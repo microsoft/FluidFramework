@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
@@ -11,11 +13,11 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import {
     IContainerContext,
-    IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -24,7 +26,6 @@ import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
-    IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
@@ -32,10 +33,10 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -44,7 +45,7 @@ import * as scribe from "./tools-core";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 const pkgVersion = require("../package.json").version;
 const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 
@@ -63,7 +64,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
     return result.data;
 }
 
-function updateProgressBar(progressBar: HTMLElement, progress: number) {
+function updateProgressBar(progressBar: HTMLElement, progress: number | undefined) {
     if (progress !== undefined) {
         progressBar.style.width = `${(100 * progress).toFixed(2)}%`;
         if (progress === 1) {
@@ -149,7 +150,7 @@ function handleFiles(
     };
 
     // Read the selected file
-    const file = files.item(0);
+    const file = files.item(0)!;
     reader.readAsText(file);
 }
 
@@ -202,7 +203,7 @@ function initialize(
         inputElement.addEventListener(
             "change",
             () => {
-                handleFiles(createButton, startButton, createDetails, inputElement.files);
+                handleFiles(createButton, startButton, createDetails, inputElement.files!);
             },
             false);
     } else {
@@ -213,7 +214,8 @@ function initialize(
         });
     }
 
-    const documentFactory: IDocumentFactory = context.scope ? context.scope.IDocumentFactory : undefined;
+    const documentFactory: IDocumentFactory | undefined = context.scope ?
+        context.scope.IDocumentFactory : undefined;
     if (documentFactory) {
         createButton.classList.remove("hidden");
     } else {
@@ -232,7 +234,7 @@ function initialize(
             },
             package: `@fluid-example/shared-text@${version}`,
         };
-        const createP = documentFactory.create(details);
+        const createP = documentFactory!.create(details);
         createP.then(
             (createUrl) => {
                 url = createUrl;
@@ -276,9 +278,13 @@ function initialize(
             }
             typingDetails.classList.remove("hidden");
 
+            if (context.scope.ILoader === undefined) {
+                throw new Error("scope must contain ILoader");
+            }
+
             // Start typing and register to update the UI
             const typeP = scribe.type(
-                context.loader,
+                context.scope.ILoader,
                 url,
                 root,
                 runtime,
@@ -292,7 +298,7 @@ function initialize(
             typeP.then(
                 (time) => {
                     (div.getElementsByClassName("total-time")[0] as HTMLDivElement).innerText =
-                        `Total time: ${(time.time / 1000).toFixed(2)} seconds`;
+                        `Total time: ${(time!.time / 1000).toFixed(2)} seconds`;
                     console.log("Done typing file");
                 },
                 (error) => {
@@ -400,23 +406,16 @@ export class Scribe
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
 
-    public url: string;
-    private root: ISharedMap;
-    private div: HTMLDivElement;
+    private root: ISharedMap | undefined;
+    private div: HTMLDivElement | undefined;
 
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
-
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
@@ -427,8 +426,8 @@ export class Scribe
                 this.div,
                 this.context,
                 this.runtime,
-                this.root,
-                "https://www.wu2.prague.office-int.com/public/literature/resume.txt",
+                this.root!,
+                "https://www.r11s-wu2-ppe.prague.office-int.com/public/literature/resume.txt",
                 50,
                 1,
                 "");
@@ -470,9 +469,8 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                deprecated_innerRequestHandler,
-            ),
-            { generateSummaries: true });
+                innerRequestHandler,
+            ));
 
         // On first boot create the base component
         if (!runtime.existing) {
@@ -483,20 +481,16 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        const progressCollectionP = Scribe.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+        ].map((factory) => [factory.type, factory])));
+        const routerP = Scribe.load(runtime, context);
 
         return runtime;
     }

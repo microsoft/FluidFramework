@@ -15,6 +15,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     IProducer,
+    IServiceConfiguration,
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
@@ -24,16 +25,7 @@ import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
-import { migrateSchema } from "./migrateDbObject";
-
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
-
-// Timeout for sending no-ops to trigger inactivity checker.
-export const ActivityCheckingTimeout = 30 * 1000;
-
-// Timeout for sending consolidated no-ops.
-export const NoopConsolidationTimeout = 250;
+import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
@@ -48,6 +40,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
+        lastSentMSN: 0,
     };
 };
 
@@ -57,7 +50,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
-        private readonly reverseProducer: IProducer) {
+        private readonly reverseProducer: IProducer,
+        private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
@@ -71,14 +65,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        let dbObject = await this.collection.findOne({ documentId, tenantId });
+        const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }
-
-        // Migrate the db object to new schema if applicable.
-        dbObject = await migrateSchema(dbObject, this.collection, leaderEpoch, 1);
 
         let lastCheckpoint: IDeliState;
 
@@ -92,24 +83,26 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // was created within a different tenant.
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
-            context.log.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
+            context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
-                context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
+                context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
-                lastCheckpoint = await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
-                if (lastCheckpoint === undefined) {
-                    context.log.error(`Summary cannot be fetched`, { messageMetaData });
+                const lastCheckpointFromSummary =
+                    await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
+                if (lastCheckpointFromSummary === undefined) {
+                    context.log?.error(`Summary cannot be fetched`, { messageMetaData });
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
+                    lastCheckpoint = lastCheckpointFromSummary;
                     // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
                     // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
                     // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log.info(JSON.stringify(lastCheckpoint));
+                    context.log?.info(JSON.stringify(lastCheckpoint));
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -134,21 +127,19 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             ) :
             lastCheckpoint;
 
+        const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
+
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         return new DeliLambda(
             context,
             tenantId,
             documentId,
             newCheckpoint,
-            dbObject,
-            // It probably shouldn't take the collection - I can manage that
-            this.collection,
+            checkpointManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
-            ClientSequenceTimeout,
-            ActivityCheckingTimeout,
-            NoopConsolidationTimeout);
+            this.serviceConfiguration);
     }
 
     public async dispose(): Promise<void> {
@@ -163,7 +154,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger): Promise<IDeliState> {
+        logger: ILogger | undefined): Promise<IDeliState | undefined> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {
@@ -175,8 +166,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     documentId,
                     tenantId,
                 };
-                logger.error(`Error fetching deli state from summary`, { messageMetaData });
-                logger.error(JSON.stringify(exception), { messageMetaData });
+                logger?.error(`Error fetching deli state from summary`, { messageMetaData });
+                logger?.error(JSON.stringify(exception), { messageMetaData });
                 return undefined;
             }
         }
@@ -194,7 +185,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger,
+        logger: ILogger | undefined,
         checkpoint: IDeliState,
         leaderEpoch: number): Promise<IDeliState> {
         let newCheckpoint = checkpoint;
@@ -212,11 +203,14 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                const messageMetaData = {
-                    documentId,
-                    tenantId,
-                };
-                logger.info(`Created a summary on epoch tick`, { messageMetaData });
+                logger?.info(
+                    `Created a summary on epoch tick`,
+                    {
+                        messageMetaData: {
+                            documentId,
+                            tenantId,
+                        },
+                    });
             }
         }
         return newCheckpoint;
@@ -235,8 +229,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            // eslint-disable-next-line no-null/no-null
-            gitManager.createTree({ entries: serviceProtocolEntries, id: null }),
+            gitManager.createTree({ entries: serviceProtocolEntries }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);
 

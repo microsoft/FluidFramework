@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import * as os from "os";
 import { commonOptionString, parseOption } from "../common/commonOptions"
+import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
 
@@ -28,6 +30,9 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     samples: boolean;
     fix: boolean;
     services: boolean;
+    worker: boolean;
+    workerThreads: boolean;
+    workerMemoryLimit: number;
 }
 
 // defaults
@@ -37,6 +42,7 @@ export const options: FastBuildOptions = {
     showExec: false,
     clean: false,
     match: [],
+    dirs: [],
     matchedOnly: true,
     buildScriptNames: [],
     vscode: false,
@@ -53,17 +59,21 @@ export const options: FastBuildOptions = {
     all: false,
     server: false,
     services: false,
+    worker: false,
+    workerThreads: false,
+    workerMemoryLimit: -1,
 };
 
 function printUsage() {
     console.log(
         `
-Usage: fluid-build <options> [<package regexp> ...]
+Usage: fluid-build <options> [(<package regexp>|<path>) ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
      --all            Operate on all packages/monorepo (default: client monorepo)
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --dir <path>     Directory to build
      --fix            Auto fix warning from package check if possible
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
@@ -254,9 +264,40 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        // Package regexp
+        if (arg === "--worker") {
+            options.worker = true;
+            continue;
+        }
+
+        if (arg === "--workerThreads") {
+            options.workerThreads = true;
+            options.worker = true;
+            continue;
+        }
+
+        if (arg === "--workerMemoryLimitMB") {
+            if (i !== process.argv.length - 1) {
+                const mb = parseInt(process.argv[++i]);
+                if (!isNaN(mb)) {
+                    options.workerMemoryLimit = mb * 1024 * 1024;
+                    continue;
+                }
+                console.error("ERROR: Argument for --workerMemoryLimitMB is not a number");
+            } else {
+                console.error("ERROR: Missing argument for --workerMemoryLimit");
+            }
+            error = true;
+            break;
+        }
+
+        // Package regexp or paths
         if (!arg.startsWith("-")) {
-            options.match.push(arg);
+            const resolvedPath = path.resolve(arg);
+            if (existsSync(resolvedPath)) {
+                options.dirs.push(arg);
+            } else {
+                options.match.push(arg);
+            }
             continue;
         }
 

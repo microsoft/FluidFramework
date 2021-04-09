@@ -1,12 +1,12 @@
 {
   "name": "@fluidframework/build-common",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Package containing common configs",
   "homepage": "https://fluidframework.com",
-  "repository": "microsoft/FluidFramework",
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": "false",
+  "sideEffects": false,
   "bin": {
     "gen-version": "bin/gen-version"
   },

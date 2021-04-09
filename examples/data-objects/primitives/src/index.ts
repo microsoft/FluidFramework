@@ -22,7 +22,7 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
  * components.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    PrimitivesName,
+    PrimitivesInstantiationFactory,
     new Map([
         [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),

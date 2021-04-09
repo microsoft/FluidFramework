@@ -10,6 +10,7 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
@@ -37,8 +38,8 @@ export class TestLambda implements IPartitionLambda {
         return;
     }
 
-    public error(error: string, restart: boolean) {
-        this.context.error(error, restart);
+    public error(error: string, errorData: IContextErrorData) {
+        this.context.error(error, errorData);
     }
 }
 
@@ -54,7 +55,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreate) {
-            return Promise.reject("Set to fail create");
+            return Promise.reject(new Error("Set to fail create"));
         }
 
         const lambda = new TestLambda(this, this.throwHandler, context);
@@ -77,9 +78,9 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
     /**
      * Closes all created lambdas
      */
-    public closeLambdas(error: string, restart: boolean) {
+    public closeLambdas(error: string, errorData: IContextErrorData) {
         for (const lambda of this.lambdas) {
-            lambda.error(error, restart);
+            lambda.error(error, errorData);
         }
     }
 }

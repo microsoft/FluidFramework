@@ -1,8 +1,9 @@
 # @fluidframework/web-code-loader
 
 ``` TypeScript
-import { IFluidPackage, IPackageConfig } from "@fluidframework/container-definitions";
+import { IPackageConfig } from "@fluidframework/container-definitions";
 import { IResolvedPackage } from "@fluidframework/web-code-loader";
+import { IFluidPackage } from "@fluidframework/core-interfaces";
 
 const cdnLink = "https://pragueauspkn.azureedge.net/@fluid-example/clicker@0.9.11445/dist/main.bundle.js";
 const linkedLibraryName = "main";

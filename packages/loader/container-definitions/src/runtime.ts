@@ -12,11 +12,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
+    IClientConfiguration,
     IClientDetails,
     IQuorum,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -27,7 +26,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ICodeLoader, ILoader } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -41,14 +40,6 @@ export enum BindState {
     NotBound = "NotBound",
     Binding = "Binding",
     Bound = "Bound",
-}
-
-/**
- * Represents the data that will be preserved from the previous IRuntime during a context reload.
- */
-export interface IRuntimeState {
-    snapshot?: ITree,
-    state?: unknown,
 }
 
 /**
@@ -73,18 +64,13 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * Deprecated: Back-compat, supporting 0.16 data stores and earlier
-     */
-    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
-
-    /**
      * @deprecated in 0.14 async stop()
      * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
      *
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active
      */
-    stop(): Promise<IRuntimeState>;
+    stop(): Promise<{snapshot?: never, state?: never}>;
 
     /**
      * Processes the given op (message)
@@ -104,8 +90,10 @@ export interface IRuntime extends IDisposable {
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
-    // 0.24 back-compat attachingBeforeSummary
-    readonly runtimeVersion?: string;
+    /**
+     * Get pending local state in a serializable format to be given back to a newly loaded container
+     */
+    getPendingLocalState(): unknown;
 }
 
 /**
@@ -119,28 +107,23 @@ export interface IRuntime extends IDisposable {
 export interface IContainerContext extends IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
-    readonly options: any;
+    readonly options: ILoaderOptions;
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly parentBranch: string | null;
-    readonly storage: IDocumentStorageService | undefined | null;
+    readonly storage: IDocumentStorageService | undefined;
     readonly connected: boolean;
-    readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
-    readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;
-    readonly serviceConfiguration: IServiceConfiguration | undefined;
-    readonly version: string;
-    readonly previousRuntimeState: IRuntimeState;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
+    pendingLocalState?: unknown;
 
     /**
      * Ambient services provided with the context
@@ -148,8 +131,6 @@ export interface IContainerContext extends IDisposable {
     readonly scope: IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
-    requestSnapshot(tagMessage: string): Promise<void>;
-    reloadContext(): Promise<void>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -166,7 +147,7 @@ export interface IContainerContext extends IDisposable {
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    createSummary(): ISummaryTree;
+    updateDirtyContainerState(dirty: boolean): void;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

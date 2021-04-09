@@ -32,14 +32,16 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         return ConsensusRegisterCollectionFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
         const collection = new ConsensusRegisterCollection(id, runtime, attributes);
-        await collection.load(branchId, services);
+        await collection.load(services);
         return collection;
     }
 

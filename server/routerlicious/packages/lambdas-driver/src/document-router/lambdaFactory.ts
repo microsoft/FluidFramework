@@ -4,14 +4,19 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import {
+    IContext,
+    IDocumentLambdaServerConfiguration,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly documentLambdaFactory: IPartitionLambdaFactory,
-        private readonly activityTimeout?: number,
+        private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
     ) {
         super();
 
@@ -22,8 +27,11 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const lambda = new DocumentLambda(this.documentLambdaFactory, config, context, this.activityTimeout);
-        return lambda;
+        return new DocumentLambda(
+            this.documentLambdaFactory,
+            config,
+            context,
+            this.documentLambdaServerConfiguration);
     }
 
     public async dispose(): Promise<void> {

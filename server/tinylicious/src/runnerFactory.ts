@@ -16,7 +16,6 @@ export class TinyliciousRunnerFactory implements utils.IRunnerFactory<Tinyliciou
             resources.orderManager,
             resources.tenantManager,
             resources.storage,
-            resources.mongoManager,
-            resources.contentCollection);
+            resources.mongoManager);
     }
 }

@@ -4,11 +4,18 @@
  */
 
 import * as path from "path";
-import * as utils from "@fluidframework/server-services-utils";
+import * as winston from "winston";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "@fluidframework/server-routerlicious-base";
+import { runService } from "../runner";
 
-utils.runService(
+const configPath = path.join(__dirname, "../../config/config.json");
+
+configureLogging(configPath);
+
+runService(
     new RiddlerResourcesFactory(),
     new RiddlerRunnerFactory(),
+    winston,
     "riddler",
-    path.join(__dirname, "../../config/config.json"));
+    configPath);

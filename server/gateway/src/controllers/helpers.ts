@@ -21,11 +21,11 @@ export function seedFromScriptIds(
                         const script = document.getElementById(id);
                         // eslint-disable-next-line no-null/no-null
                         if (script === null) {
-                            reject(`No script with id: ${id}`);
+                            reject(new Error(`No script with id: ${id}`));
                             return;
                         }
                         script.onload = () => {
-                            const maybeEntrypoint = window[pkg.resolvedPackage.fluid.browser.umd.library];
+                            const maybeEntrypoint = window[pkg.resolvedPackage.fluid?.browser?.umd?.library as string];
                             if (maybeEntrypoint !== undefined) {
                                 resolve(maybeEntrypoint as IFluidModule);
                             }

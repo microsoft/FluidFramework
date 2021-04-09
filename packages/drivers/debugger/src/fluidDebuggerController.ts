@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert , Deferred } from "@fluidframework/common-utils";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    IDocumentDeltaStorageService,
+} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
@@ -21,10 +24,9 @@ import {
     SnapshotStorage,
 } from "@fluidframework/replay-driver";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
+import { Sanitizer } from "./sanitizer";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
-
-const MaxBatchDeltas = 2000;
 
 /**
  * Replay controller that uses pop-up window to control op playback
@@ -32,7 +34,7 @@ const MaxBatchDeltas = 2000;
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
         createUi: debuggerUIFactory): DebugReplayController | null {
-        if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
+                if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
             if (ui) {
@@ -63,6 +65,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // True will cause us ping server indefinitely waiting for new ops
     protected retryFetchOpsOnEndOfFile = false;
 
+    protected documentService?: IDocumentService;
     protected documentStorageService?: IDocumentStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
@@ -144,8 +147,31 @@ export class DebugReplayController extends ReplayController implements IDebugger
         reader.readAsText(file, "utf-8");
     }
 
-    public fetchTo(currentOp: number): number {
-        return currentOp + MaxBatchDeltas;
+    public async onDownloadOpsButtonClick(anonymize: boolean): Promise<string> {
+        if (this.documentService === undefined) {
+            throw new Error("DocumentService required");
+        }
+
+        const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
+        const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+
+        const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+        const cleanMessages = sanitizer.sanitize();
+
+        return JSON.stringify(cleanMessages, undefined, 2);
+    }
+
+    private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
+        const deltaGenerator = generateSequencedMessagesFromDeltaStorage(documentDeltaStorageService);
+        let messages: ISequencedDocumentMessage[] = [];
+        for await (const message of deltaGenerator) {
+            messages = messages.concat(message);
+        }
+        return messages;
+    }
+
+    public fetchTo(currentOp: number): number | undefined {
+        return undefined;
     }
 
     // Returns true if version / file / ops selections is made.
@@ -174,18 +200,20 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
     }
 
-    public async initStorage(documentStorageService: IDocumentStorageService): Promise<boolean> {
+    public async initStorage(documentService: IDocumentService): Promise<boolean> {
         if (this.shouldUseController !== undefined) {
             return this.shouldUseController;
         }
 
-        assert(documentStorageService);
-        assert(!this.documentStorageService);
-        this.documentStorageService = documentStorageService;
+        assert(!!documentService, 0x080 /* "Invalid document service!" */);
+        assert(!this.documentService, 0x081 /* "Document service already set!" */);
+        assert(!this.documentStorageService, 0x082 /* "Document storage service already set!" */);
+        this.documentService = documentService;
+        this.documentStorageService = await documentService.connectToStorage();
 
         // User can chose "file" at any moment in time!
         if (!this.isSelectionMade()) {
-            this.versions = await documentStorageService.getVersions("", 50);
+            this.versions = await this.documentStorageService.getVersions("", 50);
             if (!this.isSelectionMade()) {
                 this.ui.addVersions(this.versions);
                 this.ui.updateVersionText(this.versionCount);
@@ -201,7 +229,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             let prevRequest = Promise.resolve();
             for (let index = i; index < this.versions.length; index += buckets) {
                 const version = this.versions[index];
-                prevRequest = this.downloadVersionInfo(documentStorageService, prevRequest, index, version);
+                prevRequest = this.downloadVersionInfo(this.documentStorageService, prevRequest, index, version);
             }
             work.push(prevRequest);
         }
@@ -212,14 +240,17 @@ export class DebugReplayController extends ReplayController implements IDebugger
             this.ui.updateVersionText(0);
         });
 
+        // This hangs until the user makes a selection or closes the window.
         this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
-        assert(this.isSelectionMade() === this.shouldUseController);
+
+        assert(this.isSelectionMade() === this.shouldUseController,
+            0x083 /* "User selection status does not match replay controller use status!" */);
         return this.shouldUseController;
     }
 
-    public async read(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         if (this.storage !== undefined) {
-            return this.storage.read(blobId);
+            return this.storage.readBlob(blobId);
         }
         throw new Error("Reading blob before storage is setup properly");
     }
@@ -264,9 +295,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     public async replay(
         emitter: (op: ISequencedDocumentMessage[]) => void,
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        let _fetchedOps = fetchedOps;
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            if (fetchedOps.length === 0) {
+            if (_fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
                 return;
             }
@@ -275,7 +307,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 this.ui.disableNextOpButton(false);
                 this.stepsDeferred = new Deferred<number>();
 
-                this.ui.updateNextOpText(fetchedOps);
+                this.ui.updateNextOpText(_fetchedOps);
 
                 this.stepsToPlay = await this.stepsDeferred.promise;
 
@@ -284,13 +316,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
             }
 
             let playOps: ISequencedDocumentMessage[];
-            if (this.stepsToPlay >= fetchedOps.length) {
-                playOps = fetchedOps;
-                this.stepsToPlay -= fetchedOps.length;
-                // eslint-disable-next-line no-param-reassign
-                fetchedOps = [];
+            if (this.stepsToPlay >= _fetchedOps.length) {
+                playOps = _fetchedOps;
+                this.stepsToPlay -= _fetchedOps.length;
+                _fetchedOps = [];
             } else {
-                playOps = fetchedOps.splice(0, this.stepsToPlay);
+                playOps = _fetchedOps.splice(0, this.stepsToPlay);
                 this.stepsToPlay = 0;
             }
             emitter(playOps);
@@ -301,12 +332,23 @@ export class DebugReplayController extends ReplayController implements IDebugger
         seq: number,
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
-        assert(!this.isSelectionMade());
-        assert(storage);
+        assert(!this.isSelectionMade(), 0x084 /* "On storage resolve, user selection already made!" */);
+        assert(!!storage, 0x085 /* "On storage resolve, missing storage!" */);
         this.storage = storage;
-        assert(this.isSelectionMade());
+        assert(this.isSelectionMade(), 0x086 /* "After storage resolve, user selection status still false!" */);
 
         this.ui.versionSelected(seq, version);
         this.startSeqDeferred.resolve(seq);
+    }
+}
+
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+    const stream = deltaStorage.fetchMessages(1, undefined);
+    while (true) {
+        const result = await stream.read();
+        if (result.done) {
+            return;
+        }
+        yield result.value;
     }
 }

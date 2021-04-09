@@ -3,35 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    ITree,
-} from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
-    IFluidDataStoreContext,
-    ISummaryTracker,
-    ISummarizeResult,
-    ISummarizerNode,
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
+import {
     CreateChildSummarizerNodeFn,
+    IContextSummarizeResult,
+    IFluidDataStoreContext,
+    IGarbageCollectionData,
+    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
+    ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTree } from "@fluidframework/runtime-utils";
-import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
+import {
+    attributesBlobKey,
+    createServiceEndpoints,
+    IChannelContext,
+    summarizeChannel,
+} from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
-import { ChannelStorageService } from "./channelStorageService";
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
@@ -42,7 +46,8 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
-    private readonly summarizerNode: ISummarizerNode;
+    private readonly summarizerNode: ISummarizerNodeWithGC;
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -50,12 +55,11 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
+        baseSnapshot:  ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Promise<Map<string, string>> | undefined,
-        private readonly branch: string,
-        private readonly summaryTracker: ISummaryTracker,
+        extraBlobs: Map<string, ArrayBufferLike> | undefined,
         createSummarizerNode: CreateChildSummarizerNodeFn,
+        gcDetailsInInitialSummary: () => Promise<IGarbageCollectionSummaryDetails>,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -64,10 +68,17 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            Promise.resolve(baseSnapshot),
+            baseSnapshot,
             extraBlobs);
-        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
-        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
+
+        const thisSummarizeInternal =
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+
+        this.summarizerNode = createSummarizerNode(
+            thisSummarizeInternal,
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
+            async () => gcDetailsInInitialSummary(),
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -88,77 +99,90 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
+    public applyStashedOp(message: ISequencedDocumentMessage): unknown {
+        assert(this.isLoaded, 0x194 /* "Remote channel must be loaded when rebasing op" */);
+        return this.services.deltaConnection.applyStashedOp(message);
+    }
+
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
         this.summarizerNode.invalidate(message.sequenceNumber);
 
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "Remote channel must not be local when processing op");
+            assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+        assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
-    public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree) {
-            const id = await this.summaryTracker.getId();
-            if (id !== undefined) {
-                return { id, entries: [] };
-            }
-        }
-
-        const channel = await this.getChannel();
-        return snapshotChannel(channel);
+    /**
+     * Returns a summary at the current sequence number.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     * @param trackState - This tells whether we should track state from this summary.
+     */
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState);
     }
 
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree);
-    }
-
-    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const snapshotTree = snapshotChannel(channel);
-        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
-        return { ...summaryResult, id: this.id };
+        const summarizeResult = summarizeChannel(channel, fullTree, trackState);
+        return { ...summarizeResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
+        assert(!this.isLoaded, 0x197 /* "Remote channel must not already be loaded when loading" */);
 
         let attributes: IChannelAttributes | undefined;
-        if (await this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(attributesBlobKey)) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
-                ".attributes");
+                attributesBlobKey);
         }
 
         let factory: IChannelFactory | undefined;
-        // this is a back-compat case where
+        // this is a backward compatibility case where
         // the attach message doesn't include
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                throw new Error("Channel type not available");
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError("Channel type not available", {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: this.attachMessageType,
+                });
             }
             attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                throw new Error(`Channel Factory ${attributes.type} not registered`);
+                // TODO: Strip out potential PII content #1920
+                throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
+                    channelId: this.id,
+                    dataStoreId: this.dataStoreContext.id,
+                    dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+                    channelFactoryType: attributes.type,
+                });
             }
         }
 
@@ -171,14 +195,10 @@ export class RemoteChannelContext implements IChannelContext {
                 `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
         }
 
-        // eslint-disable-next-line max-len
-        debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
-
         const channel = await factory.load(
             this.runtime,
             this.id,
             this.services,
-            this.branch,
             attributes);
 
         // Send all pending messages to the channel
@@ -190,6 +210,7 @@ export class RemoteChannelContext implements IChannelContext {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
                 error.sequenceNumber = message.sequenceNumber;
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw error;
             }
         }
@@ -203,5 +224,43 @@ export class RemoteChannelContext implements IChannelContext {
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
         this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
+    }
+
+    /**
+     * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context.
+     * Each node has a set of outbound routes to other GC nodes in the document.
+     * If there is no new data in this context since the last summary, previous GC data is used.
+     * If there is new data, the GC data is generated again (by calling getGCDataInternal).
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        return this.summarizerNode.getGCData(fullGC);
+    }
+
+    /**
+     * Generates the data used for garbage collection. This is called when there is new data since last summary. It
+     * loads the context and calls into the channel to get its GC data.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    private async getGCDataInternal(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+        const channel = await this.getChannel();
+        return channel.getGCData(fullGC);
+    }
+
+    /**
+     * After GC has run, called to notify the context of routes used in it. These are used for the following:
+     * 1. To identify if this context is being referenced in the document or not.
+     * 2. To determine if it needs to re-summarize in case used routes changed since last summary.
+     * 3. These are added to the summary generated by the context.
+     * @param usedRoutes - The routes that are used in this context.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        /**
+         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * used routes to contain a route to this channel context.
+         * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
+         * https://github.com/microsoft/FluidFramework/issues/4611
+         */
+        this.summarizerNode.updateUsedRoutes([""]);
     }
 }

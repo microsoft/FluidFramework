@@ -24,6 +24,10 @@ export class LocalKafka implements IProducer {
     constructor(private messageOffset = 0) {
     }
 
+    public get length() {
+        return this.qeueue.length;
+    }
+
     public subscribe(kafakaSubscriber: IKafkaSubscriber) {
         const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
         kafkaSubscription.on("processed", (queueOffset) => {
@@ -39,7 +43,7 @@ export class LocalKafka implements IProducer {
             }
 
             const diff = queueOffset - this.minimumQueueOffset;
-            this.minimumQueueOffset = queueOffset;
+            this.minimumQueueOffset = queueOffset - 1;
 
             // Remove items before min queue offset
             for (let i = 0; i < diff; i++) {
@@ -55,6 +59,7 @@ export class LocalKafka implements IProducer {
         this.subscriptions.push(kafkaSubscription);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async send(messages: object[], topic: string): Promise<any> {
         for (const message of messages) {
             const queuedMessage: IQueuedMessage = {

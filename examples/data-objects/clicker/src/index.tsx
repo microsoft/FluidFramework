@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ITask } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerName = pkg.name as string;
+export const ClickerName = "Clicker";
 
 const counterKey = "counter";
+const taskManagerKey = "taskManager";
+
+const consoleLogTaskId = "ConsoleLog";
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -25,6 +27,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
+    private _taskManager: TaskManager | undefined;
 
     /**
      * Do setup work here
@@ -32,11 +35,16 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
+        const taskManager = TaskManager.create(this.runtime);
+        this.root.set(taskManagerKey, taskManager.handle);
     }
 
     protected async hasInitialized() {
         const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
-        this._counter = await counterHandle.get();
+        this._counter = await counterHandle?.get();
+        const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
+        this._taskManager = await taskManagerHandle?.get();
+
         this.setupAgent();
     }
 
@@ -57,16 +65,24 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 
     public setupAgent() {
-        const agentTask: ITask = {
-            id: "agent",
-            instance: new ClickerAgent(this.counter),
-        };
-        this.taskManager.register(agentTask);
-        this.taskManager.pick(agentTask.id, true).then(() => {
-            console.log(`Picked`);
-        }, (err) => {
-            console.log(err);
-        });
+        this.taskManager.lockTask(consoleLogTaskId)
+            .then(async () => {
+                console.log(`Picked`);
+                const clickerAgent = new ClickerAgent(this.counter);
+                // Attempt to reacquire the task if we lose it
+                this.taskManager.once("lost", () => {
+                    clickerAgent.stop();
+                    this.setupAgent();
+                });
+                await clickerAgent.run();
+            }).catch(() => {
+                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
+                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
+                // give up.
+                if (!this.runtime.connected) {
+                    this.runtime.once("connected", () => { this.setupAgent(); });
+                }
+            });
     }
 
     private get counter() {
@@ -74,6 +90,13 @@ export class Clicker extends DataObject implements IFluidHTMLView {
             throw new Error("SharedCounter not initialized");
         }
         return this._counter;
+    }
+
+    private get taskManager() {
+        if (this._taskManager === undefined) {
+            throw new Error("TaskManager not initialized");
+        }
+        return this._taskManager;
     }
 }
 
@@ -116,10 +139,10 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
     ClickerName,
     Clicker,
-    [SharedCounter.getFactory()],
+    [SharedCounter.getFactory(), TaskManager.getFactory()],
     {},
 );
 

@@ -25,6 +25,7 @@ and ready for you to access within your DataObject subclass.
 
 ```ts
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 class MyDataObject extends DataObject implements IFluidHTMLView { }
 ```
@@ -33,7 +34,7 @@ class MyDataObject extends DataObject implements IFluidHTMLView { }
 ### The `root` SharedDirectory
 
 DataObject has a `root` property that is a [SharedDirectory][]. Typically you will create any additional distributed data
-structures during the initialization of the DataObject, as described below, and store handles to them within the root
+structures during the initialization of the DataObject, as described next, and store handles to them within the root
 SharedDirectory.
 
 ### DataObject lifecycle
@@ -120,7 +121,7 @@ an entry point for you to run upgrade or schema migration code as needed.
 The `hasInitialized` method is called _each time_ the DataObject is loaded. One common use of this method is to stash
 local references to distributed data structures so that they're available for use in synchronous code. Recall that
 retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an asynchronous
-function. `hasInitialized` serves that purpose in the example below.
+function. `hasInitialized` serves that purpose in the following example.
 
 ```ts
 protected async hasInitialized() {
@@ -135,9 +136,9 @@ Now any synchronous code can access the SharedCell using `this.currentCell`.
 
 DataObjects, like distributed data structures, are created asynchronously using a factory pattern. (Constructors in
 TypeScript cannot be asynchronous, so a factory pattern is required.) Therefore you must export a factory class for a
-DataObject, as the code below illustrates.
+DataObject, as the next code example illustrates.
 
-The DataObjectFactory constructor takes the following arguments:
+The DataObjectFactory constructor takes the following arguments.
 
 1. The first argument is the string name of the DataObject. This is used in logging.
 1. The DataObject subclass itself.
@@ -161,7 +162,7 @@ export const BadgeInstantiationFactory = new DataObjectFactory(
 ## Learn more
 
 The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
-[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/README.md)
+[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/README.md).
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
@@ -173,31 +174,31 @@ The Aqueduct library contains more than just DataObject and DataObjectFactory. T
 
 <!-- Packages -->
 
-[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[undo-redo]: {{< relref "/docs/apis/undo-redo.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/apis/ink/ink.md" >}}
-[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
 [SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
 [SharedMatrix]: {{< relref "SharedMatrix" >}}
 [SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
 [SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
-[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
 
-[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

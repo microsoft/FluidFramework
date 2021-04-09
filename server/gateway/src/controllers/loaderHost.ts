@@ -18,6 +18,7 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
 
+import { GatewayTokenProvider } from "../shared";
 import * as commits from "./commits";
 import * as navbar from "./navbar";
 import { debug } from "./debug";
@@ -29,31 +30,37 @@ export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
     cache: IGitCache,
-    jwt: string,
+    hostToken: string,
+    accessToken: string,
     config: any,
     clientId: string,
+    isSpoTenantPath: boolean,
 ) {
     debug(`Loading ${url}`);
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-    // TODO: need to be support refresh token
-    documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async () => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken)));
-
-    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        cache));
+    if (isSpoTenantPath) {
+        // TODO: need to be support refresh token
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            async () => Promise.resolve(resolved.tokens.storageToken),
+            async () => Promise.resolve(resolved.tokens.socketToken)));
+    } else {
+        const tokenProvider = new GatewayTokenProvider(document.location.origin, resolved.url, hostToken, accessToken);
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+    }
 
     config.moniker = (await Axios.get("/api/v1/moniker")).data;
     config.url = url;
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,
-        jwt,
+        hostToken,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
     const options = {

@@ -10,7 +10,7 @@ import os from "os";
 import path from "path";
 import util from "util";
 import { lock } from "proper-lockfile";
-import { IOdspTokens } from "@fluidframework/odsp-utils";
+import { IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 
 export interface IAsyncCache<TKey, TValue> {
     get(key: TKey): Promise<TValue | undefined>;
@@ -18,9 +18,16 @@ export interface IAsyncCache<TKey, TValue> {
     lock<T>(callback: () => Promise<T>): Promise<T>;
 }
 
-interface IResources {
-    tokens?: { [key: string]: IOdspTokens };
-    pushTokens?: IOdspTokens;
+export interface IResources {
+    tokens?: {
+        version?: number;
+        data: {
+            [key: string]: {
+                storage?: IOdspTokens,
+                push?: IOdspTokens
+            }
+        }
+    }
 }
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");
@@ -32,6 +39,7 @@ export async function loadRC(): Promise<IResources> {
     if (await exists(fileName)) {
         const buf = await readFile(fileName);
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(buf.toString("utf8"));
         } catch (e) {
             // Nothing
@@ -48,5 +56,11 @@ export async function saveRC(rc: IResources) {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function lockRC() {
-    return lock(getRCFileName(), { realpath: false });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return lock(getRCFileName(), {
+        retries: {
+            forever: true,
+        },
+        realpath: false,
+    });
 }

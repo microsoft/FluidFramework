@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
-import { initializeContainerCode } from "./initializeContainerCode";
 
 /**
  * Create a loader and return it.
@@ -32,23 +29,10 @@ async function createWebLoader(
         }
     }
 
-    const config = hostConfig.config ? hostConfig.config : {};
-
-    // We need to extend options, otherwise we nest properties, like client, too deeply
-    //
-    config.blockUpdateMarkers = true;
-
-    const scope = hostConfig.scope ? hostConfig.scope : {};
-    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
-        hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
-
-    return new Loader(
-        hostConfig.urlResolver,
-        hostConfig.documentServiceFactory,
+    return new Loader({
+        ...hostConfig,
         codeLoader,
-        config,
-        scope,
-        proxyLoaderFactories);
+    });
 }
 
 export class BaseHost {
@@ -67,24 +51,46 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails): Promise<Container> {
+    public async loadContainer(url: string): Promise<Container> {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
+        return container;
+    }
 
-        // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the container already has a code proposal
-        if (codeDetails) {
-            await initializeContainerCode(container, codeDetails)
-                .catch((error) => console.error("code proposal error", error));
-        }
-
-        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-        // for the contextChanged event to avoid returning before that reload completes.
-        if (container.hasNullRuntime()) {
-            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-        }
+    /**
+     * Used to create a detached container from code details.
+     * @param codeDetails - codeDetails used to create detached container.
+     */
+    public async createContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
+        const loader = await this.getLoader();
+        const container = await loader.createDetachedContainer(codeDetails);
 
         return container;
+    }
+
+    /**
+     * Used to create a detached container from snapshot of another detached container.
+     * @param snapshot - Snapshot of detached container.
+     */
+    public async rehydrateContainer(snapshot: string): Promise<Container> {
+        const loader = await this.getLoader();
+        const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+
+        return container;
+    }
+
+    public async requestFluidObjectFromContainer(container: Container, url: string) {
+        const response = await container.request({ url });
+
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "fluid/object"
+            )) {
+            return undefined;
+        }
+
+        return response.value as IFluidObject;
     }
 
     public async requestFluidObject(url: string) {

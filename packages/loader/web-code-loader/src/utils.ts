@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage } from "@fluidframework/container-definitions";
+import { IFluidPackage, IFluidPackageEnvironment } from "@fluidframework/core-interfaces";
 
 export interface IPackageIdentifierDetails {
     readonly fullId: string;
@@ -13,10 +13,12 @@ export interface IPackageIdentifierDetails {
     readonly scope: string;
 }
 
-export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
-    const packageString = typeof codeDetailsPackage === "string"
+export function extractPackageIdentifierDetails(
+    codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
+        const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : codeDetailsPackage.version === undefined // If it doesn't exist, let's make it from the package details
+        // If it doesn't exist, let's make it from the package details
+        : typeof codeDetailsPackage.version === "string"
             ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
             : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 
@@ -28,7 +30,7 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
 
     // Two @ symbols === the package has a version. Use alternative RegEx.
     if (packageString.indexOf("@") !== packageString.lastIndexOf("@")) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
         const componentsWithVersion = packageString.match(/(@(.*)\/)?((.*)@(.*))/);
         // eslint-disable-next-line no-null/no-null
         if ((componentsWithVersion === null || componentsWithVersion.length !== 6)) {
@@ -36,7 +38,7 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
         }
         [fullId, , scope, nameAndVersion, name, version] = componentsWithVersion;
     } else {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec,unicorn/no-unsafe-regex
         const componentsWithoutVersion = packageString.match(/(@(.*)\/)?((.*))/);
         // eslint-disable-next-line no-null/no-null
         if ((componentsWithoutVersion === null || componentsWithoutVersion.length !== 5)) {
@@ -52,4 +54,29 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
         scope,
         version,
     };
+}
+
+export function resolveFluidPackageEnvironment(
+    environment: IFluidPackageEnvironment,
+    baseUrl: string,
+    ): Readonly<IFluidPackageEnvironment> {
+    const resolvedEnvironment: IFluidPackageEnvironment = {};
+    for (const targetName of Object.keys(environment)) {
+        const target = environment[targetName];
+        if (target !== undefined) {
+            const files: string[] = [];
+            for (const file of target.files) {
+                if (!file.startsWith("http")) {
+                    files.push(`${baseUrl}/${file}`);
+                } else {
+                    files.push(file);
+                }
+            }
+            resolvedEnvironment[targetName] = {
+                files,
+                library: target.library,
+            };
+        }
+    }
+    return resolvedEnvironment;
 }

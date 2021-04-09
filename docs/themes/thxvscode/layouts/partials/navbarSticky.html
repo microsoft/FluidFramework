@@ -1,7 +1,5 @@
 {{ $current := .}}
 {{ $topSection := .CurrentSection.FirstSection }}
-<a role="button" id="skip-to-content" class="link-button" href="#main-content">Skip to content<i>&nbsp;</i><span
-        class="glyphicon glyphicon-menu-down"></span></a>
 <div class="navbar-fixed-container">
     <div class="navbar navbar-inverse navbar-fixed-top {{ if .IsHome}}home{{ end }}" data-spy="affix"
         data-offset-top="1">
@@ -29,16 +27,16 @@
 
                         {{- if .HasChildren }}
                         <li {{ if $isActive }}class="active" {{end}}>
-                            <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}" class="has-children">{{ .Name }}</a>
+                            <a id="nav-{{ .Name }}" href="{{ .URL | relLangURL }}" class="has-children">{{ .Name }}</a>
                             <span class="sub-menu">
                                 {{- range .Children }}
-                                <a href="{{ .URL | absLangURL }}">{{ .Name }}</a>
+                                <a href="{{ .URL | relLangURL }}">{{ .Name }}</a>
                                 {{- end }}
                             </span>
                         </li>
                         {{- else }}
                         <li {{ if $isActive}}class="active" {{end}}>
-                            <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}">{{ .Name }}</a>
+                            <a id="nav-{{ .Name }}" href="{{ .URL | relLangURL }}">{{ .Name }}</a>
                         </li>
                         {{- end }}
                         {{- end }}

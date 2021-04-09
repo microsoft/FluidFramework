@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/common-utils";
 import Axios from "axios";
 
@@ -58,7 +59,7 @@ export class DocumentFactory implements IDocumentFactory {
 
         const quorum = resolved.getQuorum();
         if (quorum.has("code")) {
-            return Promise.reject("Code has already been proposed on document");
+            return Promise.reject(new Error("Code has already been proposed on document"));
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises

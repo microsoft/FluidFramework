@@ -9,6 +9,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
+import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -16,6 +17,7 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { GatewayTokenProvider } from "../shared";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
@@ -38,10 +40,10 @@ export async function initialize(
     cache: IGitCache,
     pkg: IResolvedFluidCodeDetails | undefined,
     scriptIds: string[],
-    jwt: string,
+    hostToken: string,
+    accessToken: string,
     config: any,
-    clientId: string,
-    user: any,
+    isSpoTenantPath: boolean,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
 
@@ -50,34 +52,44 @@ export async function initialize(
     };
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-    // TODO: need to be support refresh token
-    documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async () => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken)));
-
-    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        cache));
+    if (isSpoTenantPath) {
+        // TODO: need to be support refresh token
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            async () => Promise.resolve(resolved.tokens.storageToken),
+            async () => Promise.resolve(resolved.tokens.socketToken)));
+    } else {
+        const tokenProvider = new GatewayTokenProvider(
+            document.location.origin,
+            resolved.url,
+            hostToken,
+            accessToken,
+        );
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+    }
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,
-        jwt,
+        hostToken,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
+    const multiDocumentFactory = MultiDocumentServiceFactory.create(documentServiceFactories);
     const hostConfig: IBaseHostConfig = {
-        documentServiceFactory: documentServiceFactories,
+        documentServiceFactory: multiDocumentFactory,
         urlResolver: resolver,
-        config,
+        options: config,
         codeResolver: new SemVerCdnCodeResolver(),
         scope: services,
         proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
     };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["allServices"] = services;
 
     const baseHost = new BaseHost(hostConfig, seedFromScriptIds(pkg, scriptIds));

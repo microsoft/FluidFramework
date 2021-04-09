@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -11,7 +10,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -40,10 +39,11 @@ class OpPerfTelemetry {
 
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
-        this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
+
+        this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
+
         this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
-            this.clientSequenceNumberForLatencyStatistics = undefined;
             if (opsBehind !== undefined) {
                 this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
                 this.gap = opsBehind;
@@ -56,12 +56,24 @@ class OpPerfTelemetry {
             }
         });
         this.deltaManager.on("disconnect", () => {
+            this.clientSequenceNumberForLatencyStatistics = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
-        this.deltaManager.on("beforeOpProcessing", (message) => {
-            if (message.sequenceNumber === this.connectionOpSeqNumber) {
-                this.reportGettingUpToDate();
+
+        this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
+            // Do not want to log zero for sure.
+            // We are more interested in aggregates, so logging only if we are processing some number of ops
+            // Cut-off is arbitrary - can be increased or decreased based on amount of data collected and questions we
+            // want to get answered
+            // back-compat: Once 0.36 loader version saturates (count & duration args were added there),
+            // we can remove typeof check.
+            if (typeof count === "number" && count >= 100) {
+                this.logger.sendPerformanceEvent({
+                    eventName: "GetDeltas_OpProcessing",
+                    count,
+                    duration,
+                });
             }
         });
     }
@@ -99,15 +111,21 @@ class OpPerfTelemetry {
         }
     }
 
-    private beforeProcessingOp(message: ISequencedDocumentMessage) {
+    private afterProcessingOp(message: ISequencedDocumentMessage) {
+        const sequenceNumber = message.sequenceNumber;
+
+        if (sequenceNumber === this.connectionOpSeqNumber) {
+            this.reportGettingUpToDate();
+        }
+
         // Record collab window max size after every 1000th op.
-        if (message.sequenceNumber % 1000 === 0) {
+        if (sequenceNumber % 1000 === 0) {
             if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
-                this.logger.sendTelemetryEvent({
+                this.logger.sendPerformanceEvent({
                     eventName: "MsnStatistics",
-                    sequenceNumber: message.sequenceNumber,
+                    sequenceNumber,
                     msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
-                    timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
+                    duration: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
             this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
@@ -115,12 +133,12 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opSendTimeForLatencyStatistics);
-            this.logger.sendTelemetryEvent({
+            assert(this.opSendTimeForLatencyStatistics !== undefined,
+                0x120 /* "Undefined latency statistics (op send time)" */);
+            this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
-                seqNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                value: Date.now() - this.opSendTimeForLatencyStatistics,
+                sequenceNumber,
+                duration: Date.now() - this.opSendTimeForLatencyStatistics,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

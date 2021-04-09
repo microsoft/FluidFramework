@@ -61,7 +61,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                 <h2>
                     <input
                         type="checkbox"
-                        name={this.props.todoItemModel.url}
+                        name={this.props.todoItemModel.handle.absolutePath}
                         checked={this.state.checked}
                         onChange={this.setCheckedState} />
                     <CollaborativeInput

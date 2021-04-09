@@ -5,48 +5,45 @@
 
 import {
     IFluidObject,
-    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
-import { v4 as uuid } from "uuid";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { BlobHandle } from "./blobHandle";
 import { PureDataObject } from "./pureDataObject";
 
 /**
- * DataObject is a base data store that is primed with a root directory and task manager. It
- * ensures that both are created and ready before you can access it.
+ * DataObject is a base data store that is primed with a root directory. It
+ * ensures that it is created and ready before you can access it.
  *
  * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class DataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends PureDataObject<P, S, E>
+// eslint-disable-next-line @typescript-eslint/ban-types
+export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
+    extends PureDataObject<O, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
-    private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
-    private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
-        const url = request.url;
-        if (url.startsWith(this.bigBlobs)) {
-            const value = this.root.get<string>(url);
+        const requestParser = RequestParser.create(request);
+        const itemId = requestParser.pathParts[0];
+        if (itemId === "bigBlobs") {
+            const value = this.root.get<string>(requestParser.pathParts.join("/"));
             if (value === undefined) {
-                return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
+                return create404Response(requestParser);
             }
             return { mimeType: "fluid/object", status: 200, value };
         } else {
-            return super.request(request);
+            return super.request(requestParser);
         }
     }
 
@@ -63,40 +60,10 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
     }
 
     /**
-     * Returns the built-in task manager responsible for scheduling tasks.
-     */
-    protected get taskManager(): ITaskManager {
-        if (!this.internalTaskManager) {
-            throw new Error(this.getUninitializedErrorString(`taskManager`));
-        }
-
-        return this.internalTaskManager;
-    }
-
-    /**
-     * Temporary implementation of blobs.
-     * Currently blobs are stored as properties on root map and we rely
-     * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
-     * In future blobs would be implemented as first class citizen, using blob storage APIs
-     */
-    protected async writeBlob(blob: string): Promise<IFluidHandle<string>> {
-        this.runtime.logger.sendTelemetryEvent({
-            eventName: "WriteBlob",
-            size: blob.length,
-        });
-        const path = `${this.bigBlobs}${uuid()}`;
-        this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
-    }
-
-    /**
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(props?: S): Promise<void> {
-        // Initialize task manager.
-        this.internalTaskManager = await this.context.containerRuntime.getTaskManager();
-
+    public async initializeInternal(): Promise<void> {
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
@@ -117,7 +84,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
             }
         }
 
-        await super.initializeInternal(props);
+        await super.initializeInternal();
     }
 
     protected getUninitializedErrorString(item: string) {

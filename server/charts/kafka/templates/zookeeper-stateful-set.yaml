@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ template "zookeeper.fullname" . }}
@@ -11,6 +11,9 @@ metadata:
 spec:
   serviceName: zookeeper
   replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "kafka.fullname" . }}
   template:
     metadata:
       labels:

@@ -11,11 +11,11 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    LastEditedTrackerDataObject,
     setupLastEditedTrackerForContainer,
     IFluidLastEditedTracker,
 } from "@fluidframework/last-edited-experimental";
 import {
+    IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
@@ -25,7 +25,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     Anchor,
     TabsFluidObject,
-    Vltava,
 } from "./fluidObjects";
 import {
     IFluidObjectInternalRegistry,
@@ -67,10 +66,10 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
 
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
-        defaultFluidObjectName: string,
+        defaultFactory: IFluidDataStoreFactory,
         registryEntries: NamedFluidDataStoreRegistryEntries,
     ) {
-        super(defaultFluidObjectName, registryEntries);
+        super(defaultFactory, registryEntries);
     }
 
     /**
@@ -129,13 +128,11 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of fluidObjects
     // and the default registry is already determined Issue:#1138
     return new VltavaRuntimeFactory(
-        Anchor.getFactory().type,
+        Anchor.getFactory(),
         [
             ...containerFluidObjects,
-            LastEditedTrackerDataObject.getFactory().registryEntry,
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects
             Anchor.getFactory().registryEntry,
-            Vltava.getFactory().registryEntry,
             ["internalRegistry", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
         ],
     );

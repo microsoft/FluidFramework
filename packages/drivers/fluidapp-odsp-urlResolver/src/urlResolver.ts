@@ -3,35 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
+import { createOdspUrl, IOdspUrlParts, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 
-const fluidOfficeServers = [
+const fluidOfficeAndOneNoteServers = [
     "dev.fluidpreview.office.net",
     "fluidpreview.office.net",
+    "www.onenote.com",
 ];
 
 export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
-        let contents: { drive: string; item: string; site: string } | undefined;
-        if (fluidOfficeServers.includes(server)) {
+        let contents: IOdspUrlParts | undefined;
+        if (fluidOfficeAndOneNoteServers.includes(server)) {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            contents = await initializeFluidOffice(reqUrl);
+            contents = await initializeFluidOfficeOrOneNote(reqUrl);
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(value, `Missing ${name} from office.com URL parameter`);
+                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
                 return value;
             };
             contents = {
-                drive: getRequiredParam("drive"),
-                item: getRequiredParam("item"),
-                site: getRequiredParam("siteUrl"),
+                driveId: getRequiredParam("drive"),
+                itemId: getRequiredParam("item"),
+                siteUrl: getRequiredParam("siteUrl"),
             };
         } else {
             return undefined;
@@ -39,7 +39,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         if (!contents) {
             return undefined;
         }
-        const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+        const urlToBeResolved = createOdspUrl({...contents, dataStorePath:""});
         const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
         return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
@@ -53,17 +53,17 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     }
 }
 
-async function initializeFluidOffice(urlSource: URL) {
+async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-    const siteDriveItemMatch = pathname.match(/\/p\/([^/]*)\/([^/]*)\/([^/]*)/);
+    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
 
     // eslint-disable-next-line no-null/no-null
     if (siteDriveItemMatch === null) {
         return undefined;
     }
 
-    const site = decodeURIComponent(siteDriveItemMatch[1]);
+    const site = decodeURIComponent(siteDriveItemMatch[2]);
 
     // Path value is base64 encoded so need to decode first
     const decodedSite = fromBase64ToUtf8(site);
@@ -72,12 +72,12 @@ async function initializeFluidOffice(urlSource: URL) {
     const storageType = decodedSite.split(":")[0];
     const expectedStorageType = "spo";  // Only support spo for now
     if (storageType !== expectedStorageType) {
-        return Promise.reject(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
+        return Promise.reject(new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`));
     }
 
     // Since we have the drive and item, only take the host ignore the rest
     const siteUrl = decodedSite.substring(storageType.length + 1);
-    const drive = decodeURIComponent(siteDriveItemMatch[2]);
-    const item = decodeURIComponent(siteDriveItemMatch[3]);
-    return { site: siteUrl, drive, item };
+    const driveId = decodeURIComponent(siteDriveItemMatch[3]);
+    const itemId = decodeURIComponent(siteDriveItemMatch[4]);
+    return { siteUrl, driveId, itemId };
 }

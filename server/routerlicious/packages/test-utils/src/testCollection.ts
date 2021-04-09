@@ -27,7 +27,7 @@ export class TestCollection implements ICollection<any> {
     public async update(filter: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(filter);
         if (!value) {
-            return Promise.reject("Not found");
+            return Promise.reject(new Error("Not found"));
         }
         _.extend(value, set);
     }
@@ -65,11 +65,17 @@ export class TestCollection implements ICollection<any> {
     }
 
     public async deleteOne(filter: any): Promise<any> {
-        throw new Error("Method not implemented.");
+        const value = this.findOneInternal(filter);
+        this.removeOneInternal(value);
+        return value;
     }
 
-    public async deleteMany(filter: any): Promise<any> {
-        throw new Error("Method not implemented.");
+    public async deleteMany(filter: any): Promise<any[]> {
+        const values = this.findInternal(filter);
+        values.forEach((value) => {
+            this.removeOneInternal(value);
+        });
+        return values;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -80,6 +86,13 @@ export class TestCollection implements ICollection<any> {
     private insertOneInternal(value: any): any {
         this.collection.push(value);
         return value;
+    }
+
+    private removeOneInternal(value: any): void {
+        const index = this.collection.indexOf(value);
+        if (index >= 0) {
+            this.collection.splice(index, 1);
+        }
     }
 
     private findOneInternal(query: any): any {
@@ -109,7 +122,7 @@ export class TestCollection implements ICollection<any> {
             if (!query[key]) {
                 return;
             }
-            if (query[key].$gt > 0 || query[key].$lt > 0) {
+            if (query[key].$gt > 0 || query[key].$lt > 0 || query[key].$lte > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) > query[key].$gt);
@@ -117,6 +130,10 @@ export class TestCollection implements ICollection<any> {
                 if (query[key].$lt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) < query[key].$lt);
+                }
+                if (query[key].$lte > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) <= query[key].$lte);
                 }
             } else {
                 filteredCollection = filteredCollection.filter(

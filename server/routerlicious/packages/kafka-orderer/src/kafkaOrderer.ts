@@ -10,7 +10,6 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    IServiceConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
@@ -18,19 +17,17 @@ import * as core from "@fluidframework/server-services-core";
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
         existing: boolean,
-        document: core.IDocument,
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
         client: IClient,
         maxMessageSize: number,
         clientId: string,
-        serviceConfiguration: IServiceConfiguration,
+        serviceConfiguration: core.IServiceConfiguration,
     ): Promise<KafkaOrdererConnection> {
         // Create the connection
         return new KafkaOrdererConnection(
             existing,
-            document,
             producer,
             tenantId,
             documentId,
@@ -40,31 +37,21 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             serviceConfiguration);
     }
 
-    public get parentBranch(): string {
-        return this._parentBranch;
-    }
-
-    private readonly _parentBranch: string;
-
     constructor(
         public readonly existing: boolean,
-        document: core.IDocument,
         private readonly producer: core.IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
         private readonly client: IClient,
         public readonly maxMessageSize: number,
-        public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this._parentBranch = document.parent ? document.parent.documentId : null;
-    }
+        public readonly serviceConfiguration: core.IServiceConfiguration,
+    ) { }
 
     /**
      * Sends the client join op for this connection
      */
-    public async connect() {
+    public async connect(clientJoinMessageServerMetadata?: any) {
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
@@ -75,8 +62,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             contents: null,
             data: JSON.stringify(clientDetail),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientJoin,
+            serverMetadata: clientJoinMessageServerMetadata,
         };
 
         const message: core.IRawOperationMessage = {
@@ -121,7 +109,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             contents: null,
             data: JSON.stringify(this.clientId),
             referenceSequenceNumber: -1,
-            traces: [],
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
         };
         const message: core.IRawOperationMessage = {
@@ -141,22 +129,22 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     }
 
     private async submitRawOperation(messages: core.IRawOperationMessage[]): Promise<void> {
-        // Add trace
-        messages.forEach((message) => {
-            const operation = message.operation;
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (operation && operation.traces === undefined) {
-                operation.traces = [];
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            } else if (operation && operation.traces && operation.traces.length > 1) {
-                operation.traces.push(
-                    {
-                        action: "end",
-                        service: "alfred",
-                        timestamp: Date.now(),
-                    });
-            }
-        });
+        if (this.serviceConfiguration.enableTraces) {
+            // Add trace
+            messages.forEach((message) => {
+                const operation = message.operation;
+                if (operation && operation.traces === undefined) {
+                    operation.traces = [];
+                } else if (operation && operation.traces && operation.traces.length > 1) {
+                    operation.traces.push(
+                        {
+                            action: "end",
+                            service: "alfred",
+                            timestamp: Date.now(),
+                        });
+                }
+            });
+        }
 
         return this.producer.send(messages, this.tenantId, this.documentId);
     }
@@ -168,19 +156,19 @@ export class KafkaOrderer implements core.IOrderer {
         tenantId: string,
         documentId: string,
         maxMessageSize: number,
-        serviceConfiguration: IServiceConfiguration,
+        serviceConfiguration: core.IServiceConfiguration,
     ): Promise<KafkaOrderer> {
         return new KafkaOrderer(producer, tenantId, documentId, maxMessageSize, serviceConfiguration);
     }
 
-    private existing: boolean;
+    private existing: boolean | undefined;
 
     constructor(
         private readonly producer: core.IProducer,
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly maxMessageSize: number,
-        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly serviceConfiguration: core.IServiceConfiguration,
     ) {
     }
 
@@ -192,7 +180,6 @@ export class KafkaOrderer implements core.IOrderer {
         this.existing = details.existing;
         const connection = KafkaOrdererConnection.create(
             this.existing,
-            details.value,
             this.producer,
             this.tenantId,
             this.documentId,
@@ -219,14 +206,16 @@ export class KafkaOrdererFactory {
     constructor(
         private readonly producer: core.IProducer,
         private readonly maxMessageSize: number,
-        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly serviceConfiguration: core.IServiceConfiguration,
     ) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const fullId = `${tenantId}/${documentId}`;
-        if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.create(
+
+        let orderer = this.ordererMap.get(fullId);
+        if (orderer === undefined) {
+            orderer = KafkaOrderer.create(
                 this.producer,
                 tenantId,
                 documentId,
@@ -235,6 +224,10 @@ export class KafkaOrdererFactory {
             this.ordererMap.set(fullId, orderer);
         }
 
-        return this.ordererMap.get(fullId);
+        return orderer;
+    }
+
+    public delete(tenantId: string, documentId: string): void {
+        this.ordererMap.delete(`${tenantId}/${documentId}`);
     }
 }

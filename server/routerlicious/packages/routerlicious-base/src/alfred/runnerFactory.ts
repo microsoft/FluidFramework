@@ -11,16 +11,16 @@ import {
     NodeManager,
     ReservationManager,
 } from "@fluidframework/server-memory-orderer";
+import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as redis from "redis";
+import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -56,7 +56,7 @@ export class OrdererManager implements core.IOrdererManager {
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
 
         if (tenant.orderer.url !== this.ordererUrl) {
-            return Promise.reject("Invalid ordering service endpoint");
+            return Promise.reject(new Error("Invalid ordering service endpoint"));
         }
 
         switch (tenant.orderer.type) {
@@ -70,7 +70,7 @@ export class OrdererManager implements core.IOrdererManager {
     }
 }
 
-export class AlfredResources implements utils.IResources {
+export class AlfredResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
@@ -81,14 +81,17 @@ export class AlfredResources implements utils.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
+        public restThrottler: core.IThrottler,
+        public socketConnectThrottler: core.IThrottler,
+        public socketSubmitOpThrottler: core.IThrottler,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any,
-        public contentCollection: core.ICollection<any>) {
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
+        public metricClientConfig: any) {
+        const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig, socketIoAdapterConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -98,7 +101,7 @@ export class AlfredResources implements utils.IResources {
     }
 }
 
-export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredResources> {
+export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
     public async create(config: Provider): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -106,32 +109,36 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
-        const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+        const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+        const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
             kafkaClientId,
             topic,
-            maxKafkaMessageSize,
             false,
-            kafkaProducerPollIntervalMs);
+            kafkaProducerPollIntervalMs,
+            kafkaNumberOfPartitions,
+            kafkaReplicationFactor);
+
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
         // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
-        const redisOptions2: redis.ClientOpts = { password: redisConfig2.pass };
+        const redisOptions2: Redis.RedisOptions = {
+            host: redisConfig2.host,
+            port: redisConfig2.port,
+            password: redisConfig2.pass,
+        };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
-                serverName: redisConfig2.host,
+                servername: redisConfig2.host,
             };
         }
-        const redisClient = redis.createClient(
-            redisConfig2.port,
-            redisConfig2.host,
-            redisOptions2);
+        const redisClient = new Redis(redisOptions2);
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
@@ -168,6 +175,79 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const tenantManager = new services.TenantManager(authEndpoint);
 
+        // Redis connection for throttling.
+        const redisConfigForThrottling = config.get("redisForThrottling");
+        const redisOptionsForThrottling: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
+        };
+        if (redisConfigForThrottling.tls) {
+            redisOptionsForThrottling.tls = {
+                servername: redisConfigForThrottling.host,
+            };
+        }
+        const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+
+        // Rest API Throttler
+        const throttleMaxRequestsPerMs =
+            config.get("alfred:throttling:restCalls:maxPerMs") as number | undefined;
+        const throttleMaxRequestBurst =
+            config.get("alfred:throttling:restCalls:maxBurst") as number | undefined;
+        const throttleMinRequestCooldownIntervalInMs =
+            config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
+        const throttleMinRequestThrottleIntervalInMs =
+            config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
+        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
+        const restThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleMaxRequestsPerMs,
+            throttleMaxRequestBurst,
+            throttleMinRequestCooldownIntervalInMs);
+        const restThrottler = new services.Throttler(
+            restThrottlerHelper,
+            throttleMinRequestThrottleIntervalInMs,
+            winston);
+
+        // Socket Connection Throttler
+        const throttleMaxSocketConnectionsPerMs =
+            config.get("alfred:throttling:socketConnections:maxPerMs") as number | undefined;
+        const throttleMaxSocketConnectionBurst =
+            config.get("alfred:throttling:socketConnections:maxBurst") as number | undefined;
+        const throttleMinSocketConnectionCooldownIntervalInMs =
+            config.get("alfred:throttling:socketConnections:minCooldownIntervalInMs") as number | undefined;
+        const throttleMinSocketConnectionThrottleIntervalInMs =
+            config.get("alfred:throttling:socketConnections:minThrottleIntervalInMs") as number | undefined;
+        const socketConnectThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleMaxSocketConnectionsPerMs,
+            throttleMaxSocketConnectionBurst,
+            throttleMinSocketConnectionCooldownIntervalInMs,
+        );
+        const socketConnectThrottler = new services.Throttler(
+            socketConnectThrottlerHelper,
+            throttleMinSocketConnectionThrottleIntervalInMs,
+            winston);
+
+        // Socket SubmitOp Throttler
+        const throttleMaxSubmitOpsPerMs =
+            config.get("alfred:throttling:submitOps:maxPerMs") as number | undefined;
+        const throttleMaxSubmitOpBurst =
+            config.get("alfred:throttling:submitOps:maxBurst") as number | undefined;
+        const throttleMinSubmitOpCooldownIntervalInMs =
+            config.get("alfred:throttling:submitOps:minCooldownIntervalInMs") as number | undefined;
+        const throttleMinSubmitOpThrottleIntervalInMs =
+            config.get("alfred:throttling:submitOps:minThrottleIntervalInMs") as number | undefined;
+        const socketSubmitOpThrottlerHelper = new services.ThrottlerHelper(
+            throttleStorageManager,
+            throttleMaxSubmitOpsPerMs,
+            throttleMaxSubmitOpBurst,
+            throttleMinSubmitOpCooldownIntervalInMs);
+        const socketSubmitOpThrottler = new services.Throttler(
+            socketSubmitOpThrottlerHelper,
+            throttleMinSubmitOpThrottleIntervalInMs,
+            winston);
+
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
             nodeCollectionName,
@@ -175,20 +255,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
+        const storage = new services.DocumentStorage(databaseManager, tenantManager);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
-
-        const contentCollection = db.collection("content");
-        await contentCollection.createIndex(
-            {
-                documentId: 1,
-                sequenceNumber: 1,
-                tenantId: 1,
-            },
-            false);
-
         const address = `${await utils.getHostIp()}:4000`;
+
         const nodeFactory = new LocalNodeFactory(
             os.hostname(),
             address,
@@ -200,21 +271,22 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             tenantManager,
             foremanConfig.permissions,
             maxSendMessageSize,
+            utils.generateToken,
             winston);
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
             maxSendMessageSize,
-            DefaultServiceConfiguration);
+            core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
         let eventHubOrdererFactory: KafkaOrdererFactory = null;
         if (config.get("eventHub")) {
-            const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
+            const eventHubProducer = new EventHubProducer(config.get("eventHub:endpoint"), topic);
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
                 maxSendMessageSize,
-                DefaultServiceConfiguration);
+                core.DefaultServiceConfiguration);
         }
 
         const orderManager = new OrdererManager(
@@ -238,30 +310,34 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             webSocketLibrary,
             orderManager,
             tenantManager,
+            restThrottler,
+            socketConnectThrottler,
+            socketSubmitOpThrottler,
             storage,
             appTenants,
             mongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig,
-            contentCollection);
+            metricClientConfig);
     }
 }
 
-export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources> {
-    public async create(resources: AlfredResources): Promise<utils.IRunner> {
+export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
+    public async create(resources: AlfredResources): Promise<core.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
             resources.config,
             resources.port,
             resources.orderManager,
             resources.tenantManager,
+            resources.restThrottler,
+            resources.socketConnectThrottler,
+            resources.socketSubmitOpThrottler,
             resources.storage,
             resources.clientManager,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.metricClientConfig,
-            resources.contentCollection);
+            resources.metricClientConfig);
     }
 }

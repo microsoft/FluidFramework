@@ -4,16 +4,12 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import React from "react";
 import ReactDOM from "react-dom";
-
 import { IFluidUserInformation } from "../interfaces";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../../package.json");
 
 /**
  * Basic example that takes a container provider
@@ -25,7 +21,7 @@ export class ExampleUsingProviders
 
     private userInformation: IFluidUserInformation | undefined;
 
-    public static readonly ComponentName = `${pkg.name as string}-example-using-provider`;
+    public static readonly ComponentName = `@fluid-example/pond-example-using-provider`;
 
     protected async hasInitialized() {
         this.userInformation = await this.providers.IFluidUserInformation;
@@ -52,11 +48,12 @@ export class ExampleUsingProviders
 
     public static getFactory() { return ExampleUsingProviders.factory; }
 
-    private static readonly factory = new DataObjectFactory(
-        ExampleUsingProviders.ComponentName,
-        ExampleUsingProviders,
-        [SharedMap.getFactory()],
-        { IFluidUserInformation });
+    private static readonly factory =
+        new DataObjectFactory<ExampleUsingProviders, IFluidUserInformation, undefined, IEvent>(
+            ExampleUsingProviders.ComponentName,
+            ExampleUsingProviders,
+            [SharedMap.getFactory()],
+            { IFluidUserInformation });
 }
 
 interface ExampleUsingProvidersViewProps {

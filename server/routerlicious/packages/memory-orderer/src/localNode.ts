@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -16,6 +16,8 @@ import {
     ITenantManager,
     IWebSocketServer,
     ILogger,
+    TokenGenerator,
+    DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
@@ -28,17 +30,6 @@ import { Socket } from "./socket";
 
 // Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
 // Rather than creating one per? I'm in some ways on this path.
-
-const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-};
 
 class RemoteSubscriber implements ISubscriber {
     public id = uuid();
@@ -77,6 +68,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        tokenGenerator: TokenGenerator,
         logger: ILogger) {
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.create(
@@ -95,6 +87,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             tenantManager,
             permission,
             maxMessageSize,
+            tokenGenerator,
             logger);
     }
 
@@ -161,6 +154,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private readonly tenantManager: ITenantManager,
         private readonly permission: any,
         private readonly maxMessageSize: number,
+        private readonly tokenGenerator: TokenGenerator,
         private readonly logger: ILogger) {
         super();
 
@@ -203,7 +197,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             clientId: connection.clientId,
                             existing: connection.existing,
                             maxMessageSize: this.maxMessageSize,
-                            parentBranch: connection.parentBranch,
                             serviceConfiguration: DefaultServiceConfiguration,
                         };
                         socket.send({ cid: message.cid, type: "connected", payload: connected });
@@ -253,7 +246,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize,
+            this.tokenGenerator,
             this.logger);
         assert(!this.orderMap.has(fullId));
         this.orderMap.set(fullId, orderer);

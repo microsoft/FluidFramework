@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidLoadable,
     IFluidRouter,
@@ -11,7 +12,10 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import {
+    FluidObjectHandle,
+    mixinRequestHandler,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -21,7 +25,7 @@ import {
     Marker,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
@@ -153,7 +157,6 @@ class CodemirrorView implements IFluidHTMLView {
             // to submit new ops
             this.updatingSequence = true;
 
-            // eslint-disable-next-line max-len
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const doc = this.codeMirror!.getDoc();
             for (const range of ev.ranges) {
@@ -214,7 +217,6 @@ export class CodeMirrorComponent
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
     private readonly innerHandle: IFluidHandle<this>;
@@ -224,16 +226,11 @@ export class CodeMirrorComponent
         /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 
     private async initialize() {
@@ -252,7 +249,7 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
     }
 
     public render(elm: HTMLElement): void {
@@ -269,22 +266,17 @@ class SmdeFactory implements IFluidDataStoreFactory {
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        const sequenceFactory = SharedString.getFactory();
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
 
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sequenceFactory.type, sequenceFactory);
-
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes);
-
-        const progressCollectionP = CodeMirrorComponent.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+        ].map((factory) => [factory.type, factory])));
+        const routerP = CodeMirrorComponent.load(runtime, context);
         return runtime;
     }
 }

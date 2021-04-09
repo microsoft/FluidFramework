@@ -14,7 +14,7 @@ const ObjectAssign: typeof Object.assign = __assign;
 
 export enum SetKind {
     Dense,
-    Empty
+    Empty,
 }
 
 interface TreeNode<Left, Right> {

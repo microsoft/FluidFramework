@@ -6,11 +6,10 @@
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
-    IContentMessage,
+    IClientConfiguration,
     IDocumentMessage,
     INack,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
@@ -18,7 +17,7 @@ import {
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
-const DefaultServiceConfiguration: IServiceConfiguration = {
+const DefaultServiceConfiguration: IClientConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     summary: {
@@ -42,16 +41,16 @@ export class MockDocumentDeltaConnection
         user: {
             id: "mockid",
         },
+        iat: Math.round(new Date().getTime() / 1000),
+        exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+        ver: "1.0",
     };
 
     public readonly mode: ConnectionMode = "write";
     public readonly existing: boolean = true;
-    // eslint-disable-next-line no-null/no-null
-    public readonly parentBranch: string | null = null;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";
     public initialMessages: ISequencedDocumentMessage[] = [];
-    public initialContents: IContentMessage[] = [];
     public initialSignals: ISignalMessage[] = [];
     public initialClients: ISignalClient[] = [];
     public readonly serviceConfiguration = DefaultServiceConfiguration;
@@ -69,24 +68,19 @@ export class MockDocumentDeltaConnection
             this.submitHandler(messages);
         }
     }
-    public async submitAsync(message: IDocumentMessage[]): Promise<void> {
-        this.submit(message);
-    }
+
     public submitSignal(message: any): void {
         if (this.submitSignalHandler !== undefined) {
             this.submitSignalHandler(message);
         }
     }
-    public disconnect(reason?: string) {
-        this.emit("disconnect", reason ?? "mock disconnect called");
+    public close(reason?: string) {
+        this.emit("disconnect", reason ?? "mock close() called");
     }
 
     // Mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
         this.emit("op", documentId, messages);
-    }
-    public emitOpContent(message: Partial<IContentMessage>) {
-        this.emit("op-content", message);
     }
     public emitSignal(signal: Partial<ISignalMessage>) {
         this.emit("signal", signal);

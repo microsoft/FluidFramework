@@ -47,6 +47,9 @@ nyc
 # Chart dependencies
 **/charts/*.tgz
 
-# Generated modeuls
+# Generated modules
 intel_modules/
 temp_modules/
+
+# Environment variables
+.env

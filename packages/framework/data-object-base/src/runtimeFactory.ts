@@ -10,7 +10,7 @@ import {
 import {
     buildRuntimeRequestHandler,
     RuntimeRequestHandler,
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
@@ -45,7 +45,7 @@ export class RuntimeFactory implements IRuntimeFactory {
             this.registry,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                deprecated_innerRequestHandler),
+                innerRequestHandler),
         );
 
         // Flush mode to manual to batch operations within a turn

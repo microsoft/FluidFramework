@@ -20,7 +20,6 @@ describe("Gateway", () => {
 
             const alf = new Alfred(
                 [{ id: "git", key: "git" }],
-                defaultConfig.get("worker:alfredUrl"),
                 defaultConfig.get("worker:blobStorageUrl"),
                 defaultConfig.get("gateway:auth:endpoint"));
             const gateway = app.create(

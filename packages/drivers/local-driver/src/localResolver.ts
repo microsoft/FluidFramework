@@ -3,17 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
+    DriverHeader,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-client";
+import { generateToken } from "./auth";
+
+export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
+    const createNewRequest: IRequest = {
+        url: `http://localhost:3000/${documentId}`,
+        headers: {
+            [DriverHeader.createNew]: true,
+        },
+    };
+    return createNewRequest;
+}
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -33,7 +43,7 @@ export class LocalResolver implements IUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        const fullPath = parsedUrl.pathname.substr(1);
+        const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
         const documentId = fullPath.split("/")[0];
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
@@ -62,18 +72,12 @@ export class LocalResolver implements IUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(documentId, "The resolvedUrl must have a documentId");
+        assert(!!documentId, 0x09a /* "The resolvedUrl must have a documentId" */);
 
         return `http://localhost:3000/${documentId}/${url}`;
     }
 
     public createCreateNewRequest(documentId: string): IRequest {
-        const createNewRequest: IRequest = {
-            url: `http://localhost:3000/${documentId}`,
-            headers: {
-                [CreateNewHeader.createNew]: true,
-            },
-        };
-        return createNewRequest;
+        return createLocalResolverCreateNewRequest(documentId);
     }
 }

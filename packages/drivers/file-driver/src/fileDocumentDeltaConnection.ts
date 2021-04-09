@@ -6,18 +6,16 @@
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 const MaxBatchDeltas = 2000;
@@ -31,11 +29,14 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+    scopes: [ScopeType.DocRead],
     tenantId: "",
     user: {
         id: "",
     },
+    iat: Math.round(new Date().getTime() / 1000),
+    exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+    ver: "1.0",
 };
 
 /**
@@ -113,17 +114,17 @@ export class ReplayFileDeltaConnection
      */
     public static async create(
         documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
-        const mode: ConnectionMode = "write";
+        const mode: ConnectionMode = "read";
         const connection = {
             claims: Claims,
-            clientId: "",
+            clientId: "PseudoClientId",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
             mode,
+            // Back-compat, removal tracked with issue #4346
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -173,16 +174,8 @@ export class ReplayFileDeltaConnection
         return this.details.existing;
     }
 
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
     public get version(): string {
         return this.details.version;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] {
@@ -197,23 +190,19 @@ export class ReplayFileDeltaConnection
         return this.details.initialClients;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
     public submit(documentMessages: IDocumentMessage[]): void {
-        debug("dropping the outbound message");
-    }
-
-    public async submitAsync(documentMessages: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
+        // ReplayFileDeltaConnection.submit() can't be called - client never sees its own join on,
+        // and thus can never move to sending ops.
+        throw new Error("ReplayFileDeltaConnection.submit() can't be called");
     }
 
     public async submitSignal(message: any) {
-        debug("dropping the outbound signal and wait for response");
     }
 
-    public disconnect() {
-        debug("no implementation for disconnect...");
+    public close() {
     }
 }

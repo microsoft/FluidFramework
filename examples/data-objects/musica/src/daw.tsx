@@ -260,6 +260,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             return [];
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return savedInstruments;
     }
 
@@ -295,20 +296,21 @@ export class DAW extends React.Component<DAWProps, DAWState> {
    * Recursively plays through the given song, starting at the given note index.
    */
     private postPlaySong(song: Song, noteIndex: number, loop: boolean) {
+        let _noteIndex = noteIndex;
         if (this.state.stopSong) {
             this.setState({ stopSong: false });
             return;
         }
 
-        if (noteIndex >= song.noteSequence.length) {
+        if (_noteIndex >= song.noteSequence.length) {
             if (!loop) {
                 return;
             }
 
-            noteIndex = 0;
+            _noteIndex = 0;
         }
 
-        const note = song.noteSequence[noteIndex];
+        const note = song.noteSequence[_noteIndex];
         const beatPercentage = Note.getBeatPercentage(note);
         const noteLengthSeconds = (60 / this.state.tempo) * beatPercentage;
         const noteLengthMs = noteLengthSeconds * 1000;
@@ -333,7 +335,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
         }
 
         // Call this method to move to the next note after the current note is finished.
-        setTimeout(() => this.postPlaySong(song, noteIndex + 1, loop), noteLengthMs);
+        setTimeout(() => this.postPlaySong(song, _noteIndex + 1, loop), noteLengthMs);
     }
 
     public render() {
@@ -354,6 +356,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                     style={{ maxWidth: 150, marginTop: 20 }}
                     defaultValue={instrumentDropdownData[0].label}
                     data={this.getInstrumentDropdownData()}
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     textField={(i) => i.label}
                     valueField="label"
                     onChange={(data) => this.onInstrumentChange(data.label, data.id)}
@@ -364,6 +367,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                         style={{ maxWidth: 200, marginTop: 20, display: "inline-block" }}
                         defaultValue={songDropdownData[0].label}
                         data={this.getSongDropdownData()}
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         textField={(i) => i.label}
                         valueField="label"
                         onChange={(data) => this.onSongSelectionChange(data.label, data.id)}
@@ -389,11 +393,14 @@ export class DAW extends React.Component<DAWProps, DAWState> {
 
                     <button
                         style={{ marginLeft: 10, height: 36 }}
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         onClick={() => this.recorder.startRecording(this.state.customSongName)}
                     >
                         Start Recording!
                     </button>
-                    <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.recorder.stopRecording()}>
+                    <button style={{ marginLeft: 10, height: 36 }}
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            onClick={() => this.recorder.stopRecording()}>
                         Stop Recording!
                     </button>
                     <hr />

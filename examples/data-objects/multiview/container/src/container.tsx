@@ -34,12 +34,12 @@ const registryEntries = new Map([
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
     const simpleCoordinateComponentRuntime =
         await runtime.createRootDataStore(Coordinate.ComponentName, id);
-    return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, id);
+    return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
 // Just a little helper, since we're going to request multiple coordinates.
 async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
-    const coordinateRequest = new RequestParser({
+    const coordinateRequest = RequestParser.create({
         url: ``,
         headers: request.headers,
     });
@@ -111,7 +111,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         // Create the constellation component
         const constellationComponent = await requestFluidObject<Constellation>(
             await runtime.createRootDataStore(Constellation.ComponentName, constellationComponentId),
-            constellationComponentId); // FOLLOW UP: This looks wrong, it should be empty string or slash
+            "/");
 
         // Add a few stars
         await constellationComponent.addStar(86, 74);

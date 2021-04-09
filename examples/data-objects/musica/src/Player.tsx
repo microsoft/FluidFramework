@@ -92,53 +92,53 @@ export class Player {
         switch (midiNumber) {
             case 48: {
                 // Base
-                waveProperties = {
+                const newWaveProperties = {
                     ...waveProperties,
                     frequency: 1,
                     amplitude: 10,
                     decay: -4,
                 };
-                this.playNoteCustomWave(0.5, waveProperties, this.bassWave);
+                this.playNoteCustomWave(0.5, newWaveProperties, this.bassWave);
                 break;
             }
             case 49: {
                 // Ride
-                waveProperties = {
+                const newWaveProperties = {
                     ...waveProperties,
                     frequency: 1,
                     decay: -8,
                 };
-                this.playNoteCustomWave(0.5, waveProperties, this.rideWave);
+                this.playNoteCustomWave(0.5, newWaveProperties, this.rideWave);
                 break;
             }
             case 50: {
                 // Snare
-                waveProperties = {
+                const newWaveProperties = {
                     ...waveProperties,
                     frequency: 1,
                     decay: -24,
                 };
-                this.playNoteCustomWave(0.5, waveProperties, this.snareWave);
+                this.playNoteCustomWave(0.5, newWaveProperties, this.snareWave);
                 break;
             }
             case 52: {
                 // Hi
-                waveProperties = {
+                const newWaveProperties = {
                     ...waveProperties,
                     frequency: 1,
                     decay: -4,
                 };
-                this.playNoteCustomWave(0.4, waveProperties, this.hiWave);
+                this.playNoteCustomWave(0.4, newWaveProperties, this.hiWave);
                 break;
             }
             case 53: {
                 // Hat
-                waveProperties = {
+                const newWaveProperties = {
                     ...waveProperties,
                     frequency: 1,
                     decay: -16,
                 };
-                this.playNoteCustomWave(0.5, waveProperties, this.hatWave);
+                this.playNoteCustomWave(0.5, newWaveProperties, this.hatWave);
                 break;
             }
             default: {

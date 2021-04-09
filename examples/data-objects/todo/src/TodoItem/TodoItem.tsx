@@ -6,9 +6,8 @@
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import {
-    IFluidHandle, IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import { IEvent } from "@fluidframework/common-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -39,6 +38,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell<IFluidHandle>;
@@ -100,7 +100,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
 
         waitForAttach(this.runtime)
             .then(async () => {
-                const url = await this.context.getAbsoluteUrl(this.url);
+                const url = await this.context.getAbsoluteUrl(this.handle.absolutePath);
                 this._absoluteUrl = url;
                 this.emit("stateChanged");
             })
@@ -109,20 +109,22 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new DataObjectFactory(
-        TodoItemName,
-        TodoItem,
-        [
-            SharedString.getFactory(),
-            SharedCell.getFactory(),
-        ],
-        {},
-        new Map([
-            TextBoxInstantiationFactory.registryEntry,
-            TextListInstantiationFactory.registryEntry,
-            ClickerInstantiationFactory.registryEntry,
-        ]),
-    );
+    private static readonly factory =
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        new DataObjectFactory<TodoItem, object, ITodoItemInitialState, IEvent>(
+            TodoItemName,
+            TodoItem,
+            [
+                SharedString.getFactory(),
+                SharedCell.getFactory(),
+            ],
+            {},
+            new Map([
+                TextBoxInstantiationFactory.registryEntry,
+                TextListInstantiationFactory.registryEntry,
+                ClickerInstantiationFactory.registryEntry,
+            ]),
+        );
 
     // start IFluidHTMLView
 

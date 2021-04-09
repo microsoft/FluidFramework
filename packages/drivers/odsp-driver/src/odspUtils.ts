@@ -3,27 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
+import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
-    OnlineStatus, isOnline,
-} from "@fluidframework/driver-utils";
-import {
-    DriverErrorType,
-} from "@fluidframework/driver-definitions";
+    fetchIncorrectResponse,
+    offlineFetchFailureStatusCode,
+    fetchFailureStatusCode,
+    fetchTimeoutStatusCode,
+    OdspErrorType,
+    throwOdspNetworkError,
+    getSPOAndGraphRequestIdsFromResponse,
+} from "@fluidframework/odsp-doclib-utils";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
     RequestInit as FetchRequestInit,
-    Headers as FetchHeaders,
+    Headers,
 } from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
-import {
-    offlineFetchFailureStatusCode,
-    fetchFailureStatusCode,
-    fetchIncorrectResponse,
-    throwOdspNetworkError,
-} from "./odspError";
 import { TokenFetchOptions } from "./tokenFetch";
+import { RateLimiter } from "./rateLimiter";
+import { IOdspResolvedUrl } from "./contracts";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -31,10 +34,20 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
+    commonSpoHeaders: ITelemetryProperties;
+    duration: number,
 }
 
 export function getHashedDocumentId(driveId: string, itemId: string): string {
     return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
+}
+
+function headersToMap(headers: Headers) {
+    const newHeaders = new Map<string, string>();
+    for (const [key, value] of headers.entries()) {
+        newHeaders.set(key, value);
+    }
+    return newHeaders;
 }
 
 /**
@@ -48,9 +61,11 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
-                return get({ refresh: true, claims: e.claims });
+                return get({ refresh: true, claims: e.claims, tenantId: e.tenantId });
             // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
+            // If the token was null, then retry once.
+            case OdspErrorType.fetchTokenError:
                 return get({ refresh: true });
             default:
                 // All code paths (deltas, blobs, trees) already throw exceptions.
@@ -63,61 +78,114 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
     });
 }
 
-/**
- * A utility function to do fetch with support for retries
- * @param requestInfo - fetch requestInfo, can be a string
- * @param requestInit - fetch requestInit
- */
-export async function fetchHelper<T>(
+export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-): Promise<IOdspResponse<T>> {
+): Promise<IOdspResponse<Response>> {
+    const start = performance.now();
+
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse, response);
+            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status} from the server`, response.status, response);
+                `Error ${response.status}`, response.status, response, await response.text());
         }
 
-        // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
-        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
-        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
-        // succeeds on retry.
-        try {
-            const text = await response.text();
-
-            const newHeaders = new FetchHeaders({ "body-size": text.length.toString() });
-            for (const [key, value] of response.headers.entries()) {
-                newHeaders.set(key, value);
-            }
-            const res = {
-                headers: newHeaders,
-                content: JSON.parse(text),
-            };
-            return res;
-        } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
-        }
+        const headers = headersToMap(response.headers);
+        return {
+            content: response,
+            headers,
+            commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
+            duration: performance.now() - start,
+        };
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
         let online = isOnline();
-        if (`${error}` === "TypeError: Failed to fetch") {
+        const errorText = `${error}`;
+        if (errorText === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
+        if (error.name === "AbortError") {
+            throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
+        }
+        if (errorText.indexOf("ETIMEDOUT") !== -1) {
+            throwOdspNetworkError("Timeout during fetch (ETIMEDOUT)", fetchTimeoutStatusCode);
+        }
+
+        //
+        // WARNING: Do not log error object itself or any of its properties!
+        // It could container PII, like URI in message itself, or token in properties.
+        // It is also non-serializable object due to circular references.
+        //
         throwOdspNetworkError(
-            `Fetch error: ${error}`,
+            `Fetch error`,
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             undefined, // response
         );
     });
+}
+
+/**
+ * A utility function to fetch and parse as JSON with support for retries
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ */
+export async function fetchArray(
+    requestInfo: RequestInfo,
+    requestInit: RequestInit | undefined,
+    rateLimiter: RateLimiter,
+): Promise<IOdspResponse<ArrayBuffer>> {
+    const { content, headers, commonSpoHeaders, duration } = await rateLimiter.schedule(
+        async () => fetchHelper(requestInfo, requestInit),
+    );
+
+    const arrayBuffer = await content.arrayBuffer();
+    commonSpoHeaders.bodySize = arrayBuffer.byteLength;
+    return {
+        headers,
+        content: arrayBuffer,
+        commonSpoHeaders,
+        duration,
+    };
+}
+
+/**
+ * A utility function to fetch and parse as JSON with support for retries
+ * @param requestInfo - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ */
+export async function fetchAndParseAsJSONHelper<T>(
+    requestInfo: RequestInfo,
+    requestInit: RequestInit | undefined,
+): Promise<IOdspResponse<T>> {
+    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
+    // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+    // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+    // succeeds on retry.
+    try {
+        const text = await content.text();
+
+        commonSpoHeaders.bodySize = text.length;
+        const res = {
+            headers,
+            content: JSON.parse(text),
+            commonSpoHeaders,
+            duration,
+        };
+        return res;
+    } catch (e) {
+        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, content);
+    }
 }
 
 /**
@@ -141,4 +209,9 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+}
+
+export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
+    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, "Not an ODSP resolved url");
+    return resolvedUrl as IOdspResolvedUrl;
 }

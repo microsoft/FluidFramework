@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { logVerbose } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";

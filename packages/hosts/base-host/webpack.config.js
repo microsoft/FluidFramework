@@ -17,18 +17,7 @@ function getPlugins() {
       // Also show module that is requiring each duplicate package
       verbose: true,
       // Emit errors instead of warnings
-      emitError: true,
-      /**
-       * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library.
-       * - IsArray, ms, and debug can be removed once the Node API dependency cleanup of the routerlicious package is complete.
-       * - Inherits and safe-buffer duplicate packages are coming in from webpack polyfills for the crypto library. We should not
-       *   be shipping polyfills for crypto APIs, so this can be removed once word-online-beta breaks the jwt dependency.
-       */
-      exclude: (instance) =>
-        instance.name === 'isarray' ||
-        instance.name === 'ms' ||
-        instance.name === 'debug' ||
-        instance.name === 'inherits'
+      emitError: true
     }),
     // We don't split debug/release builds, so always do bundle analysis
     new BundleAnalyzerPlugin({

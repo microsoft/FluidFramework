@@ -26,7 +26,7 @@ export class SegmentGroupCollection {
         segmentGroup.segments.push(this.segment);
     }
 
-    public dequeue(): SegmentGroup {
+    public dequeue(): SegmentGroup | undefined {
         return this.segmentGroups.dequeue();
     }
 

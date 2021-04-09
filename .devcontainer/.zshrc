@@ -113,5 +113,27 @@ function getRepoRoot {
     git rev-parse --show-toplevel
 }
 
-# Alias 'fb' to the 'fluid-build' command
-alias fb='clear && node "$(getRepoRoot)/node_modules/.bin/fluid-build"'
+# Invoke the 'fluid-build' tool for the current repo, building it if necessary.
+function fluid-build {
+    local projRoot="$(getRepoRoot)/tools/build-tools"
+
+    # Return with an error if not inside a FluidFramework repo.
+    if [[ ! -a "$projRoot" ]]; then
+        echo "fluid-build: Must be invoked inside a FluidFramework Git repository." >&2
+        return 1
+    fi
+
+    local binPath="$projRoot/dist/fluidBuild/fluidBuild.js"
+
+    # If needed, build the "@fluidframework/build-tools" package.
+    if [[ ! -a "$binPath" ]]; then
+        echo -e "(Building 'fluid-build' tool for new repository...)\n"
+        pushd $projRoot && npm i && npm run build
+        popd
+    fi
+
+    node "$binPath" $@
+}
+
+# Alias 'fb' to the 'fluid-build' function above.
+alias fb='clear && fluid-build'

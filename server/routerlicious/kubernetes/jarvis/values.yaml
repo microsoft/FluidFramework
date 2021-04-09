@@ -33,9 +33,6 @@ historian:
 gitrest:
   url: http://pilfering-lizzard-gitrest
 
-cobalt:
-  url: http://pilfering-lizzard-cobalt
-
 zookeeper:
   local: false
   url: youngling-heron-zookeeper:2181

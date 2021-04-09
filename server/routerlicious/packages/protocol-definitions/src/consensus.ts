@@ -36,8 +36,24 @@ export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedP
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
+/**
+ * A proposal that has been propposed, but not yet accepted or committed
+ */
 export interface IPendingProposal extends ISequencedProposal {
+    /**
+     * Sends a rejection for the proposal
+     */
     reject();
+
+    /**
+     * Disables the sending of rejections for this proposal
+     */
+    disableRejection();
+
+    /**
+     * Returns true if rejections has been disable, otherwise false
+     */
+    readonly rejectionDisabled: boolean;
 }
 
 export interface IQuorumEvents extends IErrorEvent {

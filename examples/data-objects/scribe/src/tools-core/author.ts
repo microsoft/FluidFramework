@@ -4,7 +4,6 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -14,10 +13,10 @@ import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";
 
-import Counter = api.RateCounter;
-
 // eslint-disable-next-line import/no-internal-modules
 import clone from "lodash/clone";
+
+import Counter = api.RateCounter;
 
 let play: boolean = false;
 
@@ -61,31 +60,31 @@ export function normalizeText(input: string): string {
 
 export interface IScribeMetrics {
     // Average latency between when a message is sent and when it is ack'd by the server
-    latencyAverage: number;
-    latencyStdDev: number;
-    latencyMinimum: number;
-    latencyMaximum: number;
+    latencyAverage?: number;
+    latencyStdDev?: number;
+    latencyMinimum?: number;
+    latencyMaximum?: number;
 
     // The rate of both typing messages and receiving replies
-    ackRate: number;
-    typingRate: number;
+    ackRate?: number;
+    typingRate?: number;
 
     // Server ordering performance
-    serverAverage: number;
+    serverAverage?: number;
 
     // Total number of ops
     totalOps: number;
 
     // The progress of typing and receiving ack for messages in the range [0,1]
-    typingProgress: number;
-    ackProgress: number;
+    typingProgress?: number;
+    ackProgress?: number;
 
     time: number;
     textLength: number;
 
-    pingAverage: number;
-    pingMaximum: number;
-    processAverage: number;
+    pingAverage?: number;
+    pingMaximum?: number;
+    processAverage?: number;
 
     typingInterval: number;
     writers: number;
@@ -93,6 +92,15 @@ export interface IScribeMetrics {
 
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
 export declare type QueueCallback = (metrics: IScribeMetrics, author: IAuthor) => void;
+
+export async function requestSharedString(loader: ILoader, urlBase: string): Promise<ISharedString> {
+    const response = await loader.request({ url: `${urlBase}/sharedstring` });
+    if (response.status !== 200 || response.mimeType !== "fluid/sharedstring") {
+        return Promise.reject(new Error("Invalid document"));
+    }
+
+    return response.value as ISharedString;
+}
 
 export async function typeFile(
     loader: ILoader,
@@ -159,22 +167,13 @@ export async function typeFile(
     const authors: IAuthor[] = [author];
 
     for (let i = 1; i < writers; i++) {
-        const response = await loader.request({ url: urlBase });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject("Invalid document");
-        }
-
-        const component = response.value as IFluidObject;
-        if (!component.ISharedString) {
-            return Promise.reject("Cannot type into document");
-        }
-
+        const sharedString = await requestSharedString(loader, urlBase);
         author = {
             ackCounter: new Counter(),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
-            ss: component.ISharedString,
+            ss: sharedString,
             typingCounter: new Counter(),
         };
         authors.push(author);
@@ -188,7 +187,7 @@ export async function typeFile(
         pingCounter.reset();
 
         // Wait a second before beginning to allow for quiescing
-        await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 1000));
 
         const metric = await typeChunk(
             authors[0], runtime, "p-0", fileText, intervalTime, scribeCallback, scribeCallback);
@@ -206,7 +205,8 @@ export async function typeFile(
         return new Promise((resolve, reject) => {
             q = queue(async (chunkKey, queueCallback) => {
                 const chunk = chunkMap.get(chunkKey);
-                const a = authors.shift();
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const a = authors.shift()!;
                 curKey++;
                 metrics.typingProgress = curKey / totalKeys;
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -259,7 +259,7 @@ export async function typeChunk(
             pingCounter.increment(latency);
         });
 
-        runtime.deltaManager.on("processTime", (time) => {
+        runtime.deltaManager.on("op", (_, time) => {
             processCounter.increment(time);
         });
 
@@ -276,10 +276,10 @@ export async function typeChunk(
                     metrics.ackRate = rate;
                 }
 
-                let clientStart: number;
-                let clientEnd: number;
-                let orderBegin: number;
-                let orderEnd: number;
+                let clientStart: number = 0;
+                let clientEnd: number = 0;
+                let orderBegin: number = 0;
+                let orderEnd: number = 0;
 
                 for (const trace of message.traces) {
                     if (trace.service === "alfred" && trace.action === "start") {

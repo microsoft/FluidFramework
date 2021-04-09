@@ -22,9 +22,11 @@
         {{/chaincode}}
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
-        var jwt = "{{ jwt }}";
+        var hostToken = "{{ hostToken }}";
+        var accessToken = "{{ accessToken }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
+        var isSpoTenantPath = {{{ isSpoTenantPath }}};
 
         {{#scripts}}
         var scriptIds = [
@@ -36,17 +38,18 @@
         {{^scripts}}
         var scriptIds = [];
         {{/scripts}}
-  
+
         containerP = controllers.loader.initialize(
             window.location.href,
             resolved,
             cache,
             chaincode,
             scriptIds,
-            jwt,
+            hostToken,
+            accessToken,
             config,
-            clientId,
-            user);
+            isSpoTenantPath,
+        );
 
         const connectionDiv = document.getElementById("connection-state");
 

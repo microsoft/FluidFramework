@@ -1,4 +1,4 @@
-{    
+{
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",

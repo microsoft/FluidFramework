@@ -5,7 +5,7 @@
 
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { RuntimeRequestHandler } from "./requestHandlers";
 
 /**
@@ -22,14 +22,14 @@ export class RuntimeRequestHandlerBuilder {
     }
 
     public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
-        const parser = new RequestParser(request);
+        const parser = RequestParser.create(request);
         for (const handler of this.handlers) {
             const response = await handler(parser, runtime);
             if (response !== undefined) {
                 return response;
             }
         }
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        return create404Response(request);
     }
 }
 

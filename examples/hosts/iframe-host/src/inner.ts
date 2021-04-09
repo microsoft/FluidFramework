@@ -2,46 +2,111 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { InnerDocumentServiceFactory } from "@fluidframework/iframe-driver";
-import { BaseHost } from "@fluidframework/base-host";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
-async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const fluidObject = await baseHost.requestFluidObject(url);
-    if (fluidObject === undefined) {
-        return;
+import * as Comlink from "comlink";
+import { fluidExport as TodoContainer } from "@fluid-example/todo";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import {
+    InnerDocumentServiceFactory,
+    InnerUrlResolver,
+} from "@fluidframework/iframe-driver";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IFrameInnerApi } from "./inframehost";
+
+let innerPort: MessagePort;
+const containers: Map<string, Container> = new Map();
+
+async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+    const response = await container.request({ url: "/" });
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "fluid/object"
+        )) {
+        return undefined;
     }
+    const fluidObject = response.value as IFluidObject;
+
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 
-export async function runInner(divId: string) {
-    const div = document.getElementById(divId) as HTMLDivElement;
-
-    const pkg: IFluidCodeDetails = {
-        package: "@fluid-example/todo@^0.15.0",
-        config: {
-            "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
-        },
-    };
-
-    const documentServiceFactory = await InnerDocumentServiceFactory.create();
-    const baseHost = new BaseHost(
-        {
-            codeResolver: new SemVerCdnCodeResolver(),
-            documentServiceFactory,
-            urlResolver: documentServiceFactory.urlResolver,
-            config: {},
-        });
-
-    const url = documentServiceFactory.resolvedUrl.url;
-    const container = await baseHost.initializeContainer(url, pkg);
-
+async function loadFluidObject(
+    divId: string,
+    container: Container,
+) {
+    const componentDiv = document.getElementById(divId) as HTMLDivElement;
+    await getFluidObjectAndRender(container, componentDiv).catch(() => { });
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(container, componentDiv).catch(() => { });
     });
+}
+
+async function loadContainer(
+    documentId: string,
+    createNew: boolean,
+    divId: string,
+): Promise<string> {
+    const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
+    const urlResolver = await InnerUrlResolver.create(innerPort);
+
+    const module = { fluidExport: TodoContainer };
+    const codeLoader = { load: async () => module };
+
+    const loader = new Loader({
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+    });
+
+    let container: Container;
+
+    // TODO: drive new/existing creation entirely from outer
+    if (createNew) {
+        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
+        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal.
+        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+        // Caller is responsible for attaching the created container
+    } else {
+        // Request must be appropriate and parseable by resolver.
+        container = await loader.resolve({ url: documentId });
+        // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
+        // new container here, where we expect this to be loading an existing container.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (!container.existing) {
+            throw new Error("Attempted to load a non-existing container");
+        }
+    }
+
+    await loadFluidObject(divId, container);
+    containers.set(container.id, container);
+
+    return container.id;
+}
+
+async function attachContainer(
+    containerId: string,
+    request: IRequest,
+): Promise<void> {
+    const container = containers.get(containerId);
+    if (container === undefined) {
+        throw new Error(`container with provided id: ${containerId} not found`);
+    }
+    await container.attach(request);
+}
+
+export async function runInner(divId: string) {
+    const innerApi: IFrameInnerApi = {
+        setMessagePort: Comlink.proxy(async (port2) => {
+            innerPort = port2;
+        }),
+        loadContainer: Comlink.proxy(async (documentId, createNew) => loadContainer(documentId, createNew, "content")),
+        attachContainer: Comlink.proxy(async (containerId, request) => attachContainer(containerId, request)),
+    };
+
+    Comlink.expose(innerApi, Comlink.windowEndpoint(window.parent));
 }

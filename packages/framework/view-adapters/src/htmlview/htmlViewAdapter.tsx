@@ -40,6 +40,9 @@ export class HTMLViewAdapter implements IFluidHTMLView {
      */
     constructor(private readonly view: IFluidObject) { }
 
+    /**
+     * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.render}
+     */
     public render(elm: HTMLElement, options?: IFluidHTMLOptions) {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
@@ -64,7 +67,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     }
 
     /**
-     * Performs cleanup on the view and removes it from the DOM.
+     * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.remove}
      */
     public remove() {
         if (this.containerNode === undefined) {

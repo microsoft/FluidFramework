@@ -9,7 +9,9 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "types": []
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*"

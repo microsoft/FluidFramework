@@ -123,7 +123,7 @@ export function loadDocsJavascript() {
     for (var i = 0; i < headers.length; i++) {
       var header = headers[i]
       header.attributes['__interactionCount'] = 0
-      $(header).append($('<a class="hash-link" href="#' + header.id + '">#</a>'))
+      $(header).append($(`<a class="hash-link" aria-label="${header.textContent} permalink" href="#${header.id}">#</a>`))
 
       $(header).children('.hash-link').on('focusin', incrementReasonsToBeVisible(header))
       $(header).children('.hash-link').on('focusout', decrementReasonsToBeVisible(header))

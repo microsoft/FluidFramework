@@ -16,19 +16,19 @@ export interface IADOConstants {
   // The ID for the build that runs to validate PRs
   // Used to update tagged PRs on CI build completion
   // Note: Assumes CI and PR builds both run in the same org/project
-  prBuildDefinitionId: number | undefined,
+  prBuildDefinitionId?: number,
 
   // The name of the build artifact that contains the bundle size artifacts
   bundleAnalysisArtifactName: string,
 
   // The guid of the repo
   // Used to post/update comments in ADO
-  projectRepoGuid: string | undefined,
+  projectRepoGuid?: string,
 
   // The number of most recent ADO builds to pull when searching for one associated
   // with a specific commit, default 20.  Pulling more builds takes longer, but may
   // be useful when there are a high volume of commits/builds.
-  buildsToSearch: number | undefined,
+  buildsToSearch?: number,
 }
 
 // The name of the metric that represents the size of the whole bundle

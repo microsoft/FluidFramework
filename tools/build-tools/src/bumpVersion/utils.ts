@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { execWithErrorAsync, execAsync } from "../common/utils";
+import { execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -19,9 +19,7 @@ export function fatal(error: string): never {
  * @param error description of command line to print when error happens
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-    // TODO: Remove env once publish to the public feed.
-    const env = process.env["NPM_TOKEN"]? process.env : { ...process.env, "NPM_TOKEN": "" };
-    const result = await execAsync(cmd, { cwd: dir, env }, pipeStdIn);
+    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
     if (result.error) {
         fatal(`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`);
     }
@@ -47,10 +45,26 @@ export class GitRepo {
     constructor(public readonly resolvedRoot: string) {
     }
 
-    public async getRemotes() {
+    private async getRemotes() {
         const result = await this.exec(`remote -v`, `getting remotes`);
         const remoteLines = result.split(/\r?\n/);
         return remoteLines.map(line => line.split(/\s+/));
+    }
+
+    /**
+     * Get the remote based on the partial Url.
+     * It will match the first remote that contains the partialUrl case insensitively
+     * @param partialUrl partial url to match case insensitively
+     */
+    public async getRemote(partialUrl: string) {
+        const lowerPartialUrl = partialUrl.toLowerCase();
+        const remotes = await this.getRemotes();
+        for (const r of remotes) {
+            if (r[1] && r[1].toLowerCase().includes(lowerPartialUrl)) {
+                return r[0];
+            }
+        }
+        return undefined;
     }
 
     public async getCurrentSha() {
@@ -58,8 +72,9 @@ export class GitRepo {
         return result.split(/\r?\n/)[0];
     }
 
-    public async getShaForBranch(branch: string) {
-        const result = await this.execNoError(`show-ref refs/heads/${branch}`);
+    public async getShaForBranch(branch: string, remote?: string) {
+        const refspec = remote ? `refs/remotes/${remote}/${branch}` : `refs/heads/${branch}`;
+        const result = await this.execNoError(`show-ref ${refspec}`);
         if (result) {
             const line = result.split(/\r?\n/)[0];
             if (line) {
@@ -67,6 +82,17 @@ export class GitRepo {
             }
         }
         return undefined;
+    }
+
+    public async isBranchUpToDate(branch: string, remote: string) {
+        await this.fetchBranch(remote, branch);
+        const currentSha = await this.getShaForBranch(branch);
+        const remoteSha = await this.getShaForBranch(branch, remote);
+        return (remoteSha === currentSha);
+    }
+
+    public async getStatus() {
+        return await this.execNoError(`status --porcelain`);
     }
 
     public async getShaForTag(tag: string) {
@@ -161,9 +187,14 @@ export class GitRepo {
     }
 
     /**
-     * Get Tags
-     *
-     * @param pattern pattern of tags to get
+     * Fetch branch
+     */
+    public async fetchBranch(remote: string, branchName: string) {
+        return await this.exec(`fetch ${remote} ${branchName}`, `fetch branch ${branchName} from remote ${remote}`);
+    }
+
+    /**
+     * Fetch Tags
      */
     public async fetchTags() {
         return await this.exec(`fetch --tags`, `fetch tags`);
@@ -196,5 +227,26 @@ export class GitRepo {
      */
     private async execNoError(command: string, pipeStdIn?: string) {
         return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
+    }
+}
+
+/**
+ * Runs policy check in fix/resolution mode the apply any an necessary changes
+ * Currently this should only apply assert short codes, but could apply
+ * additional policies in the future
+ * @param gitRepo - the git repo context to run policy check on
+ */
+export async function runPolicyCheckWithFix(gitRepo: GitRepo){
+    console.log("Running Policy Check with Resolution(fix)");
+    await exec(
+        `node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,
+        gitRepo.resolvedRoot,
+        "policy-check:fix failed");
+
+    // check for policy check violation
+    const afterPolicyCheckStatus = await gitRepo.getStatus();
+    if (afterPolicyCheckStatus !== "") {
+        console.log("======================================================================================================");
+        fatal(`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`);
     }
 }

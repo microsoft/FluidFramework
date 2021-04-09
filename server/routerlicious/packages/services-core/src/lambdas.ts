@@ -9,10 +9,30 @@ import nconf from "nconf";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
+/**
+ * Reasons why a lambda is closing
+ */
+export enum LambdaCloseType {
+    Stop,
+    ActivityTimeout,
+    Rebalance,
+    Error,
+}
+
 export interface ILogger {
     info(message: string, metaData?: any): void;
     warn(message: string, metaData?: any): void;
     error(message: string, metaData?: any): void;
+}
+
+export interface IContextErrorData {
+    /**
+     * Indicates whether the error is recoverable and the lambda should be restarted.
+     */
+    restart: boolean;
+
+    tenantId?: string;
+    documentId?: string;
 }
 
 export interface IContext {
@@ -22,15 +42,16 @@ export interface IContext {
     checkpoint(queuedMessage: IQueuedMessage): void;
 
     /**
-     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
-     * should be restarted.
+     * Closes the context with an error.
+     * @param error The error object or string
+     * @param errorData Additional information about the error
      */
-    error(error: any, restart: boolean): void;
+    error(error: any, errorData: IContextErrorData): void;
 
     /**
      * Used to log events / errors.
      */
-    readonly log: ILogger;
+    readonly log: ILogger | undefined;
 }
 
 export interface IPartitionLambda {
@@ -43,7 +64,7 @@ export interface IPartitionLambda {
      * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
      * any deferred work.
      */
-    close(): void;
+    close(closeType: LambdaCloseType): void;
 }
 
 /**
@@ -53,7 +74,7 @@ export interface IPartitionLambdaFactory extends EventEmitter {
     /**
      * Constructs a new lambda
      */
-    create(config: nconf.Provider, context: IContext): Promise<IPartitionLambda>;
+    create(config: nconf.Provider, context: IContext, updateActivityTime?: () => void): Promise<IPartitionLambda>;
 
     /**
      * Disposes of the lambda factory
@@ -74,6 +95,7 @@ export interface IPlugin {
 
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return message.value;
     }
 
@@ -82,7 +104,6 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     const rawMessage = safelyParseJSON(messageContent);
     const parsedMessage = rawMessage as IMessage;
 
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!parsedMessage) {
         return {
             contents: [],
@@ -99,6 +120,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 
         // Contents used to be a string - handle accordingly
         const contents = boxcarMessage.contents.length > 0 && typeof boxcarMessage.contents[0] === "string"
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             ? boxcarMessage.contents.map((content: any) => JSON.parse(content))
             : boxcarMessage.contents;
 

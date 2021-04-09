@@ -33,6 +33,15 @@ export interface BundleComparison {
 }
 
 /**
+ * The formatted message string of a bundle comparison along with the
+ * comparison data itself
+ */
+export type BundleComparisonResult = {
+  message: string,
+  comparison: BundleComparison[] | undefined,
+};
+
+/**
  * Functions used to process a webpack stats file and produce a set of metrics. Some processors may choose
  * to work off a bundle specific config file. Note that these config files are optional, so not all bundles
  * may have one associated with them.

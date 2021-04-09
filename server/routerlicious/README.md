@@ -33,13 +33,15 @@ below steps if you'd like to run a local version of the service or need to make 
 #### Standalone
 
 * [Docker](https://www.docker.com/)
-    * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
-    * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
+    * If running on Windows, WSL 2 may not work correctly for symlinking dependencies.  This will manifest as "module not found" errors when starting the service.  You can disable WSL 2 (and use Hyper-V instead) in Docker Settings -> General
+    * In Docker Settings -> Resources -> Advanced, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
+    * In Docker Settings -> Resources -> Advanced, check the hard drive where your repository lives.
 
 #### For Development
 
-* [Node v12.x](https://nodejs.org/en/)
+* [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
+    * If building on Windows, the easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
 
 ### Development
 
@@ -87,7 +89,7 @@ or
 
 ### Standalone
 
-You can also just run the service directly with Docker. You'll need to connect to our container registry to start.
+You can also just run the service directly with Docker.
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
@@ -108,7 +110,8 @@ attach to the running tests with VS Code or any other node debugger.
 
 ### Documentation
 
-If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
+If you want to build API documentation locally, see
+[Building Documentation](https://github.com/microsoft/FluidFramework/wiki/Building-documentation-locally).
 
 ## Design principals
 
@@ -117,11 +120,7 @@ If you want to build API documentation locally, see [Building Documentation](htt
 
 ## Architecture
 
-Below is the original Routerlicious architecture diagram. The current system has slight changes from the diagram but
-largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
-to areas that have changed from the original picture. We will update the README with a more current diagram soon.
-
-![Routerlicious architecture diagram](../../docs/architecture/server/SystemArchitecture.jpg)
+![](./docs/Routerlicious-Architecture.svg)
 
 ### Microservices
 
@@ -130,41 +129,27 @@ have clear input and output characteristics. Many can be run as serverless lambd
 [lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
-#### [Alfred](./src/alfred)
+#### [Alfred](./packages/routerlicious/src/alfred)
 
 Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
 allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
 make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
 
-#### [Deli](./src/deli)
+#### [Deli](./packages/routerlicious/src/deli)
 
 Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
 are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
+The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
+message into redis so that alfred can listen and broadcast back to the clients.
 
-#### [Scriptorium](./src/scriptorium)
+#### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
-Scriptorium retrieves sequenced messages from Kafka. It then broadcasts the new message and writes the message
+Scriptorium retrieves sequenced messages from Kafka. It then writes the message
 to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
-#### [Paparazzi](./src/paparazzi)
+#### [Scribe](./packages/routerlicious/src/scribe)
 
-The logical storage model for documents is an ordered sequence of operations. Rather than requiring clients to replay
-all operations when loading a document we instead periodically create consolidated logs of the operations. These
-consolidated logs, or snapshots, are designed for quick and efficient loading of the document at a particular
-sequence number.
-
-Paparazzi was initially charged with just creating snapshots of documents. But it has since evolved to run
-intelligent agents. Paparazzi agents are designed to be isomorphic - that is they can be run on both the server
-and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
-snapshotting and intelligence on a document.
-
-Paparazzi instances connect to Foreman to receive instructions on what operations to perform on the document.
-
-#### [Foreman](./src/foreman)
-
-Foreman is in charge of managing a pool of Paparazzi instances. It listens to the same stream of Kafka messages as
-Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
-across the pool of Paparazzi instances (snapshot, spell check, entity extraction, etc...).
+Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the Historian
 
 #### [Historian](../historian)
 
@@ -174,21 +159,21 @@ Storage providers that implement this interface are then able to plug into the s
 support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
 More details on content-addressable file systems and Git can be found at
+
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
-### Picture Errata
+### Other Microservices
 
-* Deli only talks to Kafka
-* Scriptorium should have a line to MongoDB
-* Paparazzi talks to Foreman directly and no longer proxies through a queue
-* Clients can also be Paparazzi and connect directly to Foreman
-* Only a single receive line should be drawn from Redis to Aflred
-* Historian is missing - as well as the underlying storage provider it proxies to.
-  * Clients (including Paparazzi) talk directly to Historian.
-  * Historian makes REST calls to a configured storage provider
-  * Historian caches data via Redis.
+#### [Copier](./packages/routerlicious/src/copier)
 
+Copier directly reads the raw (unticketed) operations and store it in the database.  The data can later be retrieved
+via alfred for testing and verification.
+#### [Foreman](./packages/routerlicious/src/foreman)
+
+Foreman is in charge of managing a pool of remote agent instances. It listens to the same stream of Kafka messages as
+Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
+across the pool of remote agent instances (spell check, entity extraction, etc...).
 ## Distributed data structures
 
 The API currently exposes four distributed data structures
@@ -206,7 +191,9 @@ We make use of [Winston](https://github.com/winstonjs/winston) for logging on th
 
 It's easy to use though. Just import our configured logger via:
 
+```js
 import { logger } from "../utils";
+```
 
 And then you can do logger.info in place of console.log as well as logger.error, logger.warn, logger.verbose, logger.silly to target different levels. The default filter only displays info and above (so error, warning, and info). But you can change this within logger.ts.
 
@@ -242,8 +229,6 @@ cd fluid/fluid
 git checkout <document id>
 ```
 
-Or `git clone ssh://git@praguegit.westus2.cloudapp.azure.com/home/git/prague/prague` for our production site.
-
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.
 
@@ -267,10 +252,10 @@ By default, the service does not run locally. To run locally, first add the foll
         }
     }
 ```
-This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:7000" to see grafana up and running.
+This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate to "http://localhost:7000" to get grafana up and running.
 
 ## Authentication model
-Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
+Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass `<secret-key>`, `<tenant-id>`, and `<user-info>` as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
 
 When a user from a tenant wants to create/access a document in routerlicious, it passes the signed token in api load call. Routerlicious verifies the token, matches the secret-key for the tenant and on a successful verification, grants the user access to the document. The access token is valid for the entire websocket session. User is expected to pass in another signed token for any subsequent api load call.
 
@@ -282,12 +267,15 @@ Routerlicious uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) li
 ```javascript
     jwt.sign(
         {
-            documentId: <document_id>,
+            documentId: "<document_id>",
             scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId: <tenant_id>,
-            user: <user_id>,
+            tenantId: "<tenant_id>",
+            user: "<user_id>",
+            iat: Math.round(new Date().getTime() / 1000),
+            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+            ver: "1.0",
         },
-        <secret_key>);
+        "<secret_key>");
 ```
 
 ### Passing auth token to the API

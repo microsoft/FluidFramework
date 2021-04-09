@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject, IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
 
 export interface IFluidModule {
-    fluidExport: IFluidObject;
+    fluidExport: IFluidObject & Partial<Readonly<IProvideFluidCodeDetailsComparer>>;
 }

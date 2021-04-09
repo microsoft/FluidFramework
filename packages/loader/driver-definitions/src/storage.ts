@@ -7,24 +7,37 @@ import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframewo
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
+    IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
     IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
     ITokenClaims,
-    ITokenProvider,
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
+
+export interface IDeltasFetchResult {
+    /**
+     * Sequential set of messages starting from 'from' sequence number.
+     * May be partial result, i.e. not fulfill original request in full.
+     */
+    messages: ISequencedDocumentMessage[];
+
+    /**
+     * If true, storage only partially fulfilled request, but has more ops
+     * If false, the request was fulfilled. If less ops were returned then
+     * requested, then storage does not have more ops in this range.
+     */
+    partialResult: boolean;
+}
 
 /**
  * Interface to provide access to stored deltas for a shared object
@@ -36,9 +49,18 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        tokenProvider: ITokenProvider,
-        from?: number,
-        to?: number): Promise<ISequencedDocumentMessage[]>;
+        from: number, // inclusive
+        to: number // exclusive
+    ): Promise<IDeltasFetchResult>;
+}
+
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
+
+/**
+ * Read interface for the Queue
+ */
+ export interface IStream<T> {
+    read(): Promise<IStreamResult<T>>;
 }
 
 /**
@@ -47,8 +69,24 @@ export interface IDeltaStorageService {
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param abortSignal - signal that aborts operation
+     * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+     fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>;
+}
+
+export interface IDocumentStorageServicePolicies {
+    readonly caching?: LoaderCachingPolicy;
+
+    // If this policy is provided, it tells runtime on ideal size for blobs
+    // Blobs that are smaller than that size should be aggregated into bigger blobs
+    readonly minBlobSize?: number;
 }
 
 /**
@@ -56,6 +94,11 @@ export interface IDocumentDeltaStorageService {
  */
 export interface IDocumentStorageService {
     repositoryUrl: string;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    readonly policies?: IDocumentStorageServicePolicies;
 
     /**
      * Returns the snapshot tree.
@@ -68,11 +111,6 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Reads the object with the given ID
-     */
-    read(id: string): Promise<string>;
-
-    /**
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
@@ -80,12 +118,12 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Uint8Array): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
     /**
-     * Fetch blob Data url
+     * Reads the object with the given ID, returns content in arrayBufferLike
      */
-    getRawUrl(blobId: string): string;
+    readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
@@ -106,9 +144,9 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
     (event: "disconnect", listener: (reason: any) => void);
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
-    (event: "op-content", listener: (message: IContentMessage) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
+    (event: "error", listener: (error: any) => void);
 }
 
 export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -133,11 +171,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     existing: boolean;
 
     /**
-     * The parent branch for the document
-     */
-    parentBranch: string | null;
-
-    /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
      */
     maxMessageSize: number;
@@ -153,11 +186,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     initialMessages: ISequencedDocumentMessage[];
 
     /**
-     * Messages sent during the connection
-     */
-    initialContents: IContentMessage[];
-
-    /**
      * Signals sent during the connection
      */
     initialSignals: ISignalMessage[];
@@ -170,7 +198,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Configuration details provided by the service
      */
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IClientConfiguration;
 
     /**
      * Last known sequence number to ordering service at the time of connection
@@ -187,12 +215,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     submit(messages: IDocumentMessage[]): void;
 
     /**
-     * Async version of the regular submit function.
-     */
-    // TODO why the need for two of these?
-    submitAsync(message: IDocumentMessage[]): Promise<void>;
-
-    /**
      * Submit a new signal to the server
      */
     submitSignal(message: any): void;
@@ -200,30 +222,36 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     /**
      * Disconnects the given delta connection
      */
-    disconnect();
+    close(): void;
+}
+
+export enum LoaderCachingPolicy {
+    /**
+     * The loader should not implement any prefetching or caching policy.
+     */
+    NoCaching,
 
     /**
-     * Emits an event from this document delta connection
-     * @param event - The event to emit
-     * @param args - The arguments for the event
+     * The loader should implement prefetching policy, i.e. it should prefetch resources from the latest snapshot.
      */
-    emit(event: string, ...args: any[]): boolean;
+    Prefetch,
+}
 
+export interface IDocumentServicePolicies {
     /**
-     * Gets the listeners for an event
-     * @param event - The name of the event
+     * Do not connect to delta stream
      */
-    listeners(event: string): Function[];
-
-    /**
-     * Removes all listeners from all events
-     */
-    removeAllListeners(): void;
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {
 
     resolvedUrl: IResolvedUrl;
+
+    /**
+     * Policies implemented/instructed by driver.
+     */
+    policies?: IDocumentServicePolicies;
 
     /**
      * Access to storage associated with the document...
@@ -241,15 +269,17 @@ export interface IDocumentService {
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
-     * Creates a branch of the document with the given ID. Returns the new ID.
-     */
-    branch(): Promise<string>;
-
-    /**
      * Returns the error tracking service
      */
     getErrorTrackingService(): IErrorTrackingService | null;
 
+    /**
+     * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
+     * Useful for storage to commit any pending state if any (including any local caching).
+     * Please note that it does not remove the need for caller to close all active delta connections,
+     * as storage may not be tracking such objects.
+     */
+    dispose(): void;
 }
 
 export interface IDocumentServiceFactory {
@@ -285,4 +315,6 @@ export interface ISummaryContext {
      * Parent summary acked handle (from summary ack)
      */
     readonly ackHandle: string | undefined;
+
+    readonly referenceSequenceNumber: number;
 }

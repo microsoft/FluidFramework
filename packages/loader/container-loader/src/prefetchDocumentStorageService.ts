@@ -7,11 +7,22 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import {
+    LoaderCachingPolicy,
+} from "@fluidframework/driver-definitions";
+
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
+    public get policies() {
+        const policies = this.internalStorageService.policies;
+        if (policies) {
+            return { ...policies, caching: LoaderCachingPolicy.NoCaching };
+        }
+    }
+
     // BlobId -> blob prefetchCache cache
-    private readonly prefetchCache = new Map<string, Promise<string>>();
+    private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
     private prefetchEnabled = true;
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -27,27 +38,26 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         return p;
     }
 
-    public async read(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return this.cachedRead(blobId);
     }
-
     public stopPrefetch() {
         this.prefetchEnabled = false;
         this.prefetchCache.clear();
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private cachedRead(blobId: string): Promise<string> {
+    private cachedRead(blobId: string): Promise<ArrayBufferLike> {
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
+            const prefetchedBlobP = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
-            const prefetchedBlobPFromStorage = this.internalStorageService.read(blobId);
+            const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return this.internalStorageService.read(blobId);
+        return this.internalStorageService.readBlob(blobId);
     }
 
     private prefetchTree(tree: ISnapshotTree) {

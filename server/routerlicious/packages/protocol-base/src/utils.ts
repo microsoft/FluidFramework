@@ -6,17 +6,17 @@
 import { MessageType } from "@fluidframework/protocol-definitions";
 
 /**
- * Check if the string is a system message type, which includes
- * MessageType.RemoteHelp, MessageType.Integrate, MessageType.ClientJoin,
- * MessageType.ClientLeave, MessageType.Fork
+ * Check if the string is a service message type, which includes
+ * MessageType.ClientJoin, MessageType.ClientLeave, MessageType.Control,
+ * MessageType.NoClient, MessageType.SummaryAck, and MessageType.SummaryNack
  *
  * @param type - the type to check
  * @returns true if it is a system message type
  */
-export const isSystemType = (type: string) => (
-    type === MessageType.RemoteHelp ||
-    type === MessageType.Integrate ||
+export const isServiceMessageType = (type: string) => (
     type === MessageType.ClientJoin ||
     type === MessageType.ClientLeave ||
-    type === MessageType.Fork ||
-    type === MessageType.Control);
+    type === MessageType.Control ||
+    type === MessageType.NoClient ||
+    type === MessageType.SummaryAck ||
+    type === MessageType.SummaryNack);

@@ -6,16 +6,16 @@
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientManager,
-    ICollection,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
+    IRunner,
     ITenantManager,
+    IThrottler,
     IWebServer,
     IWebServerFactory,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
@@ -23,7 +23,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
-export class AlfredRunner implements utils.IRunner {
+export class AlfredRunner implements IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
@@ -33,13 +33,15 @@ export class AlfredRunner implements utils.IRunner {
         private readonly port: string | number,
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
+        private readonly restThrottler: IThrottler,
+        private readonly socketConnectThrottler: IThrottler,
+        private readonly socketSubmitOpThrottler: IThrottler,
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
         private readonly mongoManager: MongoManager,
         private readonly producer: IProducer,
-        private readonly metricClientConfig: any,
-        private readonly contentCollection: ICollection<any>) {
+        private readonly metricClientConfig: any) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -50,6 +52,7 @@ export class AlfredRunner implements utils.IRunner {
         const alfred = app.create(
             this.config,
             this.tenantManager,
+            this.restThrottler,
             this.storage,
             this.appTenants,
             this.mongoManager,
@@ -61,17 +64,22 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+        const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection,
             this.clientManager,
             createMetricClient(this.metricClientConfig),
             winston,
-            maxNumberOfClientsPerDocument);
+            maxNumberOfClientsPerDocument,
+            maxTokenLifetimeSec,
+            isTokenExpiryEnabled,
+            this.socketConnectThrottler,
+            this.socketSubmitOpThrottler);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

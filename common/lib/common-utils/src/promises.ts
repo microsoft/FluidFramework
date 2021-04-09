@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 /**
  * A deferred creates a promise and the ability to resolve or reject it
  */
 export class Deferred<T> {
     private readonly p: Promise<T>;
-    private res: ((value?: T | PromiseLike<T>) => void) | undefined;
+    private res: ((value: T | PromiseLike<T>) => void) | undefined;
     private rej: ((reason?: any) => void) | undefined;
     private completed: boolean = false;
 
@@ -41,7 +39,7 @@ export class Deferred<T> {
      *
      * @param value - the value to resolve the promise with
      */
-    public resolve(value?: T | PromiseLike<T>) {
+    public resolve(value: T | PromiseLike<T>) {
         if (this.res !== undefined) {
             this.completed = true;
             this.res(value);
@@ -59,19 +57,6 @@ export class Deferred<T> {
             this.rej(error);
         }
     }
-}
-
-/**
- * Helper function that asserts that the given promise only resolves
- */
-// eslint-disable-next-line @typescript-eslint/promise-function-async
-export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
-    // Assert that the given promise only resolves
-    promise.catch((error) => {
-        assert.ok(false);
-    });
-
-    return promise;
 }
 
 /**

@@ -21,7 +21,7 @@ export interface IProvideFluidObjectCollection {
  * fluid objects in the collection would be like-typed.
  */
 export interface IFluidObjectCollection extends IProvideFluidObjectCollection {
-    createCollectionItem<TOpt = object>(options?: TOpt): IFluidObject;
+    createCollectionItem<TOpt = Record<string, unknown>>(options?: TOpt): IFluidObject;
     removeCollectionItem(instance: IFluidObject): void;
     // Need iteration
 }

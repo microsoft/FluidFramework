@@ -32,7 +32,7 @@ export class TestLambda implements IPartitionLambda {
         assert.equal(this.documentId, sequencedMessage.documentId);
 
         if (this.failHandler) {
-            this.context.error("Test failure", true);
+            this.context.error("Test failure", { restart: true });
         } else if (this.throwHandler) {
             throw new Error("Test Error");
         } else {
@@ -64,7 +64,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreatelambda) {
-            return Promise.reject("Test failure");
+            return Promise.reject(new Error("Test failure"));
         } else {
             const lambda = new TestLambda(config, context);
             this.lambdas.push(lambda);

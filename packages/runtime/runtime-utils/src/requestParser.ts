@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation
@@ -29,7 +29,16 @@ export class RequestParser implements IRequest {
 
     private requestPathParts: readonly string[] | undefined;
     public readonly query: string;
-    constructor(private readonly request: Readonly<IRequest>) {
+
+    public static create(request: Readonly<IRequest>) {
+        // Perf optimizations.
+        if (request instanceof RequestParser) {
+            return request;
+        }
+        return new RequestParser(request);
+    }
+
+    protected constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {
             this.query = this.request.url.substring(queryStartIndex);
@@ -42,7 +51,7 @@ export class RequestParser implements IRequest {
         return this.request.url;
     }
 
-    public get headers() {
+    public get headers(): IRequestHeader | undefined {
         return this.request.headers;
     }
 
@@ -57,17 +66,39 @@ export class RequestParser implements IRequest {
     }
 
     /**
+     * Returns true if it's a terminating path, i.e. no more elements after `elements` entries and empty query.
+     * @param elements - number of elements in path
+     */
+    public isLeaf(elements: number) {
+        return this.query === "" && this.pathParts.length === elements;
+    }
+
+    /**
      * Creates a sub request starting at a specific path part of this request's url
+     * The sub request url always has a leading slash, and always include query params if original url has any
+     * e.g. original url is /a/b/?queryParams, createSubRequest(0) is /a/b/?queryParams
+     * createSubRequest(1) is /b/?queryParams
+     * createSubRequest(2) is /?queryParams
+     * createSubRequest(n) where n is bigger than parts length, e.g. 2, or n is less than 0 will throw an exception
+     *
+     * note: query params are not counted towards path parts.
      *
      * @param startingPathIndex - The index of the first path part of the sub request
      */
-    public createSubRequest(startingPathIndex: number): IRequest | undefined {
-        if (startingPathIndex < 0 || startingPathIndex > this.pathParts.length) {
-            return undefined;
+    public createSubRequest(startingPathIndex: number): IRequest {
+        const pathLen = this.pathParts.length;
+        if (startingPathIndex < 0 || startingPathIndex > pathLen) {
+            throw new Error("incorrect sub-request");
         }
-        const path = this.pathParts.slice(startingPathIndex).join("/");
+        if (startingPathIndex === pathLen && this.url.includes("?")) {
+            return {
+                url:`/${this.query}`,
+                headers: this.headers,
+            };
+        }
+        const path = `/${this.pathParts.slice(startingPathIndex).join("/")}`;
         return {
-            url: path + this.query,
+            url: this.query === "" ? path : `${path}/${this.query}`,
             headers: this.headers,
         };
     }

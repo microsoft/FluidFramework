@@ -28,6 +28,7 @@ export function getFluidFromView<
 ): Partial<SF> {
     const fluidConverter = viewToFluid?.get(viewKey)?.fluidConverter;
     if (fluidConverter !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return fluidConverter(state, fluidState);
     } else {
         const partialFluidState: Partial<SF> = {};

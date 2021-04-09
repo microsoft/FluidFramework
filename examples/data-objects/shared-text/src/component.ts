@@ -10,6 +10,7 @@ import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
+import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
@@ -20,8 +21,7 @@ import {
     IResponse,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
-import { Ink } from "@fluidframework/ink";
+import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import {
     ISharedMap,
     SharedMap,
@@ -29,16 +29,13 @@ import {
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
     IFluidDataStoreContext,
-    ITask,
-    ITaskManager,
 } from "@fluidframework/runtime-definitions";
 import {
-    IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -55,7 +52,7 @@ async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle>
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
+    implements IFluidHTMLView, IFluidLoadable {
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
@@ -73,14 +70,11 @@ export class SharedTextRunner
     public get IFluidLoadable() { return this; }
 
     public get IFluidHTMLView() { return this; }
-    public get ISharedString() { return this.sharedString; }
 
-    public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
     private rootView: ISharedMap;
     private collabDoc: Document;
-    private taskManager: ITaskManager;
     private uiInitialized = false;
     private readonly title: string = "Shared Text";
 
@@ -89,7 +83,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.objectsRoutingContext);
     }
 
     public render(element: HTMLElement) {
@@ -106,10 +100,14 @@ export class SharedTextRunner
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
+        const pathParts = RequestParser.getPathParts(request.url);
+        if (pathParts.length === 0) {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        } else if (pathParts.length === 1 && pathParts[0].toLocaleLowerCase() === "sharedstring") {
+            return { status:200, mimeType: "fluid/sharedstring", value: this.sharedString };
+        }
+        else {
+            return create404Response(request);
         }
     }
 
@@ -165,7 +163,6 @@ export class SharedTextRunner
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.collabDoc.createMap();
-            flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
@@ -182,7 +179,11 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performance.now()}`);
 
-        this.taskManager = await this.context.containerRuntime.getTaskManager();
+        const agentSchedulerResponse = await this.context.containerRuntime.request({ url: "/_scheduler" });
+        if (agentSchedulerResponse.status === 404) {
+            throw new Error("Agent scheduler not found");
+        }
+        const agentScheduler = agentSchedulerResponse.value as IAgentScheduler;
 
         const options = parse(window.location.search.substr(1));
         setTranslation(
@@ -196,7 +197,7 @@ export class SharedTextRunner
 
         const taskScheduler = new TaskScheduler(
             this.context,
-            this.taskManager,
+            agentScheduler,
             this.sharedString,
             this.insightsMap,
         );
@@ -221,11 +222,6 @@ export class SharedTextRunner
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
-        const overlayMap = await this.rootView
-            .get<IFluidHandle<ISharedMap>>("flowContainerMap")
-            .get();
-        const overlayInkMap = await overlayMap.get<IFluidHandle<ISharedMap>>("overlayInk").get();
-
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
         containerDiv.style.touchAction = "none";
@@ -240,7 +236,6 @@ export class SharedTextRunner
                 this.rootView,
                 () => { throw new Error("Can't close document"); }),
             this.sharedString,
-            overlayInkMap,
             image,
             {});
         const theFlow = container.flowView;
@@ -271,7 +266,7 @@ export class SharedTextRunner
 class TaskScheduler {
     constructor(
         private readonly componentContext: IFluidDataStoreContext,
-        private readonly taskManager: ITaskManager,
+        private readonly agentScheduler: IAgentScheduler,
         private readonly sharedString: SharedString,
         private readonly insightsMap: ISharedMap,
     ) {
@@ -286,16 +281,12 @@ class TaskScheduler {
             : undefined;
 
         if (intelTokens?.key?.length > 0) {
-            const intelTask: ITask = {
-                id: "intel",
-                instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
-            };
-            this.taskManager.register(intelTask);
-            this.taskManager.pick(intelTask.id).then(() => {
+            const intelTaskId = "intel";
+            const textAnalyzer = new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens);
+            this.agentScheduler.pick(intelTaskId, async () => {
                 console.log(`Picked text analyzer`);
-            }, (err) => {
-                console.log(JSON.stringify(err));
-            });
+                await textAnalyzer.run();
+            }).catch((err) => { console.error(err); });
         } else {
             console.log("No intel key provided.");
         }
@@ -303,34 +294,20 @@ class TaskScheduler {
 }
 
 export function instantiateDataStore(context: IFluidDataStoreContext) {
-    const modules = new Map<string, any>();
+    const runtimeClass = mixinRequestHandler(
+        async (request: IRequest) => {
+            const router = await routerP;
+            return router.request(request);
+        });
 
-    // Create channel factories
-    const mapFactory = SharedMap.getFactory();
-    const sharedStringFactory = SharedString.getFactory();
-    const inkFactory = Ink.getFactory();
-    const cellFactory = SharedCell.getFactory();
-    const objectSequenceFactory = SharedObjectSequence.getFactory();
-    const numberSequenceFactory = SharedNumberSequence.getFactory();
-
-    modules.set(mapFactory.type, mapFactory);
-    modules.set(sharedStringFactory.type, sharedStringFactory);
-    modules.set(inkFactory.type, inkFactory);
-    modules.set(cellFactory.type, cellFactory);
-    modules.set(objectSequenceFactory.type, objectSequenceFactory);
-    modules.set(numberSequenceFactory.type, numberSequenceFactory);
-
-    const runtime = FluidDataStoreRuntime.load(
-        context,
-        modules,
-    );
-
-    const runnerP = SharedTextRunner.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        debug(`request(url=${request.url})`);
-        const runner = await runnerP;
-        return runner.request(request);
-    });
+    const runtime = new runtimeClass(context, new Map([
+        SharedMap.getFactory(),
+        SharedString.getFactory(),
+        SharedCell.getFactory(),
+        SharedObjectSequence.getFactory(),
+        SharedNumberSequence.getFactory(),
+    ].map((factory) => [factory.type, factory])));
+    const routerP = SharedTextRunner.load(runtime, context);
 
     return runtime;
 }

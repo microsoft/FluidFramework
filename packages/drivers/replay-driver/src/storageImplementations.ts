@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -34,11 +34,11 @@ export interface IFileSnapshot {
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
-    private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
+    protected static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected docTreeP: Promise<ISnapshotTree>;
-    protected blobsP: Promise<Map<string, string>>;
+    protected docTree: ISnapshotTree;
+    protected blobs: Map<string, ArrayBufferLike>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
@@ -46,9 +46,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         super();
         this.commits = json.commits;
 
-        const blobs = new Map<string, string>();
-        this.docTreeP = buildSnapshotTree(json.tree.entries, blobs);
-        this.blobsP = this.docTreeP.then((docTree) => { return blobs; });
+        this.blobs = new Map<string, ArrayBufferLike>();
+        this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
     }
 
     public async getVersions(
@@ -67,7 +66,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
         if (!versionRequested || versionRequested.id === "latest") {
-            return this.docTreeP;
+            return this.docTree;
         }
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
@@ -80,15 +79,13 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            const blobMap = await this.blobsP;
-            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTree(tree.entries, blobMap);
-            this.blobsP = Promise.resolve(blobMap);
+            this.trees[versionRequested.id] = snapshotTree = buildSnapshotTree(tree.entries, this.blobs);
         }
         return snapshotTree;
     }
 
-    public async read(blobId: string): Promise<string> {
-        const blob = (await this.blobsP).get(blobId);
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
         if (blob !== undefined) {
             return blob;
         }
@@ -103,7 +100,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         protected readonly storage: IDocumentStorageService,
         protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(this.docTree);
+        assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -122,8 +119,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.docTree;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.storage.read(blobId);
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.storage.readBlob(blobId);
     }
 }
 
@@ -136,13 +133,15 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
         throw new Error("no snapshot tree should be asked when playing ops");
     }
 
-    public async read(blobId: string): Promise<string> {
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         throw new Error(`Unknown blob ID: ${blobId}`);
     }
 }
 
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
+
+    public dispose() {}
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
@@ -160,10 +159,6 @@ export class StaticStorageDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // We have no delta stream, so make it not return forever...
         return new Promise(() => { });
-    }
-
-    public async branch(): Promise<string> {
-        return Promise.reject("Invalid operation");
     }
 
     public getErrorTrackingService() {

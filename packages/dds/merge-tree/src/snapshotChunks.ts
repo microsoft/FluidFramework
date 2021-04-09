@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {
     IFluidSerializer,
-    IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -23,9 +25,9 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkStartSegmentIndex: number,
     chunkSegmentCount: number;
     chunkLengthChars: number;
-    totalLengthChars: number;
-    totalSegmentCount: number;
-    chunkSequenceNumber: number;
+    totalLengthChars?: number;
+    totalSegmentCount?: number;
+    chunkSequenceNumber?: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
     headerMetadata?: MergeTreeHeaderMetadata;
@@ -78,9 +80,8 @@ export function serializeAsMinSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IFluidSerializer,
-    context?: IFluidHandleContext,
-    bind?: IFluidHandle) {
+    serializer: IFluidSerializer,
+    bind: IFluidHandle) {
     let targetChuck: MergeTreeChunkLegacy;
 
     if (chunk.version !== undefined) {
@@ -118,7 +119,7 @@ export function serializeAsMinSupportedVersion(
         default:
             throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
     }
-    return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
+    return serializer.stringify(targetChuck, bind);
 }
 
 export function serializeAsMaxSupportedVersion(
@@ -126,11 +127,10 @@ export function serializeAsMaxSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IFluidSerializer,
-    context?: IFluidHandleContext,
-    bind?: IFluidHandle) {
+    serializer: IFluidSerializer,
+    bind: IFluidHandle) {
     const targetChuck = toLatestVersion(path, chunk, logger, options);
-    return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
+    return serializer.stringify(targetChuck, bind);
 }
 
 export function toLatestVersion(
@@ -138,14 +138,6 @@ export function toLatestVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined): MergeTreeChunkV1 {
-    if (chunk.version !== "1") {
-        logger.send({
-            eventName: "MergeTreeChunk:toLatestVersion",
-            category: "generic",
-            fromChunkVersion: chunk.version,
-            toChunkVersion: "1",
-        });
-    }
     switch (chunk.version) {
         case undefined: {
             const chunkLegacy = chunk as MergeTreeChunkLegacy;
@@ -173,15 +165,15 @@ function buildHeaderMetadataForLegecyChunk(
             return chunk.headerMetadata;
         }
         const chunkIds: MergeTreeHeaderChunkMetadata[] = [{ id: SnapshotLegacy.header }];
-        if (chunk.chunkLengthChars < chunk.totalLengthChars) {
+        if (chunk.chunkLengthChars < chunk.totalLengthChars!) {
             chunkIds.push({ id: SnapshotLegacy.body });
         }
         return {
             orderedChunkMetadata: chunkIds,
-            minSequenceNumber: chunk.chunkMinSequenceNumber,
-            sequenceNumber: chunk.chunkSequenceNumber,
-            totalLength: chunk.totalLengthChars,
-            totalSegmentCount: chunk.totalSegmentCount,
+            minSequenceNumber: chunk.chunkMinSequenceNumber!,
+            sequenceNumber: chunk.chunkSequenceNumber!,
+            totalLength: chunk.totalLengthChars!,
+            totalSegmentCount: chunk.totalSegmentCount!,
         };
     }
     return undefined;

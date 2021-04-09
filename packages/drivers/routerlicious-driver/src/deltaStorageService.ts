@@ -3,13 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import querystring from "querystring";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
-import Axios from "axios";
-import { TokenProvider } from "./tokens";
+import {
+    IDeltaStorageService,
+    IDocumentDeltaStorageService,
+    IDeltasFetchResult,
+    IStream,
+} from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITokenProvider } from "./tokens";
+import { DocumentStorageService } from "./documentStorageService";
+import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+
+const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -18,12 +27,49 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
-        private readonly tokenProvider: api.ITokenProvider,
-        private readonly storageService: IDeltaStorageService) {
+        private readonly storageService: IDeltaStorageService,
+        private readonly documentStorageService: DocumentStorageService) {
     }
 
-    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
+    private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+
+    fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>
+    {
+        if (cachedOnly) {
+            return emptyMessageStream;
+        }
+        return requestOps(
+            this.getCore.bind(this),
+            // Staging: starting with no concurrency, listening for feedback first.
+            // In future releases we will switch to actual concurrency
+            1, // concurrency
+            from, // inclusive
+            to, // exclusive
+            MaxBatchDeltas,
+            new TelemetryNullLogger(),
+            abortSignal,
+        );
+    }
+
+    private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
+        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
+            (this.documentStorageService, this.logtailSha) : [];
+
+        this.logtailSha = undefined;
+        if (opsFromLogTail.length > 0) {
+            const messages = opsFromLogTail.filter((op) =>
+                op.sequenceNumber >= from,
+            );
+            if (messages.length > 0) {
+                return { messages, partialResult: true };
+            }
+        }
+
+        return this.storageService.get(this.tenantId, this.id, from, to);
     }
 }
 
@@ -31,48 +77,41 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
  * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
 export class DeltaStorageService implements IDeltaStorageService {
-    constructor(private readonly url: string) {
+    constructor(
+        private readonly url: string,
+        private readonly tokenProvider: ITokenProvider,
+        private readonly logger: ITelemetryLogger) {
     }
 
     public async get(
         tenantId: string,
         id: string,
-        tokenProvider: api.ITokenProvider,
-        from?: number,
-        to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        const query = querystring.stringify({ from, to });
+        from: number, // inclusive
+        to: number, // exclusive
+        ): Promise<IDeltasFetchResult>
+    {
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId, id, this.tokenProvider, this.logger);
+        const ops = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getDeltas",
+                from,
+                to,
+            },
+            async (event) => {
+                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(
+                    this.url,
+                    { from: from - 1, to });
+                event.end({
+                    count: response.length,
+                });
+                return response;
+            },
+        );
 
-        let headers: { Authorization: string } | null = null;
-
-        const token = (tokenProvider as TokenProvider).token;
-
-        if (token) {
-            headers = {
-                Authorization: `Basic ${fromUtf8ToBase64(`${tenantId}:${token}`)}`,
-            };
-        }
-
-        const opPromise = Axios.get<api.ISequencedDocumentMessage[]>(
-            `${this.url}?${query}`, { headers });
-
-        const contentPromise = Axios.get<any[]>(
-            `${this.url}/content?${query}`, { headers });
-
-        const [opData, contentData] = await Promise.all([opPromise, contentPromise]);
-
-        const contents = contentData.data;
-        const ops = opData.data;
-        let contentIndex = 0;
-        for (const op of ops) {
-            if (op.contents === undefined) {
-                assert.ok(contentIndex < contents.length, "Delta content not found");
-                const content = contents[contentIndex];
-                assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
-                op.contents = content.op.contents;
-                ++contentIndex;
-            }
-        }
-
-        return ops;
+        // It is assumed that server always returns all the ops that it has in the range that was requested.
+        // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
+        return { messages: ops, partialResult: false };
     }
 }

@@ -8,6 +8,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -50,15 +51,17 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
     }
 }
 
-export const SimpleFluidObjectEmbedInstantiationFactory = new DataObjectFactory(
-    simpleFluidObjectEmbedName,
-    SimpleFluidObjectEmbed,
-    [],
-    {},
-);
+export const SimpleFluidObjectEmbedInstantiationFactory =
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    new DataObjectFactory<SimpleFluidObjectEmbed, undefined, undefined, IEvent>(
+        simpleFluidObjectEmbedName,
+        SimpleFluidObjectEmbed,
+        [],
+        {},
+    );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    SimpleFluidObjectEmbedInstantiationFactory.type,
+    SimpleFluidObjectEmbedInstantiationFactory,
     new Map([
         SimpleFluidObjectEmbedInstantiationFactory.registryEntry,
         ClickerInstantiationFactory.registryEntry,

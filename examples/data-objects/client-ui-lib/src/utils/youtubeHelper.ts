@@ -83,6 +83,7 @@ export class YouTubeWrapper {
      * Returns current time in seconds?
      */
     public getCurrentTime(): number {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.player.getCurrentTime();
     }
 
@@ -110,6 +111,7 @@ export class YouTubeWrapper {
     }
 
     public getDuration(): number {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.player.getDuration();
     }
 }

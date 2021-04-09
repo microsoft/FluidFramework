@@ -5,7 +5,7 @@
 
 import * as async from "async";
 import * as moniker from "moniker";
-import * as git from "nodegit";
+import git from "nodegit";
 import * as testUtils from "./utils";
 
 async function mockTree(repository: git.Repository, entries: number) {

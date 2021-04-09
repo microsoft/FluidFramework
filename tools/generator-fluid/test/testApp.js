@@ -6,7 +6,6 @@
 const path = require("path");
 const assert = require("yeoman-assert");
 const helpers = require("yeoman-test");
-const shell = require('shelljs');
 
 describe("Yo fluid", function () {
     // increasing the timeout, since generation can sometimes exceed the default 2000ms.
@@ -34,7 +33,6 @@ describe("Yo fluid", function () {
                     "src/interface.ts",
                     "src/view.tsx",
                     ".gitignore",
-                    ".npmrc",
                     "jest-puppeteer.config.js",
                     "jest.config.js",
                     "package.json",
@@ -76,7 +74,6 @@ describe("Yo fluid", function () {
                     "src/dataObject.tsx",
                     "src/index.ts",
                     ".gitignore",
-                    ".npmrc",
                     "jest-puppeteer.config.js",
                     "jest.config.js",
                     "package.json",
@@ -120,7 +117,6 @@ describe("Yo fluid", function () {
                     "src/interface.ts",
                     "src/view.ts",
                     ".gitignore",
-                    ".npmrc",
                     "jest-puppeteer.config.js",
                     "jest.config.js",
                     "package.json",
@@ -143,7 +139,6 @@ describe("Yo fluid", function () {
             });
         });
 
-        
         describe("View - None - beginner", () => {
             let runContext;
             let oldCwd;
@@ -163,7 +158,6 @@ describe("Yo fluid", function () {
                     "src/dataObject.ts",
                     "src/index.ts",
                     ".gitignore",
-                    ".npmrc",
                     "jest-puppeteer.config.js",
                     "jest.config.js",
                     "package.json",

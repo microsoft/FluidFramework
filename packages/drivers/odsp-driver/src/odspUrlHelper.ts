@@ -92,6 +92,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
         // 3: optional captured drive ID
         // 4: Item ID
         // 5: Drive ID portion of Item ID
+        // eslint-disable-next-line unicorn/no-unsafe-regex
         joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
         if (joinSessionMatch === null) {
@@ -103,19 +104,19 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
             }
         }
 
-        const drive = joinSessionMatch[3] || joinSessionMatch[5];
-        const item = joinSessionMatch[4];
+        const driveId = joinSessionMatch[3] || joinSessionMatch[5];
+        const itemId = joinSessionMatch[4];
 
-        return { site: `${url.origin}${url.pathname}`, drive, item };
+        return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
     } else {
         joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
         if (joinSessionMatch === null) {
             return undefined;
         }
-        const drive = joinSessionMatch[2];
-        const item = joinSessionMatch[3];
+        const driveId = joinSessionMatch[2];
+        const itemId = joinSessionMatch[3];
 
-        return { site: `${url.origin}${url.pathname}`, drive, item };
+        return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
     }
 }

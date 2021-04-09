@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IFluidObject,
     IFluidHandle,
@@ -18,16 +17,19 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
-import { EventForwarder } from "@fluidframework/common-utils";
+import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
+import { defaultFluidObjectRequestHandler } from "../request-handlers";
 
-export interface IDataObjectProps<P extends IFluidObject = object> {
-    readonly runtime: IFluidDataStoreRuntime,
-    readonly context: IFluidDataStoreContext,
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>,
+// eslint-disable-next-line @typescript-eslint/ban-types
+export interface IDataObjectProps<O = object, S = undefined> {
+    readonly runtime: IFluidDataStoreRuntime;
+    readonly context: IFluidDataStoreContext;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    readonly initProps?: S;
 }
 
 /**
@@ -36,13 +38,14 @@ export interface IDataObjectProps<P extends IFluidObject = object> {
  * you are creating another base data store class
  *
  * Generics:
- * P - represents a type that will define optional providers that will be injected
+ * O - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PureDataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
+// eslint-disable-next-line @typescript-eslint/ban-types
+export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
@@ -63,7 +66,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      *
      * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+
+    protected initProps?: S;
+
+    protected initializeP: Promise<void> | undefined;
 
     public get disposed() { return this._disposed; }
 
@@ -77,16 +85,27 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public constructor(props: IDataObjectProps<P>) {
+    public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+        const obj = (runtime as any)._dataObject as PureDataObject;
+        assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
+        await obj.finishInitialization();
+        return obj;
+    }
+
+    public constructor(props: IDataObjectProps<O, S>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
         this.providers = props.providers;
+        this.initProps = props.initProps;
+
+        assert((this.runtime as any)._dataObject === undefined, 0x0bd /* "Object runtime already has DataObject!" */);
+        (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -99,34 +118,34 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
 
     /**
      * Return this object if someone requests it directly
-     * We will return this object in three scenarios
+     * We will return this object in two scenarios:
      *  1. the request url is a "/"
-     *  2. the request url is our url
-     *  3. the request url is empty
+     *  2. the request url is empty
      */
     public async request(req: IRequest): Promise<IResponse> {
-        const pathParts = RequestParser.getPathParts(req.url);
-        const requestUrl = (pathParts.length > 0) ? pathParts[0] : req.url;
-        if (requestUrl === "/" || requestUrl === this.url || requestUrl === "") {
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: this,
-            };
-        }
-        return Promise.reject(`unknown request url: ${req.url}`);
+        return defaultFluidObjectRequestHandler(this, req);
     }
 
     // #endregion IFluidRouter
 
     // #region IFluidLoadable
 
-    /**
-     * Absolute URL to the data store within the document
-     */
-    public get url() { return this.context.id; }
-
     // #endregion IFluidLoadable
+
+    /**
+     * Call this API to ensure PureDataObject is fully initialized
+     * initialization happens on demand, only on as-needed bases.
+     * In most cases you should allow factory/object to decide when to finish initialization.
+     * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
+     * and need fully initialized object, then you can call this API to ensure object is fully initialized.
+     */
+    public async finishInitialization(): Promise<void> {
+        if (this.initializeP !== undefined) {
+            return this.initializeP;
+        }
+        this.initializeP = this.initializeInternal();
+        return this.initializeP;
+    }
 
     /**
      * Internal initialize implementation. Overwriting this will change the flow of the PureDataObject and should
@@ -135,12 +154,14 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(props?: S): Promise<void> {
+    public async initializeInternal(): Promise<void> {
+        await this.preInitialize();
         if (this.runtime.existing) {
-            assert(props === undefined);
+            assert(this.initProps === undefined,
+                0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(this.context.createProps as S ?? props);
+            await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);
         }
         await this.hasInitialized();
     }
@@ -189,6 +210,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
         return handleFromLegacyUri<T>(`/${serviceRoutePathRoot}/${id}`, this.context.containerRuntime).get();
     }
+
+    /**
+     * Called every time the data store is initialized, before initializingFirstTime or
+     * initializingFromExisting is called.
+     */
+    protected async preInitialize(): Promise<void> { }
 
     /**
      * Called the first time the data store is initialized (new creations with a new

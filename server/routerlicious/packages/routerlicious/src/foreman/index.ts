@@ -6,6 +6,7 @@
 import { ForemanLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import { IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { generateToken } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -17,5 +18,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     // Preps message sender.
     await messageSender.initialize();
-    return new ForemanLambdaFactory(messageSender, tenantManager, foremanConfig.permissions);
+    return new ForemanLambdaFactory(messageSender, tenantManager, generateToken, foremanConfig.permissions);
 }

@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+ import { assert } from "@fluidframework/common-utils";
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
@@ -10,7 +11,6 @@ import {
     CollaborationWindow,
     compareNumbers,
     IMergeBlock,
-    internedSpaces,
     IRemovalInfo,
     ISegment,
     MergeTree,
@@ -66,15 +66,7 @@ export class PartialSequenceLengths {
     };
 
     public static combine(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, recur = false) {
-        const partialLengthsTopBranch = PartialSequenceLengths.combineBranch(mergeTree, block, collabWindow, 0, recur);
-        if (mergeTree.localBranchId > 0) {
-            partialLengthsTopBranch.downstreamPartialLengths = [] as PartialSequenceLengths[];
-            for (let i = 0; i < mergeTree.localBranchId; i++) {
-                partialLengthsTopBranch.downstreamPartialLengths[i] =
-                    PartialSequenceLengths.combineBranch(mergeTree, block, collabWindow, i + 1, recur);
-            }
-        }
-        return partialLengthsTopBranch;
+        return PartialSequenceLengths.combineBranch(mergeTree, block, collabWindow, recur);
     }
 
     /**
@@ -87,13 +79,12 @@ export class PartialSequenceLengths {
         mergeTree: MergeTree,
         block: IMergeBlock,
         collabWindow: CollaborationWindow,
-        branchId: number,
         recur = false) {
         let combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
-        PartialSequenceLengths.fromLeaves(mergeTree, branchId, combinedPartialLengths, block, collabWindow);
-        let prevPartial: PartialSequenceLength;
+        PartialSequenceLengths.fromLeaves(mergeTree, combinedPartialLengths, block, collabWindow);
+        let prevPartial: PartialSequenceLength | undefined;
 
-        function cloneOverlapRemoveClients(oldTree: RedBlackTree<number, IOverlapClient>) {
+        function cloneOverlapRemoveClients(oldTree: RedBlackTree<number, IOverlapClient> | undefined) {
             if (!oldTree) { return undefined; }
             const newTree = new RedBlackTree<number, IOverlapClient>(compareNumbers);
             oldTree.map((bProp: Property<number, IOverlapClient>) => {
@@ -104,14 +95,15 @@ export class PartialSequenceLengths {
         }
 
         function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
-            if (a.overlapRemoveClients) {
+            const overlapRemoveClientsA = a.overlapRemoveClients;
+            if (overlapRemoveClientsA) {
                 if (b.overlapRemoveClients) {
                     b.overlapRemoveClients.map((bProp: Property<number, IOverlapClient>) => {
-                        const aProp = a.overlapRemoveClients.get(bProp.key);
+                        const aProp = overlapRemoveClientsA.get(bProp.key);
                         if (aProp) {
                             aProp.data.seglen += bProp.data.seglen;
                         } else {
-                            a.overlapRemoveClients.put(bProp.data.clientId, { ...bProp.data });
+                            overlapRemoveClientsA.put(bProp.data.clientId, { ...bProp.data });
                         }
                         return true;
                     });
@@ -156,7 +148,8 @@ export class PartialSequenceLengths {
                     childBlock.partialLengths =
                         PartialSequenceLengths.combine(mergeTree, childBlock, collabWindow, true);
                 }
-                childPartials.push(childBlock.partialLengths.partialLengthsForBranch(branchId));
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                childPartials.push(childBlock.partialLengths!);
             }
         }
         let childPartialsLen = childPartials.length;
@@ -184,14 +177,16 @@ export class PartialSequenceLengths {
                     // Find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         const cpLen = childPartials[k].partialLengths[indices[k]];
-                        if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength.seq)) {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength!.seq)) {
                             outerIndexOfEarliest = k;
                             earliestPartialLength = cpLen;
                         }
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-                    addNext(earliestPartialLength);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    addNext(earliestPartialLength!);
                     indices[outerIndexOfEarliest]++;
                 }
             }
@@ -216,7 +211,7 @@ export class PartialSequenceLengths {
     }
 
     private static fromLeaves(
-        mergeTree: MergeTree, branchId: number, combinedPartialLengths: PartialSequenceLengths,
+        mergeTree: MergeTree, combinedPartialLengths: PartialSequenceLengths,
         block: IMergeBlock, collabWindow: CollaborationWindow) {
         combinedPartialLengths.minLength = 0;
         combinedPartialLengths.segmentCount = block.childCount;
@@ -230,29 +225,28 @@ export class PartialSequenceLengths {
             if (child.isLeaf()) {
                 // Leaf segment
                 const segment = child;
-                const segBranchId = mergeTree.getBranchId(segment.clientId);
                 // eslint-disable-next-line max-len
                 // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
-                if (segBranchId <= branchId) {
-                    if (seqLTE(segment.seq, collabWindow.minSeq)) {
-                        combinedPartialLengths.minLength += segment.cachedLength;
-                    } else {
-                        if (segment.seq !== UnassignedSequenceNumber) {
-                            PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
-                        }
+
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (seqLTE(segment.seq!, collabWindow.minSeq)) {
+                    combinedPartialLengths.minLength += segment.cachedLength;
+                } else {
+                    if (segment.seq !== UnassignedSequenceNumber) {
+                        PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
                     }
-                    const removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
-                    if (seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) {
-                        combinedPartialLengths.minLength -= segment.cachedLength;
-                    } else {
-                        if ((removalInfo.removedSeq !== undefined) &&
-                            (removalInfo.removedSeq !== UnassignedSequenceNumber)) {
-                            PartialSequenceLengths.insertSegment(
-                                combinedPartialLengths,
-                                segment,
-                                true,
-                                removalInfo);
-                        }
+                }
+                const removalInfo = mergeTree.getRemovalInfo(segment);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (seqLTE(removalInfo.removedSeq!, collabWindow.minSeq)) {
+                    combinedPartialLengths.minLength -= segment.cachedLength;
+                } else {
+                    if ((removalInfo.removedSeq !== undefined) &&
+                        (removalInfo.removedSeq !== UnassignedSequenceNumber)) {
+                        PartialSequenceLengths.insertSegment(
+                            combinedPartialLengths,
+                            segment,
+                            removalInfo);
                     }
                 }
             }
@@ -303,17 +297,19 @@ export class PartialSequenceLengths {
     private static insertSegment(
         combinedPartialLengths: PartialSequenceLengths,
         segment: ISegment,
-        removedSeq = false,
         removalInfo?: IRemovalInfo) {
-        let seq = segment.seq;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        let seq = segment.seq!;
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
-        let removeClientOverlap: number[];
+        let removeClientOverlap: number[] | undefined;
 
-        if (removedSeq) {
-            seq = removalInfo.removedSeq;
+        if (removalInfo) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            seq = removalInfo.removedSeq!;
             segmentLen = -segmentLen;
-            clientId = removalInfo.removedClientId;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            clientId = removalInfo.removedClientId!;
             if (removalInfo.removedClientOverlap) {
                 removeClientOverlap = removalInfo.removedClientOverlap;
             }
@@ -359,8 +355,8 @@ export class PartialSequenceLengths {
     }
 
     private static addSeq(partialLengths: PartialSequenceLength[], seq: number, seqSeglen: number, clientId?: number) {
-        let seqPartialLen: PartialSequenceLength;
-        let penultPartialLen: PartialSequenceLength;
+        let seqPartialLen: PartialSequenceLength | undefined;
+        let penultPartialLen: PartialSequenceLength | undefined;
         let leqIndex = latestLEQ(partialLengths, seq);
         if (leqIndex >= 0) {
             const pLen = partialLengths[leqIndex];
@@ -396,64 +392,72 @@ export class PartialSequenceLengths {
     public segmentCount = 0;
     public partialLengths: PartialSequenceLength[] = [];
     public clientSeqNumbers: PartialSequenceLength[][] = [];
-    public downstreamPartialLengths: PartialSequenceLengths[];
 
     constructor(public minSeq: number) {
     }
 
+    // Assume: seq is latest sequence number; no structural change to sub-tree, but a segment
+    // with sequence number seq has been added within the sub-tree
+    // TODO: assert client id matches
     public update(
         mergeTree: MergeTree,
-        block: IMergeBlock,
+        node: IMergeBlock,
         seq: number,
         clientId: number,
         collabWindow: CollaborationWindow) {
-        const segBranchId = mergeTree.getBranchId(clientId);
-        // eslint-disable-next-line max-len
-        // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
-        if (segBranchId === 0) {
-            this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
-        }
-        if (mergeTree.localBranchId > 0) {
-            for (let i = 0; i < mergeTree.localBranchId; i++) {
-                const branchId = i + 1;
-                if (segBranchId <= branchId) {
-                    this.downstreamPartialLengths[i].updateBranch(
-                        mergeTree,
-                        branchId,
-                        block,
-                        seq,
-                        clientId,
-                        collabWindow);
+        let seqSeglen = 0;
+        let segCount = 0;
+        // Compute length for seq across children
+        for (let i = 0; i < node.childCount; i++) {
+            const child = node.children[i];
+            if (!child.isLeaf()) {
+                const childBlock = child;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const branchPartialLengths = childBlock.partialLengths!;
+                const partialLengths = branchPartialLengths.partialLengths;
+                const seqIndex = latestLEQ(partialLengths, seq);
+                if (seqIndex >= 0) {
+                    const leqPartial = partialLengths[seqIndex];
+                    if (leqPartial.seq === seq) {
+                        seqSeglen += leqPartial.seglen;
+                    }
                 }
+                segCount += branchPartialLengths.segmentCount;
+            } else {
+                const segment = child;
+                const removalInfo = mergeTree.getRemovalInfo(segment);
+
+                if (segment.seq === seq) {
+                    if (removalInfo.removedSeq !== seq) {
+                        seqSeglen += segment.cachedLength;
+                    }
+                } else {
+                    if (removalInfo.removedSeq === seq) {
+                        seqSeglen -= segment.cachedLength;
+                    }
+                }
+                segCount++;
             }
         }
+        this.segmentCount = segCount;
+
+        PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
+        if (this.clientSeqNumbers[clientId] === undefined) {
+            this.clientSeqNumbers[clientId] = [];
+        }
+        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen);
+        //    console.log(this.toString());
+        if (PartialSequenceLengths.options.zamboni) {
+            this.zamboni(collabWindow);
+        }
+        if (PartialSequenceLengths.options.verify) {
+            this.verify();
+        }
+        //   console.log('ZZZ');
+        //   console.log(this.toString());
     }
 
-    public getPartialLength(mergeTree: MergeTree, refSeq: number, clientId: number) {
-        const branchId = mergeTree.getBranchId(clientId);
-        if (MergeTree.traceTraversal) {
-            console.log(`plen branch ${branchId}`);
-        }
-        if (branchId > 0) {
-            return this.downstreamPartialLengths[branchId - 1].getBranchPartialLength(refSeq, clientId);
-        } else {
-            return this.getBranchPartialLength(refSeq, clientId);
-        }
-    }
-
-    public toString(glc?: (id: number) => string, indentCount = 0) {
-        let buf = this.branchToString(glc);
-        if (this.downstreamPartialLengths) {
-            for (let i = 0, len = this.downstreamPartialLengths.length; i < len; i++) {
-                buf += "\n";
-                buf += internedSpaces(indentCount);
-                buf += this.downstreamPartialLengths[i].branchToString(glc, i + 1);
-            }
-        }
-        return buf;
-    }
-
-    private getBranchPartialLength(refSeq: number, clientId: number) {
+    public getPartialLength(refSeq: number, clientId: number) {
         let pLen = this.minLength;
         const seqIndex = latestLEQ(this.partialLengths, refSeq);
         const cliLatestindex = this.cliLatest(clientId);
@@ -483,6 +487,32 @@ export class PartialSequenceLengths {
             }
         }
         return pLen;
+    }
+
+    public toString(glc?: (id: number) => string, indentCount = 0) {
+        let buf = "";
+        for (const partial of this.partialLengths) {
+            buf += `(${partial.seq},${partial.len}) `;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array, no-restricted-syntax
+        for (const clientId in this.clientSeqNumbers) {
+            if (this.clientSeqNumbers[clientId].length > 0) {
+                buf += `Client `;
+                if (glc) {
+                    buf += `${glc(+clientId)}`;
+                } else {
+                    buf += `${clientId}`;
+                }
+                buf += "[";
+                for (const partial of this.clientSeqNumbers[clientId]) {
+                    buf += `(${partial.seq},${partial.len})`;
+                }
+                buf += "]";
+            }
+        }
+        buf = `min(seq ${this.minSeq}): ${this.minLength}; sc: ${this.segmentCount};${buf}`;
+        return buf;
     }
 
     // Clear away partial sums for sequence numbers earlier than the current window
@@ -531,83 +561,13 @@ export class PartialSequenceLengths {
 
     // Assumes sequence number already coalesced
     private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
-        this.addClientSeqNumber(partialLength.clientId, partialLength.seq, partialLength.seglen);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, partialLength.seglen);
         if (partialLength.overlapRemoveClients) {
             partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
                 this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
                 return true;
             });
-        }
-    }
-
-    // Assume: seq is latest sequence number; no structural change to sub-tree, but a segment
-    // with sequence number seq has been added within the sub-tree
-    // TODO: assert client id matches
-    private updateBranch(
-        mergeTree: MergeTree,
-        branchId: number,
-        node: IMergeBlock,
-        seq: number,
-        clientId: number,
-        collabWindow: CollaborationWindow) {
-        let seqSeglen = 0;
-        let segCount = 0;
-        // Compute length for seq across children
-        for (let i = 0; i < node.childCount; i++) {
-            const child = node.children[i];
-            if (!child.isLeaf()) {
-                const childBlock = child;
-                const branchPartialLengths = childBlock.partialLengths.partialLengthsForBranch(branchId);
-                const partialLengths = branchPartialLengths.partialLengths;
-                const seqIndex = latestLEQ(partialLengths, seq);
-                if (seqIndex >= 0) {
-                    const leqPartial = partialLengths[seqIndex];
-                    if (leqPartial.seq === seq) {
-                        seqSeglen += leqPartial.seglen;
-                    }
-                }
-                segCount += branchPartialLengths.segmentCount;
-            } else {
-                const segment = child;
-
-                const segBranchId = mergeTree.getBranchId(segment.clientId);
-                const removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
-
-                if (segment.seq === seq) {
-                    if (removalInfo.removedSeq !== seq) {
-                        seqSeglen += segment.cachedLength;
-                    }
-                } else {
-                    if (removalInfo.removedSeq === seq) {
-                        seqSeglen -= segment.cachedLength;
-                    }
-                }
-                segCount++;
-            }
-        }
-        this.segmentCount = segCount;
-
-        PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
-        if (this.clientSeqNumbers[clientId] === undefined) {
-            this.clientSeqNumbers[clientId] = [];
-        }
-        PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen);
-        //    console.log(this.toString());
-        if (PartialSequenceLengths.options.zamboni) {
-            this.zamboni(collabWindow);
-        }
-        if (PartialSequenceLengths.options.verify) {
-            this.verify();
-        }
-        //   console.log('ZZZ');
-        //   console.log(this.toString());
-    }
-
-    private partialLengthsForBranch(branchId: number) {
-        if (branchId > 0) {
-            return this.downstreamPartialLengths[branchId - 1];
-        } else {
-            return this;
         }
     }
 
@@ -629,32 +589,6 @@ export class PartialSequenceLengths {
         }
     }
 
-    private branchToString(glc?: (id: number) => string, branchId = 0) {
-        let buf = "";
-        for (const partial of this.partialLengths) {
-            buf += `(${partial.seq},${partial.len}) `;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-for-in-array, no-restricted-syntax
-        for (const clientId in this.clientSeqNumbers) {
-            if (this.clientSeqNumbers[clientId].length > 0) {
-                buf += `Client `;
-                if (glc) {
-                    buf += `${glc(+clientId)}`;
-                } else {
-                    buf += `${clientId}`;
-                }
-                buf += "[";
-                for (const partial of this.clientSeqNumbers[clientId]) {
-                    buf += `(${partial.seq},${partial.len})`;
-                }
-                buf += "]";
-            }
-        }
-        buf = `Br ${branchId}, min(seq ${this.minSeq}): ${this.minLength}; sc: ${this.segmentCount};${buf}`;
-        return buf;
-    }
-
     // Debug only
     private verifyPartialLengths(partialLengths: PartialSequenceLength[], clientPartials: boolean) {
         if (partialLengths.length === 0) { return 0; }
@@ -668,16 +602,16 @@ export class PartialSequenceLengths {
             count++;
 
             // Sequence number should be larger or equal to minseq
-            assert(this.minSeq <= partialLength.seq);
+            assert(this.minSeq <= partialLength.seq, 0x054 /* "Sequence number less than minSeq!" */);
 
             // Sequence number should be sorted
-            assert(lastSeqNum < partialLength.seq);
+            assert(lastSeqNum < partialLength.seq, 0x055 /* "Sequence number is not sorted!" */);
             lastSeqNum = partialLength.seq;
 
             // Len is a accumulation of all the seglen adjustments
             accumSegLen += partialLength.seglen;
             if (accumSegLen !== partialLength.len) {
-                assert(false);
+                assert(false, 0x056 /* "Unexpected total for accumulation of all seglen adjustments!" */);
             }
 
             if (clientPartials) {
@@ -694,13 +628,13 @@ export class PartialSequenceLengths {
             } else {
                 // Len adjustment should not make length negative
                 if (this.minLength + partialLength.len < 0) {
-                    assert(false);
+                    assert(false, 0x057 /* "Negative length after length adjustment!" */);
                 }
             }
 
             if (partialLength.overlapRemoveClients) {
                 // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
-                assert(!clientPartials);
+                assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
 
                 // Each overlap client count as one
                 count += partialLength.overlapRemoveClients.size();
@@ -719,14 +653,15 @@ export class PartialSequenceLengths {
             }
 
             // If we have client view, we should have the flat view
-            assert(this.partialLengths);
+            assert(!!this.partialLengths, 0x059 /* "Client view exists but flat view does not!" */);
             const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same
-            assert(flatCount === cliCount);
+            assert(flatCount === cliCount,
+                0x05a /* "Mismatch between number of partial lengths on client and flat views!" */);
         } else {
             // If we don't have a client view, we shouldn't have the flat view either
-            assert(!this.partialLengths);
+            assert(!this.partialLengths, 0x05b /* "Flat view exists but client view does not!" */);
         }
     }
 }

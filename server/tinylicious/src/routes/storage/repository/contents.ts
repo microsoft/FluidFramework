@@ -4,7 +4,7 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { queryParamToString } from "../../../utils";
 import * as utils from "../utils";
 import { getBlob } from "../git/blobs";
@@ -26,6 +26,7 @@ export async function getContent(
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return content;
 }
 

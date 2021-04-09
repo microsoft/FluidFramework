@@ -31,10 +31,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.getVersions(versionId, count);
     }
 
-    public async read(blobId: string): Promise<string> {
-        return this.internalStorageService.read(blobId);
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.internalStorageService.write(tree, parents, message, ref);
     }
@@ -47,11 +43,11 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.downloadSummary(handle);
     }
 
-    public async createBlob(file: Uint8Array): Promise<ICreateBlobResponse> {
+    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return this.internalStorageService.createBlob(file);
     }
 
-    public getRawUrl(blobId: string): string {
-        return this.internalStorageService.getRawUrl(blobId);
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.internalStorageService.readBlob(blobId);
     }
 }

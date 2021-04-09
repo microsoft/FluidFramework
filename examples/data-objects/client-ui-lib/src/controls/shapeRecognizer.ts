@@ -77,4 +77,5 @@ const defaultShapes = [
 
 const detector = new ShapeDetector(defaultShapes);
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const recognizeShape = (stroke: IPoint[]) => detector.spot(stroke);

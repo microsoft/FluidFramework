@@ -13,6 +13,8 @@ export let dumpSnapshotTrees = false;
 export let dumpSnapshotVersions = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
+export let paramUnpackAggregatedBlobs = true;
+export let paramActualFormatting = false;
 
 let paramForceTokenReauth = false;
 
@@ -47,6 +49,8 @@ const optionsArray =
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
+        ["--noUnpack", "Do not unpack aggregated blobs"],
+        ["--actualPayload", "Do not format json payloads nicely, preserve actual bytes / formatting in storage"],
         ["--saveDir <outdir>", "Save data of the snapshots and messages"],
         ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--websocket", "Connect to web socket to download initial messages"],
@@ -102,6 +106,12 @@ export function parseArguments() {
                 break;
             case "--numSnapshotVersions":
                 paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
+                break;
+            case "--noUnpack":
+                paramUnpackAggregatedBlobs = false;
+                break;
+            case "--actualPayload":
+                paramActualFormatting = true;
                 break;
             case "--saveDir":
                 paramSaveDir = parseStrArg(i++, "save data path");

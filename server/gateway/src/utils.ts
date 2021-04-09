@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient, ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { generateToken } from "@fluidframework/server-services-utils";
 import { Request } from "express";
 import _ from "lodash";
 
@@ -18,6 +21,25 @@ export interface IJWTClaims {
         id: string;
         name: string;
     };
+}
+
+/**
+ * Helper function to generate r11s token for given tenants
+ */
+export function getR11sToken(
+    tenantId: string,
+    documentId: string,
+    tenants: IAlfredTenant[],
+    scopes: ScopeType[],
+    user: IAlfredUser,
+    lifetimeSec: number = 60 * 60): string {
+    for (const tenant of tenants) {
+        if (tenantId === tenant.id) {
+            return generateToken(tenantId, documentId, tenant.key, scopes, user, lifetimeSec);
+        }
+    }
+
+    throw new Error("Invalid tenant");
 }
 
 /**
@@ -50,11 +72,12 @@ export function getConfig(
  * Helper function to return a relative range (if local) or the specific chaincode package version
  */
 export function getVersion() {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
     const version = require("../package.json").version as string;
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 const getUser = (request: Request) => request.user ?? request.session?.guest;
 
 export function getJWTClaims(request: Request): IJWTClaims {

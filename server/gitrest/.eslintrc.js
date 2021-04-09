@@ -5,9 +5,10 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "rules": {
-        "prefer-arrow/prefer-arrow-functions": "off"
+        "@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+        "prefer-arrow/prefer-arrow-functions": "off",
     }
 }

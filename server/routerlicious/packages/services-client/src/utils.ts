@@ -13,7 +13,7 @@ export async function getOrCreateRepository(endpoint: string, owner: string, rep
         // eslint-disable-next-line @typescript-eslint/promise-function-async, no-null/no-null
         .catch((error) => error.response && error.response.status === 400 ? null : Promise.reject(error));
 
-    if (!details) {
+    if (!details || details.status === 400) {
         console.log(`Create Repo: ${endpoint}/${owner}/${repository}`);
         const createParams: resources.ICreateRepoParams = {
             name: repository,

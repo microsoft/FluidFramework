@@ -6,8 +6,15 @@
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
-export interface IOdspResolvedUrl extends IFluidResolvedUrl {
+export interface IOdspUrlParts {
+    siteUrl: string;
+    driveId: string;
+    itemId: string;
+}
+
+export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     type: "fluid";
+    odspResolvedUrl: true;
 
     // URL to send to fluid, contains the documentId and the path
     url: string;
@@ -15,22 +22,32 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;
 
-    siteUrl: string;
-
-    driveId: string;
-
-    itemId: string;
-
     endpoints: {
         snapshotStorageUrl: string;
+        attachmentPOSTStorageUrl: string;
+        attachmentGETStorageUrl: string;
+        deltaStorageUrl: string,
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+    // eslint-disable-next-line @typescript-eslint/ban-types
     tokens: {};
 
     fileName: string;
 
     summarizer: boolean;
+
+    // This is used to save the network calls while doing trees/latest call as if the client does not have permission
+    // then this link can be redeemed for the permissions in the same network call.
+    sharingLinkToRedeem?: string;
+
+    codeHint?: {
+        // containerPackageName is used for adding the package name to the request headers.
+        // This may be used for preloading the container package when loading Fluid content.
+        containerPackageName?: string
+    }
+
+    fileVersion: string | undefined;
 }
 
 /**
@@ -48,10 +65,23 @@ export interface ISocketStorageDiscovery {
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
 
+    /**
+     * The non-AFD URL
+     */
     deltaStreamSocketUrl: string;
 
-    // The AFD URL for PushChannel
+    /**
+     * The AFD URL for PushChannel
+     */
     deltaStreamSocketUrl2?: string;
+
+    /**
+     * The access token for PushChannel. Optionally returned, depending on implementation.
+     * OneDrive for Consumer implementation returns it and OneDrive for Business implementation
+     * does not return it and instead expects token to be returned via `getWebsocketToken` callback
+     * passed as a parameter to `OdspDocumentService.create()` factory.
+     */
+    socketToken?: string;
 }
 
 /**
@@ -104,7 +134,7 @@ export enum SnapshotType {
     Channel = "channel",
 }
 
-export interface ISnapshotRequest {
+export interface IOdspSummaryPayload {
     type: SnapshotType;
     message: string;
     sequenceNumber: number;
@@ -119,12 +149,13 @@ export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEnt
 
 export interface ISnapshotTreeBaseEntry {
     path: string;
-    type: string;
+    type: "blob" | "tree" | "commit";
 }
 
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
-    id?: string;
     value: SnapshotTreeValue;
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
@@ -134,16 +165,18 @@ export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
 export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
 
 export interface ISnapshotTree {
+    type: "tree";
     entries?: SnapshotTreeEntry[];
 }
 
 export interface ISnapshotBlob {
-    contents?: string;
-    content?: string;
-    encoding: string;
+    type: "blob";
+    content: string;
+    encoding: "base64" | "utf-8";
 }
 
 export interface ISnapshotCommit {
+    type: "commit";
     content: string;
 }
 
@@ -160,11 +193,13 @@ export interface ITree {
 }
 
 /**
- * Blob content
+ * Blob content, represents blobs in downloaded snapshot.
  */
 export interface IBlob {
     content: string;
-    encoding: string;
+    // SPO only uses "base64" today for download.
+    // We are adding undefined too, as temp way to roundtrip strings unchanged.
+    encoding: "base64" | undefined;
     id: string;
     size: number;
 }
@@ -174,12 +209,6 @@ export interface IOdspSnapshot {
     trees: ITree[];
     blobs?: IBlob[];
     ops?: ISequencedDeltaOpMessage[];
-}
-
-export interface IOdspUrlParts {
-    site: string;
-    drive: string;
-    item: string;
 }
 
 export interface ISnapshotOptions {
@@ -192,6 +221,41 @@ export interface ISnapshotOptions {
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;
+
+    /*
+     * Maximum time limit to fetch snapshot (in seconds)
+     * If specified, client will timeout the fetch request if it exceeds the time limit and
+     * will try to fetch the snapshot without blobs.
+     */
+    timeout?: number;
+}
+
+export interface IOpsCachingPolicy {
+    /**
+     * Batch size. Controls how many ops are grouped together as single cache entry
+     * The bigger the number, the more efficient it is (less reads & writes)
+     * At the same time, big number means we wait for so many ops to accumulate, which
+     * increases chances and number of trailing ops that would not be flushed to cache
+     * when user closes tab
+     * Use any number below 1 to disable caching
+     * Default: 100
+     */
+    batchSize?: number;
+
+    /**
+     * To reduce the problem of losing trailing ops when using big batch sizes, host
+     * could specify how often driver should flush ops it has not flushed yet.
+     * -1 means do not use timer.
+     * Measured in ms.
+     * Default: 5000
+     */
+    timerGranularity?: number,
+
+    /**
+     * Total number of ops to cache. When we reach that number, ops caching stops
+     * Default: 5000
+     */
+    totalOpsToCache?: number;
 }
 
 export interface HostStoragePolicy {
@@ -208,10 +272,16 @@ export interface HostStoragePolicy {
      */
     concurrentSnapshotFetch?: boolean;
 
+    blobDeduping?: boolean;
+
+    // Options overwriting default ops fetching from storage.
+    opsBatchSize?: number;
+    concurrentOpsBatches?: number;
+
     /**
-     * Use post call to fetch the latest snapshot
+     * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)
      */
-    usePostForTreesLatest?: boolean;
+    opsCaching?: IOpsCachingPolicy;
 }
 
 /**
@@ -229,4 +299,31 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+}
+
+/**
+ * @deprecated - use OdspFluidDataStoreLocator
+ */
+export type OdspDocumentInfo = OdspFluidDataStoreLocator;
+
+export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
+    dataStorePath: string;
+    appName?: string;
+    containerPackageName?: string;
+    fileVersion?: string;
+}
+
+export enum SharingLinkHeader {
+    // Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
+    // which can be redeemed at server to get permissions.
+    isSharingLinkToRedeem = "isSharingLinkToRedeem",
+}
+
+export interface ISharingLinkHeader {
+    [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
+}
+
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ISharingLinkHeader> { }
 }

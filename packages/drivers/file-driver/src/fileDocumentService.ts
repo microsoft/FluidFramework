@@ -18,6 +18,8 @@ export class FileDocumentService implements api.IDocumentService {
         private readonly deltaConnection: api.IDocumentDeltaConnection) {
     }
 
+    public dispose() {}
+
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): api.IResolvedUrl {
         throw new Error("Not implemented");
@@ -41,10 +43,6 @@ export class FileDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaConnection;
-    }
-
-    public async branch(): Promise<string> {
-        return Promise.reject("Not implemented");
     }
 
     public getErrorTrackingService() {

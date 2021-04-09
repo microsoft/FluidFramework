@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -10,10 +11,11 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { Remote } from "comlink";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
-import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
+import { ICombinedDriver } from "./outerDocumentServiceFactory";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame
@@ -22,28 +24,34 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(proxyObject: Remote<{
-        clientId: string,
-        stream: IOuterDocumentDeltaConnectionProxy,
-        deltaStorage: IDocumentDeltaStorageService,
-        storage: IDocumentStorageService,
-    }>): Promise<InnerDocumentService> {
-        return new InnerDocumentService(proxyObject, await proxyObject.clientId);
+    public static async create(
+        proxyObject: ICombinedDriver,
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<InnerDocumentService> {
+        return new InnerDocumentService(
+            proxyObject,
+            resolvedUrl,
+            proxyObject.clientId,
+            logger,
+        );
     }
+
+    private readonly logger: MultiSinkLogger;
 
     private constructor(
-        private readonly outerProxy: Remote<{
-            clientId: string,
-            stream: IOuterDocumentDeltaConnectionProxy,
-            deltaStorage: IDocumentDeltaStorageService,
-            storage: IDocumentStorageService
-        }>,
-        public clientId: string) { }
-
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    public get resolvedUrl(): IResolvedUrl {
-        throw new Error("Not implemented");
+        private readonly outerProxy: ICombinedDriver,
+        public readonly resolvedUrl: IResolvedUrl,
+        public clientId: string,
+        logger?: ITelemetryBaseLogger)
+    {
+        // Use a combined logger with the provided and the outer proxy's
+        this.logger = new MultiSinkLogger("InnerIFrameDriver");
+        this.logger.addLogger(logger);
+        this.logger.addLogger(outerProxy.logger);
     }
+
+    public dispose() {}
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -61,8 +69,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: async (from?: number, to?: number) => this.outerProxy.deltaStorage.then(
-                async (deltaStorage) => deltaStorage.get(from, to)),
+            fetchMessages: (...args) => this.outerProxy.deltaStorage.fetchMessages(...args),
         };
     }
 
@@ -72,13 +79,9 @@ export class InnerDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        const stream = await this.outerProxy.stream;
+        const stream = this.outerProxy.stream;
         const connection = await stream.getDetails();
         return InnerDocumentDeltaConnection.create(connection, stream);
-    }
-
-    public async branch(): Promise<string> {
-        return Promise.reject(new Error("Inner Document Service: branch not implemented"));
     }
 
     public getErrorTrackingService() {

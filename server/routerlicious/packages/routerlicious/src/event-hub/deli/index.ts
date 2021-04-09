@@ -8,7 +8,9 @@ import { create as createDocumentRouter } from "@fluidframework/server-lambdas-d
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import { Provider } from "nconf";
+import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
@@ -31,17 +33,24 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
     const endpoint = config.get("eventHub:endpoint");
-    const forwardProducer = new services.EventHubProducer(endpoint, forwardSendTopic);
-    const reverseProducer = new services.EventHubProducer(endpoint, reverseSendTopic);
+    const forwardProducer = new EventHubProducer(endpoint, forwardSendTopic);
+    const reverseProducer = new EventHubProducer(endpoint, reverseSendTopic);
 
     const redisConfig = config.get("redis");
-    const redisOptions: any = { password: redisConfig.pass };
+    const redisOptions: RedisOptions = {
+        host: redisConfig.host,
+        port: redisConfig.port,
+        password: redisConfig.pass,
+    };
     if (redisConfig.tls) {
         redisOptions.tls = {
-            serverName: redisConfig.host,
+            servername: redisConfig.host,
         };
     }
-    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
+    const publisher = new services.SocketIoRedisPublisher(redisOptions);
+    publisher.on("error", (err) => {
+        winston.error("Error with Redis Publisher:", err);
+    });
 
     const localContext = new LocalContext(winston);
 
@@ -56,7 +65,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    return new DeliLambdaFactory(mongoManager, collection, tenantManager, combinedProducer, reverseProducer);
+    return new DeliLambdaFactory(
+        mongoManager,
+        collection,
+        tenantManager,
+        combinedProducer,
+        reverseProducer,
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

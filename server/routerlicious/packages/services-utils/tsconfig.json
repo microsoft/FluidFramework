@@ -5,9 +5,12 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strictNullChecks": false,
+        "strictNullChecks": true,
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"

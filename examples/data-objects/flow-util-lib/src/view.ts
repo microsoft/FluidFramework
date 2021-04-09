@@ -15,7 +15,9 @@ export interface IView<TInit, TProps> {
     detach(): void;
 }
 
-export abstract class View<TInit extends TProps, TProps = {} | undefined> implements IView<TInit, TProps> {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export abstract class View<TInit extends TProps, TProps = {} | undefined>
+    implements IView<TInit, TProps> {
     private _root?: Element;
     private listeners?: IListenerRegistration[];
 

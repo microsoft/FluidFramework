@@ -9,46 +9,22 @@ import {
     IRawOperationMessage,
     IRawOperationMessageBatch,
     ITenantManager,
+    IThrottler,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import {
+    verifyStorageToken,
+    throttle,
+    IThrottleMiddlewareOptions,
+    getParam,
+} from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
+import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getParam } from "../../../utils";
+import { Constants } from "../../../utils";
 
-const sequenceNumber = "sequenceNumber";
-
-export async function getDeltaContents(
-    mongoManager: MongoManager,
-    collectionName: string,
-    tenantId: string,
-    documentId: string,
-    from?: number,
-    to?: number): Promise<any[]> {
-    // Create an optional filter to restrict the delta range
-    const query: any = { documentId, tenantId };
-    if (from !== undefined || to !== undefined) {
-        query[sequenceNumber] = {};
-
-        if (from !== undefined) {
-            query[sequenceNumber].$gt = from;
-        }
-
-        if (to !== undefined) {
-            query[sequenceNumber].$lt = to;
-        }
-    }
-
-    // Query for the deltas and return a filtered version of just the operations field
-    const db = await mongoManager.getDatabase();
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { sequenceNumber: 1 });
-
-    return dbDeltas;
-}
-
-export async function getDeltas(
+async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
@@ -75,6 +51,7 @@ export async function getDeltas(
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return dbDeltas.map((delta) => delta.operation);
 }
 
@@ -103,6 +80,7 @@ async function getDeltasFromStorage(
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.term": 1, "operation.sequenceNumber": 1 });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return dbDeltas.map((delta) => delta.operation);
 }
 
@@ -196,10 +174,16 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: MongoManager,
-    appTenants: IAlfredTenant[]): Router {
+    appTenants: IAlfredTenant[],
+    throttler: IThrottler): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
+
+    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+        throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+    };
 
     function stringToSequenceNumber(value: any): number {
         if (typeof value !== "string") { return undefined; }
@@ -208,107 +192,95 @@ export function create(
     }
 
     /**
-     * Retrieves raw (unsequenced) deltas for the given document.
-     */
-    router.get("/raw/:tenantId?/:id", (request, response, next) => {
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-
-        // Query for the raw deltas (no from/to since we want all of them)
-        const deltasP = getRawDeltas(
-            mongoManager,
-            rawDeltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"));
-
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
-
-    /**
-     * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
-     */
-    router.get("/:tenantId?/:id", (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
-
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltas(
-            mongoManager,
-            deltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"),
-            from,
-            to);
-
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
-
-    /**
      * New api that fetches ops from summary and storage.
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
-    router.get(["/v1/:tenantId?/:id", "/:tenantId?/:id/v1"], (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+    router.get(
+        ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
+        verifyStorageToken(tenantManager, config),
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltasFromSummaryAndStorage(
-            tenantManager,
-            mongoManager,
-            deltasCollectionName,
-            tenantId,
-            getParam(request.params, "id"),
-            from,
-            to);
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltasFromSummaryAndStorage(
+                tenantManager,
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
 
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
 
     /**
-     * Retrieves delta contents for the given document. With an optional from and to range (both exclusive) specified
-     * @deprecated path "/content:tenantId?/:id" currently kept for backwards compatibility
+     * Retrieves raw (unsequenced) deltas for the given document.
      */
-    router.get(["/content/:tenantId?/:id", "/:tenantId?/:id/content"], (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+    router.get(
+        "/raw/:tenantId/:id",
+        verifyStorageToken(tenantManager, config),
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltaContents(
-            mongoManager,
-            "content",
-            tenantId,
-            getParam(request.params, "id"),
-            from,
-            to);
+            // Query for the raw deltas (no from/to since we want all of them)
+            const deltasP = getRawDeltas(
+                mongoManager,
+                rawDeltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"));
 
-        deltasP.then(
-            (deltas) => {
-                response.status(200).json(deltas);
-            },
-            (error) => {
-                response.status(500).json(error);
-            });
-    });
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
+
+    /**
+     * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
+     */
+    router.get(
+        "/:tenantId/:id",
+        verifyStorageToken(tenantManager, config),
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const from = stringToSequenceNumber(request.query.from);
+            const to = stringToSequenceNumber(request.query.to);
+            const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+
+            // Query for the deltas and return a filtered version of just the operations field
+            const deltasP = getDeltas(
+                mongoManager,
+                deltasCollectionName,
+                tenantId,
+                getParam(request.params, "id"),
+                from,
+                to);
+
+            deltasP.then(
+                (deltas) => {
+                    response.status(200).json(deltas);
+                },
+                (error) => {
+                    response.status(500).json(error);
+                });
+        },
+    );
 
     return router;
 }

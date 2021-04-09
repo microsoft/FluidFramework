@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { ITenantManager } from "@fluidframework/server-services-core";
 
 export interface IAlfred {
-    createFork(tenantId: string, id: string): Promise<string>;
-
     getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: IFluidCodeDetails | null }>;
 
     getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;

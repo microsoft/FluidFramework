@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
+import assert from 'assert';
 import { WebApi } from 'azure-devops-node-api';
 import { decompressStatsFile, unzipStream } from '../utilities';
 import JSZip from 'jszip';

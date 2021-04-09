@@ -5,9 +5,10 @@
 
 module.exports = {
     extends: [
-        "@fluidframework/eslint-config-fluid",
+        "@fluidframework/eslint-config-fluid/eslint7",
     ],
     rules: {
+        "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-case-declarations": "off"

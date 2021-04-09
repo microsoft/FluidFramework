@@ -37,8 +37,11 @@ export function setFluidState<SV, SF>(
     const storedStateHandle = syncedState.get<IFluidHandle>(
         `syncedState-${syncedStateId}`,
     );
-    let storedState = fluidObjectMap.get(storedStateHandle?.absolutePath)
-        ?.fluidObject as ISharedMap;
+    let storedState: ISharedMap | undefined;
+    if (storedStateHandle) {
+        storedState = fluidObjectMap.get(storedStateHandle.absolutePath)
+            ?.fluidObject as ISharedMap;
+    }
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
         fluidObjectMap.set(newState.handle.absolutePath, {

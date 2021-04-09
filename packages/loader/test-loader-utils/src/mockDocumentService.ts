@@ -35,6 +35,8 @@ export class MockDocumentService implements IDocumentService {
         private readonly deltaConnectionFactory?: () => IDocumentDeltaConnection,
     ) { }
 
+    public dispose() {}
+
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");
@@ -52,9 +54,6 @@ export class MockDocumentService implements IDocumentService {
         return this.deltaConnectionFactory !== undefined
             ? this.deltaConnectionFactory()
             : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
-    }
-    public async branch(): Promise<string> {
-        throw new Error("Method not implemented.");
     }
     public getErrorTrackingService(): IErrorTrackingService {
         throw new Error("Method not implemented.");

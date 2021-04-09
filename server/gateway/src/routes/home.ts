@@ -70,6 +70,16 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
     );
 
     router.get(
+        "/login_spo-shared",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "offline_access",
+                "https://microsoft.sharepoint.com/AllSites.Write",
+            ],
+        }),
+    );
+
+    router.get(
         "/login_pushsrv",
         passport.authenticate("openidconnect", {
             scope: [

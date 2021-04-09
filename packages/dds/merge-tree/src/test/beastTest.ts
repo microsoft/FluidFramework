@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, eqeqeq, max-len, no-bitwise */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -11,9 +11,7 @@ import path from "path";
 import { Trace } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import * as MergeTree from "../";
 import * as Base from "../base";
@@ -229,7 +227,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree.MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -237,7 +235,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment, UniversalSequenceNumber, LocalClientId));
     log(new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
@@ -1078,7 +1076,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "on the mat.");
         cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "that ", undefined, 1, 0, "1");
         if (verbose) {
@@ -1130,7 +1128,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, " old sock!");
         cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");
@@ -1161,7 +1159,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "abcdefgh");
         cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(1, 3), 1, 0, "3"));
         if (verbose) {
@@ -1596,22 +1594,21 @@ export class DocumentTree {
     }
 
     static generateContent(rowProbability: number) {
+        let _rowProbability = rowProbability;
         const items = <DocumentNode[]>[];
         const docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
-            const rowThreshold = rowProbability * 1000;
+            const rowThreshold = _rowProbability * 1000;
             const selector = DocumentTree.randPack.randInteger(1, 1000);
             if (selector >= rowThreshold) {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
-                // eslint-disable-next-line no-param-reassign
-                rowProbability /= 2;
-                if (rowProbability < 0.08) {
-                    // eslint-disable-next-line no-param-reassign
-                    rowProbability = 0;
+                _rowProbability /= 2;
+                if (_rowProbability < 0.08) {
+                    _rowProbability = 0;
                 }
-                const row = DocumentTree.generateRow(rowProbability);
+                const row = DocumentTree.generateRow(_rowProbability);
                 items.push(row);
             }
         }

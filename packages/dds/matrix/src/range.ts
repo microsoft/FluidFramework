@@ -8,9 +8,9 @@
   */
 export function ensureRange(value: number, limit: number) {
     // Coerce 'value' to Uint32 so that we can range check with a single branch.
-    value >>>= 0;   // eslint-disable-line no-param-reassign, no-bitwise
+    const _value = value >>> 0;   // eslint-disable-line no-bitwise
 
-    if (value >= limit) {
+    if (_value >= limit) {
         throw new RangeError("Invalid (row, col) coordinate.");
     }
 }

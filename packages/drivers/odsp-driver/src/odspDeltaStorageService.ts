@@ -7,33 +7,27 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
+import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { getWithRetryForTokenRefresh } from "./odspUtils";
 import { TokenFetchOptions } from "./tokenFetch";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
-export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class OdspDeltaStorageService {
     constructor(
-        private readonly deltaFeedUrlProvider: () => Promise<string>,
-        private ops: ISequencedDeltaOpMessage[] | undefined,
+        private readonly deltaFeedUrl: string,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
-        private readonly logger?: ITelemetryLogger,
+        private readonly epochTracker: EpochTracker,
+        private readonly logger: ITelemetryLogger,
     ) {
     }
 
     public async get(
-        from?: number,
-        to?: number,
-    ): Promise<ISequencedDocumentMessage[]> {
-        const ops = this.ops;
-        this.ops = undefined;
-        if (ops !== undefined && from !== undefined) {
-            return ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-        }
-        this.ops = undefined;
-
+        from: number,
+        to: number,
+    ): Promise<api.IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
@@ -43,31 +37,34 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const response = await fetchHelper<IDeltaStorageGetResponse>(url, { headers });
+            const response = await this.epochTracker
+                .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, "ops");
             const deltaStorageResponse = response.content;
-            if (this.logger) {
-                this.logger.sendTelemetryEvent({
-                    eventName: "DeltaStorageOpsFetch",
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    sprequestguid: response.headers.get("sprequestguid"),
-                    sprequestduration: response.headers.get("sprequestduration"),
-                });
-            }
-            const operations: ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
-            if (operations.length > 0 && "op" in operations[0]) {
-                return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+            let messages: ISequencedDocumentMessage[];
+            if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
+                messages = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+            } else {
+                messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
             }
 
-            return operations as ISequencedDocumentMessage[];
+            this.logger.sendPerformanceEvent({
+                eventName: "DeltaStorageOpsFetch",
+                headers: Object.keys(headers).length !== 0 ? true : undefined,
+                count: messages.length,
+                duration: response.duration, // this duration for single attempt!
+                ...response.commonSpoHeaders,
+                attempts: options.refresh ? 2 : 1,
+            });
+
+            // It is assumed that server always returns all the ops that it has in the range that was requested.
+            // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
+            return { messages, partialResult: false };
         });
     }
 
-    public async buildUrl(from: number | undefined, to: number | undefined) {
-        const fromInclusive = from === undefined ? undefined : from + 1;
-        const toInclusive = to === undefined ? undefined : to - 1;
-
-        const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
+    public async buildUrl(from: number, to: number) {
+        const filter = encodeURIComponent(`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`);
         const queryString = `?filter=${filter}`;
-        return `${await this.deltaFeedUrlProvider()}${queryString}`;
+        return `${this.deltaFeedUrl}${queryString}`;
     }
 }

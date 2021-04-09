@@ -7,8 +7,8 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IValueChanged } from "@fluidframework/map";
-
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
 const xKey = "x";
@@ -24,7 +24,7 @@ export class Coordinate extends DataObject implements ICoordinate {
         return Coordinate.factory;
     }
 
-    private static readonly factory = new DataObjectFactory(
+    private static readonly factory = new DataObjectFactory<Coordinate, undefined, undefined, IEvent>(
         Coordinate.ComponentName,
         Coordinate,
         [],
@@ -45,7 +45,7 @@ export class Coordinate extends DataObject implements ICoordinate {
     }
 
     public get x() {
-        return this.root.get(xKey);
+        return this.root.get(xKey) ?? 0;
     }
 
     public set x(newX: number) {
@@ -53,7 +53,7 @@ export class Coordinate extends DataObject implements ICoordinate {
     }
 
     public get y() {
-        return this.root.get(yKey);
+        return this.root.get(yKey) ?? 0;
     }
 
     public set y(newY: number) {

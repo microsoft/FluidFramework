@@ -58,6 +58,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
      */
     public synthesize<
         O extends IFluidObject,
+        // eslint-disable-next-line @typescript-eslint/ban-types
         R extends IFluidObject = {}>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,

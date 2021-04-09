@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -12,27 +16,24 @@ import * as api from "@fluidframework/protocol-definitions";
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-    public abstract read(blobId: string): Promise<string>;
+    public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
-        return Promise.reject("Invalid operation");
+    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
+        return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
-        return Promise.reject("Invalid operation");
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+        return Promise.reject(new Error("Invalid operation"));
     }
 
     public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject("Invalid operation");
+        return Promise.reject(new Error("Invalid operation"));
     }
 
-    public getRawUrl(blobId: string): string {
-        throw new Error("Invalid operation");
-    }
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }
@@ -46,11 +47,11 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
-     * @param storage - real document storage
+     * @param documentService - the real document service
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: IDocumentStorageService): Promise<boolean>;
+    public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops
@@ -63,7 +64,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * Note: this API is called while replay() is in progress - next batch of ops is downloaded in parallel
      * @param currentOp - current op
      */
-    public abstract fetchTo(currentOp: number): number;
+    public abstract fetchTo(currentOp: number): number | undefined;
 
     /**
      * Returns true if no more ops should be processed (or downloaded for future processing).

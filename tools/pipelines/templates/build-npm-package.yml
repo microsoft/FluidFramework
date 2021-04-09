@@ -23,6 +23,18 @@ parameters:
   type: string
   default: ci:test
 
+- name: taskBundleAnalysis
+  type: boolean
+  default: false
+
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
+
+- name: taskPack
+  type: boolean
+  default: true
+
 - name: poolCG
   type: object
   default: Lite
@@ -52,10 +64,6 @@ parameters:
   type: boolean
   default: true
 
-- name: runBundleAnalysis
-  type: boolean
-  default: false
-
 - name: buildNumberInPatch
   type: string
   default:
@@ -72,6 +80,11 @@ parameters:
 trigger: none
 
 variables:
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
@@ -140,7 +153,7 @@ stages:
                   grep -e fluid.*-0 `find packages -name 'package.json'`
                 else
                   grep -e fluid.*-0 `find . -name 'package.json'`
-              fi
+                fi
 
                 if [[ $? == 0 ]]; then
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
@@ -148,7 +161,14 @@ stages:
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]]; then
+              if [[ "$(release)" == "prerelease" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
@@ -230,48 +250,65 @@ stages:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
-              mergeTestResults: true
+              mergeTestResults: false
             condition: succeededOrFailed()
 
         # Pack
-        - task: Bash@3
-          displayName: npm pack
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              mkdir $(Build.ArtifactStagingDirectory)/pack/
-              if [ -f "lerna.json" ]; then
-                npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              else
-                npm pack --unsafe-perm
-                mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-              fi
+        - ${{ if ne(parameters.taskPack, false) }}:
+          - task: Bash@3
+            displayName: npm pack
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                mkdir $(Build.ArtifactStagingDirectory)/pack/
+                if [ -f "lerna.json" ]; then
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                else
+                  npm pack --unsafe-perm
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                fi
 
-        - task: PublishBuildArtifacts@1
-          displayName: Publish Artifact - pack
-          inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-            ArtifactName: 'pack'
-            publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - pack
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+              ArtifactName: 'pack'
+              publishLocation: 'Container'
 
-        # Collect bundle analysis
-        - ${{ if eq(parameters.runBundleAnalysis, true) }}:
+        # Collect/publish/run bundle analysis
+        - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
-            displayName: npm run bundle-analysis
+            displayName: npm run bundle-analysis:collect
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run bundle-analysis'
+              customCommand: 'run bundle-analysis:collect'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition:
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest'),
+                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
+              )
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
               publishLocation: 'Container'
+
+          - task: Npm@1
+            displayName: run bundle size comparison
+            condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            env:
+              ADO_API_TOKEN: $(System.AccessToken)
+              DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis:run'
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -288,6 +325,18 @@ stages:
               PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
               ArtifactName: '_api-extractor-temp'
               publishLocation: 'Container'
+
+        - task: Bash@3
+          displayName: Check for extraenous modified files
+          inputs:
+            targetType: 'inline'
+            script: |
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|\(use' | grep '^\s' > git_status.log
+              if [ `cat git_status.log | wc -l` != "0" ]; then
+                cat git_status.log
+                echo "##vso[task.logissue type=error]Build should not create extraenous files"
+                exit -1;
+              fi
 
       # Job - Component detection
       - ${{ if eq(variables.componentDetection, true) }}:

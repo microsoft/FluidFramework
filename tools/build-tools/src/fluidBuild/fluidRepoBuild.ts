@@ -4,7 +4,7 @@
  */
 
 import { Package, Packages } from "../common/npmPackage";
-import { globFn } from "../common/utils";
+import { existsSync, globFn, lookUpDirSync, isSameFileOrDir } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
 import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepoKind } from "../common/monoRepo";
@@ -13,11 +13,13 @@ import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
 import { logVerbose } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
+import * as path from "path";
 
 export interface IPackageMatchedOptions {
     match: string[];
     all: boolean;
     server: boolean;
+    dirs: string[];
 };
 
 export class FluidRepoBuild extends FluidRepo {
@@ -40,7 +42,7 @@ export class FluidRepoBuild extends FluidRepo {
     };
 
     public setMatched(options: IPackageMatchedOptions) {
-        const hasMatchArgs = options.match.length;
+        const hasMatchArgs = options.match.length || options.dirs.length;
 
         if (hasMatchArgs) {
             let matched = false;
@@ -49,6 +51,19 @@ export class FluidRepoBuild extends FluidRepo {
                 if (this.matchWithFilter(pkg => regExp.test(pkg.name))) {
                     matched = true;
                 }
+            });
+
+            options.dirs.forEach((arg) => {
+                const pkgDir = lookUpDirSync(arg, (currentDir) => {
+                    return existsSync(path.join(currentDir, "package.json"));
+                });
+                if (!pkgDir) {
+                    throw new Error("Directory specified in --dir is not a package. package.json not found.");
+                }
+                if (!this.matchWithFilter(pkg => isSameFileOrDir(pkg.directory, pkgDir))) {
+                    throw new Error(`Directory specified in --dir is not in a Fluid repo. ${arg} -> ${path.join(pkgDir, "package.json")}`);
+                }
+                matched = true;
             });
             return matched;
         }
@@ -68,6 +83,7 @@ export class FluidRepoBuild extends FluidRepo {
             }
             await FluidPackageCheck.checkNpmIgnore(pkg, fix);
             await FluidPackageCheck.checkTsConfig(pkg, fix);
+            await FluidPackageCheck.checkTestDir(pkg, fix);
         }
     }
     public async depcheck() {

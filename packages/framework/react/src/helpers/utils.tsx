@@ -77,6 +77,7 @@ export const addFluidObject = async <
         storedHandleMap.set(handle.absolutePath, handle);
     }
     return handle.get().then((fluidObject) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (value.isRuntimeMap) {
             (fluidObject as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents !== undefined) {

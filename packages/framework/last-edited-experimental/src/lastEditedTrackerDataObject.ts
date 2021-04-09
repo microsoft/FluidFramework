@@ -4,8 +4,9 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
@@ -14,12 +15,15 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
  */
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
-    private static readonly factory = new DataObjectFactory(
-        "@fluidframework/last-edited-experimental",
-        LastEditedTrackerDataObject,
-        [SharedSummaryBlock.getFactory()],
-        {},
-    );
+    private static readonly factory =
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        new DataObjectFactory<LastEditedTrackerDataObject, undefined, undefined, IEvent>(
+            "@fluidframework/last-edited-experimental",
+            LastEditedTrackerDataObject,
+            [SharedSummaryBlock.getFactory()],
+            {},
+            undefined,
+        );
 
     public static getFactory() {
         return LastEditedTrackerDataObject.factory;
@@ -45,7 +49,8 @@ export class LastEditedTrackerDataObject extends DataObject
 
     protected async hasInitialized() { // hasInitialized
         const sharedSummaryBlock =
-            await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId)!.get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

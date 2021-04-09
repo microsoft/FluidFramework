@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     extractBoxcar,
     ICollection,
@@ -15,12 +16,11 @@ import {
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingOffset: IQueuedMessage;
+    private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        private readonly contentCollection: ICollection<any>,
         protected context: IContext) {
     }
 
@@ -35,11 +35,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 value.operation.traces = [];
 
                 const topic = `${value.tenantId}/${value.documentId}`;
-                if (!this.pending.has(topic)) {
-                    this.pending.set(topic, []);
+
+                let pendingMessages = this.pending.get(topic);
+                if (!pendingMessages) {
+                    pendingMessages = [];
+                    this.pending.set(topic, pendingMessages);
                 }
 
-                this.pending.get(topic).push(value);
+                pendingMessages.push(value);
             }
         }
 
@@ -66,7 +69,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         this.pending = temp;
         const batchOffset = this.pendingOffset;
 
-        const allProcessed = [];
+        const allProcessed: Promise<void>[] = [];
 
         // Process all the batches + checkpoint
         for (const [, messages] of this.current) {
@@ -77,25 +80,29 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                this.context.checkpoint(batchOffset);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.context.checkpoint(batchOffset!);
                 this.sendPending();
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, { restart: true });
             });
     }
 
     private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-        const insertP = this.insertOp(messages);
-        const updateP = this.updateSequenceNumber(messages);
-        await Promise.all([insertP, updateP]);
+        return this.insertOp(messages);
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
+        const dbOps = messages.map((message) => ({
+            ...message,
+            mongoTimestamp: new Date(message.operation.timestamp),
+        }));
         return this.opCollection
-            .insertMany(messages, false)
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            .catch((error) => {
+            .insertMany(dbOps, false)
+            .catch(async (error) => {
+                this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
+
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
                 if (error.code !== 11000) {
@@ -103,40 +110,5 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     return Promise.reject(error);
                 }
             });
-    }
-
-    private async updateSequenceNumber(messages: ISequencedOperationMessage[]) {
-        // TODO: Temporary to back compat with local orderer.
-        if (this.contentCollection === undefined) {
-            return;
-        }
-
-        const allUpdates = [];
-        for (const message of messages) {
-            if (message.operation.contents === undefined) {
-                const updateP = this.contentCollection.update(
-                    {
-                        "clientId": message.operation.clientId,
-                        "documentId": message.documentId,
-                        "op.clientSequenceNumber": message.operation.clientSequenceNumber,
-                        "tenantId": message.tenantId,
-                    },
-                    {
-                        sequenceNumber: message.operation.sequenceNumber,
-                    },
-                    // eslint-disable-next-line no-null/no-null
-                    null)
-                    // eslint-disable-next-line @typescript-eslint/promise-function-async
-                    .catch((error) => {
-                        // Same reason as insertOp.
-                        if (error.code !== 11000) {
-                            return Promise.reject(error);
-                        }
-                    });
-                allUpdates.push(updateP);
-            }
-        }
-
-        await Promise.all(allUpdates);
     }
 }

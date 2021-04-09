@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
@@ -156,6 +155,7 @@ export function generateClientNames(): string[] {
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return clientNames;
 }
 

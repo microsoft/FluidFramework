@@ -57,7 +57,7 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      */
     synthesize<
         O extends IFluidObject,
-        R extends IFluidObject,>(
+        R extends IFluidObject>(
             optionalTypes: FluidObjectSymbolProvider<O>,
             requiredTypes: FluidObjectSymbolProvider<R>,
     ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;

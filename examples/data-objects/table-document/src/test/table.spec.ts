@@ -4,44 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-    createAndAttachContainer,
-    createLocalLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describe("TableDocument", () => {
-    const documentId = "fluid-test://localhost/tableTest";
-    const codeDetails = {
-        package: "tableTestPkg",
-        config: {},
-    };
+describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let tableDocument: TableDocument;
-    let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
         const newId = Math.random().toString(36).substr(2);
         return newId;
     }
 
+    let provider: ITestObjectProvider;
     beforeEach(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader(
-            [[codeDetails, TableDocument.getFactory()]],
-            deltaConnectionServer,
-            urlResolver);
-        const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(TableDocument.getFactory());
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
-
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     const extract = (table: TableDocument) => {
@@ -61,7 +43,7 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(tableDocument), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         assert.strictEqual(tableDocument.numRows, expected.length);
         assert.deepStrictEqual(extract(tableDocument), expected);
     };

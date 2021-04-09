@@ -29,7 +29,6 @@ const mockHandleContext: IFluidHandleContext = {
 
 class MockLoadable implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
-    public get url() { return "url123"; }
     public get handle() { return new FluidObjectHandle(this, "", mockHandleContext); }
 }
 
@@ -51,7 +50,7 @@ describe("Routerlicious", () => {
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Optional Provider registered via Promise value`, async () => {
@@ -63,7 +62,7 @@ describe("Routerlicious", () => {
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Optional Provider registered via factory`, async () => {
@@ -76,7 +75,7 @@ describe("Routerlicious", () => {
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Optional Provider registered via Promise factory`, async () => {
@@ -89,7 +88,7 @@ describe("Routerlicious", () => {
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Required Provider registered via value`, async () => {
@@ -97,11 +96,12 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Required Provider registered via Promise value`, async () => {
@@ -109,11 +109,12 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Required Provider registered via factory`, async () => {
@@ -122,11 +123,12 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`One Required Provider registered via Promise factory`, async () => {
@@ -135,11 +137,12 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`Two Optional Modules all registered`, async () => {
@@ -193,6 +196,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
                     {}, { IFluidLoadable, IFluidConfiguration });
                 const loadable = await s.IFluidLoadable;
@@ -207,6 +211,7 @@ describe("Routerlicious", () => {
             it(`Required Provider not registered should throw`, async () => {
                 const dc = new DependencyContainer();
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 assert.throws(() => dc.synthesize<{}, IFluidLoadable>(
                     {},
                     { IFluidLoadable },
@@ -223,7 +228,7 @@ describe("Routerlicious", () => {
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`Optional Modules found in Parent and Child`, async () => {
@@ -264,11 +269,12 @@ describe("Routerlicious", () => {
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
-                assert(loadable?.url === mock.url, "IFluidLoadable is valid");
+                assert(loadable?.handle.absolutePath === mock.handle.absolutePath, "IFluidLoadable is valid");
             });
 
             it(`Required Modules found in Parent and Child`, async () => {
@@ -279,6 +285,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
                     {}, { IFluidLoadable, IFluidConfiguration });
                 const loadable = await s.IFluidLoadable;
@@ -297,6 +304,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
+                // eslint-disable-next-line @typescript-eslint/ban-types
                 const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");

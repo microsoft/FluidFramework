@@ -10,6 +10,7 @@ import {
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import {
     FluidObjectMap,
@@ -35,6 +36,7 @@ import {
  * the render function to be filled in.
  */
 export abstract class SyncedDataObject<
+    // eslint-disable-next-line @typescript-eslint/ban-types
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent
@@ -96,7 +98,9 @@ export abstract class SyncedDataObject<
      */
     public get dataProps() {
         return {
-            runtime: this.runtime,
+            // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            runtime: this.runtime as IFluidDataStoreRuntime,
             fluidObjectMap: this.fluidObjectMap,
         };
     }
@@ -107,6 +111,7 @@ export abstract class SyncedDataObject<
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
      */
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     public setConfig<S>(key: string, value: ISyncedStateConfig<S, S>) {
         this.syncedStateConfig.set(key, value);
     }

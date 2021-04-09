@@ -16,6 +16,16 @@ export enum ContainerErrorType {
      * Throttling error from server. Server is busy and is asking not to reconnect for some time
      */
     throttlingError = "throttlingError",
+
+    /**
+     * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
+     */
+    dataCorruptionError = "dataCorruptionError",
+
+    /**
+     * Error encountered when processing an operation. May correlate with data corruption.
+     */
+    dataProcessingError = "dataProcessingError",
 }
 
 /**
@@ -36,7 +46,13 @@ export interface IErrorBase {
 /**
  * Represents warnings raised on container.
  */
-export type ContainerWarning = IErrorBase;
+export interface ContainerWarning extends IErrorBase {
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     * Default is false.
+     */
+    logged?: boolean;
+}
 
 /**
  * Represents errors raised on container.

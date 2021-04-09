@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import { ILoader } from "@fluidframework/container-definitions";
 import {
     createGroupOp,
@@ -20,6 +22,10 @@ import { MenuItem } from "prosemirror-menu";
 import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import OrderedMap = require("orderedmap");
+
 import { insertPoint } from "prosemirror-transform";
 import { EditorView } from "prosemirror-view";
 import { ComponentView } from "./componentView";
@@ -28,9 +34,6 @@ import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import OrderedMap = require("orderedmap");
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -55,7 +58,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     public readonly plugin: Plugin;
     private readonly schema: Schema;
     private state: EditorState;
-    private editorView: EditorView;
+    private editorView: EditorView | undefined;
 
     constructor(private readonly text: SharedString, private readonly loader: ILoader) {
         super();
@@ -99,29 +102,29 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                     }
                 }
 
-                top.content.push(nodeJson);
+                top.content!.push(nodeJson);
             } else if (Marker.is(segment)) {
                 // TODO are marks applied to the structural nodes as well? Or just inner text?
 
-                const nodeType = segment.properties[nodeTypeKey];
+                const nodeType = segment.properties![nodeTypeKey];
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
                         // Create the new node, add it to the top's content, and push it on the stack
                         const newNode = { type: nodeType, content: [] };
-                        top.content.push(newNode);
+                        top.content!.push(newNode);
                         nodeStack.push(newNode);
                         break;
 
                     case ReferenceType.NestEnd:
                         const popped = nodeStack.pop();
-                        assert(popped.type === nodeType);
+                        assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
                         break;
 
                     case ReferenceType.Simple:
                         // TODO consolidate the text segment and simple references
                         const nodeJson: IProseMirrorNode = {
-                            type: segment.properties.type,
-                            attrs: segment.properties.attrs,
+                            type: segment.properties!.type,
+                            attrs: segment.properties!.attrs,
                         };
 
                         if (segment.properties) {
@@ -136,7 +139,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                             }
                         }
 
-                        top.content.push(nodeJson);
+                        top.content!.push(nodeJson);
                         break;
 
                     default:
@@ -155,7 +158,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             enable: (state) => true,
             run: (state, _, view) => {
                 const { from, to } = state.selection;
-                let nodeAttrs = null;
+                let nodeAttrs: any = null;
                 if (state.selection instanceof NodeSelection && state.selection.node.type === fluidSchema.nodes.fluid) {
                     nodeAttrs = state.selection.node.attrs;
                 }
@@ -191,7 +194,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             },
         }));
 
-        const doc = nodeStack.pop();
+        const doc = nodeStack.pop()!;
         console.log(JSON.stringify(doc, null, 2));
 
         const fluidDoc = this.schema.nodeFromJSON(doc);
@@ -298,7 +301,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.editorView = editorView;
 
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         window["easyView"] = editorView;
 
         return editorView;

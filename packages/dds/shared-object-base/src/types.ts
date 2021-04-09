@@ -3,20 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
-}
-
-export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";
-
-export interface IProvideSharedObject {
-    readonly ISharedObject: ISharedObject;
-}
+import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -27,7 +17,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
+    extends IChannel, IEventProvider<TEvent> {
     /**
      * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.
@@ -41,14 +31,21 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object
+     * Generates summary of the shared object.
+     * @returns A tree representing the summary of the shared object.
      */
-    snapshot(): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
 
     /**
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }

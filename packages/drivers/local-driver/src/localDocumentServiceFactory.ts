@@ -7,10 +7,11 @@ import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentServicePolicies,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { TokenProvider } from "@fluidframework/routerlicious-driver";
+import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ensureFluidResolvedUrl,
@@ -33,7 +34,10 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      */
-    constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
+    constructor(
+        private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
+        private readonly policies?: IDocumentServicePolicies,
+        private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
         createNewSummary: ISummaryTree,
@@ -92,7 +96,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             throw new Error(`Token was not provided.`);
         }
 
-        const tokenProvider = new TokenProvider(jwtToken);
+        const tokenProvider = new DefaultTokenProvider(jwtToken);
 
         return createLocalDocumentService(
             resolvedUrl,
@@ -100,7 +104,9 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tokenProvider,
             tenantId,
             documentId,
-            this.documentDeltaConnectionsMap);
+            this.documentDeltaConnectionsMap,
+            this.policies,
+            this.innerDocumentService);
     }
 
     /**

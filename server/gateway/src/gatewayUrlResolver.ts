@@ -3,68 +3,70 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import _ from "lodash";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { IClientConfig } from "@fluidframework/odsp-utils";
-import { ScopeType } from "@fluidframework/protocol-definitions";
-import { IAlfredUser, RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
-import { IAlfredTenant, IGitCache } from "@fluidframework/server-services-client";
-import { chooseCelaName } from "@fluidframework/server-services-core";
+import { IClientConfig } from "@fluidframework/odsp-doclib-utils";
+import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
+import { IGitCache } from "@fluidframework/server-services-client";
 import { Request } from "express";
 import { Provider } from "nconf";
-import { v4 as uuid } from "uuid";
+import dotenv from "dotenv";
 import { IAlfred } from "./interfaces";
-import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
+import { spoGetResolvedUrl } from "./odspUtils";
 
-interface FullTree {
+dotenv.config();
+
+export interface FullTree {
     cache: IGitCache,
     code: IFluidCodeDetails | null,
 }
 
-export function resolveUrl(
+export function resolveSpoUrl(
     config: Provider,
-    alfred: IAlfred,
-    appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
-    scopes: ScopeType[],
     request: Request,
+    driveId?: string,
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
-    if (isSpoTenant(tenantId)) {
-        const microsoftConfiguration = config.get("login:microsoft");
+    const microsoftConfiguration = config.get("login:microsoft");
+    const clientId = _.isEmpty(microsoftConfiguration.clientId)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : microsoftConfiguration.clientId;
+    const clientSecret = _.isEmpty(microsoftConfiguration.secret)
+        ? process.env.MICROSOFT_CONFIGURATION_CLIENT_SECRET : microsoftConfiguration.secret;
+    if (clientId !== undefined && clientSecret !== undefined) {
         const clientConfig: IClientConfig = {
-            clientId: microsoftConfiguration.clientId,
-            clientSecret: microsoftConfiguration.secret,
+            clientId,
+            clientSecret,
         };
         const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-            request.session?.tokens, clientConfig);
+            request.session?.tokens, clientConfig, driveId);
         const fullTreeP = Promise.resolve(undefined);
         return [resolvedP, fullTreeP];
     } else {
-        let user: IAlfredUser | undefined;
-        if ("cela" in request.query) {
-            const celaName = chooseCelaName();
-            user = { id: uuid(), name: celaName, displayName: celaName };
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        } else if (request.user) {
-            user = {
-                displayName: request.user.name,
-                id: request.user.oid,
-                name: request.user.name,
-            };
-        }
-
-        const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
-            provider: config,
-            tenantId,
-            documentId,
-        };
-
-        const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
-        const resolvedP = configurableUrlResolver(resolverList, request);
-        const fullTreeP = alfred.getFullTree(tenantId, documentId);
-        // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
-        return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
+        throw new Error("Failed to find client ID and secret values");
     }
+}
+
+export function resolveR11sUrl(
+    config: Provider,
+    alfred: IAlfred,
+    tenantId: string,
+    documentId: string,
+    accessToken: string,
+    request: Request,
+): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
+    const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
+        provider: config,
+        tenantId,
+        documentId,
+    };
+
+    const resolverList = [
+        new RouterliciousUrlResolver(endPointConfig, async () => Promise.resolve(accessToken))];
+    const resolvedP = configurableUrlResolver(resolverList, request);
+    const fullTreeP = alfred.getFullTree(tenantId, documentId);
+    // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
+    return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
 }

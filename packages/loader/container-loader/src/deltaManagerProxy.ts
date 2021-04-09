@@ -9,15 +9,15 @@ import {
     IDeltaQueue,
     IDeltaSender,
     IDeltaQueueEvents,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {
+    IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -36,9 +36,6 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
         return this.queue.idle;
     }
 
-    private systemPaused = false;
-    private localPaused = false;
-
     constructor(private readonly queue: IDeltaQueue<T>) {
         super(queue);
     }
@@ -51,30 +48,22 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
         return this.queue.toArray();
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemPause(): Promise<void> {
-        this.systemPaused = true;
-        return this.queue.pause();
+        return this.pause();
     }
 
     public async pause(): Promise<void> {
-        this.localPaused = true;
         return this.queue.pause();
     }
 
+    // back-compat: usage removed in 0.33, remove in future versions
     public async systemResume(): Promise<void> {
-        this.systemPaused = false;
-        return this.updateResume();
+        return this.resume();
     }
 
     public async resume(): Promise<void> {
-        this.localPaused = false;
-        return this.updateResume();
-    }
-
-    private async updateResume(): Promise<void> {
-        if (!this.systemPaused && !this.localPaused) {
-            return this.queue.resume();
-        }
+        this.queue.resume();
     }
 }
 
@@ -100,17 +89,20 @@ export class DeltaManagerProxy
         return this.deltaManager.lastSequenceNumber;
     }
 
+    public get lastMessage() {
+        return this.deltaManager.lastMessage;
+    }
+
     public get lastKnownSeqNumber() {
         return this.deltaManager.lastKnownSeqNumber;
     }
 
-    // Back-compat: <= 0.18
-    public get referenceSequenceNumber(): number {
-        return this.lastSequenceNumber;
-    }
-
     public get initialSequenceNumber(): number {
         return this.deltaManager.initialSequenceNumber;
+    }
+
+    public get hasCheckpointSequenceNumber() {
+        return this.deltaManager.hasCheckpointSequenceNumber;
     }
 
     public get clientDetails(): IClientDetails {
@@ -125,7 +117,7 @@ export class DeltaManagerProxy
         return this.deltaManager.maxMessageSize;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this.deltaManager.serviceConfiguration;
     }
 
@@ -135,6 +127,10 @@ export class DeltaManagerProxy
 
     public get readonly(): boolean | undefined {
         return this.deltaManager.readonly;
+    }
+
+    public get readOnlyInfo(): ReadOnlyInfo {
+        return this.deltaManager.readOnlyInfo;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
@@ -158,10 +154,6 @@ export class DeltaManagerProxy
 
     public submitSignal(content: any): void {
         return this.deltaManager.submitSignal(content);
-    }
-
-    public submit(type: MessageType, contents: any, batch: boolean, appData: any): number {
-        return this.deltaManager.submit(type, contents, batch, appData);
     }
 
     public flush(): void {

@@ -57,10 +57,11 @@ export class Title extends ui.Component {
     }
 
     private hexToRGB(hex: string): number[] {
-        if (hex.length === 3) {
-            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        let _hex = hex;
+        if (_hex.length === 3) {
+            _hex = _hex[0] + _hex[0] + _hex[1] + _hex[1] + _hex[2] + _hex[2];
         }
-        const num = parseInt(hex, 16);
+        const num = parseInt(_hex, 16);
         return [num >> 16, num >> 8 & 255, num & 255];
     }
 }

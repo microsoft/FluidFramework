@@ -125,14 +125,14 @@ export function selectionListBoxCreate(
     const getItemTextSuffix = () => itemTextSuffix;
 
     function selectItemByKey(key: string) {
-        key = key.trim();
+        const _key = key.trim();
         if (selectionIndex >= 0) {
-            if (items[selectionIndex].key === key) {
+            if (items[selectionIndex].key === _key) {
                 return;
             }
         }
         for (let i = 0, len = items.length; i < len; i++) {
-            if (items[i].key === key) {
+            if (items[i].key === _key) {
                 selectItem(i);
                 break;
             }

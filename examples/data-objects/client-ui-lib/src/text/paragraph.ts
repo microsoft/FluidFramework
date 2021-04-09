@@ -80,7 +80,6 @@ function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSe
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeIPGMathBlock(width: number, text: string) {
     return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
@@ -284,6 +283,7 @@ export interface ITilePos {
 function getPrecedingTile(
     sharedString: SharedString, tile: MergeTree.Marker, tilePos: number, label: string,
     filter: (candidate: MergeTree.Marker) => boolean, precedingTileCache?: ITilePos[]) {
+    let _tilePos = tilePos;
     if (precedingTileCache) {
         for (let i = precedingTileCache.length - 1; i >= 0; i--) {
             const candidate = precedingTileCache[i];
@@ -292,9 +292,9 @@ function getPrecedingTile(
             }
         }
     }
-    while (tilePos > 0) {
-        tilePos = tilePos - 1;
-        const prevTileInfo = sharedString.findTile(tilePos, label);
+    while (_tilePos > 0) {
+        _tilePos = _tilePos - 1;
+        const prevTileInfo = sharedString.findTile(_tilePos, label);
         if (prevTileInfo && filter(<MergeTree.Marker>prevTileInfo.tile)) {
             return prevTileInfo;
         }
@@ -428,6 +428,7 @@ export function getListCacheInfo(
 
 export function getContentPct(pgMarker: IParagraphMarker) {
     if (pgMarker.properties && pgMarker.properties.contentWidth) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return pgMarker.properties.contentWidth;
     } else if (pgMarker.properties && pgMarker.properties.blockquote) {
         return 0.8;

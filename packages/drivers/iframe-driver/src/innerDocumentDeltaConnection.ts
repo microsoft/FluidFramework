@@ -8,16 +8,15 @@ import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
+    IClientConfiguration,
     IConnected,
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import Comlink from "comlink";
+import * as Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
@@ -95,15 +94,6 @@ export class InnerDocumentDeltaConnection
     }
 
     /**
-     * Get the parent branch for the document
-     *
-     * @returns the parent branch
-     */
-    public get parentBranch(): string | null {
-        return this.details.parentBranch;
-    }
-
-    /**
      * Get the maximum size of a message before chunking is required
      *
      * @returns the maximum size of a message before chunking is required
@@ -122,7 +112,7 @@ export class InnerDocumentDeltaConnection
     /**
      * Configuration details provided by the service
      */
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
     }
 
@@ -133,15 +123,6 @@ export class InnerDocumentDeltaConnection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
-    }
-
-    /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     /**
@@ -164,6 +145,7 @@ export class InnerDocumentDeltaConnection
 
     public get lastKnownOpNumber() {
         // TODO: remove once latest server bits are picked up
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (this.details as any).lastKnownOpNumber;
     }
 
@@ -199,15 +181,6 @@ export class InnerDocumentDeltaConnection
     }
 
     /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return this.outerProxy.submit(messages);
-    }
-
-    /**
      * Submits a new signal to the server
      *
      * @param message - signal to submit
@@ -220,7 +193,7 @@ export class InnerDocumentDeltaConnection
     /**
      * Disconnect from the websocket
      */
-    public disconnect() {
-        throw new Error("InnerDocumentDeltaConnection: Disconnect not implemented Yet");
+    public close() {
+        throw new Error("InnerDocumentDeltaConnection: close() not implemented Yet");
     }
 }

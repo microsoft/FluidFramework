@@ -5,13 +5,12 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-bitwise": "off",
-        "no-case-declarations": "off",
-        "no-param-reassign": "off"
+        "no-case-declarations": "off"
     }
 }

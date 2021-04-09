@@ -34,12 +34,6 @@ export enum MessageType {
     // Forced snapshot
     Save = "saveOp",
 
-    // System message to indicate the creation of a new fork
-    Fork = "fork",
-
-    // Message sent when forwarding a sequenced message to an upstream branch
-    Integrate = "integrate",
-
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
 
@@ -69,7 +63,7 @@ export interface ITrace {
 
 export interface INack {
     // The operation that was just nacked
-    operation: IDocumentMessage;
+    operation: IDocumentMessage | undefined;
 
     // The sequence number the client needs to catch up to before retrying
     sequenceNumber: number;
@@ -165,7 +159,7 @@ export interface ISequencedDocumentMessage {
     origin?: IBranchOrigin;
 
     // Traces related to the packet.
-    traces: ITrace[];
+    traces?: ITrace[];
 
     // Timestamp when the server ticketed the message
     timestamp: number;
@@ -179,18 +173,9 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
     additionalContent: string;
 }
 
-export interface IContentMessage {
-
-    clientId: string;
-
-    clientSequenceNumber: number;
-
-    contents: string;
-}
-
 export interface ISignalMessage {
 
-    clientId: string;
+    clientId: string | null;
 
     content: any;
 }

@@ -12,9 +12,7 @@ import ReactDOM from "react-dom";
 import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
 import { DdsCollectionComponent } from "./ddsCollection";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const PrimitivesName = pkg.name as string;
+export const PrimitivesName = "PrimitivesCollection";
 
 /**
  * Basic DDS examples using view interfaces and stock component classes.

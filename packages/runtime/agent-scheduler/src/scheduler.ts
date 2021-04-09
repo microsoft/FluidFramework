@@ -3,30 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidHandle,
-    IFluidRunnable,
     IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
-import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    IAgentScheduler,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    ITask,
-    ITaskManager,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
+import { IAgentScheduler } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
@@ -34,19 +29,20 @@ const UnattachedClientId = `${uuid()}_unattached`;
 class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
-        let scheduler: ConsensusRegisterCollection<string | null>;
+        let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
-            scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.bindToContext();
-            root.set("scheduler", scheduler.handle);
+            consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+            consensusRegisterCollection.bindToContext();
+            root.set("scheduler", consensusRegisterCollection.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
-            scheduler = await handle.get();
+            assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
+            consensusRegisterCollection = await handle.get();
         }
-        const agentScheduler = new AgentScheduler(runtime, context, scheduler);
+        const agentScheduler = new AgentScheduler(runtime, context, consensusRegisterCollection);
         agentScheduler.initialize();
 
         return agentScheduler;
@@ -55,11 +51,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public get IAgentScheduler() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(clientId);
+        assert(!!clientId, 0x117 /* "Trying to get missing clientId!" */);
         return clientId;
     }
 
@@ -81,14 +77,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
-        private readonly scheduler: ConsensusRegisterCollection<string | null>) {
+        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>) {
         super();
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} is already registered`);
+                throw new Error(`${taskUrl} is already registered`);
             }
         }
         const unregisteredTasks: string[] = [];
@@ -105,7 +101,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
         if (this.locallyRunnableTasks.has(taskId)) {
-            return Promise.reject(`${taskId} is already attempted`);
+            throw new Error(`${taskId} is already attempted`);
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
@@ -114,7 +110,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
         // I'm adding assert here to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
-        assert(this.context.deltaManager.clientDetails.capabilities.interactive);
+        assert(this.context.deltaManager.clientDetails.capabilities.interactive,
+            0x118 /* "Bad client interactive check" */);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
@@ -130,13 +127,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
             if (!this.locallyRunnableTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} was never registered`);
+                throw new Error(`${taskUrl} was never registered`);
             }
             // Note - the assumption is - we are connected.
             // If not - all tasks should have been dropped already on disconnect / attachment
-            assert(active);
+            assert(active, 0x119 /* "This agent became inactive while releasing" */);
             if (this.getTaskClientId(taskUrl) !== this.clientId) {
-                return Promise.reject(`${taskUrl} was never picked`);
+                throw new Error(`${taskUrl} was never picked`);
             }
         }
         return this.releaseCore([...taskUrls]);
@@ -160,7 +157,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
                 const taskStatus = this.getTaskClientId(taskUrl);
 
                 // Task should be either registered (null) or picked up.
-                assert(taskStatus !== undefined, `Unsuccessful registration`);
+                assert(taskStatus !== undefined, 0x11a /* `Unsuccessful registration` */);
 
                 if (taskStatus === null) {
                     debug(`Registered ${taskUrl}`);
@@ -185,7 +182,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private async clearTasks(taskUrls: string[]) {
-        assert(this.isActive());
+        assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
         const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
             debug(`Clearing ${taskUrl}`);
@@ -195,11 +192,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private getTaskClientId(url: string): string | null | undefined {
-        return this.scheduler.read(url);
+        return this.consensusRegisterCollection.read(url);
     }
 
     private async writeCore(key: string, clientId: string | null): Promise<void> {
-        await this.scheduler.write(key, clientId);
+        await this.consensusRegisterCollection.write(key, clientId);
     }
 
     private initialize() {
@@ -209,13 +206,18 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.IFluidHandleContext.isAttached);
+            assert(this.runtime.objectsRoutingContext.isAttached, 0x11c /* "Detached object routing context" */);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
-                for (const taskUrl of this.scheduler.keys()) {
+                for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
-                        leftTasks.push(taskUrl);
+                        if (this.locallyRunnableTasks.has(taskUrl)) {
+                            debug(`Requesting ${taskUrl}`);
+                            await this.writeCore(taskUrl, this.clientId);
+                        } else {
+                            leftTasks.push(taskUrl);
+                        }
                     }
                 }
                 await this.clearTasks(leftTasks);
@@ -225,12 +227,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.scheduler.on("atomicChanged", async (key: string, currentClient: string | null) => {
+        this.consensusRegisterCollection.on("atomicChanged", async (key: string, currentClient: string | null) => {
             // Check if this client was chosen.
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReasigned(key, currentClient);
+                await this.onTaskReassigned(key, currentClient);
             }
         });
 
@@ -244,7 +246,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
         });
 
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -253,14 +255,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.IFluidHandleContext.isAttached) {
+            if (this.runtime.attachState !== AttachState.Detached) {
                 this.clearRunningTasks();
             }
         });
     }
 
     private onNewTaskAssigned(key: string) {
-        assert(!this.runningTasks.has(key), "task is already running");
+        assert(!this.runningTasks.has(key), 0x11d /* "task is already running" */);
         this.runningTasks.add(key);
         const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
@@ -274,12 +276,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
     }
 
-    private async onTaskReasigned(key: string, currentClient: string | null) {
+    private async onTaskReassigned(key: string, currentClient: string | null) {
         if (this.runningTasks.has(key)) {
             this.runningTasks.delete(key);
             this.emit("released", key);
         }
-        assert(currentClient !== undefined, "client is undefined");
+        assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
@@ -300,7 +302,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     private isActive() {
         // Scheduler should be active in detached container.
-        if (!this.runtime.IFluidHandleContext.isAttached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             return true;
         }
         if (!this.runtime.connected) {
@@ -329,7 +331,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
         }
 
-        for (const taskUrl of this.scheduler.keys()) {
+        for (const taskUrl of this.consensusRegisterCollection.keys()) {
             const currentClient = this.getTaskClientId(taskUrl);
             if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);
@@ -363,115 +365,32 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 }
 
-export class TaskManager implements ITaskManager {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<TaskManager> {
-        const agentScheduler = await AgentScheduler.load(runtime, context);
-        return new TaskManager(agentScheduler, runtime, context);
+class AgentSchedulerRuntime extends FluidDataStoreRuntime {
+    private readonly agentSchedulerP: Promise<AgentScheduler>;
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry) {
+        super(dataStoreContext, sharedObjectRegistry);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext);
     }
-
-    private readonly innerHandle: IFluidHandle<this>;
-
-    public get IAgentScheduler() { return this.scheduler; }
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-    public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
-    public get ITaskManager() { return this; }
-
-    public get url() {
-        return this.innerHandle.absolutePath;
-    }
-
-    protected readonly taskUrl = "_tasks";
-
-    private readonly taskMap = new Map<string, IFluidRunnable>();
-    constructor(
-        private readonly scheduler: IAgentScheduler,
-        private readonly runtime: IFluidDataStoreRuntime,
-        private readonly context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/object", value: this };
-        } else if (!request.url.startsWith(this.taskUrl)) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        } else {
-            const trimmedUrl = request.url.substr(this.taskUrl.length);
-            const taskUrl = trimmedUrl.length > 0 && trimmedUrl.startsWith("/")
-                ? trimmedUrl.substr(1)
-                : "";
-            if (taskUrl === "" || !this.taskMap.has(taskUrl)) {
-                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-            } else {
-                return { status: 200, mimeType: "fluid/object", value: this.taskMap.get(taskUrl) };
+    public async request(request: IRequest) {
+        const response = await super.request(request);
+        if (response.status === 404) {
+            if (request.url === "" || request.url === "/") {
+                const agentScheduler = await this.agentSchedulerP;
+                return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }
-    }
-
-    /**
-     * {@inheritDoc ITaskManager.register}
-     */
-    public register(...tasks: ITask[]): void {
-        for (const task of tasks) {
-            this.taskMap.set(task.id, task.instance);
-        }
-    }
-
-    /**
-     * {@inheritDoc ITaskManager.pick}
-     */
-    public async pick(taskId: string, worker?: boolean): Promise<void> {
-        if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
-            return Promise.reject("Picking not allowed on secondary copy");
-        } else if (this.runtime.attachState !== AttachState.Attached) {
-            return Promise.reject("Picking not allowed in detached container in task manager");
-        } else {
-            const fullUrl = `/${this.runtime.id}/${this.taskUrl}/${taskId}`;
-            return this.scheduler.pick(
-                fullUrl,
-                async () => this.runTask(fullUrl, worker !== undefined ? worker : false));
-        }
-    }
-
-    private async runTask(url: string, worker: boolean) {
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: "agent",
-                },
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
-            },
-            url,
-        };
-        const response = await this.runtime.loader.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject(`Invalid agent route: ${url}`);
-        }
-
-        const fluidObject = response.value as IFluidObject;
-        const agent = fluidObject.IFluidRunnable;
-        if (agent === undefined) {
-            return Promise.reject("Fluid object does not implement IFluidRunnable");
-        }
-
-        return agent.run();
+        return response;
     }
 }
 
-export class TaskManagerFactory implements IFluidDataStoreFactory {
+export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static readonly type = "_scheduler";
-    public readonly type = TaskManagerFactory.type;
+    public readonly type = AgentSchedulerFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
 
     public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(new TaskManagerFactory())];
+        return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
@@ -481,19 +400,6 @@ export class TaskManagerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        // Warning: This promise is unhandled in this scope, and can result in unhandled promise rejection error,
-        // similar to cases where the no-floating-promise eslint rule applies.
-        const taskManagerP = TaskManager.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const taskManager = await taskManagerP;
-            return taskManager.request(request);
-        });
-
-        return runtime;
+        return new AgentSchedulerRuntime(context, dataTypes);
     }
 }

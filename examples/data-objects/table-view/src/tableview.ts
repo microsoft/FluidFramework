@@ -6,6 +6,7 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
@@ -35,7 +36,6 @@ const template = new Template({
 const innerDocKey = "innerDoc";
 
 export class TableView extends DataObject implements IFluidHTMLView {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     public static getFactory() { return factory; }
 
     public get IFluidHTMLView() { return this; }
@@ -53,8 +53,11 @@ export class TableView extends DataObject implements IFluidHTMLView {
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         elm.append(this.templateRoot);
 
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const tableDocumentHandle = this.root.get<IFluidHandle<TableDocument>>(innerDocKey)!;
+
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.root.get<IFluidHandle<TableDocument>>(innerDocKey).get().then((doc) => {
+        tableDocumentHandle.get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -99,11 +102,12 @@ export class TableView extends DataObject implements IFluidHTMLView {
     }
 }
 
-const factory = new DataObjectFactory(
+const factory = new DataObjectFactory<TableView, undefined, undefined, IEvent>(
     tableViewType,
     TableView,
     [],
     {},
     [
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
     ]);

@@ -38,7 +38,7 @@ export interface ISummaryReader {
 export interface ISummaryWriter {
     writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
-        lastSummaryHead: string,
+        lastSummaryHead: string | undefined,
         protocolMinimumSequenceNumber: number,
         protocolSequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
@@ -52,6 +52,18 @@ export interface ISummaryWriter {
         pendingOps: ISequencedOperationMessage[]): Promise<boolean>;
 
     isExternal: boolean;
+}
+
+/**
+ * Interface to abstract out the storage specific details of pending message retrieval
+ */
+export interface IPendingMessageReader {
+    /**
+     * Read pending messages
+     * @param from Starting sequence number (inclusive)
+     * @param to End sequence number (inclusive)
+     */
+     readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 /**

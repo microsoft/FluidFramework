@@ -18,9 +18,7 @@ export class ReplayDocumentService implements api.IDocumentService {
     public static async create(
         documentService: api.IDocumentService,
         controller: ReplayController): Promise<api.IDocumentService> {
-        const storage = await documentService.connectToStorage();
-
-        const useController = await controller.initStorage(storage);
+        const useController = await controller.initStorage(documentService);
         if (!useController) {
             return documentService;
         }
@@ -35,6 +33,8 @@ export class ReplayDocumentService implements api.IDocumentService {
         private readonly controller: api.IDocumentStorageService,
         private readonly deltaStorage: api.IDocumentDeltaConnection) {
     }
+
+    public dispose() {}
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): api.IResolvedUrl {
@@ -65,10 +65,6 @@ export class ReplayDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaStorage;
-    }
-
-    public async branch(): Promise<string> {
-        return Promise.reject("Invalid operation");
     }
 
     public getErrorTrackingService() {

@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
@@ -14,7 +14,9 @@ module.exports = {
         "max-len": "off",
         "no-bitwise": "off",
         "no-case-declarations": "off",
-        "no-null/no-null": "off",
-        "no-param-reassign": "off"
-    }
+        "no-null/no-null": "off"
+    },
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
 }

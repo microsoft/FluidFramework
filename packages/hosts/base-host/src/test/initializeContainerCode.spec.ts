@@ -6,7 +6,7 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { MockQuorum } from "@fluidframework/test-runtime-utils";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { initializeContainerCode } from "../initializeContainerCode";

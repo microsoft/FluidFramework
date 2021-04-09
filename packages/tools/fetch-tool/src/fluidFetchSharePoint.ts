@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
@@ -11,13 +12,13 @@ import {
     IOdspDriveItem,
     getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
-} from "@fluidframework/odsp-utils";
+} from "@fluidframework/odsp-doclib-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
     odspTokensCache,
     OdspTokenConfig,
-    IOdspCacheKey,
+    IOdspTokenManagerCacheKey,
 } from "@fluidframework/tool-utils";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
@@ -49,24 +50,16 @@ export async function resolveWrapper<T>(
         });
         // If this is used for getting a token, then refresh the cache with new token.
         if (forToken) {
-            const key: IOdspCacheKey = { isPush: false, server };
+            const key: IOdspTokenManagerCacheKey = { isPush: false, server };
             await odspTokenManager.updateTokensCache(
                 key, { accessToken: result as any as string, refreshToken: tokens.refreshToken });
             return result;
         }
         return result;
     } catch (e) {
-        if (e.requestResultError) {
-            const parsedBody = JSON.parse(e.requestResult.data);
-            if (parsedBody.error === "invalid_grant"
-                && parsedBody.suberror === "consent_required"
-                && !forceTokenReauth
-            ) {
-                // Re-auth
-                return resolveWrapper<T>(callback, server, clientConfig, true);
-            }
-            const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-            return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
+        if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
+            // Re-auth
+            return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
         }
         throw e;
     }

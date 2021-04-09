@@ -12,13 +12,16 @@ spec:
   selector:
     k8s-app: nginx-ingress-prod-lb
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-ingress-prod-controller
 spec:
   replicas: 2
   revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      k8s-app: nginx-ingress-prod-lb
   template:
     metadata:
       labels:

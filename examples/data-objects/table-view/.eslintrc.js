@@ -5,11 +5,10 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "rules": {
         "@typescript-eslint/strict-boolean-expressions":"off",
-        "no-null/no-null": "off",
-        "no-param-reassign":"off"
+        "no-null/no-null": "off"
     }
 }

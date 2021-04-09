@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
@@ -13,14 +12,10 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     private readonly q = new Deque<T>();
 
     /**
-     * Tracks whether the system has requested the queue be paused.
+     * Tracks the number of pause requests for the queue
+     * The DeltaQueue is create initially paused.
      */
-    private sysPause = true;
-
-    /**
-     * Tracks whether the user of the container has requested the queue be paused.
-     */
-    private userPause = false;
+    private pauseCount = 1;
 
     private error: any | undefined;
 
@@ -38,9 +33,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * @returns True if the queue is paused, false if not.
      */
     public get paused(): boolean {
-        // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
-        // a pause, then the queue will pause.
-        return this.sysPause || this.userPause;
+        return this.pauseCount !== 0;
     }
 
     public get length(): number {
@@ -62,7 +55,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public dispose() {
-        assert.fail("Not implemented.");
+        throw new Error("Not implemented.");
         this.isDisposed = true;
     }
 
@@ -85,7 +78,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public async pause(): Promise<void> {
-        this.userPause = true;
+        this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
         if (this.processingDeferred !== undefined) {
@@ -94,23 +87,8 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public resume(): void {
-        this.userPause = false;
-        if (!this.paused) {
-            this.ensureProcessing();
-        }
-    }
-
-    public async systemPause(): Promise<void> {
-        this.sysPause = true;
-        // If called from within the processing loop, we are in the middle of processing an op. Return a promise
-        // that will resolve when processing has actually stopped.
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
-    }
-
-    public systemResume(): void {
-        this.sysPause = false;
+        assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
+        this.pauseCount--;
         if (!this.paused) {
             this.ensureProcessing();
         }
@@ -140,11 +118,15 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * Executes the delta processing loop until a stop condition is reached.
      */
     private processDeltas() {
+        const start = performance.now();
+        let count = 0;
+
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
         while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
             // Get the next message in the queue
             const next = this.q.shift();
+            count++;
             // Process the message.
             try {
                 // We know next is defined since we did a length check just prior to shifting.
@@ -158,7 +140,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         }
 
         if (this.q.length === 0) {
-            this.emit("idle");
+            this.emit("idle", count, performance.now() - start);
         }
     }
 }

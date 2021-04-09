@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
@@ -32,7 +32,7 @@ export function createSharedMapWithInterception(
         let map;
         // Set should not be called on the wrapped object from the interception callback as this will lead to
         // infinite recursion.
-        assert(executingCallback === false, "set called recursively from the interception callback");
+        assert(executingCallback === false, 0x0c0 /* "set called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             map = sharedMap.set(key, value);
@@ -43,6 +43,7 @@ export function createSharedMapWithInterception(
                 executingCallback = false;
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return map;
     };
 

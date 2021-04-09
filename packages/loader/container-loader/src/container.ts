@@ -3,52 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import {
-    ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { assert, performance } from "@fluidframework/common-utils";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
     IDeltaManager,
-    IFluidCodeDetails,
-    ILoader,
-    IRuntimeFactory,
-    LoaderHeader,
-    IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
-    IThrottlingWarning,
     AttachState,
+    IThrottlingWarning,
+    IPendingLocalState,
+    ReadOnlyInfo,
+    ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { performance } from "@fluidframework/common-utils";
 import {
-    ChildLogger,
-    EventEmitterWithErrorHandling,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    TelemetryLogger,
-} from "@fluidframework/telemetry-utils";
+    CreateContainerError,
+    DataCorruptionError,
+    extractSafePropertiesFromMessage,
+ } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IUrlResolver,
-    IDocumentServiceFactory,
     IResolvedUrl,
-    CreateNewHeader,
 } from "@fluidframework/driver-definitions";
 import {
-    BlobCacheStorageService,
-    buildSnapshotTree,
     readAndParse,
     OnlineStatus,
     isOnline,
@@ -56,7 +50,6 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -65,6 +58,7 @@ import {
 import {
     FileMode,
     IClient,
+    IClientConfiguration,
     IClientDetails,
     ICommittedProposal,
     IDocumentAttributes,
@@ -74,7 +68,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    IServiceConfiguration,
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
@@ -84,24 +77,68 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
+    IPendingProposal,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    TelemetryLogger,
+    connectedEventName,
+    disconnectedEventName,
+} from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
-import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
-const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
+const detachedContainerRefSeqNumber = 0;
+
+export const connectEventName = "connect";
+const dirtyContainerEvent = "dirty";
+const savedContainerEvent = "saved";
+
+export interface IContainerLoadOptions {
+    /**
+     * Disables the Container from reconnecting if false, allows reconnect otherwise.
+     */
+    canReconnect?: boolean;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
+    clientDetailsOverride?: IClientDetails;
+    containerUrl: string;
+    docId: string;
+    resolvedUrl: IFluidResolvedUrl;
+    /**
+     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     */
+    version?: string | null | undefined;
+    /**
+     * Loads the Container in paused state if true, unpaused otherwise.
+     */
+    pause?: boolean;
+}
 
 export interface IContainerConfig {
     resolvedUrl?: IResolvedUrl;
     canReconnect?: boolean;
-    originalRequest?: IRequest;
+    /**
+     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
+     * for purposes of creating a separate Container instance for the summarizer to use.
+     */
+    containerUrl?: string;
+    /**
+     * Client details provided in the override will be merged over the default client.
+     */
+    clientDetailsOverride?: IClientDetails;
     id?: string;
 }
 
@@ -122,52 +159,159 @@ export enum ConnectionState {
     Connected,
 }
 
-export type DetachedContainerSource = {
-    codeDetails: IFluidCodeDetails,
-    create: true,
-} | {
-    snapshot: ISnapshotTree,
-    create: false,
-};
+/**
+ * Waits until container connects to delta storage and gets up-to-date
+ * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
+ * up to date. Host may chose to wait in such case and retry resolving URI.
+ * Warning: Will wait infinitely for connection to establish if there is no connection.
+ * May result in deadlock if Container.setAutoReconnect(false) is called and never switched back to auto-reconnect.
+ * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
+ *          false: storage does not provide indication of how far the client is. Container processed
+ *          all the ops known to it, but it maybe still behind.
+ */
+export async function waitContainerToCatchUp(container: Container) {
+    // Make sure we stop waiting if container is closed.
+    if (container.closed) {
+        throw new Error("Container is closed");
+    }
+
+    return new Promise<boolean>((accept, reject) => {
+        const deltaManager = container.deltaManager;
+
+        container.on("closed", reject);
+
+        const waitForOps = () => {
+            assert(container.connectionState !== ConnectionState.Disconnected,
+                0x0cd /* "Container disconnected while waiting for ops!" */);
+            const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
+
+            const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
+            if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                accept(hasCheckpointSequenceNumber);
+                return;
+            }
+            const callbackOps = (message) => {
+                if (connectionOpSeqNumber <= message.sequenceNumber) {
+                    accept(hasCheckpointSequenceNumber);
+                    deltaManager.off("op", callbackOps);
+                }
+            };
+            deltaManager.on("op", callbackOps);
+        };
+
+        // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
+        // But that works only if service provides us checkPointSequenceNumber
+        // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
+        // use this function to catch up, so leveraging our own join op as a fence/barrier
+        if (container.connectionState === ConnectionState.Connected) {
+            waitForOps();
+            return;
+        }
+
+        const callback = () => {
+            container.off(connectedEventName, callback);
+            waitForOps();
+        };
+        container.on(connectedEventName, callback);
+
+        container.resume();
+    });
+}
+
+export class CollabWindowTracker {
+    private opsCountSinceNoop = 0;
+    private lastNoopTime: number  | undefined;
+
+    constructor(
+        private readonly submit: (type: MessageType, contents: any) => void,
+        private readonly activeConnection: () => boolean,
+        private readonly NoopTimeFrequency: number = 2000,
+        private readonly NoopCountFrequency: number = 300,
+    ) {}
+    /**
+     * Schedules as ack to the server to update the reference sequence number
+     */
+    public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
+        if (!this.activeConnection()) {
+            this.stopSequenceNumberUpdate();
+            return;
+        }
+
+        // While processing a message, an immediate no-op can be requested.
+        // i.e. to expedite approve or commit phase of quorum.
+        if (immediateNoOp) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, ""); // This can be anything other than null
+            return;
+        }
+
+        // Filter out system messages.
+        if (isSystemMessage(message)) {
+            return;
+        }
+
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...). Also, don't
+        // count system messages in ops count.
+        assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
+
+        if (this.lastNoopTime === undefined) {
+            this.lastNoopTime = Date.now();
+        }
+
+        this.opsCountSinceNoop++;
+
+        // If the ops count since last op is greater than NoopCountFrequency and time since last noop is
+        // greater than NoopTimeFrequency, then send a Noop.
+        // We will send a message(Noop) to update our reference sequence number upon receiving a server
+        // operation. This allows the server to know our true reference sequence number and be able to
+        // correctly update the minimum sequence number (MSN).
+        if (this.opsCountSinceNoop >= this.NoopCountFrequency
+            && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
+        ) {
+            this.stopSequenceNumberUpdate();
+            this.submit(MessageType.NoOp, null);
+        }
+    }
+
+    public stopSequenceNumberUpdate(): void {
+        this.opsCountSinceNoop = 0;
+        this.lastNoopTime = undefined;
+    }
+}
+
+const getCodeProposal =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    (quorum: IQuorum) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
     /**
-     * Load container.
+     * Load an existing container.
      */
     public static async load(
-        id: string,
-        serviceFactory: IDocumentServiceFactory,
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
-        loader: ILoader,
-        request: IRequest,
-        resolvedUrl: IFluidResolvedUrl,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
+        loader: Loader,
+        loadOptions: IContainerLoadOptions,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
-        const [, docId] = id.split("/");
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
             {
-                originalRequest: request,
-                id: decodeURI(docId),
-                resolvedUrl,
-                canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
-            },
-            logger);
+                containerUrl: loadOptions.containerUrl,
+                clientDetailsOverride: loadOptions.clientDetailsOverride,
+                id: loadOptions.docId,
+                resolvedUrl: loadOptions.resolvedUrl,
+                canReconnect: loadOptions.canReconnect,
+            });
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
-                const version = request.headers?.[LoaderHeader.version];
-                const pause = request.headers?.[LoaderHeader.pause];
+                const version = loadOptions.version;
+                // always load unpaused with pending ops
+                const pause = pendingLocalState !== undefined ? false : loadOptions.pause;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -179,7 +323,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, pause === true)
+                container.load(version, pause === true, pendingLocalState)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -195,40 +339,43 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
     }
 
-    public static async create(
-        codeLoader: ICodeLoader,
-        options: any,
-        scope: IFluidObject,
+    /**
+     * Create a new container in a detached state.
+     */
+    public static async createDetached(
         loader: Loader,
-        source: DetachedContainerSource,
-        serviceFactory: IDocumentServiceFactory,
-        urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
+        codeDetails: IFluidCodeDetails,
     ): Promise<Container> {
         const container = new Container(
-            options,
-            scope,
-            codeLoader,
             loader,
-            serviceFactory,
-            urlResolver,
-            {},
-            logger);
+            {});
+        await container.createDetached(codeDetails);
+        return container;
+    }
 
-        if (source.create) {
-            await container.createDetached(source.codeDetails);
-        } else {
-            await container.rehydrateDetachedFromSnapshot(source.snapshot);
-        }
-
+    /**
+     * Create a new container in a detached state that is initialized with a
+     * snapshot from a previous detached container.
+     */
+    public static async rehydrateDetachedFromSnapshot(
+        loader: Loader,
+        snapshot: ISnapshotTree,
+    ): Promise<Container> {
+        const container = new Container(
+            loader,
+            {});
+        await container.rehydrateDetachedFromSnapshot(snapshot);
         return container;
     }
 
     public subLogger: TelemetryLogger;
-    private _canReconnect: boolean = true;
+
+    // Tells if container can reconnect on losing fist connection
+    // If false, container gets closed on loss of connection.
+    private readonly _canReconnect: boolean = true;
+
     private readonly logger: ITelemetryLogger;
 
-    private pendingClientId: string | undefined;
     private loaded = false;
     private _attachState = AttachState.Detached;
 
@@ -240,16 +387,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._storageService;
     }
-    private blobsCacheStorageService: IDocumentStorageService | undefined;
 
-    private _clientId: string | undefined;
     private _id: string | undefined;
-    private originalRequest: IRequest | undefined;
+    private containerUrl: string | undefined;
+    private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
-    private _parentBranch: string | null = null;
-    private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
@@ -259,7 +403,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._context;
     }
-    private pkg: IFluidCodeDetails | undefined;
     private _protocolHandler: ProtocolOpHandler | undefined;
     private get protocolHandler() {
         if (this._protocolHandler === undefined) {
@@ -277,10 +420,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _resolvedUrl: IResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
+    private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
+    private readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
+
+    private readonly collabWindowTracker = new CollabWindowTracker(
+        (type, contents) => this._deltaManager.submit(type, contents),
+        () => this.activeConnection(),
+        this.loader.services.options?.noopTimeFrequency,
+        this.loader.services.options?.noopCountFrequency,
+    );
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
@@ -294,6 +446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonly}
+     * @deprecated - use readOnlyInfo
      */
     public get readonly() {
         return this._deltaManager.readonly;
@@ -301,11 +454,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     /**
      * {@inheritDoc DeltaManager.readonlyPermissions}
+     * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
     }
 
+    /**
+     * {@inheritDoc DeltaManager.readOnlyInfo}
+     */
+    public get readOnlyInfo(): ReadOnlyInfo {
+        return this._deltaManager.readOnlyInfo;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.forceReadonly}
+     */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
     }
@@ -323,22 +487,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this.connectionStateHandler.connectionState;
     }
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
-    }
-
-    public get canReconnect(): boolean {
-        return this._canReconnect;
+        return this.connectionStateHandler.connected;
     }
 
     /**
      * Service configuration details. If running in offline mode will be undefined otherwise will contain service
      * configuration details returned as part of the initial connection.
      */
-    public get serviceConfiguration(): IServiceConfiguration | undefined {
+    public get serviceConfiguration(): IClientConfiguration | undefined {
         return this._deltaManager.serviceConfiguration;
     }
 
@@ -347,7 +507,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get clientId(): string | undefined {
-        return this._clientId;
+        return this.connectionStateHandler.clientId;
     }
 
     /**
@@ -362,8 +522,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.clientDetails;
     }
 
+    /**
+     * @deprecated use codeDetails
+     */
     public get chaincodePackage(): IFluidCodeDetails | undefined {
-        return this.pkg;
+        return this.codeDetails;
+    }
+
+    public get codeDetails(): IFluidCodeDetails | undefined {
+        return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
     }
 
     /**
@@ -381,27 +548,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * Returns the parent branch for this document
+     * Returns true if container is dirty.
+     * Which means data loss if container is closed at that same moment
+     * Most likely that happens when there is no network connection to ordering service
      */
-    public get parentBranch(): string | null {
-        return this._parentBranch;
+    public get isDirty() {
+        return this._dirtyContainer;
     }
 
+    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
+    private get urlResolver() {return this.loader.services.urlResolver;}
+    public get options(): ILoaderOptions { return this.loader.services.options; }
+    private get scope() { return this.loader.services.scope;}
+    private get codeLoader() { return this.loader.services.codeLoader;}
+
     constructor(
-        public readonly options: any,
-        private readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
-        private readonly loader: ILoader,
-        private readonly serviceFactory: IDocumentServiceFactory,
-        private readonly urlResolver: IUrlResolver,
+        private readonly loader: Loader,
         config: IContainerConfig,
-        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
 
         // Initialize from config
-        this.originalRequest = config.originalRequest;
+        this.containerUrl = config.containerUrl;
+        this.clientDetailsOverride = config.clientDetailsOverride;
         this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
@@ -416,20 +586,52 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            logger,
+            loader.services.subLogger,
             undefined,
             {
-                clientType, // Differentiating summarizer container from main container
-                loaderVersion: pkgVersion,
-                containerId: uuid(),
-            },
-            {
-                docId: () => this.id,
-                containerAttachState: () => this._attachState,
+                all: {
+                    clientType, // Differentiating summarizer container from main container
+                    loaderVersion: pkgVersion,
+                    containerId: uuid(),
+                    docId: () => this.id,
+                    containerAttachState: () => this._attachState,
+                    containerLoaded: () => this.loaded,
+                },
+                // we need to be judicious with our logging here to avoid generting too much data
+                // all data logged here should be broadly applicable, and not specific to a
+                // specific error or class of errors
+                error: {
+                    // load information to associate errors with the specific load point
+                    dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+                    containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
+                    containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+                    // message information to associate errors with the specific execution state
+                    dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+                    dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+                    dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+                },
             });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
+
+        this.connectionStateHandler = new ConnectionStateHandler(
+            {
+                protocolHandler: () => this._protocolHandler,
+                logConnectionStateChangeTelemetry: (value, oldState, reason) =>
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason),
+                propagateConnectionState: () => this.propagateConnectionState(),
+                isContainerLoaded: () => this.loaded,
+                shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
+                maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+            },
+            this.logger,
+        );
+
+        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
+            this.emit(connectEventName, opsBehind);
+        });
 
         this._deltaManager = this.createDeltaManager();
 
@@ -445,6 +647,46 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             });
         }
+
+        // We observed that most users of platform do not check Container.connected event on load, causing bugs.
+        // As such, we are raising events when new listener pops up.
+        // Note that we can raise both "disconnected" & "connect" events at the same time,
+        // if we are in connecting stage.
+        this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
+            // Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
+            Promise.resolve().then(() => {
+                switch (event) {
+                    case dirtyContainerEvent:
+                        if (this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
+                        break;
+                    case savedContainerEvent:
+                        if (!this._dirtyContainer) {
+                            listener(this._dirtyContainer);
+                        }
+                        break;
+                    case connectedEventName:
+                         if (this.connected) {
+                            listener(event, this.clientId);
+                         }
+                         break;
+                    case disconnectedEventName:
+                        if (!this.connected) {
+                            listener(event);
+                        }
+                        break;
+                    case connectEventName:
+                        if (this.connectionState !== ConnectionState.Disconnected) {
+                            listener(event);
+                        }
+                        break;
+                    default:
+                }
+            }).catch((error) =>  {
+                this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
+            });
+        });
     }
 
     /**
@@ -460,13 +702,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         this._deltaManager.close(error);
 
         this._protocolHandler?.close();
 
         this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert.strictEqual(this.connectionState, ConnectionState.Disconnected, "disconnect event was not raised!");
+        assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
+
+        this.service?.dispose();
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -477,12 +722,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
-                    loading: !this.loaded,
                 },
                 error,
             );
         } else {
-            assert(this.loaded);
+            assert(this.loaded, 0x0d0 /* "Container in non-loaded state before close!" */);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -491,21 +735,41 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
+    public closeAndGetPendingLocalState(): string {
+        // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
+        // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
+        // a new clientId and a future container using stale pending state without the new clientId would resubmit them
+        this._deltaManager.close();
+
+        assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
+        assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+            0x0d2 /* "resolved url should be valid Fluid url" */);
+        const pendingState: IPendingLocalState = {
+            pendingRuntimeState: this.context.getPendingLocalState(),
+            url: this.resolvedUrl.url,
+        };
+
+        this.close();
+
+        return JSON.stringify(pendingState);
+    }
+
     public get attachState(): AttachState {
         return this._attachState;
     }
 
     public serialize(): string {
-        assert.strictEqual(this.attachState, AttachState.Detached, "Should only be called in detached container");
+        assert(this.attachState === AttachState.Detached, 0x0d3 /* "Should only be called in detached container" */);
 
         const appSummary: ISummaryTree = this.context.createSummary();
-        const protocolSummary = this.protocolHandler.captureSummary();
+        const protocolSummary = this.captureProtocolSummary();
         const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
         return JSON.stringify(snapshotTree);
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded);
+        assert(this.loaded, 0x0d4 /* "not loaded" */);
+        assert(!this.closed, 0x0d5 /* "closed" */);
 
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
@@ -514,42 +778,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachInProgress = true;
         try {
-            assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
+            assert(this.deltaManager.inbound.length === 0, 0x0d6 /* "Inbound queue should be empty when attaching" */);
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
-                // 0.24 back-compat attachingBeforeSummary
-                if (this.context.runtimeVersion === undefined || this.context.runtimeVersion < "0.25") {
-                    this._attachState = AttachState.Attaching;
-                    this.emit("attaching");
-                }
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
                 const appSummary: ISummaryTree = this.context.createSummary();
-                if (this.protocolHandler === undefined) {
-                    throw new Error("Protocol Handler is undefined");
-                }
-                const protocolSummary = this.protocolHandler.captureSummary();
+                const protocolSummary = this.captureProtocolSummary();
                 this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 // Set the state as attaching as we are starting the process of attaching container.
                 // This should be fired after taking the summary because it is the place where we are
                 // starting to attach the container to storage.
                 // Also, this should only be fired in detached container.
-                if (this.context.runtimeVersion !== undefined && this.context.runtimeVersion >= "0.25") {
-                    this._attachState = AttachState.Attaching;
-                    this.emit("attaching");
-                }
+                this._attachState = AttachState.Attaching;
+                this.emit("attaching");
             }
-            assert(this.cachedAttachSummary,
-                "Summary should be there either by this attach call or previous attach call!!");
-
-            if (request.headers?.[CreateNewHeader.createNew] === undefined) {
-                request.headers = {
-                    ...request.headers,
-                    [CreateNewHeader.createNew]: {},
-                };
-            }
+            assert(!!this.cachedAttachSummary,
+                0x0d7 /* "Summary should be there either by this attach call or previous attach call!!" */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -564,14 +811,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.getAbsoluteUrl("");
-            assert(url !== undefined, "Container url undefined");
-            this.originalRequest = { url };
-            this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+            const url = await this.urlResolver.getAbsoluteUrl(
+                resolvedUrl,
+                "",
+                this._context?.codeDetails,
+            );
+            assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
+            this.containerUrl = url;
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
             }
+
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
@@ -584,13 +835,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;
-            this._parentBranch = this._id;
 
             // Propagate current connection state through the system.
-            const connected = this.connectionState === ConnectionState.Connected;
-            assert(!connected || this._deltaManager.connectionMode === "read", "Unexpected connection state");
             this.propagateConnectionState();
-            this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+            if (!this.closed) {
+                this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+            }
         } finally {
             this.attachInProgress = false;
         }
@@ -603,14 +853,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch !== null) {
-            // The below debug ruins the chrome debugging session
-            // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
-            return;
-        }
-
         // Only snapshot once a code quorum has been established
         if (!this.protocolHandler.quorum.has("code") && !this.protocolHandler.quorum.has("code2")) {
             this.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
@@ -619,18 +861,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Stop inbound message processing while we complete the snapshot
         try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
-            }
-
+            await this.deltaManager.inbound.pause();
             await this.snapshotCore(tagMessage, fullTree);
         } catch (ex) {
-            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
+            this.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
         } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
-            }
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -650,7 +887,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
         if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            if (this._connectionState === ConnectionState.Disconnected) {
+            if (this.connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
             }
@@ -667,20 +904,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public resume() {
-        this.resumeInternal();
+        if (!this.closed) {
+            this.resumeInternal({ reason: "DocumentOpenResume" });
+        }
     }
 
-    protected resumeInternal(args: IConnectionArgs = {}) {
-        if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
-        }
+    protected resumeInternal(args: IConnectionArgs) {
+        assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
 
         // Resume processing ops
-        assert(!this.resumedOpProcessingAfterLoad);
-        this.resumedOpProcessingAfterLoad = true;
-        this._deltaManager.inbound.resume();
-        this._deltaManager.outbound.resume();
-        this._deltaManager.inboundSignal.resume();
+        if (!this.resumedOpProcessingAfterLoad) {
+            this.resumedOpProcessingAfterLoad = true;
+            this._deltaManager.inbound.resume();
+            this._deltaManager.outbound.resume();
+            this._deltaManager.inboundSignal.resume();
+        }
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
@@ -688,7 +926,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get storage(): IDocumentStorageService | undefined {
-        return this.blobsCacheStorageService ?? this._storageService;
+        return this._storageService;
     }
 
     /**
@@ -699,21 +937,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public raiseContainerWarning(warning: ContainerWarning) {
         // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if ((warning as any).logged !== true) {
+        if (warning.logged !== true) {
             this.logContainerError(warning);
         }
         this.emit("warning", warning);
-    }
-
-    public async reloadContext(): Promise<void> {
-        return this.reloadContextCore().catch((error) => {
-            this.close(CreateContainerError(error));
-            throw error;
-        });
-    }
-
-    public hasNullRuntime() {
-        return this.context.hasNullRuntime();
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -721,77 +948,46 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return undefined;
         }
 
-        // TODO: Remove support for legacy requestUrl in 0.20
-        const legacyResolver = this.urlResolver as {
-            requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
-
-            getAbsoluteUrl?(
-                resolvedUrl: IResolvedUrl,
-                relativeUrl: string,
-            ): Promise<string>;
-        };
-
-        if (legacyResolver.getAbsoluteUrl !== undefined) {
-            return this.urlResolver.getAbsoluteUrl(
-                this.resolvedUrl,
-                relativeUrl);
-        }
-
-        if (legacyResolver.requestUrl !== undefined) {
-            const response = await legacyResolver.requestUrl(
-                this.resolvedUrl,
-                { url: relativeUrl });
-
-            if (response.status === 200) {
-                return response.value as string;
-            }
-            throw new Error(response.value);
-        }
-
-        throw new Error("Url Resolver does not support creating urls");
+        return this.urlResolver.getAbsoluteUrl(
+            this.resolvedUrl,
+            relativeUrl,
+            this._context?.codeDetails);
     }
 
-    private async reloadContextCore(): Promise<void> {
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
+        if (!isFluidCodeDetails(codeDetails)) {
+            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+        }
+
+        if (this.codeLoader.IFluidCodeDetailsComparer) {
+            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+                codeDetails,
+                this.getCodeDetailsFromQuorum());
+            if (comparision !== undefined && comparision <= 0) {
+                throw new Error("Proposed code details should be greater than the current");
+            }
+        }
+
+        return this.getQuorum().propose("code", codeDetails)
+            .then(()=>true)
+            .catch(()=>false);
+    }
+
+    private async processCodeProposal(): Promise<void> {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+
         await Promise.all([
-            this.deltaManager.inbound.systemPause(),
-            this.deltaManager.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.pause(),
+            this.deltaManager.inboundSignal.pause()]);
 
-        const previousContextState = await this.context.snapshotRuntimeState();
-        this.context.dispose();
-
-        let snapshot: ISnapshotTree | undefined;
-        const blobs = new Map();
-        if (previousContextState.snapshot !== undefined) {
-            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
-
-            /**
-             * Should be removed / updated after issue #2914 is fixed.
-             * There are currently two scenarios where this is called:
-             * 1. When a new code proposal is accepted - This should be set to true before `this.loadContext` is
-             * called which creates and loads the ContainerRuntime. This is because for "read" mode clients this
-             * flag is false which causes ContainerRuntime to create the internal compoents again.
-             * 2. When the first client connects in "write" mode - This happens when a clent does not create the
-             * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
-             * need to create the internal data stores in ContainerRuntime.
-             * Once we move to using detached container everywhere, this can move outside this block.
-             */
-            this._existing = true;
+        if ((await this.context.satisfies(codeDetails) === true)) {
+            this.deltaManager.inbound.resume();
+            this.deltaManager.inboundSignal.resume();
+            return;
         }
 
-        if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
-        }
-        const attributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.lastSequenceNumber,
-            term: this._deltaManager.referenceTerm,
-        };
-
-        await this.loadContext(attributes, snapshot, previousContextState);
-
-        this.deltaManager.inbound.systemResume();
-        this.deltaManager.inboundSignal.systemResume();
+        this.close(CreateContainerError(
+            new Error("ExistingContextDoesNotSatisfyIncomingProposal")));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -870,7 +1066,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Output the tree
         const root: ITree = {
             entries,
-            id: null,
         };
 
         return root;
@@ -887,11 +1082,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private async connectToDeltaStream(args: IConnectionArgs = {}) {
+    private async connectToDeltaStream(args: IConnectionArgs) {
         this.recordConnectStartTime();
 
         // All agents need "write" access, including summarizer.
-        if (!this.canReconnect || !this.client.details.capabilities.interactive) {
+        if (!this._canReconnect || !this.client.details.capabilities.interactive) {
             args.mode = "write";
         }
 
@@ -907,7 +1102,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?: unknown) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -924,7 +1119,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const connectionArgs: IConnectionArgs = { mode: "write" };
+        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write" };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
@@ -937,10 +1132,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const maybeSnapshotTree = specifiedVersion === null ? undefined
-            : await this.fetchSnapshotTree(specifiedVersion);
+        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
         // Attach op handlers to start processing ops
         this.attachDeltaManagerOpHandler(attributes);
@@ -948,15 +1142,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
+            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
         let loadDetailsP: Promise<void>;
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        if (maybeSnapshotTree !== undefined) {
+        if (snapshot !== undefined) {
             this._existing = true;
-            this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
             if (startConnectionP === undefined) {
@@ -965,7 +1158,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
                 this._existing = details.existing;
-                this._parentBranch = details.parentBranch;
             });
         }
 
@@ -973,7 +1165,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
-        await this.loadContext(attributes, maybeSnapshotTree);
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -988,14 +1181,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree?.id ?? undefined,
+            version: versionId,
         };
     }
 
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
-            sequenceNumber: 0,
+            sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
             minimumSequenceNumber: 0,
         };
@@ -1019,7 +1212,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._existing = false;
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
-        this._protocolHandler = this.initializeProtocolState(
+        this._protocolHandler = await this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1035,7 +1228,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
-        assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
+        assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
 
         // We know this is create detached flow with snapshot.
@@ -1054,11 +1247,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        if (this.service === undefined) {
-            throw new Error("Not attached");
-        }
-        const storageService = await this.service.connectToStorage();
-        return new PrefetchDocumentStorageService(storageService);
+        return this._deltaManager.connectToStorage();
     }
 
     private async getDocumentAttributes(
@@ -1074,7 +1263,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
-        // Back-compat: old docs would have ".attributes" instead of "attributes"
+        // Backward compatibility: old docs would have ".attributes" instead of "attributes"
         const attributesHash = ".protocol" in tree.trees
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
@@ -1082,7 +1271,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = storage !== undefined ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
             : readAndParseFromBlobs<IDocumentAttributes>(tree.trees[".protocol"].blobs, attributesHash);
 
-        // Back-compat for older summaries with no term
+        // Backward compatibility for older summaries with no term
         if (attributes.term === undefined) {
             attributes.term = 1;
         }
@@ -1117,7 +1306,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        const protocolHandler = this.initializeProtocolState(
+        const protocolHandler = await this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1126,14 +1315,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return protocolHandler;
     }
 
-    private initializeProtocolState(
+    private async initializeProtocolState(
         attributes: IDocumentAttributes,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): ProtocolOpHandler {
+    ): Promise<ProtocolOpHandler> {
         const protocol = new ProtocolOpHandler(
-            attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1151,17 +1339,36 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
-            // This is the only one that requires the pending client ID
-            if (clientId === this.pendingClientId) {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`);
-            }
+            this.connectionStateHandler.receivedAddMemberEvent(clientId);
         });
 
         protocol.quorum.on("removeMember", (clientId) => {
-            if (clientId === this._clientId) {
-                this._deltaManager.updateQuorumLeave();
+            this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
+        });
+
+        // back compat for old containers where the code details
+        // we're delay added. All new creates should be detached
+        // and start with an initial code details.
+        if(getCodeProposal(protocol.quorum) === undefined) {
+            this.logger.sendTelemetryEvent({
+                eventName:"NoCodeProposal",
+            });
+            await new Promise<void>((resolve)=>{
+                const waitForCode = ()=>{
+                    if(getCodeProposal(protocol.quorum) !== undefined) {
+                        resolve();
+                    }
+                    protocol.quorum.off("approveProposal", waitForCode);
+                    this.off("closed", resolve);
+                };
+                protocol.quorum.on("approveProposal", waitForCode);
+                this.once("closed", resolve);
+            });
+        }
+
+        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
+            if (proposal.key === "code" || proposal.key === "code2") {
+                this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
 
@@ -1170,46 +1377,64 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
-                    if (value === this.pkg) {
-                        return;
+                    debug(`codeProposal ${JSON.stringify(value)}`);
+                    if (!isFluidCodeDetails(value)) {
+                        this.logger.sendErrorEvent({
+                                eventName: "CodeProposalNotIFluidCodeDetails",
+                        });
                     }
-
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.reloadContext();
+                    this.processCodeProposal().catch((error) => {
+                        this.close(CreateContainerError(error));
+                        throw error;
+                    });
                 }
             });
 
         return protocol;
     }
 
-    private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
-        const quorum = this.protocolHandler.quorum;
+    private captureProtocolSummary(): ISummaryTree {
+        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
 
-        let pkg = quorum.get("code");
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
+            sequenceNumber: this.protocolHandler.sequenceNumber,
+            term: this.protocolHandler.term,
+        };
 
-        // Back compat
-        if (pkg === undefined) {
-            pkg = quorum.get("code2");
-        }
+        const summary: ISummaryTree = {
+            tree: {
+                attributes: {
+                    content: JSON.stringify(documentAttributes),
+                    type: SummaryType.Blob,
+                },
+                quorumMembers: {
+                    content: JSON.stringify(quorumSnapshot.members),
+                    type: SummaryType.Blob,
+                },
+                quorumProposals: {
+                    content: JSON.stringify(quorumSnapshot.proposals),
+                    type: SummaryType.Blob,
+                },
+                quorumValues: {
+                    content: JSON.stringify(quorumSnapshot.values),
+                    type: SummaryType.Blob,
+                },
+            },
+            type: SummaryType.Tree,
+        };
 
-        return pkg;
+        return summary;
     }
 
-    /**
-     * Loads the runtime factory for the provided package
-     */
-    private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(pkg),
-        );
+    private getCodeDetailsFromQuorum(): IFluidCodeDetails {
+        const quorum = this.protocolHandler.quorum;
 
-        const factory = fluidModule.fluidExport.IRuntimeFactory;
-        if (factory === undefined) {
-            throw new Error(PackageNotFactoryError);
-        }
-        return factory;
+        const pkg = getCodeProposal(quorum);
+
+        return pkg as IFluidCodeDetails;
     }
 
     private get client(): IClient {
@@ -1225,50 +1450,38 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 user: { id: "" },
             };
 
-        // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
-
-        if (headerClientDetails !== undefined) {
-            merge(client.details, headerClientDetails);
+        if (this.clientDetailsOverride !== undefined) {
+            merge(client.details, this.clientDetailsOverride);
         }
 
         return client;
     }
 
+    /**
+     * Returns true if connection is active, i.e. it's "write" connection and
+     * container runtime was notified about this connection (i.e. we are up-to-date and could send ops).
+     * This happens after client received its own joinOp and thus is in the quorum.
+     * If it's not true, runtime is not in position to send ops.
+     */
+    private activeConnection() {
+        return this.connectionState === ConnectionState.Connected && this._deltaManager.connectionMode === "write";
+    }
+
     private createDeltaManager() {
-        const deltaManager = new DeltaManager(
+        const deltaManager: DeltaManager = new DeltaManager(
             () => this.service,
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
-            this.canReconnect,
+            this._canReconnect,
+            () => this.activeConnection(),
         );
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            const oldState = this._connectionState;
-            this._connectionState = ConnectionState.Connecting;
-
-            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-            // (have received the join message for the client ID)
-            // This is especially important in the reconnect case. It's possible there could be outstanding
-            // ops sent by this client, so we should keep the old client id until we see our own client's
-            // join message. after we see the join message for out new connection with our new client id,
-            // we know there can no longer be outstanding ops that we sent with the previous client id.
-            this.pendingClientId = details.clientId;
-
-            this.emit("connect", opsBehind);
-
-            // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(
-                ConnectionState.Connecting,
-                oldState,
-                "websocket established",
-                opsBehind);
-
-            if (deltaManager.connectionMode === "read") {
-                this.setConnectionState(
-                    ConnectionState.Connected,
-                    `joined as readonly`);
-            }
+        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+            this.connectionStateHandler.receivedConnectEvent(
+                this._deltaManager.connectionMode,
+                details,
+                opsBehind,
+            );
 
             // Back-compat for new client and old server.
             this._audience.clear();
@@ -1278,21 +1491,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
+        deltaManager.once("submitOp", (message: IDocumentMessage) => {
+            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
+        });
+
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
-            this.setConnectionState(ConnectionState.Disconnected, reason);
+            this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
             this.raiseContainerWarning(warning);
-        });
-
-        deltaManager.on("pong", (latency) => {
-            this.emit("pong", latency);
-        });
-
-        deltaManager.on("processTime", (time) => {
-            this.emit("processTime", time);
         });
 
         deltaManager.on("readonly", (readonly) => {
@@ -1326,8 +1535,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
-        reason: string,
-        opsBehind?: number) {
+        reason?: string,
+    ) {
         // Log actual event
         const time = performance.now();
         this.connectionTransitionTimes[value] = time;
@@ -1337,13 +1546,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
+        let checkpointSequenceNumber: number | undefined;
+        let sequenceNumber: number | undefined;
+        let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
+            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+            } else {
+                // This info is of most interest on establishing connection only.
+                checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
+                if (this.deltaManager.hasCheckpointSequenceNumber) {
+                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                }
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1362,13 +1581,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             reason,
             connectionInitiationReason,
             socketDocumentId: this._deltaManager.socketDocumentId,
-            pendingClientId: this.pendingClientId,
+            pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
             connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
+            checkpointSequenceNumber,
+            sequenceNumber,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1377,46 +1598,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private setConnectionState(
-        value: ConnectionState,
-        reason: string) {
-        assert(value !== ConnectionState.Connecting);
-        if (this.connectionState === value) {
-            // Already in the desired state - exit early
-            this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
-            return;
-        }
-
-        const oldState = this._connectionState;
-        this._connectionState = value;
-
-        if (value === ConnectionState.Connected) {
-            this._clientId = this.pendingClientId;
-            this._deltaManager.updateQuorumJoin();
-        } else if (value === ConnectionState.Disconnected) {
-            // Important as we process our own joinSession message through delta request
-            this.pendingClientId = undefined;
-        }
-
-        if (this.loaded) {
-            this.propagateConnectionState();
-        }
-
-        // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, oldState, reason);
-    }
-
     private propagateConnectionState() {
         const logOpsOnReconnect: boolean =
-            this._connectionState === ConnectionState.Connected &&
+            this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
             this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
 
-        const state = this._connectionState === ConnectionState.Connected;
-        this.context.setConnectionState(state, this.clientId);
+        const state = this.connectionState === ConnectionState.Connected;
+        if (!this.context.disposed) {
+            this.context.setConnectionState(state, this.clientId);
+        }
+        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
@@ -1447,11 +1642,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
+        this.collabWindowTracker.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        const local = this._clientId === message.clientId;
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            let errorMsg: string | undefined;
+            const client: ILocalSequencedClient | undefined =
+                this.getQuorum().getMember(message.clientId);
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                errorMsg = "messageClientIdMissingFromQuorum";
+            } else if (client?.shouldHaveLeft === true) {
+                errorMsg = "messageClientIdShouldHaveLeft";
+            }
+            if (errorMsg !== undefined) {
+                const error = new DataCorruptionError(
+                    errorMsg,
+                    extractSafePropertiesFromMessage(message));
+                this.close(CreateContainerError(error));
+            }
+        }
+
+        const local = this.clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
@@ -1460,6 +1675,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
+        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         this.emit("op", message);
 
@@ -1482,7 +1698,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.removeMember(leftClientId);
             }
         } else {
-            const local = this._clientId === message.clientId;
+            const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);
         }
     }
@@ -1490,39 +1706,49 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Get the most recent snapshot, or a specific version.
      * @param specifiedVersion - The specific version of the snapshot to retrieve
-     * @returns The snapshot requested, or the latest snapshot if no version was specified
+     * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
-    private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
+    private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
+        Promise<{snapshot?: ISnapshotTree; versionId?: string}>
+    {
+        if (specifiedVersion === null) {
+            return {};
+        }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
-        if (version !== undefined) {
-            this._loadedFromVersion = version;
-            return await this.storageService.getSnapshotTree(version) ?? undefined;
-        } else if (specifiedVersion !== undefined) {
+        if (version === undefined && specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
-            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
+            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", id: specifiedVersion });
         }
+        this._loadedFromVersion = version;
+        const snapshot = await this.storageService.getSnapshotTree(version) ?? undefined;
 
-        return undefined;
+        if (snapshot === undefined && version !== undefined) {
+            this.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+        }
+        return { snapshot, versionId: version?.id };
     }
 
     private async loadContext(
+        codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
-        previousRuntimeState: IRuntimeState = {},
+        pendingLocalState?: unknown,
     ) {
-        this.pkg = this.getCodeDetailsFromQuorum();
-        const chaincode = this.pkg !== undefined ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
+        assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
+        // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
+        if (this._dirtyContainer) {
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
-
+        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
-            chaincode,
+            codeDetails,
             snapshot,
             attributes,
             new DeltaManagerProxy(this._deltaManager),
@@ -1531,51 +1757,29 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
-            async (message) => this.snapshot(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
-            previousRuntimeState,
+            (dirty: boolean) => {
+                this._dirtyContainer = dirty;
+                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+            },
+            pendingLocalState,
         );
 
         loader.resolveContainer(this);
-        this.emit("contextChanged", this.pkg);
+        this.emit("contextChanged", codeDetails);
     }
 
     /**
      * Creates a new, unattached container context
      */
     private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        this.pkg = this.getCodeDetailsFromQuorum();
-        if (this.pkg === undefined) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
             throw new Error("pkg should be provided in create flow!!");
         }
-        const runtimeFactory = await this.loadRuntimeFactory(this.pkg);
 
-        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
-
-        this._context = await ContainerContext.createOrLoad(
-            this,
-            this.scope,
-            this.codeLoader,
-            runtimeFactory,
-            snapshot,
-            attributes,
-            new DeltaManagerProxy(this._deltaManager),
-            new QuorumProxy(this.protocolHandler.quorum),
-            loader,
-            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
-            (message) => this.submitSignal(message),
-            async (message) => this.snapshot(message),
-            (error?: ICriticalContainerError) => this.close(error),
-            Container.version,
-            {},
-        );
-
-        loader.resolveContainer(this);
-        this.emit("contextChanged", this.pkg);
+        await this.loadContext(codeDetails, attributes, snapshot);
     }
 
     // Please avoid calling it directly.

@@ -8,16 +8,17 @@ import { create as createDocumentRouter } from "@fluidframework/server-lambdas-d
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import * as bytes from "bytes";
 import { Provider } from "nconf";
+import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
-    const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+    const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+    const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -43,26 +44,35 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaEndpoint,
         kafkaForwardClientId,
         forwardSendTopic,
-        maxMessageSize,
         true,
-        kafkaProducerPollIntervalMs);
+        kafkaProducerPollIntervalMs,
+        kafkaNumberOfPartitions,
+        kafkaReplicationFactor);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
         kafkaReverseClientId,
         reverseSendTopic,
-        maxMessageSize,
         false,
-        kafkaProducerPollIntervalMs);
+        kafkaProducerPollIntervalMs,
+        kafkaNumberOfPartitions,
+        kafkaReplicationFactor);
 
     const redisConfig = config.get("redis");
-    const redisOptions: any = { password: redisConfig.pass };
+    const redisOptions: RedisOptions = {
+        host: redisConfig.host,
+        port: redisConfig.port,
+        password: redisConfig.pass,
+    };
     if (redisConfig.tls) {
         redisOptions.tls = {
-            serverName: redisConfig.host,
+            servername: redisConfig.host,
         };
     }
-    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
+    const publisher = new services.SocketIoRedisPublisher(redisOptions);
+    publisher.on("error", (err) => {
+        winston.error("Error with Redis Publisher:", err);
+    });
 
     const localContext = new LocalContext(winston);
 
@@ -77,7 +87,13 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    return new DeliLambdaFactory(mongoManager, collection, tenantManager, combinedProducer, reverseProducer);
+    return new DeliLambdaFactory(
+        mongoManager,
+        collection,
+        tenantManager,
+        combinedProducer,
+        reverseProducer,
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

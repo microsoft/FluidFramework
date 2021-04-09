@@ -15,7 +15,7 @@ import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";
 import { IJSONRunSegment, SubSequence } from "./sharedSequence";
-import { SharedString } from "./sharedString";
+import { SharedString, SharedStringSegment } from "./sharedString";
 
 export class SharedStringFactory implements IChannelFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -28,7 +28,7 @@ export class SharedStringFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public static segmentFromSpec(spec: any) {
+    public static segmentFromSpec(spec: any): SharedStringSegment {
         const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 
@@ -44,14 +44,16 @@ export class SharedStringFactory implements IChannelFactory {
         return SharedStringFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<SharedString> {
         const sharedString = new SharedString(runtime, id, attributes);
-        await sharedString.load(branchId, services);
+        await sharedString.load(services);
         return sharedString;
     }
 
@@ -72,8 +74,10 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const runSegment = segSpec as IJSONRunSegment<object>;
         if (runSegment.items) {
+            // eslint-disable-next-line @typescript-eslint/ban-types
             const seg = new SubSequence<object>(runSegment.items);
             if (runSegment.props) {
                 seg.addProperties(runSegment.props);
@@ -90,14 +94,17 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         return SharedObjectSequenceFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
-        await sharedSeq.load(branchId, services);
+        await sharedSeq.load(services);
         return sharedSeq;
     }
 
@@ -136,14 +143,16 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
         return SharedNumberSequenceFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
-        await sharedSeq.load(branchId, services);
+        await sharedSeq.load(services);
         return sharedSeq;
     }
 

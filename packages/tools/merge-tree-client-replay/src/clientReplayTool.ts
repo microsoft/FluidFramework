@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import fs from "fs";
+import { assert } from "@fluidframework/common-utils";
 import { FileDeltaStorageService } from "@fluidframework/file-driver";
 import {
     createGroupOp,
@@ -16,11 +16,12 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
 import {
-    IBlob,
+    FileMode,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage } from "@fluidframework/runtime-definitions";
 import {
@@ -32,9 +33,9 @@ import {
 import { ContainerMessageType, IChunkedOp } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 
-interface IFullPathTreeEntry extends ITreeEntry {
+type IFullPathTreeEntry = ITreeEntry & {
     fullPath?: string;
-}
+};
 
 interface IFullPathSequencedDocumentMessage extends ISequencedDocumentMessage {
     fullPath?: string;
@@ -101,10 +102,10 @@ export class ClientReplayTool {
 
     private async setup() {
         if (this.args.inDirName === undefined) {
-            return Promise.reject("Please provide --indir argument");
+            return Promise.reject(new Error("Please provide --indir argument"));
         }
         if (!fs.existsSync(this.args.inDirName)) {
-            return Promise.reject("File does not exist");
+            return Promise.reject(new Error("File does not exist"));
         }
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
@@ -246,12 +247,14 @@ export class ClientReplayTool {
             const readonlyClient = clients.get("readonly");
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
-                    assert.equal(
-                        mergeTree[1].getLength(),
-                        readonlyClient.get(mergeTree[0]).getLength());
-                    assert.equal(
-                        mergeTree[1].getText(),
-                        readonlyClient.get(mergeTree[0]).getText());
+                    assert(
+                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength(),
+                        // eslint-disable-next-line max-len
+                        0x1c2 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree length" */);
+                    assert(
+                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText(),
+                        // eslint-disable-next-line max-len
+                        0x1c3 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree text" */);
                 }
             }
         }
@@ -283,7 +286,7 @@ export class ClientReplayTool {
             if (ddsTrees.has(mergeTreeType.type)) {
                 const trees = ddsTrees.get(mergeTreeType.type);
                 for (const ssTree of trees) {
-                    const tree = (ssTree.value as ITree);
+                    const tree = ssTree.value as ITree;
                     let contentTree: ITreeEntry;
                     while (tree.entries.length > 0) {
                         contentTree = tree.entries.shift();
@@ -309,10 +312,10 @@ export class ClientReplayTool {
         if (attachMessage.snapshot) {
             const snapshotTreeEntry: IFullPathTreeEntry = {
                 value: attachMessage.snapshot,
-                type: attachMessage.type,
+                type: TreeEntry.Tree,
                 fullPath: attachMessage.id,
-                path: undefined,
-                mode: undefined,
+                path: "Some path",
+                mode: FileMode.Directory,
             };
             ddsTrees.set(attachMessage.type, [snapshotTreeEntry]);
             const trees: IFullPathTreeEntry[] = [snapshotTreeEntry];
@@ -329,7 +332,7 @@ export class ClientReplayTool {
                                 break;
                             case "Blob":
                                 if (entry.path === ".attributes") {
-                                    const blob = entry.value as IBlob;
+                                    const blob = entry.value;
                                     const contents = JSON.parse(blob.contents) as { type: string };
                                     if (contents && contents.type) {
                                         if (!ddsTrees.has(contents.type)) {

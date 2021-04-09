@@ -5,8 +5,8 @@
 
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as git from "nodegit";
+import nconf from "nconf";
+import git from "nodegit";
 import * as utils from "../../utils";
 
 export async function createCommit(
@@ -16,12 +16,13 @@ export async function createCommit(
     blob: ICreateCommitParams): Promise<ICommit> {
     const date = Date.parse(blob.author.date);
     if (isNaN(date)) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject("Invalid input");
     }
 
     const repository = await repoManager.open(owner, repo);
     const signature = git.Signature.create(blob.author.name, blob.author.email, Math.floor(date), 0);
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, no-null/no-null
+    // eslint-disable-next-line no-null/no-null
     const parents = blob.parents && blob.parents.length > 0 ? blob.parents : null;
     // eslint-disable-next-line no-null/no-null
     const commit = await repository.createCommit(null, signature, signature, blob.message, blob.tree, parents);
@@ -30,7 +31,6 @@ export async function createCommit(
         author: blob.author,
         committer: blob.author,
         message: blob.message,
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         parents: parents ? blob.parents.map((parent) => ({ sha: parent, url: "" })) : [],
         sha: commit.tostrS(),
         tree: {

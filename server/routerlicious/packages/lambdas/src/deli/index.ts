@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./checkpointManager";
 export * from "./lambda";
 export * from "./lambdaFactory";

@@ -14,6 +14,7 @@ import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;
+    title: string,
 }
 
 const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
@@ -24,6 +25,7 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
             onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
             }}
+            title={props.title}
         >
             {props.children}
         </button>;
@@ -37,8 +39,9 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton clickCallback={props.removeItem}>❌</SpacesEditButton>
+                <SpacesEditButton title="Delete" clickCallback={props.removeItem}>❌</SpacesEditButton>
                 <SpacesEditButton
+                    title="Copy to clipboard"
                     clickCallback={() => {
                         navigator.clipboard.writeText(props.url).then(() => {
                             console.log("Async: Copying to clipboard was successful!");
@@ -47,7 +50,10 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
                         });
                     }}
                 >📎</SpacesEditButton>
-                <SpacesEditButton clickCallback={() => window.open(props.url, "_blank")}>↗️</SpacesEditButton>
+                <SpacesEditButton
+                    title="Open in new window"
+                    clickCallback={() => window.open(props.url, "_blank")}
+                >↗️</SpacesEditButton>
             </div>
         );
     };

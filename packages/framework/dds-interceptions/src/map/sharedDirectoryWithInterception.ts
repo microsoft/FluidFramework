@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
@@ -42,7 +42,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         let directory;
         // Set should not be called on the wrapped object from the interception callback as this will lead to
         // infinite recursion.
-        assert(executingCallback === false, "set called recursively from the interception callback");
+        assert(executingCallback === false, 0x0bf /* "set called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             directory = subDirectory.set(key, value);
@@ -53,6 +53,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
                 executingCallback = false;
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return directory;
     };
 
@@ -61,7 +62,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
-    subDirectoryWithInterception.getSubDirectory = (subdirName: string): IDirectory => {
+    subDirectoryWithInterception.getSubDirectory = (subdirName: string): IDirectory | undefined => {
         const subSubDirectory = subDirectory.getSubDirectory(subdirName);
         return subSubDirectory === undefined ?
             subSubDirectory :
@@ -73,6 +74,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         const iterator = {
             next(): IteratorResult<[string, IDirectory]> {
                 const nextVal = localDirectoriesIterator.next();
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
@@ -92,11 +94,14 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         return iterator;
     };
 
-    subDirectoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory => {
+    subDirectoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory | undefined => {
         const subSubDirectory = subDirectory.getWorkingDirectory(relativePath);
-        return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
+        return subSubDirectory === undefined ?
+            subSubDirectory :
+            createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return subDirectoryWithInterception;
 }
 

@@ -4,14 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
-import * as winston from "winston";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;
 
-    constructor(private readonly checkpointManager: CheckpointManager) {
+    constructor(private readonly checkpointManager: CheckpointManager, public readonly log: ILogger | undefined) {
         super();
     }
 
@@ -24,22 +23,24 @@ export class Context extends EventEmitter implements IContext {
         }
 
         this.checkpointManager.checkpoint(queuedMessage).catch((error) => {
+            if (this.closed) {
+                // don't emit errors after closing
+                return;
+            }
+
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
-            this.emit("error", error, true);
+            this.error(error, { restart: true });
         });
     }
 
     /**
-     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
-     * should be restarted.
+     * Closes the context with an error.
+     * @param error The error object or string
+     * @param errorData Additional information about the error
      */
-    public error(error: any, restart: boolean) {
-        this.emit("error", error, restart);
-    }
-
-    public get log(): ILogger {
-        return winston;
+    public error(error: any, errorData: IContextErrorData) {
+        this.emit("error", error, errorData);
     }
 
     /**
@@ -47,5 +48,7 @@ export class Context extends EventEmitter implements IContext {
      */
     public close(): void {
         this.closed = true;
+
+        this.removeAllListeners();
     }
 }

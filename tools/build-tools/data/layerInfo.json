@@ -79,7 +79,11 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-utils"
+                    "@fluidframework/odsp-doclib-utils"
+                ],
+                "deps": [
+                    "Driver-Definitions",
+                    "Driver-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -121,7 +125,8 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/core-interfaces"
+                    "@fluidframework/core-interfaces",
+                    "Other-Utils"
                 ]
             },
             "Loader": {
@@ -143,11 +148,25 @@
                     "Framework-Utils"
                 ]
             },
+            "HostUtils": {
+                "dev": true,
+                "packages": [
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/fluid-static"
+                ],
+                "deps": [
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Test"
+                ]
+            },
             "Runtime": {
                 "packages": [
                     "@fluidframework/agent-scheduler"
                 ],
                 "dirs": [
+                    "experimental/dds/",
                     "packages/dds/",
                     "packages/runtime/"
                 ],
@@ -159,9 +178,12 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api"
+                    "@fluid-internal/client-api",
+                    "@fluid-experimental/experimental-fluidframework",
+                    "@fluid-experimental/data-objects"
                 ],
                 "dirs": [
+                    "experimental/framework/",
                     "packages/framework/"
                 ],
                 "deps": [
@@ -174,6 +196,7 @@
                 "dev": true,
                 "dirs": [
                     "examples/",
+                    "experimental/examples/",
                     "packages/agents/"
                 ],
                 "deps": [
@@ -206,6 +229,7 @@
             "Test": {
                 "dev": true,
                 "packages": [
+                    "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
                     "@fluidframework/webpack-fluid-loader"
@@ -251,7 +275,8 @@
             "Routerlicious-Driver": {
                 "packages": [
                     "@fluidframework/routerlicious-driver",
-                    "@fluidframework/routerlicious-urlresolver"
+                    "@fluidframework/routerlicious-urlresolver",
+                    "@fluidframework/tinylicious-driver"
                 ],
                 "deps": [
                     "Driver",

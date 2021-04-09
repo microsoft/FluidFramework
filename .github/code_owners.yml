@@ -10,7 +10,7 @@ packages/agents/**:
 - tanviraumi
 - anthony-murphy
 packages/dds/**:
-- vladsud 
+- vladsud
 - anthony-murphy
 
 packages/dds/(cell|counter|ink|map)/**:
@@ -34,9 +34,11 @@ packages/dds/shared-summary-block/**:
 - agarwal-navin
 - anthony-murphy
 
-packages/driver/**:
+packages/drivers/**:
 - vladsud
 - jatgarg
+- tanviraumi
+- znewton
 
 packages/framework/**:
 - skylerjokiel
@@ -45,7 +47,7 @@ packages/loader/**:
 - vladsud
 - anthony-murphy
 packages/runtime/**:
-- vladsud 
+- vladsud
 - arinwt
 - curtisman
 packages/hosts/**:
@@ -60,14 +62,14 @@ packages/tools/**:
 - vladsud
 - anthony-murphy
 
-packages/utils/odsp-utils/**:
+packages/utils/odsp-doclib-utils/**:
 - markfields
 - curtisman
 packages/utils/telemtry-utils/**:
-- markfields 
+- markfields
 - vladsud
 - wes-carlson
-packages/utils/tools-utils/**:
+packages/utils/tool-utils/**:
 - markfields
 - curtisman
 
@@ -75,17 +77,27 @@ packages/utils/tools-utils/**:
 server/**:
 - tanviraumi
 - anthony-murphy
+- GaryWilber
+- hedasilv
 
 # examples
 examples/**:
 - skylerjokiel
 - ChumpChief
 
+# experimental
+experimental/dds/tree/**:
+- DLehenbauer
+- taylorsw04
+- CraigMacomber
+- Abe27342
+
 # docs
 docs/**:
+- tylerbutler
+"**/README*.md":
 - tylerbutler
 
 # tools
 tools/**:
 - curtisman
-

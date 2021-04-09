@@ -21,6 +21,8 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
         const root = document.createElement("span");
         root.innerHTML = content;
         pasteChildren(doc, root, position);
+        // TODO: fix this bug
+        // eslint-disable-next-line no-dupe-else-if
     } else if (content = data.getData(ClipboardFormat.html)) {
         debug("paste('text/plain'): %s", content);
         doc.insertText(position, content);
@@ -33,12 +35,14 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
 const ignoredTags = [TagName.meta];
 
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
+    let _position = position;
+
     for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
         switch (child.nodeType) {
             case document.TEXT_NODE: {
                 const text = child as Text;
-                doc.insertText(position, text.textContent);
-                position += text.textContent.length;
+                doc.insertText(_position, text.textContent);
+                _position += text.textContent.length;
                 break;
             }
             case document.ELEMENT_NODE: {
@@ -46,19 +50,19 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
                 const tag = el.tagName as TagName;
                 const emitTag = !ignoredTags.includes(tag);
                 if (emitTag) {
-                    doc.insertTags([tag], position);
-                    doc.setAttr(position, position + 1,
+                    doc.insertTags([tag], _position);
+                    doc.setAttr(_position, _position + 1,
                         [...el.attributes].reduce(
                             (accumulator, value) => {
                                 accumulator[value.name] = value.textContent;
                                 return accumulator;
                             }, {}));
-                    doc.setCssStyle(position, position + 1, el.style.cssText);
-                    position++;
+                    doc.setCssStyle(_position, _position + 1, el.style.cssText);
+                    _position++;
                 }
-                position = pasteChildren(doc, el, position);
+                _position = pasteChildren(doc, el, _position);
                 if (emitTag) {
-                    position++;
+                    _position++;
                 }
                 break;
             }
@@ -66,5 +70,5 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
         }
     }
 
-    return position;
+    return _position;
 }

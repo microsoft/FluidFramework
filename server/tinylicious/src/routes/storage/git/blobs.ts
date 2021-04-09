@@ -6,7 +6,7 @@
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as utils from "../utils";
 
 export async function createBlob(
@@ -15,7 +15,7 @@ export async function createBlob(
     authorization: string,
     body: ICreateBlobParams,
 ): Promise<ICreateBlobResponse> {
-    const buffer = Buffer.from(body.content, body.encoding);
+    const buffer = Buffer.from(body.content, body.encoding as BufferEncoding);
 
     const sha = await git.writeObject({
         dir: utils.getGitDir(store, tenantId),

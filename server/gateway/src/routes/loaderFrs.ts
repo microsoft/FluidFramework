@@ -4,21 +4,28 @@
  */
 
 import { parse } from "url";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import _ from "lodash";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import winston from "winston";
+import dotenv from "dotenv";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
-import { resolveUrl } from "../gatewayUrlResolver";
+import { FullTree, resolveR11sUrl, resolveSpoUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getUserDetails, queryParamAsString } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails, queryParamAsString, getR11sToken } from "../utils";
+import { isSpoTenant } from "../odspUtils";
 import { defaultPartials } from "./partials";
+import { getUser, IExtendedUser } from "./utils";
+
+dotenv.config();
 
 export function create(
     config: Provider,
@@ -31,10 +38,10 @@ export function create(
     const codeResolver = new SemVerCdnCodeResolver();
 
     // FRS
-    const blobStorage = config.get("worker.frsBlobStorage");
-    const serverUrl = config.get("worker.frsServerUrl");
+    const blobStorage = config.get("worker:frsBlobStorageUrl");
+    const serverUrl = config.get("worker:frsServerUrl");
     if (blobStorage !== undefined && serverUrl !== undefined) {
-        config.set("worker:blobStorage", blobStorage);
+        config.set("worker:blobStorageUrl", blobStorage);
         config.set("worker:serverUrl", serverUrl);
     }
 
@@ -45,7 +52,7 @@ export function create(
         const start = Date.now();
         const chaincode: string = queryParamAsString(request.query.chaincode);
         const claims = getJWTClaims(request);
-        const jwtToken = jwt.sign(claims, jwtKey);
+        const hostToken = jwt.sign(claims, jwtKey);
 
         const rawPath = request.params[0];
         const slash = rawPath.indexOf("/");
@@ -56,8 +63,20 @@ export function create(
 
         const search = parse(request.url).search;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-        const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
+        const user = getUser(request);
+        let fullTreeP: Promise<undefined | FullTree>;
+        let resolvedP: Promise<IFluidResolvedUrl>;
+        const isSpoTenantPath = isSpoTenant(tenantId);
+        let r11sAccessToken = "";
+        if (isSpoTenantPath) {
+            [resolvedP, fullTreeP] =
+                resolveSpoUrl(config, tenantId, documentId, request);
+        } else {
+            r11sAccessToken = getR11sToken(
+                tenantId, documentId, appTenants, scopes, user as IExtendedUser);
+            [resolvedP, fullTreeP] =
+                resolveR11sUrl(config, alfred, tenantId, documentId, r11sAccessToken, request);
+        }
 
         const workerConfig = getConfig(
             config.get("worker"),
@@ -65,7 +84,6 @@ export function create(
             config.get("error:track"));
 
         const pkgP = fullTreeP.then((fullTree) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (fullTree && fullTree.code) {
                 return codeResolver.resolveCodeDetails(fullTree.code);
             }
@@ -139,24 +157,22 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                resolved!.url += path + (search ?? "");
+                resolved.url += path + (search ?? "");
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                timings!.push(Date.now() - start);
-
+                timings.push(Date.now() - start);
+                const configClientId = config.get("login:microsoft").clientId;
                 response.render(
                     "loader",
                     {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         chaincode: JSON.stringify(pkg),
-                        clientId: config.get("login:microsoft").clientId,
+                        clientId: _.isEmpty(configClientId)
+                            ? process.env.MICROSOFT_CONFIGURATION_CLIENT_ID : configClientId,
                         config: workerConfig,
-                        jwt: jwtToken,
+                        isSpoTenantPath,
+                        hostToken,
+                        accessToken: r11sAccessToken,
                         partials: defaultPartials,
                         resolved: JSON.stringify(resolved),
                         scripts,

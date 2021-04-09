@@ -7,14 +7,14 @@ import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
     IBlob,
-    ISnapshotTree,
+    IAttachment,
+    ISnapshotTreeEx,
     ITree,
-    ITreeEntry,
     TreeEntry,
     SummaryType,
     SummaryObject,
 } from "@fluidframework/protocol-definitions";
-
+import { unreachableCase } from "@fluidframework/common-utils";
 /**
  * Take a summary object and returns its git mode.
  *
@@ -25,13 +25,12 @@ export function getGitMode(value: SummaryObject): string {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
     switch (type) {
         case SummaryType.Blob:
+        case SummaryType.Attachment:
             return FileMode.File;
-        case SummaryType.Commit:
-            return FileMode.Commit;
         case SummaryType.Tree:
             return FileMode.Directory;
         default:
-            throw new Error();
+            unreachableCase(type, `Unknown type: ${type}`);
     }
 }
 
@@ -41,18 +40,17 @@ export function getGitMode(value: SummaryObject): string {
  * @param value - summary object
  * @returns the type of summary object
  */
-export function getGitType(value: SummaryObject): string {
+export function getGitType(value: SummaryObject): "blob" | "tree" {
     const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
     switch (type) {
         case SummaryType.Blob:
+        case SummaryType.Attachment:
             return "blob";
-        case SummaryType.Commit:
-            return "commit";
         case SummaryType.Tree:
             return "tree";
         default:
-            throw new Error();
+            unreachableCase(type, `Unknown type: ${type}`);
     }
 }
 
@@ -65,9 +63,9 @@ export function getGitType(value: SummaryObject): string {
  */
 export function buildHierarchy(
     flatTree: git.ITree,
-    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
-    const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTreeEx {
+    const lookup: { [path: string]: ISnapshotTreeEx } = {};
+    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {
@@ -97,7 +95,7 @@ export function buildHierarchy(
 /**
  * Basic implementation of a blob ITreeEntry
  */
-export class BlobTreeEntry implements ITreeEntry {
+export class BlobTreeEntry {
     public readonly mode = FileMode.File;
     public readonly type = TreeEntry.Blob;
     public readonly value: IBlob;
@@ -116,7 +114,7 @@ export class BlobTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a commit ITreeEntry
  */
-export class CommitTreeEntry implements ITreeEntry {
+export class CommitTreeEntry {
     public readonly mode = FileMode.Commit;
     public readonly type = TreeEntry.Commit;
 
@@ -131,7 +129,7 @@ export class CommitTreeEntry implements ITreeEntry {
 /**
  * Basic implementation of a tree ITreeEntry
  */
-export class TreeTreeEntry implements ITreeEntry {
+export class TreeTreeEntry {
     public readonly mode = FileMode.Directory;
     public readonly type = TreeEntry.Tree;
 
@@ -143,6 +141,25 @@ export class TreeTreeEntry implements ITreeEntry {
     constructor(public readonly path: string, public readonly value: ITree) { }
 }
 
+/**
+ * Basic implementation of an attachment ITreeEntry
+ */
+export class AttachmentTreeEntry {
+    public readonly mode = FileMode.File;
+    public readonly type = TreeEntry.Attachment;
+    public readonly value: IAttachment;
+
+    /**
+     * Creates an attachment ITreeEntry
+     * @param path - path of entry
+     * @param id - id of external blob attachment
+     */
+    constructor(public readonly path: string, public readonly id: string) {
+        this.value = { id };
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-types
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {
     tree.entries.push(
         {

@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import {
     IRequest,
 } from "@fluidframework/core-interfaces";
@@ -12,8 +13,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
+import { IUser } from "@fluidframework/protocol-definitions";
 import { Provider } from "nconf";
 
 const r11sServers = [
@@ -25,10 +25,8 @@ const r11sServers = [
 export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
-        private readonly getToken: (() => Promise<string>) | undefined,
-        private readonly appTenants: IAlfredTenant[],
-        private readonly scopes?: ScopeType[],
-        private readonly user?: IAlfredUser) {
+        private readonly getToken: () => Promise<string>,
+        private readonly hostUrl: string) {
     }
 
     /**
@@ -66,13 +64,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             documentId = path[2];
         }
 
-        let token: string;
-        if (!this.getToken) {
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
-        } else {
-            token = await this.getToken();
-        }
+        const token = await this.getToken();
 
         const isLocalHost = server === "localhost";
         const isInternalRequest = server.includes("gateway"); // e.g. gateway:3000 || fierce-dog-gateway:3000
@@ -139,28 +131,22 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
-    }
-}
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-export function getR11sToken(
-    tenantId: string,
-    documentId: string,
-    tenants: IAlfredTenant[],
-    scopes?: ScopeType[],
-    user?: IAlfredUser): string {
-    let scope = scopes;
-    if (!scopes) {
-        scope = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-    }
-    for (const tenant of tenants) {
-        if (tenantId === tenant.id) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return generateToken(tenantId, documentId, tenant.key, scope!, user);
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
+        assert(!!documentId, 0x0bb /* "Document id should exist" */);
+
+        let url = relativeUrl;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
         }
-    }
 
-    throw new Error("Invalid tenant");
+        return `${this.hostUrl}/${encodeURIComponent(
+            tenantId)}/${encodeURIComponent(documentId)}/${url}`;
+    }
 }
 
 export interface IAlfredUser extends IUser {

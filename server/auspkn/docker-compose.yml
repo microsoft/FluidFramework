@@ -10,9 +10,6 @@ services:
     gitrest:
         image: prague.azurecr.io/gitrest:1038
         restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
-        restart: always
     redis:
         image: redis:alpine
     mongodb:

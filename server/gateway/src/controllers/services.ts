@@ -6,7 +6,7 @@
 /* TODO: @fluid-example packages are not published. Duplicate the interface here for now */
 // import { IProvideDocumentFactory } from "@fluid-example/host-service-interfaces";
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 
 export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
 

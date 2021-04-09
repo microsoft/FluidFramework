@@ -93,7 +93,8 @@ export class TestServer extends TestClient {
     private minSeq = 0;
 
     applyMessages(msgCount: number) {
-        while (msgCount > 0) {
+        let _msgCount = msgCount;
+        while (_msgCount > 0) {
             const msg = this.q.dequeue();
             if (msg) {
                 if (msg.sequenceNumber >= 0) {
@@ -132,8 +133,7 @@ export class TestServer extends TestClient {
             else {
                 break;
             }
-            // eslint-disable-next-line no-param-reassign
-            msgCount--;
+            _msgCount--;
         }
         return false;
     }

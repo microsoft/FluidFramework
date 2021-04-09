@@ -8,3 +8,4 @@ export * from "./innerDocumentService";
 export * from "./innerDocumentServiceFactory";
 export * from "./outerDocumentServiceFactory";
 export * from "./innerUrlResolver";
+export * from "./outerUrlResolver";

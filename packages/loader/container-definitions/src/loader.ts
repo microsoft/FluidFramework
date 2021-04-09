@@ -3,28 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidRouter,
+    IFluidCodeDetails,
+    IFluidPackage,
+    IProvideFluidCodeDetailsComparer,
+} from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
+    IPendingProposal,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";
-import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
 import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
  */
-export interface ICodeLoader {
+export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
-     * Loads the package specified by IPackage and returns a promise to its entry point exports.
+     * Loads the package specified by code details and returns a promise to its entry point exports.
      */
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -37,11 +43,11 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
      * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
-    resolvedPackage: IFluidPackage;
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     /**
      * If not undefined, this id will be used to cache the entry point for the code package
      */
-    resolvedPackageCacheId: string | undefined;
+    readonly resolvedPackageCacheId: string | undefined;
 }
 
 /**
@@ -80,12 +86,13 @@ export interface IContainerEvents extends IEvent {
      * @param opsBehind - number of ops this client is behind (if present).
      */
     (event: "connect", listener: (opsBehind?: number) => void);
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
+    (event: "dirty" | "saved", listener: (dirty: boolean) => void);
 }
 
 /**
@@ -113,6 +120,42 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
+
+    /**
+     * The current code details for the container's runtime
+     */
+    readonly codeDetails: IFluidCodeDetails | undefined
+
+    /**
+     * Returns true if the container has been closed, otherwise false
+     */
+    readonly closed: boolean;
+
+    /**
+     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
+     * Closing container in this state results in data loss for user.
+     * Container usually gets into this situation due to loss of connectivity.
+     */
+    readonly isDirty: boolean;
+
+    /**
+     * Closes the container
+     */
+    close(error?: ICriticalContainerError): void;
+
+    /**
+     * Closes the container and returns serialized local state intended to be
+     * given to a newly loaded container
+     */
+    closeAndGetPendingLocalState(): string;
+
+    /**
+     * Propose new code details that define the code to be loaded
+     * for this container's runtime. The returned promise will
+     * be true when the proposal is accepted, and false if
+     * the proposal is rejected.
+     */
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
 
     /**
      * Attaches the Container to the Container specified by the given Request.
@@ -143,7 +186,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 }
 
 /**
- * The Host's view of the Loader, used for loading Containers
+ * The Runtime's view of the Loader, used for loading Containers
  */
 export interface ILoader extends IFluidRouter {
     /**
@@ -153,8 +196,13 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+}
 
+/**
+ * The Host's view of the Loader, used for loading Containers
+ */
+export interface IHostLoader extends ILoader {
     /**
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
@@ -165,23 +213,61 @@ export interface ILoader extends IFluidRouter {
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
+
+export type ILoaderOptions = {
+    [key in string | number]: any;
+} & {
+    /**
+     * Set caching behavior for the loader.  If true, we will load a container from cache if one
+     * with the same id/version exists or create a new container and cache it if it does not. If
+     * false, always load a new container and don't cache it. If the container has already been
+     * closed, it will not be cached.  A cache option in the LoaderHeader for an individual
+     * request will override the Loader's value.
+     * Defaults to true.
+     */
+    cache?: boolean;
+
+    /**
+     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * as the `ILoader` property, and will overwrite an existing property of the same name on the
+     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * individual Data Stores.
+     * Defaults to false.
+     */
+    provideScopeLoader?: boolean;
+
+    // Below two are the options based on which we decide how often client needs to send noops in case of active
+    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
+    // should hit the min time and count to send the noop.
+    /**
+     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
+     * not sending any op.
+     */
+    noopTimeFrequency?: number;
+
+    /**
+     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     */
+    noopCountFrequency?: number;
+
+    /**
+     * Max time(in ms) container will wait for a leave message of a disconnected client.
+    */
+    maxClientLeaveWaitTime?: number,
+};
 
 /**
  * Accepted header keys for requests coming to the Loader
  */
 export enum LoaderHeader {
     /**
-     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
-     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
-     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
-     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
+     * Override the Loader's default caching behavior for this container.
      */
     cache = "fluid-cache",
 
     clientDetails = "fluid-client-details",
-    executionContext = "execution-context",
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
@@ -206,13 +292,24 @@ export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+}
+
+export interface IPendingLocalState {
+    url: string;
+    pendingRuntimeState: unknown;
 }

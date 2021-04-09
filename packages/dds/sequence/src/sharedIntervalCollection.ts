@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     MapKernel,
 } from "@fluidframework/map";
@@ -51,14 +52,16 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
         return SharedIntervalCollectionFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
-        await map.load(branchId, services);
+        await map.load(services);
 
         return map;
     }
@@ -115,7 +118,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     ) {
         super(id, runtime, attributes);
         this.intervalMapKernel = new MapKernel(
-            runtime,
+            this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
@@ -145,7 +148,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         const tree: ITree = {
             entries: [
                 {
@@ -153,13 +156,11 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.intervalMapKernel.serialize(),
+                        contents: this.intervalMapKernel.serialize(serializer),
                         encoding: "utf-8",
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         return tree;
@@ -173,18 +174,18 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         debug(`${this.id} is now disconnected`);
     }
 
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService) {
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = bufferToString(blob,"utf8");
+        this.intervalMapKernel.populate(header);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 
@@ -202,5 +203,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

@@ -4,15 +4,13 @@
  */
 
 import { IQueuedMessage } from "./queue";
-import { ILogger, IContext } from "./lambdas";
+import { IContext, IContextErrorData } from "./lambdas";
 
 /**
  * Allows checkpointing the minimum offset for multiple lambdas
  * This is useful to use for a CombinedLambda
  */
 export class CombinedContext {
-	public log: ILogger;
-
 	private currentCheckpoint: IQueuedMessage | undefined;
 
 	private readonly checkpoints: (IQueuedMessage | undefined)[];
@@ -25,9 +23,9 @@ export class CombinedContext {
 		const id = this.checkpoints.push(undefined) - 1;
 
 		return {
-			log: this.log,
+			log: this.context.log,
 			checkpoint: (message) => this.checkpoint(id, message),
-			error: (error, restart) => this.error(id, error, restart),
+			error: (error, errorData) => this.error(id, error, errorData),
 		};
 	}
 
@@ -44,8 +42,8 @@ export class CombinedContext {
 		}
 	}
 
-	private error(_id: number, error: any, restart: boolean): void {
-		this.context.error(error, restart);
+	private error(_id: number, error: any, errorData: IContextErrorData): void {
+		this.context.error(error, errorData);
 	}
 
 	/**

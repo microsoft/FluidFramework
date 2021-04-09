@@ -33,7 +33,6 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
         document: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 
     create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;

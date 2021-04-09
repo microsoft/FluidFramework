@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -73,18 +73,20 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         switch (markerType) {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
-                const rangeLabel = segment.getRangeLabels()[0];
-                const kind = (rangeLabel || segment.getTileLabels()[0]) as DocSegmentKind;
 
-                assert(tilesAndRanges.has(kind), `Unknown tile/range label '${kind}'.`);
+                const kind = (segment.hasRangeLabels() ? segment.getRangeLabels()[0] :
+                    segment.getTileLabels()[0]) as DocSegmentKind;
+
+                assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
                 return kind;
             default:
-                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd));
+                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd),
+                    "unexpected marker type");
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert.equal(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert(segment.getRangeLabels()[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }
@@ -94,6 +96,7 @@ const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
@@ -182,6 +185,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public async getComponentFromMarker(marker: Marker) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return marker.properties.handle.get();
     }
 
@@ -240,7 +244,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public remove(start: number, end: number) {
-        debug(`remove(${start},${end})`);
+        let _start = start;
+        debug(`remove(${_start},${end})`);
         const ops: IMergeTreeRemoveMsg[] = [];
 
         this.visitRange((position: number, segment: ISegment) => {
@@ -270,17 +275,17 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     // Note: The start tag must appear before the position of the current end tag.
                     console.assert(startPos < position);
 
-                    if (!(start <= startPos)) {
+                    if (!(_start <= startPos)) {
                         // If not, remove any positions up to, but excluding the current segment
                         // and adjust the pending removal range to just after this marker.
                         debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
 
                         // If the preserved end tag is at the beginning of the removal range, no remove op
                         // is necessary.  Just skip over it.
-                        if (start !== position) {
-                            ops.push(createRemoveRangeOp(start, position));
+                        if (_start !== position) {
+                            ops.push(createRemoveRangeOp(_start, position));
                         }
-                        start = position + 1;
+                        _start = position + 1;
                     }
                     break;
                 }
@@ -288,11 +293,11 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     break;
             }
             return true;
-        }, start, end);
+        }, _start, end);
 
         // If there is a non-empty span remaining, generate its remove op now.
-        if (start !== end) {
-            ops.push(createRemoveRangeOp(start, end));
+        if (_start !== end) {
+            ops.push(createRemoveRangeOp(_start, end));
         }
 
         // Perform removals in descending order, otherwise earlier deletions will shift the positions
@@ -315,6 +320,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
@@ -361,6 +367,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public getTags(position: number): Readonly<Marker[]> {
         const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return (tags && tags.items) || emptyArray;
     }
 
@@ -429,18 +436,18 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public visitRange(callback: LeafAction, start = 0, end = this.length) {
-        end = clamp(0, end, this.length);
-        start = clamp(0, start, end);
+        const _end = clamp(0, end, this.length);
+        const _start = clamp(0, start, end);
 
         // Early exit if passed an empty or invalid range (e.g., NaN).
-        if (!(start < end)) {
+        if (!(_start < _end)) {
             return;
         }
 
         // Note: We pass the leaf callback action as the accumulator, and then use the 'accumAsLeafAction'
         //       actions to invoke the accum for each leaf.  (Paranoid micro-optimization that attempts to
         //       avoid allocation while simplifying the 'LeafAction' signature.)
-        this.sharedString.walkSegments(accumAsLeafAction, start, end, callback);
+        this.sharedString.walkSegments(accumAsLeafAction, _start, _end, callback);
     }
 
     public getText(start?: number, end?: number): string {
@@ -450,19 +457,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public toString() {
         const s: string[] = [];
         this.visitRange((position, segment) => {
-            const kind = getDocSegmentKind(segment);
+            let _segment = segment;
+            const kind = getDocSegmentKind(_segment);
             switch (kind) {
                 case DocSegmentKind.text:
-                    s.push((segment as TextSegment).text);
+                    s.push((_segment as TextSegment).text);
                     break;
                 case DocSegmentKind.beginTags:
-                    for (const tag of segment.properties.tags) {
+                    for (const tag of _segment.properties.tags) {
                         s.push(`<${tag}>`);
                     }
                     break;
                 case DocSegmentKind.endTags:
-                    segment = this.getStart(segment as Marker);
-                    const tags = segment.properties.tags.slice().reverse();
+                    _segment = this.getStart(_segment as Marker);
+                    const tags = _segment.properties.tags.slice().reverse();
                     for (const tag of tags) {
                         s.push(`</${tag}>`);
                     }

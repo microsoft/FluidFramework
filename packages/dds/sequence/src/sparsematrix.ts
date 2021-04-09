@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IFluidObject } from "@fluidframework/core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -148,6 +148,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     }
 
     public getTag(pos: number) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.tags[pos];
     }
 
@@ -188,7 +189,10 @@ export function positionToRowCol(position: number) {
     return { row, col };
 }
 
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+/**
+ * @deprecated - SparseMatrix is an abandoned prototype.  Please use SharedMatrix instead.
+ */
+ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
      *
@@ -233,7 +237,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.replaceRange(start, end, segment);
     }
 
-    public getItem(row: number, col: number) {
+    public getItem(row: number, col: number):
+        // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+        Jsonable<string | number | boolean | IFluidHandle<IFluidObject & IFluidLoadable>> {
         const pos = rowColToPosition(row, col);
         const { segment, offset } =
             this.getContainingSegment(pos);
@@ -249,6 +256,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     public getTag(row: number, col: number) {
         const { segment, offset } = this.getSegment(row, col);
         if (RunSegment.is(segment)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return segment.getTag(offset);
         }
         return undefined;
@@ -321,6 +329,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
+/**
+ * @deprecated - SparseMatrixFactory/SparseMatrix is an abandoned prototype.  Please use
+ *               SharedMatrix/SharedMatrixFactory instead.
+ */
 export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
@@ -352,15 +364,17 @@ export class SparseMatrixFactory implements IChannelFactory {
         return SparseMatrixFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string,
         attributes: IChannelAttributes,
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(runtime, id, attributes);
-        await sharedObject.load(branchId, services);
+        await sharedObject.load(services);
         return sharedObject;
     }
 

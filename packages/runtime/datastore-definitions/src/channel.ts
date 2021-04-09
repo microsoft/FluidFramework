@@ -4,22 +4,12 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
-}
-
-export const IChannel: keyof IProvideChannel = "IChannel";
-
-export interface IProvideChannel {
-    readonly IChannel: IChannel;
-}
-
-export interface IChannel extends IProvideChannel, IFluidLoadable {
+export interface IChannel extends IFluidLoadable {
     /**
      * A readonly identifier for the channel
      */
@@ -30,9 +20,10 @@ export interface IChannel extends IProvideChannel, IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates snapshot of the channel.
+     * Generates summary of the channel.
+     * @returns A tree representing the summary of the channel.
      */
-    snapshot(): ITree;
+    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
 
     /**
      * True if the data structure is attached to storage.
@@ -43,6 +34,13 @@ export interface IChannel extends IProvideChannel, IFluidLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: IChannelServices): void;
+
+    /**
+     * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
+     */
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 /**
@@ -73,6 +71,8 @@ export interface IDeltaHandler {
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
+
+    applyStashedOp(message: any): unknown;
 }
 
 /**
@@ -107,9 +107,9 @@ export interface IDeltaConnection {
  */
 export interface IChannelStorageService {
     /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     * Reads the object contained at the given path. Returns a buffer representation for the object.
      */
-    read(path: string): Promise<string>;
+    readBlob(path: string): Promise<ArrayBufferLike>;
 
     /**
      * Determines if there is an object contained at the given path.
@@ -152,7 +152,6 @@ export interface IChannelFactory {
      * @param runtime - Data store runtime containing state/info/helper methods about the data store.
      * @param id - ID of the channel.
      * @param services - Services to read objects at a given path using the delta connection.
-     * @param branchId - The branch ID.
      * @param channelAttributes - The attributes for the the channel to be loaded.
      * @returns The loaded object
      *
@@ -165,7 +164,6 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string | undefined,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 

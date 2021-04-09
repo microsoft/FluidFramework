@@ -33,7 +33,7 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is _last writer wins_ (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[API documentation]({{< relref "/apis" >}}) for each DDS for more details about the merge strategy it uses.
+[API documentation]({{< relref "/docs/apis" >}}) for each DDS for more details about the merge strategy it uses.
 
 ## Performance characteristics
 
@@ -83,7 +83,7 @@ operation. With an optimistic DDS, the client will apply the local operation bef
 wait. Thus, client A pops a value off the local stack, and client B pops the same value -- even though it was _supposed_
 to pop the second value. This represents divergent behavior; we expect a _distributed_ stack to ensure that `pop`
 operations -- and any other operation for that matter -- are applied such that the clients reach a consistent state
-eventually. The optimstic implementation we just described violates that expectation
+eventually. The optimistic implementation we just described violates that expectation.
 
 A consensus-based DDS does not optimistically apply local ops. Instead, these DDSes wait for the server to apply a
 sequence number to the operation before applying it locally. With this approach, when two clients pop, neither makes any
@@ -103,7 +103,7 @@ the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like numbers and strings and _JSON serializable_ objects. For
+Distributed data structures can store primitive values like numbers and strings, and _JSON serializable_ objects. For
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called _handles_, which _are_
 serializable.
 
@@ -135,7 +135,7 @@ myMap.on("valueChanged", () => {
 });
 ```
 
-Refer to the sections below for more details about the events raised by each DDS.
+Refer to later sections for more details about the events raised by each DDS.
 
 ## Picking the right data structure
 
@@ -219,8 +219,8 @@ These DDSes are used for storing sequential data. They are all optimistic.
 ### Specialized data structures
 
 - [SharedCounter][] -- a distributed counter.
-- [SharedString][] -- specialized data structure for handling collaborative text.
-- [Ink][] -- specialized data structure for ink data.
+- [SharedString][] -- a specialized data structure for handling collaborative text.
+- [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
@@ -231,31 +231,31 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 <!-- Packages -->
 
-[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[undo-redo]: {{< relref "/docs/apis/undo-redo.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/apis/ink/ink.md" >}}
-[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
 [SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
 [SharedMatrix]: {{< relref "SharedMatrix" >}}
 [SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
 [SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
-[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
 
-[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import { assert } from "@fluidframework/common-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 
 export class SegmentPropertiesManager {
-    private pendingKeyUpdateCount: Properties.MapLike<number>;
+    private pendingKeyUpdateCount: Properties.MapLike<number> | undefined;
     private pendingRewriteCount: number;
 
     constructor(private readonly segment: ISegment) {
+        this.pendingRewriteCount = 0;
     }
 
     public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
@@ -21,10 +24,11 @@ export class SegmentPropertiesManager {
             this.pendingRewriteCount--;
         }
         for (const key of Object.keys(annotateOp.props)) {
-            if (this.pendingKeyUpdateCount[key] !== undefined) {
-                assert(this.pendingKeyUpdateCount[key] > 0);
+            if (this.pendingKeyUpdateCount?.[key] !== undefined) {
+                assert(this.pendingKeyUpdateCount[key] > 0,
+                    0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
-                if (this.pendingKeyUpdateCount[key] === 0) {
+                if (this.pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete this.pendingKeyUpdateCount[key];
                 }
@@ -36,9 +40,8 @@ export class SegmentPropertiesManager {
         newProps: Properties.PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): Properties.PropertySet {
+        collabWindow?: CollaborationWindow): Properties.PropertySet | undefined {
         if (!this.segment.properties) {
-            this.pendingRewriteCount = 0;
             this.segment.properties = Properties.createMap<any>();
             this.pendingKeyUpdateCount = Properties.createMap<number>();
         }
@@ -55,7 +58,7 @@ export class SegmentPropertiesManager {
 
         const shouldModifyKey = (key: string): boolean => {
             if (seq === UnassignedSequenceNumber
-                || this.pendingKeyUpdateCount[key] === undefined
+                || this.pendingKeyUpdateCount?.[key] === undefined
                 || combiningOp) {
                 return true;
             }
@@ -81,10 +84,10 @@ export class SegmentPropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    if (this.pendingKeyUpdateCount[key] === undefined) {
-                        this.pendingKeyUpdateCount[key] = 0;
+                    if (this.pendingKeyUpdateCount?.[key] === undefined) {
+                        this.pendingKeyUpdateCount![key] = 0;
                     }
-                    this.pendingKeyUpdateCount[key]++;
+                    this.pendingKeyUpdateCount![key]++;
                 } else if (!shouldModifyKey(key)) {
                     continue;
                 }
@@ -95,7 +98,7 @@ export class SegmentPropertiesManager {
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {
-                newValue = Properties.combine(op, previousValue, newValue, seq);
+                newValue = Properties.combine(combiningOp, previousValue, newValue, seq);
             } else {
                 newValue = newProps[key];
             }
@@ -120,14 +123,14 @@ export class SegmentPropertiesManager {
                 leafSegment.propertyManager = new SegmentPropertiesManager(leafSegment);
                 leafSegment.propertyManager.pendingRewriteCount = this.pendingRewriteCount;
                 leafSegment.propertyManager.pendingKeyUpdateCount = Properties.createMap<number>();
-                for (const key of Object.keys(this.pendingKeyUpdateCount)) {
-                    leafSegment.propertyManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount[key];
+                for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
+                    leafSegment.propertyManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
                 }
             }
         }
     }
 
     public hasPendingProperties() {
-        return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount).length > 0;
+        return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount!).length > 0;
     }
 }

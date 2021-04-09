@@ -7,7 +7,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { TodoInstantiationFactory, TodoName } from "./Todo";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    TodoName,
+    TodoInstantiationFactory,
     new Map([
         [TodoName, Promise.resolve(TodoInstantiationFactory)],
     ]),

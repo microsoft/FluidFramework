@@ -4,13 +4,14 @@
  */
 
 import { parse } from "url";
-import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 
 export interface IParsedUrl {
     id: string;
     path: string;
+    query: string;
     /**
      * Null means do not use snapshots, undefined means load latest snapshot
      * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
@@ -24,16 +25,25 @@ export function parseUrl(url: string): IParsedUrl | undefined {
     if (typeof parsed.pathname !== "string") {
         throw new Error("Failed to parse pathname");
     }
-
+    const query = parsed.search ?? "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname);
-
     return (match?.length === 3)
-        ? { id: match[1], path: match[2], version: parsed.query.version as string }
+        ? { id: match[1], path: match[2], query, version: parsed.query.version as string }
         : undefined;
 }
 
-function convertProtocolAndAppSummaryToSnapshotTreeCore(
+/**
+ * Converts summary tree (for upload) to snapshot tree (for download).
+ * Summary tree blobs contain contents, but snapshot tree blobs normally
+ * contain IDs pointing to storage. This will create 2 blob entries in the
+ * snapshot tree for each blob in the summary tree. One will be the regular
+ * path pointing to a uniquely generated ID. Then there will be another
+ * entry with the path as that uniquely generated ID, and value as the
+ * blob contents as a base-64 string.
+ * @param summary - summary to convert
+ */
+function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
 ): ISnapshotTree {
     const treeNode = {
@@ -48,15 +58,15 @@ function convertProtocolAndAppSummaryToSnapshotTreeCore(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeCore(summaryObject);
+                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
                 break;
             }
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                treeNode.blobs[blobId] = fromUtf8ToBase64(content);
+                treeNode.blobs[blobId] = typeof summaryObject.content === "string" ?
+                    fromUtf8ToBase64(summaryObject.content) :
+                    bufferToString(summaryObject.content, "base64");
                 break;
             }
             case SummaryType.Handle:
@@ -79,20 +89,14 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     protocolSummaryTree: ISummaryTree,
     appSummaryTree: ISummaryTree,
 ): ISnapshotTree {
-    const protocolSummaryTreeModified: ISummaryTree = {
+    // Shallow copy is fine, since we are doing a deep clone below.
+    const combinedSummary: ISummaryTree = {
         type: SummaryType.Tree,
-        tree: {
-            ".protocol": {
-                type: SummaryType.Tree,
-                tree: { ...protocolSummaryTree.tree },
-            },
-        },
-    };
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeCore(protocolSummaryTreeModified);
-    snapshotTree.trees = {
-        ...snapshotTree.trees,
-        ...convertProtocolAndAppSummaryToSnapshotTreeCore(appSummaryTree).trees,
+        tree: { ...appSummaryTree.tree },
     };
 
+    combinedSummary.tree[".protocol"] = protocolSummaryTree;
+
+    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
     return snapshotTree;
 }

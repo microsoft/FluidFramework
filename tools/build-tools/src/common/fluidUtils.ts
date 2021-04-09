@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 import { commonOptions } from "./commonOptions";
-import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
+import { existsSync, realpathAsync, readJsonAsync, lookUpDirAsync } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
 import { IPackageManifest } from "./fluidRepo";
@@ -46,7 +46,7 @@ async function isFluidRoot(dir: string) {
 }
 
 async function inferRoot() {
-    return lookUpDir(process.cwd(), async (curr) => {
+    return lookUpDirAsync(process.cwd(), async (curr) => {
         logVerbose(`InferRoot: probing ${curr}`);
         try {
             if (await isFluidRoot(curr)) {

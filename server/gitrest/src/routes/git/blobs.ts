@@ -5,7 +5,7 @@
 
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as utils from "../../utils";
 
 /**
@@ -36,9 +36,9 @@ export async function createBlob(
     owner: string,
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
-        return Promise.reject("Invalid blob");
+        if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
+            // eslint-disable-next-line prefer-promise-reject-errors
+            return Promise.reject("Invalid blob");
     }
 
     const repository = await repoManager.open(owner, repo);

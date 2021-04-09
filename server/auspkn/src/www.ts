@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
+import { debug } from "debug";
 import * as http from "http";
 import * as nconf from "nconf";
 import * as path from "path";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 
 /**
@@ -12,11 +12,11 @@ import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 export class ObjectStoragePartition implements IChannelStorageService {
     constructor(private readonly storage: IChannelStorageService, private readonly path: string) {
         // `path` must not include the trailing separator.
-        assert(!path.endsWith("/"));
+        assert(!path.endsWith("/"), 0x19c /* "storage service path has trailing separator" */);
     }
 
-    public async read(path: string): Promise<string> {
-        return this.storage.read(`${this.path}/${path}`);
+    public async readBlob(path: string): Promise<ArrayBufferLike> {
+        return this.storage.readBlob(`${this.path}/${path}`);
     }
 
     public async contains(path: string): Promise<boolean> {

@@ -4,16 +4,18 @@
  */
 
 import * as bodyParser from "body-parser";
-import * as cors from "cors";
+import cors from "cors";
 // eslint-disable-next-line import/no-duplicates
-import * as express from "express";
-// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
+import express from "express";
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
-import * as morgan from "morgan";
-import * as nconf from "nconf";
+import morgan from "morgan";
+import nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
+import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
 import * as utils from "./utils";
 
@@ -24,7 +26,10 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(store: nconf.Provider) {
+export function create(
+    store: nconf.Provider,
+    externalStorageManager: IExternalStorageManager,
+) {
     // Express app configuration
     const app: Express = express();
 
@@ -34,9 +39,11 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
+    app.use(bindCorrelationId());
+
     app.use(cors());
     const repoManager = new utils.RepositoryManager(store.get("storageDir"));
-    const apiRoutes = routes.create(store, repoManager);
+    const apiRoutes = routes.create(store, repoManager, externalStorageManager);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.repos);
@@ -59,7 +66,6 @@ export function create(store: nconf.Provider) {
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -71,7 +77,6 @@ export function create(store: nconf.Provider) {
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.json({
             error: {},

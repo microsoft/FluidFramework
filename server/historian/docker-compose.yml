@@ -5,13 +5,10 @@ services:
         ports:
             - 3000:3000
             - 5858:5858
-        command: node --inspect=0.0.0.0:5858 dist/www.js
+        command: node --inspect=0.0.0.0:5858 packages/historian/dist/www.js
         restart: always
     gitrest:
         image: prague.azurecr.io/gitrest:1038
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
         restart: always
     redis:
         image: redis:alpine

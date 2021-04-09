@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { describe } from "mocha";
 import { Mode, processContent } from "../replayMultipleFiles";
 
 describe("Snapshots", function() {
@@ -13,11 +12,15 @@ describe("Snapshots", function() {
         await processContent(Mode.Stress);
     });
 
-    it("Backward Compat", async () => {
+    it("writes snapshot in correct format", async () => {
         await processContent(Mode.Compare);
     });
 
-    it("Validate", async () => {
+    it("loads snapshots in old format", async () => {
         await processContent(Mode.Validate);
+    });
+
+    it("loads snapshots in old format and writes in correct format", async () => {
+        await processContent(Mode.BackCompat);
     });
 });

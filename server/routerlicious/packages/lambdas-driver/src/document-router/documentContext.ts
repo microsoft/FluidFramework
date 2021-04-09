@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
-import * as winston from "winston";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
@@ -17,7 +16,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     private closed = false;
 
-    constructor(head: IQueuedMessage, private readonly getLatestTail: () => IQueuedMessage) {
+    constructor(
+        head: IQueuedMessage,
+        public readonly log: ILogger | undefined,
+        private readonly getLatestTail: () => IQueuedMessage) {
         super();
 
         // Head represents the largest offset related to the document that is not checkpointed.
@@ -72,15 +74,13 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.emit("checkpoint", this);
     }
 
-    public error(error: any, restart: boolean) {
-        this.emit("error", error, restart);
-    }
-
-    public get log(): ILogger {
-        return winston;
+    public error(error: any, errorData: IContextErrorData) {
+        this.emit("error", error, errorData);
     }
 
     public close() {
         this.closed = true;
+
+        this.removeAllListeners();
     }
 }

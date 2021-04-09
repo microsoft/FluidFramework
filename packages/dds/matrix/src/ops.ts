@@ -8,7 +8,7 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 export enum MatrixOp {
     spliceCols,
     spliceRows,
-    set
+    set,
 }
 
 export interface IMatrixMsg {

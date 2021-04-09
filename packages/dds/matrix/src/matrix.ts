@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -16,15 +17,17 @@ import {
     Serializable,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    makeHandlesSerializable,
+    parseHandles,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,
     IMatrixReader,
     IMatrixWriter,
-    IMatrixIterator,
-    MatrixIteratorSpec,
 } from "@tiny-calc/nano";
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
@@ -57,12 +60,23 @@ interface ISetOpMetadata {
     localSeq: number,
 }
 
+/**
+ * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
+ * include setting values and inserting/removing rows and columns.
+ *
+ * Matrix values may be any Fluid serializable type, which is the set of JSON
+ * serializable types extended to include IFluidHandles.
+ *
+ * Fluid's SharedMatrix implementation works equally well for dense and sparse
+ * matrix data and physically stores data in Z-order to leverage CPU caches and
+ * prefetching when reading in either row or column major order.  (See README.md
+ * for more details.)
+ */
 export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
     IMatrixReader<T | undefined | null>,
-    IMatrixWriter<T | undefined>,
-    IMatrixIterator<T | undefined | null>
+    IMatrixWriter<T | undefined>
 {
     private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
@@ -95,8 +109,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     private undo?: MatrixUndoProvider;
 
+    /**
+     * Subscribes the given IUndoConsumer to the matrix.
+     */
     public openUndo(consumer: IUndoConsumer) {
-        assert.equal(this.undo, undefined);
+        assert(this.undo === undefined,
+            0x019 /* "SharedMatrix.openUndo() supports at most a single IUndoConsumer." */);
+
         this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
     }
 
@@ -105,6 +124,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private get rowHandles() { return this.rows.handleCache; }
     private get colHandles() { return this.cols.handleCache; }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
@@ -152,51 +174,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     // #endregion IMatrixReader
 
-    // #region IMatrixIterator
-
-    public forEachCell(
-        callback: (value: T | undefined | null, row: number, column: number) => void,
-        spec?: MatrixIteratorSpec,
-    ) {
-        const includeEmpty = spec?.includeEmpty ?? false;
-        const rowStart = spec?.rowStart ?? 0;
-        const colStart = spec?.colStart ?? 0;
-        const rowCount = spec?.rowCount ?? this.rowCount;
-        const colCount = spec?.colCount ?? this.colCount;
-        for (let i = 0; i < rowCount; i++) {
-            const row = rowStart + i;
-            const rowHandle = this.rows.getMaybeHandle(row);
-            if (!isHandleValid(rowHandle)) {
-                if (includeEmpty) {
-                    for (let j = 0; j < colCount; j++) {
-                        callback(undefined, row, colStart + j);
-                    }
-                }
-                continue;
-            }
-            for (let j = 0; j < colCount; j++) {
-                const col = colStart + j;
-                const colHandle = this.cols.getMaybeHandle(col);
-                if (!isHandleValid(colHandle)) {
-                    if (includeEmpty) {
-                        callback(undefined, row, col);
-                    }
-                }
-                else {
-                    const content = this.cells.getCell(rowHandle, colHandle);
-                    if (content !== undefined || includeEmpty) {
-                        callback(content, row, col);
-                    }
-                }
-            }
-        }
-    }
-
-    // #endregion IMatrixIterator
-
     public setCell(row: number, col: number, value: T) {
         assert(0 <= row && row < this.rowCount
-            && 0 <= col && col < this.colCount);
+            && 0 <= col && col < this.colCount,
+            0x01a /* "Trying to set out-of-bounds cell!" */);
 
         this.setCellCore(row, col, value);
 
@@ -212,7 +193,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         assert((0 <= rowStart && rowStart < this.rowCount)
             && (0 <= colStart && colStart < this.colCount)
             && (1 <= colCount && colCount <= (this.colCount - colStart))
-            && (rowCount <= (this.rowCount - rowStart)));
+            && (rowCount <= (this.rowCount - rowStart)),
+            0x01b /* "Trying to set multiple out-of-bounds cells!" */);
 
         const endCol = colStart + colCount;
         let r = rowStart;
@@ -250,6 +232,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cells.setCell(rowHandle, colHandle, value);
         this.annotations.setCell(rowHandle, colHandle, undefined);
 
+        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+    }
+
+    private sendSetCellOp(row: number, col: number, value: T, rowHandle: Handle, colHandle: Handle) {
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
@@ -274,28 +260,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public getAnnotation(row: number, col: number): T | undefined | null {
-        const rowHandle = this.rows.getMaybeHandle(row);
-        if (isHandleValid(rowHandle)) {
-            const colHandle = this.cols.getMaybeHandle(col);
-            if (isHandleValid(colHandle)) {
-                return this.annotations.getCell(rowHandle, colHandle);
-            }
-        }
-        return undefined;
-    }
-
-    public setAnnotation(row: number, col: number, value: T) {
-        assert(0 <= row && row < this.rowCount
-            && 0 <= col && col < this.colCount);
-        const rowHandle = this.rows.getAllocatedHandle(row);
-        const colHandle = this.cols.getAllocatedHandle(col);
-        this.annotations.setCell(rowHandle, colHandle, value);
-        for (const consumer of this.consumers.values()) {
-            consumer.cellsChanged(row, col, 1, 1, this);
-        }
-    }
-
     private submitVectorMessage(
         currentVector: PermutationVector,
         oppositeVector: PermutationVector,
@@ -311,7 +275,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Note that the comparison is '>=' because, in the case the MergeTree is regenerating ops for reconnection,
         // the MergeTree submits the op with the original 'localSeq'.
         assert(localSeq >= oppositeWindow.localSeq,
-            "The 'localSeq' of the vector submitting an op must >= the 'localSeq' of the other vector.");
+            0x01c /* "The 'localSeq' of the vector submitting an op must >= the 'localSeq' of the other vector." */);
 
         oppositeWindow.localSeq = localSeq;
 
@@ -319,7 +283,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (this.isAttached()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-            (message).target = dimension;
+            message.target = dimension;
 
             this.submitLocalMessage(
                 message,
@@ -357,16 +321,22 @@ export class SharedMatrix<T extends Serializable = Serializable>
     /** @internal */ public _undoRemoveRows(segment: ISegment) {
         const original = segment as PermutationSegment;
 
-        // (Re)insert the removed number of columns at the original position.
-        const rowStart = this.rows.getPosition(original);
-        this.insertRows(rowStart, original.cachedLength);
+        // (Re)insert the removed number of rows at the original position.
+        const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+        this.submitRowMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
+        // Transfer handles from the original segment to the newly inserted empty segment.
         original.transferHandlesTo(inserted);
 
-        // Generate setCell ops for each populated cell in the reinserted cols.
+        // Invalidate the handleCache in case it was populated during the 'rowsChanged'
+        // callback, which occurs before the handle span is populated.
+        const rowStart = this.rows.getPosition(inserted);
+        this.rows.handleCache.itemsChanged(
+            rowStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
+
+        // Generate setCell ops for each populated cell in the reinserted rows.
         let rowHandle = inserted.start;
         const rowCount = inserted.cachedLength;
         for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
@@ -375,7 +345,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
@@ -395,13 +365,19 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const original = segment as PermutationSegment;
 
         // (Re)insert the removed number of columns at the original position.
-        const colStart = this.cols.getPosition(original);
-        this.insertCols(colStart, original.cachedLength);
+        const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+        this.submitColMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted segment.
-        // (This allows us to use getCell(..) below to read the previous cell values)
-        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
+        // Transfer handles from the original segment to the newly inserted empty segment.
         original.transferHandlesTo(inserted);
+
+        // Invalidate the handleCache in case it was populated during the 'colsChanged'
+        // callback, which occurs before the handle span is populated.
+        const colStart = this.cols.getPosition(inserted);
+        this.cols.handleCache.itemsChanged(
+            colStart,
+            /* removedCount: */ 0,
+            /* insertedCount: */ inserted.cachedLength);
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let colHandle = inserted.start;
@@ -409,10 +385,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
         for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
-                const value = this.cells.getCell(colHandle, rowHandle);
+                const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
                 if (value !== undefined && value !== null) {
-                    this.setCellCore(
+                    this.sendSetCellOp(
                         row,
                         col,
                         value,
@@ -428,28 +404,33 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public snapshot(): ITree {
-        return {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
+        const tree: ITree = {
             entries: [
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle),
+                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle),
+                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
                 },
-                serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
-                    this.cells.snapshot(),
-                    this.pending.snapshot(),
-                ]),
+                serializeBlob(
+                    this.handle,
+                    SnapshotPath.cells,
+                    [
+                        this.cells.snapshot(),
+                        this.pending.snapshot(),
+                    ],
+                    serializer),
             ],
-            id: null,   // eslint-disable-line no-null/no-null
         };
+
+        return tree;
     }
 
     /**
@@ -471,22 +452,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
         // TODO: Recommend moving this assertion into SharedObject
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
-        assert.equal(this.isAttached(), true);
+        assert(this.isAttached() === true, 0x01d /* "Trying to submit message to runtime while detached!" */);
 
-        super.submitLocalMessage(
-            makeHandlesSerializable(
-                message,
-                this.runtime.IFluidSerializer,
-                this.runtime.IFluidHandleContext,
-                this.handle,
-            ),
-            localOpMetadata,
-        );
+        super.submitLocalMessage(makeHandlesSerializable(message, this.serializer, this.handle), localOpMetadata);
 
         // Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
-        assert.equal(
-            this.rows.getCollabWindow().localSeq,
-            this.cols.getCollabWindow().localSeq,
+        assert(
+            this.rows.getCollabWindow().localSeq === this.cols.getCollabWindow().localSeq,
+            0x01e /* "Row and col collab window 'localSeq' desynchronized!" */,
         );
     }
 
@@ -500,7 +473,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected onConnect() {
-        assert.equal(this.rows.getCollabWindow().collaborating, this.cols.getCollabWindow().collaborating);
+        assert(this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
+            0x01f /* "Row and col collab window 'collaborating' status desynchronized!" */);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
@@ -520,7 +494,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     localOpMetadata as SegmentGroup | SegmentGroup[]));
                 break;
             default: {
-                assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
+                assert(content.type === MatrixOp.set, 0x020 /* "Unknown SharedMatrix 'op' type." */);
 
                 const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
@@ -551,11 +525,20 @@ export class SharedMatrix<T extends Serializable = Serializable>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected async loadCore(branchId: string | undefined, storage: IChannelStorageService) {
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService) {
         try {
-            await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows), branchId);
-            await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols), branchId);
-            const [cellData, pendingCliSeqData] = await deserializeBlob(this.runtime, storage, SnapshotPath.cells);
+            await this.rows.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.rows),
+                this.serializer);
+            await this.cols.load(
+                this.runtime,
+                new ObjectStoragePartition(storage, SnapshotPath.cols),
+                this.serializer);
+            const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.cells = SparseArray2D.load(cellData);
             this.annotations = new SparseArray2D();
@@ -566,7 +549,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.runtime.IFluidSerializer, this.runtime.IFluidHandleContext);
+        const msg = parseHandles(rawMessage, this.serializer);
 
         const contents = msg.contents;
 
@@ -578,7 +561,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 this.rows.applyMsg(msg);
                 break;
             default: {
-                assert(contents.type === MatrixOp.set);
+                assert(contents.type === MatrixOp.set,
+                    0x021 /* "SharedMatrix message contents have unexpected type!" */);
 
                 const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
                 const { row, col } = contents;
@@ -604,7 +588,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
                             const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
-                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle));
+                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
+                                0x022 /* "SharedMatrix row and/or col handles are invalid!" */);
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.
@@ -675,7 +660,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
         // be 'undefined' or > 'localSeq'.
         assert(!(pendingLocalSeq < localSeq),
-            "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op.");
+            // eslint-disable-next-line max-len
+            0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */);
 
         // If this is the most recent write to the cell by the local client, the stored localSeq
         // will be an exact match for the given 'localSeq'.
@@ -698,5 +684,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
 
         return `${s}\n`;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

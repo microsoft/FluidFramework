@@ -7,19 +7,15 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import assert from "assert";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    IFluidDataStoreRegistry,
-    IProvideFluidDataStoreFactory,
-    IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -53,36 +49,13 @@ const DefaultComponentName = "text";
 /* eslint-enable max-len */
 
 const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
-
-class MyRegistry implements IFluidDataStoreRegistry {
-    constructor(
-        private readonly context: IContainerContext,
-        private readonly defaultRegistry: string) {
-    }
-
-    public get IFluidDataStoreRegistry() { return this; }
-
-    public async get(name: string): Promise<IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry> {
-        const scope = `${name.split("/")[0]}:cdn`;
-        const config = {};
-        config[scope] = this.defaultRegistry;
-
-        const codeDetails = {
-            package: name,
-            config,
-        };
-        const fluidModule = await this.context.codeLoader.load(codeDetails);
-        const moduleExport = fluidModule.fluidExport;
-        assert(moduleExport.IFluidDataStoreFactory !== undefined ||
-            moduleExport.IFluidDataStoreRegistry  !== undefined);
-        return moduleExport as IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry;
-    }
-}
 
 class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
@@ -104,14 +77,10 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             [
                 ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
-                [
-                    "verdaccio",
-                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
-                ],
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
         );
 

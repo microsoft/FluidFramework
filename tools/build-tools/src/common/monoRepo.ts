@@ -15,7 +15,7 @@ export enum MonoRepoKind {
 export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
-    constructor(public readonly kind: MonoRepoKind, public readonly repoPath: string) {
+    constructor(public readonly kind: MonoRepoKind, public readonly repoPath: string, ignoredDirs?: string[]) {
         const lernaPath = path.join(repoPath, "lerna.json");
         if (!existsSync(lernaPath)) {
             throw new Error(`ERROR: lerna.json not found in ${repoPath}`);
@@ -24,7 +24,7 @@ export class MonoRepo {
         for (const dir of lerna.packages as string[]) {
             // TODO: other glob pattern?
             const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], this));
+            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
         }
         this.version = lerna.version;
     }
@@ -38,11 +38,9 @@ export class MonoRepo {
     }
 
     public async install() {
-        // TODO: Remove env once publish to the public feed.
-        const env = process.env["NPM_TOKEN"]? process.env : { ...process.env, "NPM_TOKEN": "" };
         console.log(`${MonoRepoKind[this.kind]}: Installing - npm i`);
         const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.repoPath, env }, this.repoPath);
+        return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
+import { assert , bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -119,7 +119,7 @@ export class ConsensusOrderedCollection<T = any>
         // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
         runtime.getQuorum().on("removeMember", (clientId: string) => {
-            assert(clientId);
+            assert(!!clientId, 0x067 /* "Missing clientId for removal!" */);
             this.removeClient(clientId);
         });
     }
@@ -128,12 +128,12 @@ export class ConsensusOrderedCollection<T = any>
      * Add a value to the consensus collection.
      */
     public async add(value: T): Promise<void> {
-        const valueSer = this.serializeValue(value);
+        const valueSer = this.serializeValue(value, this.serializer);
 
         if (!this.isAttached()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
-            const addValue = this.deserializeValue(valueSer) as T;
+            const addValue = this.deserializeValue(valueSer, this.serializer) as T;
             this.addCore(addValue);
             return;
         }
@@ -177,14 +177,14 @@ export class ConsensusOrderedCollection<T = any>
         do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await this.newAckBasedPromise((resolve) => {
+                await this.newAckBasedPromise<T>((resolve) => {
                     this.once("add", resolve);
                 });
             }
         } while (!(await this.acquire(callback)));
     }
 
-    public snapshot(): ITree {
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
@@ -196,13 +196,11 @@ export class ConsensusOrderedCollection<T = any>
                     path: snapshotFileNameData,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.serializeValue(this.data.asArray()),
+                        contents: this.serializeValue(this.data.asArray(), serializer),
                         encoding: "utf-8",
                     },
                 },
             ],
-            // eslint-disable-next-line no-null/no-null
-            id: null,
         };
 
         tree.entries.push({
@@ -210,10 +208,11 @@ export class ConsensusOrderedCollection<T = any>
             path: snapshotFileNameTracking,
             type: TreeEntry.Blob,
             value: {
-                contents: this.serializeValue(Array.from(this.jobTracking.entries())),
+                contents: this.serializeValue(Array.from(this.jobTracking.entries()), serializer),
                 encoding: "utf-8",
             },
         });
+
         return tree;
     }
 
@@ -272,22 +271,21 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected async loadCore(
-        branchId: string | undefined,
-        storage: IChannelStorageService): Promise<void> {
-        assert(this.jobTracking.size === 0);
-        const rawContentTracking = await storage.read(snapshotFileNameTracking);
-        if (rawContentTracking !== undefined) {
-            const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
-            this.jobTracking = new Map(content) as JobTrackingInfo<T>;
-        }
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(storage: IChannelStorageService): Promise<void> {
+        assert(this.jobTracking.size === 0, 0x068 /* "On consensusOrderedCollection load, job tracking size > 0" */);
+        const blob = await storage.readBlob(snapshotFileNameTracking);
+        const rawContentTracking = bufferToString(blob, "utf8");
+        const content = this.deserializeValue(rawContentTracking, this.serializer);
+        this.jobTracking = new Map(content) as JobTrackingInfo<T>;
 
-        assert(this.data.size() === 0);
-        const rawContentData = await storage.read(snapshotFileNameData);
-        if (rawContentData !== undefined) {
-            const content = this.deserializeValue(fromBase64ToUtf8(rawContentData)) as T[];
-            this.data.loadFrom(content);
-        }
+        assert(this.data.size() === 0, 0x069 /* "On consensusOrderedCollection load, data size > 0" */);
+        const blob2 = await storage.readBlob(snapshotFileNameData);
+        const rawContentData = bufferToString(blob2, "utf8");
+        const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
+        this.data.loadFrom(content2);
     }
 
     protected registerCore() {
@@ -308,7 +306,7 @@ export class ConsensusOrderedCollection<T = any>
             let value: IConsensusOrderedCollectionValue<T> | undefined;
             switch (op.opName) {
                 case "add":
-                    this.addCore(this.deserializeValue(op.value) as T);
+                    this.addCore(this.deserializeValue(op.value, this.serializer) as T);
                     break;
 
                 case "acquire":
@@ -326,8 +324,6 @@ export class ConsensusOrderedCollection<T = any>
                 default: unreachableCase(op);
             }
             if (local) {
-                assert(
-                    localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.
                 const resolve = localOpMetadata as PendingResolve<T>;
                 resolve(value);
@@ -338,9 +334,9 @@ export class ConsensusOrderedCollection<T = any>
     private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
         message: TMessage,
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-        assert(this.isAttached());
+        assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);
 
-        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T>>((resolve) => {
+        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T> | undefined>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
@@ -396,16 +392,16 @@ export class ConsensusOrderedCollection<T = any>
         added.map((value) => this.emit("add", value, false /* newlyAdded */));
     }
 
-    private serializeValue(value) {
-        return this.runtime.IFluidSerializer.stringify(
-            value,
-            this.runtime.IFluidHandleContext,
-            this.handle);
+    private serializeValue(value, serializer: IFluidSerializer) {
+        return serializer.stringify(value, this.handle);
     }
 
-    private deserializeValue(content: string) {
-        return this.runtime.IFluidSerializer.parse(
-            content,
-            this.runtime.IFluidHandleContext);
+    private deserializeValue(content: string, serializer: IFluidSerializer) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return serializer.parse(content);
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

@@ -10,6 +10,7 @@ import {
     IPartitionLambdaFactory,
     ITaskMessageSender,
     ITenantManager,
+    TokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { ForemanLambda } from "./lambda";
@@ -18,6 +19,7 @@ export class ForemanLambdaFactory extends EventEmitter implements IPartitionLamb
     constructor(
         private readonly messageSender: ITaskMessageSender,
         private readonly tenantManager: ITenantManager,
+        private readonly tokenGenerator: TokenGenerator,
         private readonly permissions: any) {
         super();
 
@@ -33,6 +35,7 @@ export class ForemanLambdaFactory extends EventEmitter implements IPartitionLamb
         return new ForemanLambda(
             this.messageSender,
             this.tenantManager,
+            this.tokenGenerator,
             this.permissions,
             context,
             tenantId,

@@ -98,9 +98,9 @@ describe("Ink", () => {
             ink.appendPointToStroke(inkPoint, strokeId);
 
             // Load a new Ink from the snapshot of the first one.
-            const services = MockSharedObjectServices.createFromTree(ink.snapshot());
+            const services = MockSharedObjectServices.createFromSummary(ink.summarize().summary);
             const ink2 = new Ink(dataStoreRuntime, "ink2", InkFactory.Attributes);
-            await ink2.load("branchId", services);
+            await ink2.load(services);
 
             // Verify that the new Ink has the stroke and the point.
             const stroke = ink2.getStroke(strokeId);
@@ -121,11 +121,11 @@ describe("Ink", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-            const services2 = MockSharedObjectServices.createFromTree(ink.snapshot());
+            const services2 = MockSharedObjectServices.createFromSummary(ink.summarize().summary);
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
             const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-            await ink2.load("branchId", services2);
+            await ink2.load(services2);
 
             // Now connect the first Ink
             dataStoreRuntime.local = false;

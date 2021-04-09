@@ -4,18 +4,19 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { mixinRequestHandler, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,
-    IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IFluidDataStoreContext,
@@ -24,10 +25,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -39,35 +41,40 @@ export class Chaincode implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public constructor(private readonly closeFn: () => void) { }
+    public constructor(
+        private readonly closeFn: () => void,
+        private readonly dataStoreFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
+    { }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        // Create channel factories
-        const mapFactory = map.SharedMap.getFactory();
-        const sharedStringFactory = sequence.SharedString.getFactory();
-        const inkFactory = ink.Ink.getFactory();
-        const cellFactory = cell.SharedCell.getFactory();
-        const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
-        const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
-        const consensusQueueFactory = ConsensusQueue.getFactory();
-        const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
-        const directoryFactory = map.SharedDirectory.getFactory();
-        const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const document = await routerP;
+                if (request.url === "" || request.url === "/") {
+                    return {
+                        mimeType: "fluid/object",
+                        status: 200,
+                        value: document,
+                    };
+                } else {
+                    return create404Response(request);
+                }
+            },
+            this.dataStoreFactory);
 
-        // Register channel factories
-        const modules = new Map<string, any>();
-        modules.set(mapFactory.type, mapFactory);
-        modules.set(sharedStringFactory.type, sharedStringFactory);
-        modules.set(inkFactory.type, inkFactory);
-        modules.set(cellFactory.type, cellFactory);
-        modules.set(objectSequenceFactory.type, objectSequenceFactory);
-        modules.set(numberSequenceFactory.type, numberSequenceFactory);
-        modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
-        modules.set(directoryFactory.type, directoryFactory);
-        modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
-
-        const runtime = FluidDataStoreRuntime.load(context, modules);
+        const runtime = new runtimeClass(context, new Map([
+            map.SharedMap.getFactory(),
+            sequence.SharedString.getFactory(),
+            ink.Ink.getFactory(),
+            cell.SharedCell.getFactory(),
+            sequence.SharedObjectSequence.getFactory(),
+            sequence.SharedNumberSequence.getFactory(),
+            ConsensusQueue.getFactory(),
+            sequence.SparseMatrix.getFactory(),
+            map.SharedDirectory.getFactory(),
+            sequence.SharedIntervalCollection.getFactory(),
+            SharedMatrix.getFactory(),
+        ].map((factory) => [factory.type, factory])));
 
         // Initialize core data structures
         let root: map.ISharedMap;
@@ -84,17 +91,8 @@ export class Chaincode implements IFluidDataStoreFactory {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
             return new Document(runtime, context, root, this.closeFn);
         };
-        const documentP = createDocument();
 
-        // And then return it from requests
-        runtime.registerRequestHandler(async (request) => {
-            const document = await documentP;
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: document,
-            };
-        });
+        const routerP = createDocument();
 
         return runtime;
     }
@@ -119,7 +117,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(rootStoreId),
-                deprecated_innerRequestHandler,
+                innerRequestHandler,
             ),
             this.runtimeOptions);
 
@@ -132,7 +130,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     }
 }
 
-export class CodeLoader implements ICodeLoader {
+export class CodeLoader implements ICodeLoader, IFluidCodeDetailsComparer {
     private readonly fluidModule: IFluidModule;
 
     constructor(
@@ -146,7 +144,19 @@ export class CodeLoader implements ICodeLoader {
         };
     }
 
+    public get IFluidCodeDetailsComparer(): IFluidCodeDetailsComparer {
+        return this;
+    }
+
     public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
         return Promise.resolve(this.fluidModule);
+    }
+
+    public async satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean> {
+        return true;
+    }
+
+    public async compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined> {
+        return undefined;
     }
 }

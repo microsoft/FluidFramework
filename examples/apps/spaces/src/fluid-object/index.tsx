@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import React, { ReactElement } from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
     DataObject,
     DataObjectFactory,
-    getFluidObjectFactoryFromInstance,
 } from "@fluidframework/aqueduct";
 import {
     IFluidHandle,
@@ -52,8 +51,7 @@ export interface ISpacesItem {
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends DataObject implements IFluidHTMLView {
-    private storageComponent: SpacesStorage<ISpacesItem> | undefined;
-    private baseUrl: string | undefined;
+    private storageComponent: SpacesStorage | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -78,7 +76,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
     // that knows how to getViewForItem().
     public async request(req: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser({ url: req.url });
+        const requestParser = RequestParser.create({ url: req.url });
         // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];
@@ -101,10 +99,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        if (this.storageComponent === undefined) {
-            throw new Error("Spaces can't render, storage not found");
-        }
-
         const addItem = (type: string) => {
             this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
                 .catch((error) => {
@@ -112,16 +106,35 @@ export class Spaces extends DataObject implements IFluidHTMLView {
                 });
         };
 
+        const View: (props: any) => ReactElement = () => {
+            if (this.storageComponent === undefined) {
+                throw new Error("Spaces can't render, storage not found");
+            }
+            const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
+            React.useEffect(() => {
+                const getBaseUrl = async () => {
+                    setBaseUrl(await this.context.getAbsoluteUrl(this.handle.absolutePath));
+                };
+
+                getBaseUrl().catch((error) => {
+                    console.error(error);
+                });
+            });
+            return (
+                <SpacesView
+                    itemMap={spacesItemMap}
+                    storage={this.storageComponent}
+                    addItem={addItem}
+                    templates={[...Object.keys(templateDefinitions)]}
+                    applyTemplate={this.applyTemplate}
+                    getViewForItem={this.getViewForItem}
+                    getUrlForItem={(itemId: string) => `#${baseUrl}/${itemId}`}
+                />
+            );
+        };
+
         ReactDOM.render(
-            <SpacesView
-                itemMap={spacesItemMap}
-                storage={this.storageComponent}
-                addItem={addItem}
-                templates={[...Object.keys(templateDefinitions)]}
-                applyTemplate={this.applyTemplate}
-                getViewForItem={this.getViewForItem}
-                getUrlForItem={(itemId: string) => `${this.baseUrl}/${itemId}`}
-            />,
+            <View />,
             div,
         );
     }
@@ -138,10 +151,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         this.storageComponent =
-            await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
-
-        // We'll cache this async result on initialization, since we need it synchronously during render.
-        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
+            await this.root.get<IFluidHandle<SpacesStorage>>(SpacesStorageKey)?.get();
     }
 
     private readonly applyTemplate = async (template: string) => {
@@ -184,7 +194,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        const serializableObject = await itemMapEntry.create(getFluidObjectFactoryFromInstance(this.context));
+        const serializableObject = await itemMapEntry.create(this.context);
         return this.storageComponent.addItem(
             {
                 serializableObject,

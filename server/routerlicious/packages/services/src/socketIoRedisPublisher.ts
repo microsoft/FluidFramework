@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import * as redis from "redis";
+import Redis from "ioredis";
 import socketIoEmitter from "socket.io-emitter";
 
 export class SocketIoRedisTopic implements core.ITopic {
@@ -19,12 +19,12 @@ export class SocketIoRedisTopic implements core.ITopic {
 }
 
 export class SocketIoRedisPublisher implements core.IPublisher {
-    private readonly redisClient: redis.RedisClient;
+    private readonly redisClient: Redis.Redis;
     private readonly io: any;
     private readonly events = new EventEmitter();
 
-    constructor(port: number, host: string, options: any) {
-        this.redisClient = redis.createClient(port, host, options);
+    constructor(options: Redis.RedisOptions) {
+        this.redisClient = new Redis(options);
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
@@ -42,8 +42,13 @@ export class SocketIoRedisPublisher implements core.IPublisher {
         return new SocketIoRedisTopic(this.io.to(topic));
     }
 
+    public async emit(topic: string, event: string, ...args: any[]): Promise<void> {
+        this.io.to(topic).emit(event, ...args);
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return util.promisify(((callback) => this.redisClient.quit(callback)) as any)();
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -17,8 +17,10 @@ import {
     MergeTreeDeltaType,
     IMergeTreeMaintenanceCallbackArgs,
     MergeTreeMaintenanceType,
+    LocalReference,
+    ReferenceType,
 } from "@fluidframework/merge-tree";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
@@ -52,8 +54,8 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert.equal(this._start, Handle.unallocated);
-        assert(isHandleValid(value));
+        assert(this._start === Handle.unallocated, 0x024 /* "Start of PermutationSegment already allocated!" */);
+        assert(isHandleValid(value), 0x025 /* "Trying to set start of PermutationSegment to invalid handle!" */);
 
         this._start = value;
     }
@@ -101,7 +103,7 @@ export class PermutationSegment extends BaseSegment {
     }
 
     protected createSplitSegmentAt(pos: number) {
-        assert(0 < pos && pos < this.cachedLength);
+        assert(0 < pos && pos < this.cachedLength, 0x026 /* "Trying to split segment at out-of-bounds position!" */);
 
         const leafSegment = new PermutationSegment(
             /* length: */ this.cachedLength - pos,
@@ -150,12 +152,23 @@ export class PermutationVector extends Client {
             new PermutationSegment(length));
     }
 
+    public insertRelative(segment: ISegment, length: number) {
+        const inserted = new PermutationSegment(length);
+
+        return {
+            op: this.insertAtReferencePositionLocal(
+                    new LocalReference(this, segment, /* offset: */ 0, ReferenceType.Transient),
+                    inserted),
+            inserted,
+        };
+    }
+
     public remove(start: number, length: number) {
         return this.removeRangeLocal(start, start + length);
     }
 
     public getMaybeHandle(pos: number): Handle {
-        assert(0 <= pos && pos < this.getLength());
+        assert(0 <= pos && pos < this.getLength(), 0x027 /* "Trying to get handle of out-of-bounds position!" */);
 
         return this.handleCache.getHandle(pos);
     }
@@ -192,12 +205,13 @@ export class PermutationVector extends Client {
             return undefined;
         }
 
-        return this.getPosition(segment) + offset;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.getPosition(segment) + offset!;
     }
 
     public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq,
-            "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op.");
+            0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
         //       the original operation to the current position for resubmitting.  This is probably the
@@ -242,7 +256,7 @@ export class PermutationVector extends Client {
         // ops that reference the stale handle, or the removal is unACKed, in which case the handle
         // has not yet been recycled.
 
-        assert(isHandleValid(containingSegment.start));
+        assert(isHandleValid(containingSegment.start), 0x029 /* "Invalid handle at start of containing segment!" */);
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
@@ -253,27 +267,30 @@ export class PermutationVector extends Client {
     }
 
     // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle): ITree {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer): ITree {
         return {
             entries: [
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.segments,
                     type: TreeEntry.Tree,
-                    value: super.snapshot(runtime, handle, /* catchUpMsgs: */[]),
+                    value: super.snapshot(runtime, handle, serializer, /* catchUpMsgs: */[]),
                 },
-                serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
+                serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
             ],
-            id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
-    public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, branchId?: string) {
-        const handleTableData = await deserializeBlob(runtime, storage, SnapshotPath.handleTable);
+    public async load(
+        runtime: IFluidDataStoreRuntime,
+        storage: IChannelStorageService,
+        serializer: IFluidSerializer,
+    ) {
+        const handleTableData = await deserializeBlob(storage, SnapshotPath.handleTable, serializer);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
 
-        return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
+        return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), serializer);
     }
 
     private readonly onDelta = (
@@ -288,8 +305,10 @@ export class PermutationVector extends Client {
             }))
             .sort((left, right) => left.position - right.position);
 
+        const isLocal = opArgs.sequencedMessage === undefined;
+
         // Notify the undo provider, if any is attached.
-        if (this.undo !== undefined) {
+        if (this.undo !== undefined && isLocal) {
             this.undo.record(operation, ranges);
         }
 
@@ -331,7 +350,7 @@ export class PermutationVector extends Client {
             }
 
             default:
-                assert.fail();
+                throw new Error("Unhandled MergeTreeDeltaType");
         }
     };
 

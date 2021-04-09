@@ -43,9 +43,11 @@ export class CheckpointManager implements ICheckpointManager {
         //
         // And last we delete all mesages in the list prior to the summaryprotocol sequence number. From now on these
         // will no longer be referenced.
-        if (pending.length > 0) {
+        const dbOps = pending.map((message) => ({ ...message,
+            mongoTimestamp: new Date(message.operation.timestamp) }));
+        if (dbOps.length > 0) {
             await this.opCollection
-                .insertMany(pending, false)
+                .insertMany(dbOps, false)
                 // eslint-disable-next-line @typescript-eslint/promise-function-async
                 .catch((error) => {
                     // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { TenantManager } from "@fluidframework/server-services";
 import { GitManager, Historian, IGitCache } from "@fluidframework/server-services-client";
 import { ITenantManager } from "@fluidframework/server-services-core";
-import Axios from "axios";
 import { IAlfred } from "./interfaces";
 
 export class Alfred implements IAlfred {
@@ -16,7 +15,6 @@ export class Alfred implements IAlfred {
 
     constructor(
         tenants: { id: string; key: string }[],
-        private readonly ordererUrl: string,
         private readonly historianUrl: string,
         private readonly riddlerUrl: string,
     ) {
@@ -28,13 +26,6 @@ export class Alfred implements IAlfred {
             const gitManager = new GitManager(historian);
             this.tenants.set(tenant.id, gitManager);
         }
-    }
-
-    public async createFork(tenantId: string, id: string): Promise<string> {
-        const forkResponse = await Axios.post<string>(
-            `${this.ordererUrl}/documents/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}/forks`);
-
-        return forkResponse.data;
     }
 
     public async getFullTree(
@@ -119,7 +110,6 @@ export class Alfred implements IAlfred {
 
     private getGitManager(id: string): GitManager {
         const result = this.tenants.get(id);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!result) {
             throw new Error(`Unknown tenant: ${id}`);
         }

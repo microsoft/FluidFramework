@@ -8,11 +8,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import {
     Clicker,
     ExampleUsingProviders,
@@ -20,9 +20,7 @@ import {
 import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const PondName = pkg.name as string;
+export const PondName = "Pond";
 
 /**
  * Basic Pond example using stock component classes.
@@ -51,11 +49,18 @@ export class Pond extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const clicker = await this.root.get<IFluidHandle>(Clicker.ComponentName).get();
+        const clickerHandle = this.root.get<IFluidHandle>(Clicker.ComponentName);
+        if (!clickerHandle) {
+            throw new Error("Pond not intialized correctly");
+        }
+        const clicker = await clickerHandle.get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
-        const clickerUsingProviders
-            = await this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName).get();
+        const clickerUserProvidersHandle = this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName);
+        if (!clickerUserProvidersHandle) {
+            throw new Error("Pond not intialized correctly");
+        }
+        const clickerUsingProviders = await clickerUserProvidersHandle.get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 
@@ -100,7 +105,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new DataObjectFactory(
+    private static readonly factory = new DataObjectFactory<Pond, undefined, undefined, IEvent>(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],
@@ -115,7 +120,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
 // ----- CONTAINER SETUP STUFF -----
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    Pond.getFactory().type,
+    Pond.getFactory(),
     new Map([
         Pond.getFactory().registryEntry,
     ]),

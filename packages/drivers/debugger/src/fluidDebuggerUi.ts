@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
 export interface IDebuggerUI {
@@ -73,7 +73,7 @@ export interface IDebuggerController {
     /**
      * UI Layer notifies about selection of version to continue.
      * On successful load, versionSelected() is called.
-     * @param version - Version, undefined (playing ops)
+     * @param version - Snapshot version to start from.
      */
     onVersionSelection(version: IVersion): void;
 
@@ -85,10 +85,16 @@ export interface IDebuggerController {
     onSnapshotFileSelection(file: File): void;
 
     /**
-     * "next op" button is clicked in UI
+     * "next op" button is clicked in the UI
      * @param steps - number of ops to play.
      */
     onOpButtonClick(steps: number): void;
+
+    /**
+     * "Download ops" option is clicked in the UI. Returns JSON of the full opStream when available.
+     * @param anonymize - anonymize the ops json using the sanitization tool
+     */
+    onDownloadOpsButtonClick(anonymize: boolean): Promise<string>;
 }
 
 const debuggerWindowHtml =
@@ -101,8 +107,13 @@ Close debugger window to proceed to live document<br/><br/>
 </select>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
-<input id='file' type='file'/>
-<br/><br/><div id='versionText'></div><br/>
+<input id='file' type='file' value='Load from file'/>
+<br/><br/>
+<h4>Download the current document's ops</h4>
+<input type='checkbox' id='anonymize' value='Anonymize'>
+<label for='anonymize'>Anonymize</label>
+<button type='button' id='downloadOps'>Download ops</button>
+<br/><br/><div id='versionText'></div>
 </body>`;
 
 const debuggerWindowHtml2 =
@@ -112,10 +123,15 @@ const debuggerWindowHtml2 =
 <div id='versionText'></div>
 <div id='lastOp'></div>
 <br/>
-Step to move: <input type='number' id='steps' value='1' style='width:50px'/>
+Step to move: <input type='number' id='steps' value='1' min='1' style='width:50px'/>
 &nbsp; &nbsp; &nbsp;<button id='buttonOps' style='width:60px'>Go</button>
 <br/><br/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
+<br/>
+<h4>Download the current document's ops</h4>
+<input type='checkbox' id='anonymize' value='Anonymize'>
+<label for='anonymize'>Anonymize</label>
+<button type='button' id='downloadOps'>Download ops</button>
 </body>`;
 
 export class DebuggerUI {
@@ -178,26 +194,37 @@ export class DebuggerUI {
         }, false);
 
         this.selector = doc.getElementById("selector") as HTMLSelectElement;
-        const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
-        const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
-        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
 
+        const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
         buttonVers.onclick = () => {
             const index = this.selector!.selectedIndex;
             controller.onVersionSelection(this.versions[index]);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        fileSnapshot.addEventListener("change", async () => {
+        const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
+        fileSnapshot.addEventListener("change", () => {
             const files = fileSnapshot.files;
             if (files) {
                 controller.onSnapshotFileSelection(files[0]);
             }
         }, false);
 
+        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
+        const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+        this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
+
+        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.versionText.textContent = "Fetching snapshots, please wait...";
 
         controller.connectToUi(this);
+    }
+
+    private attachDownloadOpsListener(element: HTMLElement, anonymize: HTMLInputElement) {
+        element.addEventListener("click", () => {
+            this.controller.onDownloadOpsButtonClick(anonymize.checked).then((opJson) => {
+                this.download("opStream.json", opJson);
+            }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
+        });
     }
 
     public addVersions(versions: IVersion[]) {
@@ -239,24 +266,28 @@ export class DebuggerUI {
         doc.write(debuggerWindowHtml2);
         doc.close();
 
-        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.lastOpText = doc.getElementById("lastOp") as HTMLDivElement;
-        const steps = doc.getElementById("steps") as HTMLInputElement;
         this.text1 = doc.getElementById("text1") as HTMLDivElement;
         this.text2 = doc.getElementById("text2") as HTMLDivElement;
         this.text3 = doc.getElementById("text3") as HTMLDivElement;
 
+        const steps = doc.getElementById("steps") as HTMLInputElement;
         this.buttonOps = doc.getElementById("buttonOps") as HTMLButtonElement;
         this.buttonOps.disabled = true;
         this.buttonOps.onclick = () => {
             this.controller.onOpButtonClick(Number(steps.value));
         };
 
+        this.versionText = doc.getElementById("versionText") as HTMLDivElement;
         this.versionText.textContent = text;
+
+        const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
+        const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+        this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
     }
 
     public disableNextOpButton(disable: boolean) {
-        assert(this.buttonOps);
+        assert(!!this.buttonOps, 0x088 /* "Missing button ops button!" */);
         this.buttonOps.disabled = disable;
     }
 
@@ -293,5 +324,18 @@ export class DebuggerUI {
             text = `Document's last op seq#: ${lastKnownOp}`;
         }
         this.lastOpText!.textContent = text;
+    }
+
+    private download(filename: string, data: string): void {
+        const element = document.createElement("a");
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${  encodeURIComponent(data)}`);
+        element.setAttribute("download", filename);
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
     }
 }

@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IRunner } from "@fluidframework/server-services-utils";
+import { promiseTimeout } from "@fluidframework/server-services-client";
+import {
+    IConsumer,
+    IContextErrorData,
+    ILogger,
+    IPartitionLambdaFactory,
+    IRunner,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
-    private deferred: Deferred<void>;
-    private partitionManager: PartitionManager;
+    private deferred: Deferred<void> | undefined;
+    private partitionManager: PartitionManager | undefined;
+    private stopped: boolean = false;
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
@@ -21,38 +28,62 @@ export class KafkaRunner implements IRunner {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public start(): Promise<void> {
-        this.deferred = new Deferred<void>();
+    public start(logger: ILogger | undefined): Promise<void> {
+        if (this.deferred) {
+            throw new Error("Already started");
+        }
+
+        const deferred = new Deferred<void>();
+
+        this.deferred = deferred;
 
         process.on("warning", (msg) => {
             console.trace("Warning", msg);
         });
 
         this.factory.on("error", (error) => {
-            this.deferred.reject(error);
+            deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, winston);
-        this.partitionManager.on("error", (error, restart) => {
-            this.deferred.reject(error);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
+        this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
+            if (errorData && !errorData.restart) {
+                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
+                logger?.error(inspect(error));
+            } else {
+                deferred.reject(error);
+            }
         });
 
-        return this.deferred.promise;
+        this.stopped = false;
+
+        return deferred.promise;
     }
 
     /**
      * Signals to stop the service
      */
     public async stop(): Promise<void> {
-        winston.info("Stop requested");
+        if (!this.deferred || this.stopped) {
+            return;
+        }
+
+        this.stopped = true;
 
         // Stop listening for new updates
         await this.consumer.pause();
 
-        // Mark ourselves done once the topic manager has stopped processing
-        const stopP = this.partitionManager.stop();
-        this.deferred.resolve(stopP);
+        // Stop the partition manager
+        await this.partitionManager?.stop();
 
-        return this.deferred.promise;
+        // Dispose the factory
+        await this.factory.dispose();
+
+        // Close the underlying consumer, but setting a timeout for safety
+        await promiseTimeout(30000, this.consumer.close());
+
+        // Mark ourselves done once the partition manager has stopped
+        this.deferred.resolve();
+        this.deferred = undefined;
     }
 }

@@ -6,11 +6,12 @@
 import {
     ICodeLoader,
     ICodeAllowList,
-    IFluidCodeDetails,
     IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
+    isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
@@ -36,11 +37,11 @@ export class WebCodeLoader implements ICodeLoader {
         }
     }
 
-    public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
+    public async preCache(source: IFluidCodeDetails) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if (resolved?.resolvedPackage?.fluid?.browser?.umd?.files !== undefined) {
+        if (isFluidBrowserPackage(resolved.resolvedPackage)) {
             return this.scriptManager.preCacheFiles(
-                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
+                resolved.resolvedPackage.fluid.browser);
         }
     }
 
@@ -69,12 +70,15 @@ export class WebCodeLoader implements ICodeLoader {
         if (this.allowList !== undefined && !(await this.allowList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
+        if (!isFluidBrowserPackage(resolved.resolvedPackage)) {
+            throw new Error(`Package ${resolved.resolvedPackage.name} not a Fluid module.`);
+        }
 
-        const loadedScripts = await this.scriptManager.loadLibrary(
-            resolved.resolvedPackage.fluid.browser.umd,
-        );
+        const loadedScriptsP =  this.scriptManager.loadLibrary(
+            resolved.resolvedPackage.fluid.browser.umd);
+
         let fluidModule: IFluidModule | undefined;
-        for (const script of loadedScripts) {
+        for (const script of await loadedScriptsP) {
             const maybeFluidModule = script.entryPoint as IFluidModule;
             if (maybeFluidModule.fluidExport !== undefined) {
                 if (fluidModule !== undefined) {

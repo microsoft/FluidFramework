@@ -8,9 +8,9 @@ import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
@@ -54,10 +54,10 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const getStorageTokenStub = async (siteUrl: string, refresh: boolean, _claims?: string) => {
+    const getStorageTokenStub = async (options: odsp.OdspResourceTokenFetchOptions) => {
         return resolveWrapper(
             async (authRequestInfo: IOdspAuthRequestInfo) => {
-                if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
+                if ((options.refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
                     return authRequestInfo.refreshTokenFn();
                 }
                 return authRequestInfo.accessToken;
@@ -69,10 +69,15 @@ async function initializeODSPCore(
         );
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const getWebsocketTokenStub = (_refresh: boolean, _claims?: string) => Promise.resolve("");
+    const getWebsocketTokenStub = (_options: odsp.OdspResourceTokenFetchOptions) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
-        getWebsocketTokenStub);
+        getWebsocketTokenStub,
+        undefined,
+        {
+            opsBatchSize: 20000,
+            concurrentOpsBatches: 4,
+        });
     return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
@@ -102,15 +107,9 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
     }
 
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
-    const tokenProvider = new r11s.TokenProvider(paramJWT);
-    return r11s.createDocumentService(
-        r11sResolvedUrl,
-        r11sResolvedUrl.endpoints.ordererUrl,
-        r11sResolvedUrl.endpoints.deltaStorageUrl,
-        r11sResolvedUrl.endpoints.storageUrl,
-        tokenProvider,
-        tenantId,
-        documentId);
+    const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
+    const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
+    return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
 }
 
 async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
@@ -118,7 +117,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
+        new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), ""),
     ];
     const resolved = await configurableUrlResolver(resolversList, { url });
     return resolved;
@@ -127,7 +126,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 export async function fluidFetchInit(urlStr: string) {
     const resolvedUrl = await resolveUrl(urlStr) as IFluidResolvedUrl;
     if (!resolvedUrl) {
-        return Promise.reject(`Unknown URL ${urlStr}`);
+        return Promise.reject(new Error(`Unknown URL ${urlStr}`));
     }
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
@@ -138,5 +137,5 @@ export async function fluidFetchInit(urlStr: string) {
         const server = url.hostname.toLowerCase();
         return initializeR11s(server, url.pathname, resolvedUrl);
     }
-    return Promise.reject(`Unknown resolved protocol ${protocol}`);
+    return Promise.reject(new Error(`Unknown resolved protocol ${protocol}`));
 }

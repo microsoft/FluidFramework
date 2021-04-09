@@ -5,6 +5,7 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
+    IContainerRuntimeOptions,
     FluidDataStoreRegistry,
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
@@ -14,7 +15,7 @@ import {
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
-    deprecated_innerRequestHandler,
+    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -39,11 +40,13 @@ export class BaseContainerRuntimeFactory implements
      * @param registryEntries - The data store registry for containers produced
      * @param serviceRegistry - The service registry for containers produced
      * @param requestHandlers - Request handlers for containers produced
+     * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
         private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
+        private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
@@ -70,8 +73,8 @@ export class BaseContainerRuntimeFactory implements
             this.registryEntries,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                deprecated_innerRequestHandler),
-            undefined,
+                innerRequestHandler),
+            this.runtimeOptions,
             scope);
 
         // we register the runtime so developers of providers can use it in the factory pattern.

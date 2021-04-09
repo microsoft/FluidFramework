@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import {
     IFluidObject,
     IFluidHandleContext,
@@ -12,15 +13,15 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
-require("bootstrap/dist/css/bootstrap.min.css");
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
+import "bootstrap/dist/css/bootstrap.min.css";
 
 class ProgressBarView implements IFluidHTMLView {
     public parent: HTMLElement;
@@ -44,7 +45,7 @@ class ProgressBarView implements IFluidHTMLView {
             div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
-            urlDiv.innerText = this.bar.url;
+            urlDiv.innerText = this.bar.handle.absolutePath;
 
             const downButton = document.createElement("button");
             downButton.innerText = "down";
@@ -84,7 +85,6 @@ export class ProgressBar extends EventEmitter implements
 
     constructor(
         public value: number,
-        public url: string,
         private readonly keyId: string,
         context: IFluidHandleContext,
         private readonly collection: ProgressCollection,
@@ -112,11 +112,7 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
+        return defaultFluidObjectRequestHandler(this, request);
     }
 }
 
@@ -134,7 +130,6 @@ export class ProgressCollection
     public get IFluidRouter() { return this; }
     public get IFluidObjectCollection() { return this; }
 
-    public url: string;
     public handle: FluidObjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
@@ -143,8 +138,7 @@ export class ProgressCollection
     constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
-        this.url = context.id;
-        this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -200,9 +194,8 @@ export class ProgressCollection
                 key,
                 new ProgressBar(
                     this.root.get(key),
-                    `${this.url}/${key}`,
                     key,
-                    this.runtime.IFluidHandleContext,
+                    this.runtime.objectsRoutingContext,
                     this));
         }
 
@@ -214,9 +207,8 @@ export class ProgressCollection
                     changed.key,
                     new ProgressBar(
                         this.root.get(changed.key),
-                        `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.IFluidHandleContext,
+                        this.runtime.objectsRoutingContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }
@@ -231,20 +223,16 @@ class ProgressBarsFactory implements IFluidDataStoreFactory {
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
+        const runtimeClass = mixinRequestHandler(
+            async (request: IRequest) => {
+                const router = await routerP;
+                return router.request(request);
+            });
 
-        const runtime = FluidDataStoreRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        const progressCollectionP = ProgressCollection.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+        ].map((factory) => [factory.type, factory])));
+        const routerP = ProgressCollection.load(runtime, context);
 
         return runtime;
     }

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
@@ -68,7 +66,7 @@ export class SummaryWriter implements ISummaryWriter {
     /* eslint-disable max-len */
     public async writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
-        lastSummaryHead: string,
+        lastSummaryHead: string | undefined,
         protocolMinimumSequenceNumber: number,
         protocolSequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
@@ -87,15 +85,15 @@ export class SummaryWriter implements ISummaryWriter {
             // the client code just fetches the last summary which should be the same as existingRef sha.
             if (!existingRef ||
                 (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
-                    return {
-                        message: {
-                            errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
-                            summaryProposal: {
-                                summarySequenceNumber: op.sequenceNumber,
-                            },
+                return {
+                    message: {
+                        errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
+                        summaryProposal: {
+                            summarySequenceNumber: op.sequenceNumber,
                         },
-                        status: false,
-                    };
+                    },
+                    status: false,
+                };
             }
         } else if (existingRef) {
             return {
@@ -156,9 +154,9 @@ export class SummaryWriter implements ISummaryWriter {
             JSON.stringify(checkpoint));
 
         const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries, id: null }),
-            this.summaryStorage.createTree({ entries: protocolEntries, id: null }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries, id: null }),
+            this.summaryStorage.createTree({ entries: logTailEntries }),
+            this.summaryStorage.createTree({ entries: protocolEntries }),
+            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
             this.summaryStorage.getTree(content.handle, false),
         ]);
 
@@ -251,8 +249,8 @@ export class SummaryWriter implements ISummaryWriter {
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
         const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries, id: null }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries, id: null }),
+            this.summaryStorage.createTree({ entries: logTailEntries }),
+            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
             this.summaryStorage.getTree(lastCommit.tree.sha, false),
         ]);
 

@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { v4 as uuid } from "uuid";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import {
+    IChannelSummarizeResult,
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
+import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
+import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -62,6 +69,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private _isBoundToContext: boolean = false;
 
     /**
+     * True while we are summarizing this object's data.
+     */
+    private _isSummarizing: boolean = false;
+
+    /**
      * Gets the connection state
      * @returns The state of the connection
      */
@@ -69,12 +81,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._connected;
     }
 
-    /**
-     * The loadable URL for this SharedObject
-     */
-    public get url(): string {
-        return this.id;
+    protected get serializer(): IFluidSerializer {
+        /**
+         * During summarize, the SummarySerializer keeps track of IFluidHandles that are serialized. These handles
+         * represent references to other Fluid objects and are used for garbage collection.
+         *
+         * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+         * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
+         */
+        assert(!this._isSummarizing,
+            0x075 /* "SummarySerializer should be used for serializing data during summary." */);
+        return this._serializer;
     }
+
+    /**
+     * The serializer to use to serialize / parse handles, if any.
+     */
+    private readonly _serializer: IFluidSerializer;
 
     /**
      * @param id - The id of the shared object
@@ -96,14 +119,16 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
             // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
+            runtime !== null ? runtime.logger : undefined, undefined, {all:{ sharedObjectId: uuid() }});
+
+        this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
         this.attachListeners();
     }
 
     private attachListeners() {
         this.on("error", (error: any) => {
-            this.runtime.emit("error", error);
+            this.runtime.raiseContainerWarning(error);
         });
 
         // Only listen to these events if not attached.
@@ -126,19 +151,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * A shared object, after construction, can either be loaded in the case that it is already part of
      * a shared document. Or later attached if it is being newly added.
-     * @param branchId - Branch ID
      * @param services - Services used by the shared object
      */
-    public async load(
-        branchId: string | undefined,
-        services: IChannelServices,
-    ): Promise<void> {
+    public async load(services: IChannelServices): Promise<void> {
         if (this.runtime.attachState !== AttachState.Detached) {
             this.services = services;
         }
-        await this.loadCore(
-            branchId,
-            services.objectStorage);
+        await this.loadCore(services.objectStorage);
         if (this.runtime.attachState !== AttachState.Detached) {
             this.attachDeltaHandler();
         }
@@ -186,9 +205,77 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).snapshot}
+     * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public abstract snapshot(): ITree;
+    public summarize(fullTree: boolean = false, trackState: boolean = false): IChannelSummarizeResult {
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, 0x076 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
+
+        let summaryTree: ISummaryTreeWithStats;
+        let gcData: IGarbageCollectionData;
+        try {
+            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            const snapshot: ITree = this.snapshotCore(serializer);
+            summaryTree = convertToSummaryTreeWithStats(snapshot, fullTree);
+
+            // Add this channel's garbage collection data to the summarize result. The outbound routes of this channel
+            // are all the routes of all the handles that are tracked by the SummarySerializer above.
+            gcData = {
+                gcNodes: { "/": serializer.getSerializedRoutes() },
+            };
+
+            assert(this._isSummarizing, 0x077 /* "Possible re-entrancy! Summary should have been in progress." */);
+        } finally {
+            this._isSummarizing = false;
+        }
+
+        return {
+            ...summaryTree,
+            gcData,
+        };
+    }
+
+    /**
+     * {@inheritDoc (ISharedObject:interface).getGCData}
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
+        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
+        // See: https://github.com/microsoft/FluidFramework/issues/4547
+
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
+        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
+        // to other Fluid objects.
+        assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
+        this._isSummarizing = true;
+
+        let gcData: IGarbageCollectionData;
+        try {
+            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+            this.snapshotCore(serializer);
+
+            // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+            // routes of handles serialized during snapshot.
+            gcData = {
+                gcNodes: { "/": serializer.getSerializedRoutes() },
+            };
+
+            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
+        } finally {
+            this._isSummarizing = false;
+        }
+
+        return gcData;
+    }
+
+    /**
+     * Gets a form of the object that can be serialized.
+     * @returns A tree representing the snapshot of the shared object.
+     */
+    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
 
     /**
      * Set the owner of the object if it is an OwnedSharedObject
@@ -200,12 +287,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Allows the distributed data type to perform custom loading
-     * @param branchId - Branch ID
      * @param services - Storage used by the shared object
      */
-    protected abstract loadCore(
-        branchId: string | undefined,
-        services: IChannelStorageService): Promise<void>;
+    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading.
@@ -293,7 +377,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * If runtime is disposed when this call is made, executor is not run and promise is rejected right away.
      */
     protected async newAckBasedPromise<T>(
-        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+        executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     ): Promise<T> {
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {
@@ -326,7 +410,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
-        assert(this.services !== undefined, "Services should be there to attach delta handler");
+        assert(this.services !== undefined, 0x07a /* "Services should be there to attach delta handler" */);
         this._isBoundToContext = true;
         // Allows objects to do any custom processing if it is attached.
         this.didAttach();
@@ -341,6 +425,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             },
             reSubmit: (content: any, localOpMetadata: unknown) => {
                 this.reSubmit(content, localOpMetadata);
+            },
+            applyStashedOp: (content: any): unknown => {
+                return this.applyStashedOp(content);
             },
         });
 
@@ -398,4 +485,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
     }
+
+    protected abstract applyStashedOp(content: any): unknown;
 }

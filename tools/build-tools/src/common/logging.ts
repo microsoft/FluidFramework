@@ -12,9 +12,9 @@ export function logVerbose(msg: string) {
     }
 }
 
-export function logStatus(msg: string) {
+function log(msg: string, logFunc: (msg: string) => void) {
     if (!commonOptions.logtime) {
-        console.log(msg);
+        logFunc(msg);
         return;
     }
     const date = new Date();
@@ -24,5 +24,13 @@ export function logStatus(msg: string) {
     if (mins.length === 1) { mins = '0' + mins; }
     let secs = date.getSeconds().toString();
     if (secs.length === 1) { secs = '0' + secs; }
-    console.log(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
+    logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
+}
+
+export function logStatus(msg: string) {
+    log(msg, console.log);
+}
+
+export function logError(msg: string) {
+    log(`ERROR: ${msg}`, console.error);
 }

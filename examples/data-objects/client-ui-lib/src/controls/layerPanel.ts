@@ -44,16 +44,17 @@ export class LayerPanel extends ui.Component {
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
+        let _bounds = bounds;
         // TODO this is a temporary fix - need to change resize to just have a size and not a rectangle. Parent
         // will position the element. Child only needs to lay itself out within a size. System will then do any
         // geometry transforms to correctly place in screen space.
-        bounds = new ui.Rectangle(0, 0, bounds.width, bounds.height);
+        _bounds = new ui.Rectangle(0, 0, _bounds.width, _bounds.height);
 
         let scrollBounds: ui.Rectangle;
         let contentBounds: ui.Rectangle;
 
         if (this.scrollBarVisible) {
-            const nippedBounds = bounds.nipHorizRight(scrollAreaWidth);
+            const nippedBounds = _bounds.nipHorizRight(scrollAreaWidth);
             scrollBounds = nippedBounds[1];
             contentBounds = nippedBounds[0];
 
@@ -61,7 +62,7 @@ export class LayerPanel extends ui.Component {
             scrollBounds.conformElement(this.scrollBar.element);
             this.scrollBar.resize(scrollBounds);
         } else {
-            contentBounds = bounds;
+            contentBounds = _bounds;
             this.scrollBar.element.style.display = "none";
         }
 
