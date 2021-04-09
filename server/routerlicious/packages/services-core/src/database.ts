@@ -74,10 +74,10 @@ export interface ICollection<T> {
      * Finds the query in the database. If it exists, update the value to set.
      * Throws if query cannot be found.
      *
-     *  @param filter - data we want to find
-     *  @param set - new values to change to
-     *  @param addToSet - an operator that adds a value to the database unless the value already exists;
-     *   only used in mongodb.ts
+     * @param filter - data we want to find
+     * @param set - new values to change to
+     * @param addToSet - an operator that adds a value to the database unless the value already exists;
+     * only used in mongodb.ts
      */
     update(filter: any, set: any, addToSet: any): Promise<void>;
 
