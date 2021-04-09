@@ -209,18 +209,22 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             assert(this.runtime.objectsRoutingContext.isAttached, 0x11c /* "Detached object routing context" */);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
+                const tasks: Promise<any>[] = [];
                 const leftTasks: string[] = [];
                 for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
                         if (this.locallyRunnableTasks.has(taskUrl)) {
                             debug(`Requesting ${taskUrl}`);
-                            await this.writeCore(taskUrl, this.clientId);
+                            tasks.push(this.writeCore(taskUrl, this.clientId));
                         } else {
                             leftTasks.push(taskUrl);
                         }
                     }
                 }
-                await this.clearTasks(leftTasks);
+                tasks.push(this.clearTasks(leftTasks));
+                await Promise.all(tasks).catch((error) => {
+                    this.sendErrorEvent("AgentScheduler_RemoveMemberError", error);
+                });
             }
         });
 
