@@ -237,8 +237,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             }
         } else {
             const queryKeys = Object.keys(query);
-
-            // Optimization needed
             for (let i = 0; i < sessionStorage.length; i++) {
                 const ssKey = sessionStorage.key(i);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
