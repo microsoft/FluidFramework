@@ -65,7 +65,6 @@ export class LocalDocumentDeltaConnection
             token,  // Token is going to indicate tenant level information, etc...
             versions: testProtocolVersions,
         };
-
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
     }

@@ -17,7 +17,7 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         private readonly id: string,
         private readonly databaseManager: IDatabaseManager) {
     }
-  
+
     public fetchMessages(
         from: number,
         to: number | undefined,
