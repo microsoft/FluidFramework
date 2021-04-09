@@ -13,7 +13,7 @@ This can happen in two ways:
 
 ## Linking the Client Summary
 
-While the summary is uploaded directly from the client, scribe validates the summary and appends additional information
+While the summary is uploaded directly from the client, Scribe validates the summary and appends additional information
 to the summary before creating a git commit with the summary information.
 
 Specifically, Scribe fetches the summary via the SHA included on the summary op, fetches the "log tail" of operations
