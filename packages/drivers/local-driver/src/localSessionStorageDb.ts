@@ -20,8 +20,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.find}
      *
-     *  Each query key consists of several keys separated by '.' e.g: "operation.sequenceNumber".
-     *  The hierarchical syntax allows finding nested key patterns.
+     * Each query key consists of several keys separated by '.' e.g: "operation.sequenceNumber".
+     * The hierarchical syntax allows finding nested key patterns.
      */
     public async find(query: any, sort: any): Promise<any[]> {
         // split the keys and get the corresponding value
