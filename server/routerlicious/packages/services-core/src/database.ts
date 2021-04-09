@@ -97,8 +97,7 @@ export interface ICollection<T> {
      * Inserts an entry into the database.
      * Throws if it would overwrite an existing entry
      *
-     *  @param value - data to insert to the database
-     *
+     * @param value - data to insert to the database
      */
     insertOne(value: T): Promise<any>;
 
