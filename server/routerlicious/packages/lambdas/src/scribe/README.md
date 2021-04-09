@@ -25,7 +25,7 @@ summary is turned into a gitTree and committed to the summaryStorage.
 When there are no clients to write a summary, the service generates a summary without parsing any operations. The service
 summary is a summary that only includes a list of the operations since the prior summary.
 
-While clients can parse service summaries, service summary do not provide the performance improvements of summarizing
+While clients can parse service summaries, service summaries do not provide the performance improvements of summarizing
 the container on the client.
 
 The service summary manages the case where there are no clients to write a summary.
