@@ -28,7 +28,7 @@ export class LocalDocumentDeltaConnection
      * Handle initial messages, contents or signals if they were in queue
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document Id
+     * @param id - document ID
      * @param token - authorization token for storage service
      * @param client - information about the client
      * @param webSocketServer - web socket server to create connection
