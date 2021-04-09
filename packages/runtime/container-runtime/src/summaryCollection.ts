@@ -192,6 +192,10 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
+export type SummaryCollectionOpActions =
+    Partial<Record<
+    MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default",
+    (op: ISequencedDocumentMessage, sc: SummaryCollection) => void>>;
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
@@ -208,13 +212,22 @@ export class SummaryCollection {
     private maxAckWaitTime: number | undefined;
     private pendingAckTimerTimeoutCallback: (() => void) | undefined;
     private lastAck: IAckedSummary | undefined;
+    private _previousSummarySeq: number;
 
     public get latestAck() { return this.lastAck; }
+    public get lastSummarySeq() {
+        return this.latestAck?.summaryOp.referenceSequenceNumber ?? this._previousSummarySeq;
+    }
+    public get opsSinceLastSummary() {
+        return this.deltaManager.lastSequenceNumber - this.lastSummarySeq;
+    }
 
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
+        private readonly opActions: SummaryCollectionOpActions,
     ) {
+        this._previousSummarySeq = deltaManager.initialSequenceNumber;
         this.deltaManager.on(
             "op",
             (op) => this.handleOp(op));
@@ -259,7 +272,7 @@ export class SummaryCollection {
      * @param referenceSequenceNumber - reference sequence number to wait for
      * @returns The latest acked summary
      */
-    public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
+     public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
         while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
             await this.refreshWaitNextAck.promise;
         }
@@ -274,14 +287,17 @@ export class SummaryCollection {
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
+                this.opActions[op.type]?.(op, this);
                 return;
             }
             case MessageType.SummaryAck: {
                 this.handleSummaryAck(op as ISummaryAckMessage);
+                this.opActions[op.type]?.(op, this);
                 return;
             }
             case MessageType.SummaryNack: {
                 this.handleSummaryNack(op as ISummaryNackMessage);
+                this.opActions[op.type]?.(op, this);
                 return;
             }
             default: {
@@ -295,6 +311,8 @@ export class SummaryCollection {
                 ) {
                     this.pendingAckTimerTimeoutCallback?.();
                 }
+                this.opActions.default?.(op, this);
+
                 return;
             }
         }
@@ -352,6 +370,7 @@ export class SummaryCollection {
 
         // Track latest ack
         if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
+            this._previousSummarySeq = this.latestAck?.summaryOp.referenceSequenceNumber ?? this._previousSummarySeq;
             this.lastAck = summary as IAckedSummary;
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
