@@ -17,8 +17,8 @@ While the summary is uploaded directly from the client, Scribe validates the sum
 to the summary before creating a git commit with the summary information.
 
 Specifically, Scribe fetches the summary via the SHA included on the summary op, fetches the "log tail" of operations
-between the summaryOp and the summaryAck, then adds the protocol, serviceProtocol, and log tail to the summary. This
-summary is turned into a gitTree and committed to the summaryStorage.
+between the summaryOp's reference sequence and the current sequence number, then adds the protocol, serviceProtocol,
+and log tail to the summary. This summary is turned into a gitTree and committed to the summaryStorage.
 
 ## Service Summary
 
