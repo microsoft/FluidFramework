@@ -125,7 +125,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
     public get leader(): boolean {
-        console.error(`The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated`);
+        // The FluidDataStoreRuntime.leader property and "leader"/"notleader" events are deprecated
+        this.logger.sendErrorEvent({ eventName: "UsedDataStoreRuntimeLeaderProperty" });
         return this.dataStoreContext.leader;
     }
 

@@ -155,6 +155,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
     public get leader(): boolean {
+        // The FluidDataStoreContext.leader property and "leader"/"notleader" events are deprecated
+        this.logger.sendErrorEvent({ eventName: "UsedDataStoreContextLeaderProperty" });
         return this._containerRuntime.leader;
     }
 

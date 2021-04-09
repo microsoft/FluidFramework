@@ -532,7 +532,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * an upcoming release.
      */
     public get IContainerRuntimeDirtyable() {
-        console.error(`The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated`);
+        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
+        this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
         return this;
     }
     public get IFluidRouter() { return this; }
@@ -584,7 +585,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
         if (!combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection) {
-            console.error("ContainerRuntime with AgentScheduler built-in is deprecated");
+            // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
+            logger.sendErrorEvent({ eventName: "UsedOmitAgentSchedulerAndLeaderElection" });
         }
 
         const registry = combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection
@@ -728,7 +730,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
     public get leader(): boolean {
-        console.error(`The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated`);
+        // The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
+        this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
         return this._leader;
     }
 
@@ -1483,7 +1486,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * an upcoming release.
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
-        console.error(`The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated`);
+        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated
+        this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
         assert(
             isRuntimeMessage(message) === true,
             0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
