@@ -4,7 +4,7 @@
 
 [Bartolomeo Passarotti [Public domain], via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Bartolomeo_Passarotti_-_Portrait_of_a_scribe.jpg)
 
-Scribe is responsible for listening to inbound summary ops and then commiting them to the public record.
+Scribe is responsible for listening to inbound summary ops and then committing them to the public record.
 
 This can happen in two ways:
 
