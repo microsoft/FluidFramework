@@ -3,90 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
-import { DataObject } from "@fluidframework/aqueduct";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+
 import {
     DOProviderContainerRuntimeFactory,
-    IdToDataObjectCollection,
-    IFluidStaticDataObjectClass,
-    RootDataObject,
 } from "./containerCode";
 
-export interface ContainerConfig {
-    dataObjects: IFluidStaticDataObjectClass[];
+import {
+    ContainerConfig,
+    LoadableObjectClass,
+    LoadableObjectRecord,
+} from "./types";
+
+import {
+    isDataObjectClass,
+    isSharedObjectClass,
+} from "./utils";
+
+export interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: (clientId: string) => void): void;
 }
 
-export interface ContainerCreateConfig extends ContainerConfig {
+/**
+ * FluidContainer defines the interace
+ */
+export interface FluidContainer
+    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
     /**
-     * initialDataObjects defines dataObjects that will be created when the Container
-     * is first created. It uses the key as the id and the value and the DataObject to create.
+     * The initialObjects defined in the container config
      *
-     * In the example below two DataObjects will be created when the Container is first
-     * created. One with id "foo1" that will return a `Foo` DataObject and the other with
-     * id "bar2" that will return a `Bar` DataObject.
-     *
+     * Example.
      * ```
      * {
-     *   ["foo1"]: Foo,
-     *   ["bar2"]: Bar,
+     *   foo1: Foo,
+     *   bar2: Bar,
      * }
      * ```
-     *
-     * To get these DataObjects, call `container.getDataObject` passing in one of the ids.
      */
-    initialDataObjects?: IdToDataObjectCollection;
-}
+    readonly initialObjects: LoadableObjectRecord;
 
-export class FluidContainer extends EventEmitter implements Pick<Container, "audience" | "clientId"> {
-    private readonly types: Set<string>;
-
-    private readonly container: Container;
-
-    public readonly audience: Container["audience"];
-
-    public constructor(
-        container: Container, // we anticipate using this later, e.g. for Audience
-        namedRegistryEntries: NamedFluidDataStoreRegistryEntry[],
-        private readonly rootDataObject: RootDataObject,
-        public readonly createNew: boolean) {
-            super();
-            this.types = new Set();
-            namedRegistryEntries.forEach((value: NamedFluidDataStoreRegistryEntry) => {
-                const type = value[0];
-                if (this.types.has(type)) {
-                    throw new Error(`Multiple DataObjects share the same type identifier ${value}`);
-                }
-                this.types.add(type);
-            });
-            this.audience = container.audience;
-            this.container = container;
-            container.on("connected", (id: string) =>  this.emit("connected", id));
-        }
-
-    public get clientId() {
-        return this.container.clientId;
-    }
-
-    public async createDataObject<T extends DataObject>(
-        dataObjectClass: IFluidStaticDataObjectClass,
-        id: string,
-    ) {
-        const type = dataObjectClass.factory.type;
-        // This is a runtime check to ensure the developer doesn't try to create something they have not defined.
-        if (!this.types.has(type)) {
-            throw new Error(
-                `Trying to create a DataObject with type ${type} that was not defined in Container initialization`);
-        }
-
-        return this.rootDataObject.createDataObject<T>(dataObjectClass, id);
-    }
-
-    public async getDataObject<T extends DataObject>(id: string) {
-        return this.rootDataObject.getDataObject<T>(id);
-    }
+    /**
+     * Creates a new instance of the provided LoadableObjectClass
+     *
+     * The returned object needs to be
+     * @param objectClass - The type
+     */
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
 }
 
 /**
@@ -105,40 +72,67 @@ export class FluidInstance {
         this.containerService = getContainerService;
     }
 
-    public async createContainer(id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
-        const registryEntries = this.getRegistryEntries(config.dataObjects);
+    public async createContainer(id: string, config: ContainerConfig): Promise<FluidContainer> {
+        const [registryEntries, sharedObjects] = this.parseDataObjectsFromSharedObjects(config);
         const container = await getContainer(
             this.containerService,
             id,
-            new DOProviderContainerRuntimeFactory(registryEntries, config.initialDataObjects),
+            new DOProviderContainerRuntimeFactory(registryEntries, sharedObjects, config.initialObjects),
             true, /* createNew */
         );
         const rootDataObject = (await container.request({ url: "/" })).value;
-        return new FluidContainer(container, registryEntries, rootDataObject, true /* createNew */);
+        return rootDataObject as FluidContainer;
     }
 
     public async getContainer(id: string, config: ContainerConfig): Promise<FluidContainer> {
-        const registryEntries = this.getRegistryEntries(config.dataObjects);
+        const [registryEntries, sharedObjects] = this.parseDataObjectsFromSharedObjects(config);
         const container = await getContainer(
             this.containerService,
             id,
-            new DOProviderContainerRuntimeFactory(registryEntries),
+            new DOProviderContainerRuntimeFactory(registryEntries, sharedObjects),
             false, /* createNew */
         );
         const rootDataObject = (await container.request({ url: "/" })).value;
-        return new FluidContainer(container, registryEntries, rootDataObject, false /* createNew */);
+        return rootDataObject as FluidContainer;
     }
 
-    private getRegistryEntries(dataObjects: IFluidStaticDataObjectClass[]) {
-        if (dataObjects.length === 0) {
-            throw new Error("Container cannot be initialized without DataObjects");
+    /**
+     * The ContainerConfig consists of initialObjects and dynamicObjectTypes. These types can be
+     * of both SharedObject or DataObject. This function seperates the two and returns a registery
+     * of DataObject types and an array of SharedObjects.
+     */
+    private parseDataObjectsFromSharedObjects(config: ContainerConfig):
+        [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] {
+        const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
+        const sharedObjects: Set<IChannelFactory> = new Set();
+
+        const tryAddObject = (obj: LoadableObjectClass<any>) => {
+            if (isSharedObjectClass(obj)) {
+                sharedObjects.add(obj.getFactory());
+            } else if (isDataObjectClass(obj)) {
+                registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
+            } else {
+                throw new Error(`Entry is neither a DataObject or a SharedObject`);
+            }
+        };
+
+        // Add the object types that will be initialized
+        Object.values(config.initialObjects).forEach((obj) => {
+            tryAddObject(obj);
+        });
+
+        // If there are dynamic object types we will add them now
+        if (config.dynamicObjectTypes) {
+            for (const obj of config.dynamicObjectTypes) {
+                tryAddObject(obj);
+            }
         }
 
-        const dataObjectClassToRegistryEntry = (
-            dataObjectClass: IFluidStaticDataObjectClass): NamedFluidDataStoreRegistryEntry =>
-            [dataObjectClass.factory.type, Promise.resolve(dataObjectClass.factory)];
+        if (registryEntries.size === 0 && sharedObjects.size === 0) {
+            throw new Error("Container cannot be initialized without any DataTypes");
+        }
 
-        return dataObjects.map(dataObjectClassToRegistryEntry);
+        return [Array.from(registryEntries), Array.from(sharedObjects)];
     }
 }
 
@@ -154,7 +148,7 @@ export const Fluid = {
         globalFluid = new FluidInstance(getContainerService);
     },
     async createContainer(
-        id: string, config: ContainerCreateConfig): Promise<FluidContainer> {
+        id: string, config: ContainerConfig): Promise<FluidContainer> {
         if (!globalFluid) {
             throw new Error("Fluid has not been properly initialized before attempting to create a container");
         }

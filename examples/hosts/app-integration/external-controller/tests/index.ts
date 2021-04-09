@@ -6,12 +6,12 @@
 
 import {
     KeyValueDataObject,
-    KeyValueInstantiationFactory
+    KeyValueInstantiationFactory,
 } from "@fluid-experimental/data-objects";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
+import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 
 import { DiceRollerController } from "../src/controller";
-import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -32,7 +32,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     // to store ops.
     const container = await getSessionStorageContainer(
         documentId,
-        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry]),
+        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry], []),
         createNewFlag,
     );
 

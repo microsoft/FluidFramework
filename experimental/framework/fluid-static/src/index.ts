@@ -7,10 +7,12 @@ import { Fluid } from "./FluidStatic";
 export * from "./containerCode";
 export {
     FluidContainer,
-    ContainerConfig,
-    ContainerCreateConfig,
     FluidInstance,
 } from "./FluidStatic";
+
+export type {
+    ContainerConfig,
+} from "./types";
 
 // eslint-disable-next-line import/no-default-export
 export default Fluid;
