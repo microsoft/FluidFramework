@@ -27,8 +27,8 @@ async function start(): Promise<void> {
     // This includes the DataObjects we support and any initial DataObjects we want created
     // when the container is first created.
     const containerConfig = {
-        dataObjects: [KeyValueDataObject],
-        initialDataObjects: {
+        name: "dice-roller-container",
+        initialObjects: {
             /* [id]: DataObject */
             [dataObjectId]: KeyValueDataObject,
         },
@@ -39,7 +39,7 @@ async function start(): Promise<void> {
         : await Fluid.getContainer(containerId, containerConfig);
 
     // We now get the DataObject from the container
-    const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
+    const keyValueDataObject = fluidContainer.initialObjects[dataObjectId] as KeyValueDataObject;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
