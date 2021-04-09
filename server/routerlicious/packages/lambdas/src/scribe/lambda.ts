@@ -189,7 +189,7 @@ export class ScribeLambda extends SequencedLambda {
                     };
                     this.processFromPending(value.operation.referenceSequenceNumber);
 
-                    // Only process the op if the protocol state advances. This elimiates the corner case where we have
+                    // Only process the op if the protocol state advances. This eliminates the corner case where we have
                     // already captured this summary and are processing this message due to a replay of the stream.
                     if (this.protocolHead < this.protocolHandler.sequenceNumber) {
                         try {
