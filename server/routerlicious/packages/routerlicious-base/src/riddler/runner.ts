@@ -5,12 +5,11 @@
 
 import * as http from "http";
 import { Deferred } from "@fluidframework/common-utils";
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
+import { MongoManager, IRunner, ISecretManager } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import * as app from "./app";
 
-export class RiddlerRunner implements utils.IRunner {
+export class RiddlerRunner implements IRunner {
     private server: http.Server;
     private runningDeferred: Deferred<void>;
 

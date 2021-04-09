@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger, ChildLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -51,7 +51,6 @@ import {
     getRetryDelayFromError,
     logNetworkFailure,
     waitForConnectedState,
-    requestOps,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -65,7 +64,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
-const MaxBatchDeltas = 5000; // Please see Issue #5211 for data around batch sizing
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -203,6 +201,8 @@ export class DeltaManager
     private connection: IDocumentDeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
+    // Counts the number of noops sent by the client which may not be acked.
+    private trailingNoopCount = 0;
     private closed = false;
     private storageService: RetriableDocumentStorageService | undefined;
     private readonly deltaStreamDelayId = uuid();
@@ -357,7 +357,8 @@ export class DeltaManager
     }
 
     public shouldJoinWrite(): boolean {
-        return this.clientSequenceNumber !== this.clientSequenceNumberObserved;
+        // We don't have to wait for ack for topmost NoOps. So subtract those.
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
     }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
@@ -772,6 +773,12 @@ export class DeltaManager
             type,
         };
 
+        if (type === MessageType.NoOp) {
+            this.trailingNoopCount++;
+        } else {
+            this.trailingNoopCount = 0;
+        }
+
         this.emit("submitOp", message);
 
         if (!batch) {
@@ -808,28 +815,22 @@ export class DeltaManager
             this.deltaStorageP = docService.connectToDeltaStorage();
         }
 
-        const pipe = requestOps(
-            await this.deltaStorageP,
-            // Staging: starting with no concurrency, listening for feedback first.
-            // In future releases we will switch to actual concurrency
-            1, // concurrency
-            from + 1, // from is exclusive, but ParallelRequests uses inclusive left
-            to, // exclusive right
-            MaxBatchDeltas,
-            ChildLogger.create(this.logger, undefined, { all: {reason: telemetryEventSuffix } }),
-            this.closeAbortController.signal,
-        );
+        const storage = await this.deltaStorageP;
+        const stream = storage.fetchMessages(
+            from, // inclusive
+            to, // exclusive
+            this.closeAbortController.signal);
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const deltas = await pipe.pop();
-            if (deltas === undefined) {
+            const result = await stream.read();
+            if (result.done) {
                 break;
             }
             PerformanceEvent.timedExec(
                 this.logger,
-                { eventName: "GetDeltas_OpProcessing", count: deltas.length},
-                () => callback(deltas),
+                { eventName: "GetDeltas_OpProcessing", count: result.value.length},
+                () => callback(result.value),
                 { end: true, cancel: "error" });
         }
     }
@@ -1333,7 +1334,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, lastKnowOp: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1344,8 +1345,8 @@ export class DeltaManager
             return;
         }
 
-        assert(fromArg === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
-        let from = fromArg;
+        assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
+        let from = lastKnowOp + 1;
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
         if (n !== undefined) {
@@ -1354,8 +1355,8 @@ export class DeltaManager
             // Knowing about this mechanism, we could ask for op we already observed to increase validation.
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
-            assert(n === fromArg, 0x0f2 /* "previouslyProcessedMessage" */);
-            assert(from > 0, 0x0f3 /* "not positive" */);
+            assert(n === lastKnowOp, 0x0f2 /* "previouslyProcessedMessage" */);
+            assert(from > 1, 0x0f3 /* "not positive" */);
             from--;
         }
 

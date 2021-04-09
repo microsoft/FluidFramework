@@ -48,9 +48,10 @@ export const generateOdspHostStoragePolicy = (seed: number)=> {
     const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
         blobDeduping: booleanCases,
         concurrentSnapshotFetch: booleanCases,
+        opsBatchSize: numberCases,
+        concurrentOpsBatches: numberCases,
         snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
         opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
     };
-
     return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

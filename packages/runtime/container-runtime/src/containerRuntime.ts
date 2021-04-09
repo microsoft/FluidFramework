@@ -130,6 +130,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
+import { SummaryCollection } from "./summaryCollection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -675,7 +676,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
-    private latestSummaryAck: Omit<ISummaryContext, "referenceSequenceNumber">;
+    private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -778,11 +779,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
-        this.latestSummaryAck = {
-            proposalHandle: undefined,
-            ackHandle: this.context.getLoadedFromVersion()?.id,
-        };
-
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
             this.logger,
@@ -859,7 +855,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
-
+        this.summaryCollection = new SummaryCollection(
+            this.deltaManager,
+            this.logger,
+        );
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -869,7 +868,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this /* ISummarizerRuntime */,
             () => this.summaryConfiguration,
             this /* ISummarizerInternalsProvider */,
-            this.IFluidHandleContext);
+            this.IFluidHandleContext,
+            this.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -1643,10 +1643,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 lastSequenceNumber === summaryRefSeqNum,
                 0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
             );
+            const lastAck = this.summaryCollection.latestAck;
+            const summaryContext: ISummaryContext =
+                lastAck === undefined
+                ? {
+                    proposalHandle: undefined,
+                    ackHandle: this.context.getLoadedFromVersion()?.id,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                }
+                : {
+                    proposalHandle: lastAck.summaryOp.contents.handle,
+                    ackHandle: lastAck.summaryAckNack.contents.handle,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
 
             const handle = await this.storage.uploadSummaryWithContext(
                 summarizeResult.summary,
-                { ... this.latestSummaryAck, referenceSequenceNumber: summaryRefSeqNum });
+                summaryContext);
 
             if (refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
@@ -1658,7 +1671,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 );
             }
 
-            const parent = this.latestSummaryAck.ackHandle;
+            const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1988,8 +2001,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
         version?: IVersion,
     ) {
-        this.latestSummaryAck = { proposalHandle, ackHandle };
-
         const getSnapshot = async () => {
             const perfEvent = PerformanceEvent.start(summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",

@@ -26,6 +26,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         snapshotStorageUrl: string;
         attachmentPOSTStorageUrl: string;
         attachmentGETStorageUrl: string;
+        deltaStorageUrl: string,
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
@@ -272,6 +273,10 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
 
     blobDeduping?: boolean;
+
+    // Options overwriting default ops fetching from storage.
+    opsBatchSize?: number;
+    concurrentOpsBatches?: number;
 
     /**
      * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)

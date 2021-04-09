@@ -27,7 +27,6 @@
     "@azure/event-hubs": "^1.0.8",
     "@azure/event-processor-host": "^1.0.6",
     "@fluidframework/server-services-core": "^0.1023.0",
-    "@fluidframework/server-services-utils": "^0.1023.0",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0"
   },
