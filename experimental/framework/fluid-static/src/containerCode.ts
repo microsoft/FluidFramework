@@ -9,14 +9,15 @@ import {
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { FluidContainer, IFluidContainerEvents } from "./FluidStatic";
 import {
     DataObjectClass,
     LoadableObjectClass,
@@ -25,6 +26,37 @@ import {
     SharedObjectClass,
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass } from "./utils";
+
+export interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: (clientId: string) => void): void;
+}
+
+/**
+ * FluidContainer defines the interface that the developer will use to interact with Fluid.
+ */
+export interface FluidContainer
+    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
+    /**
+     * The initialObjects defined in the container config
+     *
+     * Example.
+     * ```
+     * {
+     *   foo1: Foo,
+     *   bar2: Bar,
+     * }
+     * ```
+     */
+    readonly initialObjects: LoadableObjectRecord;
+
+    /**
+     * Creates a new instance of the provided LoadableObjectClass
+     *
+     * The returned object needs to be stored via handle by the caller.
+     * @param objectClass - The type
+     */
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+}
 
 interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
