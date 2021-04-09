@@ -70,7 +70,6 @@ export interface ICollection<T> {
     findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }>;
 
     /**
-     *
      * Finds the query in the database. If it exists, update the value to set.
      * Throws if query cannot be found.
      *
