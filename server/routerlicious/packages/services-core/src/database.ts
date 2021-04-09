@@ -82,7 +82,6 @@ export interface ICollection<T> {
     update(filter: any, set: any, addToSet: any): Promise<void>;
 
     /**
-     *
      * Finds the value that satisfies query. If it exists, update the value to new set.
      * Otherwise inserts the set to the datbase.
      *
