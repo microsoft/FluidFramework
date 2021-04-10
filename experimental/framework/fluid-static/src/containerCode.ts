@@ -38,22 +38,13 @@ export interface FluidContainer
     extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
     /**
      * The initialObjects defined in the container config
-     *
-     * Example.
-     * ```
-     * {
-     *   foo1: Foo,
-     *   bar2: Bar,
-     * }
-     * ```
      */
     readonly initialObjects: LoadableObjectRecord;
 
     /**
-     * Creates a new instance of the provided LoadableObjectClass
+     * Creates a new instance of the provided LoadableObjectClass.
      *
      * The returned object needs to be stored via handle by the caller.
-     * @param objectClass - The type
      */
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
 }
