@@ -8,6 +8,7 @@ import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -66,6 +67,39 @@ async function main() {
     await safeExit(result, url, runId);
 }
 
+function *factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+    let counter = 0;
+    const factoryReused = create();
+
+    while (true) {
+        counter++;
+        // Switch between creating new factory vs. reusing factory.
+        // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+        // At the same time we want to test newly created factory.
+        let factory: T = factoryReused;
+        let headers: IRequestHeader = {};
+        switch (counter % 5) {
+            default:
+            case 0:
+                factory = create();
+                break;
+            case 1:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "cached"} };
+                break;
+            case 2:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "all"} };
+                break;
+            case 3:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "none"} };
+                break;
+            case 4:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "delayed"} };
+                break;
+        }
+        yield { factory, headers };
+    }
+}
+
 /**
  * Implementation of the runner process. Returns the return code to exit the process with.
  */
@@ -78,51 +112,29 @@ async function runnerProcess(
         const testDriver = await createTestDriver(driver, runConfig.runId);
 
         let reset = true;
-        let done = false;
-        const documentServiceFactoryReused =
-            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-        let counter = 0;
 
-        while(!done) {
-            counter++;
+        const iterator = factoryPermutations(
+            () => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()));
+
+        for (const {factory, headers} of iterator) {
+            // const {factory, headers} = result;
             // Switch between creating new factory vs. reusing factory.
             // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
             // At the same time we want to test newly created factory.
-            let factory: FaultInjectionDocumentServiceFactory = documentServiceFactoryReused;
-            let headers: IRequestHeader = {};
-            let resume = false;
-            switch (counter % 5) {
-                default:
-                case 0:
-                    factory = new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-                    break;
-                case 1:
-                    headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "cached"} };
-                    break;
-                case 2:
-                    headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "all"} };
-                    break;
-                case 3:
-                    resume = true;
-                    headers = { [LoaderHeader.loadMode]: { deltaConnection : "none"} };
-                    break;
-                case 4:
-                    resume = true;
-                    headers = { [LoaderHeader.loadMode]: { deltaConnection : "delayed"} };
-                    break;
-                }
 
             const {container, test} = await load(testDriver, factory, { url, headers }, runConfig.runId);
-            if (resume) {
-                container.resume();
-            }
+            container.resume();
+
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(factory, container, runConfig);
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                const done = await test.run(runConfig, reset);
                 printStatus(runConfig, done ?  `finished` : "closed");
+                if (done) {
+                    break;
+                }
             }catch(error) {
                 await loggerP.then(
                     async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
