@@ -269,7 +269,7 @@ export class SummaryCollection {
      * @param referenceSequenceNumber - reference sequence number to wait for
      * @returns The latest acked summary
      */
-     public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
+    public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
         while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
             await this.refreshWaitNextAck.promise;
         }
