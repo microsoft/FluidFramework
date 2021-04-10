@@ -55,7 +55,7 @@ export interface ContainerConfig {
      * ```
      * {
      *   map1: SharedMap,
-     *   bar2: KeyValueDataObject,
+     *   pair1: KeyValueDataObject,
      * }
      * ```
      */
