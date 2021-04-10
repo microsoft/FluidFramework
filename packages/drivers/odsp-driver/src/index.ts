@@ -3,30 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export * from "./odspDocumentServiceFactory";
-export * from "./odspDeltaStorageService";
-export * from "./odspDocumentService";
-export * from "./odspDocumentStorageManager";
-export * from "./contracts";
-export * from "./odspDriverUrlResolver";
-export * from "./fetchSnapshot";
-export * from "./odspUtils";
-export * from "./createOdspUrl";
-export * from "./vroom";
-export * from "./odspDocumentServiceFactoryWithCodeSplit";
-export * from "./odspDocumentServiceFactoryCore";
-export * from "./odspDocumentDeltaConnection";
-export * from "./odspCache";
-export * from "./createFile";
-export * from "./odspUrlHelper";
-export * from "./odspError";
-export * from "./createOdspCreateContainerRequest";
-export * from "./tokenFetch";
-export * from "./epochTracker";
-export * from "./odspDriverUrlResolverForShareLink";
+// Contracts.
 export * from "./constants";
-export * from "./odspFluidFileLink";
+export * from "./contracts"; // Needs to be split into public and private pieces
+export * from "./tokenFetch";
+
+// public utils
+export * from "./odspPublicUtils";
+export * from "./odspUrlHelper";
+export * from "./createOdspUrl";
 export * from "./checkUrl";
-export * from "./rateLimiter";
-export * from "./odspSummaryUploadManager";
-export * from "./opsCaching";
+export * from "./odspCache"; // need to break API vs. implementations
+
+// Factory
+export * from "./odspDocumentServiceFactory";
+export * from "./odspDocumentServiceFactoryWithCodeSplit";
+
+// File creation
+export * from "./createFile";
+export * from "./createOdspCreateContainerRequest";
+
+// URI Resolver functionality, URI management
+export * from "./odspDriverUrlResolverForShareLink";
+export * from "./odspDriverUrlResolver";
+
+// It's used by URL resolve code, but also has some public functions
+export * from "./odspFluidFileLink";

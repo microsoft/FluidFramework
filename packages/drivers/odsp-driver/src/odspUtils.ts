@@ -22,7 +22,6 @@ import {
     RequestInit as FetchRequestInit,
     Headers,
 } from "node-fetch";
-import sha from "sha.js";
 import { debug } from "./debug";
 import { TokenFetchOptions } from "./tokenFetch";
 import { RateLimiter } from "./rateLimiter";
@@ -36,10 +35,6 @@ export interface IOdspResponse<T> {
     headers: Map<string, string>;
     commonSpoHeaders: ITelemetryProperties;
     duration: number,
-}
-
-export function getHashedDocumentId(driveId: string, itemId: string): string {
-    return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
 }
 
 function headersToMap(headers: Headers) {

@@ -10,7 +10,8 @@ import { IOdspResolvedUrl } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { getHashedDocumentId, getOdspResolvedUrl } from "./odspUtils";
+import { getOdspResolvedUrl } from "./odspUtils";
+import { getHashedDocumentId } from "./odspPublicUtils";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
