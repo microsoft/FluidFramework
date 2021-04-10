@@ -253,7 +253,7 @@ export interface IContainerRuntimeOptions {
      * an instance of it using createRootDataStore, and explicitly register for leadership election using
      * TaskSubscription.
      */
-    omitAgentSchedulerAndLeaderElection?: boolean;
+    addGlobalAgentSchedulerAndLeaderElection?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -510,7 +510,7 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
     return {
         summaryOptions,
         gcOptions,
-        omitAgentSchedulerAndLeaderElection: runtimeOptions?.omitAgentSchedulerAndLeaderElection,
+        addGlobalAgentSchedulerAndLeaderElection: runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection,
     };
 }
 
@@ -581,17 +581,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
-            omitAgentSchedulerAndLeaderElection: false,
+            addGlobalAgentSchedulerAndLeaderElection: true,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
-        if (!combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection) {
+        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
-            logger.sendErrorEvent({ eventName: "UsedOmitAgentSchedulerAndLeaderElection" });
+            logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
         }
 
-        const registry = combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection
-            ? new FluidDataStoreRegistry(registryEntries)
-            : new ContainerRuntimeDataStoreRegistry(registryEntries);
+        const registry = combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false
+            ? new ContainerRuntimeDataStoreRegistry(registryEntries)
+            : new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -615,7 +615,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             requestHandler,
             storage);
 
-        if (!combinedRuntimeOptions.omitAgentSchedulerAndLeaderElection) {
+        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
             if (!context.existing) {

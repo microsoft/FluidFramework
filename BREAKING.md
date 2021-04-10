@@ -113,9 +113,9 @@ if (type === ContainerMessageType.Attach) {
 ```
 
 #### Deprecation of AgentScheduler in the container registry and instantiation of the _scheduler
-Finally, the automatic addition to the registry and creation of the `AgentScheduler` with ID `_scheduler` is deprecated and will also be removed in an upcoming release.  To prepare for this, you can proactively opt-out of the built-in by using the `IContainerRuntimeOptions` option `omitAgentSchedulerAndLeaderElection` in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.
+Finally, the automatic addition to the registry and creation of the `AgentScheduler` with ID `_scheduler` is deprecated and will also be removed in an upcoming release.  To prepare for this, you can proactively opt-out of the built-in by turning off the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.
 
-For backwards compat with documents created prior to this change, you'll need to ensure the `AgentSchedulerFactory.registryEntry` is present in the container registry.  You can add it explicitly in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.  The examples below show how to opt-in to the new behavior while maintaining backward-compat with documents that were created with a built-in `AgentScheduler`.
+For backwards compat with documents created prior to this change, you'll need to ensure the `AgentSchedulerFactory.registryEntry` is present in the container registry.  You can add it explicitly in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.  The examples below show how to opt-out of the built-in while maintaining backward-compat with documents that were created with a built-in `AgentScheduler`.
 
 ```typescript
 const runtime = await ContainerRuntime.load(
@@ -125,8 +125,8 @@ const runtime = await ContainerRuntime.load(
         AgentSchedulerFactory.registryEntry,
     ],
     requestHandler,
-    // Opt-in to removing the AgentScheduler
-    { omitAgentSchedulerAndLeaderElection: true },
+    // Opt-out of adding the AgentScheduler
+    { addGlobalAgentSchedulerAndLeaderElection: false },
     scope);
 ```
 
@@ -139,12 +139,12 @@ const SomeContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataSt
     ]),
     providerEntries,
     requestHandlers,
-    // Opt-in to removing the AgentScheduler
-    { omitAgentSchedulerAndLeaderElection: true },
+    // Opt-out of adding the AgentScheduler
+    { addGlobalAgentSchedulerAndLeaderElection: false },
 );
 ```
 
-This option will be enabled by default in an upcoming release before being turned on permanently, so it is recommended to make these updates proactively.
+The option will be turned off by default in an upcoming release before being turned off permanently, so it is recommended to make these updates proactively.
 
 ## 0.37 Breaking changes
 

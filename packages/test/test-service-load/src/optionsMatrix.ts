@@ -48,7 +48,7 @@ const summaryOptionsMatrix = new Lazy<OptionsMatrix<ISummaryRuntimeOptions>>(()=
 const runtimeOptionsMatrix = new Lazy<OptionsMatrix<IContainerRuntimeOptions>>(()=>({
     gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix)],
     summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix.value)],
-    omitAgentSchedulerAndLeaderElection: [false],
+    addGlobalAgentSchedulerAndLeaderElection: [true],
 }));
 
 export const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
