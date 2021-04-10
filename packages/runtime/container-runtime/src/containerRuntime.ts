@@ -858,7 +858,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         });
         const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            if(sc.opsSinceLastSummary > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
                 // and register summary ack handler to re-register this handler
@@ -1678,7 +1678,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
                 : {
                     proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAckNack.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 

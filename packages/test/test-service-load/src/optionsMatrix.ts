@@ -43,6 +43,7 @@ const summaryOptionsMatrix = new Lazy<OptionsMatrix<ISummaryRuntimeOptions>>(()=
     generateSummaries: booleanCases,
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides:[undefined, ...generatePairwiseOptions(summaryConfigurationMatrix)],
+    maxOpsSinceLastSummary: numberCases,
 }));
 
 const runtimeOptionsMatrix = new Lazy<OptionsMatrix<IContainerRuntimeOptions>>(()=>({

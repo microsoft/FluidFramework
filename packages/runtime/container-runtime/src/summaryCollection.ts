@@ -53,9 +53,9 @@ export interface ISummary {
 /**
  * A single summary which has already been acked by the server.
  */
-export interface IAckedSummary extends ISummary {
+export interface IAckedSummary {
     readonly summaryOp: ISummaryOpMessage;
-    readonly summaryAckNack: ISummaryAckMessage;
+    readonly summaryAck: ISummaryAckMessage;
 }
 
 enum SummaryState {
@@ -212,14 +212,12 @@ export class SummaryCollection {
     private maxAckWaitTime: number | undefined;
     private pendingAckTimerTimeoutCallback: (() => void) | undefined;
     private lastAck: IAckedSummary | undefined;
-    private _previousSummarySeq: number;
 
-    public get latestAck() { return this.lastAck; }
-    public get lastSummarySeq() {
-        return this.latestAck?.summaryOp.referenceSequenceNumber ?? this._previousSummarySeq;
-    }
-    public get opsSinceLastSummary() {
-        return this.deltaManager.lastSequenceNumber - this.lastSummarySeq;
+    public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
+
+    public get opsSinceLastAck() {
+        return this.deltaManager.lastSequenceNumber -
+            (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
     }
 
     public constructor(
@@ -227,7 +225,6 @@ export class SummaryCollection {
         private readonly logger: ITelemetryLogger,
         private readonly opActions: SummaryCollectionOpActions,
     ) {
-        this._previousSummarySeq = deltaManager.initialSequenceNumber;
         this.deltaManager.on(
             "op",
             (op) => this.handleOp(op));
@@ -344,7 +341,7 @@ export class SummaryCollection {
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
-        if (!summary) {
+        if (!summary || summary.summaryOp === undefined) {
             // Summary ack without an op should be rare. We could fetch the
             // reference sequence number from the snapshot, but instead we
             // will not emit this ack. It should be the case that the summary
@@ -369,9 +366,11 @@ export class SummaryCollection {
         this.pendingSummaries.delete(seq);
 
         // Track latest ack
-        if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
-            this._previousSummarySeq = this.latestAck?.summaryOp.referenceSequenceNumber ?? this._previousSummarySeq;
-            this.lastAck = summary as IAckedSummary;
+        if (!this.lastAck || seq > this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber) {
+            this.lastAck = {
+                summaryOp: summary.summaryOp,
+                summaryAck: op,
+            };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
         }
