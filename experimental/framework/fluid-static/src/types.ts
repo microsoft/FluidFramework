@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -30,29 +35,39 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
-export interface ContainerConfig<T extends string = string> {
-    name: T;
+export interface ContainerConfig {
     /**
-     * initialDataObjects defines dataObjects that will be created when the Container
-     * is first created. It uses the key as the id and the value and the DataObject to create.
+     * Name of the container being defined.
      *
-     * In the example below two DataObjects will be created when the Container is first
-     * created. One with id "foo1" that will return a `Foo` DataObject and the other with
-     * id "bar2" that will return a `Bar` DataObject.
+     * This property is not currently used by Fluid but instead provides the developer a centralized
+     * location to name their container. It is useful in multi-container scenarios.
+     */
+    name: string;
+
+    /**
+     * initialObjects defines loadable objects that will be created when the Container
+     * is first created. It uses the key as the id and the value and the loadable object to create.
+     *
+     * In the example below two objects will be created when the Container is first
+     * created. One with id "map1" that will return a `SharedMap` and the other with
+     * id "pair1" that will return a `KeyValueDataObject`.
      *
      * ```
      * {
-     *   foo1: Foo,
-     *   bar2: Bar,
+     *   map1: SharedMap,
+     *   bar2: KeyValueDataObject,
      * }
      * ```
-     *
-     * To get these DataObjects, call `container.getDataObject` passing in one of the ids.
      */
     initialObjects: LoadableObjectClassRecord;
 
     /**
-     * Dynamic objects are FluidObjects that can be created after the initial container creation.
+     * Dynamic objects are Loadable objects that can be created after the initial Container creation.
+     *
+     * Types defined in `initialObjects` will always be available and are not required to be provided here.
+     *
+     * For best practice it's recommended to define all the dynamic types you create even if they are
+     * included via initialObjects.
      */
     dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
