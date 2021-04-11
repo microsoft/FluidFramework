@@ -15,6 +15,7 @@ import * as uuid from "uuid";
 import request from "request";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import * as contract from "../contract";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -45,6 +46,8 @@ export class RestGitService {
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
@@ -169,6 +172,14 @@ export class RestGitService {
         this.setCache(tree.sha, tree);
 
         return tree;
+    }
+
+    public async createSnapshot(snapshotParams: contract.ISummaryPayload): Promise<contract.ISnapshotResponse> {
+        const snapshotResponse = await this.post<contract.ISnapshotResponse>(
+            `/${this.tenantId}/${this.documentId}/snapshots`,
+             snapshotParams);
+
+        return snapshotResponse;
     }
 
     public async getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
@@ -356,6 +367,9 @@ export class RestGitService {
 
     private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
+            winston.info(
+                `DEBUG-SUCCESS: ${this.documentId} ${options.method} ${options.url} ${JSON.stringify(options.body)}`);
+            options.headers["Storage-Routing-Id"] = this.getStorageRoutingHeaderValue();
             request(
                 options,
                 (error, response, body) => {
@@ -369,6 +383,12 @@ export class RestGitService {
                     }
                 });
         });
+    }
+
+    private getStorageRoutingHeaderValue()
+    {
+        // return `${this.tenantId}:${this.documentId}`;
+        return this.documentId;
     }
 
     /**
