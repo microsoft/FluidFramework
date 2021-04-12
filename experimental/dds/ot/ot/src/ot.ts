@@ -29,7 +29,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
     /**
      * Queue of sequenced ops that are above minSeq.  Used by 'processCore' to
      * adjust incoming ops to account for prior ops that the sender didn't know about
-     * at the time they submitted thier op.
+     * at the time they submitted their op.
      */
     private readonly sequencedOps: ISequencedOpInfo<TOp>[] = [];
 
