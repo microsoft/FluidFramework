@@ -154,58 +154,122 @@ describe("Summary Collection", () => {
     describe("opActions",()=>{
         it("Summary op",()=>{
             const dm = new MockDeltaManager();
-            let called = false;
+            let called = 0;
             new SummaryCollection(
                 dm,
                 new MockLogger(),
                 {
-                    summarize:()=>called = true,
+                    summarize:()=>called++,
                 },
             );
             dm.emit("op", summaryOp);
-            assert.strictEqual(called, true);
+            assert.strictEqual(called, 1);
         });
 
-        it("Summary Ack",()=>{
+        it("Summary Ack without op",()=>{
             const dm = new MockDeltaManager();
-            let called = false;
+            let called = 0;
             new SummaryCollection(
                 dm,
                 new MockLogger(),
                 {
-                    summaryAck:()=>called = true,
+                    summaryAck:()=>called++,
                 },
             );
             dm.emit("op", summaryAck);
-            assert.strictEqual(called, true);
+            assert.strictEqual(called, 0);
         });
 
-        it("Summary Nack",()=>{
+        it("Summary Ack with op",()=>{
             const dm = new MockDeltaManager();
-            let called = false;
+            let called = 0;
             new SummaryCollection(
                 dm,
                 new MockLogger(),
                 {
-                    summaryNack:()=>called = true,
+                    summaryAck:()=>called++,
+                },
+            );
+            dm.emit("op", summaryOp);
+            dm.emit("op", summaryAck);
+            assert.strictEqual(called, 1);
+        });
+
+        it("Double Summary Ack with op",()=>{
+            const dm = new MockDeltaManager();
+            let called = 0;
+            new SummaryCollection(
+                dm,
+                new MockLogger(),
+                {
+                    summaryAck:()=>called++,
+                },
+            );
+            dm.emit("op", summaryOp);
+            dm.emit("op", summaryAck);
+            dm.emit("op", summaryAck);
+            assert.strictEqual(called, 1);
+        });
+
+        it("Summary Nack without op",()=>{
+            const dm = new MockDeltaManager();
+            let called = 0;
+            new SummaryCollection(
+                dm,
+                new MockLogger(),
+                {
+                    summaryNack:()=>called++,
                 },
             );
             dm.emit("op", summaryNack);
-            assert.strictEqual(called, true);
+            assert.strictEqual(called, 0);
+        });
+
+        it("Summary Nack with op",()=>{
+            const dm = new MockDeltaManager();
+            let called = 0;
+            new SummaryCollection(
+                dm,
+                new MockLogger(),
+                {
+                    summaryNack:()=>called++,
+                },
+            );
+            dm.emit("op", summaryOp);
+            dm.emit("op", summaryNack);
+
+            assert.strictEqual(called, 1);
+        });
+
+        it("Double Summary Nack with op",()=>{
+            const dm = new MockDeltaManager();
+            let called = 0;
+            new SummaryCollection(
+                dm,
+                new MockLogger(),
+                {
+                    summaryNack:()=>called++,
+                },
+            );
+            dm.emit("op", summaryOp);
+            dm.emit("op", summaryNack);
+            dm.emit("op", summaryNack);
+
+            assert.strictEqual(called, 1);
         });
 
         it("default",()=>{
             const dm = new MockDeltaManager();
-            let called = false;
+            let called = 0;
             new SummaryCollection(
                 dm,
                 new MockLogger(),
                 {
-                    default:()=>called = true,
+                    default:()=>called++,
                 },
             );
             dm.emit("op", {});
-            assert.strictEqual(called, true);
+            assert.strictEqual(called, 1);
         });
     });
 });

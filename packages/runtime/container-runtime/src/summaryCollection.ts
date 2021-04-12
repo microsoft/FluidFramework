@@ -194,8 +194,9 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 
 export type SummaryCollectionOpActions =
     Partial<Record<
-    MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default",
-    (op: ISequencedDocumentMessage, sc: SummaryCollection) => void>>;
+        MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default",
+        (op: ISequencedDocumentMessage, sc: SummaryCollection) => void
+    >>;
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
@@ -223,7 +224,7 @@ export class SummaryCollection {
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
-        private readonly opActions: SummaryCollectionOpActions,
+        private readonly opActions: Partial<SummaryCollectionOpActions>,
     ) {
         this.deltaManager.on(
             "op",
@@ -283,18 +284,15 @@ export class SummaryCollection {
     private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
-                this.handleSummaryOp(op as ISummaryOpMessage);
-                this.opActions[op.type]?.(op, this);
+                this.handleSummaryOp(op as ISummaryOpMessage, this.opActions);
                 return;
             }
             case MessageType.SummaryAck: {
-                this.handleSummaryAck(op as ISummaryAckMessage);
-                this.opActions[op.type]?.(op, this);
+                this.handleSummaryAck(op as ISummaryAckMessage, this.opActions);
                 return;
             }
             case MessageType.SummaryNack: {
-                this.handleSummaryNack(op as ISummaryNackMessage);
-                this.opActions[op.type]?.(op, this);
+                this.handleSummaryNack(op as ISummaryNackMessage, this.opActions);
                 return;
             }
             default: {
@@ -315,7 +313,10 @@ export class SummaryCollection {
         }
     }
 
-    private handleSummaryOp(op: ISummaryOpMessage) {
+    private handleSummaryOp(
+        op: ISummaryOpMessage,
+        action: Pick<SummaryCollectionOpActions, MessageType.Summarize>,
+    ) {
         let summary: Summary | undefined;
 
         // Check if summary already being watched, broadcast if so
@@ -336,9 +337,13 @@ export class SummaryCollection {
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
         this.lastSummaryTimestamp = op.timestamp;
+        action.summarize?.(op, this);
     }
 
-    private handleSummaryAck(op: ISummaryAckMessage) {
+    private handleSummaryAck(
+        op: ISummaryAckMessage,
+        action: Pick<SummaryCollectionOpActions, MessageType.SummaryAck>,
+    ) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
         if (!summary || summary.summaryOp === undefined) {
@@ -373,15 +378,20 @@ export class SummaryCollection {
             };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
+            action.summaryAck?.(op, this);
         }
     }
 
-    private handleSummaryNack(op: ISummaryNackMessage) {
+    private handleSummaryNack(
+        op: ISummaryNackMessage,
+        action: Pick<SummaryCollectionOpActions, MessageType.SummaryNack>,
+    ) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
+            action.summaryNack?.(op, this);
         }
     }
 }
