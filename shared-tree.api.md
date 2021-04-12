@@ -357,7 +357,7 @@ export type PlaceIndex = number & {
 };
 
 // @public
-export function revert(toUndo: readonly Change[], before: Snapshot): Change[];
+export function revert(changes: readonly Change[], before: Snapshot): Change[];
 
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];

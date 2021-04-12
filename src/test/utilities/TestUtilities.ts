@@ -347,12 +347,8 @@ export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
 		return false;
 	}
 
-	for (let i = 0; i < traitsA.length; i++) {
-		const [traitLabelA, childrenA] = traitsA[i];
-		const [traitLabelB, childrenB] = traitsB[i];
-		if (traitLabelA !== traitLabelB) {
-			return false;
-		}
+	for (const [traitLabel, childrenA] of traitsA) {
+		const childrenB = b.traits[traitLabel];
 
 		if (childrenA.length !== childrenB.length) {
 			return false;

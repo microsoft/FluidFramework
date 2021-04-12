@@ -6,11 +6,12 @@
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+import { TreeNodeHandle } from '../..';
 import { noop } from '../../Common';
-import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { Change, ChangeNode, StablePlace, TraitLocation } from '../../PersistedTypes';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { Change, ChangeNode, StablePlace, StableRange, TraitLocation } from '../../PersistedTypes';
 import { SharedTree } from '../../SharedTree';
-import { makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
+import { deepCompareNodes, makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 
 /** Options used to generate a SharedTree undo/redo test suite. */
 interface SharedTreeUndoRedoOptions {
@@ -74,6 +75,10 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		let undoTree: SharedTree;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
+		function getTreeHandle() {
+			return new TreeNodeHandle(tree.currentView, initialTree.identifier);
+		}
+
 		beforeEach(() => {
 			const setupResult = setUpTestSharedTree(treeOptions);
 			tree = setupResult.tree;
@@ -90,6 +95,34 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 					additionalSetup([tree]);
 				}
 			}
+		});
+
+		it('can detach and re-insert the same node', () => {
+			const detachedId = 0 as DetachedSequenceId;
+			const editId = tree.applyEdit(
+				Change.detach(StableRange.only(left), detachedId),
+				Change.insert(detachedId, StablePlace.atStartOf(leftTrait))
+			);
+
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
+
+			const undoId: EditId = undo(tree, editId);
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
+
+			redo(tree, undoId);
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
 		});
 
 		it('works for Insert', () => {
