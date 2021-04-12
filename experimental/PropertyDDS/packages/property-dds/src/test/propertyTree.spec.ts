@@ -37,13 +37,13 @@ describe("PropertyTree", () => {
 
 	function createLocalLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
-		deltaConnectionServer: ILocalDeltaConnectionServer,
-		urlResolver: IUrlResolver,
+		localDeltaConnectionServer: ILocalDeltaConnectionServer,
+		localUrlResolver: IUrlResolver,
 		options?: ILoaderOptions,
 	): IHostLoader {
-		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		const documentServiceFactory = new LocalDocumentServiceFactory(localDeltaConnectionServer);
 
-		return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
+		return createLoader(packageEntries, documentServiceFactory, localUrlResolver, undefined, options);
 	}
 
 	async function createContainer(): Promise<IContainer> {
