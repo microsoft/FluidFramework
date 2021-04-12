@@ -155,7 +155,7 @@ export class FluidPackageCheck {
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
-                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 7070 test:mocha")
             } else {
                 expectedTestScripts.push("npm run test:mocha");
             }

@@ -14,12 +14,13 @@ import { getContainer, IGetContainerConfig, IGetContainerService } from "./getCo
 
 export class TinyliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
-    public readonly urlResolver: IUrlResolver = new InsecureTinyliciousUrlResolver();
+    public readonly urlResolver: IUrlResolver;
     public readonly generateCreateNewRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
     public readonly generateLoadExistingRequest = (config: IGetContainerConfig) => ({ url: config.containerId });
 
-    constructor() {
+    constructor(tinyliciousPort?: number) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
+        this.urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
     }
 }
@@ -33,8 +34,9 @@ export async function getTinyliciousContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
+    tinyliciousPort?: number,
 ): Promise<IContainer> {
-    const service = new TinyliciousService();
+    const service = new TinyliciousService(tinyliciousPort);
 
     return getContainer(
         service,
