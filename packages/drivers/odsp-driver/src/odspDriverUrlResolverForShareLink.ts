@@ -26,16 +26,16 @@ import { getFileLink } from "./getFileLink";
 /**
  * Properties passed to the code responsible for fetching share link for a file.
  */
-export type ShareLinkFetcherProps = {
+export interface ShareLinkFetcherProps {
     /**
      * Callback method that is used to fetch access token necessary to call API that produces share link
      */
-    tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+    tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
     /**
      * Identity type determining the shape of share link as it differs for Enterprise and Consumer users.
      */
-    identityType: IdentityType
-};
+    identityType: IdentityType;
+}
 
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
