@@ -33,6 +33,7 @@ export async function loadFrame(
     iframeDivId: string,
     dataStoreDivId: string,
     logDivId: string,
+    tinyliciousPort?: number,
 ) {
     const documentId = getDocumentId();
     const iframeDiv = document.getElementById(iframeDivId) as HTMLIFrameElement;
@@ -42,7 +43,7 @@ export async function loadFrame(
     iframe.sandbox.add("allow-scripts", "allow-forms", "allow-same-origin");
     iframeDiv.appendChild(iframe);
 
-    const urlResolver = new InsecureTinyliciousUrlResolver();
+    const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
 
     const tokenProvider = new InsecureTokenProvider("12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
