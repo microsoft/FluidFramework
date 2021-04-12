@@ -36,17 +36,19 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         await opCollection.createIndex({
             "operation.sequenceNumber": 1,
         }, false);
-
-        await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
     }
 
     if (mongoExpireAfterSeconds > 0) {
-        await opCollection.createTTLIndex(
-            {
-                mongoTimestamp: 1,
-            },
-            mongoExpireAfterSeconds,
-        );
+        if (createCosmosDBIndexes) {
+            await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+        } else {
+            await opCollection.createTTLIndex(
+                {
+                    mongoTimestamp: 1,
+                },
+                mongoExpireAfterSeconds,
+            );
+        }
     }
 
     return new ScriptoriumLambdaFactory(mongoManager, opCollection);

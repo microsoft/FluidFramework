@@ -54,15 +54,18 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     if (createCosmosDBIndexes) {
         await scribeDeltas.createIndex({ "operation.sequenceNumber": 1 }, false);
-        await scribeDeltas.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
     }
 
     if (mongoExpireAfterSeconds > 0) {
-        await scribeDeltas.createTTLIndex(
-            {
-                mongoTimestamp: 1,
-            },
-            mongoExpireAfterSeconds);
+        if (createCosmosDBIndexes) {
+            await scribeDeltas.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+        } else {
+            await scribeDeltas.createTTLIndex(
+                {
+                    mongoTimestamp: 1,
+                },
+                mongoExpireAfterSeconds);
+        }
     }
 
     const producer = createProducer(
