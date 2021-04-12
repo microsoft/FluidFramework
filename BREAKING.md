@@ -75,7 +75,7 @@ new OdspDriverUrlResolverForShareLink(
 
 // After:
 new OdspDriverUrlResolverForShareLink(
-    shareLinkFetcherProps: { tokenFetcher, identityType },
+    { tokenFetcher, identityType },
     logger,
     appName,
 );
