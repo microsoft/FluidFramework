@@ -144,6 +144,14 @@ const SomeContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataSt
 );
 ```
 
+If you use `AgentScheduler` functionality, it is recommended to instantiate this as a normal (non-root) data store (probably on your root data object).  But if you are not yet ready to migrate away from the root data store, you can instantiate it yourself on new containers (you should do this while the container is still detached):
+
+```typescript
+if (!context.existing) {
+    await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
+}
+```
+
 The option will be turned off by default in an upcoming release before being turned off permanently, so it is recommended to make these updates proactively.
 
 ## 0.37 Breaking changes
