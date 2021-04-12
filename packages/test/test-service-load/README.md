@@ -42,7 +42,7 @@ There are several npm scripts in [package.json](./package.json) to make it quick
 
 ### URL
 
-When running the stress tests, there will be a url printed in console, after the line "Connecting to new Container targeting with url:".
+When running the stress tests, there will be a URL printed in console, after the line "Connecting to new Container targeting with url:".
 This URL can be passed as-is to Fluid Debugger as well as fetch-tool.
 
 ### Options
