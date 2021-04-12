@@ -35,7 +35,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
     /**
      * Queue of local pending ops that have not yet been ACKed by the service.  Used
-     * to lazily rebuild the 'local' state cache when it is invalidated by interleaved
+     * to lazily rebuild the "local" state cache when it is invalidated by interleaved
      * remote ops.
      */
     private readonly pendingOps: TOp[] = [];
