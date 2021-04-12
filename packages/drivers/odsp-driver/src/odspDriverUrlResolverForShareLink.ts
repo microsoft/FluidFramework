@@ -24,6 +24,20 @@ import {
 import { getFileLink } from "./getFileLink";
 
 /**
+ * Properties passed to the code responsible for fetching share link for a file.
+ */
+export type ShareLinkFetcherProps = {
+    /**
+     * Callback method that is used to fetch access token necessary to call API that produces share link
+     */
+    tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+    /**
+     * Identity type determining the shape of share link as it differs for Enterprise and Consumer users.
+     */
+    identityType: IdentityType
+};
+
+/**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
@@ -31,28 +45,29 @@ import { getFileLink } from "./getFileLink";
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     private readonly logger: ITelemetryLogger;
     private readonly sharingLinkCache = new PromiseCache<string, string>();
-    private readonly instrumentedTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
+    private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
+
     /**
      * Creates url resolver instance
-     * @param tokenFetcher - Function that returns access token used to fetch share link.
+     * @param shareLinkFetcherProps - properties used when fetching share link.
      * Can be set as 'undefined' for cases where share link is not needed. Currently, only
      * getAbsoluteUrl() method requires share link.
-     * @param identityType - identity type for signed in user. This value determines the shape
-     * of share link as it differs for Enterprise and Consumer users
      * @param logger - logger object that is used as telemetry sink
      * @param appName - application name hint that is encoded with url produced by getAbsoluteUrl() method.
      * This hint is used by link handling logic which determines which app to redirect to when user
      * navigates directly to the link.
      */
     public constructor(
-        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions> | undefined = undefined,
-        private readonly identityType: IdentityType = "Enterprise",
+        shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
         this.logger = ChildLogger.create(logger, "OdspDriver");
-        if (tokenFetcher) {
-            this.instrumentedTokenFetcher = this.toInstrumentedTokenFetcher(this.logger, tokenFetcher);
+        if (shareLinkFetcherProps) {
+            this.shareLinkFetcherProps = {
+                ...shareLinkFetcherProps,
+                tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
+            };
         }
     }
 
@@ -150,8 +165,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     }
 
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
-        if (this.instrumentedTokenFetcher === undefined) {
-            throw new Error("Failed to get share link because token fetcher is missing");
+        if (this.shareLinkFetcherProps === undefined) {
+            throw new Error("Failed to get share link because share link fetcher props are missing");
         }
 
         if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {
@@ -165,9 +180,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             return cachedLinkPromise;
         }
         const newLinkPromise = getFileLink(
-            this.instrumentedTokenFetcher,
+            this.shareLinkFetcherProps.tokenFetcher,
             resolvedUrl,
-            this.identityType,
+            this.shareLinkFetcherProps.identityType,
             this.logger,
         ).then((fileLink) => {
             if (!fileLink) {
@@ -184,7 +199,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     }
 
     /**
-     * Requests a driver + data store storage URL
+     * Requests a driver + data store storage URL. Note that this method requires share link to be fetched
+     * and it will throw in case share link fetcher props were not specified when instance was created.
      * @param resolvedUrl - The driver resolved URL
      * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
      */
