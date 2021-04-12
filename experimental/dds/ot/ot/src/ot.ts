@@ -155,7 +155,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
     }
 
     protected get state() {
-        // If the locally cache state is dirty, reset it the global state and reapply our
+        // If the locally cached state is dirty, reset it to the global state and reapply our
         // pending ops to bring it up to date.
         if (this.localDirty) {
             this.local = this.global;
