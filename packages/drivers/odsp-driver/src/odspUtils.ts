@@ -110,14 +110,24 @@ export async function fetchHelper(
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
         let online = isOnline();
-        if (`${error}` === "TypeError: Failed to fetch") {
+        const errorText = `${error}`;
+        if (errorText === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
         if (error.name === "AbortError") {
             throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
         }
+        if (errorText.indexOf("ETIMEDOUT") !== -1) {
+            throwOdspNetworkError("Timeout during fetch (ETIMEDOUT)", fetchTimeoutStatusCode);
+        }
+
+        //
+        // WARNING: Do not log error object itself or any of its properties!
+        // It could container PII, like URI in message itself, or token in properties.
+        // It is also non-serializable object due to circular references.
+        //
         throwOdspNetworkError(
-            `Fetch error: ${error}`,
+            `Fetch error`,
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             undefined, // response
         );
