@@ -27,7 +27,7 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.38.0",
     "@fluidframework/merge-tree": "^0.38.0",
-    "@types/node": "^10.17.24"
+    "@types/node": "^12.19.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.21.0-0",
