@@ -865,7 +865,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // and register summary ack handler to re-register this handler
                 // after successful summary
                 opActions.default = undefined;
-                opActions.summaryAck = summaryAck;
+                opActions.summaryAck = summaryAckAction;
             }
         };
         const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
