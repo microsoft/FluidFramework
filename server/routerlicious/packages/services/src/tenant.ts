@@ -69,6 +69,7 @@ export class TenantManager implements core.ITenantManager {
             baseUrl,
             defaultQueryString,
             undefined,
+            undefined,
             defaultHeaders,
             undefined,
             undefined,

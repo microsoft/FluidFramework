@@ -27,8 +27,13 @@ import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidfra
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    (event: "leader" | "notleader", listener: () => void);
     (
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
+        // eslint-disable-next-line @typescript-eslint/unified-signatures
+        event: "disconnected" | "dispose" | "attaching" | "attached",
         listener: () => void,
     );
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);

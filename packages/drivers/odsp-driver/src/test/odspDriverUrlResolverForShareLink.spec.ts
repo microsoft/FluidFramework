@@ -31,13 +31,14 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
         // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1
         {hasVersion: false, url:"https://microsoft.sharepoint-df.com/test?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPWZpbGVJZCZjPWRhdGFTdG9yZVBhdGgmZmx1aWQ9MQ%3D%3D"},
     ];
-    let urlResolverWithTokenFetcher: OdspDriverUrlResolverForShareLink;
-    let urlResolverWithoutTokenFetcher: OdspDriverUrlResolverForShareLink;
+    let urlResolverWithShareLinkFetcher: OdspDriverUrlResolverForShareLink;
+    let urlResolverWithoutShareLinkFetcher: OdspDriverUrlResolverForShareLink;
     const mockResolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
 
     beforeEach(() => {
-        urlResolverWithTokenFetcher = new OdspDriverUrlResolverForShareLink(async () => "SharingLinkToken");
-        urlResolverWithoutTokenFetcher = new OdspDriverUrlResolverForShareLink();
+        urlResolverWithShareLinkFetcher = new OdspDriverUrlResolverForShareLink(
+            { tokenFetcher: async () => "SharingLinkToken", identityType: "Enterprise" });
+        urlResolverWithoutShareLinkFetcher = new OdspDriverUrlResolverForShareLink();
     });
 
     async function mockGetFileLink<T>(response: Promise<string>, callback: () => Promise<T>): Promise<T> {
@@ -60,8 +61,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId), "Doc id should be equal");
                 assert(resolvedUrl.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
             };
-            await runTest(urlResolverWithTokenFetcher);
-            await runTest(urlResolverWithoutTokenFetcher);
+            await runTest(urlResolverWithShareLinkFetcher);
+            await runTest(urlResolverWithoutShareLinkFetcher);
         });
 
         it(`resolve - Should resolve odsp driver url correctly hasVersion: ${urlWithNav.hasVersion}`, async () => {
@@ -76,15 +77,15 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 assert.strictEqual(resolvedUrl2.hashedDocumentId, getHashedDocumentId(driveId, itemId), "Doc id should be equal");
                 assert(resolvedUrl2.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
             };
-            await runTest(urlResolverWithTokenFetcher);
-            await runTest(urlResolverWithoutTokenFetcher);
+            await runTest(urlResolverWithShareLinkFetcher);
+            await runTest(urlResolverWithoutShareLinkFetcher);
         });
 
         it(`resolve - Check conversion in either direction hasVersion: ${urlWithNav.hasVersion}`, async () => {
             const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-                return urlResolverWithTokenFetcher.resolve({ url: urlWithNav.url });
+                return urlResolverWithShareLinkFetcher.resolve({ url: urlWithNav.url });
             });
-            const absoluteUrl = await urlResolverWithTokenFetcher.getAbsoluteUrl(resolvedUrl, dataStorePath);
+            const absoluteUrl = await urlResolverWithShareLinkFetcher.getAbsoluteUrl(resolvedUrl, dataStorePath);
             const actualNavParam = new URLSearchParams(absoluteUrl).get("nav");
             const expectedNavParam = new URLSearchParams(sharelink).get("nav");
             assert(actualNavParam !== undefined, "Nav param should be defined!!");
@@ -95,28 +96,28 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     it("resolve - Should generate sharelink and set it in shareLinkMap if using resolver with TokenFetcher", async () => {
         const url: string = createOdspUrl({siteUrl, driveId, itemId, dataStorePath});
         await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            return urlResolverWithTokenFetcher.resolve({ url });
+            return urlResolverWithShareLinkFetcher.resolve({ url });
         });
-        const actualShareLink = await urlResolverWithTokenFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
+        const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
         return assert.strictEqual(actualShareLink, sharelink, "Sharing link should be equal!!");
     });
 
     it("resolve - Should not generate sharelink if using resolver without TokenFetcher", async () => {
         const url: string = createOdspUrl({siteUrl, driveId, itemId, dataStorePath});
         await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            return urlResolverWithoutTokenFetcher.resolve({ url });
+            return urlResolverWithoutShareLinkFetcher.resolve({ url });
         });
-        const actualShareLink = await urlResolverWithoutTokenFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
+        const actualShareLink = await urlResolverWithoutShareLinkFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
         return assert.strictEqual(actualShareLink, undefined, "Sharing link should be undefined");
     });
 
     it("getAbsoluteUrl - Should generate sharelink if none was generated on resolve", async () => {
         const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            return urlResolverWithTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
+            return urlResolverWithShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         });
 
         assert(absoluteUrl !== undefined, "Absolute url should be defined!!");
-        const actualShareLink = await urlResolverWithTokenFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
+        const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
         assert.strictEqual(actualShareLink, sharelink, "Sharing link should be equal!!");
 
         const url = new URL(sharelink);
@@ -127,14 +128,14 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     it("getAbsoluteUrl - Should throw if getShareLink throws and clear the promise from shareLinkMap", async () => {
         let success = true;
         const absoluteUrl = await mockGetFileLink(Promise.reject(new Error("No Sharelink")), async () => {
-            return urlResolverWithTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
+            return urlResolverWithShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         }).catch((error) => {
             assert.strictEqual(error.message, "No Sharelink", "Error should be as expected.");
             success = false;
         });
 
         assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-        const actualShareLink = await urlResolverWithTokenFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
+        const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
         assert(actualShareLink === undefined, "Sharing link should be undefined!!");
         assert.strictEqual(success, false, "Error should be as expected!!");
     });
@@ -142,13 +143,13 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     it("getAbsoluteUrl - Should throw if using resolver without TokenFetcher", async () => {
         let success = true;
         const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            return urlResolverWithoutTokenFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
+            return urlResolverWithoutShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
         }).catch(() => {
             success = false;
         });
 
         assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-        const actualShareLink = await urlResolverWithTokenFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
+        const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(`${siteUrl},${driveId},${itemId}`);
         assert(actualShareLink === undefined, "Sharing link should be undefined!!");
         assert.strictEqual(success, false, "Error should be thrown!!");
     });
@@ -169,15 +170,16 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
             assert.strictEqual(searchParams.get("path"), dataStorePath, "dataStorePath should match");
             assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
         };
-        await runTest(urlResolverWithTokenFetcher);
-        await runTest(urlResolverWithoutTokenFetcher);
+        await runTest(urlResolverWithShareLinkFetcher);
+        await runTest(urlResolverWithoutShareLinkFetcher);
     });
 
     it("Sharing link should be set when isSharingLinkToRedeem header is set", async () => {
         const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
             const url = new URL(sharelink);
             storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
-            return urlResolverWithTokenFetcher.resolve({ url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
+            return urlResolverWithShareLinkFetcher.resolve(
+                { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
         assert.strictEqual(resolvedUrl.sharingLinkToRedeem, sharelink, "Sharing link should be set in resolved url");
     });
