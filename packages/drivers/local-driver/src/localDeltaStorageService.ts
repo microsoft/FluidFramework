@@ -8,6 +8,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 import { streamFromMessages } from "@fluidframework/driver-utils";
 
+/**
+ * Provides access to the underlying delta storage on the server for local driver.
+ */
 export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private readonly tenantId: string,

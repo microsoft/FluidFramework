@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./ot";
-export * from "./interfaces";
+export { SharedOT } from "./ot";

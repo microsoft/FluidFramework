@@ -16,14 +16,9 @@ import {
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
 } from "@fluidframework/odsp-doclib-utils";
-import {
-    default as fetch,
-    RequestInfo as FetchRequestInfo,
-    RequestInit as FetchRequestInit,
-    Headers,
-} from "node-fetch";
 import sha from "sha.js";
 import { debug } from "./debug";
+import { fetch } from "./fetch";
 import { TokenFetchOptions } from "./tokenFetch";
 import { RateLimiter } from "./rateLimiter";
 import { IOdspResolvedUrl } from "./contracts";
@@ -85,9 +80,7 @@ export async function fetchHelper(
     const start = performance.now();
 
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return fetch(requestInfo, requestInit).then(async (fetchResponse) => {
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
@@ -110,14 +103,24 @@ export async function fetchHelper(
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
         let online = isOnline();
-        if (`${error}` === "TypeError: Failed to fetch") {
+        const errorText = `${error}`;
+        if (errorText === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
         if (error.name === "AbortError") {
             throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
         }
+        if (errorText.indexOf("ETIMEDOUT") !== -1) {
+            throwOdspNetworkError("Timeout during fetch (ETIMEDOUT)", fetchTimeoutStatusCode);
+        }
+
+        //
+        // WARNING: Do not log error object itself or any of its properties!
+        // It could container PII, like URI in message itself, or token in properties.
+        // It is also non-serializable object due to circular references.
+        //
         throwOdspNetworkError(
-            `Fetch error: ${error}`,
+            `Fetch error`,
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             undefined, // response
         );

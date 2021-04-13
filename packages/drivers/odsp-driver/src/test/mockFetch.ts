@@ -36,7 +36,7 @@ export async function mockFetchMultiple<T>(
         }
         const cb = responses.shift();
         assert(cb !== undefined, "the end");
-        return cb();
+        return cb() as Promise<fetchModule.Response>;
     });
     try {
         return await callback();

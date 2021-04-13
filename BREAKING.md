@@ -1,6 +1,7 @@
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
+- [ODSP Driver url resolver for share link parameter consolidation](#ODSP-Driver-url-resolver-for-share-link-parameter-consolidation)
 - [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations)
 
 ### IPersistedCache changes
@@ -12,7 +13,7 @@ Please note that format of data stored by driver changed. It will ignore cache e
 ## ODSP Driver Type Unification
 This change reuses existing contracts to reduce redundancy improve consistency.
 
-The breaking protion of  this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
+The breaking portion of this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
 
 ``` typescript
 // before:
@@ -56,6 +57,29 @@ getFileLink(
     something,
     ...
 )
+```
+
+## ODSP Driver url resolver for share link parameter consolidation
+OdspDriverUrlResolverForShareLink constructor signature has been changed to simplify instance
+creation in case resolver is not supposed to generate share link. Instead of separately specifying
+constructor parameters that are used to fetch share link there will be single parameter in shape of
+object that consolidates all properties that are necessary to get share link.
+
+``` typescript
+// before:
+new OdspDriverUrlResolverForShareLink(
+    tokenFetcher,
+    identityType,
+    logger,
+    appName,
+);
+
+// After:
+new OdspDriverUrlResolverForShareLink(
+    { tokenFetcher, identityType },
+    logger,
+    appName,
+);
 ```
 
 ### AgentScheduler-related deprecations
