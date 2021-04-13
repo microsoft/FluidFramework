@@ -45,7 +45,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        const pathName = new URL(resolvedUrl.url).pathname;
+        const pathName = new URL(resolvedUrl.baseUrl).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
         const id = pathArr[pathArr.length - 1];
@@ -84,7 +84,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
-        const parsedUrl = parse(resolvedUrl.url);
+        const parsedUrl = parse(resolvedUrl.baseUrl);
         const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);

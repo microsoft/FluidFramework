@@ -49,7 +49,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-        const parsedUrl = parse(resolvedUrl.url);
+        const parsedUrl = parse(resolvedUrl.baseUrl);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
@@ -104,7 +104,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = parse(fluidResolvedUrl.baseUrl);
         const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
             throw new Error(

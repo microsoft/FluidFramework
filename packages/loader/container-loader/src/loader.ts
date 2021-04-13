@@ -24,7 +24,7 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
+import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -40,7 +40,6 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
-import { parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -273,10 +272,9 @@ export class Loader extends EventEmitter implements IHostLoader {
         if (this.cachingEnabled) {
             container.once("attached", () => {
                 ensureFluidResolvedUrl(container.resolvedUrl);
-                const parsedUrl = parseUrl(container.resolvedUrl.url);
-                if (parsedUrl !== undefined) {
-                    this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
-                }
+                this.addToContainerCache(
+                    container.resolvedUrl.baseUrl,
+                    Promise.resolve(container));
             });
         }
 
@@ -305,16 +303,14 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            const parsed = parseUrl(resolved.resolved.url);
-            assert(parsed !== undefined, "resolve url could not be parsed");
-            return resolved.container.request({ url: `${parsed.path}${parsed.query}` });
+            return resolved.container.request({ url: resolved.resolved.path });
         });
     }
 
     private getKeyForContainerCache(request: IRequest, resolvedUrl: IFluidResolvedUrl): string {
         const key = request.headers?.[LoaderHeader.version] !== undefined
-            ? `${resolvedUrl.id}@${request.headers[LoaderHeader.version]}`
-            : resolvedUrl.id;
+            ? `${resolvedUrl.baseUrl}@${request.headers[LoaderHeader.version]}`
+            : resolvedUrl.baseUrl;
         return key;
     }
 
@@ -340,8 +336,8 @@ export class Loader extends EventEmitter implements IHostLoader {
         ensureFluidResolvedUrl(resolvedAsFluid);
 
         if (pendingLocalState !== undefined) {
-            if (pendingLocalState?.id !== resolvedAsFluid.id) {
-                const message = `ID ${resolvedAsFluid.id} does not match pending state ID ${pendingLocalState.id}`;
+            if (pendingLocalState?.baseUrl !== resolvedAsFluid.baseUrl) {
+                const message = `${resolvedAsFluid.baseUrl} does not match pending state ${pendingLocalState.baseUrl}`;
                 throw new Error(message);
             }
         }

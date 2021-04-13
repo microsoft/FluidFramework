@@ -18,7 +18,24 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
+    /**
+     * The id of the container this resolved url is for.
+     */
     id: string,
+    /**
+     * The unique base url of this container.
+     * Usually of a format like:
+     * [protocol]://[host]/[tenantId]/[containerId]
+     */
+    baseUrl: string,
+    /**
+     * The path of the resolved request, this can be passed into
+     * the container to retrieve a Fluid object, like a data store.
+     */
+    path: string,
+    /**
+     * @deprecated - use base url and path
+     */
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, IPendingLocalState } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -60,10 +60,11 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
         assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
         assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
+        const state: IPendingLocalState = {
+            baseUrl: container.resolvedUrl.baseUrl,
             pendingRuntimeState,
-        });
+        };
+        pendingState = JSON.stringify(state);
     } else {
         pendingState = container.closeAndGetPendingLocalState();
     }

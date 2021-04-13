@@ -57,7 +57,7 @@ export class ContainerUrlResolver implements IUrlResolver {
     ): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = parse(fluidResolvedUrl.baseUrl);
         assert(parsedUrl.pathname !== undefined, 0x0b7 /* "Pathname should be defined" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(documentId !== undefined && tenantId !== undefined,

@@ -30,7 +30,9 @@ class SimpleUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
-        const containerId = request.url.split("/")[0];
+        const pathParts = request.url.split("/");
+        const containerId = pathParts[0];
+        const path = pathParts.slice(1).join("/");
         const token = jwt.sign(
             {
                 user: this.user,
@@ -39,14 +41,17 @@ class SimpleUrlResolver implements IUrlResolver {
                 scopes: ["doc:read", "doc:write", "summary:write"],
             },
             this.config.key);
-        const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${request.url}`;
+        const baseUrl = `${this.config.orderer}/${this.config.tenantId}/${containerId}`;
+        const documentUrl = `${baseUrl}/${path}`;
         return Promise.resolve({
             endpoints: {
                 deltaStorageUrl: `${this.config.orderer}/deltas/${this.config.tenantId}/${request.url}`,
                 ordererUrl: `${this.config.orderer}`,
                 storageUrl: `${this.config.storage}/repos/${this.config.tenantId}`,
             },
-            id: `${this.config.tenantId}/${containerId}`,
+            id: containerId,
+            baseUrl,
+            path,
             tokens: { jwt: token },
             type: "fluid",
             url: documentUrl,

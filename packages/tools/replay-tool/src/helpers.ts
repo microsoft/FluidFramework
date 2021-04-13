@@ -209,6 +209,7 @@ export async function loadContainer(
     documentName: string,
     logger?: TelemetryLogger,
 ): Promise<Container> {
+    const baseUrl = `fluid-file://localhost:6000/fluid/${documentName}`;
     const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl: "example.com",
@@ -216,9 +217,11 @@ export async function loadContainer(
             storageUrl: "example.com",
         },
         id: documentName,
+        baseUrl,
+        path: "",
         tokens: {},
         type: "fluid",
-        url: `fluid-file://localhost:6000/fluid/${documentName}`,
+        url: baseUrl,
     };
 
     const urlResolver = new ContainerUrlResolver(

@@ -741,7 +741,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             0x0d2 /* "resolved url should be valid Fluid url" */);
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
-            id: this.resolvedUrl.id,
+            baseUrl: this.resolvedUrl.baseUrl,
         };
 
         this.close();
