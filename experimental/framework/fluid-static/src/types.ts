@@ -46,7 +46,7 @@ export interface ContainerConfig {
 
     /**
      * initialObjects defines loadable objects that will be created when the Container
-     * is first created. It uses the key as the id and the value and the loadable object to create.
+     * is first created. It uses the key as the id and the value as the loadable object to create.
      *
      * In the example below two objects will be created when the Container is first
      * created. One with id "map1" that will return a `SharedMap` and the other with
