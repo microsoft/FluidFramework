@@ -311,7 +311,7 @@ export class Loader extends EventEmitter implements IHostLoader {
         });
     }
 
-    private getKeyForContainerCache(request: IRequest, resolverUrl: IFluidResolvedUrl): string {
+    private getKeyForContainerCache(request: IRequest, resolvedUrl: IFluidResolvedUrl): string {
         const key = request.headers?.[LoaderHeader.version] !== undefined
             ? `${resolverUrl.id}@${request.headers[LoaderHeader.version]}`
             : resolverUrl.id;
