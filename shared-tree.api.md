@@ -477,32 +477,37 @@ export class Snapshot {
     assertConsistent(): void;
     deleteNodes(nodes: Iterable<NodeId>): Snapshot;
     delta(snapshot: Snapshot): Delta<NodeId>;
+    detach(rangeToDetach: StableRange): {
+        snapshot: Snapshot;
+        detached: readonly NodeId[];
+    };
     equals(snapshot: Snapshot): boolean;
     // (undocumented)
     findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;
-    static fromTree(root: ChangeNode): Snapshot;
+    static fromTree(root: ChangeNode, expensiveValidation?: boolean): Snapshot;
     // (undocumented)
     getChangeNode(id: NodeId): ChangeNode;
     // (undocumented)
     getChangeNodes(nodeIds: readonly NodeId[]): ChangeNode[];
     getChangeNodeTree(): ChangeNode;
+    // (undocumented)
+    getIndexInTrait(node: NodeId): TraitNodeIndex;
     getParentSnapshotNode(id: NodeId): SnapshotNode | undefined;
     getSnapshotNode(id: NodeId): SnapshotNode;
     getTrait(traitLocation: TraitLocation): readonly NodeId[];
-    // (undocumented)
-    getTraitAddress(node: NodeId): NodeInTrait;
     getTraitLabel(id: NodeId): TraitLabel | undefined;
     // (undocumented)
+    getTraitLocation(node: NodeId): TraitLocation;
+    // (undocumented)
     hasNode(id: NodeId): boolean;
+    insertIntoTrait(nodesToInsert: readonly NodeId[], placeToInsert: StablePlace): Snapshot;
     insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot;
-    mergeWith(nodes: Iterable<[NodeId, SnapshotNode]>, merger: (oldVal: SnapshotNode, newVal: SnapshotNode, key: NodeId) => SnapshotNode): Snapshot;
     placeFromStablePlace(stablePlace: StablePlace): SnapshotPlace;
     rangeFromStableRange(range: StableRange): SnapshotRange;
-    replaceNode(nodeId: NodeId, node: SnapshotNode): Snapshot;
+    replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot;
     // (undocumented)
     readonly root: NodeId;
     get size(): number;
-    updateTraitContents(traitLocation: TraitLocation, newContents: NodeId[]): Snapshot;
     validateStablePlace(place: StablePlace): EditValidationResult;
     validateStableRange(range: StableRange): EditValidationResult;
 }

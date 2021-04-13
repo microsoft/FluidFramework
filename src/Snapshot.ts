@@ -57,7 +57,7 @@ export interface SnapshotRange {
 	readonly end: SnapshotPlace;
 }
 
-type Forest = GenericForest<NodeId, SnapshotNode, { label: TraitLabel; index: TraitNodeIndex }>;
+type Forest = GenericForest<NodeId, SnapshotNode, { label: TraitLabel }>;
 
 /** Yield the direct children of the given `SnapshotNode` */
 function* getSnapshotNodeChildren(
@@ -89,10 +89,17 @@ export class Snapshot {
 	private readonly forest: Forest;
 
 	/**
+	 * A cache of node's index within their parent trait.
+	 * Used to avoid redundant linear scans of traits.
+	 * Not shared across snapshots; initialized to empty each time a Snapshot is created.
+	 */
+	private traitIndicesCache?: Map<NodeId, TraitNodeIndex>;
+
+	/**
 	 * Constructs a Snapshot using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `Snapshot`
 	 */
-	public static fromTree(root: ChangeNode): Snapshot {
+	public static fromTree(root: ChangeNode, expensiveValidation = false): Snapshot {
 		function insertNodeRecursive(node: ChangeNode, newSnapshotNodes: Map<NodeId, SnapshotNode>): NodeId {
 			const { identifier, definition } = node;
 			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
@@ -115,7 +122,7 @@ export class Snapshot {
 		const map = new Map<NodeId, SnapshotNode>();
 		return new Snapshot(
 			insertNodeRecursive(root, map),
-			createForest(getSnapshotNodeChildren, compareStrings).addAll(map)
+			createForest(getSnapshotNodeChildren, compareStrings, expensiveValidation).add(map)
 		);
 	}
 
@@ -168,27 +175,14 @@ export class Snapshot {
 	 * Inserts all nodes (and their descendants) in a NodeSequence into the forest.
 	 */
 	public insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot {
-		return new Snapshot(this.root, this.forest.addAll(sequence));
-	}
-
-	/**
-	 * Add the given nodes into the forest. If an entry contains a key that is already present in the forest,
-	 * run the merger function to resolve the conflict.
-	 * @param nodes - the nodes to add to the forest
-	 * @param merger - a function which, given two conflicting values for the same key, returns the correct value.
-	 */
-	public mergeWith(
-		nodes: Iterable<[NodeId, SnapshotNode]>,
-		merger: (oldVal: SnapshotNode, newVal: SnapshotNode, key: NodeId) => SnapshotNode
-	): Snapshot {
-		return new Snapshot(this.root, this.forest.mergeWith(nodes, merger));
+		return new Snapshot(this.root, this.forest.add(sequence));
 	}
 
 	/**
 	 * Remove all nodes with the given ids from the forest
 	 */
 	public deleteNodes(nodes: Iterable<NodeId>): Snapshot {
-		return new Snapshot(this.root, this.forest.deleteAll(nodes, true));
+		return new Snapshot(this.root, this.forest.delete(nodes, true));
 	}
 
 	/**
@@ -256,9 +250,8 @@ export class Snapshot {
 		}
 
 		const startTraitLocation =
-			start.referenceTrait || this.getTraitAddress(assertNotUndefined(start.referenceSibling)).trait;
-		const endTraitLocation =
-			end.referenceTrait || this.getTraitAddress(assertNotUndefined(end.referenceSibling)).trait;
+			start.referenceTrait || this.getTraitLocation(assertNotUndefined(start.referenceSibling));
+		const endTraitLocation = end.referenceTrait || this.getTraitLocation(assertNotUndefined(end.referenceSibling));
 
 		if (!compareTraits(startTraitLocation, endTraitLocation)) {
 			return EditValidationResult.Invalid;
@@ -276,43 +269,83 @@ export class Snapshot {
 	}
 
 	/**
-	 * Set the contents of the given trait
-	 * @param traitLocation - the location of the trait
-	 * @param newContents - the contents of the trait
+	 * Detaches a range of nodes from their parent. The detached nodes remain in the Snapshot.
+	 * @param rangeToDetach - the range of nodes to detach
 	 */
-	public updateTraitContents(traitLocation: TraitLocation, newContents: NodeId[]): Snapshot {
-		const deleteTrait = newContents.length === 0;
-		const { parent } = traitLocation;
-		const oldNode = this.getSnapshotNode(parent);
-		const traits = new Map(oldNode.traits.entries());
+	public detach(rangeToDetach: StableRange): { snapshot: Snapshot; detached: readonly NodeId[] } {
+		const { start, end } = this.rangeFromStableRange(rangeToDetach);
+		const { trait: traitLocation } = start;
+		const { parent: parentId, label } = traitLocation;
+		const parentNode = this.getSnapshotNode(parentId);
+		const traits = new Map(parentNode.traits);
+		const trait = traits.get(label) ?? [];
+		const startIndex = this.findIndexWithinTrait(start);
+		const endIndex = this.findIndexWithinTrait(end);
+
+		const detached: NodeId[] = trait.slice(startIndex, endIndex);
+		const newChildren = [...trait.slice(0, startIndex), ...trait.slice(endIndex)];
+
+		const deleteTrait = newChildren.length === 0;
 		if (deleteTrait) {
-			traits.delete(traitLocation.label);
+			traits.delete(label);
 		} else {
-			traits.set(traitLocation.label, newContents);
+			traits.set(label, newChildren);
 		}
-		const node: SnapshotNode = { ...oldNode, traits };
-		const snapshot = this.replaceNode(parent, node);
-		assert(deleteTrait || snapshot.getTrait(traitLocation) === newContents, 'updateTraitContents should work');
+		const newParent: SnapshotNode = { ...parentNode, traits };
+		const snapshot = new Snapshot(this.root, this.forest.replace(parentId, newParent, undefined, detached));
+		assert(deleteTrait || snapshot.getTrait(traitLocation) === newChildren, 'updateTraitContents should work');
+		return { snapshot, detached };
+	}
+
+	/**
+	 * Parents a set of nodes in a specified location within a trait.
+	 * @param nodesToInsert - the nodes to parent in the specified place. The nodes must already be present in the Snapshot.
+	 * @param placeToInsert - the location to insert the nodes.
+	 */
+	public insertIntoTrait(nodesToInsert: readonly NodeId[], placeToInsert: StablePlace): Snapshot {
+		const place = this.placeFromStablePlace(placeToInsert);
+		const { parent: parentId, label } = place.trait;
+		const parentNode = this.getSnapshotNode(parentId);
+		const traits = new Map(parentNode.traits);
+		const trait = traits.get(label) ?? [];
+
+		const index = this.findIndexWithinTrait(place);
+		const newChildren = [...trait.slice(0, index), ...nodesToInsert, ...trait.slice(index)];
+		traits.set(label, newChildren);
+
+		const newParent: SnapshotNode = { ...parentNode, traits };
+		const snapshot = new Snapshot(
+			this.root,
+			this.forest.replace(
+				parentId,
+				newParent,
+				nodesToInsert.map((nodeId) => [nodeId, { label }]),
+				undefined
+			)
+		);
+		assert(snapshot.getTrait(place.trait) === newChildren, 'updateTraitContents should work');
 		return snapshot;
 	}
 
 	/**
-	 * Replaces a node. The node must exist in this `Snapshot`.
+	 * Replaces a node's data and leaves the children parented. The node must exist in this `Snapshot`.
 	 * @param nodeId - the id of the node to replace
-	 * @param node - the new node
+	 * @param nodeData - the new data
 	 */
-	public replaceNode(nodeId: NodeId, node: SnapshotNode): Snapshot {
-		return new Snapshot(this.root, this.forest.replace(nodeId, node));
+	public replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot {
+		const existingNode = this.getSnapshotNode(nodeId);
+		return new Snapshot(this.root, this.forest.replace(nodeId, { ...nodeData, traits: existingNode.traits }));
 	}
 
 	/**
 	 * @returns the index just after place (which specifies a location between items).
+	 * Performance note: this is O(siblings in trait).
 	 */
 	public findIndexWithinTrait(place: SnapshotPlace): PlaceIndex {
 		if (place.sibling === undefined) {
 			return this.getIndexOfSide(place.side, place.trait);
 		}
-		return getIndex(place.side, this.getTraitAddress(place.sibling).index);
+		return getIndex(place.side, this.getIndexInTrait(place.sibling));
 	}
 
 	/**
@@ -352,22 +385,48 @@ export class Snapshot {
 			range.start.referenceSibling ??
 			range.end.referenceSibling ??
 			fail('malformed range does not indicate trait');
-		return this.getTraitAddress(sibling).trait;
+		return this.getTraitLocation(sibling);
 	}
 
 	/**
-	 * @param node - must have a parent
+	 * @param node - must have a parent.
 	 */
-	public getTraitAddress(node: NodeId): NodeInTrait {
+	public getTraitLocation(node: NodeId): TraitLocation {
 		const parentData = this.forest.getParent(node);
 		assert(parentData !== undefined, 'node must have parent');
 		return {
-			index: parentData.parentData.index,
-			trait: {
-				parent: parentData.parentNode,
-				label: parentData.parentData.label,
-			},
+			parent: parentData.parentNode,
+			label: parentData.parentData.label,
 		};
+	}
+
+	/**
+	 * @param node - must have a parent.
+	 * Performance note: this is O(siblings in trait).
+	 */
+	public getIndexInTrait(node: NodeId): TraitNodeIndex {
+		if (this.traitIndicesCache === undefined) {
+			this.traitIndicesCache = new Map();
+		} else {
+			const cached = this.traitIndicesCache.get(node);
+			if (cached !== undefined) {
+				return cached;
+			}
+		}
+		const parentData = this.forest.getParent(node);
+		const parent = this.forest.get(parentData.parentNode);
+		const traitParent =
+			parent.traits.get(parentData.parentData.label) ?? fail('invalid parentData: trait parent not found.');
+		let foundIndex = -1 as TraitNodeIndex;
+		for (let i = 0; i < traitParent.length; i++) {
+			const nodeInTrait = traitParent[i];
+			const index = i as TraitNodeIndex;
+			this.traitIndicesCache.set(nodeInTrait, index);
+			if (nodeInTrait === node) {
+				foundIndex = index;
+			}
+		}
+		return foundIndex !== -1 ? foundIndex : fail('invalidParentData: node not found in specified trait');
 	}
 
 	/**
@@ -412,9 +471,8 @@ export class Snapshot {
 			assert(stablePlace.referenceTrait !== undefined);
 			return { trait: stablePlace.referenceTrait, side };
 		}
-		const nodeInTrait = this.getTraitAddress(stablePlace.referenceSibling);
 		return {
-			trait: nodeInTrait.trait,
+			trait: this.getTraitLocation(stablePlace.referenceSibling),
 			side: stablePlace.side,
 			sibling: stablePlace.referenceSibling,
 		};

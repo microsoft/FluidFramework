@@ -323,6 +323,18 @@ export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
 export const initialSnapshot = Snapshot.fromTree(initialTree);
 
 /**
+ * Convenient pre-made Snapshot for 'simpleTestTree'.
+ * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
+ */
+export const simpleTreeSnapshotWithValidation = Snapshot.fromTree(simpleTestTree, true);
+
+/**
+ * Convenient pre-made Snapshot for 'initialTree'.
+ * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
+ */
+export const initialSnapshotWithValidation = Snapshot.fromTree(initialTree, true);
+
+/**
  * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
  *
  * See {@link comparePayloads} for payload comparison semantics.

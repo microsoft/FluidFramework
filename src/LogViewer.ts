@@ -155,7 +155,7 @@ export class CachingLogViewer implements LogViewer {
 				);
 			});
 		}
-		const initialSnapshot = Snapshot.fromTree(baseTree);
+		const initialSnapshot = Snapshot.fromTree(baseTree, expensiveValidation);
 		this.sequencedSnapshotCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			log.numberOfSequencedEdits, // The cache needs the minimum known revision, so pass in the length of the sequenced edit list

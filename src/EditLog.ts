@@ -356,7 +356,7 @@ export class EditLog implements OrderedEditSet {
 			return;
 		}
 
-		for (const [key, chunk] of this.editChunks.entries()) {
+		for (const [key, chunk] of this.editChunks.entries(undefined, [])) {
 			if (chunk.handle === undefined) {
 				const edits = assertNotUndefined(chunk.edits);
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from './Common';
+import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from './Common';
 import { DetachedSequenceId, NodeId, TraitLabel } from './Identifiers';
 import {
 	EditResult,
@@ -13,7 +13,6 @@ import {
 	Detach,
 	EditNode,
 	Insert,
-	TreeNode,
 	Constraint,
 	ConstraintEffect,
 	SetValue,
@@ -163,27 +162,39 @@ export class Transaction {
 			return EditResult.Malformed;
 		}
 
+		let idAlreadyPresent = false;
+		let duplicateIdInBuild = false;
 		const map = new Map<NodeId, SnapshotNode>();
 		let detachedSequenceNotFound = false;
-		const newIds = [
-			...this.createSnapshotNodesForTree(change.source, map, () => {
+		const newIds = this.createSnapshotNodesForTree(
+			change.source,
+			(id, snapshotNode) => {
+				if (map.has(id)) {
+					duplicateIdInBuild = true;
+					return true;
+				}
+				if (this.view.hasNode(id)) {
+					idAlreadyPresent = true;
+					return true;
+				}
+				map.set(id, snapshotNode);
+				return false;
+			},
+			() => {
 				detachedSequenceNotFound = true;
-			}),
-		];
-		if (detachedSequenceNotFound) {
+			}
+		);
+
+		if (detachedSequenceNotFound || duplicateIdInBuild) {
 			return EditResult.Malformed;
 		}
-		let duplicateId = false;
-		const view = this.view.mergeWith(map, (old, _new, _key) => {
-			duplicateId = true;
-			return old;
-		});
-		if (duplicateId) {
+		if (idAlreadyPresent) {
 			return EditResult.Invalid;
 		}
 
+		const view = this.view.insertSnapshotNodes(map);
 		this._view = view;
-		this.detached.set(change.destination, newIds);
+		this.detached.set(change.destination, assertNotUndefined(newIds));
 		return EditResult.Applied;
 	}
 
@@ -199,11 +210,7 @@ export class Transaction {
 		}
 
 		this.detached.delete(change.source);
-		const place = this.view.placeFromStablePlace(change.destination);
-		const nodes = this.view.getTrait(place.trait);
-		const index = this.view.findIndexWithinTrait(place);
-		const newNodes = [...nodes.slice(0, index), ...source, ...nodes.slice(index)];
-		this._view = this.view.updateTraitContents(place.trait, newNodes);
+		this._view = this.view.insertIntoTrait(source, change.destination);
 
 		return EditResult.Applied;
 	}
@@ -214,17 +221,9 @@ export class Transaction {
 			return sourceChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
 		}
 
-		const { start, end } = this.view.rangeFromStableRange(change.source);
-		const { trait: traitLocation } = start;
-		const nodes = this.view.getTrait(traitLocation);
-
-		const startIndex = this.view.findIndexWithinTrait(start);
-		const endIndex = this.view.findIndexWithinTrait(end);
-
-		const detached: NodeId[] = nodes.slice(startIndex, endIndex);
-		const keep = [...nodes.slice(0, startIndex), ...nodes.slice(endIndex)];
-
-		let modifiedView = this.view.updateTraitContents(traitLocation, keep);
+		const result = this.view.detach(change.source);
+		let modifiedView = result.snapshot;
+		const { detached } = result;
 
 		// Store or dispose detached
 		if (change.destination !== undefined) {
@@ -284,57 +283,86 @@ export class Transaction {
 			// TODO: detect payloads that are not Fluid Serializable here.
 			// The consistency of editing does not actually depend on payloads being well formed,
 			// but its better to detect bugs producing bad payloads here than let them pass.
-
 			newNode.payload = payload;
 		}
-		this._view = this.view.replaceNode(change.nodeToModify, newNode);
+		this._view = this.view.replaceNodeData(change.nodeToModify, newNode);
 		return EditResult.Applied;
 	}
 
-	private createSnapshotNodeForTree(
-		node: TreeNode<EditNode>,
-		map: Map<NodeId, SnapshotNode>,
+	/**
+	 * Generates snapshot nodes from the supplied edit nodes.
+	 * Invokes onCreateNode for each new snapshot node, and halts creation early if it returns true.
+	 * Invokes onInvalidDetachedId and halts early for any invalid detached IDs referenced in the edit node sequence.
+	 * @returns all the top-level node IDs in `sequence` (both from nodes and from detached sequences).
+	 */
+	private createSnapshotNodesForTree(
+		sequence: Iterable<EditNode>,
+		onCreateNode: (id: NodeId, node: SnapshotNode) => boolean,
 		onInvalidDetachedId: () => void
-	): NodeId {
-		const traits = new Map<TraitLabel, readonly NodeId[]>();
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in node.traits) {
-			if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
-				const element = node.traits[key];
-				traits.set(key as TraitLabel, [...this.createSnapshotNodesForTree(element, map, onInvalidDetachedId)]);
+	): NodeId[] | undefined {
+		const topLevelIds: NodeId[] = [];
+		const unprocessed: EditNode[] = [];
+		for (const editNode of sequence) {
+			if (isDetachedSequenceId(editNode)) {
+				const detachedIds = this.getDetachedNodeIds(editNode, onInvalidDetachedId);
+				if (detachedIds === undefined) {
+					return undefined;
+				}
+				topLevelIds.push(...detachedIds);
+			} else {
+				unprocessed.push(editNode);
+				topLevelIds.push(editNode.identifier);
 			}
 		}
-
-		const newNode: SnapshotNode = {
-			identifier: node.identifier,
-			definition: node.definition,
-			traits,
-		};
-		copyPropertyIfDefined(node, newNode, 'payload');
-
-		map.set(newNode.identifier, newNode);
-		return newNode.identifier;
+		while (unprocessed.length > 0) {
+			const node = unprocessed.pop();
+			assert(node !== undefined && !isDetachedSequenceId(node));
+			const traits = new Map<TraitLabel, readonly NodeId[]>();
+			// eslint-disable-next-line no-restricted-syntax
+			for (const key in node.traits) {
+				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
+					const children = node.traits[key];
+					const childIds: NodeId[] = [];
+					for (const child of children) {
+						if (isDetachedSequenceId(child)) {
+							const detachedIds = this.getDetachedNodeIds(child, onInvalidDetachedId);
+							if (detachedIds === undefined) {
+								return undefined;
+							}
+							childIds.push(...detachedIds);
+						} else {
+							childIds.push(child.identifier);
+							unprocessed.push(child);
+						}
+					}
+					traits.set(key as TraitLabel, childIds);
+				}
+			}
+			const newNode: SnapshotNode = {
+				identifier: node.identifier,
+				definition: node.definition,
+				traits,
+			};
+			copyPropertyIfDefined(node, newNode, 'payload');
+			if (onCreateNode(newNode.identifier, newNode)) {
+				return undefined;
+			}
+		}
+		return topLevelIds;
 	}
 
-	private *createSnapshotNodesForTree(
-		sequence: Iterable<EditNode>,
-		map: Map<NodeId, SnapshotNode>,
+	private getDetachedNodeIds(
+		detachedId: DetachedSequenceId,
 		onInvalidDetachedId: () => void
-	): Iterable<NodeId> {
-		for (const node of sequence) {
-			if (isDetachedSequenceId(node)) {
-				// Retrieve the detached sequence from the void.
-				const detachedNodeIds = this.detached.get(node);
-				if (detachedNodeIds === undefined) {
-					onInvalidDetachedId();
-					break;
-				}
-				// Since we have retrieved the sequence, remove it from the void to prevent a second tree from multiparenting it later
-				this.detached.delete(node);
-				yield* detachedNodeIds;
-			} else {
-				yield this.createSnapshotNodeForTree(node, map, onInvalidDetachedId);
-			}
+	): readonly NodeId[] | undefined {
+		// Retrieve the detached sequence from the void.
+		const detachedNodeIds = this.detached.get(detachedId);
+		if (detachedNodeIds === undefined) {
+			onInvalidDetachedId();
+			return undefined;
 		}
+		// Since we have retrieved the sequence, remove it from the void to prevent a second tree from multiparenting it later
+		this.detached.delete(detachedId);
+		return detachedNodeIds;
 	}
 }
