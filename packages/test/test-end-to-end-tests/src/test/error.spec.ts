@@ -84,6 +84,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                 {
                     canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                     clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
+                    containerUrl: testRequest.url,
                     resolvedUrl: testResolved,
                     version: testRequest.headers?.[LoaderHeader.version],
                     pause: testRequest.headers?.[LoaderHeader.pause],
