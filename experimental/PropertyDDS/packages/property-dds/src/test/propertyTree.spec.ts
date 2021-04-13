@@ -47,7 +47,7 @@ describe("PropertyTree", () => {
 	}
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
 		return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 	}
 
