@@ -238,6 +238,7 @@ export interface ISummaryRuntimeOptions {
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 
+    // Defaults to 3000 ops
     maxOpsSinceLastSummary?: number;
 }
 
