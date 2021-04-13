@@ -89,7 +89,7 @@ const pair1 = initialObjects["pair1"];
 
 LoadableObjects can also be created dynamically during runtime. Dynamic object types need to be defined in the  `dynamicObjectTypes` property of the ContainerConfig.
 
-The Container has a `create` method that will create a new instance of the provided type. This instance will be local to the user until attached to another LoadableObject. `initialObjects` are attached when the Container is created and should be used to store dynamic objects. When storing a LoadableObject you must store a reference to the object and not the object itself. To do this use the `handle` property on the LoadableObject.
+The Container has a `create` method that will create a new instance of the provided type. This instance will be local to the user until attached to another LoadableObject. Dynamic objects created this way should be stored in initialObjects, which are attached when the Container is created. When storing a LoadableObject you must store a reference to the object and not the object itself. To do this use the `handle` property on the LoadableObject.
 
 Dynamic objects are loaded on-demand to optimize for data virtualization. To get the LoadableObject, first get the stored handle then resolve that handle.
 
