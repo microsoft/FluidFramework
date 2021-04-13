@@ -15,7 +15,7 @@ describe("external-controller-diceRoller", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
-        await page.waitFor(() => window["fluidStarted"]);
+        await page.waitFor(() => (window as any).fluidStarted as unknown);
     });
 
     it("loads and there's a button with Roll", async () => {

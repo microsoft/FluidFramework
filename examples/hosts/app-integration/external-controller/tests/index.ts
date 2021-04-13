@@ -5,10 +5,10 @@
  */
 
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
+import { getSessionStorageContainer } from "@fluid-experimental/get-container";
+import { SharedMap } from "@fluidframework/map";
 
-import { containerConfig } from "../src/app";
 import { DiceRollerController } from "../src/controller";
 import { renderDiceRoller } from "../src/view";
 
@@ -20,6 +20,15 @@ if (window.location.hash.length === 0) {
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
+
+export const containerConfig = {
+    name: "dice-roller-container",
+    initialObjects: {
+        /* [id]: DataObject */
+        kvp: KeyValueDataObject,
+        map: SharedMap,
+    },
+};
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -35,14 +44,30 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     );
 
     // Get the Default Object from the Container
-    const dataObjectId = "dice";
     const fluidContainer = (await container.request({ url: "/" })).value;
-    const kvPairDataObject = fluidContainer.initialObjects[dataObjectId] as KeyValueDataObject;
-    const diceRollerController = new DiceRollerController(kvPairDataObject);
-    await diceRollerController.initialize(createNewFlag);
+    // We now get the DataObject from the container
+    const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;
 
-    // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(diceRollerController, element);
+    // Our controller manipulates the data object (model).
+    const diceRollerController = new DiceRollerController(keyValueDataObject);
+    await diceRollerController.initialize(createNew);
+
+    // We render a view which uses the controller.
+    const div1 = document.createElement("div");
+    element.appendChild(div1);
+    renderDiceRoller(diceRollerController, div1);
+
+    // We now get the DataObject from the container
+    const sharedMap = fluidContainer.initialObjects.map as SharedMap;
+
+    // Our controller manipulates the data object (model).
+    const diceRollerController2 = new DiceRollerController(sharedMap);
+    await diceRollerController2.initialize(createNew);
+
+    const div2 = document.createElement("div");
+    element.appendChild(div2);
+    // We render a view which uses the controller.
+    renderDiceRoller(diceRollerController2, div2);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation
