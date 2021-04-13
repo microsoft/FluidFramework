@@ -90,7 +90,7 @@ export class RootDataObject
     protected async hasInitialized() {
         this.runtime.on("connected", this.connectedHandler);
 
-        // We will always load the initial objects so they are avaiable to the developer
+        // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
             const loadDir = async () => {
