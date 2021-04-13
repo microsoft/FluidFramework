@@ -317,7 +317,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
 
-        const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
+            const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
