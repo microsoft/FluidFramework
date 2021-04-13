@@ -187,7 +187,6 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
 
         const expectedResolvedUrl = `fluid-odsp://localhost?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`
-        + ``;
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
