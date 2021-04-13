@@ -22,17 +22,18 @@ document.title = containerId;
 
 const dataObjectId = "dice";
 
+// Define the configuration of our Container.
+// This includes the DataObjects we support and any initial DataObjects we want created
+// when the container is first created.
+export const containerConfig = {
+    name: "dice-roller-container",
+    initialObjects: {
+        /* [id]: DataObject */
+        [dataObjectId]: KeyValueDataObject,
+    },
+};
+
 async function start(): Promise<void> {
-    // Define the configuration of our Container.
-    // This includes the DataObjects we support and any initial DataObjects we want created
-    // when the container is first created.
-    const containerConfig = {
-        name: "dice-roller-container",
-        initialObjects: {
-            /* [id]: DataObject */
-            [dataObjectId]: KeyValueDataObject,
-        },
-    };
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
         ? await Fluid.createContainer(containerId, containerConfig)

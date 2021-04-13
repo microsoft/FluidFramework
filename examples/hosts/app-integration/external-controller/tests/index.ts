@@ -4,13 +4,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-    KeyValueDataObject,
-    KeyValueInstantiationFactory,
-} from "@fluid-experimental/data-objects";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 
+import { containerConfig } from "../src/app";
 import { DiceRollerController } from "../src/controller";
 import { renderDiceRoller } from "../src/view";
 
@@ -30,13 +28,9 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const initialObjects = {
-        /* [id]: DataObject */
-        dice: KeyValueDataObject,
-    };
     const container = await getSessionStorageContainer(
         documentId,
-        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry], [], initialObjects),
+        new DOProviderContainerRuntimeFactory(containerConfig),
         createNewFlag,
     );
 
