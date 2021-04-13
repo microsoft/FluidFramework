@@ -868,7 +868,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 opActions.summaryAck = summaryAck;
             }
         };
-        const summaryAck = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
             this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
             // we've caught up, so re-register the default action to monitor for
             // falling behind, and unregister ourself
