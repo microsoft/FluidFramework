@@ -336,6 +336,8 @@ export class SharedTree extends SharedObject {
     constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean);
     // @internal
     applyEdit(...changes: Change[]): EditId;
+    // (undocumented)
+    protected applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     // (undocumented)
     createRevert(editId: EditId): Change[];
