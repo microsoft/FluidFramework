@@ -59,10 +59,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(
-        private readonly loader: ILoader,
-        private readonly containerUrl: () => string | undefined,
-    ) {
+    constructor(private readonly loader: ILoader) {
         super();
     }
 
@@ -79,19 +76,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const containerUrl = this.containerUrl();
         if (request.url.startsWith("/")) {
-            let container: IContainer;
-            if (canUseCache(request)) {
-                container = await this.containerDeferred.promise;
-            } else if (containerUrl === undefined) {
-                throw new Error("Container url is not provided");
-            } else {
-                container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
-            }
+            const container = await this.containerDeferred.promise;
             return container.request(request);
         }
-
         return this.loader.request(request);
     }
 
@@ -444,7 +432,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                containerUrl: request.url,
                 docId,
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],

@@ -82,7 +82,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                containerUrl: testRequest.url,
                 docId: "documentId",
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
