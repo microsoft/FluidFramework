@@ -1626,7 +1626,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // We should have a defined version to load from if specified version requested
             this.logger.sendErrorEvent({
                 eventName: "NoVersionFoundWhenSpecified",
-                specifiedVersion: specifiedVersion ?? "Oldest",
+                specifiedVersion: `${specifiedVersion}`,
             });
         }
 
