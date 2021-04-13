@@ -6,7 +6,6 @@
     "resolveJsonModule": true,
     "typeRoots": [
       "../node_modules/@types",
-      "../types/@adsktypes"
     ],
     "baseUrl": ".",
     "paths": {

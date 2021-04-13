@@ -4,6 +4,7 @@
   "description": "",
   "license": "MIT",
   "author": "",
+  "types": "src/index.d.ts",
   "main": "src/index.js",
   "scripts": {
     "coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",

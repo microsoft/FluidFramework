@@ -5,7 +5,7 @@ declare module "@fluid-experimental/property-changeset" {
 
     type ApplyChangeSetOptions = {
         applyAfterMetaInformation?: object; // Additional meta information which help later to obtain
-                                            // more compact changeset during the apply operation
+        // more compact changeset during the apply operation
         rebaseMetaInformation?: object;
     }
 
@@ -86,7 +86,7 @@ declare module "@fluid-experimental/property-changeset" {
     }
 
     type RebaseChangeSetOptions = {
-        applyAfterMetaInformation?:  object,
+        applyAfterMetaInformation?: object,
         throwOnTemplateMismatch?: Boolean
         rebaseMetaInformation?: object
     }
@@ -97,11 +97,10 @@ declare module "@fluid-experimental/property-changeset" {
     }
 
 
-    class Utils {
+    const  Utils: {
         /**
          * Utils
          */
-        constructor();
         /**
          * Traverses a ChangeSet recursively and invokes either a pre- or a post-order callback for each visited property.
          *
@@ -111,24 +110,24 @@ declare module "@fluid-experimental/property-changeset" {
          *     object containing optional parameters.
          * @param in_finalizer A callback when traversal is completed
          */
-        traverseChangeSetRecursively(in_changeSet: SerializedChangeSet, in_params: TraveChangeSetRecursivelyParameters, in_finalizer?: Function): void;
+        traverseChangeSetRecursively(in_changeSet: SerializedChangeSet, in_params: TraveChangeSetRecursivelyParameters, in_finalizer?: Function): void,
         /**
          * Extracts all typeIds from the given ChangeSet
          */
-        extractTypeids(): Array<string>;
+        extractTypeids(): Array<string>,
         /**
          * Enumerates all template from a given ChangeSet
          */
-        enumerateSchemas(): Array<object>;
+        enumerateSchemas(): Array<object>,
         /**
          * Searches through a ChangeSet and returns all Changes to a properties with a given typeid
          */
-        getChangesByType(): object;
+        getChangesByType(): object,
         /**
          * Filter the serialized ChangeSet returning a subset of serialized ChangeSet which has been performed
          * on the given path. Returns an empty serialized ChangeSet if the path has not been affected.
          */
-        getChangesByPath(): object;
+        getChangesByPath(): object,
         /**
          * Invoke a callback for all nested ChangeSets that correspond to a set of user supplied tokenized paths.
          * @param in_paths An object which contains the tokenized paths as nested objects. Common path segment are thus shared.
@@ -153,7 +152,7 @@ declare module "@fluid-experimental/property-changeset" {
          * @param in_callback The function to invoke at the registered paths (it is called both for the interior and the leaf nodes)
          * @param in_options -
          */
-        getChangesToTokenizedPaths(in_paths: object, in_changeSet: SerializedChangeSet, in_callback: Function, in_options?: GetChangesToTokenizedPathsOptions): void;
+        getChangesToTokenizedPaths(in_paths: object, in_changeSet: SerializedChangeSet, in_callback: Function, in_options?: GetChangesToTokenizedPathsOptions): void,
         /**
          * Filter change sets by paths.
          * Given a change set, this function will filter it based on a series of paths.
@@ -178,7 +177,7 @@ declare module "@fluid-experimental/property-changeset" {
          *
          * NOTE: Paths that traverse through sets and arrays are not supported.
          */
-        static getFilteredChangeSetByPaths(in_changeSet: SerializedChangeSet, in_paths: string[] | TokenizedPath): SerializedChangeSet;
+        getFilteredChangeSetByPaths(in_changeSet: SerializedChangeSet, in_paths: string[] | TokenizedPath): SerializedChangeSet,
         /**
          * Extract all paths from the ChangeSet in a flattened list and include the operations and typeid information.
          * NOTE: The paths returned also include the parent. i.e. the path 'nodeProp.subproperty' will result in
@@ -195,9 +194,11 @@ declare module "@fluid-experimental/property-changeset" {
          * @param in_changeSet The changeset to extract paths from
          * @param in_options Set of options
          */
-        extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: ExtractPathsFromChangeSetOptions): object;
+        extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: ExtractPathsFromChangeSetOptions): object,
 
+        TraversalContext: typeof TraversalContext
     }
+
     type TokenizedPath = Map<String, TokenizedPath>
     class TraversalContext {
         /**
@@ -309,6 +310,6 @@ declare module "@fluid-experimental/property-changeset" {
         atEnd(): boolean;
         static types: types_ENUM;
 
-      }
+    }
 }
 

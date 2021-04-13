@@ -3,7 +3,6 @@
   "compilerOptions": {
     "typeRoots": [
       "./node_modules/@types",
-      "../types/@adsktypes"
     ],
     "types": [
       "underscore"
