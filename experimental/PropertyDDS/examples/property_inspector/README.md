@@ -10,7 +10,7 @@ Go back to the root folder and run:
 npm install
 alias fb='clear && node "$(git rev-parse --show-toplevel)/node_modules/.bin/fluid-build"'
 fb --install --symlink:full
-fb --all @fluid-experimental/partial-checkout  @fluid-experimental/property-query tinylicious
+fb --all @fluid-experimental/partial-inspector tinylicious
 ```
 
 You can then run the example with:
