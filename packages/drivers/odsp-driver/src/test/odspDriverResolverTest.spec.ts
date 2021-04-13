@@ -50,7 +50,6 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const baseUrl = "fluid-odsp://localhost?driveId=driveId&path=path";
         const expected: IOdspResolvedUrl = {
             endpoints: {
                 snapshotStorageUrl: "",
@@ -61,10 +60,8 @@ describe("Odsp Driver Resolver", () => {
             tokens: {},
             type: "fluid",
             odspResolvedUrl: true,
-            baseUrl,
             id: "odspCreateNew",
-            path: "",
-            url: baseUrl,
+            url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
             siteUrl: "https://localhost",
             hashedDocumentId: "",
             driveId: "driveId",
@@ -186,7 +183,8 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
         assert.strictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
 
-        const expectedResolvedUrl = `fluid-odsp://localhost?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
+        const expectedResolvedUrl = `fluid-odsp://${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`
+        + `&version=null`;
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
@@ -211,10 +209,9 @@ describe("Odsp Driver Resolver", () => {
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const expectedResolvedUrl = `fluid-odsp://localhost/drives/driveId/items/item1/`;
-        const expectedPath = `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
-        assert.strictEqual(resolvedUrl.baseUrl, expectedResolvedUrl, "resolved baseUrl is wrong");
-        assert.strictEqual(resolvedUrl.path, expectedPath, "resolved path is wrong");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
+            + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("Should resolve url with file path containing ending slashes", async () => {
@@ -238,10 +235,9 @@ describe("Odsp Driver Resolver", () => {
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const expectedResolvedUrl = `fluid-odsp://localhost/drives/driveId/items/item1/`;
-        const expectedPath = `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
-        assert.strictEqual(resolvedUrl.baseUrl, expectedResolvedUrl, "resolved baseUrl is wrong");
-        assert.strictEqual(resolvedUrl.path, expectedPath, "resolved path is wrong");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
+            + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("Should resolve url with special characters", async () => {
@@ -265,23 +261,19 @@ describe("Odsp Driver Resolver", () => {
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
-        const expectedResolvedUrl = `fluid-odsp://localhost/drives/driveId/items/item!@$/`;
-        const expectedPath = `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
-        assert.strictEqual(resolvedUrl.baseUrl, expectedResolvedUrl, "resolved baseUrl is wrong");
-        assert.strictEqual(resolvedUrl.path, expectedPath, "resolved path is wrong");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
+            + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
     it("resolves urls with datastore path in url path", async () => {
-        const absoluteUrl = "https://localhost/datastore?driveId=driveId&itemId=itemId&path=/";
+        const absoluteUrl = "https://localhost/datastore?driveId=driveId&itemId=&path=/";
         const resolvedUrl = await resolver.resolve({ url: absoluteUrl });
 
         assert.strictEqual(
-            resolvedUrl.baseUrl,
-            "fluid-odsp://localhost/drives/driveId/items/itemId/",
-        );
-        assert.strictEqual(
-            resolvedUrl.path,
-            "?driveId=driveId&itemId=itemId&path=/",
+            resolvedUrl.url,
+            // eslint-disable-next-line max-len
+            "fluid-odsp://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/?driveId=driveId&itemId=&path=/",
         );
     });
 
@@ -308,10 +300,8 @@ describe("Odsp Driver Resolver", () => {
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
         assert.strictEqual(resolvedUrl.fileVersion, fileVersion, "FileVersion should be equal");
 
-        const expectedResolvedUrl = `fluid-odsp://localhost/drives/driveId/items/item/versions/285.0/`;
-        const expectedPath =
-            `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}&fileVersion=${fileVersion}`;
-        assert.strictEqual(resolvedUrl.baseUrl, expectedResolvedUrl, "resolved baseUrl is wrong");
-        assert.strictEqual(resolvedUrl.path, expectedPath, "resolved path is wrong");
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
+            + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}&fileVersion=${fileVersion}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 });

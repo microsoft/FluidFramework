@@ -92,9 +92,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         const host = new URL(this.ordererUrl).host;
         const relativePath = !documentRelativePath || documentRelativePath.startsWith("/")
             ? documentRelativePath : `/${documentRelativePath}`;
-        const path = `${relativePath}${queryParams}`;
-        const baseUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}`;
-        const documentUrl = `${baseUrl}${path}`;
+        const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
         const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
@@ -106,8 +104,6 @@ export class InsecureUrlResolver implements IUrlResolver {
                 storageUrl,
             },
             id: documentId,
-            baseUrl,
-            path,
             tokens: {},
             type: "fluid",
             url: documentUrl,
@@ -118,7 +114,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.baseUrl);
+        const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
         assert(!!documentId, "Invalid document id from parsed URL");
 

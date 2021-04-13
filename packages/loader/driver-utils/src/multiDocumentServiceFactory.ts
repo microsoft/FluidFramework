@@ -44,7 +44,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "none:";
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        const urlObj = parse(resolvedUrl.baseUrl);
+        const urlObj = parse(resolvedUrl.url);
         if (urlObj.protocol === undefined) {
             throw new Error("No protocol provided");
         }
@@ -62,7 +62,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
-        const urlObj = parse(createNewResolvedUrl.baseUrl);
+        const urlObj = parse(createNewResolvedUrl.url);
         if (urlObj.protocol === undefined) {
             throw new Error("No protocol provided");
         }

@@ -128,7 +128,7 @@ export async function fluidFetchInit(urlStr: string) {
     if (!resolvedUrl) {
         return Promise.reject(new Error(`Unknown URL ${urlStr}`));
     }
-    const protocol = new URL(resolvedUrl.baseUrl).protocol;
+    const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
         return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getMicrosoftConfiguration());

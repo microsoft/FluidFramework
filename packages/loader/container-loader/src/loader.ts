@@ -40,6 +40,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
+import { IParsedUrl, parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -272,9 +273,10 @@ export class Loader extends EventEmitter implements IHostLoader {
         if (this.cachingEnabled) {
             container.once("attached", () => {
                 ensureFluidResolvedUrl(container.resolvedUrl);
-                this.addToContainerCache(
-                    container.resolvedUrl.baseUrl,
-                    Promise.resolve(container));
+                const parsedUrl = parseUrl(container.resolvedUrl.url);
+                if (parsedUrl !== undefined) {
+                    this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
+                }
             });
         }
 
@@ -303,14 +305,14 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            return resolved.container.request({ url: resolved.resolved.path });
+            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
         });
     }
 
-    private getKeyForContainerCache(request: IRequest, resolvedUrl: IFluidResolvedUrl): string {
+    private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
         const key = request.headers?.[LoaderHeader.version] !== undefined
-            ? `${resolvedUrl.baseUrl}@${request.headers[LoaderHeader.version]}`
-            : resolvedUrl.baseUrl;
+            ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
+            : parsedUrl.id;
         return key;
     }
 
@@ -331,30 +333,40 @@ export class Loader extends EventEmitter implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingLocalState,
-    ): Promise<{container: Container, resolved: IFluidResolvedUrl}> {
+    ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
+        // Parse URL into data stores
+        const parsed = parseUrl(resolvedAsFluid.url);
+        if (parsed === undefined) {
+            throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
+        }
+
         if (pendingLocalState !== undefined) {
-            if (pendingLocalState?.baseUrl !== resolvedAsFluid.baseUrl) {
-                const message = `${resolvedAsFluid.baseUrl} does not match pending state ${pendingLocalState.baseUrl}`;
+            const parsedPendingUrl = parseUrl(pendingLocalState.url);
+            if (parsedPendingUrl?.id !== parsed.id ||
+                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
+                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
                 throw new Error(message);
             }
         }
 
         // parseUrl's id is expected to be of format "tenantId/docId"
-        const { canCache, fromSequenceNumber } = this.parseHeader(request);
+        const [, docId] = parsed.id.split("/");
+        const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
         let container: Container;
         if (shouldCache) {
-            const key = this.getKeyForContainerCache(request, resolvedAsFluid);
+            const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
                 const containerP =
                     this.loadContainer(
+                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -363,6 +375,7 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
+                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -381,7 +394,7 @@ export class Loader extends EventEmitter implements IHostLoader {
             });
         }
 
-        return {container, resolved: resolvedAsFluid};
+        return { container, parsed };
     }
 
     private get cachingEnabled() {
@@ -392,7 +405,7 @@ export class Loader extends EventEmitter implements IHostLoader {
         return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
     }
 
-    private parseHeader(request: IRequest) {
+    private parseHeader(parsed: IParsedUrl, request: IRequest) {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ?? {};
@@ -401,6 +414,9 @@ export class Loader extends EventEmitter implements IHostLoader {
         if (headerSeqNum !== undefined) {
             fromSequenceNumber = headerSeqNum;
         }
+
+        // If set in both query string and headers, use query string
+        request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
         // Version === null means not use any snapshot.
         if (request.headers[LoaderHeader.version] === "null") {
@@ -417,6 +433,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
+        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,

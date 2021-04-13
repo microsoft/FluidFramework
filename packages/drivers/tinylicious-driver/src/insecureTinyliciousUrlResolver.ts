@@ -28,10 +28,10 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
         const url = request.url.replace(`http://localhost:${this.tinyliciousPort}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
-        const path = url.slice(documentId.length);
+        const documentRelativePath = url.slice(documentId.length);
 
-        const baseUrl = `fluid://localhost:${this.tinyliciousPort}/tinylicious/${encodedDocId}`;
-        const documentUrl = `${baseUrl}${path}`;
+        // eslint-disable-next-line max-len
+        const documentUrl = `fluid://localhost:${this.tinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
         const deltaStorageUrl = `http://localhost:${this.tinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
         const storageUrl = `http://localhost:${this.tinyliciousPort}/repos/tinylicious`;
 
@@ -42,8 +42,6 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
                 storageUrl,
             },
             id: documentId,
-            baseUrl,
-            path,
             tokens: { jwt: this.auth(documentId) },
             type: "fluid",
             url: documentUrl,
@@ -53,7 +51,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
         const documentId = decodeURIComponent(
-            resolvedUrl.baseUrl.replace(`fluid://localhost:${this.tinyliciousPort}/tinylicious/`, ""),
+            resolvedUrl.url.replace(`fluid://localhost:${this.tinyliciousPort}/tinylicious/`, ""),
         );
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
@@ -63,6 +61,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
          */
         return `${documentId}/${relativeUrl}`;
     }
+
     private auth(documentId: string) {
         const claims: ITokenClaims = {
             documentId,

@@ -62,7 +62,7 @@ export async function start(): Promise<void> {
     // Generating Fluid urls.
     const encodedTenantId = encodeURIComponent(tenantId);
     const encodedDocId = encodeURIComponent(documentId);
-    const baseUrl = `fluid://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
+    const documentUrl = `fluid://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
     const deltaStorageUrl = `${ordererEndpoint}/deltas/${encodedTenantId}/${encodedDocId}`;
     const storageUrl = `${storageEndpoint}/repos/${encodedTenantId}`;
     const requestUrl = `http://${url.parse(ordererEndpoint).host}/${encodedTenantId}/${encodedDocId}`;
@@ -75,11 +75,9 @@ export async function start(): Promise<void> {
             storageUrl,
         },
         id: documentId,
-        baseUrl,
-        path: "",
         tokens: { jwt: token },
         type: "fluid",
-        url: baseUrl,
+        url: documentUrl,
     };
 
     const urlResolver = new ContainerUrlResolver(

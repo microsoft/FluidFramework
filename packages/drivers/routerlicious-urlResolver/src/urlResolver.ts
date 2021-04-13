@@ -48,22 +48,20 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             return undefined;
         }
 
-        const pathParts = reqUrl.pathname.split("/");
+        const path = reqUrl.pathname.split("/");
         let tenantId: string;
         let documentId: string;
         let provider: Provider | undefined;
-        let path: string = "";
         if (this.config) {
             tenantId = this.config.tenantId;
             documentId = this.config.documentId;
             provider = this.config.provider;
-        } else if (pathParts.length >= 4) {
-            tenantId = pathParts[2];
-            documentId = pathParts[3];
-            path = `/${pathParts.slice(4).join("/")}`;
+        } else if (path.length >= 4) {
+            tenantId = path[2];
+            documentId = path[3];
         } else {
             tenantId = "fluid";
-            documentId = pathParts[2];
+            documentId = path[2];
         }
 
         const token = await this.getToken();
@@ -73,12 +71,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
         const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
 
-        const baseUrl = "fluid://" +
+        let fluidUrl = "fluid://" +
             `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(documentId)}`;
 
-        let fluidUrl = baseUrl;
         // In case of any additional parameters add them back to the url
         if (reqUrl.search) {
             const searchParams = reqUrl.search;
@@ -124,8 +121,6 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 ordererUrl,
             },
             id: documentId,
-            baseUrl,
-            path,
             tokens: { jwt: token },
             type: "fluid",
             url: fluidUrl,
@@ -139,7 +134,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     ): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.baseUrl);
+        const parsedUrl = parse(fluidResolvedUrl.url);
         assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);

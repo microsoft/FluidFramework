@@ -19,7 +19,7 @@ describe("Spo Url Resolver", () => {
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
             // eslint-disable-next-line max-len
-            `fluid-odsp://${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
+            `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 
     it("Should resolve the other tenant spo url correctly", async () => {
@@ -33,6 +33,6 @@ describe("Spo Url Resolver", () => {
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
             // eslint-disable-next-line max-len
-            `fluid-odsp://${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
+            `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 });

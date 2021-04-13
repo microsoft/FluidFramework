@@ -44,10 +44,7 @@ export class LocalResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
         const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
-        const pathParts = fullPath.split("/");
-        const documentId = pathParts[0];
-        const path = pathParts.length > 1 ? `/${pathParts.slice(1).join("/")}` : "";
-        const baseUrl = `fluid-test://localhost:3000/${this.tenantId}/${documentId}`;
+        const documentId = fullPath.split("/")[0];
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
@@ -55,12 +52,10 @@ export class LocalResolver implements IUrlResolver {
                 ordererUrl: "http://localhost:3000",
                 storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
             },
+            id: documentId,
             tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
-            id: documentId,
-            baseUrl,
-            path,
-            url: `${baseUrl}${path}`,
+            url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
         };
 
         return resolved;
@@ -73,7 +68,7 @@ export class LocalResolver implements IUrlResolver {
         }
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const parsedUrl = parse(fluidResolvedUrl.baseUrl);
+        const parsedUrl = parse(fluidResolvedUrl.url);
         if (parsedUrl.pathname === undefined) {
             throw new Error("Url should contain tenant and docId!!");
         }

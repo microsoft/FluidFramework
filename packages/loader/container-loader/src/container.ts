@@ -40,6 +40,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -137,7 +138,6 @@ export interface IContainerConfig {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    id?: string;
 }
 
 export enum ConnectionState {
@@ -432,7 +432,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public get resolvedUrl(): IFluidResolvedUrl | undefined {
+    public get resolvedUrl(): IResolvedUrl | undefined {
         return this._resolvedUrl;
     }
 
@@ -475,7 +475,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get id(): string {
-        return this.resolvedUrl?.id ?? "";
+        return this._resolvedUrl?.id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -741,7 +741,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             0x0d2 /* "resolved url should be valid Fluid url" */);
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
-            baseUrl: this.resolvedUrl.baseUrl,
+            url: this.resolvedUrl.url,
         };
 
         this.close();

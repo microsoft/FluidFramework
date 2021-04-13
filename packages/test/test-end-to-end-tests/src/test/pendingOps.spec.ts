@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader, IPendingLocalState } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -60,11 +60,10 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
         assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
         assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        const state: IPendingLocalState = {
-            baseUrl: container.resolvedUrl.baseUrl,
+        pendingState = JSON.stringify({
+            url: container.resolvedUrl.url,
             pendingRuntimeState,
-        };
-        pendingState = JSON.stringify(state);
+        });
     } else {
         pendingState = container.closeAndGetPendingLocalState();
     }
@@ -318,7 +317,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
 
-            const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
+        const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
