@@ -31,7 +31,7 @@ export type SharedObjectClass<T extends IFluidLoadable>
     = { readonly getFactory: () => IChannelFactory } & LoadableObjectCtor<T>;
 
 /**
- * This type defines that the object has a constructor that will return a IFluidLoadable
+ * An object with a constructor that will return an `IFluidLoadable`.
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
