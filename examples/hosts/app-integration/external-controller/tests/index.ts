@@ -30,19 +30,20 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
+    const initialObjects = {
+        /* [id]: DataObject */
+        dice: KeyValueDataObject,
+    };
     const container = await getSessionStorageContainer(
         documentId,
-        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry], []),
+        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry], [], initialObjects),
         createNewFlag,
     );
 
     // Get the Default Object from the Container
     const dataObjectId = "dice";
-    const rootDataObject = (await container.request({ url: "/" })).value;
-    if (createNewFlag) {
-        await rootDataObject.createDataObject(KeyValueDataObject, dataObjectId);
-    }
-    const kvPairDataObject = await rootDataObject.getDataObject(dataObjectId);
+    const fluidContainer = (await container.request({ url: "/" })).value;
+    const kvPairDataObject = fluidContainer.initialObjects[dataObjectId] as KeyValueDataObject;
     const diceRollerController = new DiceRollerController(kvPairDataObject);
     await diceRollerController.initialize(createNewFlag);
 
