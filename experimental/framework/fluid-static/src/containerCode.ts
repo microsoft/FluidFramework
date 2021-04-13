@@ -14,18 +14,17 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
+    ContainerConfig,
     DataObjectClass,
     LoadableObjectClass,
     LoadableObjectClassRecord,
     LoadableObjectRecord,
     SharedObjectClass,
 } from "./types";
-import { isDataObjectClass, isSharedObjectClass } from "./utils";
+import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
@@ -57,10 +56,10 @@ interface RootDataObjectProps {
  * The RootDataObject is the implementation of the FluidContainer.
  */
 export class RootDataObject
-// eslint-disable-next-line @typescript-eslint/ban-types
-extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
-implements FluidContainer {
-    private readonly connectedHandler = (id: string) =>  this.emit("connected", id);
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
+    implements FluidContainer {
+    private readonly connectedHandler = (id: string) => this.emit("connected", id);
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -168,23 +167,20 @@ const rootDataStoreId = "rootDOId";
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory
     private readonly initialObjects: LoadableObjectClassRecord;
-    constructor(
-        registryEntries: NamedFluidDataStoreRegistryEntry[],
-        sharedObjects: IChannelFactory[],
-        initialObjects: LoadableObjectClassRecord = {},
-    ) {
+    constructor(config: ContainerConfig) {
+        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(config);
         const rootDataObjectFactory =
             // eslint-disable-next-line @typescript-eslint/ban-types
             new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
-            "rootDO",
-            RootDataObject,
-            [],
-            {},
-            registryEntries,
-        );
+                "rootDO",
+                RootDataObject,
+                sharedObjects,
+                {},
+                registryEntries,
+            );
         super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
-        this.initialObjects = initialObjects;
+        this.initialObjects = config.initialObjects;
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
