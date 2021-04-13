@@ -5,6 +5,10 @@ nyc
 *.log
 .DS_Store
 
+lib
+*.ts.map
+*.d.ts
+
 # Rush: Temporary files
 common/temp
 
@@ -21,3 +25,5 @@ bundleAnalysis
 
 # Misc pipeline artifacts
 artifacts
+
+
