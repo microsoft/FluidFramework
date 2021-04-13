@@ -18,7 +18,7 @@ import {
     IContainerContext,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
@@ -42,12 +42,30 @@ class ClientComparer implements IComparer<ITrackedClient> {
     }
 }
 
-class QuorumHeap {
+class QuorumHeap extends EventEmitter {
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private summarizerCount = 0;
 
-    public addClient(clientId: string, client: ISequencedClient) {
+    constructor(quorum: IQuorum) {
+        super();
+        const members = quorum.getMembers();
+        for (const [clientId, client] of members) {
+            this.addClient(clientId, client);
+        }
+
+        quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+            this.addClient(clientId, details);
+            this.emit("heapChange");
+        });
+
+        quorum.on("removeMember", (clientId: string) => {
+            this.removeClient(clientId);
+            this.emit("heapChange");
+        });
+    }
+
+    private addClient(clientId: string, client: ISequencedClient) {
         // Have to undefined-check client.details for backwards compatibility
         const isSummarizer = client.client.details?.type === summarizerClientType;
         const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
@@ -57,7 +75,7 @@ class QuorumHeap {
         }
     }
 
-    public removeClient(clientId: string) {
+    private removeClient(clientId: string) {
         const member = this.heapMembers.get(clientId);
         if (member) {
             this.heap.remove(member);
@@ -139,7 +157,7 @@ class Throttler {
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly quorumHeap = new QuorumHeap();
+    private readonly quorumHeap: QuorumHeap;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
@@ -182,23 +200,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.setClientId(context.clientId);
         }
 
-        const members = context.quorum.getMembers();
-        for (const [clientId, client] of members) {
-            this.quorumHeap.addClient(clientId, client);
-        }
-
         context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
             if (this.opsUntilFirstConnect === -1 && clientId === this.clientId) {
                 this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
             }
-            this.quorumHeap.addClient(clientId, details);
-            this.refreshSummarizer();
         });
 
-        context.quorum.on("removeMember", (clientId: string) => {
-            this.quorumHeap.removeClient(clientId);
-            this.refreshSummarizer();
-        });
+        this.quorumHeap = new QuorumHeap(context.quorum);
+        this.quorumHeap.on("heapChange", () => { this.refreshSummarizer(); });
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
