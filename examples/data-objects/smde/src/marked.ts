@@ -4,7 +4,7 @@
  */
 
 import { SharedString } from "@fluidframework/sequence";
-import * as marked from "marked";
+import marked from "marked";
 
 export class Viewer {
     constructor(private readonly elm: HTMLElement, private readonly text: SharedString) {

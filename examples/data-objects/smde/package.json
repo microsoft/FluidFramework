@@ -46,15 +46,16 @@
     "@fluidframework/runtime-definitions": "^0.38.0",
     "@fluidframework/sequence": "^0.38.0",
     "@fluidframework/view-interfaces": "^0.38.0",
-    "@types/simplemde": "^1.11.7",
-    "marked": "^0.8.0",
+    "marked": "^2.0.3",
     "simplemde": "^1.11.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.21.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/webpack-fluid-loader": "^0.38.0",
+    "@types/marked": "^2.0.2",
     "@types/node": "^12.19.0",
+    "@types/simplemde": "^1.11.7",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",
