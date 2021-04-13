@@ -9,7 +9,7 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { LoggingError, ITaggableTelemetryProperties } from "@fluidframework/telemetry-utils";
+import { LoggingError, ITaggableTelemetryProperties, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -46,14 +46,16 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
 export class AuthorizationError extends LoggingError implements IAuthorizationError {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
+    readonly claims: { tag: string, value: string | undefined }; // See ITaggedTelemetryPropertyType
 
     constructor(
         errorMessage: string,
-        readonly claims: string | undefined,
+        claims: string | undefined,
         readonly tenantId: string | undefined,
         statusCode: number,
     ) {
         super(errorMessage, { statusCode });
+        this.claims = { tag: TelemetryDataTag.UserData, value: claims };
     }
 }
 
