@@ -21,7 +21,7 @@ export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> |
  * contructor that will return the type of the DataObject.
  */
 export type DataObjectClass<T extends IFluidLoadable>
-= { readonly factory: IFluidDataStoreFactory }  & LoadableObjectCtor<T>;
+    = { readonly factory: IFluidDataStoreFactory }  & LoadableObjectCtor<T>;
 
 /**
  * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
