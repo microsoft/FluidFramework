@@ -215,6 +215,7 @@ export async function loadContainer(
             ordererUrl: "example.com",
             storageUrl: "example.com",
         },
+        id: documentName,
         tokens: {},
         type: "fluid",
         url: `fluid-file://localhost:6000/fluid/${documentName}`,

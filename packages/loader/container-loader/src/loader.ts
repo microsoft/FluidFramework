@@ -24,7 +24,7 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -40,7 +40,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
-import { IParsedUrl, parseUrl } from "./utils";
+import { parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -305,14 +305,16 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
+            const parsed = parseUrl(resolved.resolved.url);
+            assert(parsed !== undefined, "resolve url could not be parsed");
+            return resolved.container.request({ url: `${parsed.path}${parsed.query}` });
         });
     }
 
-    private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
+    private getKeyForContainerCache(request: IRequest, resolverUrl: IFluidResolvedUrl): string {
         const key = request.headers?.[LoaderHeader.version] !== undefined
-            ? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
-            : parsedUrl.id;
+            ? `${resolverUrl.id}@${request.headers[LoaderHeader.version]}`
+            : resolverUrl.id;
         return key;
     }
 
@@ -333,40 +335,30 @@ export class Loader extends EventEmitter implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingLocalState,
-    ): Promise<{ container: Container; parsed: IParsedUrl }> {
+    ): Promise<{container: Container, resolved: IFluidResolvedUrl}> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
-        // Parse URL into data stores
-        const parsed = parseUrl(resolvedAsFluid.url);
-        if (parsed === undefined) {
-            throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
-        }
-
         if (pendingLocalState !== undefined) {
-            const parsedPendingUrl = parseUrl(pendingLocalState.url);
-            if (parsedPendingUrl?.id !== parsed.id ||
-                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
-                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+            if (pendingLocalState?.id !== resolvedAsFluid.id) {
+                const message = `ID ${resolvedAsFluid.id} does not match pending state ID ${pendingLocalState.id}`;
                 throw new Error(message);
             }
         }
 
         // parseUrl's id is expected to be of format "tenantId/docId"
-        const [, docId] = parsed.id.split("/");
-        const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const { canCache, fromSequenceNumber } = this.parseHeader(request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
         let container: Container;
         if (shouldCache) {
-            const key = this.getKeyForContainerCache(request, parsed);
+            const key = this.getKeyForContainerCache(request, resolvedAsFluid);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
                 const containerP =
                     this.loadContainer(
-                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -375,7 +367,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
-                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -394,7 +385,7 @@ export class Loader extends EventEmitter implements IHostLoader {
             });
         }
 
-        return { container, parsed };
+        return {container, resolved: resolvedAsFluid};
     }
 
     private get cachingEnabled() {
@@ -405,7 +396,7 @@ export class Loader extends EventEmitter implements IHostLoader {
         return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
     }
 
-    private parseHeader(parsed: IParsedUrl, request: IRequest) {
+    private parseHeader(request: IRequest) {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ?? {};
@@ -414,9 +405,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         if (headerSeqNum !== undefined) {
             fromSequenceNumber = headerSeqNum;
         }
-
-        // If set in both query string and headers, use query string
-        request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
         // Version === null means not use any snapshot.
         if (request.headers[LoaderHeader.version] === "null") {
@@ -433,19 +421,16 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
-        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,
     ): Promise<Container> {
-        const docId = decodeURI(encodedDocId);
         return Container.load(
             this,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                 containerUrl: request.url,
-                docId,
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],

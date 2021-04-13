@@ -310,6 +310,6 @@ declare module "@fluidframework/core-interfaces" {
 }
 
 export interface IPendingLocalState {
-    url: string;
+    id: string;
     pendingRuntimeState: unknown;
 }

@@ -41,6 +41,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
                 ordererUrl: `http://localhost:${this.tinyliciousPort}`,
                 storageUrl,
             },
+            id: `tinylicious/${documentId}`,
             tokens: { jwt: this.auth(documentId) },
             type: "fluid",
             url: documentUrl,

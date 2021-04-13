@@ -76,6 +76,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     attachmentPOSTStorageUrl: "",
                     deltaStorageUrl: "",
                 },
+                id: "odspCreateNew",
                 tokens: {},
                 type: "fluid",
                 odspResolvedUrl: true,
@@ -96,7 +97,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
         assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
-        let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
+        let documentUrl = `fluid-odsp://${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
         if (request.url.length > 0) {
             // In case of any additional parameters add them back to the url
@@ -118,6 +119,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
                 deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
             },
+            id: hashedDocumentId,
             tokens: {},
             url: documentUrl,
             hashedDocumentId,

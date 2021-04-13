@@ -103,6 +103,7 @@ export class InsecureUrlResolver implements IUrlResolver {
                 ordererUrl: this.ordererUrl,
                 storageUrl,
             },
+            id:`${this.tenantId}/${documentId}`,
             tokens: {},
             type: "fluid",
             url: documentUrl,

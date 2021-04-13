@@ -40,7 +40,6 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -96,7 +95,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
@@ -115,7 +114,6 @@ export interface IContainerLoadOptions {
      */
     clientDetailsOverride?: IClientDetails;
     containerUrl: string;
-    docId: string;
     resolvedUrl: IFluidResolvedUrl;
     /**
      * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
@@ -128,13 +126,13 @@ export interface IContainerLoadOptions {
 }
 
 export interface IContainerConfig {
-    resolvedUrl?: IResolvedUrl;
+    resolvedUrl?: IFluidResolvedUrl;
     canReconnect?: boolean;
     /**
      * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
      * for purposes of creating a separate Container instance for the summarizer to use.
      */
-    containerUrl?: string;
+         containerUrl?: string;
     /**
      * Client details provided in the override will be merged over the default client.
      */
@@ -302,7 +300,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 containerUrl: loadOptions.containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
-                id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
             });
@@ -388,7 +385,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private _id: string | undefined;
     private containerUrl: string | undefined;
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -417,7 +413,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
-    private _resolvedUrl: IResolvedUrl | undefined;
+    private _resolvedUrl: IFluidResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
     private _dirtyContainer = false;
@@ -436,7 +432,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public get resolvedUrl(): IResolvedUrl | undefined {
+    public get resolvedUrl(): IFluidResolvedUrl | undefined {
         return this._resolvedUrl;
     }
 
@@ -479,7 +475,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get id(): string {
-        return this._id ?? "";
+        return this.resolvedUrl?.id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -572,7 +568,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Initialize from config
         this.containerUrl = config.containerUrl;
         this.clientDetailsOverride = config.clientDetailsOverride;
-        this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
@@ -746,7 +741,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             0x0d2 /* "resolved url should be valid Fluid url" */);
         const pendingState: IPendingLocalState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
-            url: this.resolvedUrl.url,
+            id: this.resolvedUrl.id,
         };
 
         this.close();
@@ -818,13 +813,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             );
             assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
             this.containerUrl = url;
-            const parsedUrl = parseUrl(resolvedUrl.url);
-            if (parsedUrl === undefined) {
-                throw new Error("Unable to parse Url");
-            }
-
-            const [, docId] = parsedUrl.id.split("/");
-            this._id = decodeURI(docId);
 
             if (this._storageService === undefined) {
                 this._storageService = await this.getDocumentStorageService();
