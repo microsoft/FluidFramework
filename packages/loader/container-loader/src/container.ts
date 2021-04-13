@@ -132,7 +132,7 @@ export interface IContainerConfig {
      * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
      * for purposes of creating a separate Container instance for the summarizer to use.
      */
-         containerUrl?: string;
+    containerUrl?: string;
     /**
      * Client details provided in the override will be merged over the default client.
      */
