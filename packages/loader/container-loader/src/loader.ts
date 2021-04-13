@@ -24,7 +24,7 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -51,15 +51,11 @@ function canUseCache(request: IRequest): boolean {
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
-    // Because the loader is passed to the container during construction we need to resolve the target container
-    // after construction.
-    private readonly containerDeferred = new Deferred<Container>();
-
     /**
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(private readonly loader: ILoader) {
+    constructor(private readonly loader: ILoader, private readonly container: Container) {
         super();
     }
 
@@ -67,9 +63,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
-            // If no headers are set that require a reload make use of the same object
-            const container = await this.containerDeferred.promise;
-            return container;
+            return this.container;
         }
 
         return this.loader.resolve(request);
@@ -77,14 +71,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
-            const container = await this.containerDeferred.promise;
-            return container.request(request);
+            return this.container.request(request);
         }
         return this.loader.request(request);
-    }
-
-    public resolveContainer(container: Container) {
-        this.containerDeferred.resolve(container);
     }
 }
 
