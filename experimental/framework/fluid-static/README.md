@@ -55,7 +55,7 @@ const config = {
     initialObjects: {
         /* ... */
     },
-    dynamicDataTypes: [ /*...*/ ],
+    dynamicObjectTypes: [ /*...*/ ],
 }
 await Fluid.createContainer("_unique-id_", config);
 const container = await Fluid.getContainer("_unique-id_", config);
