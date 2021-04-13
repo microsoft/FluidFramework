@@ -3,15 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IContextErrorData, ILogger, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IRunner } from "@fluidframework/server-services-utils";
+import { promiseTimeout } from "@fluidframework/server-services-client";
+import {
+    IConsumer,
+    IContextErrorData,
+    ILogger,
+    IPartitionLambdaFactory,
+    IRunner,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
     private deferred: Deferred<void> | undefined;
     private partitionManager: PartitionManager | undefined;
+    private stopped: boolean = false;
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
@@ -39,8 +47,17 @@ export class KafkaRunner implements IRunner {
 
         this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
-            deferred.reject(error);
+            if (errorData && !errorData.restart) {
+                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
+                logger?.error(inspect(error));
+            } else {
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.");
+                logger?.error(inspect(error));
+                deferred.reject(error);
+            }
         });
+
+        this.stopped = false;
 
         return deferred.promise;
     }
@@ -49,15 +66,23 @@ export class KafkaRunner implements IRunner {
      * Signals to stop the service
      */
     public async stop(): Promise<void> {
-        if (!this.deferred) {
+        if (!this.deferred || this.stopped) {
             return;
         }
+
+        this.stopped = true;
 
         // Stop listening for new updates
         await this.consumer.pause();
 
         // Stop the partition manager
         await this.partitionManager?.stop();
+
+        // Dispose the factory
+        await this.factory.dispose();
+
+        // Close the underlying consumer, but setting a timeout for safety
+        await promiseTimeout(30000, this.consumer.close());
 
         // Mark ourselves done once the partition manager has stopped
         this.deferred.resolve();

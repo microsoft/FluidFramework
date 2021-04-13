@@ -19,7 +19,6 @@ import {
     IDeltaManager,
     ILoader,
     IRuntime,
-    IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
@@ -44,7 +43,6 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { NullChaincode, NullRuntime } from "./nullRuntime";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -64,8 +62,8 @@ export class ContainerContext implements IContainerContext {
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
-        previousRuntimeState: IRuntimeState,
         updateDirtyContainerState: (dirty: boolean) => void,
+        pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -82,8 +80,8 @@ export class ContainerContext implements IContainerContext {
             submitSignalFn,
             closeFn,
             version,
-            previousRuntimeState,
-            updateDirtyContainerState);
+            updateDirtyContainerState,
+            pendingLocalState);
         await context.load();
         return context;
     }
@@ -160,13 +158,6 @@ export class ContainerContext implements IContainerContext {
     }
 
     private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        if (this.codeDetails === undefined) {
-            const fluidExport =  new NullChaincode();
-            return {
-                fluidExport,
-            };
-        }
-
         const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
             async () => this.codeLoader.load(this.codeDetails),
         );
@@ -189,8 +180,8 @@ export class ContainerContext implements IContainerContext {
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
-        public readonly previousRuntimeState: IRuntimeState,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
+        public readonly pendingLocalState?: unknown,
 
     ) {
         this.logger = container.subLogger;
@@ -225,13 +216,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.loadedFromVersion;
     }
 
-    /**
-     * Snapshot and close the runtime, and return its state if available
-     */
-    public async snapshotRuntimeState(): Promise<IRuntimeState> {
-        return this.runtime.stop();
-    }
-
     public get attachState(): AttachState {
         return this.container.attachState;
     }
@@ -243,7 +227,7 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert(connected === this.connected, "Mismatch in connection state while setting");
+        assert(connected === this.connected, 0x0de /* "Mismatch in connection state while setting" */);
 
         runtime.setConnectionState(connected, clientId);
     }
@@ -260,20 +244,12 @@ export class ContainerContext implements IContainerContext {
         return this.runtime.request(path);
     }
 
-    public registerTasks(tasks: string[]): any {
-        return;
-    }
-
-    public async reloadContext(): Promise<void> {
-        return this.container.reloadContext();
-    }
-
-    public hasNullRuntime() {
-        return this.runtime instanceof NullRuntime;
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
+    }
+
+    public getPendingLocalState(): unknown {
+        return this.runtime.getPendingLocalState();
     }
 
     /**

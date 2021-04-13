@@ -171,9 +171,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             getVersions: async (versionId: string | null, count: number) => {
                 return storage.getVersions(versionId, count);
             },
-            read: async (id) => {
-                return storage.read(id);
-            },
             write: async (root, parents, message, ref) => {
                 return storage.write(root, parents, message, ref);
             },
@@ -193,10 +190,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const get = Comlink.proxy(async (from: number, to: number) => deltaStorage.get(from, to));
+        const fetchMessages = Comlink.proxy(deltaStorage.fetchMessages.bind(deltaStorage));
 
         return {
-            get,
+            fetchMessages,
         };
     }
 

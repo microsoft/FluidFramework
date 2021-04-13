@@ -148,7 +148,7 @@ export class Timer implements ITimer {
     }
 
     private handler() {
-        assert(!!this.runningState, "Running timer missing handler");
+        assert(!!this.runningState, 0x00a /* "Running timer missing handler" */);
         const restart = this.runningState.restart;
         if (restart !== undefined) {
             // Restart with remaining time
@@ -207,7 +207,7 @@ export class PromiseTimer implements IPromiseTimer {
 
     public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
-        this.deferred = new Deferred();
+        this.deferred = new Deferred<IPromiseTimerResult>();
         this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
         return this.deferred.promise;
     }
@@ -222,7 +222,7 @@ export class PromiseTimer implements IPromiseTimer {
 
     protected wrapHandler(handler: () => void) {
         handler();
-        assert(!!this.deferred, "Handler executed without deferred");
+        assert(!!this.deferred, 0x00b /* "Handler executed without deferred" */);
         this.deferred.resolve({ timerResult: "timeout" });
         this.deferred = undefined;
     }

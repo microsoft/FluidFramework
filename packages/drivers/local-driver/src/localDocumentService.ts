@@ -9,6 +9,7 @@ import * as socketStorage from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 
 /**
@@ -32,6 +33,8 @@ export class LocalDocumentService implements api.IDocumentService {
         private readonly innerDocumentService?: api.IDocumentService,
     ) { }
 
+    public dispose() {}
+
     /**
      * Creates and returns a document storage service for local use.
      */
@@ -39,6 +42,7 @@ export class LocalDocumentService implements api.IDocumentService {
         return new socketStorage.DocumentStorageService(
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
+            new TelemetryNullLogger(),
             { minBlobSize: 2048 }); // Test blob aggregation.
     }
 

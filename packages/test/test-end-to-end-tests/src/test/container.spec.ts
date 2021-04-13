@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     ContainerErrorType,
@@ -15,40 +15,63 @@ import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
-import { LocalCodeLoader, TestObjectProvider, LoaderContainerTracker } from "@fluidframework/test-utils";
+import {
+    LocalCodeLoader,
+    TestObjectProvider,
+    LoaderContainerTracker,
+    TestContainerRuntimeFactory,
+    ITestObjectProvider,
+    TestFluidObjectFactory,
+} from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestDriver, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { getDataStoreFactory, createRuntimeFactory, TestDataObject } from "./compatUtils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import {
+    getDataStoreFactory,
+    ITestDataObject,
+    TestDataObjectType,
+    describeNoCompat,
+} from "@fluidframework/test-version-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
-
-describe("Container", () => {
-    let driver: ITestDriver;
-    let logger: ITelemetryBufferedLogger;
+const codeDetails: IFluidCodeDetails = {package: "test"};
+// REVIEW: enable compat testing?
+describeNoCompat("Container", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(function() {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-        logger = getTestLogger();
+        provider = getTestObjectProvider();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other than local driver
-        if (driver.type !== "local") {
+        if (provider.driver.type !== "local") {
             this.skip();
         }
+    });
+    before(async ()=>{
+        const loader = new Loader({
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory:
+                provider.documentServiceFactory,
+            codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+        });
+        loaderContainerTracker.add(loader);
+        const container = await loader.createDetachedContainer(codeDetails);
+        await container.attach(provider.driver.createCreateNewRequest("containerTest"));
     });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
     async function loadContainer(props?: Partial<ILoaderProps>) {
-        const loader =  new Loader({
+        const loader = new Loader({
             ...props,
-            logger,
-            urlResolver: props?.urlResolver ?? driver.createUrlResolver(),
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
-                props?.documentServiceFactory ?? driver.createDocumentServiceFactory(),
-            codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
+                props?.documentServiceFactory ?? provider.documentServiceFactory,
+            codeLoader: props?.codeLoader ?? new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
         });
         loaderContainerTracker.add(loader);
 
@@ -78,7 +101,7 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = driver.createDocumentServiceFactory();
+            const documentServiceFactory = provider.documentServiceFactory;
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -101,7 +124,7 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
-            const documentServiceFactory = driver.createDocumentServiceFactory();
+            const documentServiceFactory = provider.documentServiceFactory;
             const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -125,7 +148,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -148,7 +171,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -181,7 +204,7 @@ describe("Container", () => {
         const deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
-        const documentServiceFactory = driver.createDocumentServiceFactory();
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -204,17 +227,17 @@ describe("Container", () => {
     });
 
     it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-        const runtimeFactory = (_?: unknown) => createRuntimeFactory(
-            TestDataObject.type,
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
             getDataStoreFactory());
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,
-            driver,
+            provider.driver,
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        const dataObject = await requestFluidObject<TestDataObject>(container, "default");
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
         let runCount = 0;
 

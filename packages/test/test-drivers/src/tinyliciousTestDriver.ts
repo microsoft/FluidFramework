@@ -4,21 +4,23 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
+    defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export class TinyliciousTestDriver implements ITestDriver {
     public readonly type = "tinylicious";
-    public readonly version = pkgVersion;
+    public get version() { return this.api.version; }
 
-    createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
-        return new RouterliciousDocumentServiceFactory(
+    constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) {}
+    createDocumentServiceFactory(): IDocumentServiceFactory {
+        return new this.api.RouterliciousDocumentServiceFactory(
             new InsecureTinyliciousTokenProvider());
     }
     createUrlResolver(): InsecureTinyliciousUrlResolver {
@@ -28,6 +30,6 @@ export class TinyliciousTestDriver implements ITestDriver {
         return createTinyliciousCreateNewRequest(testId);
     }
     async createContainerUrl(testId: string): Promise<string> {
-        return `http://localhost:3000/${testId}`;
+        return `http://localhost:${defaultTinyliciousPort}/${testId}`;
     }
 }

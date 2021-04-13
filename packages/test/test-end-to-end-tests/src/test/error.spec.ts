@@ -24,21 +24,27 @@ import {
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { createDocumentId, LocalCodeLoader, LoaderContainerTracker } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import {
+    createDocumentId,
+    LocalCodeLoader,
+    LoaderContainerTracker,
+    ITestObjectProvider,
+} from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
-describe("Errors Types", () => {
+// REVIEW: enable compat testing?
+describeNoCompat("Errors Types", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let urlResolver: IUrlResolver;
     let testRequest: IRequest;
     let testResolved: IFluidResolvedUrl;
     let documentServiceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
-    let driver: ITestDriver;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+        provider = getTestObjectProvider();
     });
     afterEach(() => {
         loaderContainerTracker.reset();
@@ -47,11 +53,12 @@ describe("Errors Types", () => {
     it("GeneralError Test", async () => {
         const id = createDocumentId();
         // Setup
-        urlResolver = driver.createUrlResolver();
-        testRequest = { url: await driver.createContainerUrl(id) };
+
+        urlResolver = provider.urlResolver;
+        testRequest = { url: await provider.driver.createContainerUrl(id) };
         testResolved =
             await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = driver.createDocumentServiceFactory();
+        documentServiceFactory = provider.documentServiceFactory;
 
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
@@ -67,6 +74,7 @@ describe("Errors Types", () => {
             urlResolver,
             documentServiceFactory: mockFactory,
             codeLoader,
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
         });
         loaderContainerTracker.add(loader);
 
@@ -86,7 +94,10 @@ describe("Errors Types", () => {
 
             assert.fail("Error expected");
         } catch (error) {
-            assert.equal(error.errorType, ContainerErrorType.genericError, "Error should be a genericError");
+            assert(
+                [DriverErrorType.genericNetworkError, ContainerErrorType.genericError].includes(error.errorType),
+                `${error.errorType} should be genericError or genericNetworkError`,
+            );
         }
     });
 

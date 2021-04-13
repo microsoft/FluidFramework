@@ -185,7 +185,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 
@@ -203,5 +203,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

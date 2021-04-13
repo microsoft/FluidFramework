@@ -6,7 +6,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
 import { DataObject } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
+import { IContainer } from '@fluidframework/container-definitions';
+import { Loader } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -20,7 +21,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluidframework/test-drivers';
+import { createFluidTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
@@ -152,8 +153,8 @@ export interface ITestContainerConfig {
 
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents {
-	/** The testObjectProvider created if one was not set in the options. */
-	testObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	/** The TestObjectProvider created if one was not set in the options. */
+	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 }
@@ -169,7 +170,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	testObjectProvider?: TestObjectProvider<ITestContainerConfig>;
+	testObjectProvider?: TestObjectProvider;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -195,19 +196,18 @@ export async function setUpLocalServerTestSharedTree(
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
 	const runtimeFactory = (containerOptions?: ITestContainerConfig) =>
 		new TestContainerRuntimeFactory(TestDataObject.type, new TestFluidObjectFactory(registry), {
-			initialSummarizerDelayMs: 0,
+			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 
-	let provider: TestObjectProvider<ITestContainerConfig>;
-	let container: Container;
+	let provider: TestObjectProvider;
+	let container: IContainer;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
 		container = await provider.loadTestContainer();
 	} else {
-		const driver = new LocalServerTestDriver();
-		provider = new TestObjectProvider(driver, runtimeFactory);
-		container = (await provider.makeTestContainer()) as Container;
+		provider = new TestObjectProvider(Loader, await createFluidTestDriver(), runtimeFactory);
+		container = await provider.makeTestContainer();
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');

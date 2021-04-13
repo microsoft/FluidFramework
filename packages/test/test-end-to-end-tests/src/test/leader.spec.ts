@@ -6,30 +6,31 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import {
-    generateNonCompatTest,
-    ITestObjectProvider,
-} from "./compatUtils";
+import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
-        await timeoutPromise((resolve, rejected) => container.on("connected", resolve));
+        await timeoutPromise((resolve, rejected) => container.on("connected", resolve), { durationMs: 4000 });
     }
 }
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
+describeFullCompat("Leader", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
-        args = argsFactory();
-        container1 = await args.makeTestContainer() as Container;
+        provider = getTestObjectProvider();
+        container1 = await provider.makeTestContainer() as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
     });
     afterEach(() => {
-        args.reset();
+        // Clean up all the listener
+        registeredListeners.forEach(([target, name, handler]) => {
+            target.off(name, handler);
+        });
     });
 
     it("Create and load", async () => {
@@ -39,30 +40,36 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // shouldn't be a leader in view only mode
         assert(!dataObject1.context.leader);
 
-        const container2 = await args.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer() as Container;
         await ensureConnected(container2);
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
         if (!dataObject2.context.leader) {
-            await timeoutPromise((resolve) => {
-                dataObject2.context.once("leader", () => { resolve(); });
-            });
+            await timeoutPromise(
+                (resolve) => { dataObject2.context.once("leader", () => { resolve(); }); },
+                { durationMs: 4000 },
+            );
         }
         assert(dataObject2.context.leader);
     });
 
     interface ListenerConfig { dataObject: ITestFluidObject, name: string, leader: boolean, notleader: boolean }
+    const registeredListeners: [IFluidDataStoreRuntime, "leader" | "notleader", any][] = [];
+    function registerListener(target: IFluidDataStoreRuntime, name: "leader" | "notleader", handler: () => void) {
+        target.on(name, handler);
+        registeredListeners.push([target, name, handler]);
+    }
     const setupListener = (config: ListenerConfig) => {
-        config.dataObject.runtime.on("leader", () => {
+        registerListener(config.dataObject.runtime, "leader", () => {
             assert(config.leader, `leader event not expected in ${config.name}`);
             config.leader = false;
         });
 
-        config.dataObject.runtime.on("notleader", () => {
+        registerListener(config.dataObject.runtime, "notleader", () => {
             assert(config.notleader, `notleader event not expected in ${config.name}`);
             config.notleader = false;
         });
@@ -79,7 +86,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         checkExpected(config);
         assert(dataObject1.context.leader);
@@ -88,13 +95,13 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("force read only", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         const config = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
         setupListener(config);
 
         container1.forceReadonly(true);
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         checkExpected(config);
         assert(!dataObject1.context.leader);
@@ -105,15 +112,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         dataObject1.root.set("blah", "blah");
 
         // Make sure we reconnect as a writer and processed the op
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
-        const container2 = await args.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await ensureConnected(container2);
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         assert(dataObject1.context.leader);
         assert(!dataObject2.context.leader);
@@ -125,7 +132,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         container1.close();
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         checkExpected(config1);
         checkExpected(config2);
@@ -136,25 +143,25 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("Concurrent update", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
         assert(dataObject1.context.leader);
 
-        const container2 = await args.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer() as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-        const container3 = await args.loadTestContainer() as Container;
+        const container3 = await provider.loadTestContainer() as Container;
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await Promise.all([ensureConnected(container2), ensureConnected(container3)]);
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         assert(dataObject1.context.leader);
         assert(!dataObject2.context.leader);
         assert(!dataObject3.context.leader);
 
-        await args.opProcessingController.pauseProcessing();
+        await provider.opProcessingController.pauseProcessing();
 
         const config2 = { dataObject: dataObject2, name: "dataObject2", leader: false, notleader: false };
         const config3 = { dataObject: dataObject3, name: "dataObject3", leader: false, notleader: false };
@@ -164,7 +171,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         container1.close();
 
         // Process all the leave message
-        await args.opProcessingController.processIncoming();
+        await provider.opProcessingController.processIncoming();
 
         // No one should be a leader yet
         assert(!dataObject1.context.leader);
@@ -174,7 +181,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         config2.leader = true;
         config3.leader = true;
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
         assert((dataObject2.context.leader || dataObject3.context.leader) &&
             (!dataObject2.context.leader || !dataObject3.context.leader),
             "only one container should be the leader");
@@ -189,8 +196,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         checkExpected(config2);
         checkExpected(config3);
     });
-};
-
-describe("Leader", () => {
-    generateNonCompatTest(tests);
 });

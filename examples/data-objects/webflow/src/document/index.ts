@@ -77,11 +77,12 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 const kind = (segment.hasRangeLabels() ? segment.getRangeLabels()[0] :
                     segment.getTileLabels()[0]) as DocSegmentKind;
 
-                assert(tilesAndRanges.has(kind), `Unknown tile/range label '${kind}'.`);
+                assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
                 return kind;
             default:
-                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd));
+                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd),
+                    "unexpected marker type");
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)

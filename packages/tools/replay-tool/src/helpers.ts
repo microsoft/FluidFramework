@@ -63,7 +63,7 @@ export function compareWithReferenceSnapshot(
      * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
      * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
      */
-    const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+    const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
@@ -93,6 +93,8 @@ class UnknownChannel implements IChannel {
             setConnectionState: (connected: boolean) => {
             },
             reSubmit: (content: any, localOpMetadata: unknown) => {
+            },
+            applyStashedOp: (content: any) => {
             },
         });
     }
@@ -223,8 +225,9 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
-    const codeLoader = new API.CodeLoader({ generateSummaries: false },
+    const codeLoader = new API.CodeLoader({ summaryOptions: { generateSummaries: false } },
         [
+            ["_scheduler", Promise.resolve(chaincode)],
             ["@ms/atmentions", Promise.resolve(chaincode)],
             ["@ms/augloop", Promise.resolve(chaincode)],
             ["@ms/catalog", Promise.resolve(chaincode)],
@@ -262,7 +265,8 @@ export async function loadContainer(
     });
     const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
+    assert(container.existing,
+        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
 }

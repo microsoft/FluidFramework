@@ -42,7 +42,7 @@ export function exceptionToResponse(err: any): IResponse {
         const responseErr: IResponseException = err;
         return {
             mimeType: "text/plain",
-            status,
+            status: responseErr.code,
             value: responseErr.message,
             stack: responseErr.stack ?? getStack(),
         };
@@ -50,7 +50,7 @@ export function exceptionToResponse(err: any): IResponse {
     return {
         mimeType: "text/plain",
         status,
-        value : `${err}`,
+        value: `${err}`,
         stack: getStack(),
     };
 }
@@ -80,18 +80,18 @@ export async function requestFluidObject<T = IFluidObject>(
         throw responseToException(response, request);
     }
 
-    assert(response.value);
+    assert(response.value, 0x19a /* "Invalid response value for Fluid object request" */);
     return response.value as T;
 }
 
 export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
 
 export function createResponseError(status: number, value: string, request: IRequest): IResponse {
-    assert(status !== 200);
+    assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
     return {
         mimeType: "text/plain",
         status,
-        value : request.url === undefined ? value : `${value}: ${request.url}`,
+        value: request.url === undefined ? value : `${value}: ${request.url}`,
         stack: getStack(),
     };
 }

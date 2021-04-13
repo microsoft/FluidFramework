@@ -18,12 +18,12 @@ import {
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
-import Axios from "axios";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { ITokenProvider } from "./tokens";
+import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -48,7 +48,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!resolvedUrl.endpoints.ordererUrl);
+        assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
@@ -61,23 +61,25 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        const token = await this.tokenProvider.fetchStorageToken(
+
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             id,
+            this.tokenProvider,
+            logger2,
+            resolvedUrl.endpoints.ordererUrl,
         );
-        await Axios.post(
-            `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
+        await ordererRestWrapper.post(
+            `/documents/${tenantId}`,
             {
                 id,
                 summary: appSummary,
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             },
-            {
-                headers: {
-                    Authorization: `Basic ${token.jwt}`,
-                },
-            });
+        );
+
         return this.createDocumentService(resolvedUrl, logger);
     }
 

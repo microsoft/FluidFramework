@@ -15,10 +15,9 @@ import { TokenFetchOptions } from "./tokenFetch";
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
-export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class OdspDeltaStorageService {
     constructor(
-        private readonly deltaFeedUrlProvider: () => Promise<string>,
-        private ops: ISequencedDeltaOpMessage[] | undefined,
+        private readonly deltaFeedUrl: string,
         private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
@@ -29,16 +28,6 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         from: number,
         to: number,
     ): Promise<api.IDeltasFetchResult> {
-        const ops = this.ops;
-        this.ops = undefined;
-        if (ops !== undefined) {
-            const messages = ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-            if (messages.length > 0) {
-                return { messages, partialResult: true };
-            }
-        }
-        this.ops = undefined;
-
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
@@ -74,11 +63,8 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     }
 
     public async buildUrl(from: number, to: number) {
-        const fromInclusive = from + 1;
-        const toInclusive = to - 1;
-
-        const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
+        const filter = encodeURIComponent(`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`);
         const queryString = `?filter=${filter}`;
-        return `${await this.deltaFeedUrlProvider()}${queryString}`;
+        return `${this.deltaFeedUrl}${queryString}`;
     }
 }

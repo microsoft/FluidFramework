@@ -44,27 +44,13 @@ export interface TokenFetchOptions {
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     /** Site url representing ODSP resource location */
     siteUrl: string;
-}
 
-/**
- * Represents access token fetch options for ODSP resource addressable via Graph API
- */
-export interface GraphResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
-    type: "Graph";
-}
+    /** ODSP drive id where resource resides. Optional, used only when fetching token to access ODSP file */
+    driveId?: string;
 
-/**
- * Represents access token fetch options for ODSP resource addressable via Vroom API
- */
-export interface OneDriveResourceTokenFetchOptions extends OdspResourceTokenFetchOptions {
-    type: "OneDrive";
+    /** ODSP item id representing resource. Optional, used only when fetching token to access ODSP file */
+    itemId?: string;
 }
-
-/**
- * Represents access token fetch options for sharing link. Either Graph or Vroom or both tokens might be
- * needed to generate sharing link.
- */
-export type SharingLinkTokenFetchOptions = GraphResourceTokenFetchOptions | OneDriveResourceTokenFetchOptions;
 
 /**
  * Method signature for callback method used to fetch access token
@@ -98,4 +84,9 @@ export function isTokenFromCache(tokenResponse: string | TokenResponse | null): 
         : tokenResponse.fromCache;
 }
 
-export type IdentityType = "Consumer" | "Enterprise";
+/**
+ * Identity types supported by ODSP driver.
+ *  Consumer represents user authenticated with Microsoft Account (MSA)
+ *  Enterprise represents user authenticated with M365 tenant account
+ */
+ export type IdentityType = "Consumer" | "Enterprise";

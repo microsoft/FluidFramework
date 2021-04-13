@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import {
     assert,
-    fromUtf8ToBase64,
     stringToBuffer,
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -121,8 +120,10 @@ export class MockContainerRuntime {
         this.deltaManager = new MockDeltaManager();
         // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
         this.dataStoreRuntime.deltaManager = this.deltaManager;
+        this.dataStoreRuntime.quorum = factory.quorum;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
         this.clientId = this.dataStoreRuntime.clientId;
+        factory.quorum.addMember(this.clientId, {});
     }
 
     public createDeltaConnection(): MockDeltaConnection {
@@ -155,6 +156,7 @@ export class MockContainerRuntime {
 
     public process(message: ISequencedDocumentMessage) {
         this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastMessage = message;
         this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
@@ -176,7 +178,8 @@ export class MockContainerRuntime {
         const local = this.clientId === message.clientId;
         if (local) {
             const pendingMessage = this.pendingMessages.shift();
-            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
+            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber,
+                "Unexpected client sequence number from message");
             localOpMetadata = pendingMessage.localOpMetadata;
         }
         return [local, localOpMetadata];
@@ -193,6 +196,7 @@ export class MockContainerRuntime {
 export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
+    public readonly quorum = new MockQuorum();
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
@@ -387,7 +391,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
-    public readonly quorum = new MockQuorum();
+    public quorum = new MockQuorum();
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -557,6 +561,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
+
+    public async applyStashedOp(content: any) {
+        return;
+    }
 }
 
 /**
@@ -569,7 +577,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
     }
 
     public submit(messageContent: any): number {
-        assert(false);
+        assert(false, "Throw submit error on mock empty delta connection");
         return 0;
     }
 
@@ -581,12 +589,6 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  */
 export class MockObjectStorageService implements IChannelStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
-    }
-    public async read(path: string): Promise<string> {
-        const content = this.contents[path];
-        // Do we have such blob?
-        assert(content !== undefined);
-        return fromUtf8ToBase64(content);
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
@@ -612,7 +614,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
         const contents: { [key: string]: string } = {};
         for (const [key, value] of Object.entries(summaryTree.tree)) {
-            assert(value.type === SummaryType.Blob);
+            assert(value.type === SummaryType.Blob, "Unexpected summary type on mock createFromSummary");
             contents[key] = value.content as string;
         }
         return new MockSharedObjectServices(contents);

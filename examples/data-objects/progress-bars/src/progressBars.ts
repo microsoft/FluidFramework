@@ -16,7 +16,7 @@ import {
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -223,17 +223,15 @@ class ProgressBarsFactory implements IFluidDataStoreFactory {
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
-
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+        ].map((factory) => [factory.type, factory])));
         const routerP = ProgressCollection.load(runtime, context);
 
         return runtime;

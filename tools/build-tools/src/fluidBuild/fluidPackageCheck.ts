@@ -73,7 +73,7 @@ export class FluidPackageCheck {
             const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
             const hasConfig = testScript.includes(" --config ");
             if (isClient) {
-                const pkgstring = "@fluidframework/mocha-test-setup"
+                const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;
                 }
@@ -155,7 +155,7 @@ export class FluidPackageCheck {
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
-                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 7070 test:mocha")
             } else {
                 expectedTestScripts.push("npm run test:mocha");
             }
@@ -428,9 +428,15 @@ export class FluidPackageCheck {
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "**/_api-extractor-temp/**",
-        ]
-        const expected = pkg.name.startsWith("@fluidframework/test-") ?
+        ];
+
+        if (pkg.getScript("build:docs")) {
+            expectedCommon.push("**/_api-extractor-temp/**");
+        }
+
+        const testPackage = pkg.name.startsWith("@fluidframework/test-")
+            || pkg.name.startsWith("@fluid-internal/test-")
+        const expected = testPackage ?
             expectedCommon :
             [...expectedCommon,
                 "src/test",
@@ -509,11 +515,15 @@ export class FluidPackageCheck {
         const command = pkg.getScript("tsc");
         if (command) {
             const parsedCommand = TscUtils.parseCommandLine(command);
-            if (!parsedCommand) { return undefined; }
+            if (!parsedCommand) { return; }
 
             // Assume tsc with no argument.
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
+            if (configJson === undefined) {
+                this.logWarn(pkg, `Failed to load config file '${configFile}'`, false);
+                return;
+            }
 
             let changed = false;
             if (await this.checkTsConfigExtend(pkg, fix, configJson)) {

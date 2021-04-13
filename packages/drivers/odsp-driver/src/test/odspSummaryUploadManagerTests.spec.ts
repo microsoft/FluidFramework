@@ -9,28 +9,31 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 import * as api from "@fluidframework/protocol-definitions";
-import { hashFile, IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
-import { IBlob } from "../contracts";
+import { IBlob, IOdspResolvedUrl } from "../contracts";
+import { LocalPersistentCache } from "../odspCache";
 import { TokenFetchOptions } from "../tokenFetch";
-import { mockFetch } from "./mockFetch";
+import { mockFetchOk } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Odsp Summary Upload Manager Tests", () => {
     let epochTracker: EpochTracker;
-    let cache: LocalPersistentCacheAdapter;
     let odspSummaryUploadManager: OdspSummaryUploadManager;
     beforeEach(() => {
-        const logger = new TelemetryNullLogger();
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTracker(cache, logger);
+        const logger = new TelemetryUTLogger();
+        let resolvedUrl: IOdspResolvedUrl | undefined;
+        epochTracker = new EpochTracker(createUtLocalCache(), { docId: "docId", resolvedUrl: resolvedUrl! }, logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
             async (options: TokenFetchOptions, name?: string) => "token",
             logger,
             epochTracker,
+            { blobDeduping: true },
         );
     });
 
@@ -126,12 +129,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
 
-        await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return odspSummaryUploadManager.writeSummaryTree(
-                appSummary,
-                summaryContext,
-            );
-        });
+        await mockFetchOk(
+            async () => odspSummaryUploadManager.writeSummaryTree(appSummary, summaryContext),
+            { id: summaryContext.proposalHandle },
+        );
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 2,
             "2 blobs should be in cache");
@@ -150,12 +151,10 @@ describe("Odsp Summary Upload Manager Tests", () => {
             },
         };
         const componentBlobNewPath = ".app/default2/component2";
-        await mockFetch({ id: summaryContext.proposalHandle }, async () => {
-            return odspSummaryUploadManager.writeSummaryTree(
-                appSummary,
-                summaryContext,
-            );
-        });
+        await mockFetchOk(
+            async () => odspSummaryUploadManager.writeSummaryTree(appSummary, summaryContext),
+            { id: summaryContext.proposalHandle },
+        );
 
         assert.strictEqual(odspSummaryUploadManager["blobTreeDedupCaches"].blobShaToPath.size, 1,
             "1 blobs should be in cache");
@@ -456,5 +455,79 @@ describe("Odsp Summary Upload Manager Tests", () => {
             "Root blob should be deduped");
         assert(serializedTree.includes("\"id\":\"ackHandle/.app/default/header/component\""),
             "Component blob should be deduped");
+    });
+
+    it("Should not dedup any blob with deduping disabled", async () => {
+        // Disable blob deduping
+        odspSummaryUploadManager["hostPolicy"]["blobDeduping"] = false;
+        const rootBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("root"),
+        };
+        const componentBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify("component"),
+        };
+
+        const appSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                default: {
+                    type: api.SummaryType.Tree,
+                    tree: {
+                        header: {
+                            type: api.SummaryType.Tree,
+                            tree: {
+                                component: componentBlob,
+                                root: rootBlob,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const blobTreeDedupCaches: IDedupCaches = {
+            blobShaToPath: new Map(),
+            pathToBlobSha: new Map(),
+            treesPathToTree: new Map(),
+        };
+        await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            undefined,
+            cloneDeep(appSummary),
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+
+        // Now insert another blob with same content as component blob
+        appSummary.tree.default2 = {
+            type: api.SummaryType.Tree,
+            tree: {
+                component2: componentBlob,
+                header: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify("headerBlob"),
+                },
+            },
+        };
+        appSummary.tree.default = {
+            type: api.SummaryType.Handle,
+            handle: "default",
+            handleType: api.SummaryType.Tree,
+        };
+        odspSummaryUploadManager["blobTreeDedupCaches"] = blobTreeDedupCaches;
+        const { snapshotTree, blobs, reusedBlobs } = await odspSummaryUploadManager["convertSummaryToSnapshotTree"](
+            "ackHandle",
+            appSummary,
+            blobTreeDedupCaches,
+            ".app",
+            true,
+        );
+        const serializedTree = JSON.stringify(snapshotTree);
+        assert.strictEqual(reusedBlobs, 0, "0 reused blobs should be there");
+        assert.strictEqual(blobs, 2, "All blobs should be present as is");
+        assert(serializedTree.includes("\"id\":\"ackHandle/.app/default\""),
+            "Handle should be present for default datastore");
     });
 });

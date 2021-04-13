@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
@@ -26,14 +27,13 @@ import {
     LoaderCachingPolicy,
     IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
-import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
+import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     INackContent,
     ISequencedDocumentMessage,
@@ -49,6 +49,8 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
+    logNetworkFailure,
+    waitForConnectedState,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -57,15 +59,11 @@ import {
 } from "@fluidframework/container-utils";
 import { debug } from "./debug";
 import { DeltaQueue } from "./deltaQueue";
-import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
-const MissingFetchDelaySeconds = 0.1;
-const MaxFetchDelaySeconds = 10;
-const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -187,6 +185,7 @@ export class DeltaManager
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
     private lastProcessedSequenceNumber: number = 0;
+    private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -202,6 +201,8 @@ export class DeltaManager
     private connection: IDocumentDeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
+    // Counts the number of noops sent by the client which may not be acked.
+    private trailingNoopCount = 0;
     private closed = false;
     private storageService: RetriableDocumentStorageService | undefined;
     private readonly deltaStreamDelayId = uuid();
@@ -223,13 +224,15 @@ export class DeltaManager
     // I.e. we know how far behind the client was at the time of establishing connection
     private _hasCheckpointSequenceNumber = false;
 
+    private readonly closeAbortController = new AbortController();
+
     /**
      * Tells if  current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
      */
     public get hasCheckpointSequenceNumber() {
         // Valid to be called only if we have active connection.
-        assert(this.connection !== undefined);
+        assert(this.connection !== undefined, 0x0df /* "Missing active connection" */);
         return this._hasCheckpointSequenceNumber;
     }
 
@@ -251,6 +254,10 @@ export class DeltaManager
 
     public get lastSequenceNumber(): number {
         return this.lastProcessedSequenceNumber;
+    }
+
+    public get lastMessage() {
+        return this.lastProcessedMessage;
     }
 
     public get lastKnownSeqNumber() {
@@ -349,6 +356,11 @@ export class DeltaManager
         return this._reconnectMode;
     }
 
+    public shouldJoinWrite(): boolean {
+        // We don't have to wait for ack for topmost NoOps. So subtract those.
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
+    }
+
     public async connectToStorage(): Promise<IDocumentStorageService> {
         if (this.storageService !== undefined) {
             return this.storageService;
@@ -368,7 +380,7 @@ export class DeltaManager
 
         // ensure we did not lose that policy in the process of wrapping
         assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
-            "lost minBlobSize policy");
+            0x0e0 /* "lost minBlobSize policy" */);
 
         return this.storageService;
     }
@@ -380,7 +392,7 @@ export class DeltaManager
     public setAutomaticReconnect(reconnect: boolean): void {
         assert(
             this._reconnectMode !== ReconnectMode.Never,
-            "Cannot toggle automatic reconnect if reconnect is set to Never.");
+            0x0e1 /* "Cannot toggle automatic reconnect if reconnect is set to Never." */);
         this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
     }
 
@@ -447,7 +459,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, {}));
+            this.close(CreateProcessingError(error, this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -511,10 +523,10 @@ export class DeltaManager
         this.lastObservedSeqNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
-        assert(this.handler === undefined);
+        assert(this.handler === undefined, 0x0e2 /* "DeltaManager already has attached op handler!" */);
         this.handler = handler;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!!(this.handler as any));
+        assert(!!(this.handler as any), 0x0e3 /* "Newly set op handler is null/undefined!" */);
 
         this._inbound.resume();
         this._inboundSignal.resume();
@@ -580,7 +592,7 @@ export class DeltaManager
         // firing of "connected" event from Container and switch of current clientId (as tracked
         // by all DDSes). This will make it impossible to figure out if ops actually made it through,
         // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
-        if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
+        if (this.shouldJoinWrite()) {
             requestedMode = "write";
         }
 
@@ -733,7 +745,7 @@ export class DeltaManager
         // reset clientSequenceNumber if we are using new clientId.
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
-        assert(!!this.connection);
+        assert(!!this.connection, 0x0e4 /* "Lost old connection!" */);
         if (this.lastSubmittedClientId !== this.connection?.clientId) {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
@@ -761,18 +773,23 @@ export class DeltaManager
             type,
         };
 
-        const outbound = this.createOutboundMessage(type, message);
+        if (type === MessageType.NoOp) {
+            this.trailingNoopCount++;
+        } else {
+            this.trailingNoopCount = 0;
+        }
+
         this.emit("submitOp", message);
 
         if (!batch) {
             this.flush();
-            this.messageBuffer.push(outbound);
+            this.messageBuffer.push(message);
             this.flush();
         } else {
-            this.messageBuffer.push(outbound);
+            this.messageBuffer.push(message);
         }
 
-        return outbound.clientSequenceNumber;
+        return message.clientSequenceNumber;
     }
 
     public submitSignal(content: any) {
@@ -785,176 +802,37 @@ export class DeltaManager
 
     private async getDeltas(
         telemetryEventSuffix: string,
-        fromInitial: number,
-        to: number | undefined,
-        callback: (messages: ISequencedDocumentMessage[]) => void) {
-        let retry: number = 0;
-        let from: number = fromInitial;
-        let deltas: ISequencedDocumentMessage[] = [];
-        let deltasRetrievedTotal = 0;
-
+        from: number, // exclusive
+        to: number | undefined, // exclusive
+        callback: (messages: ISequencedDocumentMessage[]) => void)
+    {
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Delta manager is not attached");
         }
 
-        const telemetryEvent = PerformanceEvent.start(this.logger, {
-            eventName: `GetDeltas_${telemetryEventSuffix}`,
-            from,
-            to,
-        });
-
-        let requests = 0;
-        let deltaStorage: IDocumentDeltaStorageService | undefined;
-        let lastSuccessTime: number | undefined;
-
-        while (!this.closed) {
-            const maxFetchTo = from + MaxBatchDeltas;
-            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
-
-            let deltasRetrievedLast = 0;
-            let canRetry = false;
-            let retryAfter: number | undefined;
-            let delay: number;
-
-            // Calculate delay for next iteration if request fails or we get no ops.
-            // If request succeeds and returns some ops, we will reset these variables.
-            retry++;
-            delay = retryAfter ?? Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
-
-            try {
-                // Connect to the delta storage endpoint
-                if (deltaStorage === undefined) {
-                    if (this.deltaStorageP === undefined) {
-                        this.deltaStorageP = docService.connectToDeltaStorage();
-                    }
-                    deltaStorage = await this.deltaStorageP;
-                }
-
-                requests++;
-
-                // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
-                canRetry = true;
-                const deltasP = deltaStorage.get(from, fetchTo);
-
-                // Return previously fetched deltas, for processing while we are waiting for new request.
-                if (deltas.length > 0) {
-                    callback(deltas);
-                }
-
-                // Now wait for request to come back
-                const { messages, partialResult } = await deltasP;
-                deltas = messages;
-
-                // Note that server (or driver code) can push here something unexpected, like undefined
-                // Exception thrown as result of it will result in us retrying
-                deltasRetrievedLast = deltas.length;
-                deltasRetrievedTotal += deltasRetrievedLast;
-                const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
-
-                // If we have no upper bound, then need to check partialResult flag. Different caching layers will
-                // return whatever ops they have and we need to keep asking until we get to the end.
-                // Only when partialResult = false, we know we got everything caching/storage layers have to offer,
-                // and if it's less than what we asked for, we know we reached the end.
-                // But if we know upper bound, then we have to get all these ops, even of storage says it does not
-                // have them. That could happen if offering service did not flush them yet to storage, or is in process
-                // of doing it, and we know we have a gap on our knowledge and can't proceed further without these ops.
-                // Note #1: we can get more ops than what we asked for - need to account for that!
-                // Note #2: from & to are exclusive! I.e. we actually expect [from + 1, to - 1] range of ops back!
-                if (to === undefined ? (!partialResult && lastFetch < maxFetchTo - 1) : to - 1 <= lastFetch) {
-                    callback(deltas);
-                    telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
-                    return;
-                }
-
-                // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
-                // count since something prevented us from seeing those deltas
-                from = lastFetch;
-
-                if (deltasRetrievedLast !== 0) {
-                    // If we are getting some ops, reset all counters.
-                    delay = 0;
-                    retry = 0;
-                    lastSuccessTime = undefined;
-                } else if (lastSuccessTime === undefined) {
-                    lastSuccessTime = Date.now();
-                } else if (Date.now() - lastSuccessTime > 30000) {
-                    // If we are connected and receiving proper responses from server, but can't get any ops back,
-                    // then give up after some time. This likely indicates the issue with ordering service not flushing
-                    // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
-                    // current as it can't get ops.
-                    telemetryEvent.cancel({
-                        category: "error",
-                        error: "too many retries",
-                        retry,
-                        requests,
-                        deltasRetrievedTotal,
-                        replayFrom: from,
-                        to,
-                    });
-                    this.close(createGenericNetworkError(
-                        "Failed to retrieve ops from storage: giving up after too many retries",
-                        false /* canRetry */,
-                    ));
-                    return;
-                }
-            } catch (origError) {
-                canRetry = canRetry && canRetryOnError(origError);
-                const error = CreateContainerError(origError);
-
-                lastSuccessTime = undefined;
-
-                logNetworkFailure(
-                    this.logger,
-                    {
-                        eventName: "GetDeltas_Error",
-                        fetchTo,
-                        from,
-                        requests,
-                        retry,
-                    },
-                    origError);
-
-                if (!canRetry) {
-                    // It's game over scenario.
-                    telemetryEvent.cancel({ category: "error" }, origError);
-                    this.close(error);
-                    return;
-                }
-                retryAfter = getRetryDelayFromError(origError);
-
-                if (retryAfter !== undefined && retryAfter >= 0) {
-                    this.emitDelayInfo(this.deltaStorageDelayId, retryAfter, error);
-                }
-            }
-
-            if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
-                // the client caught up while we were trying to fetch ops from storage
-                // bail out since we no longer need to request these ops
-                telemetryEvent.end({
-                    deltasRetrievedTotal,
-                    requests,
-                    lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
-                });
-                return;
-            }
-
-            telemetryEvent.reportProgress({
-                delay, // seconds
-                deltasRetrievedLast,
-                deltasRetrievedTotal,
-                replayFrom: from,
-                requests,
-                retry,
-                success: lastSuccessTime !== undefined,
-            });
-
-            await waitForConnectedState(delay * 1000);
+        if (this.deltaStorageP === undefined) {
+            this.deltaStorageP = docService.connectToDeltaStorage();
         }
 
-        // Might need to change to non-error event
-        this.logger.sendErrorEvent({ eventName: "GetDeltasClosedConnection" });
-        telemetryEvent.cancel({ error: "container closed" });
+        const storage = await this.deltaStorageP;
+        const stream = storage.fetchMessages(
+            from, // inclusive
+            to, // exclusive
+            this.closeAbortController.signal);
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const result = await stream.read();
+            if (result.done) {
+                break;
+            }
+            PerformanceEvent.timedExec(
+                this.logger,
+                { eventName: "GetDeltas_OpProcessing", count: result.value.length},
+                () => callback(result.value),
+                { end: true, cancel: "error" });
+        }
     }
 
     /**
@@ -966,6 +844,8 @@ export class DeltaManager
         }
         this.closed = true;
         this.storageService?.dispose();
+
+        this.closeAbortController.abort();
 
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(error !== undefined ? `${error.message}` : "Container closed");
@@ -993,24 +873,6 @@ export class DeltaManager
         this.emit("closed", error);
 
         this.removeAllListeners();
-    }
-
-    // Specific system level message attributes are need to be looked at by the server.
-    // Hence they are separated and promoted as top level attributes.
-    private createOutboundMessage(
-        type: MessageType,
-        coreMessage: IDocumentMessage): IDocumentMessage {
-        if (isSystemType(type)) {
-            const data = coreMessage.contents as string;
-            coreMessage.contents = null;
-            const outboundMessage: IDocumentSystemMessage = {
-                ...coreMessage,
-                data,
-            };
-            return outboundMessage;
-        } else {
-            return coreMessage;
-        }
     }
 
     public refreshDelayInfo(id: string) {
@@ -1113,7 +975,7 @@ export class DeltaManager
      */
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
-        assert(this.connection === undefined, "old connection exists on new connection setup");
+        assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -1121,8 +983,8 @@ export class DeltaManager
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
-            "claims/connectionMode mismatch");
-        assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
+            0x0e7 /* "claims/connectionMode mismatch" */);
+        assert(!readonly || this.connectionMode === "read", 0x0e8 /* "readonly perf with write connection" */);
         this.set_readonlyPermissions(readonly);
 
         this.refreshDelayInfo(this.deltaStreamDelayId);
@@ -1138,7 +1000,7 @@ export class DeltaManager
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
-        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on new connection");
+        assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this._outbound.resume();
 
@@ -1226,7 +1088,7 @@ export class DeltaManager
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
-        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
+        assert(this.messageBuffer.length === 0, 0x0ea /* "messageBuffer is not empty on disconnect" */);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
@@ -1252,7 +1114,7 @@ export class DeltaManager
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
-        assert(this.connection !== undefined);
+        assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
         this.disconnectFromDeltaStream(error.message);
 
@@ -1328,7 +1190,8 @@ export class DeltaManager
         }
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
-        assert(n === undefined || n === this.lastQueuedSequenceNumber);
+        assert(n === undefined || n === this.lastQueuedSequenceNumber,
+            0x0ec /* "Unexpected value for previously processed message's sequence number" */);
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
@@ -1387,15 +1250,14 @@ export class DeltaManager
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
-        // Note: NoClient has not been added yet to isSystemMessage (in 0.16.x branch)
         assert(
             message.clientId !== undefined
-            || isSystemMessage(message)
-            || message.type === MessageType.NoClient,
-            "non-system message have to have clientId",
+            || isSystemMessage(message),
+            0x0ed /* "non-system message have to have clientId" */,
         );
 
         // if we have connection, and message is local, then we better treat is as local!
@@ -1403,15 +1265,15 @@ export class DeltaManager
             this.connection === undefined
             || this.connection.clientId !== message.clientId
             || this.lastSubmittedClientId === message.clientId,
-            "Not accounting local messages correctly",
+            0x0ee /* "Not accounting local messages correctly" */,
         );
 
         if (this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
-            assert(this.clientSequenceNumberObserved < clientSequenceNumber, "client seq# not growing");
+            assert(this.clientSequenceNumberObserved < clientSequenceNumber, 0x0ef /* "client seq# not growing" */);
             assert(clientSequenceNumber <= this.clientSequenceNumber,
-                "Incoming local client seq# > generated by this client");
+                0x0f0 /* "Incoming local client seq# > generated by this client" */);
 
             this.clientSequenceNumberObserved = clientSequenceNumber;
         }
@@ -1426,7 +1288,7 @@ export class DeltaManager
         }
 
         // Add final ack trace.
-        if (message.traces?.length > 0) {
+        if (message.traces !== undefined && message.traces.length > 0) {
             const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
                 ? "unknown"
                 : this.clientDetails.type;
@@ -1472,7 +1334,7 @@ export class DeltaManager
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, fromArg: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, lastKnowOp: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -1483,8 +1345,8 @@ export class DeltaManager
             return;
         }
 
-        assert(fromArg === this.lastQueuedSequenceNumber, "from arg");
-        let from = fromArg;
+        assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
+        let from = lastKnowOp + 1;
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
         if (n !== undefined) {
@@ -1493,8 +1355,8 @@ export class DeltaManager
             // Knowing about this mechanism, we could ask for op we already observed to increase validation.
             // This is especially useful when coming out of offline mode or loading from
             // very old cached (by client / driver) snapshot.
-            assert(n === fromArg, "previouslyProcessedMessage");
-            assert(from > 0, "not positive");
+            assert(n === lastKnowOp, 0x0f2 /* "previouslyProcessedMessage" */);
+            assert(from > 1, 0x0f3 /* "not positive" */);
             from--;
         }
 
@@ -1508,6 +1370,7 @@ export class DeltaManager
             this.fetching = false;
         }).catch ((error) => {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
+            this.close(CreateContainerError(error));
         });
     }
 

@@ -26,7 +26,6 @@ import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
-    IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
@@ -279,9 +278,13 @@ function initialize(
             }
             typingDetails.classList.remove("hidden");
 
+            if (context.scope.ILoader === undefined) {
+                throw new Error("scope must contain ILoader");
+            }
+
             // Start typing and register to update the UI
             const typeP = scribe.type(
-                context.loader,
+                context.scope.ILoader,
                 url,
                 root,
                 runtime,
@@ -467,8 +470,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ),
-            { generateSummaries: true });
+            ));
 
         // On first boot create the base component
         if (!runtime.existing) {
@@ -479,17 +481,15 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
-
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+        ].map((factory) => [factory.type, factory])));
         const routerP = Scribe.load(runtime, context);
 
         return runtime;

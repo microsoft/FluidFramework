@@ -4,8 +4,8 @@
  */
 
 import React from "react";
-import { KeyValueDataObject, KeyValueInstantiationFactory } from "@fluid-experimental/data-objects";
-import { Fluid } from "@fluid-experimental/fluid-static";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import Fluid from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
 
 const getContainerId = (): { containerId: string; isNew: boolean } => {
@@ -18,58 +18,52 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
     return { containerId, isNew };
 };
 
-type KVData = { [key: string]: any };
-type SetKVPair = (key: string, value: any) => void;
+const service = new TinyliciousService();
+Fluid.init(service);
 
-// useKVPair is an example of a custom hook that returns Fluid backed state and a method to modify that state
-function useKVPair(): [KVData, SetKVPair | undefined] {
+const dataObjectId = "dateTracker";
+
+const containerConfig = {
+    dataObjects: [KeyValueDataObject],
+    initialDataObjects: { [dataObjectId]: KeyValueDataObject }
+};
+
+function App() {
+
     const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
     React.useEffect(() => {
-        const { containerId, isNew } = getContainerId();
+        if (!dataObject) {
+            const { containerId, isNew } = getContainerId();
 
-        const load = async () => {
-            const service = new TinyliciousService();
-            const fluidDocument = isNew
-                ? await Fluid.createDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry])
-                : await Fluid.getDocument(service, containerId, [KeyValueInstantiationFactory.registryEntry]);
+            const load = async () => {
+                const fluidContainer = isNew
+                    ? await Fluid.createContainer(containerId, containerConfig)
+                    : await Fluid.getContainer(containerId, containerConfig);
 
-            const keyValueDataObject: KeyValueDataObject = isNew
-                ? await fluidDocument.createDataObject(KeyValueInstantiationFactory.type, 'kvpairId')
-                : await fluidDocument.getDataObject('kvpairId');
+                const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
 
-            setDataObject(keyValueDataObject);
-        }
+                setDataObject(keyValueDataObject);
+            }
 
-        load();
-
-    }, [])
-
-    React.useEffect(() => {
-        if (dataObject) {
+            load();
+        } else {
             const updateData = () => setData(dataObject.query());
+            updateData();
             dataObject.on("changed", updateData);
             return () => { dataObject.off("change", updateData) }
         }
     }, [dataObject]);
 
-    const setPair = dataObject?.set;
-
-    return [data, setPair];
-}
-
-function App() {
-    const [data, setPair] = useKVPair();
-
-    if (!data || !setPair) return <div />;
+    if (!dataObject) return <div />;
 
     return (
         <div className="App">
-            <button onClick={() => setPair("time", Date.now().toString())}>
+            <button onClick={() => dataObject.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data.time}</span>
+            <span>{data["time"]}</span>
         </div>
     )
 }

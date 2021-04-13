@@ -28,6 +28,8 @@ export interface IChannelContext {
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
+    applyStashedOp(content: any): unknown;
+
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
      * including any of its children. Each node has a set of outbound routes to other GC nodes in the document.
@@ -51,7 +53,7 @@ export function createServiceEndpoints(
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    extraBlobs?: Map<string, ArrayBufferLike>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

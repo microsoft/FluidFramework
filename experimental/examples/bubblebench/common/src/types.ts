@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { normal, rnd } from "./rnd";
+import { normal, randomColor, rnd } from "./rnd";
 
 export interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push" | "pop" | "map">, Iterable<T> { }
 
@@ -33,7 +33,7 @@ export interface IAppState {
 }
 
 export function makeBubble(stageWidth: number, stageHeight: number) {
-    const radius = (normal() * 15) + 5;
+    const radius = Math.max((normal() * 10) + 10, 3);
     const maxSpeed = 4;
     const diameter = radius * 2;
 
@@ -45,3 +45,11 @@ export function makeBubble(stageWidth: number, stageHeight: number) {
         vy: maxSpeed * (rnd.float64() * 2 - 1),
     };
 }
+
+export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number) => ({
+    clientId: "pending",
+    color: randomColor(),
+    bubbles: new Array(numBubbles)
+        .fill(undefined)
+        .map(() => makeBubble(stageWidth, stageHeight)),
+});

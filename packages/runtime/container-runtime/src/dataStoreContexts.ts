@@ -67,6 +67,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         return this._contexts.get(id);
     }
 
+    public delete(id: string): boolean {
+        this.deferredContexts.delete(id);
+        this.notBoundContexts.delete(id);
+        return this._contexts.delete(id);
+    }
+
     /**
      * Return the unbound local context with the given id,
      * or undefined if it's not found or not unbound.
@@ -85,7 +91,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addUnbound(context: LocalFluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "Creating store with existing ID");
+        assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
 
@@ -123,7 +129,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public bind(id: string) {
         const removed: boolean = this.notBoundContexts.delete(id);
-        assert(removed, "The given id was not found in notBoundContexts to delete");
+        assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
         this.resolveDeferred(id);
     }
@@ -134,11 +140,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
-        assert(!!context, "Cannot find context to resolve to");
-        assert(!this.notBoundContexts.has(id), "Expected this id to already be removed from notBoundContexts");
+        assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
+        assert(!this.notBoundContexts.has(id),
+            0x15b /* "Expected this id to already be removed from notBoundContexts" */);
 
         const deferred = this.deferredContexts.get(id);
-        assert(!!deferred, "Cannot find deferred to resolve");
+        assert(!!deferred, 0x15c /* "Cannot find deferred to resolve" */);
         deferred.resolve(context);
     }
 
@@ -149,7 +156,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     public addBoundOrRemoted(context: FluidDataStoreContext) {
         const id = context.id;
-        assert(!this._contexts.has(id), "Creating store with existing ID");
+        assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
 

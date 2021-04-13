@@ -104,6 +104,9 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** The last sequence number processed by the delta manager */
     readonly lastSequenceNumber: number;
 
+    /** The last message processed by the delta manager */
+    readonly lastMessage: ISequencedDocumentMessage | undefined;
+
     /** The latest sequence number the delta manager is aware of */
     readonly lastKnownSeqNumber: number;
 
@@ -158,7 +161,11 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 /** Events emitted by a Delta Queue */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
-    (event: "idle", listener: () => void);
+    /**
+     * @param count - number of events (T) processed before becoming idle
+     * @param duration - amount of time it took to process elements (milliseconds).
+     */
+    (event: "idle", listener: (count: number, duration: number) => void);
 }
 
 /**

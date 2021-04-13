@@ -17,7 +17,7 @@ import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as redis from "redis";
+import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -70,7 +70,7 @@ export class OrdererManager implements core.IOrdererManager {
     }
 }
 
-export class AlfredResources implements utils.IResources {
+export class AlfredResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
@@ -101,7 +101,7 @@ export class AlfredResources implements utils.IResources {
     }
 }
 
-export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredResources> {
+export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
     public async create(config: Provider): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -122,26 +122,23 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             kafkaNumberOfPartitions,
             kafkaReplicationFactor);
 
-        producer.on("error", (error) => {
-            winston.error(error);
-        });
-
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
         // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
-        const redisOptions2: redis.ClientOpts = { password: redisConfig2.pass };
+        const redisOptions2: Redis.RedisOptions = {
+            host: redisConfig2.host,
+            port: redisConfig2.port,
+            password: redisConfig2.pass,
+        };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
-                serverName: redisConfig2.host,
+                servername: redisConfig2.host,
             };
         }
-        const redisClient = redis.createClient(
-            redisConfig2.port,
-            redisConfig2.host,
-            redisOptions2);
+        const redisClient = new Redis(redisOptions2);
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
@@ -180,16 +177,17 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
-        const redisOptionsForThrottling: redis.ClientOpts = { password: redisConfigForThrottling.pass };
+        const redisOptionsForThrottling: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
+        };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
-                serverName: redisConfigForThrottling.host,
+                servername: redisConfigForThrottling.host,
             };
         }
-        const redisClientForThrottling = redis.createClient(
-            redisConfigForThrottling.port,
-            redisConfigForThrottling.host,
-            redisOptionsForThrottling);
+        const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         // Rest API Throttler
         const throttleMaxRequestsPerMs =
@@ -324,8 +322,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
     }
 }
 
-export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources> {
-    public async create(resources: AlfredResources): Promise<utils.IRunner> {
+export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
+    public async create(resources: AlfredResources): Promise<core.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
             resources.config,

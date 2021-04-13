@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
@@ -14,6 +14,7 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
+import { RouterliciousStorageRestWrapper } from "./restWrapper";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -39,6 +40,8 @@ export class DocumentService implements api.IDocumentService {
 
     private documentStorageService: DocumentStorageService | undefined;
 
+    public dispose() {}
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *
@@ -49,27 +52,19 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const storageToken = await this.tokenProvider.fetchStorageToken(
+        const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
             this.tenantId,
             this.documentId,
+            this.tokenProvider,
+            this.logger,
+            this.gitUrl,
+            this.directCredentials,
         );
-        // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
-        // tenant token
-        let credentials: ICredentials | undefined;
-        if (this.directCredentials) {
-            credentials = this.directCredentials;
-        } else {
-            credentials = {
-                password: storageToken.jwt,
-                user: this.tenantId,
-            };
-        }
-
         const historian = new Historian(
             this.gitUrl,
             this.historianApi,
             this.disableCache,
-            credentials);
+            storageRestWrapper);
         const gitManager = new GitManager(historian);
 
         // Insert cached seed data
@@ -91,7 +86,7 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager);
+        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager, this.logger);
         return this.documentStorageService;
     }
 
@@ -101,7 +96,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        assert(this.documentStorageService, "Storage service not initialized");
+        assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
@@ -114,18 +109,35 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const ordererToken = await this.tokenProvider.fetchOrdererToken(
-            this.tenantId,
-            this.documentId,
-        );
-        return R11sDocumentDeltaConnection.create(
-            this.tenantId,
-            this.documentId,
-            ordererToken.jwt,
-            io,
-            client,
-            this.ordererUrl,
-            this.logger);
+        const connect = async () => {
+            const ordererToken = await this.tokenProvider.fetchOrdererToken(
+                this.tenantId,
+                this.documentId,
+            );
+            return R11sDocumentDeltaConnection.create(
+                this.tenantId,
+                this.documentId,
+                ordererToken.jwt,
+                io,
+                client,
+                this.ordererUrl,
+                this.logger,
+            );
+        };
+
+        // Attempt to establish connection.
+        // Retry with new token on authorization error; otherwise, allow container layer to handle.
+        try {
+            const connection = await connect();
+            return connection;
+        } catch (error) {
+            if (error?.statusCode === 401) {
+                // Fetch new token and retry once,
+                // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
+                return connect();
+            }
+            throw error;
+        }
     }
 
     public getErrorTrackingService() {

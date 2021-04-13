@@ -87,8 +87,7 @@ export interface IContainerEvents extends IEvent {
      */
     (event: "connect", listener: (opsBehind?: number) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
-    (event: "contextDisposed" | "contextChanged",
-        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -145,6 +144,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
 
     /**
+     * Closes the container and returns serialized local state intended to be
+     * given to a newly loaded container
+     */
+    closeAndGetPendingLocalState(): string;
+
+    /**
      * Propose new code details that define the code to be loaded
      * for this container's runtime. The returned promise will
      * be true when the proposal is accepted, and false if
@@ -191,7 +196,7 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
 /**
@@ -215,15 +220,6 @@ export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
     /**
-     * Affects the behavior of the Container when a new code proposal
-     * is accepted that the current loaded code does not satisfy.
-     * True to reload the context without closing the container, or
-     * false to only close the container.
-     * Defaults to false.
-     */
-    hotSwapContext?: boolean;
-
-    /**
      * Set caching behavior for the loader.  If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If
      * false, always load a new container and don't cache it. If the container has already been
@@ -232,6 +228,34 @@ export type ILoaderOptions = {
      * Defaults to true.
      */
     cache?: boolean;
+
+    /**
+     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * as the `ILoader` property, and will overwrite an existing property of the same name on the
+     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * individual Data Stores.
+     * Defaults to false.
+     */
+    provideScopeLoader?: boolean;
+
+    // Below two are the options based on which we decide how often client needs to send noops in case of active
+    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
+    // should hit the min time and count to send the noop.
+    /**
+     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
+     * not sending any op.
+     */
+    noopTimeFrequency?: number;
+
+    /**
+     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     */
+    noopCountFrequency?: number;
+
+    /**
+     * Max time(in ms) container will wait for a leave message of a disconnected client.
+    */
+    maxClientLeaveWaitTime?: number,
 };
 
 /**
@@ -244,7 +268,6 @@ export enum LoaderHeader {
     cache = "fluid-cache",
 
     clientDetails = "fluid-client-details",
-    executionContext = "execution-context",
 
     /**
      * Start the container in a paused, unconnected state. Defaults to false
@@ -269,13 +292,24 @@ export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;
 }
 
+interface IProvideLoader {
+    readonly ILoader: ILoader;
+}
+
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideLoader>> { }
+}
+
+export interface IPendingLocalState {
+    url: string;
+    pendingRuntimeState: unknown;
 }

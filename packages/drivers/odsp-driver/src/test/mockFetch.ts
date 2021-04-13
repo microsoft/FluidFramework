@@ -4,6 +4,7 @@
 */
 
 /* eslint-disable @typescript-eslint/ban-types */
+import assert from "assert";
 import sinon from "sinon";
 import * as fetchModule from "node-fetch";
 
@@ -14,32 +15,18 @@ export const createResponse = async (headers: { [key: string]: string }, respons
         text: async () => Promise.resolve(JSON.stringify(response)),
         arrayBuffer: async () => Promise.resolve({ byteLength: 10 }),
         headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
+        json: async () => Promise.resolve(response),
     });
 
 export const okResponse = async (headers: { [key: string]: string }, response: any) =>
     createResponse(headers, response, 200);
 export const notFound = async (headers: { [key: string]: string } = {}) => createResponse(headers, undefined, 404);
 
-export async function mockFetchMultiple<T>(
-    responses: object[],
-    callback: () => Promise<T>,
-): Promise<T> {
-    const fetchStub = sinon.stub(fetchModule, "default");
-    fetchStub.callsFake(async () => {
-        return responses.shift();
-    });
-    try {
-        return await callback();
-    } finally {
-        fetchStub.restore();
-    }
-}
-
 export type FetchCallType = "internal" | "external" | "single";
 
-export async function mockFetchCore<T>(
+export async function mockFetchMultiple<T>(
     callback: () => Promise<T>,
-    responseType: () => Promise<object>,
+    responses: (() => Promise<object>)[],
     type: FetchCallType = "single",
 ): Promise<T> {
     const fetchStub = sinon.stub(fetchModule, "default");
@@ -47,7 +34,9 @@ export async function mockFetchCore<T>(
         if (type === "external") {
             fetchStub.restore();
         }
-        return responseType();
+        const cb = responses.shift();
+        assert(cb !== undefined, "the end");
+        return cb() as Promise<fetchModule.Response>;
     });
     try {
         return await callback();
@@ -55,15 +44,24 @@ export async function mockFetchCore<T>(
         if (type !== "internal") {
             fetchStub.restore();
         }
+        assert(responses.length === 0, "all responses used");
     }
 }
 
-export async function mockFetch<T>(
-    response: object,
+export async function mockFetchSingle<T>(
     callback: () => Promise<T>,
+    responseType: () => Promise<object>,
+    type: FetchCallType = "single",
+): Promise<T> {
+    return mockFetchMultiple(callback, [responseType], type);
+}
+
+export async function mockFetchOk<T>(
+    callback: () => Promise<T>,
+    response: object = {},
     headers: { [key: string]: string} = {},
 ): Promise<T> {
-    return mockFetchCore(
+    return mockFetchSingle(
         callback,
         async () => okResponse(headers, response));
 }

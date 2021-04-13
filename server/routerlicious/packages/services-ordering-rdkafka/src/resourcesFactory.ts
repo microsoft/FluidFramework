@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IResources, IResourcesFactory } from "@fluidframework/server-services-utils";
+import {
+    IConsumer,
+    IPartitionLambdaFactory,
+    IResources,
+    IResourcesFactory,
+} from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
@@ -40,8 +44,8 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
+        const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
         const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const replicationFactor = config.get("kafka:lib:replicationFactor");
 
@@ -53,7 +57,11 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 
         const clientId = moniker.choose();
 
-        const endpoints = { kafka: [kafkaEndpoint], zooKeeper: [zookeeperEndpoint] };
+        const endpoints = {
+            kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
+            zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
+         };
+
         const consumer = new RdkafkaConsumer(
             endpoints,
             clientId,

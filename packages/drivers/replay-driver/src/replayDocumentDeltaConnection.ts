@@ -21,11 +21,9 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
-
-const MaxBatchDeltas = 2000;
 
 const ReplayDocumentId = "documentId";
 
@@ -67,10 +65,6 @@ export class ReplayControllerStatic extends ReplayController {
         return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 
-    public async read(blobId: string): Promise<string> {
-        return Promise.reject(new Error("Invalid operation"));
-    }
-
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         return Promise.reject(new Error("Invalid operation"));
     }
@@ -80,9 +74,10 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public fetchTo(currentOp: number) {
-        const useFetchToBatch = !(this.unitIsTime !== true && this.replayTo >= 0);
-        const fetchToBatch = currentOp + MaxBatchDeltas;
-        return useFetchToBatch ? fetchToBatch : Math.min(fetchToBatch, this.replayTo);
+        if (!(this.unitIsTime !== true && this.replayTo >= 0)) {
+            return undefined;
+        }
+        return this.replayTo;
     }
 
     public isDoneFetch(currentOp: number, lastTimeStamp?: number) {
@@ -170,7 +165,6 @@ export class ReplayControllerStatic extends ReplayController {
                         }
                     }
                 }
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 scheduleNext(nextInterval);
                 emitter(playbackOps);
             };
@@ -208,8 +202,6 @@ export class ReplayDocumentDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
             mode: "read",
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: 16 * 1024,
@@ -318,26 +310,30 @@ export class ReplayDocumentDeltaConnection
         do {
             const fetchTo = controller.fetchTo(currentOp);
 
-            const { messages, partialResult } = await documentStorageService.get(currentOp, fetchTo);
+            const abortController = new AbortController();
+            const stream = documentStorageService.fetchMessages(currentOp + 1, fetchTo, abortController.signal);
+            do {
+                const result = await stream.read();
 
-            if (messages.length === 0) {
-                // No more ops. But, they can show up later, either because document was just created,
-                // or because another client keeps submitting new ops.
-                assert(!partialResult);
-                if (controller.isDoneFetch(currentOp, undefined)) {
+                if (result.done) {
+                    // No more ops. But, they can show up later, either because document was just created,
+                    // or because another client keeps submitting new ops.
+                    done = controller.isDoneFetch(currentOp, undefined);
+                    if (!done) {
+                        await delay(2000);
+                    }
                     break;
                 }
-                await delay(2000);
-                continue;
-            }
+                replayPromiseChain = replayPromiseChain.then(
+                    async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
 
-            replayPromiseChain = replayPromiseChain.then(
-                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
+                const messages = result.value;
+                currentOp += messages.length;
+                done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+            } while (!done);
 
-            currentOp += messages.length;
-            done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+            abortController.abort();
         } while (!done);
-
         return replayPromiseChain;
     }
 }

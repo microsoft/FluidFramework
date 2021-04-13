@@ -49,8 +49,18 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult>;
+        from: number, // inclusive
+        to: number // exclusive
+    ): Promise<IDeltasFetchResult>;
+}
+
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
+
+/**
+ * Read interface for the Queue
+ */
+ export interface IStream<T> {
+    read(): Promise<IStreamResult<T>>;
 }
 
 /**
@@ -59,8 +69,16 @@ export interface IDeltaStorageService {
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param abortSignal - signal that aborts operation
+     * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-    get(from: number, to: number): Promise<IDeltasFetchResult>;
+     fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {
@@ -93,11 +111,6 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Reads the object with the given ID, returns content in base64
-     */
-    read(id: string): Promise<string>;
-
-    /**
      * Writes to the object with the given ID
      */
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
@@ -107,6 +120,9 @@ export interface IDocumentStorageService {
      */
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
+    /**
+     * Reads the object with the given ID, returns content in arrayBufferLike
+     */
     readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
@@ -257,6 +273,13 @@ export interface IDocumentService {
      */
     getErrorTrackingService(): IErrorTrackingService | null;
 
+    /**
+     * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
+     * Useful for storage to commit any pending state if any (including any local caching).
+     * Please note that it does not remove the need for caller to close all active delta connections,
+     * as storage may not be tracking such objects.
+     */
+    dispose(): void;
 }
 
 export interface IDocumentServiceFactory {

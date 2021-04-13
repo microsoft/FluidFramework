@@ -17,7 +17,11 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+    requestOps,
+    streamObserver,
+} from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -30,15 +34,16 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
+import { IEntry, IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
+import { OpsCache } from "./opsCaching";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -97,8 +102,6 @@ function writeLocalStorage(key: string, value: string) {
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
-
     readonly policies: IDocumentServicePolicies;
 
     /**
@@ -121,7 +124,7 @@ export class OdspDocumentService implements IDocumentService {
         epochTracker: EpochTracker,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
-            resolvedUrl as IOdspResolvedUrl,
+            getOdspResolvedUrl(resolvedUrl),
             getStorageToken,
             getWebsocketToken,
             logger,
@@ -140,11 +143,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly isOdc: boolean;
 
-    // Track maximum sequence number we observed and communicated to cache layer.
-    private opSeqNumberMax = 0;
-    private opSeqNumberMaxHostNotified = 0;
-
     private readonly hostPolicy: HostStoragePolicyInternal;
+
+    private _opsCache?: OpsCache;
 
     /**
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -170,16 +171,14 @@ export class OdspDocumentService implements IDocumentService {
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        epochTracker.fileEntry = {
-            resolvedUrl: odspResolvedUrl,
-            docId: odspResolvedUrl.hashedDocumentId,
-        };
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
             undefined,
             {
-                odc: this.isOdc,
+                all: {
+                    odc: this.isOdc,
+                },
             });
 
         this.hostPolicy = hostPolicy;
@@ -220,25 +219,79 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const urlProvider = async () => {
-            const websocketEndpoint = await this.joinSession();
-            return websocketEndpoint.deltaStorageUrl;
-        };
-
+        let snapshotOps = this.storageManager?.ops;
         const service = new OdspDeltaStorageService(
-            urlProvider,
-            this.storageManager?.ops,
+            this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
             this.epochTracker,
             this.logger,
         );
 
+        // batch size, please see issue #5211 for data around batch sizing
+        const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+        const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
+
         return {
-            get: async (from: number, to: number) => {
-                const { messages, partialResult } = await service.get(from, to);
-                this.opsReceived(messages);
-                return { messages, partialResult };
-            },
+            fetchMessages: (
+                fromTotal: number,
+                toTotal: number | undefined,
+                abortSignal?: AbortSignal,
+                cachedOnly?: boolean) => {
+                    let missed = false;
+                    const stream = requestOps(
+                        async (from: number, to: number) => {
+                            if (snapshotOps !== undefined && snapshotOps.length !== 0) {
+                                const messages = snapshotOps.filter((op) =>
+                                    op.sequenceNumber >= from).map((op) => op.op);
+                                if (messages.length > 0 && messages[0].sequenceNumber === from) {
+                                    // Consider not caching these ops as they will be cached as part of
+                                    // snapshot cache entry
+                                    this.opsReceived(messages);
+                                    snapshotOps = undefined;
+                                    return { messages, partialResult: true };
+                                } else {
+                                    this.logger.sendErrorEvent({
+                                        eventName: "SnapshotOpsNotUsed",
+                                        length: snapshotOps.length,
+                                        first: snapshotOps[0].sequenceNumber,
+                                        from,
+                                        to,
+                                    });
+                                    snapshotOps = undefined;
+                                }
+                            }
+                                    // We always write ops sequentially. Once there is a miss, stop consulting cache.
+                            // This saves a bit of processing time
+                            if (!missed) {
+                                const messagesFromCache = await this.opsCache?.get(from, to);
+                                if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                                    return {
+                                        messages: messagesFromCache as ISequencedDocumentMessage[],
+                                        partialResult: true,
+                                    };
+                                }
+                                missed = true;
+                            }
+
+                            // Proper implementaiton Coming in future
+                            if (cachedOnly) {
+                                return { messages: [], partialResult: false };
+                            }
+
+                            return service.get(from, to);
+                        },
+                        // Staging: starting with no concurrency, listening for feedback first.
+                        // In future releases we will switch to actual concurrency
+                        concurrency,
+                        fromTotal, // inclusive
+                        toTotal, // exclusive
+                        batchSize,
+                        this.logger,
+                        abortSignal,
+                    );
+
+                    return streamObserver(stream, (ops) => this.opsReceived(ops));
+                },
         };
     }
 
@@ -304,9 +357,7 @@ export class OdspDocumentService implements IDocumentService {
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
-                this.odspResolvedUrl.driveId,
-                this.odspResolvedUrl.itemId,
-                this.odspResolvedUrl.siteUrl,
+                this.odspResolvedUrl,
                 "opStream/joinSession",
                 "POST",
                 this.logger,
@@ -381,7 +432,7 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         const connectWithAfd = async () => {
-            assert(afdUrl !== undefined, "Tried to connect with AFD but no AFD url provided");
+            assert(afdUrl !== undefined, 0x0a3 /* "Tried to connect with AFD but no AFD url provided" */);
 
             const startTime = performance.now();
             try {
@@ -454,22 +505,48 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
-    // We use it to notify caching layer of how stale is snapshot stored in cache.
-    protected opsReceived(ops: ISequencedDocumentMessage[]) {
-        const cacheEntry = this.storageManager?.snapshotCacheEntry;
-        if (ops.length === 0 || cacheEntry === undefined) {
+    public dispose() {
+        this._opsCache?.flushOps();
+    }
+
+    protected get opsCache() {
+        if (this._opsCache) {
+            return this._opsCache;
+        }
+
+        const seqNumber = this.storageManager?.snapshotSequenceNumber;
+        const batchSize = this.hostPolicy.opsCaching?.batchSize ?? 100;
+        if (seqNumber === undefined || batchSize < 1) {
             return;
         }
 
-        const maxSeq = ops[ops.length - 1].sequenceNumber;
-        if (this.opSeqNumberMax < maxSeq) {
-            this.opSeqNumberMax = maxSeq;
+        const opsKey: Omit<IEntry, "key"> = {
+            type: "ops",
+        };
+        this._opsCache = new OpsCache(
+            seqNumber,
+            this.logger,
+            {
+                write: async (key: string, opsData: string) => {
+                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                },
+                read: async (batch: string) => undefined,
+            },
+            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
+            this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
+        );
+        return this._opsCache;
+    }
+
+    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+    // We use it to notify caching layer of how stale is snapshot stored in cache.
+    protected opsReceived(ops: ISequencedDocumentMessage[]) {
+        // No need for two clients to save same ops
+        if (ops.length === 0 || this.odspResolvedUrl.summarizer) {
+            return;
         }
-        if (this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
-            this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
-            this.updateUsageOpFrequency *= updateUsageOpMultiplier;
-            this.cache.persistedCache.updateUsage(cacheEntry, this.opSeqNumberMax);
-        }
+
+        this.opsCache?.addOps(ops);
     }
 }

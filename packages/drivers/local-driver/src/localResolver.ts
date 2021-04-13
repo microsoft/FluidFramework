@@ -68,11 +68,12 @@ export class LocalResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        if (parsedUrl.pathname === undefined) {
+        // eslint-disable-next-line no-null/no-null
+        if (parsedUrl.pathname === null) {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(!!documentId, "The resolvedUrl must have a documentId");
+        assert(!!documentId, 0x09a /* "'documentId' must be a defined, non-zero length string." */);
 
         return `http://localhost:3000/${documentId}/${url}`;
     }

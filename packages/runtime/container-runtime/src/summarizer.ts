@@ -31,7 +31,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
+import { GenerateSummaryData } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
@@ -114,7 +114,6 @@ export interface ISummarizer
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly previousState: IPreviousState;
     readonly summarizerClientId: string | undefined;
     nextSummarizerD?: Deferred<Summarizer>;
     closeFn(): void;
@@ -312,7 +311,8 @@ export class RunningSummarizer implements IDisposable {
         private readonly raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
     ) {
-        this.logger = new ChildLogger(baseLogger, "Running", undefined, { summaryGenTag: () => this.summarizeCount });
+        this.logger = ChildLogger.create(
+            baseLogger, "Running", {all:{ summaryGenTag: () => this.summarizeCount }});
 
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -458,7 +458,7 @@ export class RunningSummarizer implements IDisposable {
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = new Deferred();
+        this.summarizing = new Deferred<void>();
 
         (async () => {
             const result = await this.summarize(reason, false);
@@ -633,7 +633,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
     private immediateSummary: boolean = false;
-    public readonly summaryCollection: SummaryCollection;
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
@@ -648,24 +647,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly internalsProvider: ISummarizerInternalsProvider,
         handleContext: IFluidHandleContext,
-        summaryCollection?: SummaryCollection,
+        public readonly summaryCollection: SummaryCollection,
     ) {
         super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
-        if (summaryCollection) {
-            // summarize immediately because we just went through context reload
-            this.immediateSummary = true;
-            this.summaryCollection = summaryCollection;
-        } else {
-            this.summaryCollection = new SummaryCollection(
-                this.runtime.deltaManager.initialSequenceNumber,
-                this.logger);
-        }
-        this.runtime.deltaManager.inbound.on("op",
-            (op) => this.summaryCollection.handleOp(op));
-
-        this.runtime.previousState.nextSummarizerD?.resolve(this);
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
@@ -772,11 +758,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
             onBehalfOf,
-            initSummarySeqNumber: this.summaryCollection.initialSequenceNumber,
+            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
         });
 
         const initialAttempt: ISummaryAttempt = {
-            refSequenceNumber: this.summaryCollection.initialSequenceNumber,
+            refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
             summaryTime: Date.now(),
         };
 
@@ -865,7 +851,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     private async handleSummaryAcks() {
-        let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
+        let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {

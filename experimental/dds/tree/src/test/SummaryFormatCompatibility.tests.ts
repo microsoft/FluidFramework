@@ -45,7 +45,7 @@ describe('Summary', () => {
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 	let expectedTree: SharedTree;
-	let localTestObjectProvider: TestObjectProvider<ITestContainerConfig>;
+	let localTestObjectProvider: TestObjectProvider;
 
 	const testSummaryFiles = fs.readdirSync(pathBase);
 
@@ -179,14 +179,21 @@ describe('Summary', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
+			await localTestObjectProvider.ensureSynchronized();
 
 			validateSummaryRead('small-history-0.0.2');
 			validateSummaryWrite(fullHistorySummarizer);
 		});
 	});
 
-	describe('format version 0.1.0', () => {
+	describe('version 0.1.0', () => {
+		// Completes any pending chunk uploads on expectedTree and processes the handle ops
+		const catchupExpectedTree = async () => {
+			expectedTree.saveSummary();
+			await new Promise((resolve) => expectedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
+			await localTestObjectProvider.ensureSynchronized();
+		};
+
 		it('can be read and written with no history', async () => {
 			validateSummaryRead('no-history-0.1.0');
 			validateSummaryWrite(fullHistorySummarizer_0_1_0);
@@ -210,7 +217,7 @@ describe('Summary', () => {
 				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 			}
 
-			await localTestObjectProvider.opProcessingController.process();
+			await localTestObjectProvider.ensureSynchronized();
 
 			await catchupExpectedTree();
 

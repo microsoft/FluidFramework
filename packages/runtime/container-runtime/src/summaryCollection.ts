@@ -5,7 +5,9 @@
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Deferred, assert } from "@fluidframework/common-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryContent,
@@ -93,7 +95,7 @@ class Summary implements ISummary {
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.state === SummaryState.Local);
+        assert(this.state === SummaryState.Local, 0x175 /* "Can only broadcast if summarizer starts in local state" */);
         this._summaryOp = op;
         this.defSummaryOp.resolve();
         this.state = SummaryState.Broadcast;
@@ -101,7 +103,8 @@ class Summary implements ISummary {
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast);
+        assert(this.state === SummaryState.Broadcast,
+            0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */);
         this._summaryAckNack = op;
         this.defSummaryAck.resolve();
         this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
@@ -204,14 +207,18 @@ export class SummaryCollection {
     private lastSummaryTimestamp: number | undefined;
     private maxAckWaitTime: number | undefined;
     private pendingAckTimerTimeoutCallback: (() => void) | undefined;
-    private lastAck?: IAckedSummary;
+    private lastAck: IAckedSummary | undefined;
 
     public get latestAck() { return this.lastAck; }
 
     public constructor(
-        public readonly initialSequenceNumber: number,
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
-    ) { }
+    ) {
+        this.deltaManager.on(
+            "op",
+            (op) => this.handleOp(op));
+    }
 
     /**
      * Creates and returns a summary watcher for a specific client.
@@ -263,7 +270,7 @@ export class SummaryCollection {
      * Handler for ops; only handles ops relating to summaries.
      * @param op - op message to handle
      */
-    public handleOp(op: ISequencedDocumentMessage) {
+    private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
@@ -327,7 +334,7 @@ export class SummaryCollection {
             // from. i.e. initialSequenceNumber > summarySequenceNumber.
             // We really don't care about it for now, since it is older than
             // the one we loaded from.
-            if (seq >= this.initialSequenceNumber) {
+            if (seq >= this.deltaManager.initialSequenceNumber) {
                 // Potential causes for it to be later than our initialSequenceNumber
                 // are that the summaryOp was nacked then acked, double-acked, or
                 // the summarySequenceNumber is incorrect.
@@ -335,7 +342,7 @@ export class SummaryCollection {
                     eventName: "SummaryAckWithoutOp",
                     sequenceNumber: op.sequenceNumber, // summary ack seq #
                     summarySequenceNumber: seq, // missing summary seq #
-                    initialSequenceNumber: this.initialSequenceNumber,
+                    initialSequenceNumber: this.deltaManager.initialSequenceNumber,
                 });
             }
             return;

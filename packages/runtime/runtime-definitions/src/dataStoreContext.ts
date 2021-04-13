@@ -56,10 +56,12 @@ export enum FlushMode {
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
-
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     (event: "leader" | "notleader", listener: () => void);
 }
 
@@ -69,8 +71,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  */
 export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
-    IProvideFluidHandleContext
-{
+    IProvideFluidHandleContext {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -102,7 +103,12 @@ export interface IContainerRuntimeBase extends
      * @deprecated 0.16 Issue #1537, #3631
      * @internal
      */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidRouter>;
+    _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id?: string,
+        isRoot?: boolean,
+    ): Promise<IFluidRouter>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -212,6 +218,8 @@ export interface IFluidDataStoreChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: string, content: any, localOpMetadata: unknown);
+
+    applyStashedOp(content: any): Promise<unknown>;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -221,7 +229,12 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    (event: "leader" | "notleader", listener: () => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "attaching" | "attached", listener: () => void);
 }
 
 /**
@@ -229,7 +242,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends
-IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry> {
+    IEventProvider<IFluidDataStoreContextEvents>,
+    Partial<IProvideFluidDataStoreRegistry>,
+    IProvideFluidHandleContext {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -252,10 +267,19 @@ IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegi
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly logger: ITelemetryLogger;
+    readonly clientDetails: IClientDetails;
+    /**
+     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * available through scope instead
+     */
     readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.

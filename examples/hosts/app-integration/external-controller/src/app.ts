@@ -2,46 +2,67 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import {
-    IKeyValueDataObject,
-    KeyValueDataObject,
-    KeyValueInstantiationFactory,
-} from "@fluid-experimental/data-objects";
-import { Fluid } from "@fluid-experimental/fluid-static";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import Fluid from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
+import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
+
+// Define the server we will be using and initialize Fluid
+const service = new TinyliciousService();
+Fluid.init(service);
 
 let createNew = false;
 if (location.hash.length === 0) {
     createNew = true;
     location.hash = Date.now().toString();
 }
-const documentId = location.hash.substring(1);
-document.title = documentId;
+const containerId = location.hash.substring(1);
+document.title = containerId;
 
-const dataObjectId = "dice";
+// Define the configuration of our Container.
+// This includes the DataObjects we support and any initial DataObjects we want created
+// when the container is first created.
+export const containerConfig = {
+    name: "dice-roller-container",
+    initialObjects: {
+        /* [id]: DataObject */
+        kvp: KeyValueDataObject,
+        map: SharedMap,
+    },
+};
 
 async function start(): Promise<void> {
-    const service = new TinyliciousService();
-    // Get or create the document
-    const fluidDocument = createNew
-        ? await Fluid.createDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry])
-        : await Fluid.getDocument(service, documentId, [KeyValueInstantiationFactory.registryEntry]);
+    // Get or create the document depending if we are running through the create new flow
+    const fluidContainer = createNew
+        ? await Fluid.createContainer(containerId, containerConfig)
+        : await Fluid.getContainer(containerId, containerConfig);
 
-    // We'll create the data object when we create the new document.
-    const keyValueDataObject: IKeyValueDataObject = createNew
-        ? await fluidDocument.createDataObject<KeyValueDataObject>(KeyValueInstantiationFactory.type, dataObjectId)
-        : await fluidDocument.getDataObject<KeyValueDataObject>(dataObjectId);
+    // We now get the DataObject from the container
+    const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.
-    const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(diceRollerController, div);
+    const contentDiv = document.getElementById("content") as HTMLDivElement;
+    const div1 = document.createElement("div");
+    contentDiv.appendChild(div1);
+    renderDiceRoller(diceRollerController, div1);
+
+    // We now get the SharedMap from the container
+    const sharedMap = fluidContainer.initialObjects.map as SharedMap;
+
+    // Our controller manipulates the data object (model).
+    const diceRollerController2 = new DiceRollerController(sharedMap);
+    await diceRollerController2.initialize(createNew);
+
+    const div2 = document.createElement("div");
+    contentDiv.appendChild(div2);
+    // We render a view which uses the controller.
+    renderDiceRoller(diceRollerController2, div2);
 }
 
 start().catch((error) => console.error(error));

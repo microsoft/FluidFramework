@@ -23,7 +23,9 @@
                 "src/index.ts",
                 "--runInBand"
             ],
-            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            "env": {
+                "TS_NODE_PROJECT": "tsconfig.json",
+            },
             // "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "smartStep": true,
@@ -48,7 +50,9 @@
                 // "fail",
                 "--exit"
             ],
-            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            "env": {
+                "TS_NODE_PROJECT": "tsconfig.json",
+            },
             // "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "smartStep": true,
@@ -74,7 +78,7 @@
             "sourceMaps": true,
             "url": "localhost:3000/sharedText/oct18-3",
             "pathMapping": {
-                "/public/scripts/dist/src/" : "${workspaceFolder}/dist"
+                "/public/scripts/dist/src/": "${workspaceFolder}/dist"
             }
         },
         {
@@ -90,7 +94,9 @@
             "request": "launch",
             "name": "Beast",
             "sourceMaps": true,
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
             "protocol": "inspector",
             "program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
         },
@@ -99,7 +105,9 @@
             "request": "launch",
             "name": "Farm",
             "sourceMaps": true,
-            "outFiles": [ "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js" ],
+            "outFiles": [
+                "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js"
+            ],
             "protocol": "inspector",
             "program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
         },
@@ -113,8 +121,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -127,8 +137,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceRoot}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceRoot}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -141,8 +153,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceRoot}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceRoot}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -155,8 +169,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceRoot}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceRoot}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -169,8 +185,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -183,8 +201,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -197,8 +217,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -211,8 +233,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -225,8 +249,10 @@
             "sourceMaps": true,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "protocol": "inspector",
             "trace": "sm"
         },
         {
@@ -234,7 +260,7 @@
             "request": "launch",
             "name": "Debug Current Mocha Test",
             "env": {
-                // "FLUID_TEST_DRIVER": "odsp" //values: local, tinylicious, routerlicious, odsp
+                // "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp
             },
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
             "windows": {
@@ -250,21 +276,26 @@
             "skipFiles": [
                 "<node_internals>/**/*.js"
             ],
-            "preLaunchTask": "Build Current Tests"
+            "preLaunchTask": "Build Current Tests",
+            "internalConsoleOptions": "openOnSessionStart",
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Debug Current Test (JS)",
+            // "env": { "FLUID_TEST_VERBOSE": "1" },
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "sourceMaps": true,
             "args": [
                 "--no-timeouts",
                 "--exit",
-                "../../dist/test/${fileBasenameNoExtension}.js", ],
+                "../../dist/test/${fileBasenameNoExtension}.js",
+            ],
             "cwd": "${fileDirname}",
-            "outFiles": ["${fileDirname}/../../dist/**/*.js"],
+            "outFiles": [
+                "${fileDirname}/../../dist/**/*.js"
+            ],
         }
     ]
 }

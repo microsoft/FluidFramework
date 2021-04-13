@@ -12,7 +12,6 @@ describe("MergeTree", () => {
     let mergeTree: MergeTree;
     const localClientId = 17;
     let currentSequenceNumber: number;
-    const branchId = 0;
     beforeEach(() => {
         mergeTree = new MergeTree();
         mergeTree.insertSegments(
@@ -27,8 +26,7 @@ describe("MergeTree", () => {
         mergeTree.startCollaboration(
             localClientId,
             /* minSeq: */ currentSequenceNumber,
-            /* currentSeq: */ currentSequenceNumber,
-            branchId);
+            /* currentSeq: */ currentSequenceNumber);
     });
 
     describe("insertText", () => {

@@ -9,6 +9,7 @@ import {
     IsoBuffer,
     Uint8ArrayToString,
     unreachableCase,
+    stringToBuffer,
 } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -46,7 +47,7 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return IsoBuffer.from(content, "utf8").byteLength;
+        return stringToBuffer(content, "utf8").byteLength;
     } else {
         return content.byteLength;
     }
@@ -240,7 +241,8 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0, "There should not be commit tree entries in snapshot");
+    assert(Object.keys(snapshot.commits).length === 0,
+        0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
     for (const [key, value] of Object.entries(snapshot.blobs)) {

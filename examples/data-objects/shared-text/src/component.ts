@@ -10,6 +10,7 @@ import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
+import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
 import {
@@ -27,7 +28,6 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IAgentScheduler,
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -294,28 +294,19 @@ class TaskScheduler {
 }
 
 export function instantiateDataStore(context: IFluidDataStoreContext) {
-    const modules = new Map<string, any>();
-
-    // Create channel factories
-    const mapFactory = SharedMap.getFactory();
-    const sharedStringFactory = SharedString.getFactory();
-    const cellFactory = SharedCell.getFactory();
-    const objectSequenceFactory = SharedObjectSequence.getFactory();
-    const numberSequenceFactory = SharedNumberSequence.getFactory();
-
-    modules.set(mapFactory.type, mapFactory);
-    modules.set(sharedStringFactory.type, sharedStringFactory);
-    modules.set(cellFactory.type, cellFactory);
-    modules.set(objectSequenceFactory.type, objectSequenceFactory);
-    modules.set(numberSequenceFactory.type, numberSequenceFactory);
-
     const runtimeClass = mixinRequestHandler(
         async (request: IRequest) => {
             const router = await routerP;
             return router.request(request);
         });
 
-    const runtime = new runtimeClass(context, modules);
+    const runtime = new runtimeClass(context, new Map([
+        SharedMap.getFactory(),
+        SharedString.getFactory(),
+        SharedCell.getFactory(),
+        SharedObjectSequence.getFactory(),
+        SharedNumberSequence.getFactory(),
+    ].map((factory) => [factory.type, factory])));
     const routerP = SharedTextRunner.load(runtime, context);
 
     return runtime;
