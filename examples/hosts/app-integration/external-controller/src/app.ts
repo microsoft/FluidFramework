@@ -52,7 +52,7 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div1);
     renderDiceRoller(diceRollerController, div1);
 
-    // We now get the DataObject from the container
+    // We now get the SharedMap from the container
     const sharedMap = fluidContainer.initialObjects.map as SharedMap;
 
     // Our controller manipulates the data object (model).
