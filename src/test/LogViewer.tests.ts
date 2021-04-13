@@ -12,10 +12,8 @@ import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { Transaction } from '../Transaction';
-import { noop } from '../Common';
+import { assert, noop } from '../Common';
 import {
-	asyncFunctionThrowsCorrectly,
-	initialSnapshot,
 	left,
 	leftTraitLabel,
 	leftTraitLocation,
@@ -28,15 +26,20 @@ import {
 
 const initialSimpleTree = { ...simpleTestTree, traits: {} };
 
-function getSimpleLog(): EditLog {
+function getSimpleLog(numEdits: number = 2): EditLog {
 	const log = new EditLog();
-	log.addSequencedEdit(newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
-	log.addSequencedEdit(newEdit(Insert.create([right], StablePlace.atStartOf(rightTraitLocation))));
+	for (let i = 0; i < numEdits; i++) {
+		if (i % 2 === 0) {
+			log.addSequencedEdit(newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
+		} else {
+			log.addSequencedEdit(newEdit(Insert.create([right], StablePlace.atStartOf(rightTraitLocation))));
+		}
+	}
 	return log;
 }
 
-function getSimpleLogWithLocalEdits(): EditLog {
-	const logWithLocalEdits = getSimpleLog();
+function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog {
+	const logWithLocalEdits = getSimpleLog(numSequencedEdits);
 	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation))));
 	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
 	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation))));
@@ -78,19 +81,6 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 			).to.be.true;
 			const fullTreeSnapshot = viewer.getSnapshotInSession(2);
 			expect(fullTreeSnapshot.equals(simpleTreeSnapshot)).to.be.true;
-		});
-
-		it('can set snapshots', async () => {
-			const snapshots = getSnapshotsForLog(log, initialSimpleTree);
-			const viewer = viewerCreator(log, initialSimpleTree);
-			for (let i = log.length; i >= 0; i--) {
-				const snapshot = snapshots[i];
-				// TODO:#52815: The expensive validation pattern currently causes `setKnownRevision` to asynchronously complete, even though the
-				// `LogViewer` interface doesn't specify this.
-				// eslint-disable-next-line @typescript-eslint/await-thenable
-				await viewer.setKnownRevision(i, snapshot);
-				expect(viewer.getSnapshotInSession(i).equals(snapshot)).to.be.true;
-			}
 		});
 
 		it('produces correct snapshots when the log is mutated', () => {
@@ -162,11 +152,13 @@ describe('CachingLogViewer', () => {
 		log: EditLog,
 		baseTree?: ChangeNode,
 		editCallback?: EditResultCallback,
-		logger?: ITelemetryBaseLogger
+		logger?: ITelemetryBaseLogger,
+		knownRevisions?: [number, Snapshot][]
 	): CachingLogViewer {
 		return new CachingLogViewer(
 			log,
 			baseTree,
+			knownRevisions,
 			/* expensiveValidation */ true,
 			editCallback,
 			logger ?? getMockLogger()
@@ -175,46 +167,49 @@ describe('CachingLogViewer', () => {
 
 	runLogViewerCorrectnessTests(getCachingLogViewer);
 
-	const log = getSimpleLog();
-
 	it('detects non-integer revisions when setting snapshots', async () => {
-		const viewer = getCachingLogViewer(log, initialSimpleTree);
-		expect(
-			await asyncFunctionThrowsCorrectly(
-				async () => viewer.setKnownRevision(2.4, simpleTreeSnapshot),
-				'revision must be an integer'
-			)
-		).to.be.true;
+		expect(() =>
+			getCachingLogViewer(getSimpleLog(), initialSimpleTree, undefined, undefined, [[2.4, simpleTreeSnapshot]])
+		).to.throw('revision must be an integer');
 	});
 
 	it('detects out-of-bounds revisions when setting snapshots', async () => {
-		const viewer = getCachingLogViewer(log, initialSimpleTree);
-		expect(
-			await asyncFunctionThrowsCorrectly(
-				async () => viewer.setKnownRevision(1000, simpleTreeSnapshot),
-				'revision must correspond to the result of a SequencedEdit'
-			)
-		).to.be.true;
+		expect(() =>
+			getCachingLogViewer(getSimpleLog(), initialSimpleTree, undefined, undefined, [[1000, simpleTreeSnapshot]])
+		).to.throw('revision must correspond to the result of a SequencedEdit');
 	});
 
-	it('detects invalid snapshots', async () => {
-		const viewer = getCachingLogViewer(log, initialSimpleTree);
-		// Set the head revision snapshot to something different than what is produced by applying edits sequentially.
-		expect(
-			await asyncFunctionThrowsCorrectly(
-				async () => viewer.setKnownRevision(2, initialSnapshot),
-				'setKnownRevision passed invalid snapshot'
-			)
-		).to.be.true;
+	it('can be created with known revisions', async () => {
+		const log = getSimpleLog();
+		const snapshots = getSnapshotsForLog(log, initialSimpleTree);
+		const viewer = getCachingLogViewer(
+			log,
+			initialSimpleTree,
+			undefined,
+			undefined,
+			Array.from(snapshots.keys()).map((revision) => [revision, snapshots[revision]])
+		);
+		for (let i = log.length; i >= 0; i--) {
+			const snapshot = snapshots[i];
+			expect(viewer.getSnapshotInSession(i).equals(snapshot)).to.be.true;
+		}
 	});
 
-	it('reuses cached snapshots for sequenced edits', async () => {
+	async function requestAllSnapshots(viewer: CachingLogViewer, log: EditLog): Promise<void> {
+		for (let i = 0; i <= log.length; i++) {
+			await viewer.getSnapshot(i);
+		}
+	}
+
+	it('caches snapshots for sequenced edits', async () => {
+		const log = getSimpleLog();
 		let editsProcessed = 0;
 		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+		assert(log.length < CachingLogViewer.sequencedCacheSizeMax);
 
-		// Force all snapshots to be generated.
-		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
+		await requestAllSnapshots(viewer, log);
 		expect(editsProcessed).to.equal(log.length);
+
 		// Ask for every snapshot; no edit application should occur, since the snapshots will be cached.
 		for (let i = 0; i <= log.length; i++) {
 			await viewer.getSnapshot(i);
@@ -222,12 +217,54 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).to.equal(log.length);
 	});
 
+	it('evicts least recently set cached snapshots for sequenced edits', async () => {
+		let editsProcessed = 0;
+		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
+		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+		viewer.setMinimumSequenceNumber(log.length + 1); // simulate all edits being subject to eviction
+
+		await requestAllSnapshots(viewer, log);
+		expect(editsProcessed).to.equal(log.length);
+
+		editsProcessed = 0;
+		for (let i = CachingLogViewer.sequencedCacheSizeMax + 1; i <= log.length; i++) {
+			await viewer.getSnapshot(i);
+		}
+		expect(editsProcessed).to.equal(0);
+
+		await viewer.getSnapshot(CachingLogViewer.sequencedCacheSizeMax);
+		expect(editsProcessed).to.equal(CachingLogViewer.sequencedCacheSizeMax);
+	});
+
+	it('never evicts the snapshot for the most recent sequenced edit', async () => {
+		let editsProcessed = 0;
+		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
+		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+
+		// Simulate all clients being caught up.
+		viewer.setMinimumSequenceNumber(log.numberOfSequencedEdits);
+
+		await requestAllSnapshots(viewer, log);
+		expect(editsProcessed).to.equal(log.length);
+
+		editsProcessed = 0;
+		for (let i = 0; i <= CachingLogViewer.sequencedCacheSizeMax; i++) {
+			await viewer.getSnapshot(i);
+		}
+		expect(editsProcessed).to.equal(CachingLogViewer.sequencedCacheSizeMax);
+
+		editsProcessed = 0;
+		await viewer.getSnapshot(log.numberOfSequencedEdits);
+		expect(editsProcessed).to.equal(0);
+	});
+
 	it('caches snapshots for local revisions', async () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
 		const viewer = getCachingLogViewer(logWithLocalEdits, initialSimpleTree, () => editsProcessed++);
+		assert(logWithLocalEdits.length < CachingLogViewer.sequencedCacheSizeMax);
 
-		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
+		await requestAllSnapshots(viewer, logWithLocalEdits);
 		expect(editsProcessed).to.equal(logWithLocalEdits.length);
 
 		// Local edits should now be cached until next remote sequenced edit arrives
@@ -243,7 +280,7 @@ describe('CachingLogViewer', () => {
 		logWithLocalEdits.addLocalEdit(
 			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
 		);
-		await viewer.getSnapshot(Number.POSITIVE_INFINITY);
+		await requestAllSnapshots(viewer, logWithLocalEdits);
 		expect(editsProcessed).to.equal(1);
 
 		editsProcessed = 0;
@@ -251,7 +288,8 @@ describe('CachingLogViewer', () => {
 			logWithLocalEdits.addSequencedEdit(
 				logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
 			);
-			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
+			await viewer.getSnapshot(logWithLocalEdits.numberOfSequencedEdits); // get the latest (just added) sequenced edit
+			await viewer.getSnapshot(Number.POSITIVE_INFINITY); // get the last snapshot, which is a local revision
 			expect(editsProcessed).to.equal(0);
 		}
 	});
@@ -372,6 +410,7 @@ describe('CachingLogViewer', () => {
 			const viewer = new CachingLogViewer(
 				log,
 				initialSimpleTree,
+				[],
 				/* expensiveValidation */ true,
 				undefined,
 				getMockLogger((event) => events.push(event))

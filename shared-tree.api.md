@@ -93,6 +93,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     protected handleNewEdit(id: EditId, result: ValidEditingResult): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
+    protected hintKnownEditingResult(edit: Edit, result: ValidEditingResult): void;
     protected abstract readonly latestCommittedView: Snapshot;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
@@ -282,14 +283,10 @@ export interface ISharedTreeEvents extends IErrorEvent {
 // @public
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
-// Warning: (ae-internal-missing-underscore) The name "LogViewer" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
+// @public
 export interface LogViewer {
-    getSnapshot(revision: number): Promise<Snapshot>;
-    getSnapshotInSession(revision: number): Snapshot;
-    setKnownEditingResult(edit: Edit, result: EditingResult): void;
-    setKnownRevision(revision: number, view: Snapshot): void;
+    getSnapshot(revision: Revision): Promise<Snapshot>;
+    getSnapshotInSession(revision: Revision): Snapshot;
 }
 
 // @public
@@ -360,6 +357,9 @@ export type PlaceIndex = number & {
 export function revert(changes: readonly Change[], before: Snapshot): Change[];
 
 // @public
+export type Revision = number;
+
+// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
 
 // @public
@@ -392,8 +392,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
     loadSummary(summary: SharedTreeSummaryBase): void;
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
-    // @internal
-    logViewer: LogViewer;
+    get logViewer(): LogViewer;
     // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)

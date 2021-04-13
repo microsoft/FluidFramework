@@ -240,6 +240,13 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
+	 * @returns true iff the revision is a local revision (not sequenced).
+	 */
+	public isSequencedRevision(revision: number): boolean {
+		return revision <= this.sequencedEditIds.length;
+	}
+
+	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetIndexOfId}
 	 */
 	public tryGetIndexOfId(editId: EditId): number | undefined {

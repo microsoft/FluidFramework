@@ -72,7 +72,7 @@ export {
 	SnapshotRange,
 } from './Snapshot';
 export { setTrait, newEdit, isDetachedSequenceId } from './EditUtilities';
-export { LogViewer } from './LogViewer';
+export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
 export { comparePayloads } from './SnapshotUtilities';

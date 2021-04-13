@@ -12,6 +12,7 @@ import { newEditId } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
 import { ValidEditingResult, Transaction } from './Transaction';
 import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
+import { CachingLogViewer } from './LogViewer';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -90,6 +91,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public readonly tree: SharedTree;
 
 	/**
+	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
+	 * Used for optimizations if provided.
+	 */
+	private readonly cachingLogViewer?: CachingLogViewer;
+
+	/**
 	 * Holds the state required to manage the currently open edit.
 	 * Undefined if there is currently not an open edit.
 	 *
@@ -103,6 +110,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler) {
 		super();
 		this.tree = tree;
+		if (tree.logViewer instanceof CachingLogViewer) {
+			this.cachingLogViewer = tree.logViewer;
+		}
 		this.previousView = currentView;
 		this.editCommittedHandler = onEditCommitted;
 
@@ -160,6 +170,15 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	}
 
 	/**
+	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular Snapshot.
+	 * This may be used as a caching hint to avoid recomputation.
+	 */
+	protected hintKnownEditingResult(edit: Edit, result: ValidEditingResult): void {
+		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
+		this.cachingLogViewer?.setKnownEditingResult(edit, result);
+	}
+
+	/**
 	 * Take any needed action between when an edit is completed.
 	 * Usually this will include submitting it to a SharedTree.
 	 *
@@ -168,8 +187,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	protected handleNewEdit(id: EditId, result: ValidEditingResult): void {
 		const edit: Edit = { id, changes: result.changes };
 
-		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
-		this.tree.logViewer.setKnownEditingResult(edit, result);
+		this.hintKnownEditingResult(edit, result);
 
 		// Since external edits could have been applied while currentEdit was pending,
 		// do not use the produced view: just go to the newest revision

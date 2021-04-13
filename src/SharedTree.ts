@@ -226,15 +226,23 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	private editLog: EditLog;
 
 	/**
-	 * Viewer for trees defined by editLog.
-	 * @internal
+	 * As an implementation detail, SharedTree uses a log viewer that caches snapshots at different revisions.
+	 * It is not exposed to avoid accidental correctness issues, but `logViewer` is exposed in order to give clients a way
+	 * to access the revision history.
 	 */
-	public logViewer: LogViewer;
+	private cachingLogViewer: CachingLogViewer;
+
+	/**
+	 * Viewer for trees defined by editLog. This allows access to views of the tree at different revisions (various points in time).
+	 */
+	public get logViewer(): LogViewer {
+		return this.cachingLogViewer;
+	}
 
 	protected readonly logger: ITelemetryLogger;
 
 	/**
-	 * Iff true, the snapshots passed to setKnownRevision will be asserted to be correct.
+	 * Iff true, additional assertions for correctness in CachingLogViewer will run.
 	 */
 	private readonly expensiveValidation: boolean;
 
@@ -249,10 +257,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		this.expensiveValidation = expensiveValidation;
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		const { editLog, logViewer } = this.createEditLogFromSummary(initialSummary);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary);
 
 		this.editLog = editLog;
-		this.logViewer = logViewer;
+		this.cachingLogViewer = cachingLogViewer;
 	}
 
 	/**
@@ -372,12 +380,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { editLog, logViewer } = this.createEditLogFromSummary(summary);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(summary);
 		this.editLog = editLog;
-		this.logViewer = logViewer;
+		this.cachingLogViewer = cachingLogViewer;
 	}
 
-	private createEditLogFromSummary(summary: SharedTreeSummaryBase): { editLog: EditLog; logViewer: LogViewer } {
+	private createEditLogFromSummary(
+		summary: SharedTreeSummaryBase
+	): { editLog: EditLog; cachingLogViewer: CachingLogViewer } {
 		const convertedSummary = convertSummaryToReadFormat(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary);
@@ -386,7 +396,15 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		const currentView = Snapshot.fromTree(currentTree);
 
 		const editLog = new EditLog(editHistory);
-		const logViewer = new CachingLogViewer(editLog, initialTree, this.expensiveValidation, undefined, this.logger);
+		const logViewer = new CachingLogViewer(
+			editLog,
+			initialTree,
+			// TODO:#47830: Store multiple checkpoints in summary.
+			[[editLog.length, currentView]],
+			this.expensiveValidation,
+			undefined,
+			this.logger
+		);
 
 		// Upload any full blobs that have yet to be uploaded
 		// When multiple clients connect and load summaries with non-uploaded chunks, they will all initiate uploads
@@ -395,10 +413,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			this.uploadEditChunk(chunk, key).catch((error: unknown) => this.emit('error', error));
 		}
 
-		// TODO:#47830: Store the associated revision on the snapshot.
-		// The current view should only be stored in the cache if the revision it's associated with is known.
-		void logViewer.setKnownRevisionSynchronous(editLog.length, currentView);
-		return { editLog, logViewer };
+		return { editLog, cachingLogViewer: logViewer };
 	}
 
 	/**
@@ -448,6 +463,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
+		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
 		const { type } = message.contents;
 		if (type === SharedTreeOpType.Handle) {
 			const { editHandle, chunkKey } = message.contents as SharedTreeHandleOp;
