@@ -10,29 +10,24 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
 export class BasicCheckout extends Checkout {
     constructor(tree: SharedTree);
     // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
-    // (undocumented)
     protected get latestCommittedView(): Snapshot;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "BlobId" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type BlobId = string;
 
 // @public
 export interface Build {
@@ -75,8 +70,8 @@ export enum ChangeType {
 }
 
 // @public @sealed
-export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
-    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: any);
+export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
+    protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
     applyChanges(...changes: Change[]): void;
     applyEdit(...changes: Change[]): EditId;
@@ -88,10 +83,16 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
     disposed: boolean;
     protected emitChange(): void;
     // (undocumented)
+    getChangesAndSnapshotBeforeInSession(id: EditId): {
+        changes: readonly Change[];
+        before: Snapshot;
+    };
+    // (undocumented)
     getEditStatus(): EditResult;
-    protected abstract handleNewEdit(edit: Edit, view: Snapshot): void;
+    protected handleNewEdit(id: EditId, result: ValidEditingResult): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
+    protected hintKnownEditingResult(edit: Edit, result: ValidEditingResult): void;
     protected abstract readonly latestCommittedView: Snapshot;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
@@ -104,6 +105,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 export enum CheckoutEvent {
     ViewChange = "viewChange"
 }
+
+// @public (undocumented)
+export function comparePayloads(a: Payload, b: Payload): boolean;
 
 // @public
 export interface Constraint {
@@ -162,40 +166,50 @@ export interface Edit {
     readonly id: EditId;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "EditAddedHandler" should be prefixed with an underscore because the declaration is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "EditChunkOrHandle" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+export type EditChunkOrHandle = EditHandle | EditWithoutId[];
+
+// @public
+export interface EditCommittedEventArguments {
+    editId: EditId;
+    local: boolean;
+    tree: SharedTree;
+}
+
+// @public
+export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
+
+// Warning: (ae-internal-missing-underscore) The name "EditHandle" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface EditHandle {
+    // (undocumented)
+    get: () => Promise<ArrayBufferLike>;
+}
 
 // @public
 export type EditId = UuidString & {
     readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
 
-// Warning: (ae-internal-missing-underscore) The name "EditLog" should be prefixed with an underscore because the declaration is marked as @internal
+// @public
+export type EditingResult = {
+    readonly result: EditResult.Invalid | EditResult.Malformed;
+    readonly changes: readonly Change[];
+    readonly before: Snapshot;
+} | ValidEditingResult;
+
+// Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal @sealed
-export class EditLog implements OrderedEditSet {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<Edit>;
-    constructor(sequencedEdits?: readonly Edit[]);
-    addLocalEdit(edit: Edit): void;
-    addSequencedEdit(edit: Edit): void;
-    // (undocumented)
-    equals(other: EditLog): boolean;
-    // (undocumented)
-    getAtIndex(index: number): Edit;
-    // (undocumented)
-    indexOf(editId: EditId): number;
-    // (undocumented)
-    isLocalEdit(editId: EditId): boolean;
-    // (undocumented)
-    get length(): number;
-    get numberOfLocalEdits(): number;
-    get numberOfSequencedEdits(): number;
-    registerEditAddedHandler(handler: EditAddedHandler): void;
-    // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+// @internal
+export interface EditLogSummary {
+    readonly editChunks: readonly {
+        key: number;
+        chunk: EditChunkOrHandle;
+    }[];
+    readonly editIds: readonly EditId[];
 }
 
 // @public
@@ -225,6 +239,12 @@ export enum EditValidationResult {
 export function fullHistorySummarizer(sequencedEdits: OrderedEditSet, currentView: Snapshot): SharedTreeSummary;
 
 // @public
+export interface ICheckoutEvents extends IErrorEvent {
+    // (undocumented)
+    (event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void): any;
+}
+
+// @public
 export const initialTree: ChangeNode;
 
 // @public
@@ -242,12 +262,24 @@ export const Insert: {
     create: (nodes: EditNode[], destination: StablePlace) => Change[];
 };
 
-// Warning: (ae-internal-missing-underscore) The name "LogViewer" should be prefixed with an underscore because the declaration is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "isDetachedSequenceId" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
+export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId;
+
+// @public
+export interface ISharedTreeEvents extends IErrorEvent {
+    // (undocumented)
+    (event: 'committedEdit', listener: EditCommittedHandler): any;
+}
+
+// @public
+export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
+
+// @public
 export interface LogViewer {
-    getSnapshot(revision: number): Snapshot;
-    setKnownRevision(revision: number, view: Snapshot): void;
+    getSnapshot(revision: Revision): Promise<Snapshot>;
+    getSnapshotInSession(revision: Revision): Snapshot;
 }
 
 // @public
@@ -290,34 +322,24 @@ export interface OrderedEditSet {
     // (undocumented)
     length: number;
     // (undocumented)
-    tryGetEdit(editId: EditId): Edit | undefined;
+    tryGetEdit(editId: EditId): Promise<Edit | undefined>;
+    // (undocumented)
+    tryGetIndexOfId(editId: EditId): number | undefined;
 }
 
 // @public
-export interface Payload {
-    // (undocumented)
-    readonly base64: string;
-}
+export type Payload = Serializable;
 
 // @public
 export type PlaceIndex = number & {
     readonly PlaceIndex: unique symbol;
 };
 
-// @public @sealed
-export class PrefetchingCheckout extends Checkout {
-    // (undocumented)
-    protected handleNewEdit(edit: Edit, view: Snapshot): void;
-    // (undocumented)
-    protected get latestCommittedView(): Snapshot;
-    // (undocumented)
-    static load(tree: SharedTree, prefetchFilter: (node: Definition) => boolean): Promise<PrefetchingCheckout>;
-    // (undocumented)
-    waitForPendingUpdates(): Promise<void>;
-}
+// @public
+export function revert(changes: readonly Change[], before: Snapshot): Change[];
 
 // @public
-export function revert(edit: Edit, view: Snapshot): Change[];
+export type Revision = number;
 
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
@@ -332,7 +354,7 @@ export interface SetValue {
 }
 
 // @public @sealed
-export class SharedTree extends SharedObject {
+export class SharedTree extends SharedObject<ISharedTreeEvents> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean);
     // @internal
     applyEdit(...changes: Change[]): EditId;
@@ -349,17 +371,16 @@ export class SharedTree extends SharedObject {
     equals(sharedTree: SharedTree): boolean;
     static getFactory(): SharedTreeFactory;
     // (undocumented)
+    getRuntime(): IFluidDataStoreRuntime;
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     loadSummary(summary: SharedTreeSummary): void;
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
-    // @internal
-    logViewer: LogViewer;
+    get logViewer(): LogViewer;
     // (undocumented)
     protected onDisconnect(): void;
-    // @internal
-    payloadCache: Map<BlobId, Payload>;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void;
     // @internal
@@ -367,9 +388,11 @@ export class SharedTree extends SharedObject {
     // (undocumented)
     protected registerCore(): void;
     // @internal
-    saveSummary(): SharedTreeSummary;
+    saveSerializedSummary(serializer?: IFluidSerializer): string;
+    // @internal
+    saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
-    snapshotCore(_serializer: IFluidSerializer): ITree;
+    snapshotCore(serializer: IFluidSerializer): ITree;
     summarizer: SharedTreeSummarizer;
 }
 
@@ -435,32 +458,37 @@ export class Snapshot {
     assertConsistent(): void;
     deleteNodes(nodes: Iterable<NodeId>): Snapshot;
     delta(snapshot: Snapshot): Delta<NodeId>;
+    detach(rangeToDetach: StableRange): {
+        snapshot: Snapshot;
+        detached: readonly NodeId[];
+    };
     equals(snapshot: Snapshot): boolean;
     // (undocumented)
     findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;
-    static fromTree(root: ChangeNode): Snapshot;
+    static fromTree(root: ChangeNode, expensiveValidation?: boolean): Snapshot;
     // (undocumented)
     getChangeNode(id: NodeId): ChangeNode;
     // (undocumented)
     getChangeNodes(nodeIds: readonly NodeId[]): ChangeNode[];
     getChangeNodeTree(): ChangeNode;
+    // (undocumented)
+    getIndexInTrait(node: NodeId): TraitNodeIndex;
     getParentSnapshotNode(id: NodeId): SnapshotNode | undefined;
     getSnapshotNode(id: NodeId): SnapshotNode;
     getTrait(traitLocation: TraitLocation): readonly NodeId[];
-    // (undocumented)
-    getTraitAddress(node: NodeId): NodeInTrait;
     getTraitLabel(id: NodeId): TraitLabel | undefined;
     // (undocumented)
+    getTraitLocation(node: NodeId): TraitLocation;
+    // (undocumented)
     hasNode(id: NodeId): boolean;
+    insertIntoTrait(nodesToInsert: readonly NodeId[], placeToInsert: StablePlace): Snapshot;
     insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot;
-    mergeWith(nodes: Iterable<[NodeId, SnapshotNode]>, merger: (oldVal: SnapshotNode, newVal: SnapshotNode, key: NodeId) => SnapshotNode): Snapshot;
     placeFromStablePlace(stablePlace: StablePlace): SnapshotPlace;
     rangeFromStableRange(range: StableRange): SnapshotRange;
-    replaceNode(nodeId: NodeId, node: SnapshotNode): Snapshot;
+    replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot;
     // (undocumented)
     readonly root: NodeId;
     get size(): number;
-    updateTraitContents(traitLocation: TraitLocation, newContents: NodeId[]): Snapshot;
     validateStablePlace(place: StablePlace): EditValidationResult;
     validateStableRange(range: StableRange): EditValidationResult;
 }
@@ -573,6 +601,18 @@ export type TreeNodeSequence<TChild> = readonly TChild[];
 export type UuidString = string & {
     readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
+
+// @public
+export interface ValidEditingResult {
+    // (undocumented)
+    readonly after: Snapshot;
+    // (undocumented)
+    readonly before: Snapshot;
+    // (undocumented)
+    readonly changes: readonly Change[];
+    // (undocumented)
+    readonly result: EditResult.Applied;
+}
 
 
 ```

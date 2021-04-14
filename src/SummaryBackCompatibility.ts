@@ -1,3 +1,4 @@
+import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { EditLog } from './EditLog';
 import { ChangeNode, Edit } from './PersistedTypes';
 import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
@@ -21,13 +22,17 @@ export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
 
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
+ * Also constructs handle objects from their serialized form.
+ *
+ * @param jsonSummary - The string to deserialize.
+ * @param serializer - The serializer required to deserialize handles in the string.
  * @returns A SharedTree summary or an ErrorString if the summary could not be interpreted.
  *
  */
-export function deserialize(jsonSummary: string): SharedTreeSummaryBase | ErrorString {
+export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase | ErrorString {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
-		summary = JSON.parse(jsonSummary);
+		summary = serializer.parse(jsonSummary);
 	} catch {
 		return 'Json syntax error in Summary';
 	}

@@ -17,7 +17,14 @@
 // API Exports
 
 export { initialTree } from './InitialTree';
-export { BlobId, EditCommittedHandler, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
+export {
+	EditCommittedHandler,
+	EditCommittedEventArguments,
+	ISharedTreeEvents,
+	SharedTree,
+	SharedTreeEvent,
+	SharedTreeEditor,
+} from './SharedTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
 export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
@@ -53,7 +60,7 @@ export {
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, SerializedChunk } from './EditLog';
+export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
 	EditValidationResult,
 	NodeInTrait,
@@ -64,7 +71,9 @@ export {
 	SnapshotPlace,
 	SnapshotRange,
 } from './Snapshot';
-export { setTrait, newEdit } from './EditUtilities';
-export { LogViewer } from './LogViewer';
-export { Checkout, CheckoutEvent } from './Checkout';
+export { setTrait, newEdit, isDetachedSequenceId } from './EditUtilities';
+export { LogViewer, Revision } from './LogViewer';
+export { Checkout, CheckoutEvent, ICheckoutEvents } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
+export { comparePayloads } from './SnapshotUtilities';
+export { EditingResult, ValidEditingResult } from './Transaction';

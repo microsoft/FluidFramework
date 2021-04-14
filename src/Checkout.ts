@@ -4,23 +4,24 @@
  */
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
 import { Change, Edit, EditResult } from './PersistedTypes';
-import { newEdit } from './EditUtilities';
+import { newEditId } from './EditUtilities';
 import { EditValidationResult, Snapshot } from './Snapshot';
-import { Transaction } from './Transaction';
+import { ValidEditingResult, Transaction } from './Transaction';
 import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
+import { CachingLogViewer } from './LogViewer';
 
 /**
- * An event emitted by a `Checkout` to indicate a state change.
+ * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
  * @public
  */
 export enum CheckoutEvent {
 	/**
 	 * `currentView` has changed.
-	 * Passed `NodeId[]` of all nodes changed since the last ViewChange event.
+	 * Passed a before and after Snapshot.
 	 */
 	ViewChange = 'viewChange',
 	/**
@@ -42,6 +43,13 @@ export enum CheckoutEvent {
 }
 
 /**
+ * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
+ */
+export interface ICheckoutEvents extends IErrorEvent {
+	(event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void);
+}
+
+/**
  * A mutable Checkout of a SharedTree, allowing viewing and interactive transactional editing.
  * Provides (snapshot-isolation)[https://en.wikipedia.org/wiki/Snapshot_isolation] while editing.
  *
@@ -57,7 +65,7 @@ export enum CheckoutEvent {
  * @public
  * @sealed
  */
-export abstract class Checkout extends EventEmitterWithErrorHandling implements IDisposable {
+export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -83,6 +91,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	public readonly tree: SharedTree;
 
 	/**
+	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
+	 * Used for optimizations if provided.
+	 */
+	private readonly cachingLogViewer?: CachingLogViewer;
+
+	/**
 	 * Holds the state required to manage the currently open edit.
 	 * Undefined if there is currently not an open edit.
 	 *
@@ -96,6 +110,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler) {
 		super();
 		this.tree = tree;
+		if (tree.logViewer instanceof CachingLogViewer) {
+			this.cachingLogViewer = tree.logViewer;
+		}
 		this.previousView = currentView;
 		this.editCommittedHandler = onEditCommitted;
 
@@ -145,18 +162,38 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 		this.currentEdit = undefined;
 		const editingResult = currentEdit.close();
 		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
-		const edit = newEdit(editingResult.changes);
 
-		this.handleNewEdit(edit, editingResult.before, editingResult.after);
+		const id: EditId = newEditId();
 
-		return edit.id;
+		this.handleNewEdit(id, editingResult);
+		return id;
+	}
+
+	/**
+	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular Snapshot.
+	 * This may be used as a caching hint to avoid recomputation.
+	 */
+	protected hintKnownEditingResult(edit: Edit, result: ValidEditingResult): void {
+		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
+		this.cachingLogViewer?.setKnownEditingResult(edit, result);
 	}
 
 	/**
 	 * Take any needed action between when an edit is completed.
 	 * Usually this will include submitting it to a SharedTree.
+	 *
+	 * Override this to customize.
 	 */
-	protected abstract handleNewEdit(edit: Edit, before: Snapshot, after: Snapshot): void;
+	protected handleNewEdit(id: EditId, result: ValidEditingResult): void {
+		const edit: Edit = { id, changes: result.changes };
+
+		this.hintKnownEditingResult(edit, result);
+
+		// Since external edits could have been applied while currentEdit was pending,
+		// do not use the produced view: just go to the newest revision
+		// (which processLocalEdit will do, including invalidation).
+		this.tree.processLocalEdit(edit);
+	}
 
 	/**
 	 * Applies the supplied changes to the tree and emits a change event.
@@ -248,10 +285,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	 *
 	 * Override this in Checkouts that may have edits which are not included in tree.edits.
 	 */
-	public getEditAndSnapshotBeforeInSession(id: EditId): { edit: Edit; before: Snapshot } {
+	public getChangesAndSnapshotBeforeInSession(id: EditId): { changes: readonly Change[]; before: Snapshot } {
 		const editIndex = this.tree.edits.getIndexOfId(id);
 		return {
-			edit: this.tree.edits.getEditInSessionAtIndex(editIndex),
+			changes: this.tree.edits.getEditInSessionAtIndex(editIndex).changes,
 			before: this.tree.logViewer.getSnapshotInSession(editIndex),
 		};
 	}
@@ -262,10 +299,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling implements 
 	 * It is ok to make excessive calls to this: change notifications will be cheaply de-duplicated.
 	 */
 	protected emitChange(): void {
-		const delta = this.previousView.delta(this.currentView);
-		this.previousView = this.currentView;
-		if (delta.changed.length !== 0 || delta.removed.length !== 0 || delta.added.length !== 0) {
-			this.emit(CheckoutEvent.ViewChange, delta);
+		const current = this.currentView;
+		const previous = this.previousView;
+		if (previous !== current) {
+			// Set previousView before calling emit to make reentrant case work (where the event handler causes an edit).
+			this.previousView = current;
+			this.emit(CheckoutEvent.ViewChange, previous, current);
 		}
 	}
 

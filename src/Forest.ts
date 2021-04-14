@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
+import BTree from '@taylorsw04/sorted-btree';
 import { fail, assert } from './Common';
 
 /**
@@ -35,37 +35,28 @@ export interface Delta<ID> {
  * @typeParam TParentData - Data about the child to parent relation ship between two nodes in the forest
  */
 export interface Forest<ID, T, TParentData> {
-	[Symbol.iterator](): IterableIterator<[ID, T]>;
-
 	/**
 	 * Returns the number of nodes in the forest.
 	 * */
 	size: number;
 
 	/**
-	 * Adds the supplied node to the forest. The ID must be unique in the forest.
+	 * Adds the supplied nodes to the forest. The IDs must be unique in the forest.
 	 */
-	add(id: ID, node: T): Forest<ID, T, TParentData>;
+	add(nodes: Iterable<[ID, T]>): Forest<ID, T, TParentData>;
 
 	/**
-	 * Adds the supplied nodes to the forest. The IDs must be unique in the forest. When adding multiple nodes,
-	 * prefer this method over repeat calls to `add()` as it provides the `Forest` an opportunity for optimization.
+	 * Replaces the node associated with `id`. The inserted node will have the same ID. A node with `id` must exist in the forest.
+	 *
+	 * By default, no reparenting is performed. The optionally provided iterators can be used to adjust the children of the replaced node.
+	 * Any added children must already exist in the forest and be unparented.
+	 * Any removed children will be unparented and remain in the forest.
+	 *
+	 * Care should be taken to ensure that the child set that results from the adds/deletes are consistent with those returned by the
+	 * `getChildren` delegate provided to `createForest`.
+	 *
 	 */
-	addAll(nodes: Iterable<[ID, T]>): Forest<ID, T, TParentData>;
-
-	/**
-	 * Add the given nodes into this forest. If an entry contains a key that is already present in the forest,
-	 * run the merger function to resolve the conflict.
-	 * @param nodes - the nodes to add to this forest
-	 * @param merger - a function which, given two conflicting values for the same key, returns the correct value.
-	 */
-	mergeWith(nodes: Iterable<[ID, T]>, merger: (oldVal: T, newVal: T, key: ID) => T): Forest<ID, T, TParentData>;
-
-	/**
-	 * Like delete then add, but works for nodes with parents. A node with `id` must exist in the forest.
-	 * Any children of the old node that are not subsequently parented under the new node are left unparented.
-	 */
-	replace(id: ID, node: T): Forest<ID, T, TParentData>;
+	replace(id: ID, node: T, childrenAdded?: [ID, TParentData][], childrenRemoved?: ID[]): Forest<ID, T, TParentData>;
 
 	/**
 	 * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
@@ -78,18 +69,11 @@ export interface Forest<ID, T, TParentData> {
 	tryGet(id: ID): T | undefined;
 
 	/**
-	 * Deletes the node associated with 'id'. The deleted node must be unparented.
-	 * @param id - The ID of the node to delete.
-	 * @param deleteChildren - If true, recursively deletes descendants. Otherwise, leaves children unparented.
-	 */
-	delete(id: ID, deleteChildren: boolean): Forest<ID, T, TParentData>;
-
-	/**
 	 * Deletes the node associated with each id in 'ids'. The deleted nodes must be unparented.
 	 * @param ids - The IDs of the nodes to delete.
 	 * @param deleteChildren - If true, recursively deletes descendants. Otherwise, leaves children unparented.
 	 */
-	deleteAll(ids: Iterable<ID>, deleteChildren: boolean): Forest<ID, T, TParentData>;
+	delete(ids: Iterable<ID>, deleteChildren: boolean): Forest<ID, T, TParentData>;
 
 	/**
 	 * Checks that the metadata is correct, and the items form a forest.
@@ -131,15 +115,18 @@ export interface Forest<ID, T, TParentData> {
  * @typeParam TParentData - Data about the child to parent relation ship between two nodes in the forest
  */
 export function createForest<ID, T, TParentData>(
-	getChildren: (_: T) => Iterable<[ID, TParentData]>
+	getChildren: (_: T) => Iterable<[ID, TParentData]>,
+	comparison: (a: ID, b: ID) => number,
+	expensiveValidation = false
 ): Forest<ID, T, TParentData> {
-	return new ForestI(getChildren);
+	return new ForestI(getChildren, comparison, expensiveValidation);
 }
 
 interface ForestState<ID, T, TParentData> {
 	nodes: BTree<ID, T>;
 	parents: BTree<ID, { parentNode: ID; parentData: TParentData }>;
 	getChildren: (_: T) => Iterable<[ID, TParentData]>;
+	expensiveValidation: boolean;
 }
 
 /**
@@ -165,79 +152,105 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 	private readonly getChildren: (_: T) => Iterable<[ID, TParentData]>;
 
 	/**
+	 * If true, consistency checks will be applied after forest operations.
+	 */
+	private readonly expensiveValidation: boolean;
+
+	/**
 	 * Caller must ensure provided BTrees are not modified.
 	 * Will not modify the BTrees.
 	 */
-	public constructor(data: ForestState<ID, T, TParentData> | ((_: T) => Iterable<[ID, TParentData]>)) {
+	public constructor(data: ForestState<ID, T, TParentData>);
+
+	/**
+	 * Construct a new forest without reusing nodes from a previous one.
+	 */
+	public constructor(
+		getChildren: (_: T) => Iterable<[ID, TParentData]>,
+		comparison: (a: ID, b: ID) => number,
+		expensiveValidation: boolean
+	);
+
+	public constructor(
+		data: ForestState<ID, T, TParentData> | ((_: T) => Iterable<[ID, TParentData]>),
+		comparison?: (a: ID, b: ID) => number,
+		expensiveValidation?: boolean
+	) {
 		if (typeof data === 'object') {
 			this.nodes = data.nodes;
 			this.parents = data.parents;
 			this.getChildren = data.getChildren;
+			this.expensiveValidation = data.expensiveValidation;
 		} else {
-			this.nodes = new BTree();
-			this.parents = new BTree();
+			assert(comparison !== undefined);
+			this.nodes = new BTree(undefined, comparison);
+			this.parents = new BTree(undefined, comparison);
 			this.getChildren = data;
+			this.expensiveValidation = expensiveValidation ?? false;
 		}
-	}
-
-	public [Symbol.iterator](): IterableIterator<[ID, T]> {
-		return this.nodes.entries();
+		if (this.expensiveValidation) {
+			this.assertConsistent();
+		}
 	}
 
 	public get size(): number {
 		return this.nodes.size;
 	}
 
-	public add(id: ID, node: T): ForestI<ID, T, TParentData> {
-		assert(!this.nodes.has(id), 'can not add node with already existing id');
+	public add(nodes: Iterable<[ID, T]>): Forest<ID, T, TParentData> {
 		const mutableNodes = this.nodes.clone();
-		mutableNodes.set(id, node);
 		const mutableParents = this.parents.clone();
 
-		for (const [childId, parentData] of this.getChildren(node)) {
-			mutableParents.set(childId, { parentNode: id, parentData });
-		}
-
-		return new ForestI({ nodes: mutableNodes, parents: mutableParents, getChildren: this.getChildren });
-	}
-
-	public addAll(nodes: Iterable<[ID, T]>): Forest<ID, T, TParentData> {
-		return this.mergeWith(nodes, () => fail('can not add node with already existing id'));
-	}
-
-	public mergeWith(
-		nodes: Iterable<[ID, T]>,
-		merger: (oldVal: T, newVal: T, key: ID) => T
-	): ForestI<ID, T, TParentData> {
-		let forest = new ForestI({ nodes: this.nodes, parents: this.parents, getChildren: this.getChildren });
-
 		for (const [id, node] of nodes) {
-			const currentNode = forest.nodes.get(id);
-			if (currentNode !== undefined) {
-				forest = forest.replace(id, merger(currentNode, node, id));
-			} else {
-				forest = forest.add(id, node);
+			assert(!mutableNodes.has(id), 'can not add node with already existing id');
+			mutableNodes.set(id, node);
+			for (const [childId, parentData] of this.getChildren(node)) {
+				mutableParents.set(childId, { parentNode: id, parentData });
 			}
 		}
 
-		return forest;
+		return new ForestI({
+			nodes: mutableNodes,
+			parents: mutableParents,
+			getChildren: this.getChildren,
+			expensiveValidation: this.expensiveValidation,
+		});
 	}
 
-	public replace(id: ID, node: T): ForestI<ID, T, TParentData> {
+	public replace(
+		id: ID,
+		node: T,
+		childrenAdded?: [ID, TParentData][],
+		childrenRemoved?: ID[]
+	): ForestI<ID, T, TParentData> {
 		const old = this.nodes.get(id);
 		assert(old, 'can not replace node that does not exist');
 
 		const mutableNodes = this.nodes.clone();
 		mutableNodes.set(id, node);
-		const mutableParents = this.parents.clone();
-		for (const [child, _] of this.getChildren(old)) {
-			mutableParents.delete(child);
-		}
-		for (const [childId, parentData] of this.getChildren(node)) {
-			mutableParents.set(childId, { parentNode: id, parentData });
+
+		let parents = this.parents;
+		if (childrenAdded || childrenRemoved) {
+			parents = this.parents.clone();
+
+			if (childrenRemoved) {
+				for (const childId of childrenRemoved) {
+					parents.delete(childId);
+				}
+			}
+			if (childrenAdded) {
+				for (const [childId, parentData] of childrenAdded) {
+					parents.set(childId, { parentNode: id, parentData });
+				}
+			}
 		}
 
-		return new ForestI({ nodes: mutableNodes, parents: mutableParents, getChildren: this.getChildren });
+		return new ForestI({
+			nodes: mutableNodes,
+			parents,
+			getChildren: this.getChildren,
+			expensiveValidation: this.expensiveValidation,
+		});
 	}
 
 	public get(id: ID): T {
@@ -248,11 +261,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.nodes.get(id);
 	}
 
-	public delete(id: ID, deleteChildren: boolean): ForestI<ID, T, TParentData> {
-		return this.deleteAll([id], deleteChildren);
-	}
-
-	public deleteAll(ids: Iterable<ID>, deleteChildren: boolean): ForestI<ID, T, TParentData> {
+	public delete(ids: Iterable<ID>, deleteChildren: boolean): ForestI<ID, T, TParentData> {
 		const mutableNodes = this.nodes.clone();
 		const mutableParents = this.parents.clone();
 		for (const id of ids) {
@@ -263,6 +272,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 			nodes: mutableNodes,
 			parents: mutableParents,
 			getChildren: this.getChildren,
+			expensiveValidation: this.expensiveValidation,
 		});
 	}
 
@@ -285,7 +295,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 
 	public assertConsistent(): void {
 		const checkedChildren = new Set<ID>([]);
-		for (const [k, v] of this.nodes.entries()) {
+		for (const [k, v] of this.nodes.entries(undefined, [])) {
 			const d: T = v;
 			for (const [id, _] of this.getChildren(d)) {
 				assert(!checkedChildren.has(id), 'the item tree tree must not contain cycles or multi-parented nodes');
@@ -308,6 +318,10 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 		return this.parents.get(id);
 	}
 
+	private static anyDifference(): { break: boolean } {
+		return { break: true };
+	}
+
 	public equals(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): boolean {
 		if (this === forest) {
 			return true;
@@ -319,47 +333,53 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 			if (forest.nodes === this.nodes) {
 				return true;
 			}
-		}
-
-		for (const [id, value] of forest) {
-			const otherValue = this.tryGet(id);
-			if (otherValue === undefined || !comparator(value, otherValue)) {
+			if (
+				this.nodes.diff(
+					forest.nodes,
+					ForestI.anyDifference,
+					ForestI.anyDifference,
+					(_, nodeThis, nodeOther) => {
+						if (!comparator(nodeThis, nodeOther)) {
+							return { break: true };
+						}
+						return undefined;
+					}
+				) !== undefined
+			) {
 				return false;
 			}
+			return true;
 		}
-		return true;
+
+		fail('Comparison to two different types of Forest is not supported.');
 	}
 
 	public delta(forest: Forest<ID, T, TParentData>, comparator: (a: T, b: T) => boolean = Object.is): Delta<ID> {
-		// TODO:#48808: Include generating changed, removed and added in optimized B+ tree diff.
-		const changed: ID[] = [];
-		for (const [id] of this) {
-			const f = forest.tryGet(id);
-			if (f !== undefined) {
-				if (!comparator(f, this.get(id))) {
-					changed.push(id);
+		if (forest instanceof ForestI) {
+			const changed: ID[] = [];
+			const removed: ID[] = [];
+			const added: ID[] = [];
+			this.nodes.diff(
+				forest.nodes,
+				(id) => {
+					removed.push(id);
+				},
+				(id) => {
+					added.push(id);
+				},
+				(id, nodeThis, nodeOther) => {
+					if (!comparator(nodeThis, nodeOther)) {
+						changed.push(id);
+					}
 				}
-			}
+			);
+			return {
+				changed,
+				added,
+				removed,
+			};
 		}
 
-		const removed: ID[] = [];
-		for (const [id] of this) {
-			if (forest.tryGet(id) === undefined) {
-				removed.push(id);
-			}
-		}
-
-		const added: ID[] = [];
-		for (const [id] of forest) {
-			if (this.tryGet(id) === undefined) {
-				added.push(id);
-			}
-		}
-
-		return {
-			changed,
-			added,
-			removed,
-		};
+		fail('Comparison to two different types of Forest is not supported.');
 	}
 }

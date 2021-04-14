@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
+import { serializeHandles } from '@fluidframework/shared-object-base';
 import { TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
 import { EditLogSummary, OrderedEditSet } from './EditLog';
@@ -57,9 +59,14 @@ export interface SharedTreeSummary extends SharedTreeSummaryBase {
 
 /**
  * Serializes a SharedTree summary into a JSON string. This may later be used to initialize a SharedTree's state via `deserialize()`
+ * Also replaces handle objects with their serialized form.
+ *
+ * @param summary - The SharedTree summary to serialize.
+ * @param serializer - The serializer required to serialize handles in the summary.
+ * @param bind - The object handle required to serialize handles in the summary
  */
-export function serialize(summary: SharedTreeSummaryBase): string {
-	return JSON.stringify(summary);
+export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSerializer, bind: IFluidHandle): string {
+	return assertNotUndefined(serializeHandles(summary, serializer, bind));
 }
 
 /**
