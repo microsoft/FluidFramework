@@ -15,7 +15,7 @@ const ReferenceArrayProperty = require('./properties/reference_array_property');
 const ReferenceMapProperty = require('./properties/reference_map_property');
 const EnumArrayProperty = require('./properties/enum_array_property');
 const EnumProperty = require('./properties/enum_property');
-const {Int64Property, Uint64Property} = require('./properties/int_properties');
+const { Int64Property, Uint64Property } = require('./properties/int_properties');
 const ValueArrayProperty = require('./properties/value_array_property');
 const ValueMapProperty = require('./properties/value_map_property');
 const ValueProperty = require('./properties/value_property');
@@ -31,7 +31,12 @@ module.exports = {
   SetProperty,
   RefereceProperty,
   ReferenceMapProperty,
-  ReferenceArrayProperty, Uint64Property,
-  EnumArrayProperty, EnumProperty, Int64Property,ValueArrayProperty
-  ,ValueMapProperty, ValueProperty
+  ReferenceArrayProperty,
+  Uint64Property,
+  EnumArrayProperty,
+  EnumProperty,
+  Int64Property,
+  ValueArrayProperty,
+  ValueMapProperty,
+  ValueProperty
 }

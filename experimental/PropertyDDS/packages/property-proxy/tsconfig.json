@@ -3,10 +3,7 @@
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
-        "allowJs": true,
-        "typeRoots": [
-            "../types/@adsktypes"
-        ]
+        "allowJs": true
     },
     "include": [
         "src/**/*"

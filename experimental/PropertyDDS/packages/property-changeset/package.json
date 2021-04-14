@@ -4,6 +4,7 @@
   "description": "",
   "license": "MIT",
   "author": "",
+  "types": "src/index.d.ts",
   "main": "src/index.js",
   "scripts": {
     "test": "npm run test:mocha",
