@@ -7,10 +7,21 @@ import {
     IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { Container } from "@fluidframework/container-loader";
+import {
+    IDocumentServiceFactory,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
+import {
+    InsecureTinyliciousTokenProvider,
+    InsecureTinyliciousUrlResolver,
+} from "@fluidframework/tinylicious-driver";
 import { getContainer, IGetContainerService } from "./getContainer";
+
+export interface ITinyliciousFileConfig {
+    id: string;
+}
 
 export class TinyliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
@@ -19,7 +30,28 @@ export class TinyliciousService implements IGetContainerService {
     constructor(tinyliciousPort?: number) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
-        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
+            tokenProvider,
+        );
+    }
+
+    public async createContainer(
+        fileConfig: ITinyliciousFileConfig,
+        containerRuntimeFactory: IRuntimeFactory,
+    ): Promise<Container> {
+        return getContainer(this, fileConfig.id, containerRuntimeFactory, true);
+    }
+
+    public async getContainer(
+        fileConfig: ITinyliciousFileConfig,
+        containerRuntimeFactory: IRuntimeFactory,
+    ): Promise<Container> {
+        return getContainer(
+            this,
+            fileConfig.id,
+            containerRuntimeFactory,
+            false,
+        );
     }
 }
 

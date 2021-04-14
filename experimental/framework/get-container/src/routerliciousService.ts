@@ -15,6 +15,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
 import { IGetContainerService } from "./getContainer";
+import { TinyliciousService } from "./tinyliciousService";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -59,11 +60,12 @@ class SimpleUrlResolver implements IUrlResolver {
     }
 }
 
-export class RouterliciousService implements IGetContainerService {
+export class RouterliciousService extends TinyliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
     constructor(config: IRouterliciousConfig) {
+        super();
         const user = {
             id: "unique-id",
             name: "Unique Idee",
