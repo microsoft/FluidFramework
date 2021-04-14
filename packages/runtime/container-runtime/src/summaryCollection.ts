@@ -224,7 +224,7 @@ export class SummaryCollection {
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
-        private readonly opActions: Partial<SummaryCollectionOpActions>,
+        private readonly opActions: SummaryCollectionOpActions,
     ) {
         this.deltaManager.on(
             "op",

@@ -238,6 +238,7 @@ export interface ISummaryRuntimeOptions {
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 
+    // Defaults to 3000 ops
     maxOpsSinceLastSummary?: number;
 }
 
@@ -900,10 +901,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // and register summary ack handler to re-register this handler
                 // after successful summary
                 opActions.default = undefined;
-                opActions.summaryAck = summaryAck;
+                opActions.summaryAck = summaryAckAction;
             }
         };
-        const summaryAck = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
             this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
             // we've caught up, so re-register the default action to monitor for
             // falling behind, and unregister ourself
