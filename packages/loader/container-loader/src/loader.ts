@@ -438,14 +438,12 @@ export class Loader extends EventEmitter implements IHostLoader {
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,
     ): Promise<Container> {
-        const docId = decodeURI(encodedDocId);
         return Container.load(
             this,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                 containerUrl: request.url,
-                docId,
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
                 pause: request.headers?.[LoaderHeader.pause],

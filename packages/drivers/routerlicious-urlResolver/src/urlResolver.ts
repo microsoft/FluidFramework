@@ -120,6 +120,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 deltaStorageUrl,
                 ordererUrl,
             },
+            id: documentId,
             tokens: { jwt: token },
             type: "fluid",
             url: fluidUrl,
