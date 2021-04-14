@@ -200,6 +200,6 @@ export interface INewFileInfo {
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
-    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, "Not an ODSP resolved url");
+    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, 0x1de /* "Not an ODSP resolved url" */);
     return resolvedUrl as IOdspResolvedUrl;
 }
