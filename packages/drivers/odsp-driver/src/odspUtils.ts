@@ -23,6 +23,7 @@ import {
     Headers,
 } from "node-fetch";
 import { debug } from "./debug";
+import { fetch } from "./fetch";
 import { TokenFetchOptions } from "./tokenFetch";
 import { RateLimiter } from "./rateLimiter";
 import { IOdspResolvedUrl } from "./contracts";
@@ -80,9 +81,7 @@ export async function fetchHelper(
     const start = performance.now();
 
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return fetch(requestInfo, requestInit).then(async (fetchResponse) => {
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
