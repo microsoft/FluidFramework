@@ -49,8 +49,6 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
-    getRetryDelayFromError,
-    canRetryOnError,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -98,7 +96,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
@@ -152,9 +150,6 @@ export enum ConnectionState {
      */
     Connected,
 }
-
-const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -758,40 +753,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        let success = false;
-        let numRetries = 0;
-        let retryAfter = 1;
-        let id: string | undefined;
-        do {
-            try {
-                await this.attachCore(request);
-                if (id !== undefined) {
-                    this._deltaManager.refreshDelayInfo(id);
-                }
-                success = true;
-            } catch (err) {
-                // If it is not retriable, then just log/throw the error
-                if (!canRetryOnError(err)) {
-                    this.logger.sendErrorEvent({
-                        eventName: "AttachFailure",
-                        retry: numRetries,
-                    }, err);
-                    throw err;
-                }
-                numRetries++;
-                // If the error is throttling error, then wait for the specified time before retrying.
-                // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                if (id === undefined) {
-                    id = uuid();
-                }
-                this._deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
-                await delay(retryAfter);
-            }
-        } while (!success);
-    }
-
-    private async attachCore(request: IRequest) {
         assert(this.loaded, 0x0d4 /* "not loaded" */);
         assert(!this.closed, 0x0d5 /* "closed" */);
 
@@ -824,12 +785,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
+            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
-                this.service = await this.serviceFactory.createContainer(
-                    this.cachedAttachSummary,
-                    createNewResolvedUrl,
-                    this.subLogger,
+                this.service = await runWithRetry(
+                    async () => this.serviceFactory.createContainer(
+                        summary,
+                        createNewResolvedUrl,
+                        this.subLogger,
+                    ),
+                    "containerAttach",
+                    this._deltaManager,
+                    this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
