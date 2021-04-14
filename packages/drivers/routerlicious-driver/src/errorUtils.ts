@@ -52,6 +52,11 @@ export function createR11sNetworkError(
     retryAfterSeconds?: number,
 ): R11sError {
     switch (statusCode) {
+        case undefined:
+            // If a service is temporarily down or a browser resource limit is reached, Axios will throw
+            // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
+            // error message, "Network Error".
+            return new GenericNetworkError(errorMessage, errorMessage === "Network Error", statusCode);
         case 401:
         case 403:
             return new AuthorizationError(errorMessage, undefined, undefined, statusCode);
