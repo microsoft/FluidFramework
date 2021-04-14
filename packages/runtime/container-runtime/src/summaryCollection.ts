@@ -284,15 +284,15 @@ export class SummaryCollection {
     private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
-                this.handleSummaryOp(op as ISummaryOpMessage, this.opActions);
+                this.handleSummaryOp(op as ISummaryOpMessage);
                 return;
             }
             case MessageType.SummaryAck: {
-                this.handleSummaryAck(op as ISummaryAckMessage, this.opActions);
+                this.handleSummaryAck(op as ISummaryAckMessage);
                 return;
             }
             case MessageType.SummaryNack: {
-                this.handleSummaryNack(op as ISummaryNackMessage, this.opActions);
+                this.handleSummaryNack(op as ISummaryNackMessage);
                 return;
             }
             default: {
@@ -313,10 +313,7 @@ export class SummaryCollection {
         }
     }
 
-    private handleSummaryOp(
-        op: ISummaryOpMessage,
-        action: Pick<SummaryCollectionOpActions, MessageType.Summarize>,
-    ) {
+    private handleSummaryOp(op: ISummaryOpMessage) {
         let summary: Summary | undefined;
 
         // Check if summary already being watched, broadcast if so
@@ -337,13 +334,10 @@ export class SummaryCollection {
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
         this.lastSummaryTimestamp = op.timestamp;
-        action.summarize?.(op, this);
+        this.opActions.summarize?.(op, this);
     }
 
-    private handleSummaryAck(
-        op: ISummaryAckMessage,
-        action: Pick<SummaryCollectionOpActions, MessageType.SummaryAck>,
-    ) {
+    private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
         if (!summary || summary.summaryOp === undefined) {
@@ -378,20 +372,17 @@ export class SummaryCollection {
             };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
-            action.summaryAck?.(op, this);
+            this.opActions.summaryAck?.(op, this);
         }
     }
 
-    private handleSummaryNack(
-        op: ISummaryNackMessage,
-        action: Pick<SummaryCollectionOpActions, MessageType.SummaryNack>,
-    ) {
+    private handleSummaryNack(op: ISummaryNackMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
-            action.summaryNack?.(op, this);
+            this.opActions.summaryNack?.(op, this);
         }
     }
 }
