@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
@@ -14,8 +16,8 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
-import { IGetContainerService } from "./getContainer";
-import { TinyliciousService } from "./tinyliciousService";
+import { getContainer, IGetContainerService } from "./getContainer";
+import { ITinyliciousFileConfig } from "./tinyliciousService";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -60,12 +62,11 @@ class SimpleUrlResolver implements IUrlResolver {
     }
 }
 
-export class RouterliciousService extends TinyliciousService implements IGetContainerService {
+export class RouterliciousService implements IGetContainerService {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
     constructor(config: IRouterliciousConfig) {
-        super();
         const user = {
             id: "unique-id",
             name: "Unique Idee",
@@ -74,5 +75,24 @@ export class RouterliciousService extends TinyliciousService implements IGetCont
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
         this.urlResolver = new SimpleUrlResolver(config, user);
+    }
+
+    public async createContainer(
+        fileConfig: ITinyliciousFileConfig,
+        containerRuntimeFactory: IRuntimeFactory,
+    ): Promise<Container> {
+        return getContainer(this, fileConfig.id, containerRuntimeFactory, true);
+    }
+
+    public async getContainer(
+        fileConfig: ITinyliciousFileConfig,
+        containerRuntimeFactory: IRuntimeFactory,
+    ): Promise<Container> {
+        return getContainer(
+            this,
+            fileConfig.id,
+            containerRuntimeFactory,
+            false,
+        );
     }
 }

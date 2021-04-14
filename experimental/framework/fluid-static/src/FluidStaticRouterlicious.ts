@@ -63,7 +63,7 @@ let globalFluidRouterlicious: FluidRouterliciousInstance | undefined;
 export const FluidRouterlicious = {
     init(config: IRouterliciousConfig) {
         if (globalFluidRouterlicious) {
-            throw new Error("Fluid cannot be initialized more than once");
+            throw new Error("FluidRouterlicious cannot be initialized more than once");
         }
         globalFluidRouterlicious = new FluidRouterliciousInstance(config);
     },
@@ -73,7 +73,7 @@ export const FluidRouterlicious = {
     ): Promise<FluidContainer> {
         if (!globalFluidRouterlicious) {
             throw new Error(
-                "Fluid has not been properly initialized before attempting to create a container",
+                "FluidRouterlicious has not been properly initialized before attempting to create a container",
             );
         }
         return globalFluidRouterlicious.createContainer(
@@ -87,7 +87,7 @@ export const FluidRouterlicious = {
     ): Promise<FluidContainer> {
         if (!globalFluidRouterlicious) {
             throw new Error(
-                "Fluid has not been properly initialized before attempting to get a container",
+                "FluidRouterlicious has not been properly initialized before attempting to get a container",
             );
         }
         return globalFluidRouterlicious.getContainer(fileConfig, containerConfig);

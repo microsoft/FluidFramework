@@ -62,7 +62,7 @@ let globalFluidTinylicious: FluidTinyliciousInstance | undefined;
 export const FluidTinylicious = {
     init(tinyliciousPort?: number) {
         if (globalFluidTinylicious) {
-            throw new Error("Fluid cannot be initialized more than once");
+            throw new Error("FluidTinylicious cannot be initialized more than once");
         }
         globalFluidTinylicious = new FluidTinyliciousInstance(tinyliciousPort);
     },
@@ -72,7 +72,7 @@ export const FluidTinylicious = {
     ): Promise<FluidContainer> {
         if (!globalFluidTinylicious) {
             throw new Error(
-                "Fluid has not been properly initialized before attempting to create a container",
+                "FluidTinylicious has not been properly initialized before attempting to create a container",
             );
         }
         return globalFluidTinylicious.createContainer(
@@ -86,7 +86,7 @@ export const FluidTinylicious = {
     ): Promise<FluidContainer> {
         if (!globalFluidTinylicious) {
             throw new Error(
-                "Fluid has not been properly initialized before attempting to get a container",
+                "FluidTinylicious has not been properly initialized before attempting to get a container",
             );
         }
         return globalFluidTinylicious.getContainer(fileConfig, containerConfig);
