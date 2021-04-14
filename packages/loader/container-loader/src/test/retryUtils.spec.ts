@@ -8,7 +8,7 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../utils";
 
-describe("RetriableDocumentStorageService Tests", () => {
+describe("Retry Util Tests", () => {
     const deltaManager = {
         refreshDelayInfo: () => {},
         emitDelayInfo: () => {},
