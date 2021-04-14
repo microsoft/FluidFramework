@@ -221,8 +221,6 @@ export interface IGCRuntimeOptions {
 
     /**
      * Allows additional GC options to be passed.
-     * For example, "runGCInTestMode" can be set to true to run GC in test mode where unreferenced objects are
-     * immediately deleted.
      */
     [key: string]: any;
 }
@@ -715,10 +713,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public get gcOptions(): IGCRuntimeOptions {
-        return this.runtimeOptions.gcOptions;
-    }
-
     // Back compat: 0.28, can be removed in 0.29
     public readonly IFluidSerializer: IFluidSerializer;
 
@@ -817,14 +811,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
-            (this.gcOptions.gcAllowed === true ? 1 : 0);
+            (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
 
         // Can override with localStorage flag.
         this.shouldRunGC = localStorageRunGC() ?? (
             // Must not be disabled permanently in summary.
             (this.summaryGCFeature > 0)
             // Must not be disabled by runtime option.
-            && !this.gcOptions.disableGC
+            && !this.runtimeOptions.gcOptions.disableGC
         );
 
         // Default to true (disabled) until a few versions have passed.
@@ -879,7 +873,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
-            this._logger);
+            this._logger,
+            this.runtimeOptions);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1611,7 +1606,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData(this.gcOptions.runFullGC === true);
+                const gcData = await this.dataStores.getGCData(this.runtimeOptions.gcOptions.runFullGC === true);
                 const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
                     gcData.gcNodes, [ "/" ],
                     this.logger,
@@ -1632,7 +1627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing
                 // scenarios involving access to deleted data.
-                if (this.gcOptions.runGCInTestMode) {
+                if (this.runtimeOptions.gcOptions.runGCInTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
