@@ -38,9 +38,11 @@
     "@fluidframework/protocol-definitions": "^0.1022.0-0",
     "@fluidframework/shared-object-base": "^0.38.0",
     "@fluidframework/telemetry-utils": "^0.38.0",
-    "buffer": "^6.0.2",
-    "immutable": "^4.0.0-rc.12",
-    "sorted-btree": "^1.4.0",
+    "@fluidframework/undo-redo": "^0.38.0",
+    "@taylorsw04/sorted-btree": "1.4.1-optimizedDiff",
+    "buffer": "^6.0.3",
+    "denque": "^1.5.0",
+    "lru-cache": "^6.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -56,6 +58,7 @@
     "@fluidframework/test-runtime-utils": "^0.38.0",
     "@fluidframework/test-utils": "^0.38.0",
     "@microsoft/api-extractor": "^7.13.1",
+    "@types/lru-cache": "^5.1.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "chai": "^4.2.0",

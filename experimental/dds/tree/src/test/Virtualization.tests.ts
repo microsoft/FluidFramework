@@ -1,17 +1,17 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 
 import { expect } from 'chai';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { editsPerChunk } from '../EditLog';
+import { EditHandle, editsPerChunk } from '../EditLog';
 import { newEdit, setTrait } from '../EditUtilities';
 import { Edit, EditWithoutId } from '../PersistedTypes';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import { SharedTree } from '../SharedTree';
 import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
-describe('SharedTree history virtualization', () => {
+// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
+describe.skip('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider;
 
@@ -39,15 +39,6 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the ops to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
-		// Initiate the edit upload
-		sharedTree.saveSummary();
-
-		// Wait for each chunk to be uploaded
-		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
-
-		// Wait for the handle op to be processed.
-		await testObjectProvider.ensureSynchronized();
-
 		return expectedEdits;
 	};
 
@@ -55,6 +46,11 @@ describe('SharedTree history virtualization', () => {
 		const expectedEdits: Edit[] = await processNewEditChunks();
 
 		const summary = sharedTree.saveSummary();
+
+		const { editHistory } = summary as SharedTreeSummary;
+		const { editChunks } = assertNotUndefined(editHistory);
+		expect(editChunks.length).to.equal(1);
+		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
 
 		// Load a second tree using the summary
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({ testObjectProvider });
@@ -70,15 +66,6 @@ describe('SharedTree history virtualization', () => {
 		sharedTree.processLocalEdit(edit);
 
 		// Wait for the op to to be submitted and processed across the containers.
-		await testObjectProvider.ensureSynchronized();
-
-		// Initiate edit upload
-		sharedTree.saveSummary();
-
-		// Wait for each chunk to be uploaded
-		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
-
-		// Wait for any handle ops to be processed.
 		await testObjectProvider.ensureSynchronized();
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
@@ -104,19 +91,10 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the ops to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
-		// Initiate edit upload
-		sharedTree.saveSummary();
-
-		// Wait for each chunk to be uploaded
-		await new Promise((resolve) => sharedTree.once(SharedTreeEvent.ChunksUploaded, resolve));
-
-		// Wait for the handle op to be processed.
-		await testObjectProvider.ensureSynchronized();
-
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(2);
-		expect((editChunks[0].chunk as ISerializedHandle).type === '__fluid_handle__');
+		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
 		expect(Array.isArray(editChunks[1].chunk)).to.be.true;
 		expect((editChunks[1].chunk as EditWithoutId[]).length).to.equal(10);
 	});
@@ -131,7 +109,7 @@ describe('SharedTree history virtualization', () => {
 		// Make sure each key is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ key, chunk }, index) => {
 			expect(key).to.equal(index * editsPerChunk);
-			expect((chunk as ISerializedHandle).type === '__fluid_handle__');
+			expect(typeof (chunk as EditHandle).get).to.equal('function');
 		});
 	});
 
@@ -157,11 +135,20 @@ describe('SharedTree history virtualization', () => {
 		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
 		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
 		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
+		const sharedTree2Chunk = assertNotUndefined(sharedTree2Summary.editHistory).editChunks[0].chunk;
+		const sharedTree3Chunk = assertNotUndefined(sharedTree3Summary.editHistory).editChunks[0].chunk;
 
-		// Make sure the chunk is the first shared tree is a serialized handle
-		expect((sharedTreeChunk as ISerializedHandle).type === '__fluid_handle__');
+		// Make sure the chunk of the first shared tree is a handle
+		expect(typeof (sharedTreeChunk as EditHandle).get).to.equal('function');
 
-		expect(sharedTreeSummary).to.deep.equal(sharedTree2Summary);
-		expect(sharedTree2Summary).to.deep.equal(sharedTree3Summary);
+		const sharedTreeHandleRoute = (sharedTreeChunk as any).absolutePath;
+		const sharedTree2HandleRoute = (sharedTree2Chunk as any).absolutePath;
+		const sharedTree3HandleRoute = (sharedTree3Chunk as any).absolutePath;
+
+		// Make sure the handle route of the first shared tree is a string
+		expect(typeof sharedTreeHandleRoute).to.equal('string');
+
+		expect(sharedTreeHandleRoute).to.equal(sharedTree2HandleRoute);
+		expect(sharedTree2HandleRoute).to.equal(sharedTree3HandleRoute);
 	});
 });
