@@ -1,16 +1,18 @@
 {
   "name": "@fluid-experimental/property-common",
   "version": "0.1.0",
-  "description": "",
+  "description": "common functions used in properties",
+  "homepage": "https://fluidframework.com",
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
-  "author": "",
-  "types": "src/index.d.ts",
+  "author": "Autodesk Inc.",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
+    "doc": "jsdoc -c jsdoc.conf",
     "test": "npm run test:mocha",
     "test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "doc": "jsdoc -c jsdoc.conf"
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
   },
   "dependencies": {
     "ajv": "7.1.1",
