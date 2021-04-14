@@ -15,9 +15,11 @@ import {
 
 import {
     IDeltaManager,
+    IDeltaManagerEvents,
     IDeltaQueue,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
@@ -61,7 +63,7 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
  */
-export class MockDeltaManager extends EventEmitter
+export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return undefined; }
 

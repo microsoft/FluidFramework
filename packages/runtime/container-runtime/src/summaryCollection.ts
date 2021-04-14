@@ -53,9 +53,9 @@ export interface ISummary {
 /**
  * A single summary which has already been acked by the server.
  */
-export interface IAckedSummary extends ISummary {
+export interface IAckedSummary {
     readonly summaryOp: ISummaryOpMessage;
-    readonly summaryAckNack: ISummaryAckMessage;
+    readonly summaryAck: ISummaryAckMessage;
 }
 
 enum SummaryState {
@@ -192,6 +192,11 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
+export type SummaryCollectionOpActions =
+    Partial<Record<
+        MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default",
+        (op: ISequencedDocumentMessage, sc: SummaryCollection) => void
+    >>;
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
@@ -209,11 +214,17 @@ export class SummaryCollection {
     private pendingAckTimerTimeoutCallback: (() => void) | undefined;
     private lastAck: IAckedSummary | undefined;
 
-    public get latestAck() { return this.lastAck; }
+    public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
+
+    public get opsSinceLastAck() {
+        return this.deltaManager.lastSequenceNumber -
+            (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
+    }
 
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
+        private readonly opActions: SummaryCollectionOpActions,
     ) {
         this.deltaManager.on(
             "op",
@@ -295,6 +306,8 @@ export class SummaryCollection {
                 ) {
                     this.pendingAckTimerTimeoutCallback?.();
                 }
+                this.opActions.default?.(op, this);
+
                 return;
             }
         }
@@ -321,12 +334,13 @@ export class SummaryCollection {
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
         this.lastSummaryTimestamp = op.timestamp;
+        this.opActions.summarize?.(op, this);
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
-        if (!summary) {
+        if (!summary || summary.summaryOp === undefined) {
             // Summary ack without an op should be rare. We could fetch the
             // reference sequence number from the snapshot, but instead we
             // will not emit this ack. It should be the case that the summary
@@ -351,10 +365,14 @@ export class SummaryCollection {
         this.pendingSummaries.delete(seq);
 
         // Track latest ack
-        if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
-            this.lastAck = summary as IAckedSummary;
+        if (!this.lastAck || seq > this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber) {
+            this.lastAck = {
+                summaryOp: summary.summaryOp,
+                summaryAck: op,
+            };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
+            this.opActions.summaryAck?.(op, this);
         }
     }
 
@@ -364,6 +382,7 @@ export class SummaryCollection {
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
+            this.opActions.summaryNack?.(op, this);
         }
     }
 }
