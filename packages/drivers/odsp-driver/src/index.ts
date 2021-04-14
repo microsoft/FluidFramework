@@ -16,11 +16,11 @@ export * from "./checkUrl";
 export * from "./odspCache"; // need to break API vs. implementations
 
 // Factory
+export * from "./odspDocumentServiceFactoryCore";
 export * from "./odspDocumentServiceFactory";
 export * from "./odspDocumentServiceFactoryWithCodeSplit";
 
 // File creation
-export * from "./createFile";
 export * from "./createOdspCreateContainerRequest";
 
 // URI Resolver functionality, URI management
