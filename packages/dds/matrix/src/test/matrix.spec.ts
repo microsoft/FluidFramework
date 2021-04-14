@@ -774,7 +774,7 @@ describe("Matrix", () => {
             // Reconnect the second client.
             containerRuntime1.connected = true;
 
-            // Note: We cannot 'deepEquals' bound fluid handles, and therefore cannot use our
+            // Note: We cannot 'deepEquals' bound Fluid handles, and therefore cannot use our
             //       'expect()' helper here.  Instead, we 'processAllMessages()' and then compare
             //       the relevant fields of IFluidHandle.
 
