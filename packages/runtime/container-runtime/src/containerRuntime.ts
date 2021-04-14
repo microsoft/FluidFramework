@@ -130,7 +130,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-import { SummaryCollection } from "./summaryCollection";
+import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -237,6 +237,9 @@ export interface ISummaryRuntimeOptions {
     // and the root node when generating a summary if set to true.
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
+
+    // Defaults to 3000 ops
+    maxOpsSinceLastSummary?: number;
 }
 
 /**
@@ -891,10 +894,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
+        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+                this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                // unregister default to no log on every op after falling behind
+                // and register summary ack handler to re-register this handler
+                // after successful summary
+                opActions.default = undefined;
+                opActions.summaryAck = summaryAckAction;
+            }
+        };
+        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+            // we've caught up, so re-register the default action to monitor for
+            // falling behind, and unregister ourself
+            opActions.default = defaultAction;
+            opActions.summaryAck = undefined;
+        };
+        const opActions: SummaryCollectionOpActions = {
+            default: defaultAction,
+        };
+
         this.summaryCollection = new SummaryCollection(
             this.deltaManager,
             this.logger,
+            opActions,
         );
+
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -1693,7 +1719,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
                 : {
                     proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAckNack.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 

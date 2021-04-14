@@ -114,7 +114,6 @@ export interface IContainerLoadOptions {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    containerUrl: string;
     resolvedUrl: IFluidResolvedUrl;
     /**
      * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
@@ -129,11 +128,6 @@ export interface IContainerLoadOptions {
 export interface IContainerConfig {
     resolvedUrl?: IFluidResolvedUrl;
     canReconnect?: boolean;
-    /**
-     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
-     * for purposes of creating a separate Container instance for the summarizer to use.
-     */
-    containerUrl?: string;
     /**
      * Client details provided in the override will be merged over the default client.
      */
@@ -298,7 +292,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {
-                containerUrl: loadOptions.containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
@@ -385,7 +378,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private containerUrl: string | undefined;
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
@@ -565,8 +557,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         super();
         this._audience = new Audience();
 
-        // Initialize from config
-        this.containerUrl = config.containerUrl;
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
@@ -806,14 +796,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.urlResolver.getAbsoluteUrl(
-                resolvedUrl,
-                "",
-                this._context?.codeDetails,
-            );
-            assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
-            this.containerUrl = url;
-
             if (this._storageService === undefined) {
                 this._storageService = await this.getDocumentStorageService();
             }
@@ -1731,7 +1713,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
+        const loader = new RelativeLoader(this.loader, this);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1754,7 +1736,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState,
         );
 
-        loader.resolveContainer(this);
         this.emit("contextChanged", codeDetails);
     }
 
