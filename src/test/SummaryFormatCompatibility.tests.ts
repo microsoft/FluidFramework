@@ -156,7 +156,7 @@ describe('Summary', () => {
 		}
 	}
 
-	describe('format version 0.0.2', () => {
+	describe('version 0.0.2', () => {
 		it('can be read and written with no history', async () => {
 			validateSummaryRead('no-history-0.0.2');
 			validateSummaryWrite(fullHistorySummarizer);
@@ -187,7 +187,7 @@ describe('Summary', () => {
 		});
 	});
 
-	describe('format version 0.1.0', () => {
+	describe('version 0.1.0', () => {
 		it('can be read and written with no history', async () => {
 			validateSummaryRead('no-history-0.1.0');
 			validateSummaryWrite(fullHistorySummarizer_0_1_0);

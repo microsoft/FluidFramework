@@ -344,7 +344,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 						}
 						return undefined;
 					}
-				)
+				) !== undefined
 			) {
 				return false;
 			}

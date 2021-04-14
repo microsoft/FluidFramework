@@ -13,7 +13,6 @@ module.exports = {
 	rules: {
 		// Recover "noUnusedLocals" behavior as part of linting.
 		'@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
-
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',
@@ -28,14 +27,14 @@ module.exports = {
 
 		// Prettier
 		'comma-dangle': 'off',
+		'@typescript-eslint/comma-dangle': 'off',
 		'max-len': 'off',
 		'no-mixed-spaces-and-tabs': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
-		'@typescript-eslint/strict-boolean-expressions': 'off',
+		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'prefer-arrow/prefer-arrow-functions': 'off',
-		'no-null/no-null': 'off', // Payloads use null
 		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
 	},
 	overrides: [

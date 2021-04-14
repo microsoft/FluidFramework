@@ -338,7 +338,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 					},
 				},
 			],
-			id: undefined,
 		};
 
 		return tree;
@@ -504,7 +503,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		// see discussion on the following github issue: https://github.com/microsoft/FluidFramework/issues/4399
 		// To work around this issue, we currently tolerate duplicate ops in loaded documents.
 		// This could be strengthened in the future to only apply to documents which may have been impacted.
-		const shouldIgnoreEdit = this.editLog.tryGetIndexOfId(editId) && !wasLocalEdit;
+		const shouldIgnoreEdit = this.editLog.tryGetIndexOfId(editId) !== undefined && !wasLocalEdit;
 		if (shouldIgnoreEdit) {
 			return;
 		}
