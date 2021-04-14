@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fetch from "node-fetch";
+import { fetch } from "./fetch";
 import {
     IOdspAuthRequestInfo,
     authRequestWithRetry,
@@ -13,7 +13,6 @@ export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
 }
 
@@ -26,7 +25,6 @@ export async function putAsync(
             ...config,
             method: "PUT",
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return fetch(url, putConfig);
     });
 }
@@ -42,14 +40,12 @@ export async function postAsync(
             body,
             method: "POST",
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return fetch(url, postConfig);
     });
 }
 
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
     return safeRequestCore(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return fetch(url, { body, method: "POST" });
     });
 }

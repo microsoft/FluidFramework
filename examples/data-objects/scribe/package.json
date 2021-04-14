@@ -48,7 +48,7 @@
     "@fluidframework/runtime-definitions": "^0.38.0",
     "@fluidframework/sequence": "^0.38.0",
     "@fluidframework/view-interfaces": "^0.38.0",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.19.0",
     "async": "^2.6.1",
     "axios": "^0.21.1",
     "bootstrap": "^3.3.7",

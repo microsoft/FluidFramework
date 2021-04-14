@@ -82,8 +82,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                containerUrl: testRequest.url,
-                docId: "documentId",
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
                 pause: testRequest.headers?.[LoaderHeader.pause],
@@ -93,7 +91,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
     it("Load container successfully", async () => {
         const container = await loadContainer();
-        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.id, "containerTest", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });

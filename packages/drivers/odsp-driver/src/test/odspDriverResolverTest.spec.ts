@@ -8,7 +8,7 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 import { IOdspResolvedUrl } from "../contracts";
 
@@ -60,6 +60,7 @@ describe("Odsp Driver Resolver", () => {
             tokens: {},
             type: "fluid",
             odspResolvedUrl: true,
+            id: "odspCreateNew",
             url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
             siteUrl: "https://localhost",
             hashedDocumentId: "",

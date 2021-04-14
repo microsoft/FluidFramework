@@ -51,6 +51,8 @@ export class KafkaRunner implements IRunner {
                 logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
                 logger?.error(inspect(error));
             } else {
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.");
+                logger?.error(inspect(error));
                 deferred.reject(error);
             }
         });

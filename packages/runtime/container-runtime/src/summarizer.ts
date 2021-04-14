@@ -860,7 +860,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
                 await this.internalsProvider.refreshLatestSummaryAck(
                     ack.summaryOp.contents.handle,
-                    ack.summaryAckNack.contents.handle,
+                    ack.summaryAck.contents.handle,
                     summaryLogger,
                 );
             } catch (error) {

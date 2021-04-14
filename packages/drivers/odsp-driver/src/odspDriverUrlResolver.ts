@@ -10,7 +10,8 @@ import { IOdspResolvedUrl } from "./contracts";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { getHashedDocumentId, getOdspResolvedUrl } from "./odspUtils";
+import { getOdspResolvedUrl } from "./odspUtils";
+import { getHashedDocumentId } from "./odspPublicUtils";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -79,6 +80,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 tokens: {},
                 type: "fluid",
                 odspResolvedUrl: true,
+                id: "odspCreateNew",
                 url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
                 siteUrl: siteURL,
                 hashedDocumentId: "",
@@ -118,6 +120,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
                 deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
             },
+            id: hashedDocumentId,
             tokens: {},
             url: documentUrl,
             hashedDocumentId,
