@@ -16,12 +16,6 @@ import {
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
 } from "@fluidframework/odsp-doclib-utils";
-import {
-    default as fetch,
-    RequestInfo as FetchRequestInfo,
-    RequestInit as FetchRequestInit,
-    Headers,
-} from "node-fetch";
 import { debug } from "./debug";
 import { fetch } from "./fetch";
 import { TokenFetchOptions } from "./tokenFetch";
