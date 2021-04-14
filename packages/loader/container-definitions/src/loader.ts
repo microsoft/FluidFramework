@@ -196,7 +196,7 @@ export interface ILoader extends IFluidRouter {
      * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
-    resolve(request: IRequest, pendingLocalState?: string, resolvedUrl?: IResolvedUrl): Promise<IContainer>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
 /**

@@ -67,7 +67,17 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             } else {
                 const resolvedUrl = this.container.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);
-                return this.loader.resolve(request, undefined, resolvedUrl);
+                const container = await Container.load(
+                    this.loader as Loader,
+                    {
+                        canReconnect: request.headers?.[LoaderHeader.reconnect],
+                        clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                        resolvedUrl,
+                        version: request.headers?.[LoaderHeader.version],
+                        pause: request.headers?.[LoaderHeader.pause],
+                    },
+                );
+                return container;
             }
         }
 
@@ -274,17 +284,12 @@ export class Loader extends EventEmitter implements IHostLoader {
             JSON.parse(snapshot));
     }
 
-    public async resolve(
-        request: IRequest,
-        pendingLocalState?: string,
-        resolvedUrl?: IResolvedUrl,
-    ): Promise<Container> {
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
         return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
-                resolvedUrl,
             );
             return resolved.container;
         });
@@ -321,9 +326,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingLocalState,
-        resolvedUrl?: IResolvedUrl,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
-        const resolvedAsFluid = resolvedUrl ?? await this.services.urlResolver.resolve(request);
+        const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into data stores
