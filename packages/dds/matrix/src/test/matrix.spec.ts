@@ -13,6 +13,7 @@ import {
     MockContainerRuntimeForReconnection,
     MockEmptyDeltaConnection,
     MockStorage,
+    MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMatrix, SharedMatrixFactory } from "..";
@@ -629,6 +630,7 @@ describe("Matrix", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
+        let mockHandle: MockHandle<unknown>;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
             containerRuntimeFactory.processAllMessages();
@@ -661,6 +663,8 @@ describe("Matrix", () => {
             matrix2 = response2.matrix;
             containerRuntime2 = response2.containerRuntime;
             consumer2 = new TestConsumer(matrix2);
+
+            mockHandle = new MockHandle({});
         });
 
         afterEach(async () => {
@@ -694,7 +698,7 @@ describe("Matrix", () => {
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
 
-            // Verify that the 'setCells()' op targetted the original position of (0,0),
+            // Verify that the 'setCells()' op targeted the original position of (0,0),
             // not the current local position of (0,3).
             await expect([
                 [undefined, undefined, undefined, "A"],
@@ -757,6 +761,33 @@ describe("Matrix", () => {
             await expect([
                 ["2nd"],
             ]);
+        });
+
+        it("setCell(IFluidHandle) is preserved when resubmitted", async () => {
+            // Disconnect the first client.
+            containerRuntime1.connected = false;
+
+            matrix1.insertCols(0, 1);
+            matrix1.insertRows(0, 1);
+            matrix1.setCell(0, 0, mockHandle);
+
+            // Reconnect the second client.
+            containerRuntime1.connected = true;
+
+            // Note: We cannot 'deepEquals' bound fluid handles, and therefore cannot use our
+            //       'expect()' helper here.  Instead, we 'processAllMessages()' and then compare
+            //       the relevant fields of IFluidHandle.
+
+            containerRuntimeFactory.processAllMessages();
+
+            const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
+            const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+
+            assert.equal(handle1.IFluidHandle.absolutePath, handle2.IFluidHandle.absolutePath);
+
+            // Remove handle from matrix to prevent the convergence sanity checks in 'afterEach()'
+            // from performing a 'deepEquals' on the matrix contents.
+            matrix1.setCell(0, 0, undefined);
         });
 
         it("resubmission omits writes to recycled row/col handles", async () => {
