@@ -4,6 +4,8 @@
  */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
+
 import _ from "lodash";
 import {
      IDataCreationOptions,
@@ -23,6 +25,10 @@ import { makeStyles } from '@material-ui/styles';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import { theme } from './theme';
 
+import { PropertyProxy } from '@fluid-experimental/property-proxy';
+
+import { FluidBinder } from '@fluid-experimental/property-binder';
+import { IPropertyTree } from './dataObject';
 
 const useStyles = makeStyles({
     activeGraph: {
@@ -100,3 +106,19 @@ export const InspectorApp = (props: any) => {
         </MuiThemeProvider>)
 };
 
+
+
+export function renderApp(propertyTree: IPropertyTree, element: HTMLElement) {
+    const fluidBinder = new FluidBinder();
+
+    fluidBinder.attachTo(propertyTree);
+
+    // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
+    // inspector tree-table.
+    fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
+        // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
+        // Note: This is what currently inspector table expect for "data" prop.
+        const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);
+        ReactDOM.render(<InspectorApp data={proxifiedDDS} />, element);
+    }, 20));
+}

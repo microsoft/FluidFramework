@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
-
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
 
@@ -13,15 +10,12 @@ import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./conta
 import { IPropertyTree } from "./dataObject";
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
 import _ from 'lodash';
 
-
-import { FluidBinder } from '@fluid-experimental/property-binder';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { registerSchemas } from '@fluid-experimental/schemas';
+import { renderApp } from "./inspector";
 
-import { InspectorApp } from './inspector';
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -56,19 +50,7 @@ async function start(): Promise<void> {
 
     const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
 
-    // Creating a FluidBinder instance.
-    const fluidBinder = new FluidBinder();
-
-    fluidBinder.attachTo(propertyTree);
-
-    // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
-    // inspector tree-table.
-    fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
-        // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
-        // Note: This is what currently inspector table expect for "data" prop.
-        const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);
-        ReactDOM.render(<InspectorApp data={proxifiedDDS}/>, document.getElementById('root'))
-    }, 20));
+    renderApp(propertyTree, document.getElementById('root')!);
 
     // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
     window.addEventListener("hashchange", () => {
@@ -77,3 +59,4 @@ async function start(): Promise<void> {
 }
 
 start().catch((error) => console.error(error));
+

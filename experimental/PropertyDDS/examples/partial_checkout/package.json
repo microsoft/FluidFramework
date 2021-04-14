@@ -72,8 +72,5 @@
   "jest-junit": {
     "outputDirectory": "nyc",
     "outputName": "jest-junit-report.xml"
-  },
-  "test": "npm run test:jest",
-  "test:jest": "jest",
-  "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest"
+  }
 }
