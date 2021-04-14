@@ -3,6 +3,7 @@
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
 - [ODSP Driver url resolver for share link parameter consolidation](#ODSP-Driver-url-resolver-for-share-link-parameter-consolidation)
 - [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations)
+- [Removed containerUrl from IContainerLoadOptions and IContainerConfig](#Removed-containerUrl-from-IContainerLoadOptions-and-IContainerConfig)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -177,6 +178,9 @@ if (!context.existing) {
 ```
 
 The option will be turned off by default in an upcoming release before being turned off permanently, so it is recommended to make these updates proactively.
+
+### Removed containerUrl from IContainerLoadOptions and IContainerConfig
+Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
 
 ## 0.37 Breaking changes
 
