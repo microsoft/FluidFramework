@@ -9,8 +9,7 @@ import { OrderedEditSet } from '../EditLog';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
-import { formatVersion } from '../Summary';
-import { newEdit } from '../GenericEditUtilities';
+import { formatVersion, newEdit } from '../generic';
 import { Change } from './PersistedTypes';
 import { setTrait } from './EditUtilities';
 

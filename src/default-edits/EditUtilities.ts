@@ -7,7 +7,7 @@ import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { Snapshot, SnapshotNode, SnapshotPlace, SnapshotRange } from '../Snapshot';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditValidationResult } from '../Checkout';
-import { EditNode, TraitLocation, TreeNodeSequence } from '../PersistedTypes';
+import { EditNode, TraitLocation, TreeNodeSequence } from '../generic';
 import { Change, StablePlace, StableRange } from './PersistedTypes';
 
 /**

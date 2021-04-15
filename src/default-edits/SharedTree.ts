@@ -6,8 +6,7 @@
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
-import { ChangeNode, Edit, EditNode } from '../PersistedTypes';
-import { GenericSharedTree } from '../GenericSharedTree';
+import { ChangeNode, Edit, EditNode, GenericSharedTree } from '../generic';
 import { Change, Delete, Insert, Move, StableRange, StablePlace } from './PersistedTypes';
 import { SharedTreeFactory } from './Factory';
 import * as HistoryEditFactory from './HistoryEditFactory';

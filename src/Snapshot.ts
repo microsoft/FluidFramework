@@ -7,7 +7,7 @@ import { assert, copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { compareSnapshotNodes, getChangeNodeFromSnapshot } from './SnapshotUtilities';
 import { createForest, Delta, Forest as GenericForest } from './Forest';
-import { ChangeNode, NodeData, TraitLocation } from './PersistedTypes';
+import { ChangeNode, NodeData, TraitLocation } from './generic';
 
 /**
  * An immutable view of a distributed tree node.

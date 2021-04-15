@@ -7,12 +7,18 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
-import { newEditId } from './GenericEditUtilities';
 import { Snapshot } from './Snapshot';
-import { ValidEditingResult, GenericTransaction } from './GenericTransaction';
-import { EditCommittedHandler, GenericSharedTree, SharedTreeEvent } from './GenericSharedTree';
+import {
+	newEditId,
+	ValidEditingResult,
+	GenericTransaction,
+	Edit,
+	EditResult,
+	EditCommittedHandler,
+	GenericSharedTree,
+	SharedTreeEvent,
+} from './generic';
 import { CachingLogViewer } from './LogViewer';
-import { Edit, EditResult } from './PersistedTypes';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.

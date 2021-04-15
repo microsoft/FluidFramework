@@ -5,7 +5,7 @@
 
 import { Snapshot } from './Snapshot';
 import { Checkout } from './Checkout';
-import { EditCommittedEventArguments, GenericSharedTree } from './GenericSharedTree';
+import { EditCommittedEventArguments, GenericSharedTree } from './generic';
 
 /**
  * Basic Session that stays up to date with the SharedTree.

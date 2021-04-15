@@ -5,10 +5,10 @@
 
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { serializeHandles } from '@fluidframework/shared-object-base';
-import { assert, assertNotUndefined } from './Common';
-import { EditLogSummary, OrderedEditSet } from './EditLog';
-import { Snapshot } from './Snapshot';
-import { readFormatVersion, SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
+import { assert, assertNotUndefined } from '../Common';
+import { EditLogSummary, OrderedEditSet } from '../EditLog';
+import { Snapshot } from '../Snapshot';
+import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { ChangeNode, Edit } from './PersistedTypes';
 
 /**

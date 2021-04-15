@@ -15,13 +15,13 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from './Common';
-import { editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
-import { EditId } from './Identifiers';
-import { Snapshot } from './Snapshot';
-import { initialTree } from './InitialTree';
-import { CachingLogViewer, LogViewer } from './LogViewer';
-import { convertSummaryToReadFormat, deserialize, readFormatVersion } from './SummaryBackCompatibility';
+import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from '../Common';
+import { editsPerChunk, EditLog, OrderedEditSet } from '../EditLog';
+import { EditId } from '../Identifiers';
+import { Snapshot } from '../Snapshot';
+import { initialTree } from '../InitialTree';
+import { CachingLogViewer, LogViewer } from '../LogViewer';
+import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
 import {
 	SharedTreeSummarizer,
 	serialize,

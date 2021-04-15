@@ -6,7 +6,7 @@
 import BTree from '@taylorsw04/sorted-btree';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
-import { Edit, EditWithoutId } from './PersistedTypes';
+import { Edit, EditWithoutId } from './generic';
 import { EditId } from './Identifiers';
 import { compareFiniteNumbers } from './SnapshotUtilities';
 

@@ -8,11 +8,10 @@ import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
-import { ChangeNode, Edit, EditResult } from './PersistedTypes';
+import { ChangeNode, Edit, EditResult, EditingResult, GenericTransaction } from './generic';
 import { EditId } from './Identifiers';
 import { initialTree } from './InitialTree';
 import { RevisionValueCache } from './RevisionValueCache';
-import { EditingResult, GenericTransaction } from './GenericTransaction';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular snapshot is computed).

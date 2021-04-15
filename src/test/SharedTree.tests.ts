@@ -9,9 +9,15 @@ import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
-import { EditNode, ChangeNode, SharedTreeOpType } from '../PersistedTypes';
-import { SharedTreeEvent } from '../GenericSharedTree';
-import { fullHistorySummarizer, serialize } from '../Summary';
+import {
+	EditNode,
+	ChangeNode,
+	SharedTreeOpType,
+	SharedTreeEvent,
+	fullHistorySummarizer,
+	serialize,
+	newEdit,
+} from '../generic';
 import {
 	Change,
 	ChangeType,
@@ -25,7 +31,6 @@ import {
 import { editsPerChunk } from '../EditLog';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
-import { newEdit } from '../GenericEditUtilities';
 import { TreeNodeHandle } from '../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
