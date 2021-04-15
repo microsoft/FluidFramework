@@ -101,9 +101,6 @@ export class SharedPropertyTree extends SharedObject {
 	) {
 		super(id, runtime, attributes);
 
-		this.root.getWorkspace = () => this;
-		// this.root._getCheckoutView = () => undefined;
-
 		this.options = options;
 		// Quick hack to let HFDM root be aware of the DDS hosting it.
 		this._root._tree = this;

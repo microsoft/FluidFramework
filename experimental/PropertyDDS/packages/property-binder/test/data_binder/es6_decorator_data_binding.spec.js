@@ -12,7 +12,7 @@ import {
 } from '../../src/data_binder/data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
 import { ModificationContext } from '../../src/data_binder/modification_context';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('Decorated DataBinding', function () {
@@ -122,16 +122,16 @@ describe('Decorated DataBinding', function () {
     }
   }
 
-  beforeAll(function () {
+  beforeAll(async function () {
     PropertyFactory.register(personTemplate);
     PropertyFactory.register(infoTemplate);
 
-    workspace = new MockWorkspace();
+    workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
     dataBinder.attachTo(workspace);
     dataBinder.register('View', personTemplate.typeid, TestDataBindingClass);
     testProp = createPerson();
-    workspace.insert('person', testProp);
+   workspace.root.insert('person', testProp);
     dataBindingInstance = dataBinder.resolve('person', 'View');
   });
 
@@ -205,7 +205,7 @@ describe('Decorated DataBinding', function () {
 
   it('should trigger the callback once', function () {
     const anotherPerson = createPerson();
-    workspace.insert('anotherPerson', anotherPerson);
+   workspace.root.insert('anotherPerson', anotherPerson);
     const anotherDataBindingInstance = dataBinder.resolve('anotherPerson', 'View');
     // We need to reset the spy, as it is per class and was already called for our dataBindingInstance.
     anotherDataBindingInstance.onPropertyRegisteredCallback.mockClear();
@@ -248,7 +248,7 @@ describe('Decorated DataBinding', function () {
     PropertyFactory.register(orderEntrySchema);
     dataBinder.register('MODEL', orderEntrySchema.typeid, OrderEntryDataBinding);
     const order = PropertyFactory.create(orderEntrySchema.typeid);
-    workspace.insert('order', order);
+   workspace.root.insert('order', order);
 
     expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);

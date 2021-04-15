@@ -32,7 +32,7 @@ import {
 import { catchConsoleErrors } from './catch_console_errors';
 import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
 import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from '../../src/internal/constants';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('DataBinder', function () {
@@ -45,8 +45,8 @@ describe('DataBinder', function () {
     registerTestTemplates();
   });
 
-  beforeEach(function () {
-    workspace = new MockWorkspace();
+  beforeEach(async function () {
+    workspace = await MockSharedPropertyTree();
   });
 
   afterEach(function () {
@@ -66,12 +66,12 @@ describe('DataBinder', function () {
   describe('references', function () {
     var dataBinder, otherWorkspace;
 
-    beforeEach(function () {
+    beforeEach(async function () {
       dataBinder = new DataBinder();
 
       // Bind to the workspace
       dataBinder.attachTo(workspace);
-      otherWorkspace = new MockWorkspace();
+      otherWorkspace = await MockSharedPropertyTree();
     });
 
     afterEach(function () {
@@ -101,15 +101,15 @@ describe('DataBinder', function () {
       const removeCallback = jest.fn();
       const insertCallback = jest.fn();
 
-      workspace.insert('target', PropertyFactory.create('NodeProperty'));
-      workspace.insert('referrer', PropertyFactory.create(ReferenceParentTemplate.typeid));
-      workspace.insert('forcer', PropertyFactory.create(ReferenceParentTemplate.typeid));
+     workspace.root.insert('target', PropertyFactory.create('NodeProperty'));
+     workspace.root.insert('referrer', PropertyFactory.create(ReferenceParentTemplate.typeid));
+     workspace.root.insert('forcer', PropertyFactory.create(ReferenceParentTemplate.typeid));
 
       // We set the reference to be valid, to target.
-      workspace.get(['referrer', 'single_ref'], RESOLVE_NEVER).setValue('/target');
+      workspace.root.get(['referrer', 'single_ref'], RESOLVE_NEVER).setValue('/target');
       // We set the forcer reference to point to the non-existent property /target.text
       // This makes the target.text node exist with path callbacks, even if the property does not.
-      workspace.get(['forcer', 'single_ref'], RESOLVE_NEVER).setValue('/target.text');
+      workspace.root.get(['forcer', 'single_ref'], RESOLVE_NEVER).setValue('/target.text');
 
       // We create a binding that watches .text
       class MyBinding extends DataBinding {
@@ -124,7 +124,7 @@ describe('DataBinder', function () {
       expect(insertCallback).toHaveBeenCalledTimes(0);
 
       // Removing the referrer should not trigger the event
-      workspace.remove('target');
+      workspace.root.remove('target');
       expect(removeCallback).toHaveBeenCalledTimes(0);
     });
 
@@ -173,17 +173,17 @@ describe('DataBinder', function () {
       const target1 = PropertyFactory.create(ChildTemplate.typeid);
       const target2 = PropertyFactory.create(ChildTemplate.typeid);
 
-      workspace.insert('target1', target1);
-      workspace.insert('target2', target2);
+     workspace.root.insert('target1', target1);
+     workspace.root.insert('target2', target2);
 
       const refParent = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
         ref1: '/target1',
         ref2: '/target2'
       });
-      workspace.insert('refParent', refParent);
+     workspace.root.insert('refParent', refParent);
 
       const parentProp = PropertyFactory.create(ParentTemplate.typeid);
-      workspace.insert('parentProp', parentProp);
+     workspace.root.insert('parentProp', parentProp);
 
       const startRef = PropertyFactory.create('Reference', 'single', '/refParent');
       parentProp.insert('startRef', startRef);
@@ -342,7 +342,7 @@ describe('DataBinder', function () {
       resetHistory();
 
       // Remove parent
-      workspace.remove('parentProp');
+      workspace.root.remove('parentProp');
       expect(ref1insertSpy).toHaveBeenCalledTimes(0);
       expect(ref1removeSpy).toHaveBeenCalledTimes(0); // << not fired, bad reference
       expect(ref2insertSpy).toHaveBeenCalledTimes(0);
@@ -395,17 +395,17 @@ describe('DataBinder', function () {
       const target1 = PropertyFactory.create(ChildTemplate.typeid);
       const target2 = PropertyFactory.create(ChildTemplate.typeid);
 
-      workspace.insert('target1', target1);
-      workspace.insert('target2', target2);
+     workspace.root.insert('target1', target1);
+     workspace.root.insert('target2', target2);
 
       const refParent = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
         ref1: '/target1',
         ref2: '/target2'
       });
-      workspace.insert('refParent', refParent);
+     workspace.root.insert('refParent', refParent);
 
       const parentProp = PropertyFactory.create(ParentTemplate.typeid);
-      workspace.insert('parentProp', parentProp);
+     workspace.root.insert('parentProp', parentProp);
 
       const startRef = PropertyFactory.create('Reference', 'single', '/refParent.ref1');
       parentProp.insert('startRef', startRef);
@@ -542,7 +542,7 @@ describe('DataBinder', function () {
       resetHistory();
 
       // Remove parent
-      workspace.remove('parentProp');
+      workspace.root.remove('parentProp');
       expect(ref1insertSpy).toHaveBeenCalledTimes(0);
       expect(ref1removeSpy).toHaveBeenCalledTimes(0); // << not fired, bad reference
       expect(ref1ReferenceInsertSpy).toHaveBeenCalledTimes(0);
@@ -563,14 +563,14 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
       const ref = PropertyFactory.create('Reference');
-      workspace.insert('ref', ref);
+     workspace.root.insert('ref', ref);
 
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
       referenceInsertSpy.mockClear();
       referenceRemoveSpy.mockClear();
 
-      workspace.remove('ref');
+      workspace.root.remove('ref');
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
@@ -578,14 +578,14 @@ describe('DataBinder', function () {
     });
 
     it('should be ok when going through references and traversing', function () {
-      workspace.pushModifiedEventScope();
+      workspace.pushNotificationDelayScope();
       dataBinder.pushBindingActivationScope();
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
 
       // Set things up so references that are followed will visit myChild1 and myChild4,
       // myChild4 will not have been traversed yet.
       const myChildrenArray = PropertyFactory.create('NodeProperty', 'array');
-      workspace.insert('myChildren', myChildrenArray);
+     workspace.root.insert('myChildren', myChildrenArray);
       const childrenChildren = [];
       for (let i = 0; i < 4; ++i) {
         const subArray = PropertyFactory.create('NodeProperty', 'array');
@@ -602,7 +602,7 @@ describe('DataBinder', function () {
       childrenChildren[2].get([0, 'two'], RESOLVE_NO_LEAFS).setValue('/myChildren[3][0].three');
 
       dataBinder.popBindingActivationScope();
-      workspace.popModifiedEventScope();
+      workspace.popNotificationDelayScope();
     });
 
     it('should be able to bind to referenced properties', function () {
@@ -631,13 +631,13 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
 
       // referenceParentPSet should produce a ParentDataBinding
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
 
@@ -648,19 +648,19 @@ describe('DataBinder', function () {
 
       // This should trigger the remove handler
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Now we have a two stage reference
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
       doubleReferenceInsertSpy.mockClear();
 
@@ -671,12 +671,12 @@ describe('DataBinder', function () {
 
       // This should trigger the remove handler
       expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -706,7 +706,7 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const childDataBinding = dataBinder.resolve('/myChild1', 'BINDING');
@@ -717,8 +717,8 @@ describe('DataBinder', function () {
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('../../myChild1');
-      workspace.insert('myParent', PropertyFactory.create('NodeProperty', 'single'));
-      workspace.get('myParent').insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myParent', PropertyFactory.create('NodeProperty', 'single'));
+      workspace.root.get('myParent').insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myParent.myReferenceParent', 'BINDING');
@@ -739,18 +739,18 @@ describe('DataBinder', function () {
 
       // This should trigger the remove handler
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Now we have a two stage reference
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('../myReferenceParent');
-      workspace.get('myParent').insert('myReferenceParent2', referenceParentPSet2);
+      workspace.root.get('myParent').insert('myReferenceParent2', referenceParentPSet2);
 
       expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
@@ -764,14 +764,14 @@ describe('DataBinder', function () {
       // This should trigger the remove handler
       expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(2);
 
       // This should trigger the insert handler
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
-      workspace.insert('myChild1', childPset);
+     workspace.root.insert('myChild1', childPset);
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
 
@@ -780,7 +780,7 @@ describe('DataBinder', function () {
       referenceRemoveSpy.mockClear();
       // Insert with an already valid reference *below* us so that the relative path has no leading '..'
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
-      workspace.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
+      workspace.root.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('myChild2');
       // Triggered when our reference became valid
@@ -798,13 +798,13 @@ describe('DataBinder', function () {
 
       // This should trigger the remove handler
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.get('myParent').get('myReferenceParent').remove('myChild2');
+      workspace.root.get('myParent').get('myReferenceParent').remove('myChild2');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       referenceRemoveSpy.mockClear();
 
       // This should trigger the insert handler
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
-      workspace.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
+      workspace.root.get('myParent').get('myReferenceParent').insert('myChild2', childPset2);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
     });
@@ -834,7 +834,7 @@ describe('DataBinder', function () {
       ParentDataBinding.registerOnPath('topoRef.geoRef', ['modify'], referenceModifySpy);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('root', root);
+     workspace.root.insert('root', root);
 
       var textProp = geoMap.get(['foo', 'text']);
       expect(PropertyFactory.instanceOf(textProp, 'String', 'single')).toEqual(true);
@@ -860,28 +860,28 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
 
       // Insert a primitive value
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the modify on the reference property
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
-      workspace.get('string').setValue('newText');
+      workspace.root.get('string').setValue('newText');
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('string');
+      workspace.root.remove('string');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
       expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
     });
 
@@ -907,12 +907,12 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
 
       // Insert a primitive value
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
@@ -921,7 +921,7 @@ describe('DataBinder', function () {
 
       expect(refModifySpy).toHaveBeenCalledTimes(1);
 
-      workspace.remove(referenceParentPSet);
+      workspace.root.remove(referenceParentPSet);
 
       expect(refRemoveSpy).toHaveBeenCalledTimes(1);
     });
@@ -930,11 +930,11 @@ describe('DataBinder', function () {
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
       // Insert a primitive value
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER).setValue('/string');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       var refInsertSpy = jest.fn(function (in_context) {
         expect(in_context.getProperty()).toEqual(referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER));
@@ -961,7 +961,7 @@ describe('DataBinder', function () {
 
       expect(refModifySpy).toHaveBeenCalledTimes(1);
 
-      workspace.remove(referenceParentPSet);
+      workspace.root.remove(referenceParentPSet);
 
       expect(refRemoveSpy).toHaveBeenCalledTimes(1);
     });
@@ -990,33 +990,33 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
 
       // Insert a primitive value
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/string');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // This should not trigger the modify on the reference property
       expect(refModifySpy).toHaveBeenCalledTimes(0);
-      workspace.get('string').setValue('newText');
+      workspace.root.get('string').setValue('newText');
       expect(refModifySpy).toHaveBeenCalledTimes(0);
 
       // This should not trigger the remove handler
       expect(refRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('string');
+      workspace.root.remove('string');
       expect(refRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should not trigger the insert handler
       expect(refInsertSpy).toHaveBeenCalledTimes(1);
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
       expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the remove handler
       expect(refRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       expect(refRemoveSpy).toHaveBeenCalledTimes(1);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(refInsertSpy).toHaveBeenCalledTimes(2);
 
       refInsertSpy.mockClear();
@@ -1033,16 +1033,16 @@ describe('DataBinder', function () {
       expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the modify on the reference property
-      workspace.get('string').setValue('newText');
+      workspace.root.get('string').setValue('newText');
       expect(refModifySpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the remove handler
-      workspace.remove('string');
+      workspace.root.remove('string');
       expect(refRemoveSpy).toHaveBeenCalledTimes(0);
       expect(referencedRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should not trigger the insert handler
-      workspace.insert('string', PropertyFactory.create('String'));
+     workspace.root.insert('string', PropertyFactory.create('String'));
       expect(refInsertSpy).toHaveBeenCalledTimes(1);
 
       expect(refRemoveSpy).toHaveBeenCalledTimes(0);
@@ -1069,11 +1069,11 @@ describe('DataBinder', function () {
 
       // Insert a primitive value
       var nodeProp = PropertyFactory.create('NodeProperty');
-      workspace.insert('__registeredHandler', nodeProp);
+     workspace.root.insert('__registeredHandler', nodeProp);
       nodeProp.insert('__subProperty', PropertyFactory.create('String'));
 
       // Most basic case, insert with an already valid reference
-      workspace.insert('myNodeProperty', referenceParentPSet);
+     workspace.root.insert('myNodeProperty', referenceParentPSet);
       referenceParentPSet.insert('__registeredDataBindingHandlers', PropertyFactory.create('Reference', undefined,
         '/__registeredHandler'));
 
@@ -1117,15 +1117,15 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
 
       // We insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // references resolved, we get an insert
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
@@ -1158,25 +1158,25 @@ describe('DataBinder', function () {
 
       // This should trigger the remove handler
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
-      workspace.remove('myChild2');
+      workspace.root.remove('myChild2');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
 
       // This should trigger the insert handler
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild2', childPset2);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Make sure the old handlers have been removed
       childPset1.get('text').setValue('newText');
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
 
       // Make sure, removing a reference also removes its
       // bound callbacks
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
 
       // This should no longer trigger the modify on the reference property
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
@@ -1221,14 +1221,14 @@ describe('DataBinder', function () {
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
       // insert our target properties
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('nodeParent', nodeParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('nodeParent', nodeParentPSet);
       nodeParentPSet.insert('child1', PropertyFactory.create(ChildTemplate.typeid, 'single'));
       // We insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/invalid_ref_value');
@@ -1321,14 +1321,14 @@ describe('DataBinder', function () {
         // This should trigger the remove handler
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
         doubleReferenceRemoveSpy.mockClear();
-        workspace.remove('myChild1');
+        workspace.root.remove('myChild1');
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // the insert was already called once when the reference was made valid
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
         doubleReferenceInsertSpy.mockClear();
-        workspace.insert('myChild1', childPset1);
+       workspace.root.insert('myChild1', childPset1);
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
 
         expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(2 * in_increment);
@@ -1339,28 +1339,28 @@ describe('DataBinder', function () {
       };
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // Create a second parent
       referenceParentPSet2.get(hopName, RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
       // We insert with an already valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // This should trigger the modify on the reference property
       runTests(1, 1);
 
       // This should unbind the tests
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       runTests(1, 1);
 
       // Changing the reference should unbind all tests again
@@ -1374,11 +1374,11 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Now delete the node in the middle of the reference chain
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       runTests(1, 1);
 
       // Changing the nested reference should also unbind all tests
@@ -1392,10 +1392,10 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Test the same for dynamically inserting and removing references
-      workspace.remove('myReferenceParent2', referenceParentPSet2);
-      workspace.remove('myReferenceParent', referenceParentPSet);
-      workspace.insert('myReferenceParent2', nodeParentPSet2);
-      workspace.insert('myReferenceParent', nodeParentPSet);
+      workspace.root.remove('myReferenceParent2', referenceParentPSet2);
+      workspace.root.remove('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent2', nodeParentPSet2);
+     workspace.root.insert('myReferenceParent', nodeParentPSet);
       nodeParentPSet2.insert(hopName, PropertyFactory.create('Reference', undefined, '/myChild1'));
       nodeParentPSet.insert('single_ref', PropertyFactory.create('Reference', undefined, '/myReferenceParent2'));
       runTests(1, 2);
@@ -1419,9 +1419,9 @@ describe('DataBinder', function () {
 
     it('should give the right databinding going through references', () => {
       const myData = PropertyFactory.create(ChildTemplate.typeid);
-      workspace.insert('myData', myData);
+     workspace.root.insert('myData', myData);
       const myOtherData = PropertyFactory.create(ChildTemplate.typeid);
-      workspace.insert('myOtherData', myOtherData);
+     workspace.root.insert('myOtherData', myOtherData);
 
       // Set up a chain; ref3 points to ref2 points to ref1 points to myData
       const myReferences = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
@@ -1429,7 +1429,7 @@ describe('DataBinder', function () {
         ref2: 'ref1',
         ref3: 'ref2'
       });
-      workspace.insert('myReferences', myReferences);
+     workspace.root.insert('myReferences', myReferences);
 
       dataBinder.register('BINDING', 'String', ChildDataBinding);
 
@@ -1506,7 +1506,7 @@ describe('DataBinder', function () {
 
     it('should give the right property in a primitive array', () => {
       const myData = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
-      workspace.insert('myData', myData);
+     workspace.root.insert('myData', myData);
 
       const stringArray = myData.get('arrayOfStrings');
 
@@ -1565,25 +1565,25 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // We insert with a not yet valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // Create a second parent
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(1);
 
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild2');
       expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
 
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1609,18 +1609,18 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // We insert with a not yet valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // Create a second parent
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(1);
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(0);
 
@@ -1635,7 +1635,7 @@ describe('DataBinder', function () {
       expect(doublyReferencedModifySpy).toHaveBeenCalledTimes(1);
 
       // Now remove the reference completely; we should get a remove
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
@@ -1665,18 +1665,18 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'all' });
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // We insert with a not yet valid reference
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // Create a second parent
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(1);
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(0);
 
@@ -1687,12 +1687,12 @@ describe('DataBinder', function () {
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(1);
 
       // Now remove the reference completely; we should get a remove
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(2);
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
       // Put the intermediate node back
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
       // Currently, inserting it back again does not fire the insert
       // LYNXDEV-7596
@@ -1700,7 +1700,7 @@ describe('DataBinder', function () {
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(2);
 
       // Now remove the reference completely; we should get a remove
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       expect(doublyReferencedInsertSpy).toHaveBeenCalledTimes(3);
       expect(doublyReferencedRemoveSpy).toHaveBeenCalledTimes(3);
     });
@@ -1717,7 +1717,7 @@ describe('DataBinder', function () {
       ChildDataBinding.registerOnPath('text', ['referenceRemove'], referenceRemoveSpy);
 
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'single' });
-      workspace.insert('theChild', myChild);
+     workspace.root.insert('theChild', myChild);
       myChild.get('text').setValue('Hi!');
 
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
@@ -1735,9 +1735,9 @@ describe('DataBinder', function () {
       var baseTexture = PropertyFactory.create(DoubleReferenceParentTemplate.typeid);
       var image = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
 
-      workspace.insert('bound', bound);
-      workspace.insert('baseTexture', baseTexture);
-      workspace.insert('image', image);
+     workspace.root.insert('bound', bound);
+     workspace.root.insert('baseTexture', baseTexture);
+     workspace.root.insert('image', image);
 
       baseTexture.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
@@ -1759,9 +1759,9 @@ describe('DataBinder', function () {
 
       material.insert('metal_f0', metal_f0);
 
-      workspace.insert('material', material);
-      workspace.insert('texturemap', texturemap);
-      workspace.insert('image', image);
+     workspace.root.insert('material', material);
+     workspace.root.insert('texturemap', texturemap);
+     workspace.root.insert('image', image);
 
       texturemap.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
@@ -1783,9 +1783,9 @@ describe('DataBinder', function () {
 
       material.insert('metal_f0', metal_f0);
 
-      workspace.insert('material', material);
-      workspace.insert('texturemap', texturemap);
-      workspace.insert('image', image);
+     workspace.root.insert('material', material);
+     workspace.root.insert('texturemap', texturemap);
+     workspace.root.insert('image', image);
 
       metal_f0.get(['ref_ref'], RESOLVE_NEVER).setValue('/texturemap');
 
@@ -1807,9 +1807,9 @@ describe('DataBinder', function () {
 
       material.insert('metal_f0', metal_f0);
 
-      workspace.insert('material', material);
-      workspace.insert('texturemap', texturemap);
-      workspace.insert('image', image);
+     workspace.root.insert('material', material);
+     workspace.root.insert('texturemap', texturemap);
+     workspace.root.insert('image', image);
 
       texturemap.get('ref_ref', RESOLVE_NEVER).setValue('/image');
 
@@ -1831,7 +1831,7 @@ describe('DataBinder', function () {
       ChildDataBinding.registerOnPath('text', ['collectionRemove'], collectionRemoveSpy);
 
       dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding, { context: 'single' });
-      workspace.insert('theChild', myChild);
+     workspace.root.insert('theChild', myChild);
       myChild.get('text').setValue('Hi!');
 
       expect(collectionInsertSpy).toHaveBeenCalledTimes(0);
@@ -1866,10 +1866,10 @@ describe('DataBinder', function () {
       // insert with a dangling reference that contains [] and a number key
       referenceParentPSet.get('single_prim_ref', RESOLVE_NEVER)
         .setValue('/myMapContainer.subMap[10]');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       var mapContainerPset = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
-      workspace.insert('myMapContainer', mapContainerPset);
+     workspace.root.insert('myMapContainer', mapContainerPset);
 
       // This should not trigger anything, since we're inserting into a non-referenced path in the map
       mapContainerPset.get('subMap').insert('5', PropertyFactory.create(ChildTemplate.typeid, 'single'));
@@ -1920,7 +1920,7 @@ describe('DataBinder', function () {
 
       // Create reference parent psets
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // create the chain
       referenceParentPSet.get('ref1', RESOLVE_NEVER)
@@ -1934,7 +1934,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
         referenceInsertSpy[i].mockClear();
@@ -1944,7 +1944,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 4; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.get('myString').setValue('hello');
+      workspace.root.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
         referenceModifySpy[i].mockClear();
@@ -1954,22 +1954,22 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.remove('myString');
+      workspace.root.remove('myString');
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
         referenceRemoveSpy[i].mockClear();
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
 
       // Check whether modifying the references works
-      workspace.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
+     workspace.root.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
       referenceParentPSet.get('ref4', RESOLVE_NEVER)
         .setValue('/myString2');
       referenceParentPSet.get('ref2', RESOLVE_NEVER)
         .setValue('/myReferenceParent.ref4');
 
       // The old handler should no longer trigger
-      workspace.get('myString').setValue('hello2');
+      workspace.root.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
@@ -1980,7 +1980,7 @@ describe('DataBinder', function () {
       referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
-      workspace.get('myString2').setValue('hello2');
+      workspace.root.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
         referenceModifySpy[handlers[i]].mockClear();
@@ -2012,42 +2012,42 @@ describe('DataBinder', function () {
       referenceParentPSet.get('array_ref').set(0, ('/alsoMyChildTemplate'));
       referenceParentPSet.get('array_ref').set(2, ('/myChildTemplate'));
 
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // This shouldn't trigger anything
-      workspace.insert('alsoMyChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
+     workspace.root.insert('alsoMyChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the insert handler (but not the modify/remove handlers)
-      workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
+     workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid, 'single'));
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This shouldn't trigger anything
-      workspace.get('alsoMyChildTemplate').get('text').setValue('hello');
+      workspace.root.get('alsoMyChildTemplate').get('text').setValue('hello');
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This also shouldn't trigger anything
-      workspace.remove('alsoMyChildTemplate');
+      workspace.root.remove('alsoMyChildTemplate');
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger the modify handler (but not the insert/remove handlers)
-      workspace.get('myChildTemplate').get('text').setValue('hello');
+      workspace.root.get('myChildTemplate').get('text').setValue('hello');
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       referenceModifySpy.mockClear();
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // This should trigger remove handler (but not the insert/modify handler)
-      workspace.remove('myChildTemplate');
+      workspace.root.remove('myChildTemplate');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       referenceRemoveSpy.mockClear();
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -2072,15 +2072,15 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
       expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
-      workspace.insert('myChild1', arrayPset1);
-      workspace.insert('myChild2', arrayPset2);
+     workspace.root.insert('myChild1', arrayPset1);
+     workspace.root.insert('myChild2', arrayPset2);
 
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1.subArray');
@@ -2140,15 +2140,15 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve('/myReferenceParent', 'BINDING');
       expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
-      workspace.insert('myChild1', arrayPset1);
-      workspace.insert('myChild2', arrayPset2);
+     workspace.root.insert('myChild1', arrayPset1);
+     workspace.root.insert('myChild2', arrayPset2);
 
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
@@ -2209,14 +2209,14 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
       expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
-      workspace.insert('myChild1', mapPset1);
-      workspace.insert('myChild2', mapPset2);
+     workspace.root.insert('myChild1', mapPset1);
+     workspace.root.insert('myChild2', mapPset2);
 
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1.subMap');
@@ -2268,14 +2268,14 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
       expect(parentDataBinding.onModify).toHaveBeenCalledTimes(0);
       parentDataBinding.onModify.mockClear();
-      workspace.insert('myChild1', mapPset1);
-      workspace.insert('myChild2', mapPset2);
+     workspace.root.insert('myChild1', mapPset1);
+     workspace.root.insert('myChild2', mapPset2);
 
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
@@ -2326,8 +2326,8 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent1', doubleReferenceParentPSet1);
-      workspace.insert('myReferenceParent2', doubleReferenceParentPSet2);
+     workspace.root.insert('myReferenceParent1', doubleReferenceParentPSet1);
+     workspace.root.insert('myReferenceParent2', doubleReferenceParentPSet2);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
@@ -2338,8 +2338,8 @@ describe('DataBinder', function () {
       expect(parentDataBinding2).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding2.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding2.onModify.mockClear();
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
       dataBinder._resetDebugCounters();
 
@@ -2384,7 +2384,7 @@ describe('DataBinder', function () {
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild2.text');
       parentDataBinding1.onModify.mockClear();
-      workspace.remove(doubleReferenceParentPSet2);
+      workspace.root.remove(doubleReferenceParentPSet2);
       // change the *value* of the reference (i.e. the "pointed to" object) again
       childPset2.get('text').value = 'hello2';
       // we should not get a notification on either parents as we've removed the 2nd reference prop pointing to this
@@ -2414,9 +2414,9 @@ describe('DataBinder', function () {
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent1', doubleReferenceParentPSet1);
-      workspace.insert('myReferenceParent2', doubleReferenceParentPSet2);
-      workspace.insert('myReferenceParent3', doubleReferenceParentPSet3);
+     workspace.root.insert('myReferenceParent1', doubleReferenceParentPSet1);
+     workspace.root.insert('myReferenceParent2', doubleReferenceParentPSet2);
+     workspace.root.insert('myReferenceParent3', doubleReferenceParentPSet3);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve('/myReferenceParent1', 'BINDING');
@@ -2431,7 +2431,7 @@ describe('DataBinder', function () {
       expect(parentDataBinding3).toBeInstanceOf(ParentDataBinding);
       expect(parentDataBinding3.onModify).toHaveBeenCalledTimes(1);
       parentDataBinding3.onModify.mockClear();
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
 
@@ -2504,7 +2504,7 @@ describe('DataBinder', function () {
       expect(modificationContext.length).toEqual(1);
       expect(modificationContext[0].getAbsolutePath()).toEqual('myChild1.text');
       parentDataBinding1.onModify.mockClear();
-      workspace.remove(doubleReferenceParentPSet3);
+      workspace.root.remove(doubleReferenceParentPSet3);
       // change the *value* of the reference (i.e. the "pointed to" object) again
       childPset1.get('text').value = 'hello2';
       // we should not get a notification on either parents as we've removed the 2nd reference prop pointing to this
@@ -2532,9 +2532,9 @@ describe('DataBinder', function () {
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent1', referenceParentPSet1);
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
-      workspace.insert('myReferenceParent3', referenceParentPSet3);
+     workspace.root.insert('myReferenceParent1', referenceParentPSet1);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent3', referenceParentPSet3);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
@@ -2554,7 +2554,7 @@ describe('DataBinder', function () {
         .setValue('/myChild1');
       referenceParentPSet3.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(3);
       referenceInsertSpy.mockClear();
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
@@ -2568,7 +2568,7 @@ describe('DataBinder', function () {
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove should trigger the remove handler
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(3);
@@ -2577,9 +2577,9 @@ describe('DataBinder', function () {
 
     it('not follow references if there aren no exactPaths', function () {
       const a = PropertyFactory.create(ParentTemplate.typeid, 'single');
-      workspace.insert('a', a);
-      workspace.insert('ref', PropertyFactory.create('Reference', 'single'));
-      workspace.getRoot().get('ref', RESOLVE_NEVER).setValue('/a');
+     workspace.root.insert('a', a);
+     workspace.root.insert('ref', PropertyFactory.create('Reference', 'single'));
+      workspace.root.get('ref', RESOLVE_NEVER).setValue('/a');
 
       dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding);
 
@@ -2591,11 +2591,11 @@ describe('DataBinder', function () {
       const a = PropertyFactory.create('NodeProperty', 'single');
       const b = PropertyFactory.create('NodeProperty', 'single');
 
-      workspace.insert('a', a);
+     workspace.root.insert('a', a);
       a.insert('ref', PropertyFactory.create('Reference', 'single'));
       a.get('ref', RESOLVE_NEVER).setValue('/b');
 
-      workspace.insert('b', b);
+     workspace.root.insert('b', b);
       b.insert('ref', PropertyFactory.create('Reference', 'single'));
       b.get('ref', RESOLVE_NEVER).setValue('/a');
 
@@ -2608,11 +2608,11 @@ describe('DataBinder', function () {
       const a = PropertyFactory.create('NodeProperty', 'single');
       const b = PropertyFactory.create('NodeProperty', 'single');
 
-      workspace.insert('a', a);
+     workspace.root.insert('a', a);
       a.insert('ref', PropertyFactory.create('Reference', 'array'));
       a.get('ref', RESOLVE_NEVER).push('/b');
 
-      workspace.insert('b', b);
+     workspace.root.insert('b', b);
       b.insert('ref', PropertyFactory.create('Reference', 'array'));
       b.get('ref', RESOLVE_NEVER).push('/a');
 
@@ -2625,11 +2625,11 @@ describe('DataBinder', function () {
       const a = PropertyFactory.create('NodeProperty', 'single');
       const b = PropertyFactory.create('NodeProperty', 'single');
 
-      workspace.insert('a', a);
+     workspace.root.insert('a', a);
       a.insert('ref', PropertyFactory.create('Reference', 'map'));
       a.get('ref', RESOLVE_NEVER).insert('b', '/b');
 
-      workspace.insert('b', b);
+     workspace.root.insert('b', b);
       b.insert('ref', PropertyFactory.create('Reference', 'map'));
       b.get('ref', RESOLVE_NEVER).insert('a', '/a');
 
@@ -2640,9 +2640,9 @@ describe('DataBinder', function () {
 
     it('follow references if there is an exactPath', function () {
       const a = PropertyFactory.create(ParentTemplate.typeid, 'single');
-      workspace.insert('a', a);
-      workspace.insert('ref', PropertyFactory.create('Reference', 'single'));
-      workspace.getRoot().get('ref', RESOLVE_NEVER).setValue('/a');
+     workspace.root.insert('a', a);
+     workspace.root.insert('ref', PropertyFactory.create('Reference', 'single'));
+      workspace.root.get('ref', RESOLVE_NEVER).setValue('/a');
 
       dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding, {
         exactPath: 'ref'
@@ -2654,9 +2654,9 @@ describe('DataBinder', function () {
 
     it('follow references if there is an exactPath in arrays', function () {
       const a = PropertyFactory.create(ParentTemplate.typeid, 'single');
-      workspace.insert('a', a);
-      workspace.insert('refArray', PropertyFactory.create('Reference', 'array'));
-      workspace.getRoot().get('refArray').push('/a');
+     workspace.root.insert('a', a);
+     workspace.root.insert('refArray', PropertyFactory.create('Reference', 'array'));
+      workspace.root.get('refArray').push('/a');
 
       dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding, {
         exactPath: 'refArray[0]'
@@ -2691,9 +2691,9 @@ describe('DataBinder', function () {
       // Register the DataBinding
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent1', referenceParentPSet1);
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
-      workspace.insert('myReferenceParent3', referenceParentPSet3);
+     workspace.root.insert('myReferenceParent1', referenceParentPSet1);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent3', referenceParentPSet3);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(3);
       dataBinder._resetDebugCounters();
       const parentDataBinding1 = dataBinder.resolve(referenceParentPSet1, 'BINDING');
@@ -2726,7 +2726,7 @@ describe('DataBinder', function () {
 
       referenceParentPSet3.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(2);
       referenceInsertSpy.mockClear();
       expect(referenceModifySpy).toHaveBeenCalledTimes(0); // TODO: this gets called here
@@ -2750,7 +2750,7 @@ describe('DataBinder', function () {
       expect(referenceReferenceRemoveSpy).toHaveBeenCalledTimes(0);
 
       // remove should trigger the remove handler
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       expect(referenceModifySpy).toHaveBeenCalledTimes(0);
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(2);
@@ -2776,30 +2776,30 @@ describe('DataBinder', function () {
 
       // We insert the object with the reference within the array to make sure, the evaluation
       // order by DataBindingManger is as expected
-      workspace.insert('array', PropertyFactory.create(undefined, 'array'));
-      workspace.get('array').push(PropertyFactory.create(ChildTemplate.typeid));
-      workspace.get('array').push(PropertyFactory.create(ReferenceParentTemplate.typeid));
-      workspace.get('array').push(PropertyFactory.create('NodeProperty'));
-      workspace.get('array').push(PropertyFactory.create(ChildTemplate.typeid));
+     workspace.root.insert('array', PropertyFactory.create(undefined, 'array'));
+      workspace.root.get('array').push(PropertyFactory.create(ChildTemplate.typeid));
+      workspace.root.get('array').push(PropertyFactory.create(ReferenceParentTemplate.typeid));
+      workspace.root.get('array').push(PropertyFactory.create('NodeProperty'));
+      workspace.root.get('array').push(PropertyFactory.create(ChildTemplate.typeid));
 
-      var reference = workspace.get(['array', 1, 'single_ref'],
+      var reference = workspace.root.get(['array', 1, 'single_ref'],
         RESOLVE_NEVER);
-      workspace.get(['array', 2]).insert('ref', PropertyFactory.create('Reference'));
-      var reference2 = workspace.get(['array', 2, 'ref'],
+      workspace.root.get(['array', 2]).insert('ref', PropertyFactory.create('Reference'));
+      var reference2 = workspace.root.get(['array', 2, 'ref'],
         RESOLVE_NEVER);
 
       reference.setValue('/array[0]');
-      workspace.get(['array', 0, 'text']).setValue('changed');
+      workspace.root.get(['array', 0, 'text']).setValue('changed');
       expect(referenceModifySpy.mock.calls.length).toEqual(1);
 
       referenceModifySpy.mockClear();
 
       // When a reference is changed a modification should no longer result
       // in a modify event
-      workspace.pushModifiedEventScope();
+      workspace.pushNotificationDelayScope();
       reference.setValue('/array[3]');
-      workspace.get(['array', 0, 'text']).setValue('changed2');
-      workspace.popModifiedEventScope();
+      workspace.root.get(['array', 0, 'text']).setValue('changed2');
+      workspace.popNotificationDelayScope();
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       reference2.setValue('/array[0]');
@@ -2807,36 +2807,36 @@ describe('DataBinder', function () {
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // This should also work for chained references
-      workspace.pushModifiedEventScope();
+      workspace.pushNotificationDelayScope();
       reference.setValue('/array[3]');
-      workspace.get(['array', 0, 'text']).setValue('changed3');
-      workspace.popModifiedEventScope();
+      workspace.root.get(['array', 0, 'text']).setValue('changed3');
+      workspace.popNotificationDelayScope();
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // This should also work and for multi-hop references
       reference.setValue('/array[2]');
       reference2.setValue('/array[0]');
-      workspace.pushModifiedEventScope();
+      workspace.pushNotificationDelayScope();
       reference2.setValue('/array[3]');
-      workspace.get(['array', 0, 'text']).setValue('changed4');
-      workspace.popModifiedEventScope();
+      workspace.root.get(['array', 0, 'text']).setValue('changed4');
+      workspace.popNotificationDelayScope();
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // And when removing the referencing property
       reference.setValue('/array[2]');
       reference2.setValue('/array[0]');
-      workspace.pushModifiedEventScope();
-      workspace.get(['array', 2]).remove('ref');
-      workspace.get(['array', 0, 'text']).setValue('changed5');
-      workspace.popModifiedEventScope();
+      workspace.pushNotificationDelayScope();
+      workspace.root.get(['array', 2]).remove('ref');
+      workspace.root.get(['array', 0, 'text']).setValue('changed5');
+      workspace.popNotificationDelayScope();
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
 
       // Or when inserting the referencing property
       reference.setValue('/array[2]');
-      workspace.pushModifiedEventScope();
-      workspace.get(['array', 2]).insert('ref', PropertyFactory.create('Reference', undefined, '/array[3]'));
-      workspace.get(['array', 3, 'text']).setValue('changed6');
-      workspace.popModifiedEventScope();
+      workspace.pushNotificationDelayScope();
+      workspace.root.get(['array', 2]).insert('ref', PropertyFactory.create('Reference', undefined, '/array[3]'));
+      workspace.root.get(['array', 3, 'text']).setValue('changed6');
+      workspace.popNotificationDelayScope();
       expect(referenceModifySpy.mock.calls.length).toEqual(0);
     });
 
@@ -2872,14 +2872,14 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // Most basic case, insert with an already valid reference
       expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
@@ -2890,12 +2890,12 @@ describe('DataBinder', function () {
       expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // Remove our referenced node: this should trigger the referenceChange spy
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // Reinsert our referenced node: this  should also trigger the referenceChange spy
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
@@ -2906,7 +2906,7 @@ describe('DataBinder', function () {
       referenceChangedSpy.mockClear();
       expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
       referenceBoundSpy.mockClear();
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
@@ -2917,7 +2917,7 @@ describe('DataBinder', function () {
       expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       expect(referenceBoundSpy).toHaveBeenCalledTimes(0);
       // reinsert with an invalid reference -> the ref. path is already undefined, it won't trigger referenceChanged
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceChangedSpy).toHaveBeenCalledTimes(0);
       // but should trigger the reference bound spy
       expect(referenceBoundSpy).toHaveBeenCalledTimes(1);
@@ -2947,14 +2947,14 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // Most basic case, insert with an already valid reference
       expect(referenceSpy).toHaveBeenCalledTimes(0);
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       // should not trigger as we only listen to modify events
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
@@ -2964,19 +2964,19 @@ describe('DataBinder', function () {
       referenceSpy.mockClear();
 
       // Remove the referenced Property: this should not trigger
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Reinsert the referenced Property: this  should not trigger either
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Remove the reference: this should not trigger
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Reinsert the reference: this should not trigger
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // Change the reference to something else -> should trigger
@@ -2986,13 +2986,13 @@ describe('DataBinder', function () {
       referenceSpy.mockClear();
 
       // Remove the reference again, and set it to an invalid path, should not trigger
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/invalid');
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // reinsert again (with invalid path), should not trigger
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(referenceSpy).toHaveBeenCalledTimes(0);
 
       // set it to a valid path -> should trigger
@@ -3016,15 +3016,15 @@ describe('DataBinder', function () {
 
       // Most basic case, insert with an already valid reference
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(7);  // seven types of references in ReferenceParentTemplate
       dataBinder._resetDebugCounters();
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       // now unregister for 'Reference' and register for 'array<Reference>'
       regKey.destroy();
       dataBinder.register('BINDING', 'array<Reference>', ParentDataBinding);
       // reinsert pset
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     });
 
@@ -3074,9 +3074,9 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -3114,14 +3114,14 @@ describe('DataBinder', function () {
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       referenceModifySpy.mockClear();
       // should trigger the remove spy
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       referenceRemoveSpy.mockClear();
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       // should trigger the insert spy
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
       // this should also trigger the referenceChanged spy
@@ -3137,11 +3137,11 @@ describe('DataBinder', function () {
       expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
       otherReferenceModifySpy.mockClear();
       // should trigger the remove spy
-      workspace.remove('myChild2');
+      workspace.root.remove('myChild2');
       expect(otherReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       otherReferenceRemoveSpy.mockClear();
       // should trigger the insert spy
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild2', childPset2);
       expect(otherReferenceInsertSpy).toHaveBeenCalledTimes(1);
       otherReferenceInsertSpy.mockClear();
       // should still trigger the original modify spy
@@ -3198,7 +3198,7 @@ describe('DataBinder', function () {
 
       // Create the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // create the chain
       var referenceMap = referenceParentPSet.get('map_ref');
@@ -3213,7 +3213,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
         referenceInsertSpy[i].mockClear();
@@ -3223,7 +3223,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.get('myString').setValue('hello');
+      workspace.root.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
         referenceModifySpy[i].mockClear();
@@ -3233,22 +3233,22 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.remove('myString');
+      workspace.root.remove('myString');
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
         referenceRemoveSpy[i].mockClear();
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
 
       // Check whether modifying the references works
-      workspace.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
+     workspace.root.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
       referenceParentPSet.get('ref3', RESOLVE_NEVER)
         .setValue('/myString2');
       referenceParentPSet.get('ref1', RESOLVE_NEVER)
         .setValue('/myReferenceParent.ref3');
 
       // The old handler should no longer trigger
-      workspace.get('myString').setValue('hello2');
+      workspace.root.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
@@ -3259,7 +3259,7 @@ describe('DataBinder', function () {
       referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
-      workspace.get('myString2').setValue('hello2');
+      workspace.root.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
         referenceModifySpy[handlers[i]].mockClear();
@@ -3302,7 +3302,7 @@ describe('DataBinder', function () {
 
       // Create the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // create the chain
       referenceParentPSet.get('ref1', RESOLVE_NEVER)
@@ -3317,7 +3317,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
         referenceInsertSpy[i].mockClear();
@@ -3327,7 +3327,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.get('myString').setValue('hello');
+      workspace.root.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
         referenceModifySpy[i].mockClear();
@@ -3337,22 +3337,22 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.remove('myString');
+      workspace.root.remove('myString');
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
         referenceRemoveSpy[i].mockClear();
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
 
       // Check whether modifying the references works
-      workspace.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
+     workspace.root.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
       referenceParentPSet.get('ref3', RESOLVE_NEVER)
         .setValue('/myString2');
       referenceParentPSet.get('ref1', RESOLVE_NEVER)
         .setValue('/myReferenceParent.ref3');
 
       // The old handler should no longer trigger
-      workspace.get('myString').setValue('hello2');
+      workspace.root.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
@@ -3363,7 +3363,7 @@ describe('DataBinder', function () {
       referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
-      workspace.get('myString2').setValue('hello2');
+      workspace.root.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
         referenceModifySpy[handlers[i]].mockClear();
@@ -3446,13 +3446,13 @@ describe('DataBinder', function () {
         // This should trigger the remove handler
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
         doubleReferenceRemoveSpy.mockClear();
-        workspace.remove('myChild1');
+        workspace.root.remove('myChild1');
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // It will already have been called once when the reference became valid
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
-        workspace.insert('myChild1', childPset1);
+       workspace.root.insert('myChild1', childPset1);
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(2 * in_increment);
 
         expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount + 2 * in_increment);
@@ -3462,28 +3462,28 @@ describe('DataBinder', function () {
         doubleReferenceRefChangedSpy.mockClear();
       };
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // Create a second parent
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
       // We insert with an already valid reference
       var mapRef = referenceParentPSet.get('map_ref');
       mapRef.insert('a', '/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // This should trigger the modify on the reference property
       runTests(1, 1);
 
       // This should unbind the tests
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       runTests(1, 1);
 
       // Changing the reference should unbind all tests again
@@ -3495,11 +3495,11 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Now delete the node in the middle of the reference chain
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       runTests(1, 1);
 
       // Changing the nested reference should also unbind all tests
@@ -3513,10 +3513,10 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Test the same for dynamically inserting and removing references
-      workspace.remove('myReferenceParent2', referenceParentPSet2);
-      workspace.remove('myReferenceParent', referenceParentPSet);
-      workspace.insert('myReferenceParent2', nodeParentPSet2);
-      workspace.insert('myReferenceParent', nodeParentPSet);
+      workspace.root.remove('myReferenceParent2', referenceParentPSet2);
+      workspace.root.remove('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent2', nodeParentPSet2);
+     workspace.root.insert('myReferenceParent', nodeParentPSet);
       nodeParentPSet2.insert('single_ref', PropertyFactory.create('Reference', undefined, '/myChild1'));
       nodeParentPSet.insert('map_ref', PropertyFactory.create('Reference', 'map'));
       var nodeParentMapRef = nodeParentPSet.get('map_ref');
@@ -3580,9 +3580,9 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -3689,9 +3689,9 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -3731,14 +3731,14 @@ describe('DataBinder', function () {
       expect(referenceModifySpy).toHaveBeenCalledTimes(1);
       referenceModifySpy.mockClear();
       // should trigger the remove spy
-      workspace.remove('myChild1');
+      workspace.root.remove('myChild1');
       expect(referenceRemoveSpy).toHaveBeenCalledTimes(1);
       referenceRemoveSpy.mockClear();
       // this should also trigger the referenceChanged spy
       expect(referenceChangedSpy).toHaveBeenCalledTimes(1);
       referenceChangedSpy.mockClear();
       // should trigger the insert spy
-      workspace.insert('myChild1', childPset1);
+     workspace.root.insert('myChild1', childPset1);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
       referenceInsertSpy.mockClear();
       // this should also trigger the referenceChanged spy
@@ -3750,11 +3750,11 @@ describe('DataBinder', function () {
       expect(otherReferenceModifySpy).toHaveBeenCalledTimes(1);
       otherReferenceModifySpy.mockClear();
       // should trigger the remove spy
-      workspace.remove('myChild2');
+      workspace.root.remove('myChild2');
       expect(otherReferenceRemoveSpy).toHaveBeenCalledTimes(1);
       otherReferenceRemoveSpy.mockClear();
       // should trigger the insert spy
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild2', childPset2);
       expect(otherReferenceInsertSpy).toHaveBeenCalledTimes(1);
       otherReferenceInsertSpy.mockClear();
       // should still trigger the original modify spy
@@ -3810,7 +3810,7 @@ describe('DataBinder', function () {
 
       // Create the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // create the chain
       var referenceArray = referenceParentPSet.get('array_ref');
@@ -3825,7 +3825,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
       for (i = 0; i < 3; ++i) {
         expect(referenceInsertSpy[i]).toHaveBeenCalledTimes(1);
         referenceInsertSpy[i].mockClear();
@@ -3835,7 +3835,7 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.get('myString').setValue('hello');
+      workspace.root.get('myString').setValue('hello');
       for (i = 0; i < 3; ++i) {
         expect(referenceModifySpy[i]).toHaveBeenCalledTimes(1);
         referenceModifySpy[i].mockClear();
@@ -3845,22 +3845,22 @@ describe('DataBinder', function () {
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(0);
       }
-      workspace.remove('myString');
+      workspace.root.remove('myString');
       for (i = 0; i < 3; ++i) {
         expect(referenceRemoveSpy[i]).toHaveBeenCalledTimes(1);
         referenceRemoveSpy[i].mockClear();
       }
-      workspace.insert('myString', PropertyFactory.create('String', 'single'));
+     workspace.root.insert('myString', PropertyFactory.create('String', 'single'));
 
       // Check whether modifying the references works
-      workspace.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
+     workspace.root.insert('myString2', PropertyFactory.create('String', 'single', 'string2'));
       referenceParentPSet.get('ref3', RESOLVE_NEVER)
         .setValue('/myString2');
       referenceParentPSet.get('ref1', RESOLVE_NEVER)
         .setValue('/myReferenceParent.ref3');
 
       // The old handler should no longer trigger
-      workspace.get('myString').setValue('hello2');
+      workspace.root.get('myString').setValue('hello2');
       var handlers = [0, 1, 3];
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(0);
@@ -3871,7 +3871,7 @@ describe('DataBinder', function () {
       referenceModifySpy[2].mockClear();
 
       // The new handler should now trigger instead
-      workspace.get('myString2').setValue('hello2');
+      workspace.root.get('myString2').setValue('hello2');
       for (i = 0; i < handlers.length; i++) {
         expect(referenceModifySpy[handlers[i]]).toHaveBeenCalledTimes(1);
         referenceModifySpy[handlers[i]].mockClear();
@@ -3953,13 +3953,13 @@ describe('DataBinder', function () {
         // This should trigger the remove handler
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_refChangedCount - in_increment);
         doubleReferenceRemoveSpy.mockClear();
-        workspace.remove('myChild1');
+        workspace.root.remove('myChild1');
         expect(doubleReferenceRemoveSpy).toHaveBeenCalledTimes(in_increment);
 
         // This should trigger the insert handler
         // It may have been called once when the insert reference became valid
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(in_increment);
-        workspace.insert('myChild1', childPset1);
+       workspace.root.insert('myChild1', childPset1);
         expect(doubleReferenceInsertSpy).toHaveBeenCalledTimes(2 * in_increment);
 
         expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount + 2 * in_increment);
@@ -3969,28 +3969,28 @@ describe('DataBinder', function () {
         doubleReferenceRefChangedSpy.mockClear();
       };
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
 
       // Create a second parent
       referenceParentPSet2.get('single_ref', RESOLVE_NEVER)
         .setValue('/myChild1');
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
       // We insert with an already valid reference
       var arrayRef = referenceParentPSet.get('array_ref');
       arrayRef.push('/myReferenceParent2');
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
 
       // This should trigger the modify on the reference property
       runTests(1, 1);
 
       // This should unbind the tests
-      workspace.remove('myReferenceParent');
+      workspace.root.remove('myReferenceParent');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       runTests(1, 1);
 
       // Changing the reference should unbind all tests again
@@ -4002,11 +4002,11 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Now delete the node in the middle of the reference chain
-      workspace.remove('myReferenceParent2');
+      workspace.root.remove('myReferenceParent2');
       runTests(0, 1);
 
       // Restore the references
-      workspace.insert('myReferenceParent2', referenceParentPSet2);
+     workspace.root.insert('myReferenceParent2', referenceParentPSet2);
       runTests(1, 1);
 
       // Changing the nested reference should also unbind all tests
@@ -4020,10 +4020,10 @@ describe('DataBinder', function () {
       runTests(1, 1);
 
       // Test the same for dynamically inserting and removing references
-      workspace.remove('myReferenceParent2', referenceParentPSet2);
-      workspace.remove('myReferenceParent', referenceParentPSet);
-      workspace.insert('myReferenceParent2', nodeParentPSet2);
-      workspace.insert('myReferenceParent', nodeParentPSet);
+      workspace.root.remove('myReferenceParent2', referenceParentPSet2);
+      workspace.root.remove('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent2', nodeParentPSet2);
+     workspace.root.insert('myReferenceParent', nodeParentPSet);
       nodeParentPSet2.insert('single_ref', PropertyFactory.create('Reference', undefined, '/myChild1'));
       nodeParentPSet.insert('array_ref', PropertyFactory.create('Reference', 'array'));
       var nodeParentArrayRef = nodeParentPSet.get('array_ref');
@@ -4082,9 +4082,9 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -4153,9 +4153,9 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
       dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('myChild1', childPset1);
-      workspace.insert('myChild2', childPset2);
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myChild1', childPset1);
+     workspace.root.insert('myChild2', childPset2);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -4230,7 +4230,7 @@ describe('DataBinder', function () {
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding, { context: 'single' });
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       // parentPset should produce a ParentDataBinding
-      workspace.insert('myReferenceParent', referenceParentPSet);
+     workspace.root.insert('myReferenceParent', referenceParentPSet);
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       dataBinder._resetDebugCounters();
       const parentDataBinding = dataBinder.resolve(referenceParentPSet, 'BINDING');
@@ -4241,7 +4241,7 @@ describe('DataBinder', function () {
       referenceParentPSet.get('single_ref', RESOLVE_NEVER)
         .setValue('/myArray');
       // insert the array *after* we've inserted our references -> need to do conversion in DataBindingTree
-      workspace.insert('myArray', arrayPset);
+     workspace.root.insert('myArray', arrayPset);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(0);
       arrayPset.push(21);
       expect(referenceInsertSpy).toHaveBeenCalledTimes(1);
@@ -4250,15 +4250,15 @@ describe('DataBinder', function () {
     // TODO: stop previously working test
     it.skip('should be able to use referenceChanged with isDeferred', function () {
       const eyeSpy = jest.fn();
-      workspace.insert('bob', PropertyFactory.create(ReferenceParentTemplate.typeid));
-      workspace.insert('target', PropertyFactory.create('String'));
+     workspace.root.insert('bob', PropertyFactory.create(ReferenceParentTemplate.typeid));
+     workspace.root.insert('target', PropertyFactory.create('String'));
 
       ParentDataBinding.registerOnPath('single_ref', ['insert', 'remove', 'referenceChanged'], eyeSpy, {
         isDeferred: true
       });
       dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
-      workspace.resolvePath('bob.single_ref', RESOLVE_NEVER).setValue('/target');
-      workspace.remove(workspace.get('target'));
+      workspace.root.resolvePath('bob.single_ref', RESOLVE_NEVER).setValue('/target');
+      workspace.root.remove(workspace.root.get('target'));
 
       dataBinder.detach();
     });

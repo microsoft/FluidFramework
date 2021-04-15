@@ -52,63 +52,63 @@ export const populateWorkspace = (workspace: MockWorkspace) => {
   ];
 
   schemas.forEach((schema) => { PropertyFactory.register(schema); });
-  workspace.insert('BooleanFalse', PropertyFactory.create('Bool', 'single', false) as BaseProperty);
-  workspace.insert('BooleanTrue', PropertyFactory.create('Bool', 'single', true) as BaseProperty);
-  workspace.insert('String',
+ workspace.root.insert('BooleanFalse', PropertyFactory.create('Bool', 'single', false) as BaseProperty);
+ workspace.root.insert('BooleanTrue', PropertyFactory.create('Bool', 'single', true) as BaseProperty);
+ workspace.root.insert('String',
     PropertyFactory.create('String', 'single', 'Hello ') as BaseProperty);
-  workspace.insert('ValidReference',
+ workspace.root.insert('ValidReference',
     PropertyFactory.create('Reference', 'single', 'String') as BaseProperty);
-  workspace.insert('InvalidReference',
+ workspace.root.insert('InvalidReference',
     PropertyFactory.create('Reference', 'single', 'someNonExisting') as BaseProperty);
-  workspace.insert('Point3D',
+ workspace.root.insert('Point3D',
     PropertyFactory.create(point3DSchema.typeid, 'single', { x: 1, y: 2, z: 3 }) as BaseProperty);
-  workspace.insert('CoordinateSystem3D',
+ workspace.root.insert('CoordinateSystem3D',
     PropertyFactory.create(coordinateSystem3DSchema.typeid) as BaseProperty);
-  workspace.insert('PrimitiveCollections',
+ workspace.root.insert('PrimitiveCollections',
     PropertyFactory.create(primitiveCollectionsSchema.typeid) as BaseProperty);
-  workspace.insert('NonPrimitiveCollections',
+ workspace.root.insert('NonPrimitiveCollections',
     PropertyFactory.create(nonPrimitiveCollectionsSchema.typeid) as BaseProperty);
   workspace.get<MapProperty>(['NonPrimitiveCollections', 'map'])!.set(
     'outlier', PropertyFactory.create(coordinateSystem3DSchema.typeid) as BaseProperty);
-  workspace.insert('ReferenceCollections',
+ workspace.root.insert('ReferenceCollections',
     PropertyFactory.create(referenceCollectionsSchema.typeid) as BaseProperty);
-  workspace.insert('EnumCases',
+ workspace.root.insert('EnumCases',
     PropertyFactory.create(enumCasesSchema.typeid) as BaseProperty);
-  workspace.insert('Uint64Cases',
+ workspace.root.insert('Uint64Cases',
     PropertyFactory.create(uint64CasesSchema.typeid) as BaseProperty);
-  workspace.insert('SampleConst',
+ workspace.root.insert('SampleConst',
     PropertyFactory.create(sampleConstSchema.typeid) as BaseProperty);
-  workspace.insert('SampleCollectionConst',
+ workspace.root.insert('SampleCollectionConst',
     PropertyFactory.create(sampleConstCollectionSchema.typeid) as BaseProperty);
-  workspace.insert('sampleComplexConst',
+ workspace.root.insert('sampleComplexConst',
     PropertyFactory.create(sampleComplexConstsSchema.typeid) as BaseProperty);
-  workspace.insert('typedReferences',
+ workspace.root.insert('typedReferences',
     PropertyFactory.create(typedReferencesSchema.typeid) as BaseProperty);
 
   const nodeProp = PropertyFactory.create<NodeProperty>('NodeProperty')!;
   nodeProp.insert('nestedStr', PropertyFactory.create('String', 'single', 'nested test')!);
   nodeProp.insert('int32', PropertyFactory.create('Int32', 'single', 2)!);
   nodeProp.insert('cyclicReference', PropertyFactory.create('Reference', 'single', '../')!);
-  workspace.insert('nodeProp', nodeProp!);
-  workspace.insert(uniqueIdentifier, PropertyFactory.create('String', 'single', uniqueIdentifier)!);
+ workspace.root.insert('nodeProp', nodeProp!);
+ workspace.root.insert(uniqueIdentifier, PropertyFactory.create('String', 'single', uniqueIdentifier)!);
 
   const primitives = ['String', 'Int32', 'Int64', 'Float64', 'Uint64', 'Reference'];
   const collections = ['Array', 'Map'];
   for (const type of primitives) {
     for (const context of collections) {
-      workspace.insert(
+     workspace.root.insert(
         type.toLowerCase() + context, PropertyFactory.create(type, context.toLowerCase()) as BaseProperty);
     }
   }
   workspace.get<ArrayProperty>('stringArray')!.push([0, 1, 2]);
   workspace.get<ArrayProperty>('uint64Array')!.push([0, 1, 2]);
-  workspace.insert('ReferenceToUint64ArrayElement',
+ workspace.root.insert('ReferenceToUint64ArrayElement',
     PropertyFactory.create('Reference', 'single', 'uint64Array[0]') as BaseProperty);
-  workspace.insert('ReferenceToReference',
+ workspace.root.insert('ReferenceToReference',
     PropertyFactory.create('Reference', 'single', 'ReferenceToArrayElement') as BaseProperty);
-  workspace.insert('ReferenceToElementOfArrayOfReferences',
+ workspace.root.insert('ReferenceToElementOfArrayOfReferences',
     PropertyFactory.create('Reference', 'single', '/ReferenceCollections.arrayOfReferences[0]') as BaseProperty);
-  workspace.insert('ReferenceToInvalidElementOfArrayOfReferences',
+ workspace.root.insert('ReferenceToInvalidElementOfArrayOfReferences',
     PropertyFactory.create('Reference', 'single', '/ReferenceCollections.arrayOfReferences[5]') as BaseProperty);
 };
 

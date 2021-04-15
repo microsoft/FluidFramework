@@ -131,9 +131,9 @@ PropertyElement.prototype.setValue = function(value) {
         if (workspace) {
           // We wrap the setValues since it may do multiple ops. For example, setting an
           // array will create a changeset for each individual element of the array.
-          workspace.pushModifiedEventScope();
+          workspace.pushNotificationDelayScope();
           this._property.setValues(value);
-          workspace.popModifiedEventScope();
+          workspace.popNotificationDelayScope();
         } else {
           this._property.setValues(value);
         }
@@ -354,7 +354,7 @@ PropertyElement.prototype.becomeChild = function(in_child, in_options = RESOLVE_
     const nextToken = in_child[i + 1]; // will be undefined at the last element
 
     if (token === '/') {
-      this._property = this._property.getRoot().getWorkspace().getRoot();
+      this._property = this._property.getRoot();
       this._childToken = undefined;
     } else if (token === '*') {
       if (nextToken !== undefined) {

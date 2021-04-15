@@ -979,7 +979,7 @@ class DataBinder {
       }
 
       // we need to resolve the references along the way to our subtree but not at the leaf!
-      const subTreeRootElement = new PropertyElement(this._workspace.getRoot());
+      const subTreeRootElement = new PropertyElement(this._workspace.root);
       subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS);
 
       // Only recurse if the property exists. If it is not there, it is bad user input
@@ -1066,7 +1066,7 @@ class DataBinder {
     const startPath = in_activationRule.startPath;
     const pathArr = PathHelper.tokenizePathString(startPath.substr(1));
     // we need to resolve the references along the way to our subtree but not at the leaf!
-    const subTreeRootElement = new PropertyElement(this._workspace.getRoot());
+    const subTreeRootElement = new PropertyElement(this._workspace.root);
     subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS);
 
     if (!subTreeRootElement.isValid()) {
@@ -1325,7 +1325,7 @@ class DataBinder {
       // We look to see if the property, or any property along the path, already exists.
       // We handle the case where only a property along the path exists to give the reference-handling
       // code to insert any callbacks for changes to the reference.
-      let property = this._workspace.getRoot();
+      let property = this._workspace.root;
       let partiallySucceeded = tokenizedPath.length === 0;
       for (let i = 0; i < tokenizedPath.length; ++i) {
         let childProperty;
@@ -1383,7 +1383,8 @@ class DataBinder {
     }
 
     this._workspace = in_workspace;
-    this._onModifiedRegistrationKey = this._workspace.register('modified', this._modifyScene.bind(this));
+    this._onModifiedRegistrationKey  = this._modifyScene.bind(this);
+    this._workspace.on('localModification', this._onModifiedRegistrationKey);
 
     this._buildDataBindingTree();
 
@@ -1418,7 +1419,7 @@ class DataBinder {
       }
     };
 
-    _recursiveStep_bindingtree(this._workspace.getRoot());
+    _recursiveStep_bindingtree(this._workspace.root);
   }
 
   /**
@@ -1462,7 +1463,7 @@ class DataBinder {
     }
 
     if (this._onModifiedRegistrationKey) {
-      this._workspace.unregister('modified', this._onModifiedRegistrationKey);
+      this._workspace.off('localModification', this._onModifiedRegistrationKey);
       this._onModifiedRegistrationKey = null;
       this._workspace = null;
     }
@@ -2144,7 +2145,7 @@ class DataBinder {
       dataBinder: this
     };
     var myUserData = {
-      property: this._workspace.getRoot(),
+      property: this._workspace.root,
       dataBindingTreeNode: this._dataBindingTree,
       retroactive: false    // We are not retroactively installing bindings
     };
@@ -2343,10 +2344,10 @@ class DataBinder {
    * const workspace = getHFDMWorkspace();
    * myDataBinder.attachTo(workspace);
    *
-   * workspace.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+   *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
-   * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
+   * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
    * console.assert(fido instanceof DogRepresentation);
    * ```
    *
@@ -2399,10 +2400,10 @@ class DataBinder {
    * const workspace = getHFDMWorkspace();
    * myDataBinder.attachTo(workspace);
    *
-   * workspace.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+   *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
-   * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
+   * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
    * console.assert(fido instanceof DogRepresentation);
    * ```
    *
@@ -2518,7 +2519,7 @@ class DataBinder {
       };
 
       // Visit the entire tree and remove all occurrences of this runtime representation.
-      const rootElement = new PropertyElement(this._workspace.getRoot());
+      const rootElement = new PropertyElement(this._workspace.root);
       recursivelyVisitHierarchy(rootElement, '/', this._dataBindingTree, visit);
     }
   }
@@ -2642,7 +2643,7 @@ class DataBinder {
       // Nice try
       throw new Error('Calling getRepresentationAtPath when not attached to a workspace');
     }
-    const property = this.getWorkspace().resolvePath(path);
+    const property = this.getWorkspace().root.resolvePath(path);
     if (!property) {
       // Nice try
       throw new Error('Calling getRepresentationAtPath for a path that does not resolve to a property');

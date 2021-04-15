@@ -28,20 +28,20 @@ describe('JS-Object-like property accessing ', function() {
     testProperty = PropertyFactory.create('autodesk.appframework.tests:myGenericTemplate-1.0.0');
 
     // Naming the custom properties (i.e. inserting them into the workspace)
-    workspace.insert('myTestProperty', testProperty);
-    workspace.insert('myBook', PropertyFactory.create(bookDataTemplate.typeid, 'single'));
+   workspace.root.insert('myTestProperty', testProperty);
+   workspace.root.insert('myBook', PropertyFactory.create(bookDataTemplate.typeid, 'single'));
 
-    workspace.insert('constantCollections', PropertyFactory.create(collectionConstants.typeid));
+   workspace.root.insert('constantCollections', PropertyFactory.create(collectionConstants.typeid));
 
     // Create an Array of NodeProperties, we should be able to create arrays of collections
-    workspace.insert('myGenericArray', PropertyFactory.create(vector2DTemplate.typeid, 'array'));
+   workspace.root.insert('myGenericArray', PropertyFactory.create(vector2DTemplate.typeid, 'array'));
     workspace.get('myGenericArray').push(PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
     workspace.get('myGenericArray').push(PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
     workspace.get('myGenericArray').push(PropertyFactory.create('NamedProperty', 'set'));
     workspace.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
     workspace.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
 
-    workspace.insert('myGenericMap', PropertyFactory.create('NodeProperty', 'map'));
+   workspace.root.insert('myGenericMap', PropertyFactory.create('NodeProperty', 'map'));
     workspace.get('myGenericMap').insert('array', PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
     workspace.get('myGenericMap').insert('map', PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
     workspace.get('myGenericMap').insert('set', PropertyFactory.create('NamedProperty', 'set'));
@@ -58,19 +58,19 @@ describe('JS-Object-like property accessing ', function() {
     //     commitGUID: "repoRefWorkspace.getActiveCommit().getGuid()"
     //   }
     // );
-    // workspace.insert('repoRef', repoRefWorkspaceProp);
+    //workspace.root.insert('repoRef', repoRefWorkspaceProp);
 
     // const repoRefArray = PropertyFactory.create('RepositoryReferenceProperty', 'array', [
     //   repoRefWorkspaceProp.clone(),
     //   repoRefWorkspaceProp.clone()
     // ]);
-    // workspace.insert('repoRefArray', repoRefArray);
+    //workspace.root.insert('repoRefArray', repoRefArray);
 
     // const repoRefMap = PropertyFactory.create('RepositoryReferenceProperty', 'map', {
     //   a: repoRefWorkspaceProp.clone(),
     //   b: repoRefWorkspaceProp.clone()
     // });
-    // workspace.insert('repoRefMap', repoRefMap);
+    //workspace.root.insert('repoRefMap', repoRefMap);
 
     // Calling things from PropertyProxy
     state = PropertyProxy.proxify(workspace);
@@ -134,7 +134,7 @@ describe('JS-Object-like property accessing ', function() {
   describe('The following work as JS object: ', function() {
     beforeEach(function() {
       workspace.remove('myTestProperty');
-      workspace.insert('myTestProperty', PropertyFactory.create(genericTemplate.typeid));
+     workspace.root.insert('myTestProperty', PropertyFactory.create(genericTemplate.typeid));
     });
 
     it('The property that is registered', function() {
@@ -318,7 +318,7 @@ describe('JS-Object-like property accessing ', function() {
           const proxiedProp = PropertyProxy.proxify(prop);
           expect(() => { proxiedProp.ref = 5; }).toThrow(Error, 'PropertyProxy-009');
 
-          workspace.insert('prop', prop);
+         workspace.root.insert('prop', prop);
           expect(() => { proxiedProp.ref = 3; }).not.toThrow();
           workspace.remove('prop');
         });
@@ -2176,7 +2176,7 @@ describe('JS-Object-like property accessing ', function() {
           checkAssignment();
 
           // Assign iterables of primitive properties in the workspace should work
-          workspace.insert('Int32Prop', PropertyFactory.create('Int32', 'single', 42));
+         workspace.root.insert('Int32Prop', PropertyFactory.create('Int32', 'single', 42));
 
           state.myTestProperty.myI32Array = [workspace.resolvePath('Int32Prop')];
           expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(

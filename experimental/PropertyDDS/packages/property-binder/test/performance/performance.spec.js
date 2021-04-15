@@ -117,7 +117,7 @@ import { PropertyFactory, HFDM } from '@adsk/forge-hfdm';
     const createWideTree = function(in_workspace, in_typeid, in_numberOfTreeNodes, io_collectedProperties) {
       for (let i = 0; i < in_numberOfTreeNodes; ++i) {
         const pset = PropertyFactory.create(in_typeid, 'single');
-        in_workspace.insert('node' + i, pset);
+        in_workspace.root.insert('node' + i, pset);
         if (io_collectedProperties) {
           io_collectedProperties.push(pset);
         }
@@ -167,7 +167,7 @@ import { PropertyFactory, HFDM } from '@adsk/forge-hfdm';
     const clearWorkspace = function(in_workspace) {
       const children = in_workspace.getIds();
       for (let i = 0; i < children.length; ++i) {
-        in_workspace.remove(children[i]);
+        in_workspace.root.remove(children[i]);
       }
     };
 

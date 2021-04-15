@@ -6,7 +6,7 @@
 import { DataBinder } from '../../src/data_binder/data_binder';
 import { DataBinding } from '../../src/data_binder/data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 const NEVER = { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER };
 
@@ -61,7 +61,7 @@ describe('ES6 DataBinding', function () {
     return PropertyFactory.create(testTemplate.typeid);
   };
 
-  beforeAll(function () {
+  beforeAll(async function () {
     PropertyFactory.register(personTemplate);
     PropertyFactory.register(testTemplate);
 
@@ -94,14 +94,14 @@ describe('ES6 DataBinding', function () {
       }
     };
 
-    workspace = new MockWorkspace();
+    workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
     TestDataBinding.initialize();
     dataBinder.attachTo(workspace);
     dataBinder.register('View', testTemplate.typeid, TestDataBinding);
     testProp = createTest();
-    workspace.insert('testProp', testProp);
-    workspace.insert('myChild', createPerson());
+   workspace.root.insert('testProp', testProp);
+   workspace.root.insert('myChild', createPerson());
     testProp.insert('customTest', createPerson());
     testProp.insert('onProperty', createPerson());
     testProp.get('customArrayTest').insert(0, createPerson());

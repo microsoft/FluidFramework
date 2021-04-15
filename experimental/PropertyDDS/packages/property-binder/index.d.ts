@@ -398,7 +398,7 @@ declare module "@fluid-experimental/property-binder" {
              * const workspace = getHFDMWorkspace();
              * myDataBinder.attachTo(workspace);
              *
-             * workspace.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+             *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
              *
              * // Request the runtime representation associated with the property
              * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
@@ -766,7 +766,7 @@ declare module "@fluid-experimental/property-binder" {
              * const workspace = getHFDMWorkspace();
              * myDataBinder.attachTo(workspace);
              *
-             * workspace.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+             *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
              *
              * // Request the runtime representation associated with the property
              * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
