@@ -1,5 +1,32 @@
 # Change Log
 
+## 0.85.0
+
+* refactor: BREAKING CHANGE: separate shared-tree code into edit-specific and edit-agnostic classes and types
+  * Associated pull request: [29483](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29483)
+  * Commit: [61dd3fefdfc7e0a4efe6aabcfc3072ac26ce1759](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/61dd3fefdfc7e0a4efe6aabcfc3072ac26ce1759)
+* remove: BREAKING CHANGE: remove EditCommitted event from Checkout
+  * Associated pull request: [29683](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29683)
+  * Commit: [ff689129c0a9662fbfc4bca711295997507616a3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ff689129c0a9662fbfc4bca711295997507616a3)
+* build: update dependencies
+  * Associated pull request: [29697](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29697)
+  * Commit: [06a730403dedc183e306263986887b47a2feb7f9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/06a730403dedc183e306263986887b47a2feb7f9)
+* merge: Integrate changes from FluidFramework copy of shared-tree
+  * Associated pull request: [29686](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29686)
+  * Commit: [fc337ed8b65ee74fafaf699d1b92d98d50aecff9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fc337ed8b65ee74fafaf699d1b92d98d50aecff9)
+* perf: BREAKING CHANGE: Improve performance of inserts/deletes/replaces in Forest
+  * Associated pull request: [29605](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29605)
+  * Commit: [b8e516928beabf802ee21e2077bd535983f30dfe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b8e516928beabf802ee21e2077bd535983f30dfe)
+* perf: BREAKING CHANGE: SharedTree evicts sequenced snapshots
+  * Associated pull request: [29035](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29035)
+  * Commit: [8fd94d9f2613eb816eede695fd56b4e4b186a381](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8fd94d9f2613eb816eede695fd56b4e4b186a381)
+* fix: bugs in reverting Detach changes
+  * Associated pull request: [29553](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29553)
+  * Commit: [ff0c89e849b5a84469a5cf767098f442edd75232](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ff0c89e849b5a84469a5cf767098f442edd75232)
+* fix: Allow duplicate sequenced edits
+  * Associated pull request: [29494](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29494)
+  * Commit: [919b64f2255a8bcd346430895c0fb9b20204925b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/919b64f2255a8bcd346430895c0fb9b20204925b)
+
 ## 0.82.1
 
 * fix: undo support for detach edits
