@@ -14,9 +14,12 @@ import {
     ITestObjectProvider,
     ChannelFactoryRegistry,
     ITestFluidObject,
+    LocalCodeLoader,
+    SupportedExportInterfaces,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -28,7 +31,8 @@ import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -614,5 +618,56 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader.resolve({ url: requestUrl2 });
         assert.strictEqual(container, container2, "Both containers should be same");
+    });
+});
+
+describeNoCompat("Detached Container", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    let request: IRequest;
+
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+        request = provider.driver.createCreateNewRequest(provider.documentId);
+    });
+
+    it("Retry attaching detached container", async () => {
+        let retryTimes = 1;
+        const documentServiceFactory: IDocumentServiceFactory = {
+            ...provider.documentServiceFactory,
+            createContainer: async (createNewSummary, createNewResolvedUrl, logger) => {
+                if (retryTimes > 0) {
+                    retryTimes -= 1;
+                    const error = new Error("Test Error");
+                    (error as any).canRetry = true;
+                    throw error;
+                }
+                return provider.documentServiceFactory.createContainer(createNewSummary, createNewResolvedUrl, logger);
+            },
+        };
+
+        const fluidExport: SupportedExportInterfaces = {
+            IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
+        };
+        const codeLoader = new LocalCodeLoader([
+            [provider.defaultCodeDetails, fluidExport],
+        ]);
+        const loader = new Loader({
+            urlResolver: provider.urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            logger: new TelemetryNullLogger(),
+        });
+
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        await container.attach(request);
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
+        assert.strictEqual(container.closed, false, "Container should be open");
+        assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
+        if (provider.driver.type === "odsp") {
+            assert.ok(container.id, "No container ID");
+        } else {
+            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+        }
+        assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     });
 });
