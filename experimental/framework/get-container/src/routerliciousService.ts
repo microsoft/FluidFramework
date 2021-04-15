@@ -17,7 +17,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
 import { getContainer, IGetContainerService } from "./getContainer";
-import { ITinyliciousFileConfig } from "./tinyliciousService";
+import { ITinyliciousServiceConfig } from "./tinyliciousService";
 
 export interface IRouterliciousConfig {
     orderer: string,
@@ -79,19 +79,19 @@ export class RouterliciousService implements IGetContainerService {
     }
 
     public async createContainer(
-        fileConfig: ITinyliciousFileConfig,
+        serviceConfig: ITinyliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
-        return getContainer(this, fileConfig.id, containerRuntimeFactory, true);
+        return getContainer(this, serviceConfig.id, containerRuntimeFactory, true);
     }
 
     public async getContainer(
-        fileConfig: ITinyliciousFileConfig,
+        serviceConfig: ITinyliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
         return getContainer(
             this,
-            fileConfig.id,
+            serviceConfig.id,
             containerRuntimeFactory,
             false,
         );

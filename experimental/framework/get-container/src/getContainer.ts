@@ -14,11 +14,11 @@ export interface IGetContainerService {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
     createContainer(
-        fileConfig: any,
+        serviceConfig: any,
         containerRuntimeFactory: IRuntimeFactory
     ): Promise<Container>;
     getContainer(
-        fileConfig: any,
+        serviceConfig: any,
         containerRuntimeFactory: IRuntimeFactory
     ): Promise<Container>;
 }

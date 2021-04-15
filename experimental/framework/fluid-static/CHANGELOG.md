@@ -29,7 +29,7 @@ import { SharedMap } from "@fluidframework/map";
 
 // ...
 
-const containerConfig = {
+const objectConfig = {
     name: "my-container",
     initialObjects: {
         "pair1": KeyValueDataObject,

@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/tinylicious-driver";
 import { getContainer, IGetContainerService } from "./getContainer";
 
-export interface ITinyliciousFileConfig {
+export interface ITinyliciousServiceConfig {
     id: string;
 }
 
@@ -36,19 +36,19 @@ export class TinyliciousService implements IGetContainerService {
     }
 
     public async createContainer(
-        fileConfig: ITinyliciousFileConfig,
+        serviceConfig: ITinyliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
-        return getContainer(this, fileConfig.id, containerRuntimeFactory, true);
+        return getContainer(this, serviceConfig.id, containerRuntimeFactory, true);
     }
 
     public async getContainer(
-        fileConfig: ITinyliciousFileConfig,
+        serviceConfig: ITinyliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
         return getContainer(
             this,
-            fileConfig.id,
+            serviceConfig.id,
             containerRuntimeFactory,
             false,
         );

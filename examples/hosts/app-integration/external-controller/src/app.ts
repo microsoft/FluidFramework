@@ -4,7 +4,7 @@
  */
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { FluidTinylicious } from "@fluid-experimental/fluid-static";
-import { ITinyliciousFileConfig } from "@fluid-experimental/get-container";
+import { ITinyliciousServiceConfig } from "@fluid-experimental/get-container";
 import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
@@ -34,10 +34,10 @@ export const containerConfig = {
 
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
-    const fileConfig: ITinyliciousFileConfig = {id: containerId};
+    const serviceConfig: ITinyliciousServiceConfig = { id: containerId };
     const fluidContainer = createNew
-        ? await FluidTinylicious.createContainer(fileConfig, containerConfig)
-        : await FluidTinylicious.getContainer(fileConfig, containerConfig);
+        ? await FluidTinylicious.createContainer(serviceConfig, containerConfig)
+        : await FluidTinylicious.getContainer(serviceConfig, containerConfig);
 
     // We now get the DataObject from the container
     const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;

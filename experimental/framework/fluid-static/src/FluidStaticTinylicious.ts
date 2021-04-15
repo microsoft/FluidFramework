@@ -4,7 +4,7 @@
  */
 
 import {
-    ITinyliciousFileConfig,
+    ITinyliciousServiceConfig,
     TinyliciousService,
 } from "@fluid-experimental/get-container";
 import { Container } from "@fluidframework/container-loader";
@@ -25,28 +25,28 @@ export class FluidTinyliciousInstance {
     }
 
     public async createContainer(
-        fileConfig: ITinyliciousFileConfig,
-        containerConfig: ContainerConfig,
+        serviceConfig: ITinyliciousServiceConfig,
+        objectConfig: ContainerConfig,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
-            containerConfig,
+            objectConfig,
         );
         const container = await this.containerService.createContainer(
-            fileConfig,
+            serviceConfig,
             runtimeFactory,
         );
         return this.getRootDataObject(container);
     }
 
     public async getContainer(
-        fileConfig: ITinyliciousFileConfig,
-        containerConfig: ContainerConfig,
+        serviceConfig: ITinyliciousServiceConfig,
+        objectConfig: ContainerConfig,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
-            containerConfig,
+            objectConfig,
         );
         const container = await this.containerService.getContainer(
-            fileConfig,
+            serviceConfig,
             runtimeFactory,
         );
         return this.getRootDataObject(container);
@@ -72,8 +72,8 @@ export const FluidTinylicious = {
         globalFluidTinylicious = new FluidTinyliciousInstance(tinyliciousPort);
     },
     async createContainer(
-        fileConfig: ITinyliciousFileConfig,
-        containerConfig: ContainerConfig,
+        serviceConfig: ITinyliciousServiceConfig,
+        objectConfig: ContainerConfig,
     ): Promise<FluidContainer> {
         if (!globalFluidTinylicious) {
             throw new Error(
@@ -81,19 +81,19 @@ export const FluidTinylicious = {
             );
         }
         return globalFluidTinylicious.createContainer(
-            fileConfig,
-            containerConfig,
+            serviceConfig,
+            objectConfig,
         );
     },
     async getContainer(
-        fileConfig: ITinyliciousFileConfig,
-        containerConfig: ContainerConfig,
+        serviceConfig: ITinyliciousServiceConfig,
+        objectConfig: ContainerConfig,
     ): Promise<FluidContainer> {
         if (!globalFluidTinylicious) {
             throw new Error(
                 "FluidTinylicious has not been properly initialized before attempting to get a container",
             );
         }
-        return globalFluidTinylicious.getContainer(fileConfig, containerConfig);
+        return globalFluidTinylicious.getContainer(serviceConfig, objectConfig);
     },
 };
