@@ -101,7 +101,6 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 
 const detachedContainerRefSeqNumber = 0;
 
-export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -606,16 +605,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                propagateConnectionState: () => this.propagateConnectionState(),
-                isContainerLoaded: () => this.loaded,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
 
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
+        this.connectionStateHandler.on("connectionStateChanged", () => {
+            if (this.loaded) {
+                this.propagateConnectionState();
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -658,11 +657,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
-                        }
-                        break;
-                    case connectEventName:
-                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -1452,8 +1446,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
-            this.connectionStateHandler.receivedConnectEvent(
+        deltaManager.on("connect_document_success", (details: IConnectionDetails, opsBehind?: number) => {
+            this.connectionStateHandler.receivedConnectDocumentSuccessEvent(
                 this._deltaManager.connectionMode,
                 details,
                 opsBehind,
