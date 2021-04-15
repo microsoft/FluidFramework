@@ -332,8 +332,7 @@ describe("Shared Directory with Interception", () => {
             try {
                 sharedDirectoryWithInterception.set("color", "green");
             } catch (error) {
-                assert.strictEqual(error.message,
-                    "bf",
+                assert(error.message === 0x0bf || error.message === "bf",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }
