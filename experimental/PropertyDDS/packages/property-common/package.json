@@ -23,7 +23,7 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": "^0.38.0",
+    "@fluidframework/mocha-test-setup": "^0.39.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.2",
     "mocha": "^8.1.1",
