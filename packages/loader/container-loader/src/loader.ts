@@ -72,7 +72,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                     {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                        resolvedUrl,
+                        resolvedUrl: {...resolvedUrl},
                         version: request.headers?.[LoaderHeader.version],
                         pause: request.headers?.[LoaderHeader.pause],
                     },
