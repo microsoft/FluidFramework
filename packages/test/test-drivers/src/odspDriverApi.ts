@@ -13,6 +13,7 @@ import {
     HostStoragePolicy,
     ISnapshotOptions,
     IOpsCachingPolicy,
+    ICollabSessionOptions,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     booleanCases,
@@ -27,7 +28,7 @@ export const OdspDriverApi = {
     OdspDocumentServiceFactory,
     OdspDriverUrlResolver,
     createOdspCreateContainerRequest,
-    createOdspUrl,                          // REVIEW: does this need to be back compat?
+    createOdspUrl, // REVIEW: does this need to be back compat?
 };
 
 export type OdspDriverApiType = typeof OdspDriverApi;
@@ -46,6 +47,10 @@ const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
     totalOpsToCache: numberCases,
 };
 
+const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
+    unauthenticatedUserDisplayName: [undefined],
+};
+
 export const generateOdspHostStoragePolicy = (seed: number)=> {
     const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
         blobDeduping: booleanCases,
@@ -54,6 +59,7 @@ export const generateOdspHostStoragePolicy = (seed: number)=> {
         concurrentOpsBatches: numberCases,
         snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
         opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
+        sessionOptions: [undefined, ...generatePairwiseOptions(odspSessionOptions, seed)],
     };
     return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };
