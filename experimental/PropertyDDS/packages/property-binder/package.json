@@ -33,6 +33,8 @@
     "@babel/runtime": "^7.13.7",
     "@fluid-experimental/property-changeset": "0.1.0",
     "@fluid-experimental/property-properties": "0.1.0",
+    "@fluid-experimental/property-dds": "0.1.0",
+    "@fluidframework/test-utils": "0.37.4",
     "underscore": "^1.9.1"
   },
   "devDependencies": {

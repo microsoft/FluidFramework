@@ -6,7 +6,7 @@
 /* eslint-disable require-jsdoc */
 /* globals expect */
 import { DataBinder } from '../../src/data_binder/data_binder';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockWorkspace } from './shared_property_tree';
 import {
   catchConsoleErrors
 } from './catch_console_errors';
@@ -56,9 +56,9 @@ describe('DataBinder databinding semversioning', function () {
 
   catchConsoleErrors();
 
-  beforeEach(function () {
+  beforeEach(async function () {
 
-    workspace = new MockWorkspace();
+    workspace = await MockWorkspace();
     dataBinder = new DataBinder();
     // Bind to the workspace
     dataBinder.attachTo(workspace);
@@ -102,7 +102,7 @@ describe('DataBinder databinding semversioning', function () {
     it('versioning, define', function () {
       versions.forEach(version => {
         const nodots = version.replace(/\./g, '_');
-        workspace.insert(nodots, PropertyFactory.create(version));
+       workspace.root.insert(nodots, PropertyFactory.create(version));
       });
 
       dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
@@ -160,7 +160,7 @@ describe('DataBinder databinding semversioning', function () {
     });
 
     it('should not create a binding for a version that is not activated', function () {
-      workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
+     workspace.root.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
 
       dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
         upgradeType: UpgradeType.MINOR
@@ -171,7 +171,7 @@ describe('DataBinder databinding semversioning', function () {
     });
 
     it('should not create a binding for a version that is not defined but activated', function () {
-      workspace.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
+     workspace.root.insert('myprop', PropertyFactory.create('test1:mytype-2.0.0'));
 
       dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
         upgradeType: UpgradeType.MINOR
@@ -184,7 +184,7 @@ describe('DataBinder databinding semversioning', function () {
     it('versioning, inheritance, patch', function () {
       // Simulate a new piece of data using mytype-1.0.1 appearing in the workspace.
       // Will the 1.0.0 binding get called?
-      workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-1.0.0'));
+     workspace.root.insert('myprop', PropertyFactory.create('test1:inheritMyType-1.0.0'));
 
       dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
         upgradeType: UpgradeType.MINOR
@@ -197,7 +197,7 @@ describe('DataBinder databinding semversioning', function () {
     it('versioning, inheritance, minor', function () {
       // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
       // Will the 1.0.0 binding get called?
-      workspace.insert('myprop', PropertyFactory.create('test1:inheritMyType-2.0.0'));
+     workspace.root.insert('myprop', PropertyFactory.create('test1:inheritMyType-2.0.0'));
 
       dataBinder.defineDataBinding('bindingtype', 'test1:mytype-1.0.0', D100, {
         upgradeType: UpgradeType.MINOR
@@ -210,7 +210,7 @@ describe('DataBinder databinding semversioning', function () {
     it('versioning, base type', function () {
       // Simulate a new piece of data using mytype-1.2.0 appearing in the workspace.
       // Will the 1.0.0 binding get called?
-      workspace.insert('myprop', PropertyFactory.create('test1:myrelationship-1.0.0'));
+     workspace.root.insert('myprop', PropertyFactory.create('test1:myrelationship-1.0.0'));
 
       dataBinder.defineDataBinding('bindingtype', 'RelationshipProperty', D100);
       dataBinder.activateDataBinding('bindingtype', 'RelationshipProperty');

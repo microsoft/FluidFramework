@@ -7,7 +7,7 @@ import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-prop
 import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internal_utils';
 import { catchConsoleErrors } from './catch_console_errors';
 import { PrimitiveChildrenTemplate, AnimalSchema, registerTestTemplates } from './testTemplates';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockWorkspace } from './shared_property_tree';
 
 describe('minimalRootPaths', () => {
   it('should return the same array for exclusive paths', () => {
@@ -209,11 +209,11 @@ describe('forEachProperty', () => {
   });
 });
 
-describe('visitTypeHierarchy', () => {
+describe('visitTypeHierarchy', async () => {
   let workspace;
   const callbackSpy = jest.fn();
   beforeAll(async () => {
-    workspace = new MockWorkspace();
+    workspace = await MockWorkspace();
   });
 
   beforeEach(() => {
@@ -222,7 +222,7 @@ describe('visitTypeHierarchy', () => {
 
   it('should get schemas', () => {
     PropertyFactory.register(PrimitiveChildrenTemplate);
-    workspace.insert('dummy', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+   workspace.root.insert('dummy', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
     visitTypeHierarchy(
       PrimitiveChildrenTemplate.typeid,
       typeid => { callbackSpy(typeid); return true; },
@@ -255,7 +255,7 @@ describe('visitTypeHierarchy', () => {
     };
     PropertyFactory.register(AnimalSchema);
     PropertyFactory.register(SlothSchema);
-    workspace.insert('sloth', PropertyFactory.create(SlothSchema.typeid));
+   workspace.root.insert('sloth', PropertyFactory.create(SlothSchema.typeid));
     visitTypeHierarchy(
       SlothSchema.typeid,
       typeid => { callbackSpy(typeid); return true; },

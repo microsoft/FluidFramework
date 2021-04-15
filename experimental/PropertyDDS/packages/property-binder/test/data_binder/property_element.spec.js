@@ -19,7 +19,7 @@ import * as _ from 'underscore';
 import { PropertyElement } from '../../src/internal/property_element';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockWorkspace } from './shared_property_tree';
 
 describe('Property element', function () {
 
@@ -36,8 +36,8 @@ describe('Property element', function () {
     registerTestTemplates();
   });
 
-  beforeEach(function () {
-    workspace = new MockWorkspace();
+  beforeEach(async function () {
+    workspace = await MockWorkspace();
   });
 
   describe('hierarchy walking', function () {
@@ -54,8 +54,8 @@ describe('Property element', function () {
     });
 
     it('dereferencing', function () {
-      workspace.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
-      workspace.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
+     workspace.root.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
+     workspace.root.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
       workspace.get(['refParent', 'single_ref'], RESOLVE_NEVER).setValue('/child');
 
       const rootElem = new PropertyElement(workspace.getRoot());
@@ -83,8 +83,8 @@ describe('Property element', function () {
   });
 
   it('reference containers', function () {
-    workspace.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
-    workspace.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
+   workspace.root.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
+   workspace.root.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.get(['refParent', 'array_ref']).push('/child');
     workspace.get(['refParent', 'map_ref']).insert('aKey', '/child');
 
@@ -123,8 +123,8 @@ describe('Property element', function () {
     const child = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
     const refParent = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
-    workspace.insert('refParent', refParent);
-    workspace.insert('child', child);
+   workspace.root.insert('refParent', refParent);
+   workspace.root.insert('child', child);
     workspace.get(['refParent', 'array_ref']).push('/child');
     workspace.get(['refParent', 'map_ref']).insert('aKey', '/child');
     workspace.get(['child', 'arrayOfNumbers']).push(42);
@@ -178,7 +178,7 @@ describe('Property element', function () {
     };
     // console.log('All the data:', allData);
 
-    workspace.insert('thedata', myData);
+   workspace.root.insert('thedata', myData);
 
     const propElem = new PropertyElement(workspace.getRoot());
 
@@ -266,7 +266,7 @@ describe('Property element', function () {
 
   it('crazy paths for child token', function () {
     const mymap = PropertyFactory.create('Float64', 'map');
-    workspace.insert('themap', mymap);
+   workspace.root.insert('themap', mymap);
 
     mymap.insert('"my.child.path"', 42);
     const propElem = new PropertyElement(mymap);
@@ -286,7 +286,7 @@ describe('Property element', function () {
     child1.get('text').setValue('child1 text');
     array.get('subArray').push(child0);
     array.get('subArray').push(child1);
-    workspace.insert('theArray', array);
+   workspace.root.insert('theArray', array);
 
     const rootElem = new PropertyElement(workspace.getRoot());
     const childElem = rootElem.getChild(['theArray', 'subArray', 1, 'text']);
@@ -304,7 +304,7 @@ describe('Property element', function () {
     child1.get('text').setValue('child1 text');
     map.get('subMap').insert('child0', child0);
     map.get('subMap').insert('child1', child1);
-    workspace.insert('theMap', map);
+   workspace.root.insert('theMap', map);
 
     const rootElem = new PropertyElement(workspace.getRoot());
     const childElem = rootElem.getChild(['theMap', 'subMap', 'child1', 'text']);
@@ -322,10 +322,10 @@ describe('Property element', function () {
     const ref1 = PropertyFactory.create('Reference', 'single');
     const ref2 = PropertyFactory.create('Reference', 'single');
     const ref3 = PropertyFactory.create('Reference', 'single');
-    workspace.insert('text', text);
-    workspace.insert('ref1', ref1);
-    workspace.insert('ref2', ref2);
-    workspace.insert('ref3', ref3);
+   workspace.root.insert('text', text);
+   workspace.root.insert('ref1', ref1);
+   workspace.root.insert('ref2', ref2);
+   workspace.root.insert('ref3', ref3);
     ref3.setValue('/ref2');
     ref2.setValue('/ref1');
     ref1.setValue('/text');
@@ -339,8 +339,8 @@ describe('Property element', function () {
   it('double references array', function () {
     const text = PropertyFactory.create('String', 'single');
     const refs = PropertyFactory.create('Reference', 'array');
-    workspace.insert('text', text);
-    workspace.insert('refs', refs);
+   workspace.root.insert('text', text);
+   workspace.root.insert('refs', refs);
     refs.push('/text');
     refs.push('/refs[0]');
     refs.push('/refs[1]');
@@ -354,7 +354,7 @@ describe('Property element', function () {
 
   it('tokenized path, toString, getContext', function () {
     const arrayData = PropertyFactory.create('String', 'array');
-    workspace.insert('theArray', arrayData);
+   workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
     const rootElem = new PropertyElement(workspace.getRoot());
@@ -378,7 +378,7 @@ describe('Property element', function () {
 
   it('becoming the parent', function () {
     const arrayData = PropertyFactory.create('String', 'array');
-    workspace.insert('theArray', arrayData);
+   workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
     const rootElem = new PropertyElement(workspace.getRoot());
@@ -421,7 +421,7 @@ describe('Property element', function () {
 
   it('cloning', function () {
     const arrayData = PropertyFactory.create('String', 'array');
-    workspace.insert('theArray', arrayData);
+   workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
     const rootElem = new PropertyElement(workspace.getRoot());
@@ -437,9 +437,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.setValue('/myData');
@@ -462,9 +462,9 @@ describe('Property element', function () {
     myData.push(1);
     myData.push(2);
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myReference1.setValue('/myData');
     myReference2.setValue('/myReference1*.[1]');
@@ -481,9 +481,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.setValue('/myData');
@@ -497,7 +497,7 @@ describe('Property element', function () {
 
   it('dereferencing chain', function () {
     const myData = PropertyFactory.create(ChildTemplate.typeid);
-    workspace.insert('myData', myData);
+   workspace.root.insert('myData', myData);
 
     // Set up a chain; ref3 points to ref2 points to ref1 points to myData
     const myReferences = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
@@ -505,7 +505,7 @@ describe('Property element', function () {
       ref2: 'ref1',
       ref3: 'ref2'
     });
-    workspace.insert('myReferences', myReferences);
+   workspace.root.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('ref3', RESOLVE_NEVER));
     expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
@@ -514,13 +514,13 @@ describe('Property element', function () {
 
   it('dereferencing chain, primitive array', function () {
     const myData = PropertyFactory.create(ChildTemplate.typeid);
-    workspace.insert('myData', myData);
+   workspace.root.insert('myData', myData);
 
     // Set up a chain; array_ref[2] points to array_ref[1] points to array_ref[0] points to myData
     const myReferences = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
       array_ref: ['/myData', 'array_ref[0]', 'array_ref[1]']
     });
-    workspace.insert('myReferences', myReferences);
+   workspace.root.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('array_ref'), 2);
     expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
@@ -529,14 +529,14 @@ describe('Property element', function () {
 
   it('dereferencing chain, primitive array, with a *', function () {
     const myData = PropertyFactory.create(ChildTemplate.typeid);
-    workspace.insert('myData', myData);
+   workspace.root.insert('myData', myData);
 
     // Set up a chain; array_ref[2] points to array_ref[1] points to array_ref[0] but with a * so the
     // reference, not the target
     const myReferences = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single', {
       array_ref: ['/myData', 'array_ref[0].*', 'array_ref[1]'] // Note the star!
     });
-    workspace.insert('myReferences', myReferences);
+   workspace.root.insert('myReferences', myReferences);
     const propElem = new PropertyElement(myReferences.get('array_ref'), 2);
     expect(propElem.isValid()).toEqual(true);
     propElem.becomeDereference();
@@ -549,9 +549,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference', 'array');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.push('/myData');
@@ -570,9 +570,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference', 'array');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.push('/myData');
@@ -589,9 +589,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference', 'map');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.set('toto', '/myData');
@@ -610,9 +610,9 @@ describe('Property element', function () {
     const myReference1 = PropertyFactory.create('Reference', 'map');
     const myReference2 = PropertyFactory.create('Reference');
 
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myData.setValue(42);
     myReference1.set('toto', '/myData');
@@ -630,9 +630,9 @@ describe('Property element', function () {
     const myReference2 = PropertyFactory.create('Reference');
 
     myData.get('aNumber').setValue(42);
-    workspace.insert('myData', myData);
-    workspace.insert('myReference1', myReference1);
-    workspace.insert('myReference2', myReference2);
+   workspace.root.insert('myData', myData);
+   workspace.root.insert('myReference1', myReference1);
+   workspace.root.insert('myReference2', myReference2);
 
     myReference1.set('toto', '/myData');
     myReference2.setValue('/myReference1[toto]');

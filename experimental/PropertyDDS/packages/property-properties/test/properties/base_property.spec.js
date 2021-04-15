@@ -508,7 +508,7 @@
         return createRootProperty().then(function(workspace) {
           var property = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           var subproperty = property.resolvePath('p2.p2p1.p2p1p2');
-          workspace.insert('test', property);
+         workspace.root.insert('test', property);
           expect(property.isAncestorOf(subproperty)).to.equal(true);
         });
       });
@@ -531,7 +531,7 @@
         return createRootProperty().then(function(workspace) {
           var property = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           var subproperty = property.resolvePath('p2.p2p1.p2p1p2');
-          workspace.insert('test', property);
+         workspace.root.insert('test', property);
           expect(property.isAncestorOf(subproperty)).to.equal(true);
         });
       });
@@ -540,7 +540,7 @@
         return createRootProperty().then(function(workspace) {
           var property = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           var subproperty = property.resolvePath('p2.p2p1.p2p1p2');
-          workspace.insert('test', property);
+         workspace.root.insert('test', property);
           expect(subproperty.isDescendantOf(property)).to.equal(true);
         });
       });
@@ -551,7 +551,7 @@
           var element = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           property.push(element);
           var subproperty = element.resolvePath('p2.p2p1.p2p1p2');
-          workspace.insert('test', property);
+         workspace.root.insert('test', property);
           expect(subproperty.isDescendantOf(property)).to.equal(true);
         });
       });
@@ -562,7 +562,7 @@
           var element = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           property.push(element);
           var subproperty = element.resolvePath('p2.p2p1.p2p1p2');
-          workspace.insert('test', property);
+         workspace.root.insert('test', property);
           expect(property.isAncestorOf(subproperty)).to.equal(true);
         });
       });
@@ -571,8 +571,8 @@
         return createRootProperty().then(function(workspace) {
           var prop1 = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
           var prop2 = PropertyFactory.create('autodesk.tests:property.traversal-1.0.0');
-          workspace.insert('test1', prop1);
-          workspace.insert('test2', prop2);
+         workspace.root.insert('test1', prop1);
+         workspace.root.insert('test2', prop2);
           expect(prop2.isAncestorOf(prop1)).to.equal(false);
           expect(prop2.isDescendantOf(prop1)).to.equal(false);
           expect(prop1.isAncestorOf(prop2)).to.equal(false);

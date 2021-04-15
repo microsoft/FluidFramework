@@ -6,7 +6,7 @@
 import { DataBinder } from '../../src/data_binder/data_binder';
 import { SingletonDataBinding, StatelessDataBinding } from '../../src/data_binder/stateless_data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockWorkspace } from './shared_property_tree';
 
 import {
   registerTestTemplates, AnimalSchema, DogSchema, CatSchema, ChinchillaSchema
@@ -128,12 +128,12 @@ describe('Stateless Binder', function () {
   let dogHandle;
   let chinchillaHandle;
 
-  beforeEach(function () {
+  beforeEach(async function () {
     numCats = 0;
     numDogs = 0;
     numChinchillas = 0;
 
-    workspace = new MockWorkspace();
+    workspace = await MockWorkspace();
     dataBinder = new DataBinder();
 
 
@@ -159,25 +159,25 @@ describe('Stateless Binder', function () {
     animalHandle = dataBinder.registerStateless('DataBindingTestAnimal', AnimalSchema.typeid, animalSingleton);
 
     // Cats are just children of the root
-    workspace.insert('markcat', createCat({ name: 'Mark' }));
-    workspace.insert('harrycat', createCat({ name: 'Harry' }));
-    workspace.insert('bobcat', createCat({ name: 'Bob' }));
+   workspace.root.insert('markcat', createCat({ name: 'Mark' }));
+   workspace.root.insert('harrycat', createCat({ name: 'Harry' }));
+   workspace.root.insert('bobcat', createCat({ name: 'Bob' }));
 
     // The dogs use arrays
     const array = PropertyFactory.create(DogSchema.typeid, 'array');
-    workspace.insert('dogarray', array);
+   workspace.root.insert('dogarray', array);
     array.push(createDog({ name: 'Amanda' }));
     array.push(createDog({ name: 'Karen' }));
 
     // Chinchillas are in maps
     const chinchillaMap = PropertyFactory.create(ChinchillaSchema.typeid, 'map');
-    workspace.insert('chinchillamap', chinchillaMap);
+   workspace.root.insert('chinchillamap', chinchillaMap);
     chinchillaMap.insert('pedro', createChincilla({ name: 'Pedro' }));
     chinchillaMap.insert('alessandro', createChincilla({ name: 'Alessandro' }));
 
     // A map of animals
     const animalMap = PropertyFactory.create(AnimalSchema.typeid, 'map');
-    workspace.insert('animalmap', animalMap);
+   workspace.root.insert('animalmap', animalMap);
     animalMap.insert('thedog', createDog({ name: 'Woofers' }));
     animalMap.insert('thecat', createCat({ name: 'Mittens' }));
     animalMap.insert('thechinchilla', createChincilla({ name: 'Andres' }));
@@ -212,7 +212,7 @@ describe('Stateless Binder', function () {
 
   // #region Removal callback counts
   it('should get called back for onRemove', function () {
-    workspace.remove(workspace.get(['markcat']));
+    workspace.root.remove(workspace.get(['markcat']));
     workspace.get(['dogarray']).remove(1);
     workspace.get(['animalmap']).remove('thechinchilla');
 

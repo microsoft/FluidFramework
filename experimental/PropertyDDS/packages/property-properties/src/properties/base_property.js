@@ -545,15 +545,8 @@ BaseProperty.prototype._getCheckedOutRepositoryInfo = function() {
  * @return {property-properties.Workspace|undefined} The workspace containing the property.
  */
 BaseProperty.prototype.getWorkspace = function () {
-  try {
     const root = this.getRoot();
-    if (root === this) {
-      return undefined;
-    }
-    return root.getWorkspace();
-  } catch (e) {
-    return undefined
-  }
+    return root ? root._tree: undefined;
 };
 
 /**
@@ -1058,7 +1051,7 @@ BaseProperty.prototype.deserialize = function( in_serializedObj, in_filteringOpt
  * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
  *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
  * @param {boolean} in_reportToView - Usually the dirtying should be reported to the checkout view
- *     and trigger a modified event there. When batching updates, this can be prevented via this flag.
+ *     and  a modified event there. When batching updates, this can be prevented via this flag.
  * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
  *    The filtering options to consider while deserializing the property.
  * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the

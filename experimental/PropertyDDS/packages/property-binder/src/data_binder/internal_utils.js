@@ -632,7 +632,8 @@ const unregisterAllOnPathListeners = function(in_dataBindingConstructor) {
 const getLocalOrRemoteSchema = (in_typeid, in_workspace) => {
   return TypeIdHelper.isReferenceTypeId(in_typeid) ? undefined :
     // if in_typeid is a remotely registered template
-    (in_workspace ? in_workspace.getTemplate(in_typeid) : undefined) ||
+    // TODO: Figure out whether we want to expose templates through the PropertyTree or just PropertyFactory
+    // (in_workspace ? in_workspace.getTemplate(in_typeid) : undefined) ||
     // or it's locally registered template/property
     PropertyFactory.getTemplate(in_typeid);
 };

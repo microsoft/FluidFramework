@@ -10,7 +10,7 @@ import { catchConsoleErrors } from './catch_console_errors';
 import { DataBinding } from '../../src/data_binder/data_binding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { ActivationQueryCacheHelper } from '../../src/internal/activation_query_cache_helper';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree'
+import { MockWorkspace } from './shared_property_tree'
 
 /**
  * Dummy class to instantiate
@@ -49,9 +49,9 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
   beforeAll(function () {
   });
 
-  beforeEach(function () {
+  beforeEach(async function () {
     dataBinder = new DataBinder();
-    workspace = new MockWorkspace();
+    workspace = await MockWorkspace();
     dataBinder.attachTo(workspace);
   });
 

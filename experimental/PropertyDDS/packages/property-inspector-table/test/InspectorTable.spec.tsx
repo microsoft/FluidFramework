@@ -117,7 +117,7 @@ describe('InspectorTable', () => {
     });
 
     it('should never find an occurrence of the dummy row', () => {
-      workspace.insert('coordinateSystem3D', PropertyFactory.create(coordinateSystem3DSchema.typeid));
+     workspace.root.insert('coordinateSystem3D', PropertyFactory.create(coordinateSystem3DSchema.typeid));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, 'd', clock);
       expect(wrapper.find('InspectorTable').state().searchInProgress).toEqual(true);
@@ -133,7 +133,7 @@ describe('InspectorTable', () => {
 
     it('should recompute search when the data props changes, when there was a match already', () => {
       const testString = 'stringFilterTest';
-      workspace.insert(testString, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(testString, PropertyFactory.create('String', 'single', 'result'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, testString, clock);
       clock.runAll();
@@ -143,7 +143,7 @@ describe('InspectorTable', () => {
       clock.runAll();
       // It should still be one, since we perform search on demand
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(1);
-      workspace.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
       wrapper.setProps({ data: PropertyProxy.proxify(workspace.getRoot()) });
       clock.runAll();
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(1);
@@ -151,12 +151,12 @@ describe('InspectorTable', () => {
 
     it('should recompute search when the data props changes, when there was no match', () => {
       const testString = 'stringFilterTest';
-      workspace.insert(testString, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(testString, PropertyFactory.create('String', 'single', 'result'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, '2');
       clock.runAll();
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(0);
-      workspace.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
       wrapper.setProps({ data: PropertyProxy.proxify(workspace.getRoot()) });
       clock.runAll();
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(1);
@@ -164,7 +164,7 @@ describe('InspectorTable', () => {
 
     it('should recompute search when state changes', () => {
       const testString = 'stringFilterTest';
-      workspace.insert(testString, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(testString, PropertyFactory.create('String', 'single', 'result'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, testString);
       clock.runAll();
@@ -174,15 +174,15 @@ describe('InspectorTable', () => {
       clock.runAll();
       // It is still should be one, since we perform search on demand
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(1);
-      workspace.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
+     workspace.root.insert(`${testString}2`, PropertyFactory.create('String', 'single', 'result'));
       wrapper.setProps({ data: PropertyProxy.proxify(workspace.getRoot()) });
       clock.runAll();
       expect(wrapper.find('InspectorTable').state().foundMatches.length).toEqual(1);
     });
 
     it('should search and highlight matches on demand', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
-      workspace.insert('pointY', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointY', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, 'point');
       clock.runAll();
@@ -204,7 +204,7 @@ describe('InspectorTable', () => {
     });
 
     it('should search and highlight nested matches on demand', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, 'x');
       clock.runAll();
@@ -223,8 +223,8 @@ describe('InspectorTable', () => {
 
 
     it('should not search again when navigating to already found row', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
-      workspace.insert('pointY', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointY', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, 'point');
       clock.runAll();
@@ -261,7 +261,7 @@ describe('InspectorTable', () => {
     });
 
     it('should not highlight matches when search is closed', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, 'x');
       clock.runAll();
@@ -273,7 +273,7 @@ describe('InspectorTable', () => {
     });
 
     it('should work when no results are found', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
       changeSearchInput(wrapper, `${Math.random()}`); // unlikely string to find
       clock.runAll();
@@ -288,7 +288,7 @@ describe('InspectorTable', () => {
     });
 
     it('should debounce filtering 250ms after last keystroke', () => {
-      workspace.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
+     workspace.root.insert('pointX', PropertyFactory.create(point3DSchema.typeid, 'single'));
       const wrapper = mountInspectorTable(rootProxy);
 
       // Simulate changing typing pointX in time.
@@ -325,8 +325,8 @@ describe('InspectorTable', () => {
 
   describe('dataGetter', () => {
     beforeEach(async () => {
-      workspace.insert('test1', PropertyFactory.create('String', 'single', '1')!);
-      workspace.insert('test2', PropertyFactory.create('String', 'single', '2')!);
+     workspace.root.insert('test1', PropertyFactory.create('String', 'single', '1')!);
+     workspace.root.insert('test2', PropertyFactory.create('String', 'single', '2')!);
       rootProxy = PropertyProxy.proxify(workspace.getRoot());
     });
 
@@ -425,7 +425,7 @@ describe('InspectorTable', () => {
           it(`should work for creation under ${context}`, () => {
             const typContext = typIds[context];
             Object.keys(typContext).forEach((type) => {
-              workspace.insert(type, PropertyFactory.create(type, context, typContext[type].initialValue));
+             workspace.root.insert(type, PropertyFactory.create(type, context, typContext[type].initialValue));
               wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
               expandRow(wrapper, type);
               findAndClick(wrapper, type);
@@ -485,10 +485,10 @@ describe('InspectorTable', () => {
       describe('property creation under collections', () => {
         testWithContext();
         it('should work for creation under set', () => {
-          workspace.insert('namedNodeSet', PropertyFactory.create('NamedNodeProperty', 'set'));
+         workspace.root.insert('namedNodeSet', PropertyFactory.create('NamedNodeProperty', 'set'));
 
           // Inserting dummy prop for custom type to be visible in workspace
-          workspace.insert('dummy', PropertyFactory.create(inheritsNamedNodeProp.typeid));
+         workspace.root.insert('dummy', PropertyFactory.create(inheritsNamedNodeProp.typeid));
           workspace.commit();
           wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 
@@ -504,7 +504,7 @@ describe('InspectorTable', () => {
     });
     describe('property creation for dynamic properties only', () => {
       it('should allow creation under node property', () => {
-        workspace.insert('inheritNodeProp', PropertyFactory.create(inheritNodeProp.typeid));
+       workspace.root.insert('inheritNodeProp', PropertyFactory.create(inheritNodeProp.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'inheritNodeProp');
         const dataRow = wrapper.find('NewDataRow');
@@ -514,7 +514,7 @@ describe('InspectorTable', () => {
         expect(dataForm.length).toEqual(1);
       });
       it('should not allow creation under non-node property', () => {
-        workspace.insert('inheritNonNodeProp', PropertyFactory.create(point3DSchema.typeid));
+       workspace.root.insert('inheritNonNodeProp', PropertyFactory.create(point3DSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         const dataRow = wrapper.find('NewDataRow');
         expect(dataRow.length).toEqual(1);
@@ -523,7 +523,7 @@ describe('InspectorTable', () => {
 
     describe('property deletion', () => {
       it('should provide context menu for deletion', () => {
-        workspace.insert('testProp', PropertyFactory.create('String'));
+       workspace.root.insert('testProp', PropertyFactory.create('String'));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 
         const menuButtonWrapper = findRowMenuButton(wrapper, 'testProp');
@@ -531,7 +531,7 @@ describe('InspectorTable', () => {
       });
 
       it('should delete custom property', () => {
-        workspace.insert('propertyToDelete', PropertyFactory.create(primitiveCollectionsSchema.typeid));
+       workspace.root.insert('propertyToDelete', PropertyFactory.create(primitiveCollectionsSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
         // Find context menu button inside row
         const menuButtonWrapper = findRowMenuButton(wrapper, 'propertyToDelete');
@@ -541,7 +541,7 @@ describe('InspectorTable', () => {
       });
 
       it('should delete element of static array', () => {
-        workspace.insert('propertyCollectionSchema', PropertyFactory.create(primitiveCollectionsSchema.typeid));
+       workspace.root.insert('propertyCollectionSchema', PropertyFactory.create(primitiveCollectionsSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'propertyCollectionSchema');
@@ -554,7 +554,7 @@ describe('InspectorTable', () => {
       });
 
       it('should delete element of static map', () => {
-        workspace.insert('propertyCollectionSchema', PropertyFactory.create(primitiveCollectionsSchema.typeid));
+       workspace.root.insert('propertyCollectionSchema', PropertyFactory.create(primitiveCollectionsSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'propertyCollectionSchema');
@@ -568,7 +568,7 @@ describe('InspectorTable', () => {
       it('should delete primitive property from mix of static and dynamic', () => {
         const temp = PropertyFactory.create(primitiveCollectionsNodeSchema.typeid);
         (temp as NodeProperty).insert('Int_Value', PropertyFactory.create('Int32')!);
-        workspace.insert('mixedProperty', temp);
+       workspace.root.insert('mixedProperty', temp);
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'mixedProperty');
@@ -587,7 +587,7 @@ describe('InspectorTable', () => {
       it('should delete custom property from mix of static and dynamic', () => {
         const temp = PropertyFactory.create(primitiveCollectionsNodeSchema.typeid);
         (temp as NodeProperty).insert('NodeProperty_value', PropertyFactory.create(inheritNodeProp.typeid)!);
-        workspace.insert('mixedProperty', temp);
+       workspace.root.insert('mixedProperty', temp);
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'mixedProperty');
@@ -601,7 +601,7 @@ describe('InspectorTable', () => {
       it('should delete array from mix of static and dynamic', () => {
         const temp = PropertyFactory.create(primitiveCollectionsNodeSchema.typeid);
         (temp as NodeProperty).insert('Int_Array', PropertyFactory.create('Int32', 'array')!);
-        workspace.insert('mixedProperty', temp);
+       workspace.root.insert('mixedProperty', temp);
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'mixedProperty');
@@ -618,7 +618,7 @@ describe('InspectorTable', () => {
         (intArray as ArrayProperty).push(2);
         (intArray as ArrayProperty).push(3);
         (temp as NodeProperty).insert('Int_Array', intArray!);
-        workspace.insert('mixedProperty', temp);
+       workspace.root.insert('mixedProperty', temp);
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
         expandRow(wrapper, 'mixedProperty');
@@ -631,7 +631,7 @@ describe('InspectorTable', () => {
       });
 
       it('should provide context menu for deletion - array element', () => {
-        workspace.insert('collections', PropertyFactory.create(primitiveCollectionsSchema.typeid));
+       workspace.root.insert('collections', PropertyFactory.create(primitiveCollectionsSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'collections');
         expandRow(wrapper, 'array');
@@ -640,7 +640,7 @@ describe('InspectorTable', () => {
       });
 
       it('should provide context menu for deletion - map element', () => {
-        workspace.insert('collections', PropertyFactory.create(primitiveCollectionsSchema.typeid));
+       workspace.root.insert('collections', PropertyFactory.create(primitiveCollectionsSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'collections');
         expandRow(wrapper, 'map');
@@ -649,7 +649,7 @@ describe('InspectorTable', () => {
       });
 
       it('should not provide context menu entry for deletion of constant child', () => {
-        workspace.insert('prop', PropertyFactory.create(sampleConstSchema.typeid));
+       workspace.root.insert('prop', PropertyFactory.create(sampleConstSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'prop');
 
@@ -658,7 +658,7 @@ describe('InspectorTable', () => {
       });
 
       it('should not provide context menu for deletion of constant child - array', () => {
-        workspace.insert('constCollectionProp', PropertyFactory.create(sampleConstCollectionSchema.typeid));
+       workspace.root.insert('constCollectionProp', PropertyFactory.create(sampleConstCollectionSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'constCollectionProp');
 
@@ -669,7 +669,7 @@ describe('InspectorTable', () => {
       });
 
       it('should not provide context menu for deletion of constant child - array element', () => {
-        workspace.insert('constCollectionProp', PropertyFactory.create(sampleConstCollectionSchema.typeid));
+       workspace.root.insert('constCollectionProp', PropertyFactory.create(sampleConstCollectionSchema.typeid));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
         expandRow(wrapper, 'constCollectionProp');
         expandRow(wrapper, 'numbersConst');
@@ -686,8 +686,8 @@ describe('InspectorTable', () => {
       };
 
       it('references should become invalid when referenced property is deleted', () => {
-        workspace.insert('IntProperty', PropertyFactory.create('Int8'));
-        workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntProperty'));
+       workspace.root.insert('IntProperty', PropertyFactory.create('Int8'));
+       workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntProperty'));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
         const intMenuButtonWrapper = findRowMenuButton(wrapper, 'IntProperty');
         deleteProperty(wrapper, intMenuButtonWrapper);
@@ -699,9 +699,9 @@ describe('InspectorTable', () => {
       });
 
       it('references should become invalid when referenced reference is deleted', () => {
-        workspace.insert('IntProperty', PropertyFactory.create('Int8'));
-        workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntProperty'));
-        workspace.insert('ReferenceReferenceProperty',
+       workspace.root.insert('IntProperty', PropertyFactory.create('Int8'));
+       workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntProperty'));
+       workspace.root.insert('ReferenceReferenceProperty',
           PropertyFactory.create('Reference', 'single', 'ReferenceProperty'));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
         let row = findTableRow(wrapper, 'ReferenceProperty');
@@ -718,8 +718,8 @@ describe('InspectorTable', () => {
       });
 
       it('reference should point to the 2nd element of the array after the 1st is deleted', () => {
-        workspace.insert('IntArray', PropertyFactory.create('Int8', 'array', [1, 2, 3]));
-        workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntArray[1]'));
+       workspace.root.insert('IntArray', PropertyFactory.create('Int8', 'array', [1, 2, 3]));
+       workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'IntArray[1]'));
         wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
         let row = findTableRow(wrapper, 'ReferenceProperty');
         let text = getValueField(row);
@@ -784,7 +784,7 @@ describe('InspectorTable', () => {
           if (!typIds[context].hasOwnProperty(typContext)) { continue; }
           it(`should work for ${context} of ${typContext}`, () => {
             if (context === 'single') {
-              workspace.insert(typContext, PropertyFactory.create(typContext));
+             workspace.root.insert(typContext, PropertyFactory.create(typContext));
               const newValue = typIds[context][typContext].newValue;
               typContext === 'Bool'
                 ? changeBoolValue(newValue, rootProxy)
@@ -796,7 +796,7 @@ describe('InspectorTable', () => {
               }
             } else {
               const initialValue = typIds[context][typContext].initialValue;
-              workspace.insert(collectionPath,
+             workspace.root.insert(collectionPath,
                 PropertyFactory.create(typContext, context, initialValue));
               const newValue = typIds[context][typContext].newValue;
               mountExpandUpdateCollection(newValue, collectionPath, collectionKey, typContext);
@@ -821,7 +821,7 @@ describe('InspectorTable', () => {
         };
         Object.keys(numberTests).forEach((key) => {
           it(`should work for ${key} of ${typeid}`, () => {
-            workspace.insert('test', PropertyFactory.create(typeid, ...numberTests[key].args));
+           workspace.root.insert('test', PropertyFactory.create(typeid, ...numberTests[key].args));
             const newValue = generateRandomValidNumber(typeid);
             mountExpandUpdateCollection(newValue, 'test', numberTests[key].collectionKey);
             const valProperty = workspace.get(['test'].concat(numberTests[key].path));
@@ -861,7 +861,7 @@ describe('InspectorTable', () => {
       };
       Object.keys(inheritingEnumTests).forEach((key) => {
         it(`should work for ${key} of Enum inheriting`, () => {
-          workspace.insert('test',
+         workspace.root.insert('test',
             PropertyFactory.create(enumUnoDosTresSchema.typeid, ...inheritingEnumTests[key].args));
           const wrapper = mountInspectorTable(rootProxy);
           expandRow(wrapper, 'test');
@@ -884,7 +884,7 @@ describe('InspectorTable', () => {
         it(`should work for ${key} of inline Enum`, () => {
           const schema = inlineEnumSchema(key);
           PropertyFactory.register(schema);
-          workspace.insert('parent', PropertyFactory.create(schema.typeid));
+         workspace.root.insert('parent', PropertyFactory.create(schema.typeid));
           if (key === 'single') {
             workspace.get(['parent', 'inlineEnum']).setEnumByString('tres');
           } else if (key === 'array') {
@@ -914,8 +914,8 @@ describe('InspectorTable', () => {
       };
       Object.keys(referenceTests).forEach((key) => {
         it(`should work for ${key} of Reference`, () => {
-          workspace.insert('String', PropertyFactory.create('String', 'single', 'someValue'));
-          workspace.insert('ref', PropertyFactory.create('Reference', ...referenceTests[key].args));
+         workspace.root.insert('String', PropertyFactory.create('String', 'single', 'someValue'));
+         workspace.root.insert('ref', PropertyFactory.create('Reference', ...referenceTests[key].args));
           const newValue = Math.random() + '';
           mountExpandUpdateCollection(newValue, 'ref', referenceTests[key].collectionKey);
           expect(workspace.get('String').value).toEqual(newValue);
@@ -938,7 +938,7 @@ describe('InspectorTable', () => {
 
     Object.entries(sampleTestMap).forEach(([key, testData]) => {
       it(`should mount correct view component for ${key}`, () => {
-        workspace.insert(
+       workspace.root.insert(
           'testRow',
           PropertyFactory.create(testData.typeidOverride || key, ...testData.args),
         );
@@ -950,7 +950,7 @@ describe('InspectorTable', () => {
       });
 
       it(`should render correct MaterialUI component for ${key}`, () => {
-        workspace.insert(
+       workspace.root.insert(
           'testRow',
           PropertyFactory.create(testData.typeidOverride || key, ...testData.args),
         );
@@ -1041,9 +1041,9 @@ describe('InspectorTable', () => {
     };
 
     const twoReferencesCheck = (oldTypeId, oldContext, oldVal, newTypeId, newContext, newVal) => {
-      workspace.insert('OneProperty', PropertyFactory.create(oldTypeId, oldContext, oldVal));
-      workspace.insert('AnotherProperty', PropertyFactory.create(newTypeId, newContext, newVal));
-      workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'OneProperty'));
+     workspace.root.insert('OneProperty', PropertyFactory.create(oldTypeId, oldContext, oldVal));
+     workspace.root.insert('AnotherProperty', PropertyFactory.create(newTypeId, newContext, newVal));
+     workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'OneProperty'));
       wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 
       // Verify that the EditableValueCell shows the correct value
@@ -1074,8 +1074,8 @@ describe('InspectorTable', () => {
     });
 
     it('reference modification should work: cyclic reference', () => {
-      workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single'));
-      workspace.insert('OneReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferenceProperty'));
+     workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single'));
+     workspace.root.insert('OneReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferenceProperty'));
       wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 
       // Verify that the EditableValueCell shows the correct value
@@ -1091,9 +1091,9 @@ describe('InspectorTable', () => {
     });
 
     it('reference modification should work: cyclic reference with multiple nodes', () => {
-      workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single'));
-      workspace.insert('SecondReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferenceProperty'));
-      workspace.insert('ThirdReferenceProperty',
+     workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single'));
+     workspace.root.insert('SecondReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferenceProperty'));
+     workspace.root.insert('ThirdReferenceProperty',
         PropertyFactory.create('Reference', 'single', 'SecondReferenceProperty'));
       wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
       editReference('ReferenceProperty', 'ThirdReferenceProperty');
@@ -1104,10 +1104,10 @@ describe('InspectorTable', () => {
     });
 
     it('reference modification should work: reference -> reference from array -> int', () => {
-      workspace.insert('IntProperty1', PropertyFactory.create('Int8', 'single', 8));
-      workspace.insert('IntProperty2', PropertyFactory.create('Int8', 'single', 9));
-      workspace.insert('ReferencePropertyArray', PropertyFactory.create('Reference', 'array'));
-      workspace.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferencePropertyArray[0]'));
+     workspace.root.insert('IntProperty1', PropertyFactory.create('Int8', 'single', 8));
+     workspace.root.insert('IntProperty2', PropertyFactory.create('Int8', 'single', 9));
+     workspace.root.insert('ReferencePropertyArray', PropertyFactory.create('Reference', 'array'));
+     workspace.root.insert('ReferenceProperty', PropertyFactory.create('Reference', 'single', 'ReferencePropertyArray[0]'));
       wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
       expandRow(wrapper, 'ReferencePropertyArray');
       findAndClick(wrapper, 'ReferencePropertyArray');
@@ -1154,9 +1154,9 @@ describe('InspectorTable', () => {
     });
 
     it('should show tooltip for very long texts in named cells', () => {
-      workspace.insert('Repeat this string to get a long name'.repeat(10),
+     workspace.root.insert('Repeat this string to get a long name'.repeat(10),
         PropertyFactory.create('NodeProperty', 'single'));
-      workspace.insert('test-short-name', PropertyFactory.create('NodeProperty', 'single'));
+     workspace.root.insert('test-short-name', PropertyFactory.create('NodeProperty', 'single'));
 
       wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
       const overflowableCells = wrapper.find('OverflowableCell');

@@ -34,7 +34,7 @@ import { catchConsoleErrors } from './catch_console_errors';
 import { RESOLVE_NO_LEAFS } from '../../src/internal/constants';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 import { ModificationContext } from '../../src/data_binder/modification_context';
-import { SharedPropertyTree as MockWorkspace } from './shared_property_tree';
+import { MockWorkspace } from './shared_property_tree';
 
 // Create a mock THREE.Object3D
 class Vector3 {
@@ -94,10 +94,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     PropertyFactory.register(Object3DSchema);
   });
 
-  beforeEach(function () {
+  beforeEach(async function () {
     // console.log('inner before each');
     dataBinder = new DataBinder();
-    workspace = new MockWorkspace();
+    workspace = await MockWorkspace();
   });
 
   afterEach(function () {
@@ -137,7 +137,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, MyBinding);
 
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
   });
 
   it('onModify', function () {
@@ -155,7 +155,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     expect(primitiveChildDataBinding).toBeInstanceOf(PrimitiveChildrenDataBinding);
@@ -203,7 +203,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     ParentDataBinding.registerOnPath('node.child', ['modify'], nestedChildSpy);
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-    workspace.insert('myNodePropertyTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
+   workspace.root.insert('myNodePropertyTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
     workspace.get('myNodePropertyTemplate').insert('node', PropertyFactory.create('NodeProperty'));
     workspace.get('myNodePropertyTemplate').get('node').insert('child', PropertyFactory.create('String'));
     expect(nodeSpy).toHaveBeenCalledTimes(1);
@@ -230,7 +230,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-    workspace.insert('myNodeContainerTemplate', nodeContainerPset);
+   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const parentDataBinding = dataBinder.resolve(nodeContainerPset.getAbsolutePath(), 'BINDING');
     expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
@@ -289,11 +289,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     var nodeContainerPset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-    workspace.insert('myNodeContainerTemplate', nodeContainerPset);
+   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
     nodeContainerPset.insert('node', PropertyFactory.create('NodeProperty'));
     nodeContainerPset.get('node').insert('child', PropertyFactory.create('String'));
 
-    workspace.remove('myNodeContainerTemplate');
+    workspace.root.remove('myNodeContainerTemplate');
     expect(textRemoveSpy).toHaveBeenCalledTimes(1);
     expect(nestedChildRemoveSpy).toHaveBeenCalledTimes(1);
     expect(anotherThingRemoveSpy).toHaveBeenCalledTimes(0);
@@ -313,7 +313,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     expect(primitiveChildDataBinding).toBeInstanceOf(PrimitiveChildrenDataBinding);
@@ -359,7 +359,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
@@ -440,7 +440,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var arrayContainerPset = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
-    workspace.insert('myArrayContainerTemplate', arrayContainerPset);
+   workspace.root.insert('myArrayContainerTemplate', arrayContainerPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.get(['myArrayContainerTemplate', 'subArray']);
@@ -500,7 +500,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var mapContainerPset = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
-    workspace.insert('myMapContainerTemplate', mapContainerPset);
+   workspace.root.insert('myMapContainerTemplate', mapContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var mapProperty = workspace.get(['myMapContainerTemplate', 'subMap']);
@@ -576,7 +576,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var mapContainerPset = PropertyFactory.create(SetContainerTemplate.typeid, 'single');
-    workspace.insert('mySetContainerTemplate', mapContainerPset);
+   workspace.root.insert('mySetContainerTemplate', mapContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var setProperty = workspace.get(['mySetContainerTemplate', 'subSet']);
@@ -638,7 +638,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var nodeContainerPset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-    workspace.insert('myNodeContainerTemplate', nodeContainerPset);
+   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var nodeProperty = workspace.get(['myNodeContainerTemplate', 'nested']);
@@ -700,7 +700,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
@@ -798,7 +798,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, PrimitiveChildrenDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('node', PropertyFactory.create(NodeContainerTemplate.typeid));
+   workspace.root.insert('node', PropertyFactory.create(NodeContainerTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     primitiveChildrenDataBinding = dataBinder.resolve('/node', 'BINDING');
 
@@ -857,7 +857,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var node = PropertyFactory.create(NodeContainerTemplate.typeid);
-    workspace.insert('node', node);
+   workspace.root.insert('node', node);
 
     node.insert('string', stringProperty);
     expect(insertSpy).toHaveBeenCalledTimes(1);
@@ -875,7 +875,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(collectionRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('same databinding on two workspaces should not matter', function () {
+  it('same databinding on two workspaces should not matter', async function () {
     // In some tests, a databinding used in the first test was interfering with the second test.
     // We simulate that here
     const insertSpy = jest.fn();
@@ -898,9 +898,9 @@ describe('DataBinding.registerOnPath() should work for', function () {
     const dataBinder1 = new DataBinder();
     const dataBinder2 = new DataBinder();
 
-    const workspace1 = new MockWorkspace();
+    const workspace1 = await MockWorkspace();
     dataBinder1.register('BINDING', PrimitiveChildrenTemplate.typeid, myBinding);
-    const workspace2 = new MockWorkspace();
+    const workspace2 = await MockWorkspace();
     dataBinder2.register('BINDING', PrimitiveChildrenTemplate.typeid, myBinding);
 
     dataBinder1.attachTo(workspace1);
@@ -936,7 +936,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(0);
 
     // Test changing an instance of the parent class
-    workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
+   workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
@@ -949,7 +949,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived class
-    workspace.insert('myInheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+   workspace.root.insert('myInheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
@@ -962,7 +962,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived derived class
-    workspace.insert(
+   workspace.root.insert(
       'myInheritedInheritedChildTemplate', PropertyFactory.create(InheritedInheritedChildTemplate.typeid)
     );
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
@@ -1003,7 +1003,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-    workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1029,7 +1029,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-    workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1055,7 +1055,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-    workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1081,7 +1081,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-    workspace.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1103,13 +1103,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, DerivedDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
+   workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
     expect(myParentDataBinding).toBeDefined();
     expect(myParentDataBinding).toBeInstanceOf(ParentDataBinding);
-    workspace.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
+   workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myChildTemplate', 'BINDING');
@@ -1162,7 +1162,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     const nodePset = PropertyFactory.create('NodeProperty', 'single');
     expect(pathSpy).toHaveBeenCalledTimes(0);
-    workspace.insert('node', nodePset);
+   workspace.root.insert('node', nodePset);
 
     const stringPset = PropertyFactory.create('String', 'single');
     nodePset.insert('aString', stringPset);
@@ -1199,7 +1199,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, DerivedDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
+   workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
@@ -1209,7 +1209,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedInsertSpy).toHaveBeenCalledTimes(0);
     parentInsertSpy.mockClear();
     derivedInsertSpy.mockClear();
-    workspace.insert('myNodeContainerTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
+   workspace.root.insert('myNodeContainerTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myNodeContainerTemplate', 'BINDING');
@@ -1269,20 +1269,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // Add our child (referenced) pset
     var childPset = PropertyFactory.create(ChildTemplate.typeid, 'single');
-    workspace.insert('myChild1', childPset);
+   workspace.root.insert('myChild1', childPset);
 
     // referenceParentPSet should produce a ParentDataBinding
     // Most basic case, insert with an already valid reference
     const referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
     referenceParentPSet.get('single_ref', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
       .setValue('/myChild1');
-    workspace.insert('myReferenceParent', referenceParentPSet);
+   workspace.root.insert('myReferenceParent', referenceParentPSet);
 
     // Now we have a two stage reference
     const referenceParentPSet2 = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
     referenceParentPSet2.get('single_ref', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
       .setValue('/myReferenceParent');
-    workspace.insert('myReferenceParent2', referenceParentPSet2);
+   workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
     // Register the DataBindings
     var doubleReferenceModifySpy = jest.fn(function () {
@@ -1316,9 +1316,9 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
-    workspace.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
-    workspace.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
+   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+   workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
+   workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
     workspace.get('child1').insert('myChild1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.get('child1').insert('myChild2', PropertyFactory.create('NodeProperty', 'single'));
     workspace.get('child1').insert('myChild3', PropertyFactory.create('NodeProperty', 'single'));
@@ -1386,7 +1386,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     PropertyFactory.register(orderEntrySchema);
     dataBinder.register('MODEL', orderEntrySchema.typeid, OrderEntryDataBinding);
     const order = PropertyFactory.create(orderEntrySchema.typeid);
-    workspace.insert('order', order);
+   workspace.root.insert('order', order);
 
     expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);
@@ -1491,7 +1491,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
+   workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     workspace.get('parent').insert('child', PropertyFactory.create(ChildTemplate.typeid, undefined,
@@ -1610,7 +1610,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, PrimitiveChildrenDataBinding);
     dataBinder.attachTo(workspace);
-    workspace.insert('bob', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+   workspace.root.insert('bob', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
     workspace.get(['bob', 'arrayOfStrings']).push('Hi there');
     expect(collectionInsert).toHaveBeenCalledTimes(1);
     expect(collectionRemove).toHaveBeenCalledTimes(0);
@@ -1679,7 +1679,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-    workspace.insert('childArray', PropertyFactory.create(ChildTemplate.typeid, 'array'));
+   workspace.root.insert('childArray', PropertyFactory.create(ChildTemplate.typeid, 'array'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     var childArrayProperty = workspace.get('childArray');
@@ -1717,7 +1717,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+     workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
       workspace.get('point2D').get('position').get('x').value = 42;
       workspace.get('point2D').get('position').get('y').value = 42;
@@ -1754,20 +1754,20 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // retroactively adding bindings - we will get simulated callbacks for data1
     expect(called).toHaveBeenCalledTimes(0);
     simulated = true;
-    workspace.insert('data1', data1);
+   workspace.root.insert('data1', data1);
     dataBinder.attachTo(workspace);
     expect(called).toHaveBeenCalledTimes(2);
 
     // bindings are attached - we will get real callbacks for data2
     simulated = false;
     called.mockClear();
-    workspace.insert('data2', data2);
+   workspace.root.insert('data2', data2);
     expect(called).toHaveBeenCalledTimes(2);
 
     // real callbacks for data2 being removed
     simulated = false;
     called.mockClear();
-    workspace.remove(data2);
+    workspace.root.remove(data2);
     // We won't get called back for collectionRemove (sort of LYNXDEV-5675) - so only one call
     expect(called).toHaveBeenCalledTimes(1);
 
@@ -1804,7 +1804,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // bindings are attached - we will get real callbacks for data1
     expect(called).toHaveBeenCalledTimes(0);
     simulated = false;
-    workspace.insert('data1', data1);
+   workspace.root.insert('data1', data1);
     expect(called).toHaveBeenCalledTimes(2);
 
     // simulated callbacks for handles being destroyed
@@ -1833,7 +1833,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-    workspace.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+   workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
     // Push a scope, and modify both position variables
     workspace.pushModifiedEventScope();
@@ -1869,7 +1869,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     const handle = dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-    workspace.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+   workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
     // Push a scope, and modify both position variables
     workspace.pushModifiedEventScope();
@@ -1912,7 +1912,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
     // child1 is already there, child2 is inserted later, inside the push/pop modified event scope.
-    workspace.insert('child1', PropertyFactory.create(positionTemplate.typeid, 'single'));
+   workspace.root.insert('child1', PropertyFactory.create(positionTemplate.typeid, 'single'));
 
     // Should have heard of the insert of child1, once
     expect(pathSpy).toHaveBeenCalledTimes(1);
@@ -1922,7 +1922,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // to be called.
     workspace.pushModifiedEventScope();
 
-    workspace.insert('child2', PropertyFactory.create(positionTemplate.typeid, 'single'));
+   workspace.root.insert('child2', PropertyFactory.create(positionTemplate.typeid, 'single'));
 
     workspace.get('child1').get('x').value = 42;
     workspace.get('child1').get('y').value = 42;
@@ -1952,7 +1952,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-    workspace.insert('myPrimitiveChildTemplate', primitiveChildPset);
+   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     expect(worked).toEqual(false);
     primitiveChildPset.resolvePath('nested.aNumber').setValue(23);
@@ -1967,7 +1967,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
+     workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
 
       workspace.get('point2D').get('position').get('x').value = 42;
       workspace.get('point2D').get('position').get('y').value = 42;
@@ -1984,7 +1984,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
+     workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
 
       workspace.pushModifiedEventScope();
       workspace.get('point2D').get('position').get('x').value = 42;
@@ -2020,7 +2020,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DWeirdTemplate.typeid, ParentDataBinding);
 
-      workspace.insert('point2D', PropertyFactory.create(point2DWeirdTemplate.typeid, 'single'));
+     workspace.root.insert('point2D', PropertyFactory.create(point2DWeirdTemplate.typeid, 'single'));
 
       workspace.pushModifiedEventScope();
       workspace.get('point2D').get('position').get('x').value = 42;
@@ -2071,11 +2071,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myDerivedDataBinding.registerOnPath('text', ['modify'], pathModifySpy);
     myDerivedDataBinding.registerOnPath('text', ['remove'], pathRemoveSpy);
     dataBinder.register('BINDING', ParentTemplate.typeid, myDerivedDataBinding);
-    workspace.insert('parentProperty', PropertyFactory.create(ParentTemplate.typeid, 'single'));
+   workspace.root.insert('parentProperty', PropertyFactory.create(ParentTemplate.typeid, 'single'));
     expect(pathInsertSpy).toHaveBeenCalledTimes(1);
     workspace.get(['parentProperty', 'text']).setValue('forty-two');
     expect(pathModifySpy).toHaveBeenCalledTimes(1);
-    workspace.remove('parentProperty');
+    workspace.root.remove('parentProperty');
     expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -2100,13 +2100,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myDerivedDataBinding.initialize();
     dataBinder.attachTo(workspace);
     dataBinder.register('BINDING', referenceContainerTemplate.typeid, myDerivedDataBinding);
-    workspace.insert('refContainer', PropertyFactory.create(referenceContainerTemplate.typeid, 'single'));
+   workspace.root.insert('refContainer', PropertyFactory.create(referenceContainerTemplate.typeid, 'single'));
     workspace.get(['refContainer', 'container', 'ref'], RESOLVE_NO_LEAFS).setValue('/child');
-    workspace.insert('child', PropertyFactory.create(ChildTemplate.typeid, 'single'));
+   workspace.root.insert('child', PropertyFactory.create(ChildTemplate.typeid, 'single'));
     expect(insertRemoveSpy).toHaveBeenCalledTimes(1); // insert
     workspace.get(['child', 'text']).setValue('this is still 42');
     expect(modifySpy).toHaveBeenCalledTimes(1); // modify
-    workspace.remove('child');
+    workspace.root.remove('child');
     expect(insertRemoveSpy).toHaveBeenCalledTimes(2); // insert + remove
   });
 
@@ -2142,7 +2142,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ['collectionInsert', 'collectionModify'], collectionPathSpy);
     const handle = dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, ParentDataBinding);
 
-    workspace.insert('props', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
+   workspace.root.insert('props', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     expect(singlePathSpy).toHaveBeenCalledTimes(1); // called once for the insert
 
     workspace.get('props').get('arrayOfNumbers').push(42);
@@ -2174,7 +2174,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     const scene = PropertyFactory.create('NodeProperty');
-    workspace.insert('scene', scene);
+   workspace.root.insert('scene', scene);
 
     // We assume Light3D-1.0.0 and Camera3D-1.0.0 inherit from Object3D-1.0.0
     // We define a binding for Object3D and for Camera3D
@@ -2195,7 +2195,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // When this camera is added, it does not match the 'scene' prefix specified in the activateDataBinding call
     // so nothing is created
-    workspace.insert('lostCamera', PropertyFactory.create('autodesk.samples:Camera3D-1.0.0'));
+   workspace.root.insert('lostCamera', PropertyFactory.create('autodesk.samples:Camera3D-1.0.0'));
     console.assert(dataBinder.resolve('lostCamera', 'BINDING') === undefined);
     // SnippetEnd{DataBinder.DataBindingInheritance}
   });
@@ -2252,7 +2252,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       },
       name: 'myObject'
     });
-    workspace.insert('object', myObject);
+   workspace.root.insert('object', myObject);
 
     const binding = dataBinder.resolve('object', 'BINDING');
 
@@ -2315,7 +2315,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       },
       name: 'myObject'
     });
-    workspace.insert('object', myObject);
+   workspace.root.insert('object', myObject);
 
     const binding = dataBinder.resolve('object', 'BINDING');
 
