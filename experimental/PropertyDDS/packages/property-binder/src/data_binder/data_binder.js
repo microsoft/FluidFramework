@@ -2347,7 +2347,7 @@ class DataBinder {
    *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
-   * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
+   * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
    * console.assert(fido instanceof DogRepresentation);
    * ```
    *
@@ -2403,7 +2403,7 @@ class DataBinder {
    *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
-   * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
+   * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
    * console.assert(fido instanceof DogRepresentation);
    * ```
    *
@@ -2643,7 +2643,7 @@ class DataBinder {
       // Nice try
       throw new Error('Calling getRepresentationAtPath when not attached to a workspace');
     }
-    const property = this.getWorkspace().resolvePath(path);
+    const property = this.getWorkspace().root.resolvePath(path);
     if (!property) {
       // Nice try
       throw new Error('Calling getRepresentationAtPath for a path that does not resolve to a property');

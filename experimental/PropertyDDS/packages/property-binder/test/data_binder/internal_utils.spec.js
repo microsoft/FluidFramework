@@ -7,7 +7,7 @@ import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-prop
 import { forEachProperty, minimalRootPaths, visitTypeHierarchy } from '../../src/data_binder/internal_utils';
 import { catchConsoleErrors } from './catch_console_errors';
 import { PrimitiveChildrenTemplate, AnimalSchema, registerTestTemplates } from './testTemplates';
-import { MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 
 describe('minimalRootPaths', () => {
   it('should return the same array for exclusive paths', () => {
@@ -213,7 +213,7 @@ describe('visitTypeHierarchy', async () => {
   let workspace;
   const callbackSpy = jest.fn();
   beforeAll(async () => {
-    workspace = await MockWorkspace();
+    workspace = await MockSharedPropertyTree();
   });
 
   beforeEach(() => {

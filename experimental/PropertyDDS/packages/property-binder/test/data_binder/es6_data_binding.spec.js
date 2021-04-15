@@ -6,7 +6,7 @@
 import { DataBinder } from '../../src/data_binder/data_binder';
 import { DataBinding } from '../../src/data_binder/data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
-import { MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 const NEVER = { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER };
 
@@ -94,7 +94,7 @@ describe('ES6 DataBinding', function () {
       }
     };
 
-    workspace = await MockWorkspace();
+    workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
     TestDataBinding.initialize();
     dataBinder.attachTo(workspace);

@@ -131,9 +131,9 @@ PropertyElement.prototype.setValue = function(value) {
         if (workspace) {
           // We wrap the setValues since it may do multiple ops. For example, setting an
           // array will create a changeset for each individual element of the array.
-          workspace.pushModifiedEventScope();
+          workspace.pushNotificationDelayScope();
           this._property.setValues(value);
-          workspace.popModifiedEventScope();
+          workspace.popNotificationDelayScope();
         } else {
           this._property.setValues(value);
         }

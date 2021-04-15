@@ -12,7 +12,7 @@ import {
 } from '../../src/data_binder/data_binding';
 import { catchConsoleErrors } from './catch_console_errors';
 import { ModificationContext } from '../../src/data_binder/modification_context';
-import { MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
 describe('Decorated DataBinding', function () {
@@ -126,7 +126,7 @@ describe('Decorated DataBinding', function () {
     PropertyFactory.register(personTemplate);
     PropertyFactory.register(infoTemplate);
 
-    workspace = await MockWorkspace();
+    workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
     dataBinder.attachTo(workspace);
     dataBinder.register('View', personTemplate.typeid, TestDataBindingClass);

@@ -6,7 +6,7 @@
 /* eslint-disable require-jsdoc */
 /* globals expect */
 import { DataBinder } from '../../src/data_binder/data_binder';
-import { MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import {
   catchConsoleErrors
 } from './catch_console_errors';
@@ -58,7 +58,7 @@ describe('DataBinder databinding semversioning', function () {
 
   beforeEach(async function () {
 
-    workspace = await MockWorkspace();
+    workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
     // Bind to the workspace
     dataBinder.attachTo(workspace);

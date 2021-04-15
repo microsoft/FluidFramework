@@ -19,7 +19,7 @@ import * as _ from 'underscore';
 import { PropertyElement } from '../../src/internal/property_element';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
-import { MockWorkspace } from './shared_property_tree';
+import { MockSharedPropertyTree } from './mock_shared_property_tree';
 
 describe('Property element', function () {
 
@@ -37,7 +37,7 @@ describe('Property element', function () {
   });
 
   beforeEach(async function () {
-    workspace = await MockWorkspace();
+    workspace = await MockSharedPropertyTree();
   });
 
   describe('hierarchy walking', function () {
@@ -56,9 +56,9 @@ describe('Property element', function () {
     it('dereferencing', function () {
      workspace.root.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
      workspace.root.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
-      workspace.get(['refParent', 'single_ref'], RESOLVE_NEVER).setValue('/child');
+      workspace.root.get(['refParent', 'single_ref'], RESOLVE_NEVER).setValue('/child');
 
-      const rootElem = new PropertyElement(workspace.getRoot());
+      const rootElem = new PropertyElement(workspace.root);
       expect(rootElem.isValid()).toEqual(true);
 
       const refParentElem = rootElem.getChild('refParent');
@@ -85,10 +85,10 @@ describe('Property element', function () {
   it('reference containers', function () {
    workspace.root.insert('refParent', PropertyFactory.create(ReferenceParentTemplate.typeid, 'single'));
    workspace.root.insert('child', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
-    workspace.get(['refParent', 'array_ref']).push('/child');
-    workspace.get(['refParent', 'map_ref']).insert('aKey', '/child');
+    workspace.root.get(['refParent', 'array_ref']).push('/child');
+    workspace.root.get(['refParent', 'map_ref']).insert('aKey', '/child');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     expect(rootElem.isValid()).toEqual(true);
 
     const refParentElem = rootElem.getChild('refParent');
@@ -125,27 +125,27 @@ describe('Property element', function () {
 
    workspace.root.insert('refParent', refParent);
    workspace.root.insert('child', child);
-    workspace.get(['refParent', 'array_ref']).push('/child');
-    workspace.get(['refParent', 'map_ref']).insert('aKey', '/child');
-    workspace.get(['child', 'arrayOfNumbers']).push(42);
+    workspace.root.get(['refParent', 'array_ref']).push('/child');
+    workspace.root.get(['refParent', 'map_ref']).insert('aKey', '/child');
+    workspace.root.get(['child', 'arrayOfNumbers']).push(42);
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     expect(rootElem.isValid()).toEqual(true);
 
     // Root has no parent
     expect(rootElem.getParent().isValid()).toEqual(false);
 
     const refParentElem = rootElem.getChild('refParent');
-    expect(refParentElem.getParent().getProperty()).toEqual(workspace.getRoot());
+    expect(refParentElem.getParent().getProperty()).toEqual(workspace.root);
 
     const arrayEntryElem = refParentElem.getChild(['array_ref', 0], RESOLVE_NEVER);
     expect(arrayEntryElem.getChildToken()).toEqual(0);
-    expect(arrayEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'array_ref']));
+    expect(arrayEntryElem.getParent().getProperty()).toEqual(workspace.root.get(['refParent', 'array_ref']));
     expect(arrayEntryElem.getParent().getChildToken()).toBeUndefined();
 
     const mapEntryElem = refParentElem.getChild(['map_ref', 'aKey'], RESOLVE_NEVER);
     expect(mapEntryElem.getChildToken()).toEqual('aKey');
-    expect(mapEntryElem.getParent().getProperty()).toEqual(workspace.get(['refParent', 'map_ref']));
+    expect(mapEntryElem.getParent().getProperty()).toEqual(workspace.root.get(['refParent', 'map_ref']));
     expect(mapEntryElem.getParent().getChildToken()).toBeUndefined();
 
     const childElem = rootElem.getChild('child');
@@ -180,7 +180,7 @@ describe('Property element', function () {
 
    workspace.root.insert('thedata', myData);
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
 
     const test = (data, child) => {
       propElem.becomeChild(child);
@@ -288,7 +288,7 @@ describe('Property element', function () {
     array.get('subArray').push(child1);
    workspace.root.insert('theArray', array);
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     const childElem = rootElem.getChild(['theArray', 'subArray', 1, 'text']);
     expect(childElem.getValue()).toEqual('child1 text');
 
@@ -306,7 +306,7 @@ describe('Property element', function () {
     map.get('subMap').insert('child1', child1);
    workspace.root.insert('theMap', map);
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     const childElem = rootElem.getChild(['theMap', 'subMap', 'child1', 'text']);
     expect(childElem.getValue()).toEqual('child1 text');
 
@@ -331,7 +331,7 @@ describe('Property element', function () {
     ref1.setValue('/text');
     text.setValue('theText');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     expect(rootElem.getChild('ref3', RESOLVE_ALWAYS).getValue()).toEqual('theText');
     expect(rootElem.getChild('ref3', RESOLVE_NEVER).getValue()).toEqual('/ref2');
   });
@@ -346,7 +346,7 @@ describe('Property element', function () {
     refs.push('/refs[1]');
     text.setValue('theText');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     expect(rootElem.getChild(['refs', 2], RESOLVE_ALWAYS).getValue()).toEqual('theText');
     expect(rootElem.getChild(['refs', 2], RESOLVE_NO_LEAFS).getValue()).toEqual('/refs[1]');
     expect(rootElem.getChild(['refs', 2], RESOLVE_NEVER).getValue()).toEqual('/refs[1]');
@@ -357,7 +357,7 @@ describe('Property element', function () {
    workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     expect(rootElem.getTokenizedPath().length).toEqual(0);
     expect(rootElem.getContext()).toEqual('single');
     rootElem.becomeChild('theArray');
@@ -381,17 +381,17 @@ describe('Property element', function () {
    workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     rootElem.becomeChild('theArray');
-    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
+    expect(rootElem.getProperty()).toEqual(workspace.root.get('theArray'));
     rootElem.becomeChild(0);
-    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
+    expect(rootElem.getProperty()).toEqual(workspace.root.get('theArray'));
     expect(rootElem.getChildToken()).toEqual(0);
     rootElem.becomeParent();
-    expect(rootElem.getProperty()).toEqual(workspace.getRoot().get('theArray'));
+    expect(rootElem.getProperty()).toEqual(workspace.root.get('theArray'));
     expect(rootElem.getChildToken()).toBeUndefined();
     rootElem.becomeParent();
-    expect(rootElem.getProperty()).toEqual(workspace.getRoot());
+    expect(rootElem.getProperty()).toEqual(workspace.root);
     expect(rootElem.getChildToken()).toBeUndefined();
     rootElem.becomeParent();
     expect(rootElem.isValid()).toEqual(false);
@@ -424,7 +424,7 @@ describe('Property element', function () {
    workspace.root.insert('theArray', arrayData);
     arrayData.push('hi');
 
-    const rootElem = new PropertyElement(workspace.getRoot());
+    const rootElem = new PropertyElement(workspace.root);
     rootElem.becomeChild('theArray');
     rootElem.becomeChild(0);
     const clone = rootElem.clone();
@@ -445,7 +445,7 @@ describe('Property element', function () {
     myReference1.setValue('/myData');
     myReference2.setValue('/myReference1*'); // Note the star!
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     // The value of the reference has a *: we are referring to the reference property and not the
@@ -469,7 +469,7 @@ describe('Property element', function () {
     myReference1.setValue('/myData');
     myReference2.setValue('/myReference1*.[1]');
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     // Because we didn't dereference myReference1, [1] fails
@@ -489,7 +489,7 @@ describe('Property element', function () {
     myReference1.setValue('/myData');
     myReference2.setValue('/myReference1');
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     expect(propElem.getValue()).toEqual(42);
@@ -557,7 +557,7 @@ describe('Property element', function () {
     myReference1.push('/myData');
     myReference2.setValue('/myReference1[0].*'); // Note the star!
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     // The value of the reference has a *: we are referring to the reference property and not the
@@ -578,7 +578,7 @@ describe('Property element', function () {
     myReference1.push('/myData');
     myReference2.setValue('/myReference1[0]');
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     expect(propElem.getValue()).toEqual(42);
@@ -597,7 +597,7 @@ describe('Property element', function () {
     myReference1.set('toto', '/myData');
     myReference2.setValue('/myReference1[toto].*'); // Note the star!
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     // The value of the reference has a *: we are referring to the reference property and not the
@@ -618,7 +618,7 @@ describe('Property element', function () {
     myReference1.set('toto', '/myData');
     myReference2.setValue('/myReference1[toto]');
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     propElem.becomeChild('myReference2');
 
     expect(propElem.getValue()).toEqual(42);
@@ -637,7 +637,7 @@ describe('Property element', function () {
     myReference1.set('toto', '/myData');
     myReference2.setValue('/myReference1[toto]');
 
-    const propElem = new PropertyElement(workspace.getRoot());
+    const propElem = new PropertyElement(workspace.root);
     expect(propElem.getChild('myReference2', RESOLVE_NEVER).getProperty()).toEqual(myReference2);
     expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NEVER).isValid()).toEqual(false);
 
