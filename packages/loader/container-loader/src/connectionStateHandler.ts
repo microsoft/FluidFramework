@@ -15,7 +15,6 @@ export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-    propagateConnectionState: () => void,
     isContainerLoaded: () => boolean,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
@@ -28,8 +27,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
 /**
  * Events emitted by the ConnectionStateHandler.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IConnectionStateHandlerEvents extends IEvent {
+    (event: "connectionStateChanged", listener: () => void);
 }
 
 export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
@@ -225,9 +224,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             }
         }
 
-        if (this.handler.isContainerLoaded()) {
-            this.handler.propagateConnectionState();
-        }
+        this.emit("connectionStateChanged");
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);

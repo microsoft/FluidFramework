@@ -606,13 +606,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                propagateConnectionState: () => this.propagateConnectionState(),
                 isContainerLoaded: () => this.loaded,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
+
+        this.connectionStateHandler.on("connectionStateChanged", () => { this.propagateConnectionState(); });
 
         this._deltaManager = this.createDeltaManager();
 
