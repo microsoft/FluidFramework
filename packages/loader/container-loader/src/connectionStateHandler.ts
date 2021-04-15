@@ -15,7 +15,6 @@ export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-    isContainerLoaded: () => boolean,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
 }
