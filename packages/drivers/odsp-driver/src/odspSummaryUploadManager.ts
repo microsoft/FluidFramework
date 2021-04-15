@@ -43,9 +43,7 @@ function gatesMarkUnreferencedNodes() {
         }
     } catch (e) {}
 
-    // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
-    // See - https://github.com/microsoft/FluidFramework/issues/5127
-    return false;
+    return true;
 }
 
 export interface IDedupCaches {
