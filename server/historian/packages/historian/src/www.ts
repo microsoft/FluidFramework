@@ -6,7 +6,7 @@
 import * as path from "path";
 import * as nconf from "nconf";
 import * as winston from "winston";
-import { runService } from "@fluidframework/server-services-utils";
+import { runService } from "@fluidframework/server-routerlicious-base";
 import { HistorianResourcesFactory, HistorianRunnerFactory } from "@fluidframework/historian-base";
 
 const configFile = path.join(__dirname, "../config.json");

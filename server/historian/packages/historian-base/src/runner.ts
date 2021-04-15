@@ -5,15 +5,14 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
-import { IThrottler, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
+import { IThrottler, IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-services-core";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { ICache, ITenantService } from "./services";
-import { configureLogging } from "./logger";
 import * as app from "./app";
 
-export class HistorianRunner implements utils.IRunner {
+export class HistorianRunner implements IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 

@@ -4,8 +4,9 @@
  */
 
 import { ITenantConfig } from "@fluidframework/server-services-core";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { TestDb, TestTenant } from "@fluidframework/server-test-utils";
-import { ITenantService } from "../services";
+import { ITenantService } from "../../services";
 
 export class TestTenantService implements ITenantService {
     private readonly tenant = new TestTenant("http://test", "http://historian", new TestDb({}));

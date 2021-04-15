@@ -9,10 +9,12 @@ import * as git from "@fluidframework/gitresources";
 import {
     IGetRefParamsExternal,
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+    IPatchRefParamsExternal,
+    BasicRestWrapper,
+    RestWrapper,
+} from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
-import request from "request";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { ICache } from "./definitions";
@@ -39,7 +41,8 @@ function endsWith(value: string, endings: string[]): boolean {
 }
 
 export class RestGitService {
-    private readonly authHeader: string;
+    private readonly restWrapper: RestWrapper;
+    private readonly authHeader: string | undefined;
 
     constructor(
         private readonly storage: ITenantStorage,
@@ -50,6 +53,20 @@ export class RestGitService {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
         }
+
+        this.restWrapper = new BasicRestWrapper(
+            storage.url,
+            undefined,
+            undefined,
+            {
+                "User-Agent": userAgent,
+                "Authorization": this.authHeader,
+            },
+            undefined,
+            undefined,
+            undefined,
+            () => getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
+        );
     }
 
     public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
@@ -283,91 +300,22 @@ export class RestGitService {
     }
 
     private async get<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            headers: {
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "GET",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 200);
+        return this.restWrapper.get<T>(url);
     }
 
     private async post<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "POST",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 201);
+        return this.restWrapper.post<T>(url, requestBody, undefined, {
+            "Content-Type": "application/json",
+        });
     }
 
     private async delete<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            headers: {
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            method: "DELETE",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 204);
+        return this.restWrapper.delete<T>(url);
     }
 
     private async patch<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "PATCH",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 200);
-    }
-
-    /**
-     * Updates the provided options with authorization information
-     */
-    private authorize(options: request.OptionsWithUrl) {
-        if (this.authHeader) {
-            options.headers.Authorization = this.authHeader;
-        }
-    }
-
-    private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            request(
-                options,
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== statusCode) {
-                        winston.info(response.body);
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
+        return this.restWrapper.patch(url, requestBody, undefined, {
+            "Content-Type": "application/json",
         });
     }
 
@@ -384,9 +332,9 @@ export class RestGitService {
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
         if (useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
-            const cachedValue = await this.cache.get<T>(key).catch((error) => {
+            const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
-                return null;
+                return undefined;
             });
 
             if (cachedValue) {
