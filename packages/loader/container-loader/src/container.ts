@@ -96,7 +96,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
@@ -779,12 +779,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
+            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
-                this.service = await this.serviceFactory.createContainer(
-                    this.cachedAttachSummary,
-                    createNewResolvedUrl,
-                    this.subLogger,
+                this.service = await runWithRetry(
+                    async () => this.serviceFactory.createContainer(
+                        summary,
+                        createNewResolvedUrl,
+                        this.subLogger,
+                    ),
+                    "containerAttach",
+                    this._deltaManager,
+                    this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
