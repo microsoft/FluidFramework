@@ -17,6 +17,7 @@ import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -300,23 +301,25 @@ export class RestGitService {
     }
 
     private async get<T>(url: string): Promise<T> {
-        return this.restWrapper.get<T>(url);
+        return this.restWrapper.get<T>(url)
+            .catch(getRequestErrorTranslator(url, "GET"));
     }
 
     private async post<T>(url: string, requestBody: any): Promise<T> {
         return this.restWrapper.post<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        });
+        }).catch(getRequestErrorTranslator(url, "POST"));
     }
 
     private async delete<T>(url: string): Promise<T> {
-        return this.restWrapper.delete<T>(url);
+        return this.restWrapper.delete<T>(url)
+            .catch(getRequestErrorTranslator(url, "DELETE"));
     }
 
     private async patch<T>(url: string, requestBody: any): Promise<T> {
-        return this.restWrapper.patch(url, requestBody, undefined, {
+        return this.restWrapper.patch<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        });
+        }).catch(getRequestErrorTranslator(url, "PATCH"));
     }
 
     /**

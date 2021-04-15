@@ -9,7 +9,7 @@ import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BasicRestWrapper, NetworkError, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
 import * as winston from "winston";
-import { getTokenLifetimeInSec } from "../utils";
+import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
@@ -48,7 +48,9 @@ export class RiddlerService implements ITenantService {
             winston.info(`Resolving tenant details from cache`);
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
-        const details = await this.restWrapper.get<ITenantConfig>(`/api/tenants/${tenantId}`);
+        const tenantUrl = `/api/tenants/${tenantId}`;
+        const details = await this.restWrapper.get<ITenantConfig>(tenantUrl)
+            .catch(getRequestErrorTranslator(tenantUrl, "GET"));
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
             winston.error(`Error caching tenant details to redis`, error);
         });
@@ -66,10 +68,9 @@ export class RiddlerService implements ITenantService {
             return;
         }
 
-        await this.restWrapper.post(`/api/tenants/${tenantId}/validate`, token)
-            .catch(() => {
-                throw new NetworkError(403, "Invalid token");
-            });
+        const tokenValidationUrl = `/api/tenants/${tenantId}/validate`;
+        await this.restWrapper.post(tokenValidationUrl, token)
+            .catch(getRequestErrorTranslator(tokenValidationUrl, "POST", new NetworkError(403, "Invalid token")));
 
         // TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
         let tokenLifetimeInSec = getTokenLifetimeInSec(token);

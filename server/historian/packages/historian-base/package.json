@@ -35,6 +35,7 @@
     "debug": "^4.1.1",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.5.1",
+    "json-stringify-safe": "5.0.1",
     "morgan": "^1.9.1",
     "nconf": "^0.11.0",
     "redis": "^2.8.0",

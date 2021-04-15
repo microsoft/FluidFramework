@@ -7,7 +7,10 @@
 import { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { NetworkError } from "@fluidframework/server-services-client";
 import * as jwt from "jsonwebtoken";
+import winston from "winston";
+import safeStringify from "json-stringify-safe";
 
 export function normalizePort(val) {
     const normalizedPort = parseInt(val, 10);
@@ -45,4 +48,34 @@ export function getTenantIdFromRequest(params: Params) {
     }
 
     return "-";
+}
+
+/**
+ * Pass into `.catch()` block of a RestWrapper call to output a more standardized network error.
+ * @param url request url to be output in error log
+ * @param method request method (e.g. "GET", "POST") to be output in error log
+ * @param networkErrorOverride NetworkError to throw, regardless of error received from request
+ */
+export function getRequestErrorTranslator(
+    url: string,
+    method: string,
+    networkErrorOverride?: NetworkError): (error: any) => never {
+    const getStandardLogErrorMessage = (message: string) =>
+        `[${method}] Request to [${url}] failed: ${message}`;
+    const requestErrorTranslator = (error: any): never => {
+        // BasicRestWrapper only throws `AxiosError.response.status` when available.
+        // Only bubble the error code, but log additional details for debugging purposes
+        if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10)))  {
+            const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
+            winston.error(getStandardLogErrorMessage(`${errorCode}`));
+            throw (networkErrorOverride ?? new NetworkError(
+                errorCode,
+                "Internal Service Request Failed",
+            ));
+        }
+        // Treat anything else as an internal error, but log for debugging purposes
+        winston.error(getStandardLogErrorMessage(safeStringify(error)));
+        throw (networkErrorOverride ?? new NetworkError(500, "Internal Server Error"));
+    };
+    return requestErrorTranslator;
 }

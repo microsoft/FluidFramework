@@ -95,7 +95,7 @@ export function create(
                 response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
             },
             (error) => {
-                response.status(400).json(error);
+                response.status(error?.code ?? 400).json(error?.message ?? error);
             });
     });
 
