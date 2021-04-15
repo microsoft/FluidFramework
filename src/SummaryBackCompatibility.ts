@@ -1,7 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { ErrorString } from './Common';
 import { EditLog } from './EditLog';
 import { ChangeNode, Edit } from './PersistedTypes';
-import { ErrorString, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
+import { SharedTreeSummaryBase, SharedTreeSummary } from './Summary';
 
 /** The summary format version that is read by SharedTree. */
 export const readFormatVersion = '0.1.0';
@@ -11,13 +17,13 @@ export const readFormatVersion = '0.1.0';
  * TODO:#49901: Remove export when this format is no longer written.
  * @internal
  */
-export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
+export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
 	readonly currentTree: ChangeNode;
 
 	/**
 	 * A list of edits.
 	 */
-	readonly sequencedEdits: readonly Edit[];
+	readonly sequencedEdits: readonly Edit<TChange>[];
 }
 
 /**
@@ -54,11 +60,13 @@ export function deserialize(jsonSummary: string, serializer: IFluidSerializer): 
  * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be converted.
  *
  */
-export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): SharedTreeSummary | ErrorString {
+export function convertSummaryToReadFormat<TChange>(
+	summary: SharedTreeSummaryBase
+): SharedTreeSummary<TChange> | ErrorString {
 	const { version } = summary;
 
 	if (version === readFormatVersion) {
-		const { currentTree, editHistory } = summary as SharedTreeSummary;
+		const { currentTree, editHistory } = summary as SharedTreeSummary<TChange>;
 
 		if (editHistory !== undefined) {
 			if (typeof editHistory !== 'object') {
@@ -73,10 +81,10 @@ export function convertSummaryToReadFormat(summary: SharedTreeSummaryBase): Shar
 			}
 		}
 	} else if (version === '0.0.2') {
-		const { currentTree, sequencedEdits } = summary as SharedTreeSummary_0_0_2;
+		const { currentTree, sequencedEdits } = summary as SharedTreeSummary_0_0_2<TChange>;
 
 		if (sequencedEdits !== undefined) {
-			const temporaryLog = new EditLog();
+			const temporaryLog = new EditLog<TChange>();
 
 			sequencedEdits.forEach((edit) => {
 				temporaryLog.addSequencedEdit(edit);

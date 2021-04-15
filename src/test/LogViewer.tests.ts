@@ -6,13 +6,13 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { EditLog } from '../EditLog';
-import { ChangeNode, Edit, EditResult, Insert, StablePlace } from '../PersistedTypes';
-import { newEdit } from '../EditUtilities';
+import { Change, Insert, StablePlace, Transaction } from '../default-edits';
 import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
-import { Transaction } from '../Transaction';
 import { assert, noop } from '../Common';
+import { newEdit } from '../GenericEditUtilities';
+import { ChangeNode, Edit, EditResult } from '../PersistedTypes';
 import {
 	left,
 	leftTraitLabel,
@@ -26,8 +26,8 @@ import {
 
 const initialSimpleTree = { ...simpleTestTree, traits: {} };
 
-function getSimpleLog(numEdits: number = 2): EditLog {
-	const log = new EditLog();
+function getSimpleLog(numEdits: number = 2): EditLog<Change> {
+	const log = new EditLog<Change>();
 	for (let i = 0; i < numEdits; i++) {
 		if (i % 2 === 0) {
 			log.addSequencedEdit(newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
@@ -38,7 +38,7 @@ function getSimpleLog(numEdits: number = 2): EditLog {
 	return log;
 }
 
-function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog {
+function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog<Change> {
 	const logWithLocalEdits = getSimpleLog(numSequencedEdits);
 	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(leftTraitLocation))));
 	logWithLocalEdits.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
@@ -46,7 +46,7 @@ function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog {
 	return logWithLocalEdits;
 }
 
-function getSnapshotsForLog(log: EditLog, baseTree: ChangeNode): Snapshot[] {
+function getSnapshotsForLog(log: EditLog<Change>, baseTree: ChangeNode): Snapshot[] {
 	const snapshots: Snapshot[] = [Snapshot.fromTree(baseTree)];
 	for (let i = 0; i < log.length; i++) {
 		const edit = log.getEditInSessionAtIndex(i);
@@ -55,7 +55,9 @@ function getSnapshotsForLog(log: EditLog, baseTree: ChangeNode): Snapshot[] {
 	return snapshots;
 }
 
-function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: ChangeNode) => LogViewer): Mocha.Suite {
+function runLogViewerCorrectnessTests(
+	viewerCreator: (log: EditLog<Change>, baseTree?: ChangeNode) => LogViewer
+): Mocha.Suite {
 	return describe('LogViewer', () => {
 		const log = getSimpleLog();
 
@@ -85,7 +87,7 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 
 		it('produces correct snapshots when the log is mutated', () => {
 			const simpleLog = getSimpleLog();
-			const mutableLog = new EditLog();
+			const mutableLog = new EditLog<Change>();
 			const viewer = viewerCreator(mutableLog, initialSimpleTree);
 			const snapshotsForLog = getSnapshotsForLog(simpleLog, initialSimpleTree);
 			// This test takes an empty log (A) and a log with edits in it (B), and adds the edits from B to A.
@@ -113,7 +115,7 @@ function runLogViewerCorrectnessTests(viewerCreator: (log: EditLog, baseTree?: C
 				return snapshots;
 			}
 
-			function expectSnapshotsAreEqual(log: EditLog, viewer: LogViewer): void {
+			function expectSnapshotsAreEqual(log: EditLog<Change>, viewer: LogViewer): void {
 				const snapshotsForLog = getSnapshotsForLog(log, initialSimpleTree);
 				const snapshotsForViewer = getSnapshotsFromViewer(viewer, log.length);
 				expect(snapshotsForLog.length).to.equal(snapshotsForViewer.length);
@@ -149,19 +151,20 @@ describe('CachingLogViewer', () => {
 	}
 
 	function getCachingLogViewer(
-		log: EditLog,
+		log: EditLog<Change>,
 		baseTree?: ChangeNode,
 		editCallback?: EditResultCallback,
 		logger?: ITelemetryBaseLogger,
 		knownRevisions?: [number, Snapshot][]
-	): CachingLogViewer {
+	): CachingLogViewer<Change> {
 		return new CachingLogViewer(
 			log,
 			baseTree,
 			knownRevisions,
 			/* expensiveValidation */ true,
 			editCallback,
-			logger ?? getMockLogger()
+			logger ?? getMockLogger(),
+			Transaction.factory
 		);
 	}
 
@@ -195,7 +198,7 @@ describe('CachingLogViewer', () => {
 		}
 	});
 
-	async function requestAllSnapshots(viewer: CachingLogViewer, log: EditLog): Promise<void> {
+	async function requestAllSnapshots(viewer: CachingLogViewer<Change>, log: EditLog<Change>): Promise<void> {
 		for (let i = 0; i <= log.length; i++) {
 			await viewer.getSnapshot(i);
 		}
@@ -317,7 +320,7 @@ describe('CachingLogViewer', () => {
 	const arbitrarySnapshot = Snapshot.fromTree(makeEmptyNode());
 
 	it('uses known editing result', () => {
-		const log = new EditLog();
+		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -337,7 +340,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('ignores known editing if for wrong before snapshot', () => {
-		const log = new EditLog();
+		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -356,7 +359,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('ignores known editing if for wrong edit', () => {
-		const log = new EditLog();
+		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -376,7 +379,7 @@ describe('CachingLogViewer', () => {
 	});
 
 	it('uses known editing result with multiple edits', () => {
-		const log = new EditLog();
+		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
 		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
@@ -404,7 +407,11 @@ describe('CachingLogViewer', () => {
 	});
 
 	describe('Telemetry', () => {
-		function getViewer(): { log: EditLog; viewer: CachingLogViewer; events: ITelemetryBaseEvent[] } {
+		function getViewer(): {
+			log: EditLog<Change>;
+			viewer: CachingLogViewer<Change>;
+			events: ITelemetryBaseEvent[];
+		} {
 			const log = getSimpleLog();
 			const events: ITelemetryBaseEvent[] = [];
 			const viewer = new CachingLogViewer(
@@ -413,12 +420,13 @@ describe('CachingLogViewer', () => {
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				getMockLogger((event) => events.push(event))
+				getMockLogger((event) => events.push(event)),
+				Transaction.factory
 			);
 			return { log, viewer, events };
 		}
 
-		function addInvalidEdit(log: EditLog): Edit {
+		function addInvalidEdit(log: EditLog<Change>): Edit<Change> {
 			// Add a local edit that will be invalid (inserts a node at a location that doesn't exist)
 			const edit = newEdit(
 				Insert.create(

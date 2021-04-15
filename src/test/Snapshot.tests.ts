@@ -5,8 +5,10 @@
 
 import { expect } from 'chai';
 import { NodeId, TraitLabel } from '../Identifiers';
-import { ChangeNode, Side, StablePlace, StableRange } from '../PersistedTypes';
-import { EditValidationResult, Snapshot } from '../Snapshot';
+import { Side, Snapshot } from '../Snapshot';
+import { EditValidationResult } from '../Checkout';
+import { detachRange, insertIntoTrait, StablePlace, StableRange, validateStableRange } from '../default-edits';
+import { ChangeNode } from '../PersistedTypes';
 import {
 	simpleTreeSnapshotWithValidation,
 	left,
@@ -19,7 +21,7 @@ describe('Snapshot', () => {
 	describe('StableRange validation', () => {
 		it('is malformed when anchors are malformed', () => {
 			expect(
-				simpleTreeSnapshotWithValidation.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					// trait and sibling should be mutually exclusive
 					start: { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before },
 					end: { referenceSibling: left.identifier, side: Side.After },
@@ -28,7 +30,7 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when anchors are incorrectly ordered', () => {
 			expect(
-				simpleTreeSnapshotWithValidation.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: left.identifier, side: Side.After },
 					end: { referenceSibling: left.identifier, side: Side.Before },
 				})
@@ -36,7 +38,7 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when anchors are in different traits', () => {
 			expect(
-				simpleTreeSnapshotWithValidation.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: left.identifier, side: Side.Before },
 					end: { referenceSibling: right.identifier, side: Side.After },
 				})
@@ -44,7 +46,7 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when an anchor is invalid', () => {
 			expect(
-				simpleTreeSnapshotWithValidation.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId, side: Side.Before },
 					end: { referenceSibling: right.identifier, side: Side.After },
 				})
@@ -64,7 +66,7 @@ describe('Snapshot', () => {
 		it('can detach a single node', () => {
 			expect(startingSnapshot.getIndexInTrait(nodeA.identifier)).to.equal(0);
 			expect(startingSnapshot.getIndexInTrait(nodeB.identifier)).to.equal(1);
-			const { snapshot } = startingSnapshot.detach(StableRange.only(nodeA));
+			const { snapshot } = detachRange(startingSnapshot, StableRange.only(nodeA));
 			expect(snapshot.size).to.equal(3);
 			expect(snapshot.hasNode(nodeA.identifier)).to.be.true;
 			expect(snapshot.getParentSnapshotNode(nodeA.identifier)).to.be.undefined;
@@ -72,7 +74,10 @@ describe('Snapshot', () => {
 			expect(snapshot.getIndexInTrait(nodeB.identifier)).to.equal(0);
 		});
 		it('can detach an entire trait', () => {
-			const { snapshot, detached } = startingSnapshot.detach(StableRange.all({ parent: tree.identifier, label }));
+			const { snapshot, detached } = detachRange(
+				startingSnapshot,
+				StableRange.all({ parent: tree.identifier, label })
+			);
 			expect(detached).deep.equals([nodeA.identifier, nodeB.identifier]);
 			expect(snapshot.size).to.equal(3);
 			expect(snapshot.hasNode(nodeA.identifier)).to.be.true;
@@ -88,7 +93,8 @@ describe('Snapshot', () => {
 			expect(snapshot.size).to.equal(4);
 			expect(snapshot.hasNode(newNode.identifier)).to.be.true;
 			expect(snapshot.getParentSnapshotNode(newNode.identifier)).to.be.undefined;
-			snapshot = snapshot.insertIntoTrait(
+			snapshot = insertIntoTrait(
+				snapshot,
 				[newNode.identifier],
 				StablePlace.atStartOf({ parent: tree.identifier, label })
 			);

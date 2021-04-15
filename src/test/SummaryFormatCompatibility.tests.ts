@@ -9,10 +9,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { fail } from '../Common';
-import { Change, StablePlace } from '../PersistedTypes';
+import { SharedTree, Change, StablePlace } from '../default-edits';
 import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
-import { newEdit } from '../EditUtilities';
-import { SharedTree } from '../SharedTree';
 import { deserialize } from '../SummaryBackCompatibility';
 import {
 	fullHistorySummarizer,
@@ -20,6 +18,7 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 } from '../Summary';
+import { newEdit } from '../GenericEditUtilities';
 import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 
@@ -35,7 +34,7 @@ function summaryFilePath(summaryName: string): string {
  * A version/summarizer pair must be specified for a write test to be generated.
  * Versions that can no longer be written should be removed from this list.
  */
-const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer }[] = [
+const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<unknown> }[] = [
 	{ version: '0.0.2', summarizer: fullHistorySummarizer },
 	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
 ];
@@ -94,7 +93,7 @@ describe('Summary', () => {
 		expect(tree.equals(expectedTree)).to.be.true;
 	};
 
-	const validateSummaryWrite = (summarizer: SharedTreeSummarizer): void => {
+	const validateSummaryWrite = (summarizer: SharedTreeSummarizer<unknown>): void => {
 		// Save a new summary with the expected tree and use it to load a new SharedTree
 		expectedTree.summarizer = summarizer;
 		const newSummary = expectedTree.saveSummary();

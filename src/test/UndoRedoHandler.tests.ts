@@ -5,8 +5,7 @@
 
 import { UndoRedoStackManager } from '@fluidframework/undo-redo';
 import { EditId } from '../Identifiers';
-import { SharedTree } from '../SharedTree';
-import { SharedTreeUndoRedoHandler } from '../UndoRedoHandler';
+import { SharedTree, SharedTreeUndoRedoHandler } from '../default-edits';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
 
 describe('SharedTreeUndoRedoHandler', () => {

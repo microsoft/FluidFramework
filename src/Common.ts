@@ -208,3 +208,9 @@ export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDs
 		(destination as any)[property] = value;
 	}
 }
+
+/**
+ * A developer facing (non-localized) error message.
+ * TODO: better error system.
+ */
+export type ErrorString = string;

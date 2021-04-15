@@ -4,8 +4,8 @@
  */
 
 import { Snapshot } from './Snapshot';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree';
 import { Checkout } from './Checkout';
+import { EditCommittedEventArguments, GenericSharedTree } from './GenericSharedTree';
 
 /**
  * Basic Session that stays up to date with the SharedTree.
@@ -14,12 +14,12 @@ import { Checkout } from './Checkout';
  * @public
  * @sealed
  */
-export class BasicCheckout extends Checkout {
+export class BasicCheckout<TChange> extends Checkout<TChange> {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: SharedTree) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
+	public constructor(tree: GenericSharedTree<TChange>) {
+		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange>>) => {
 			this.emitChange();
 		});
 	}

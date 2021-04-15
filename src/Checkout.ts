@@ -7,12 +7,12 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
-import { Change, Edit, EditResult } from './PersistedTypes';
-import { newEditId } from './EditUtilities';
-import { EditValidationResult, Snapshot } from './Snapshot';
-import { ValidEditingResult, Transaction } from './Transaction';
-import { EditCommittedHandler, SharedTree, SharedTreeEvent } from './SharedTree';
+import { newEditId } from './GenericEditUtilities';
+import { Snapshot } from './Snapshot';
+import { ValidEditingResult, GenericTransaction } from './GenericTransaction';
+import { EditCommittedHandler, GenericSharedTree, SharedTreeEvent } from './GenericSharedTree';
 import { CachingLogViewer } from './LogViewer';
+import { Edit, EditResult } from './PersistedTypes';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -34,6 +34,29 @@ export interface ICheckoutEvents extends IErrorEvent {
 }
 
 /**
+ * The result of validation of an Edit.
+ * @public
+ */
+export enum EditValidationResult {
+	/**
+	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
+	 * or contained a sequence of changes that could not possibly be applied sequentially without error
+	 * (e.g. an edit which tries to insert the same detached node twice).
+	 */
+	Malformed,
+	/**
+	 * The edit is well-formed but cannot be applied to the current view, generally because concurrent changes
+	 * caused one or more merge conflicts.
+	 * For example, the edit refers to the `StablePlace` after node `C`, but `C` has since been deleted.
+	 */
+	Invalid,
+	/**
+	 * The edit is well-formed and can be applied to the current view.
+	 */
+	Valid,
+}
+
+/**
  * A mutable Checkout of a SharedTree, allowing viewing and interactive transactional editing.
  * Provides (snapshot-isolation)[https://en.wikipedia.org/wiki/Snapshot_isolation] while editing.
  *
@@ -49,7 +72,7 @@ export interface ICheckoutEvents extends IErrorEvent {
  * @public
  * @sealed
  */
-export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
+export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -67,18 +90,18 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	/**
 	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler: EditCommittedHandler;
+	private readonly editCommittedHandler: EditCommittedHandler<GenericSharedTree<TChange>>;
 
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: SharedTree;
+	public readonly tree: GenericSharedTree<TChange>;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
 	 * Used for optimizations if provided.
 	 */
-	private readonly cachingLogViewer?: CachingLogViewer;
+	private readonly cachingLogViewer?: CachingLogViewer<TChange>;
 
 	/**
 	 * Holds the state required to manage the currently open edit.
@@ -87,11 +110,15 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Since `currentView` exposes the the intermediate state from this edit,
 	 * operations that modify `currentEdit.view` must call `emitChange` to handle invalidation.
 	 */
-	private currentEdit?: Transaction;
+	private currentEdit?: GenericTransaction<TChange>;
 
 	public disposed: boolean = false;
 
-	protected constructor(tree: SharedTree, currentView: Snapshot, onEditCommitted: EditCommittedHandler) {
+	protected constructor(
+		tree: GenericSharedTree<TChange>,
+		currentView: Snapshot,
+		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>
+	) {
 		super();
 		this.tree = tree;
 		if (tree.logViewer instanceof CachingLogViewer) {
@@ -129,7 +156,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 */
 	public openEdit(): void {
 		assert(this.currentEdit === undefined, 'An edit is already open.');
-		this.currentEdit = new Transaction(this.currentView);
+		this.currentEdit = this.tree.transactionFactory(this.currentView);
 	}
 
 	/**
@@ -157,7 +184,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular Snapshot.
 	 * This may be used as a caching hint to avoid recomputation.
 	 */
-	protected hintKnownEditingResult(edit: Edit, result: ValidEditingResult): void {
+	protected hintKnownEditingResult(edit: Edit<TChange>, result: ValidEditingResult<TChange>): void {
 		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
 		this.cachingLogViewer?.setKnownEditingResult(edit, result);
 	}
@@ -168,8 +195,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 *
 	 * Override this to customize.
 	 */
-	protected handleNewEdit(id: EditId, result: ValidEditingResult): void {
-		const edit: Edit = { id, changes: result.changes };
+	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChange>): void {
+		const edit: Edit<TChange> = { id, changes: result.changes };
 
 		this.hintKnownEditingResult(edit, result);
 
@@ -184,7 +211,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
 	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
 	 */
-	public applyChanges(...changes: Change[]): void {
+	public applyChanges(...changes: TChange[]): void {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
 		const { result } = this.currentEdit.applyChanges(changes);
 		assert(result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid.');
@@ -195,7 +222,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Convenience helper for applying an edit containing the given changes.
 	 * Opens an edit, applies the given changes, and closes the edit. See (`openEdit()`/`applyChanges()`/`closeEdit()`).
 	 */
-	public applyEdit(...changes: Change[]): EditId {
+	public applyEdit(...changes: TChange[]): EditId {
 		this.openEdit();
 		this.applyChanges(...changes);
 		return this.closeEdit();
@@ -218,7 +245,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		// When closed, the result might indicate Malformed due to unused detached entities.
 		// This is not an error, as the edit was still open and can still use those entities.
 		const priorResults = this.currentEdit.close();
-		const rebasedEdit = new Transaction(this.latestCommittedView).applyChanges(priorResults.changes);
+		const rebasedEdit = this.tree.transactionFactory(this.latestCommittedView).applyChanges(priorResults.changes);
 		assert(
 			rebasedEdit.result !== EditResult.Malformed,
 			'Malformed changes should have been caught on original application.'
@@ -269,7 +296,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 *
 	 * Override this in Checkouts that may have edits which are not included in tree.edits.
 	 */
-	public getChangesAndSnapshotBeforeInSession(id: EditId): { changes: readonly Change[]; before: Snapshot } {
+	public getChangesAndSnapshotBeforeInSession(id: EditId): { changes: readonly TChange[]; before: Snapshot } {
 		const editIndex = this.tree.edits.getIndexOfId(id);
 		return {
 			changes: this.tree.edits.getEditInSessionAtIndex(editIndex).changes,

@@ -5,19 +5,18 @@
 
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { serializeHandles } from '@fluidframework/shared-object-base';
-import { TraitLabel } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
 import { EditLogSummary, OrderedEditSet } from './EditLog';
-import { newEdit, setTrait } from './EditUtilities';
-import { ChangeNode, Edit, Change } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
-import { initialTree } from './InitialTree';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
+import { ChangeNode, Edit } from './PersistedTypes';
 
 /**
  * Format version for summaries that are written.
+ * When next changing the format, we should add a new format version variable for the edit-specific summaries and assign it an independent
+ * version number.
  */
-const formatVersion = '0.0.2';
+export const formatVersion = '0.0.2';
 
 /**
  * Handler for summarizing the tree state.
@@ -26,13 +25,10 @@ const formatVersion = '0.0.2';
  * @returns a summary of the supplied state.
  * @public
  */
-export type SharedTreeSummarizer = (editLog: OrderedEditSet, currentView: Snapshot) => SharedTreeSummaryBase;
-
-/**
- * A developer facing (non-localized) error message.
- * TODO: better error system.
- */
-export type ErrorString = string;
+export type SharedTreeSummarizer<TChange> = (
+	editLog: OrderedEditSet<TChange>,
+	currentView: Snapshot
+) => SharedTreeSummaryBase;
 
 /**
  * The minimal information on a SharedTree summary. Contains the summary format version.
@@ -48,13 +44,13 @@ export interface SharedTreeSummaryBase {
  * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
  * @public
  */
-export interface SharedTreeSummary extends SharedTreeSummaryBase {
+export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
 	readonly currentTree: ChangeNode;
 
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory?: EditLogSummary;
+	readonly editHistory?: EditLogSummary<TChange>;
 }
 
 /**
@@ -73,10 +69,13 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
  * Preserves the full history in the generated summary.
  * @public
  */
-export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
+export function fullHistorySummarizer<TChange>(
+	editLog: OrderedEditSet<TChange>,
+	currentView: Snapshot
+): SharedTreeSummary_0_0_2<TChange> {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
-	const sequencedEdits: Edit[] = [];
+	const sequencedEdits: Edit<TChange>[] = [];
 	let idIndex = 0;
 	editChunks.forEach(({ chunk }) => {
 		assert(
@@ -102,37 +101,13 @@ export function fullHistorySummarizer(editLog: OrderedEditSet, currentView: Snap
 /**
  * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
  */
-export function fullHistorySummarizer_0_1_0(editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary {
+export function fullHistorySummarizer_0_1_0<TChange>(
+	editLog: OrderedEditSet<TChange>,
+	currentView: Snapshot
+): SharedTreeSummary<TChange> {
 	return {
 		currentTree: currentView.getChangeNodeTree(),
 		editHistory: editLog.getEditLogSummary(true),
 		version: readFormatVersion,
-	};
-}
-
-/**
- * Does not preserve (persist) history at all.
- * Instead, the history returned in the summary will contain a single change that creates a revision identical to the supplied view.
- * @public
- */
-export function noHistorySummarizer(_editLog: OrderedEditSet, currentView: Snapshot): SharedTreeSummary_0_0_2 {
-	const currentTree = currentView.getChangeNodeTree();
-	const rootId = currentTree.identifier;
-	const changes: Change[] = [];
-	// Generate a set of changes to set the root node's children to that of the root in the currentTree
-	Object.entries(currentTree.traits).forEach(([label, children]) => {
-		changes.push(...setTrait({ parent: rootId, label: label as TraitLabel }, children));
-	});
-	assert(currentTree.payload === undefined, 'setValue not yet supported.');
-	assert(
-		currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
-		'root definition and identifier should be immutable.'
-	);
-	const edit = newEdit(changes);
-
-	return {
-		currentTree,
-		sequencedEdits: [{ id: edit.id, changes: edit.changes }],
-		version: formatVersion,
 	};
 }

@@ -239,6 +239,6 @@ function makeTraits(
  *
  * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
  */
-export function compareFiniteNumbers(a, b): number {
+export function compareFiniteNumbers(a: number, b: number): number {
 	return a - b;
 }
