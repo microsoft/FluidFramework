@@ -5,7 +5,7 @@
 
 import { Snapshot } from './Snapshot';
 import { EditCommittedEventArguments, SharedTree } from './SharedTree';
-import { Checkout, CheckoutEvent } from './Checkout';
+import { Checkout } from './Checkout';
 
 /**
  * Basic Session that stays up to date with the SharedTree.
@@ -21,7 +21,6 @@ export class BasicCheckout extends Checkout {
 	public constructor(tree: SharedTree) {
 		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
 			this.emitChange();
-			this.emit(CheckoutEvent.EditCommitted, args.editId);
 		});
 	}
 

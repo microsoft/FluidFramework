@@ -24,22 +24,6 @@ export enum CheckoutEvent {
 	 * Passed a before and after Snapshot.
 	 */
 	ViewChange = 'viewChange',
-	/**
-	 * An edit has been added.
-	 * This happens when either:
-	 *
-	 * - A locally generated edit has been created in this Checkout.
-	 * - A locally generated edit had been added to SharedTree (might be from another Checkout, or added directly to the tree).
-	 * - A remotely generated edit is added to the log.
-	 *
-	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
-	 *
-	 * Note that, for locally generated edits, this event will not be emitted again when that edit is sequenced,
-	 * however it may be emitted for both of the first two cases above.
-	 * Additionally be aware that currently events for the second and third cases may occur before those edits are actually visible in the
-	 * checkout (depends on the implementation).
-	 */
-	EditCommitted = 'committedEdit',
 }
 
 /**

@@ -104,7 +104,6 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 // @public
 export enum CheckoutEvent {
-    EditCommitted = "committedEdit",
     ViewChange = "viewChange"
 }
 
