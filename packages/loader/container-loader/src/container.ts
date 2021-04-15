@@ -1446,8 +1446,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on("connect_document_success", (details: IConnectionDetails, opsBehind?: number) => {
-            this.connectionStateHandler.receivedConnectDocumentSuccessEvent(
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
+            this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
                 opsBehind,
