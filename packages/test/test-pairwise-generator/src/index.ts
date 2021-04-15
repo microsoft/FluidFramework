@@ -17,7 +17,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
 export const booleanCases: readonly (boolean)[] = [true, false];
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
-type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__paritalKeyCount?: number});
+type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__partialKeyCount?: number});
 
 function applyPairToPartial<T extends Record<string, any>>(
     randEng: random.Engine,
@@ -35,7 +35,7 @@ function applyPairToPartial<T extends Record<string, any>>(
             return;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if(partial.__paritalKeyCount! < keyCount) {
+        if(partial.__partialKeyCount! < keyCount) {
             if((pair.iKey in partial && !(pair.jKey in partial) && partial[pair.iKey] === pair.iVal)
                 || (pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)) {
                 matchingPartials.push(partial);
@@ -44,7 +44,7 @@ function applyPairToPartial<T extends Record<string, any>>(
     }
     if(matchingPartials.length === 0) {
         const partial: PartialWithKeyCount<T> = {};
-        partial.__paritalKeyCount = 2;
+        partial.__partialKeyCount = 2;
         partial[pair.iKey] = pair.iVal;
         partial[pair.jKey] = pair.jVal;
         partials.push(partial);
@@ -56,7 +56,7 @@ function applyPairToPartial<T extends Record<string, any>>(
             found[pair.iKey] = pair.iVal;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        found.__paritalKeyCount!++;
+        found.__partialKeyCount!++;
     }
 }
 
@@ -64,11 +64,7 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
     optionsMatrix: OptionsMatrix<T>,
     randomSeed: number = 0x35843): T[] {
     const randEng = random.engines.mt19937();
-    if(randomSeed !== undefined) {
-        randEng.seed(randomSeed);
-    }else{
-        randEng.autoSeed();
-    }
+    randEng.seed(randomSeed);
 
     // sort keys biggest to smallest, and prune those with only an undefined option
     const matrixKeys: (keyof T)[] =
@@ -96,14 +92,14 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
 
     // fix up any incomplete outputs
     for(const partial of partials) {
-        if(partial.__paritalKeyCount !== matrixKeys.length) {
+        if(partial.__partialKeyCount !== matrixKeys.length) {
             for(const key of matrixKeys) {
                 if(!(key in partial)) {
                     partial[key] = random.pick(randEng, optionsMatrix[key] as any[]);
                 }
             }
         }
-        delete partial.__paritalKeyCount;
+        delete partial.__partialKeyCount;
     }
 
     return partials as T[];
