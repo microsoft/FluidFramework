@@ -101,11 +101,6 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 
 const detachedContainerRefSeqNumber = 0;
 
-/**
- * This event fires when the connect_document_success message is processed.  Note that this is before our own
- * join op will have appeared.
- */
-const connectDocumentSuccessEventName = "connect_document_success";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -662,11 +657,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
-                        }
-                        break;
-                    case connectDocumentSuccessEventName:
-                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -1450,9 +1440,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on(connectDocumentSuccessEventName, (details: IConnectionDetails, opsBehind?: number) => {
-            this.emit(connectDocumentSuccessEventName, opsBehind);
-
+        deltaManager.on("connect_document_success", (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
