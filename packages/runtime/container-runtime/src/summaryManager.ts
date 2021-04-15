@@ -4,13 +4,18 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    IDisposable,
+    IEvent,
+    ITelemetryLogger,
+} from "@fluidframework/common-definitions";
 import {
     Heap,
     IComparer,
     IHeapNode,
-    PromiseTimer,
     IPromiseTimerResult,
+    PromiseTimer,
+    TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
@@ -42,7 +47,11 @@ class ClientComparer implements IComparer<ITrackedClient> {
     }
 }
 
-class QuorumHeap extends EventEmitter {
+interface IQuorumHeapEvents extends IEvent {
+    (event: "heapChange", listener: () => void);
+}
+
+class QuorumHeap extends TypedEventEmitter<IQuorumHeapEvents> {
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private summarizerCount = 0;
@@ -56,12 +65,10 @@ class QuorumHeap extends EventEmitter {
 
         quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
             this.addClient(clientId, details);
-            this.emit("heapChange");
         });
 
         quorum.on("removeMember", (clientId: string) => {
             this.removeClient(clientId);
-            this.emit("heapChange");
         });
     }
 
@@ -73,6 +80,7 @@ class QuorumHeap extends EventEmitter {
         if (isSummarizer) {
             this.summarizerCount++;
         }
+        this.emit("heapChange");
     }
 
     private removeClient(clientId: string) {
@@ -83,6 +91,7 @@ class QuorumHeap extends EventEmitter {
             if (member.value.isSummarizer) {
                 this.summarizerCount--;
             }
+            this.emit("heapChange");
         }
     }
 
