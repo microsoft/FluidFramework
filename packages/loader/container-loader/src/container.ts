@@ -101,7 +101,7 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 
 const detachedContainerRefSeqNumber = 0;
 
-export const connectEventName = "connect";
+export const connectEventName = "connect_document_success";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -613,10 +613,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             this.logger,
         );
-
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
-        });
 
         this._deltaManager = this.createDeltaManager();
 
@@ -1447,6 +1443,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+            this.emit(connectEventName, opsBehind);
+
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,

@@ -9,7 +9,7 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { connectEventName, ConnectionState } from "./container";
+import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
@@ -28,11 +28,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
 /**
  * Events emitted by the ConnectionStateHandler.
  */
- export interface IConnectionStateHandlerEvents extends IEvent {
-    /**
-     * @param opsBehind - number of ops this client is behind (if present).
-     */
-    (event: "connect", listener: (opsBehind?: number) => void);
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IConnectionStateHandlerEvents extends IEvent {
 }
 
 export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
@@ -155,8 +152,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
-
-        this.emit(connectEventName, opsBehind);
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);

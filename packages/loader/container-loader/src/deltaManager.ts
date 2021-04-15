@@ -1034,7 +1034,7 @@ export class DeltaManager
         // WARNING: This has to happen before processInitialMessages() call below.
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
         this.emit(
-            "connect",
+            "connect_document_success",
             DeltaManager.detailsFromConnection(connection),
             this._hasCheckpointSequenceNumber ? this.lastKnownSeqNumber - this.lastSequenceNumber : undefined);
 
