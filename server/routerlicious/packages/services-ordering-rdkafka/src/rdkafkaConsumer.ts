@@ -19,7 +19,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	optimizedRebalance: boolean;
 	commitRetryDelay: number;
 	automaticConsume: boolean;
-    maxConsumerCommitRetries: number;
+	maxConsumerCommitRetries: number;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -52,7 +52,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			optimizedRebalance: options?.optimizedRebalance ?? false,
 			commitRetryDelay: options?.commitRetryDelay ?? 1000,
 			automaticConsume: options?.automaticConsume ?? true,
-            maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
+			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
 	}
 
@@ -270,54 +270,54 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 	}
 
-    public async commitCheckpoint(
-        partitionId: number,
-        queuedMessage: IQueuedMessage,
-        retries: number = 0): Promise<void> {
-        const startTime = Date.now();
-        try {
-            if (!this.consumer) {
-                throw new Error("Invalid consumer");
-            }
+	public async commitCheckpoint(
+		partitionId: number,
+		queuedMessage: IQueuedMessage,
+		retries: number = 0): Promise<void> {
+		const startTime = Date.now();
+			try {
+				if (!this.consumer) {
+						throw new Error("Invalid consumer");
+				}
 
-            if (this.pendingCommits.has(partitionId)) {
-                throw new Error(`There is already a pending commit for partition ${partitionId}`);
-            }
+				if (this.pendingCommits.has(partitionId)) {
+						throw new Error(`There is already a pending commit for partition ${partitionId}`);
+				}
 
-            // this will be resolved in the "offset.commit" event
-            const deferredCommit = new Deferred<void>();
-            this.pendingCommits.set(partitionId, deferredCommit);
+				// this will be resolved in the "offset.commit" event
+				const deferredCommit = new Deferred<void>();
+				this.pendingCommits.set(partitionId, deferredCommit);
 
-            // logs are replayed from the last checkpointed offset.
-            // to avoid reprocessing the last message twice, we checkpoint at offset + 1
-            this.consumer.commit({
-                topic: this.topic,
-                partition: partitionId,
-                offset: queuedMessage.offset + 1,
-            });
+				// logs are replayed from the last checkpointed offset.
+				// to avoid reprocessing the last message twice, we checkpoint at offset + 1
+				this.consumer.commit({
+					topic: this.topic,
+					partition: partitionId,
+					offset: queuedMessage.offset + 1,
+				});
 
-            const latency = Date.now() - startTime;
-            this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
-            console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer!");
-            return deferredCommit.promise;
-        } catch (ex) {
-            const hasPartition = this.assignedPartitions.has(partitionId);
-            const willRetry = this.consumer?.isConnected()
-                              && retries < this.consumerOptions.maxConsumerCommitRetries
-                              && hasPartition;
+				const latency = Date.now() - startTime;
+				this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
+				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer!");
+				return deferredCommit.promise;
+			} catch (ex) {
+					const hasPartition = this.assignedPartitions.has(partitionId);
+					const willRetry = this.consumer?.isConnected()
+                                      && retries < this.consumerOptions.maxConsumerCommitRetries
+                                      && hasPartition;
 
-            const latency = Date.now() - startTime;
-            this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
-            console.log("[RDKAFKA COMMIT LOG] Commit checkpoint error in RdKafkaConsumer. Error", ex);
+					const latency = Date.now() - startTime;
+					this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
+					console.log("[RDKAFKA COMMIT LOG] Commit checkpoint error in RdKafkaConsumer. Error", ex);
 
-            if (willRetry) {
-                console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Next retry count: ", retries + 1);
-                return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
-            }
+					if (willRetry) {
+						console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Next retry count: ", retries + 1);
+						return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
+					}
 
-            throw ex;
-        }
-    }
+					throw ex;
+			}
+	}
 
 	public async pause() {
 		this.consumer?.unsubscribe();
