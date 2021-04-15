@@ -16,7 +16,6 @@ import {
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
 } from "@fluidframework/odsp-doclib-utils";
-import sha from "sha.js";
 import { debug } from "./debug";
 import { fetch } from "./fetch";
 import { TokenFetchOptions } from "./tokenFetch";
@@ -31,10 +30,6 @@ export interface IOdspResponse<T> {
     headers: Map<string, string>;
     commonSpoHeaders: ITelemetryProperties;
     duration: number,
-}
-
-export function getHashedDocumentId(driveId: string, itemId: string): string {
-    return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
 }
 
 function headersToMap(headers: Headers) {
@@ -205,6 +200,6 @@ export interface INewFileInfo {
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
-    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, "Not an ODSP resolved url");
+    assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, 0x1de /* "Not an ODSP resolved url" */);
     return resolvedUrl as IOdspResolvedUrl;
 }

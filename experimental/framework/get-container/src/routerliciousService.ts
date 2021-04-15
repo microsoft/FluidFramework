@@ -49,6 +49,7 @@ class SimpleUrlResolver implements IUrlResolver {
                 ordererUrl: `${this.config.orderer}`,
                 storageUrl: `${this.config.storage}/repos/${this.config.tenantId}`,
             },
+            id: containerId,
             tokens: { jwt: token },
             type: "fluid",
             url: documentUrl,

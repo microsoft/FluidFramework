@@ -512,7 +512,7 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.options.runGCInTestMode, "Data stores should be deleted only in GC test mode");
+        assert(this.runtime.options.runGCInTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];
