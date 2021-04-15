@@ -1,3 +1,9 @@
+## 0.39 Breaking changes
+- [connect event removed from Container](#connect-event-removed-from-Container)
+
+### connect event removed from Container
+The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
+
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)

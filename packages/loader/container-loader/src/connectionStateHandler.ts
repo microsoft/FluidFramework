@@ -135,7 +135,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
-    public receivedConnectEvent(
+    public receivedConnectDocumentSuccessEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
         opsBehind?: number,
