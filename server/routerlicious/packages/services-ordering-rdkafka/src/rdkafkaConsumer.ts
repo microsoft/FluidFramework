@@ -277,11 +277,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		const startTime = Date.now();
 			try {
 				if (!this.consumer) {
-						throw new Error("Invalid consumer");
+					throw new Error("Invalid consumer");
 				}
 
 				if (this.pendingCommits.has(partitionId)) {
-						throw new Error(`There is already a pending commit for partition ${partitionId}`);
+					throw new Error(`There is already a pending commit for partition ${partitionId}`);
 				}
 
 				// this will be resolved in the "offset.commit" event
@@ -301,21 +301,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer!");
 				return deferredCommit.promise;
 			} catch (ex) {
-					const hasPartition = this.assignedPartitions.has(partitionId);
-					const willRetry = this.consumer?.isConnected()
-                                      && retries < this.consumerOptions.maxConsumerCommitRetries
-                                      && hasPartition;
+				const hasPartition = this.assignedPartitions.has(partitionId);
+				const willRetry = this.consumer?.isConnected()
+									&& retries < this.consumerOptions.maxConsumerCommitRetries
+									&& hasPartition;
 
-					const latency = Date.now() - startTime;
-					this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
-					console.log("[RDKAFKA COMMIT LOG] Commit checkpoint error in RdKafkaConsumer. Error", ex);
+				const latency = Date.now() - startTime;
+				this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
+				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint error in RdKafkaConsumer. Error", ex);
 
-					if (willRetry) {
-						console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Next retry count: ", retries + 1);
-						return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
-					}
+				if (willRetry) {
+					console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Next retry count: ", retries + 1);
+					return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
+				}
 
-					throw ex;
+				throw ex;
 			}
 	}
 
