@@ -63,16 +63,11 @@ class QuorumHeap extends TypedEventEmitter<IQuorumHeapEvents> {
             this.addClient(clientId, client);
         }
 
-        quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
-            this.addClient(clientId, details);
-        });
-
-        quorum.on("removeMember", (clientId: string) => {
-            this.removeClient(clientId);
-        });
+        quorum.on("addMember", this.addClient);
+        quorum.on("removeMember", this.removeClient);
     }
 
-    private addClient(clientId: string, client: ISequencedClient) {
+    private readonly addClient = (clientId: string, client: ISequencedClient) => {
         // Have to undefined-check client.details for backwards compatibility
         const isSummarizer = client.client.details?.type === summarizerClientType;
         const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
@@ -81,9 +76,9 @@ class QuorumHeap extends TypedEventEmitter<IQuorumHeapEvents> {
             this.summarizerCount++;
         }
         this.emit("heapChange");
-    }
+    };
 
-    private removeClient(clientId: string) {
+    private readonly removeClient = (clientId: string) => {
         const member = this.heapMembers.get(clientId);
         if (member) {
             this.heap.remove(member);
@@ -93,7 +88,7 @@ class QuorumHeap extends TypedEventEmitter<IQuorumHeapEvents> {
             }
             this.emit("heapChange");
         }
-    }
+    };
 
     public getFirstClientId(): string | undefined {
         return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
