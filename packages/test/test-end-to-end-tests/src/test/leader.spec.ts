@@ -22,7 +22,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        container1 = await provider.makeTestContainer() as Container;
+        container1 = await provider.makeTestContainer({
+            runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+        }) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
     });
@@ -40,7 +42,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         // shouldn't be a leader in view only mode
         assert(!dataObject1.context.leader);
 
-        const container2 = await provider.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer({
+            runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+        }) as Container;
         await ensureConnected(container2);
         await provider.ensureSynchronized();
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
@@ -114,7 +118,9 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         // Make sure we reconnect as a writer and processed the op
         await provider.ensureSynchronized();
 
-        const container2 = await provider.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer({
+            runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+        }) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
@@ -146,10 +152,14 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert(dataObject1.context.leader);
 
-        const container2 = await provider.loadTestContainer() as Container;
+        const container2 = await provider.loadTestContainer({
+            runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+        }) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-        const container3 = await provider.loadTestContainer() as Container;
+        const container3 = await provider.loadTestContainer({
+            runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+        }) as Container;
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.

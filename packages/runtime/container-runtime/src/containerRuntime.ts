@@ -587,7 +587,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
-            addGlobalAgentSchedulerAndLeaderElection: true,
+            addGlobalAgentSchedulerAndLeaderElection: false,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
