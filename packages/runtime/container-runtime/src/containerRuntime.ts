@@ -509,12 +509,18 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         disableGC: oldRuntimeOptions.disableGC,
         runFullGC: oldRuntimeOptions.runFullGC,
     };
+    const agentSchedulerOption: boolean | undefined = runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection;
 
-    return {
+    const backCompatOptions: IContainerRuntimeOptions = {
         summaryOptions,
         gcOptions,
-        addGlobalAgentSchedulerAndLeaderElection: runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection,
     };
+
+    if (agentSchedulerOption !== undefined) {
+        backCompatOptions.addGlobalAgentSchedulerAndLeaderElection = agentSchedulerOption;
+    }
+
+    return backCompatOptions;
 }
 
 /**
