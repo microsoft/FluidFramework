@@ -4,6 +4,7 @@
 - [ODSP Driver url resolver for share link parameter consolidation](#ODSP-Driver-url-resolver-for-share-link-parameter-consolidation)
 - [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations)
 - [Removed containerUrl from IContainerLoadOptions and IContainerConfig](#Removed-containerUrl-from-IContainerLoadOptions-and-IContainerConfig)
+- [LoaderHeader.pause](#LoaderHeader.pause)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -181,6 +182,16 @@ The option will be turned off by default in an upcoming release before being tur
 
 ### Removed containerUrl from IContainerLoadOptions and IContainerConfig
 Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
+
+### LoaderHeader.pause
+LoaderHeader.pause has been removed. instead of
+```typescript
+[LoaderHeader.pause]: true
+```
+use
+```typescript
+[LoaderHeader.loadMode]: { deltaConnection: "none" }
+```
 
 ## 0.37 Breaking changes
 

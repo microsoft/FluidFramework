@@ -32,9 +32,6 @@ describe("Container Runtime", () => {
 
         async function startDeltaManager() {
             await deltaManager.connect({ reason: "test" });
-            deltaManager.inbound.resume();
-            deltaManager.outbound.resume();
-            deltaManager.inboundSignal.resume();
         }
 
         // Function to yield control in the Javascript event loop.

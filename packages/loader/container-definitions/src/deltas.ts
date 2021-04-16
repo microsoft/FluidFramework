@@ -207,6 +207,8 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      * Returns all the items in the queue as an array. Does not remove them from the queue.
      */
     toArray(): T[];
+
+    waitTillProcessingDone(): Promise<void>;
 }
 
 export type ReadOnlyInfo = {
