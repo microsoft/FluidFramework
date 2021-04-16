@@ -114,8 +114,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		consumer.on("offset.commit", (err, offsets) => {
 			let shouldRetryCommit = false;
+            console.log("[RDKAFKA OFFSET COMMIT LISTENER] Entered listener.");
 
 			if (err) {
+                console.log("[RDKAFKA OFFSET COMMIT LISTENER] There was an error.");
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
@@ -124,16 +126,20 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
+                    console.log("[RDKAFKA OFFSET COMMIT LISTENER] Should not retry commit. Will emit error.");
 					this.error(err);
 				}
 			}
 
+            console.log("[RDKAFKA OFFSET COMMIT LISTENER] Will now iterate over offsets.");
 			for (const offset of offsets) {
 				const deferredCommit = this.pendingCommits.get(offset.partition);
 				if (deferredCommit) {
 					if (shouldRetryCommit) {
+                        console.log("[RDKAFKA OFFSET COMMIT LISTENER] Will check if partition is there");
 						setTimeout(() => {
 							if (this.assignedPartitions.has(offset.partition)) {
+                                console.log("[RDKAFKA OFFSET COMMIT LISTENER] Will call commit for the offset");
 								// we still own this partition. checkpoint again
 								this.consumer?.commit(offset);
 							}
@@ -298,7 +304,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 				const latency = Date.now() - startTime;
 				this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
-				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer!");
+				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer! Retry: ", retries);
 				return deferredCommit.promise;
 			} catch (ex) {
 				const hasPartition = this.assignedPartitions.has(partitionId);
@@ -311,7 +317,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint error in RdKafkaConsumer. Error", ex);
 
 				if (willRetry) {
-					console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Next retry count: ", retries + 1);
+					console.log("[RDKAFKA COMMIT LOG] Will retry after failure. Current retry count: ", retries);
 					return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
 				}
 
