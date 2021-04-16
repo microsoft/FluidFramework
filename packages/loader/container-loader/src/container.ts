@@ -97,12 +97,11 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
-export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -115,8 +114,6 @@ export interface IContainerLoadOptions {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    containerUrl: string;
-    docId: string;
     resolvedUrl: IFluidResolvedUrl;
     /**
      * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
@@ -129,18 +126,12 @@ export interface IContainerLoadOptions {
 }
 
 export interface IContainerConfig {
-    resolvedUrl?: IResolvedUrl;
+    resolvedUrl?: IFluidResolvedUrl;
     canReconnect?: boolean;
-    /**
-     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
-     * for purposes of creating a separate Container instance for the summarizer to use.
-     */
-    containerUrl?: string;
     /**
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    id?: string;
 }
 
 export enum ConnectionState {
@@ -301,9 +292,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {
-                containerUrl: loadOptions.containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
-                id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
             });
@@ -393,8 +382,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private _id: string | undefined;
-    private containerUrl: string | undefined;
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
@@ -422,7 +409,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
-    private _resolvedUrl: IResolvedUrl | undefined;
+    private _resolvedUrl: IFluidResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
     private _dirtyContainer = false;
@@ -484,7 +471,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get id(): string {
-        return this._id ?? "";
+        return this._resolvedUrl?.id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -574,10 +561,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         super();
         this._audience = new Audience();
 
-        // Initialize from config
-        this.containerUrl = config.containerUrl;
         this.clientDetailsOverride = config.clientDetailsOverride;
-        this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
@@ -626,16 +610,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                propagateConnectionState: () => this.propagateConnectionState(),
-                isContainerLoaded: () => this.loaded,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
 
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
+        this.connectionStateHandler.on("connectionStateChanged", () => {
+            if (this.loaded) {
+                this.propagateConnectionState();
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -678,11 +662,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
-                        }
-                        break;
-                    case connectEventName:
-                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -805,32 +784,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
+            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
-                this.service = await this.serviceFactory.createContainer(
-                    this.cachedAttachSummary,
-                    createNewResolvedUrl,
-                    this.subLogger,
+                this.service = await runWithRetry(
+                    async () => this.serviceFactory.createContainer(
+                        summary,
+                        createNewResolvedUrl,
+                        this.subLogger,
+                    ),
+                    "containerAttach",
+                    this._deltaManager,
+                    this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.urlResolver.getAbsoluteUrl(
-                resolvedUrl,
-                "",
-                this._context?.codeDetails,
-            );
-            assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
-            this.containerUrl = url;
-            const parsedUrl = parseUrl(resolvedUrl.url);
-            if (parsedUrl === undefined) {
-                throw new Error("Unable to parse Url");
-            }
-
-            const [, docId] = parsedUrl.id.split("/");
-            this._id = decodeURI(docId);
-
             if (this._storageService === undefined) {
                 this._storageService = await this.getDocumentStorageService();
             }
@@ -1541,7 +1511,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
@@ -1804,7 +1774,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
+        const loader = new RelativeLoader(this.loader, this);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1827,7 +1797,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState,
         );
 
-        loader.resolveContainer(this);
         this.emit("contextChanged", codeDetails);
     }
 

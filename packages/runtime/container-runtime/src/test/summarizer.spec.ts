@@ -99,7 +99,8 @@ describe("Runtime", () => {
                     mockDeltaManager = new MockDeltaManager();
                     summaryCollection = new SummaryCollection(
                         mockDeltaManager,
-                        mockLogger);
+                        mockLogger,
+                        {});
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,
