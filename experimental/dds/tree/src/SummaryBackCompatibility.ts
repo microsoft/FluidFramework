@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { EditLog } from './EditLog';
 import { ChangeNode, Edit } from './PersistedTypes';
