@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import { FluidTinylicious } from "@fluid-experimental/fluid-static";
-import { ITinyliciousServiceConfig } from "@fluid-experimental/get-container";
+import FluidTinylicious, { ITinyliciousServiceConfig } from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";

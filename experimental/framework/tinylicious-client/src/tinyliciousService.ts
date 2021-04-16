@@ -17,7 +17,7 @@ import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { getContainer, IGetContainerService } from "./getContainer";
+import { getContainer, IGetContainerService } from "@fluid-experimental/get-container";
 
 export interface ITinyliciousServiceConfig {
     id: string;

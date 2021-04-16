@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { Container } from "@fluidframework/container-loader";
+import {
+    ContainerConfig,
+    DOProviderContainerRuntimeFactory,
+    FluidContainer,
+} from "@fluid-experimental/fluid-static";
 import {
     ITinyliciousServiceConfig,
     TinyliciousService,
-} from "@fluid-experimental/get-container";
-import { Container } from "@fluidframework/container-loader";
-import {
-    DOProviderContainerRuntimeFactory,
-    FluidContainer,
-} from "./containerCode";
-import { ContainerConfig } from "./types";
+} from "./tinyliciousService";
 
 /**
  * FluidTinyliciousInstance provides the ability to have a Fluid object backed by a Tinylicious service

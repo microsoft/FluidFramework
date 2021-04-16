@@ -17,13 +17,16 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
 import { getContainer, IGetContainerService } from "./getContainer";
-import { ITinyliciousServiceConfig } from "./tinyliciousService";
 
 export interface IRouterliciousConfig {
     orderer: string,
     storage: string,
     tenantId: string,
     key: string,
+}
+
+export interface IRouterliciousServiceConfig {
+    id: string;
 }
 
 class SimpleUrlResolver implements IUrlResolver {
@@ -79,14 +82,14 @@ export class RouterliciousService implements IGetContainerService {
     }
 
     public async createContainer(
-        serviceConfig: ITinyliciousServiceConfig,
+        serviceConfig: IRouterliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
         return getContainer(this, serviceConfig.id, containerRuntimeFactory, true);
     }
 
     public async getContainer(
-        serviceConfig: ITinyliciousServiceConfig,
+        serviceConfig: IRouterliciousServiceConfig,
         containerRuntimeFactory: IRuntimeFactory,
     ): Promise<Container> {
         return getContainer(

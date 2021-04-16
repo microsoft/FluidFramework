@@ -8,7 +8,7 @@ import { fluidExport as TodoContainer } from "@fluid-example/todo";
 import {
     getTinyliciousContainer,
     InsecureTinyliciousUrlResolver,
-} from "@fluid-experimental/get-container";
+} from "@fluid-experimental/tinylicious-client";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";

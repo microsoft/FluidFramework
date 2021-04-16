@@ -12,6 +12,8 @@
     - [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
     - [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
       - [Example](#example-3)
+    - [[BREAKING] `'FluidStatic' instances have been moved to be service specific`]
+    (#fluidstatic-instances-have-been-moved-to-be-service-specific)
 
 ## 0.38.0
 
@@ -146,4 +148,6 @@ const map2 = await map2Handle.get();
 const map2 = await map1.get("map2").get();
 
 ```
+
+### [BREAKING] 'FluidStatic' instances have been moved to be service specific
 

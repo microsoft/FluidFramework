@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { getTinyliciousContainer } from "@fluid-experimental/tinylicious-client";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
