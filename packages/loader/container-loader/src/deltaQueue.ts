@@ -44,6 +44,12 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         return this.processingDeferred === undefined && this.q.length === 0;
     }
 
+    public async waitTillProcessingDone(): Promise<void> {
+        if (this.processingDeferred !== undefined) {
+            return this.processingDeferred.promise;
+        }
+    }
+
     /**
      * @param worker - A callback to process a delta.
      * @param logger - For logging telemetry.
@@ -81,9 +87,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+        return this.waitTillProcessingDone();
     }
 
     public resume(): void {

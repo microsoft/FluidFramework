@@ -1,3 +1,20 @@
+## 0.39 Breaking changes
+- [connect event removed from Container](#connect-event-removed-from-Container)
+- [LoaderHeader.pause](#LoaderHeader.pause)
+
+### connect event removed from Container
+The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
+
+### LoaderHeader.pause
+LoaderHeader.pause has been removed. instead of
+```typescript
+[LoaderHeader.pause]: true
+```
+use
+```typescript
+[LoaderHeader.loadMode]: { deltaConnection: "none" }
+```
+
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
@@ -181,6 +198,7 @@ The option will be turned off by default in an upcoming release before being tur
 
 ### Removed containerUrl from IContainerLoadOptions and IContainerConfig
 Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
+>>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

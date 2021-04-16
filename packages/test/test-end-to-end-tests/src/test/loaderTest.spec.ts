@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -152,9 +152,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 
     it("loaded container is paused using loader pause flags", async () => {
         // load the container paused
-        const headers = {
+        const headers: IRequestHeader = {
             [LoaderHeader.cache]: false,
-            [LoaderHeader.pause]: true,
+            [LoaderHeader.loadMode]: { deltaConnection: "delayed" },
         };
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
@@ -190,8 +190,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         const url = await container.getAbsoluteUrl("");
         assert(url, "url is undefined");
         // load the containers paused
-        const container1 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
-        const container2 = await loader.resolve({ url, headers: { [LoaderHeader.pause]: true } });
+        const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
+        const container1 = await loader.resolve({ url, headers });
+        const container2 = await loader.resolve({ url, headers });
 
         assert.strictEqual(container1, container2, "container not cached across multiple loader requests");
 

@@ -1,6 +1,10 @@
 # Changes across versions for the Fluid-Static
 
 - [Changes across versions for the Fluid-Static](#changes-across-versions-for-the-fluid-static)
+  - [0.39.0](#0390)
+    - [[BREAKING] `'FluidStatic' instances have been moved to be service specific`]
+      - [Example](#example-4)
+    (#fluidstatic-instances-have-been-moved-to-be-service-specific)
   - [0.38.0](#0380)
     - [DDS object types are now supported](#dds-object-types-are-now-supported)
       - [Example](#example)
@@ -12,8 +16,21 @@
     - [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
     - [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
       - [Example](#example-3)
-    - [[BREAKING] `'FluidStatic' instances have been moved to be service specific`]
-    (#fluidstatic-instances-have-been-moved-to-be-service-specific)
+
+## 0.39.0
+
+### [BREAKING] 'FluidStatic' instances have been moved to be service specific
+
+The generalized FluidStatic class has now been replaced with service-specific static instances. An example of this can be found for Tinylicious in `@fluid-experimental/tinylicious-client`. Instead of importing in a generalized FluidStatic instance that needs to be initialized by providing a service, you can choose to import in the FluidStatic specificially for the service you will be using.
+
+#### Example
+
+```javascript
+import FluidTinylicious from "@fluid-experimental/tinylicious-client";
+
+await FluidTinylicious.createContainer( { id: "_unique-id_" }, /* config */);
+const container = await FluidTinylicious.getContainer({ id: "_unique-id_" }, /* config */);
+```
 
 ## 0.38.0
 
@@ -148,6 +165,3 @@ const map2 = await map2Handle.get();
 const map2 = await map1.get("map2").get();
 
 ```
-
-### [BREAKING] 'FluidStatic' instances have been moved to be service specific
-

@@ -85,7 +85,6 @@ Then use another command window to deliver the changes:
 * `npm run build` - build
 * `docker-compose restart {modified service}` - allow the container to pick up the changes stored on the local machine
 or
-* `npm run browserify` - rebuild the view code (.hjs, view controllers) and reload the browser
 
 ### Standalone
 
