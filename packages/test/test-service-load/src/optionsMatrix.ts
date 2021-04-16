@@ -38,11 +38,12 @@ export function generateRuntimeOptions(seed: number) {
         maxOpsSinceLastSummary: numberCases,
     };
 
-    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+    type OptionsUnderTest = Pick<IContainerRuntimeOptions, "gcOptions" | "summaryOptions">;
+
+    const runtimeOptionsMatrix: OptionsMatrix<OptionsUnderTest> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
-        addGlobalAgentSchedulerAndLeaderElection: [undefined],
     };
 
-    return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);
+    return generatePairwiseOptions<OptionsUnderTest>(runtimeOptionsMatrix, seed);
 }
