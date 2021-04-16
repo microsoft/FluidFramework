@@ -4,5 +4,6 @@
  */
 
 export * from "./constants";
+export * from "./middleware";
 export * from "./params";
 export * from "./runner";
