@@ -67,7 +67,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
             clientId,
             receiveTopic,
             groupId,
-            { numberOfPartitions, replicationFactor },
+            { numberOfPartitions, replicationFactor, optimizedRebalance: true },
         );
 
         return new RdkafkaResources(
