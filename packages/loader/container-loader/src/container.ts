@@ -96,12 +96,11 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
-export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -606,16 +605,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                propagateConnectionState: () => this.propagateConnectionState(),
-                isContainerLoaded: () => this.loaded,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
 
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
+        this.connectionStateHandler.on("connectionStateChanged", () => {
+            if (this.loaded) {
+                this.propagateConnectionState();
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -658,11 +657,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
-                        }
-                        break;
-                    case connectEventName:
-                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -785,12 +779,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
+            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
-                this.service = await this.serviceFactory.createContainer(
-                    this.cachedAttachSummary,
-                    createNewResolvedUrl,
-                    this.subLogger,
+                this.service = await runWithRetry(
+                    async () => this.serviceFactory.createContainer(
+                        summary,
+                        createNewResolvedUrl,
+                        this.subLogger,
+                    ),
+                    "containerAttach",
+                    this._deltaManager,
+                    this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
@@ -1446,7 +1446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
