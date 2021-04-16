@@ -7,6 +7,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
@@ -77,6 +78,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             [
                 ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
+                AgentSchedulerFactory.registryEntry,
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
@@ -86,6 +88,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
 
         // On first boot create the base component
         if (!runtime.existing) {
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
             await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
         }
 
