@@ -4,12 +4,12 @@
  */
 
 import {
-    assert,
-    fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
     unreachableCase,
     stringToBuffer,
+    fromBase64ToUtf8,
+    assert,
 } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -231,6 +231,34 @@ export function convertToSummaryTree(
     } else {
         return convertToSummaryTreeWithStats(snapshot, fullTree);
     }
+}
+
+/**
+ * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
+ * was taken by serialize api in detached container.
+ * @param snapshot - snapshot in ISnapshotTree format
+ */
+ export function convertSnapshotTreeToSummaryTree(
+    snapshot: ISnapshotTree,
+): ISummaryTreeWithStats {
+    assert(Object.keys(snapshot.commits).length === 0,
+        0x19e /* "There should not be commit tree entries in snapshot" */);
+
+    const builder = new SummaryTreeBuilder();
+    for (const [key, value] of Object.entries(snapshot.blobs)) {
+        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
+        // and we want to push blobPath to blobValue in tree entries.
+        if (snapshot.blobs[value] !== undefined) {
+            const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
+            builder.addBlob(key, decoded);
+        }
+    }
+
+    for (const [key, tree] of Object.entries(snapshot.trees)) {
+        const subtree = convertSnapshotTreeToSummaryTree(tree);
+        builder.addWithStats(key, subtree);
+    }
+    return builder.getSummaryTree();
 }
 
 /**
