@@ -4,12 +4,12 @@
  */
 
 import {
+    assert,
+    fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
     unreachableCase,
     stringToBuffer,
-    fromBase64ToUtf8,
-    assert,
 } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -238,7 +238,7 @@ export function convertToSummaryTree(
  * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
  */
- export function convertSnapshotTreeToSummaryTree(
+export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
     assert(Object.keys(snapshot.commits).length === 0,
