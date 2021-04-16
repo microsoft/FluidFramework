@@ -182,10 +182,11 @@ module.exports = (env) => CommonWebpackLibTSConfig({
   merge: merge(common(env), {
     externals: [{
       'react': 'react',
-      '@adsk/forge-appfw-databinder': '@adsk/forge-appfw-databinder',
-      '@adsk/forge-appfw-hfdm-property-proxy': '@adsk/forge-appfw-hfdm-property-proxy',
-      '@adsk/forge-appfw-udp-inspector': '@adsk/forge-appfw-udp-inspector',
+      "@fluid-experimental/property-binder": "@fluid-experimental/property-binder",
+      '@fluid-experimental/property-changeset': '@fluid-experimental/property-changeset',
+      '@fluid-experimental/property-dd‚s':'@fluid-experimental/property-dds',
       '@fluid-experimental/property-properties': '@fluid-experimental/property-properties',
+      '@fluid-experimental/property-proxy': '@fluid-experimental/property-proxy',
     }
     ],
     plugins: [
