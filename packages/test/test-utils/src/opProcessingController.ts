@@ -134,7 +134,7 @@ class DeltaManagerMonitor extends DeltaManagerToggle {
             this.connect(id);
         }
 
-        deltaManager.on("connect_document_success", (details) => this.connect(details.clientId));
+        deltaManager.on("connect", (details) => this.connect(details.clientId));
         deltaManager.on("disconnect", (reason) => {
             assert(this.clientId !== undefined);
             this.trace("DIS");
@@ -296,7 +296,7 @@ export class OpProcessingController {
                         monitor2.onClientDisconnect(clientId);
                     });
                 }
-                monitor1.deltaManager.on("connect_document_success", (details) => {
+                monitor1.deltaManager.on("connect", (details) => {
                     if (monitor1.deltaManager.active) {
                         monitor1.deltaManager.once("disconnect", () => {
                             monitor2.onClientDisconnect(details.clientId);

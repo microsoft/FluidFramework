@@ -502,7 +502,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     + `${msg.type} ${getContentsString(msg.type, msg.contents)}`);
             });
 
-            container.deltaManager.on("connect_document_success", (details) => {
+            container.deltaManager.on("connect", (details) => {
                 debugOp(`${index}: CON: clientId: ${details.clientId}`);
             });
             container.deltaManager.on("disconnect", (reason) => {

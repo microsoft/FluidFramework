@@ -42,7 +42,7 @@ class OpPerfTelemetry {
 
         this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
-        this.deltaManager.on("connect_document_success", (details, opsBehind) => {
+        this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
             if (opsBehind !== undefined) {
                 this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
