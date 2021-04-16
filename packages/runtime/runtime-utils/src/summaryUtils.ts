@@ -234,60 +234,6 @@ export function convertToSummaryTree(
 }
 
 /**
- * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
- * was taken by serialize api in detached container.
- * @param snapshot - snapshot in ISnapshotTree format
- */
-export function convertSnapshotTreeToSummaryTree(
-    snapshot: ISnapshotTree,
-): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0,
-        0x19e /* "There should not be commit tree entries in snapshot" */);
-
-    const builder = new SummaryTreeBuilder();
-    for (const [key, value] of Object.entries(snapshot.blobs)) {
-        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
-        // and we want to push blobPath to blobValue in tree entries.
-        if (snapshot.blobs[value] !== undefined) {
-            const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
-            builder.addBlob(key, decoded);
-        }
-    }
-
-    for (const [key, tree] of Object.entries(snapshot.trees)) {
-        const subtree = convertSnapshotTreeToSummaryTree(tree);
-        builder.addWithStats(key, subtree);
-    }
-    return builder.getSummaryTree();
-}
-
-/**
- * Utility to convert serialized snapshot taken in detached container to format where we can use it to
- * attach the container.
- * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
- */
-export function convertContainerToDriverSerializedFormat(
-    serializedSnapshotTree: string,
-): ISummaryTree {
-    const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
-    const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
-    const appSummaryTree: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {},
-    };
-    const entries = Object.entries(summaryTree.tree);
-    for (const [key, subTree] of entries) {
-        if (key !== ".protocol") {
-            appSummaryTree.tree[key] = subTree;
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete summaryTree.tree[key];
-        }
-    }
-    summaryTree.tree[".app"] = appSummaryTree;
-    return summaryTree;
-}
-
-/**
  * Converts ISummaryTree to ITree format. This is needed for back-compat while we get rid of snapshot.
  * @param summaryTree - summary tree in ISummaryTree format
  */

@@ -27,10 +27,10 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MessageType, ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 
@@ -249,11 +249,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const subDataStore1 = await createFluidObject(dataStore.context, "default");
         dataStore.root.set("attachKey", subDataStore1.handle);
 
-        const snapshotTree = container.serialize();
-        const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
+        const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
         const resolvedUrl = await provider.urlResolver.resolve(request);
         assert(resolvedUrl);
-        const service = await provider.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
+        const service = await provider.documentServiceFactory.createContainer(summaryForAttach, resolvedUrl);
         const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
 
         const container2 = await loader.resolve({ url: absoluteUrl });

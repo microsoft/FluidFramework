@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { Loader } from "@fluidframework/container-loader";
+import {
+    convertDetachedContainerSnapshot,
+    Loader,
+} from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -153,7 +156,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree: ISnapshotTree = convertDetachedContainerSnapshot(JSON.parse(container.serialize()));
 
             // Check for scheduler
             assertSchedulerTree(snapshotTree);
@@ -178,12 +181,12 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree1: ISnapshotTree = convertDetachedContainerSnapshot(JSON.parse(container.serialize()));
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const snapshotTree2: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree2: ISnapshotTree = convertDetachedContainerSnapshot(JSON.parse(container.serialize()));
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -216,7 +219,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree: ISnapshotTree = convertDetachedContainerSnapshot(JSON.parse(container.serialize()));
 
             assertProtocolTree(snapshotTree);
             const { channelsTree } = assertSchedulerTree(snapshotTree);
@@ -580,7 +583,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = JSON.parse(container.serialize());
+            const snapshotTree = convertDetachedContainerSnapshot(JSON.parse(container.serialize()));
 
             assertProtocolTree(snapshotTree);
             const { channelsTree } = assertSchedulerTree(snapshotTree);
