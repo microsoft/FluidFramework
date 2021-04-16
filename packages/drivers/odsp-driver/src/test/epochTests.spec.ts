@@ -18,8 +18,8 @@ import {
     IEntry,
     LocalPersistentCache,
  } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+ import { getHashedDocumentId } from "../odspPublicUtils";
+ import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
 

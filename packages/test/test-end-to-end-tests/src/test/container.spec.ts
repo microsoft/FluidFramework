@@ -10,7 +10,13 @@ import {
     ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
+import {
+    Container,
+    ConnectionState,
+    Loader,
+    ILoaderProps,
+    waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
@@ -82,18 +88,16 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                containerUrl: testRequest.url,
-                docId: "documentId",
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
-                pause: testRequest.headers?.[LoaderHeader.pause],
+                loadMode: testRequest.headers?.[LoaderHeader.loadMode],
             },
         );
     }
 
     it("Load container successfully", async () => {
         const container = await loadContainer();
-        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.id, "containerTest", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
@@ -134,7 +138,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
-            await loadContainer({ documentServiceFactory: mockFactory });
+            const container2 = await loadContainer({ documentServiceFactory: mockFactory });
+            await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
             assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");

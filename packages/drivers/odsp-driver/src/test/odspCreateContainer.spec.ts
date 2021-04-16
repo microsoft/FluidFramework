@@ -12,7 +12,8 @@ import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { IOdspResolvedUrl } from "../contracts";
-import { getHashedDocumentId, getOdspResolvedUrl } from "../odspUtils";
+import { getOdspResolvedUrl } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {

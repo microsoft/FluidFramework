@@ -505,7 +505,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     const col = this.cols.handleToPosition(colHandle, localSeq);
 
                     if (row >= 0 && col >= 0) {
-                        this.setCellCore(
+                        this.sendSetCellOp(
                             row,
                             col,
                             setOp.value,

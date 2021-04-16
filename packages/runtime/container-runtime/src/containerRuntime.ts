@@ -130,7 +130,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-import { SummaryCollection } from "./summaryCollection";
+import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -237,6 +237,9 @@ export interface ISummaryRuntimeOptions {
     // and the root node when generating a summary if set to true.
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
+
+    // Defaults to 3000 ops
+    maxOpsSinceLastSummary?: number;
 }
 
 /**
@@ -533,7 +536,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public get IContainerRuntimeDirtyable() {
         // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
+        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
         return this;
     }
     public get IFluidRouter() { return this; }
@@ -586,7 +592,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
-            logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
+            console.warn("ContainerRuntime with AgentScheduler built-in is deprecated, "
+                + "see BREAKING.md for more details and migration instructions");
+            // Disabling noisy telemetry until customers have had some time to migrate
+            // logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
         }
 
         const registry = combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false
@@ -731,7 +740,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public get leader(): boolean {
         // The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
-        this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
+        console.warn("The ContainerRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
         return this._leader;
     }
 
@@ -891,10 +903,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
+        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+                this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                // unregister default to no log on every op after falling behind
+                // and register summary ack handler to re-register this handler
+                // after successful summary
+                opActions.default = undefined;
+                opActions.summaryAck = summaryAckAction;
+            }
+        };
+        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+            // we've caught up, so re-register the default action to monitor for
+            // falling behind, and unregister ourself
+            opActions.default = defaultAction;
+            opActions.summaryAck = undefined;
+        };
+        const opActions: SummaryCollectionOpActions = {
+            default: defaultAction,
+        };
+
         this.summaryCollection = new SummaryCollection(
             this.deltaManager,
             this.logger,
+            opActions,
         );
+
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -1487,7 +1522,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
         // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
+        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
         assert(
             isRuntimeMessage(message) === true,
             0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
@@ -1693,7 +1731,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
                 : {
                     proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAckNack.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 

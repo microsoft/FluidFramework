@@ -6,8 +6,7 @@
 import * as path from "path";
 import * as winston from "winston";
 import { configureLogging } from "@fluidframework/server-services-utils";
-import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "@fluidframework/server-routerlicious-base";
-import { runService } from "../runner";
+import { RiddlerResourcesFactory, RiddlerRunnerFactory, runService } from "@fluidframework/server-routerlicious-base";
 
 const configPath = path.join(__dirname, "../../config/config.json");
 

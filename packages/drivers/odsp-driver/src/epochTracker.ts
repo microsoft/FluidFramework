@@ -59,7 +59,7 @@ export class EpochTracker implements IPersistedFileCache {
 
     // public for UT purposes only!
     public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal) {
-        assert(this._fluidEpoch === undefined, "epoch exists");
+        assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
         this._fluidEpoch = epoch;
 
         this.logger.sendTelemetryEvent(
@@ -80,7 +80,7 @@ export class EpochTracker implements IPersistedFileCache {
             if (value === undefined || value.version !== persistedCacheValueVersion) {
                 return undefined;
             }
-            assert(value.fluidEpoch !== undefined, "all entries have to have epoch");
+            assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(value.fluidEpoch, true, "cache");
             } else if (this._fluidEpoch !== value.fluidEpoch) {
@@ -95,7 +95,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     public async put(entry: IEntry, value: any) {
-        assert(this._fluidEpoch !== undefined, "no epoch");
+        assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
         const data: IVersionedValueWithEpoch = {
             value,
             version: persistedCacheValueVersion,
