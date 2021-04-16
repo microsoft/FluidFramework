@@ -1,6 +1,11 @@
 # Changes across versions for the Fluid-Static
 
 - [Changes across versions for the Fluid-Static](#changes-across-versions-for-the-fluid-static)
+  - [0.39.0](#0390)
+    - [[BREAKING] `'FluidStatic' has separate implementations for each service`](#fluidstatic-instances-have-been-moved-to-be-service-specific)
+      - [Example](#example-4)
+    - [[BREAKING] `createContainer and getContainer now accept service-specific container configurations`](#createContainer-and-getContainer-now-accept-service-specific-container-configurations)
+      - [Example](#example-5)
   - [0.38.0](#0380)
     - [DDS object types are now supported](#dds-object-types-are-now-supported)
       - [Example](#example)
@@ -12,6 +17,50 @@
     - [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
     - [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
       - [Example](#example-3)
+
+## 0.39.0
+
+### [BREAKING] 'FluidStatic' has separate implementations for each service
+
+There is no longer a general `FluidStatic` class. It has instead been replaced by `Fluid*` implementations that are unique for each service that the client is trying to communicate with. For example, when working with the Tinylicious server, instead of importing in `Fluid` as the default import from the package, selectively import the `FluidTinylicious` class.
+
+#### Example
+
+```javascript
+import { FluidTinylicious } from "@fluid-experimental/fluid-static";
+
+FluidTinylicious.init();
+```
+
+### [BREAKING] createContainer and getContainer now accept service-specific container configurations
+
+Instead of taking in just an id as the first parameter in `createContainer` and `getContainer`, they now take in a `serviceConfig` which is unique for each service. In Tinylicious' case, the only value in config object is still just an id, but other services can use this to obtain additional metadata for how to store this container's data.
+
+The second parameter is now called `objectConfig` and remains of type `ContainerConfig`. It is still used to define the different DDSes and DataObjects that this container will have.
+
+#### Example
+
+```javascript
+import { FluidTinylicious } from "@fluid-experimental/fluid-static";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { SharedMap } from "@fluidframework/map";
+
+const serviceConfig = {
+    id: "_unique-id_"
+}
+
+const objectConfig = {
+    name: "my-container",
+    initialObjects: {
+        "pair1": KeyValueDataObject,
+        "map1": SharedMap,
+    }
+}
+
+FluidTinylicious.init();
+await FluidTinylicious.createContainer(serviceConfig, objectConfig);
+const container = await FluidTinylicious.getContainer(serviceConfig, objectConfig);
+```
 
 ## 0.38.0
 
@@ -29,7 +78,7 @@ import { SharedMap } from "@fluidframework/map";
 
 // ...
 
-const objectConfig = {
+const containerConfig = {
     name: "my-container",
     initialObjects: {
         "pair1": KeyValueDataObject,
@@ -146,4 +195,3 @@ const map2 = await map2Handle.get();
 const map2 = await map1.get("map2").get();
 
 ```
-
