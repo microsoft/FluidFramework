@@ -69,7 +69,7 @@ export class RiddlerService implements ITenantService {
         }
 
         const tokenValidationUrl = `/api/tenants/${tenantId}/validate`;
-        await this.restWrapper.post(tokenValidationUrl, token)
+        await this.restWrapper.post(tokenValidationUrl, { token })
             .catch(getRequestErrorTranslator(tokenValidationUrl, "POST", new NetworkError(403, "Invalid token")));
 
         // TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
