@@ -4,6 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
+import type { OutgoingHttpHeaders } from "http";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -43,26 +44,25 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
-    private readonly authHeader: string | undefined;
 
     constructor(
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
+        const defaultHeaders: OutgoingHttpHeaders = {
+            "User-Agent": userAgent,
+        };
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
-            this.authHeader = `Basic ${token.toString("base64")}`;
+            defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
             undefined,
             undefined,
-            {
-                "User-Agent": userAgent,
-                "Authorization": this.authHeader,
-            },
+            defaultHeaders,
             undefined,
             undefined,
             undefined,
