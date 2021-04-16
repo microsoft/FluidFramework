@@ -23,7 +23,9 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            const container = await provider.makeTestContainer();
+            const container = await provider.makeTestContainer({
+                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+            });
             scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId);
 
             const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
@@ -102,7 +104,9 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
         beforeEach(async () => {
             // Create a new Container for the first document.
-            container1 = await provider.makeTestContainer();
+            container1 = await provider.makeTestContainer({
+                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+            });
             scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
             const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
@@ -116,7 +120,9 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
                 });
             }
             // Load existing Container for the second document.
-            container2 = await provider.loadTestContainer();
+            container2 = await provider.loadTestContainer({
+                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
+            });
             scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
             const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
