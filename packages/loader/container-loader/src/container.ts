@@ -301,11 +301,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
 
-                // always load unpaused with pending ops
+                // always load unpaused with pending ops!
+                // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
-                const mode: IContainerLoadMode = pendingLocalState !== undefined ?
-                    defaultMode :
-                    loadOptions.loadMode ?? defaultMode;
+                assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
+                    "pending state requires immidiate connection!");
+                const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket

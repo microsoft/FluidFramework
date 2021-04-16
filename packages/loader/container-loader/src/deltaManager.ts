@@ -1358,38 +1358,39 @@ export class DeltaManager
             return;
         }
 
-        assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
-        let from = lastKnowOp + 1;
+        try {
+            assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
+            let from = lastKnowOp + 1;
 
-        const n = this.previouslyProcessedMessage?.sequenceNumber;
-        if (n !== undefined) {
-            // If we already processed at least one op, then we have this.previouslyProcessedMessage populated
-            // and can use it to validate that we are operating on same file, i.e. it was not overwritten.
-            // Knowing about this mechanism, we could ask for op we already observed to increase validation.
-            // This is especially useful when coming out of offline mode or loading from
-            // very old cached (by client / driver) snapshot.
-            assert(n === lastKnowOp, 0x0f2 /* "previouslyProcessedMessage" */);
-            assert(from > 1, 0x0f3 /* "not positive" */);
-            from--;
-        }
+            const n = this.previouslyProcessedMessage?.sequenceNumber;
+            if (n !== undefined) {
+                // If we already processed at least one op, then we have this.previouslyProcessedMessage populated
+                // and can use it to validate that we are operating on same file, i.e. it was not overwritten.
+                // Knowing about this mechanism, we could ask for op we already observed to increase validation.
+                // This is especially useful when coming out of offline mode or loading from
+                // very old cached (by client / driver) snapshot.
+                assert(n === lastKnowOp, 0x0f2 /* "previouslyProcessedMessage" */);
+                assert(from > 1, 0x0f3 /* "not positive" */);
+                from--;
+            }
 
-        this.fetching = true;
+            this.fetching = true;
 
-        return this.getDeltas(
-            from,
-            to,
-            (messages) => {
-                this.refreshDelayInfo(this.deltaStorageDelayId);
-                this.enqueueMessages(messages, telemetryEventSuffix);
-            },
-            cacheOnly,
-        ).finally(() => {
-            this.refreshDelayInfo(this.deltaStorageDelayId);
-            this.fetching = false;
-        }).catch ((error) => {
+            await this.getDeltas(
+                from,
+                to,
+                (messages) => {
+                    this.refreshDelayInfo(this.deltaStorageDelayId);
+                    this.enqueueMessages(messages, telemetryEventSuffix);
+                },
+                cacheOnly);
+        } catch (error) {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
             this.close(CreateContainerError(error));
-        });
+        } finally {
+            this.refreshDelayInfo(this.deltaStorageDelayId);
+            this.fetching = false;
+        }
     }
 
     private catchUp(messages: ISequencedDocumentMessage[], telemetryEventSuffix: string): void {
