@@ -55,6 +55,8 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public dispose() { }
 
+    public async waitTillProcessingDone() { }
+
     constructor() {
         super();
     }
