@@ -8,10 +8,12 @@ import {
     createOdspCreateContainerRequest,
     createOdspUrl,
     OdspDriverUrlResolver,
+} from "@fluidframework/odsp-driver";
+import {
     HostStoragePolicy,
     ISnapshotOptions,
     IOpsCachingPolicy,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver-definitions";
 import {
     booleanCases,
     generatePairwiseOptions,

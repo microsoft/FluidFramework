@@ -7,7 +7,7 @@ import assert from "assert";
 import os from "os";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import type { HostStoragePolicy, OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver";
+import type { OdspResourceTokenFetchOptions, HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 import {
     OdspTokenConfig,
     OdspTokenManager,

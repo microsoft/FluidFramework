@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
-import { IOdspResolvedUrl } from "../contracts";
 
 describe("Odsp Driver Resolver", () => {
     const siteUrl = "https://localhost";

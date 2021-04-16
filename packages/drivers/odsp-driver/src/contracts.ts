@@ -3,52 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-
-export interface IOdspUrlParts {
-    siteUrl: string;
-    driveId: string;
-    itemId: string;
-}
-
-export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
-    type: "fluid";
-    odspResolvedUrl: true;
-
-    // URL to send to fluid, contains the documentId and the path
-    url: string;
-
-    // A hashed identifier that is unique to this document
-    hashedDocumentId: string;
-
-    endpoints: {
-        snapshotStorageUrl: string;
-        attachmentPOSTStorageUrl: string;
-        attachmentGETStorageUrl: string;
-        deltaStorageUrl: string,
-    };
-
-    // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    tokens: {};
-
-    fileName: string;
-
-    summarizer: boolean;
-
-    // This is used to save the network calls while doing trees/latest call as if the client does not have permission
-    // then this link can be redeemed for the permissions in the same network call.
-    sharingLinkToRedeem?: string;
-
-    codeHint?: {
-        // containerPackageName is used for adding the package name to the request headers.
-        // This may be used for preloading the container package when loading Fluid content.
-        containerPackageName?: string
-    }
-
-    fileVersion: string | undefined;
-}
+import { IOdspUrlParts, HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 
 /**
  * Socket storage discovery api response
@@ -209,79 +165,6 @@ export interface IOdspSnapshot {
     trees: ITree[];
     blobs?: IBlob[];
     ops?: ISequencedDeltaOpMessage[];
-}
-
-export interface ISnapshotOptions {
-    blobs?: number;
-    deltas?: number;
-    channels?: number;
-    /*
-     * Maximum Data size (in bytes)
-     * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
-     * if snapshot is bigger in size than specified limit.
-     */
-    mds?: number;
-
-    /*
-     * Maximum time limit to fetch snapshot (in seconds)
-     * If specified, client will timeout the fetch request if it exceeds the time limit and
-     * will try to fetch the snapshot without blobs.
-     */
-    timeout?: number;
-}
-
-export interface IOpsCachingPolicy {
-    /**
-     * Batch size. Controls how many ops are grouped together as single cache entry
-     * The bigger the number, the more efficient it is (less reads & writes)
-     * At the same time, big number means we wait for so many ops to accumulate, which
-     * increases chances and number of trailing ops that would not be flushed to cache
-     * when user closes tab
-     * Use any number below 1 to disable caching
-     * Default: 100
-     */
-    batchSize?: number;
-
-    /**
-     * To reduce the problem of losing trailing ops when using big batch sizes, host
-     * could specify how often driver should flush ops it has not flushed yet.
-     * -1 means do not use timer.
-     * Measured in ms.
-     * Default: 5000
-     */
-    timerGranularity?: number,
-
-    /**
-     * Total number of ops to cache. When we reach that number, ops caching stops
-     * Default: 5000
-     */
-    totalOpsToCache?: number;
-}
-
-export interface HostStoragePolicy {
-    snapshotOptions?: ISnapshotOptions;
-
-    /**
-     * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
-     * Container loads from whatever comes first in such case.
-     * Snapshot fetched from storage is pushed to cache in either case.
-     * If set to false, driver will first consult with cache. Only on cache miss (cache does not
-     * return snapshot), driver will fetch snapshot from storage (and push it to cache), otherwise
-     * it will load from cache and not reach out to storage.
-     * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
-     */
-    concurrentSnapshotFetch?: boolean;
-
-    blobDeduping?: boolean;
-
-    // Options overwriting default ops fetching from storage.
-    opsBatchSize?: number;
-    concurrentOpsBatches?: number;
-
-    /**
-     * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)
-     */
-    opsCaching?: IOpsCachingPolicy;
 }
 
 /**

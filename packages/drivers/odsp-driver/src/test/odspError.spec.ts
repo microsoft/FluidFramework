@@ -10,10 +10,12 @@ import {
     createOdspNetworkError,
     fetchIncorrectResponse,
     invalidFileNameStatusCode,
-    OdspError,
-    OdspErrorType,
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
+import {
+    OdspError,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";

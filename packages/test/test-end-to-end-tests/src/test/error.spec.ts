@@ -22,8 +22,8 @@ import { createWriteError } from "@fluidframework/driver-utils";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
-    OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
