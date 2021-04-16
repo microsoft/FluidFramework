@@ -6,6 +6,8 @@
 // Constants
 export * from "./constants";
 
+export * from "./contractsPublic";
+
 // public utils
 export * from "./odspPublicUtils";
 export * from "./odspUrlHelper";

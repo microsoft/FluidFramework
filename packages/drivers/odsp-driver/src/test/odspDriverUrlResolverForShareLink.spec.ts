@@ -15,7 +15,7 @@ import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import * as fileLinkImport from "../getFileLink";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
-import { SharingLinkHeader } from "../contracts";
+import { SharingLinkHeader } from "../contractsPublic";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 
 describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {

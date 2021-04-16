@@ -17,7 +17,7 @@ import {
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
-import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
+import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
