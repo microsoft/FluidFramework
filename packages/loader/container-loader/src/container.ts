@@ -94,7 +94,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { ILoaderServices, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
@@ -284,12 +284,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        loader: Loader,
+        services: ILoaderServices,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: unknown,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            services,
             {
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
@@ -332,11 +332,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Create a new container in a detached state.
      */
     public static async createDetached(
-        loader: Loader,
+        services: ILoaderServices,
         codeDetails: IFluidCodeDetails,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            services,
             {});
         await container.createDetached(codeDetails);
         return container;
@@ -347,11 +347,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * snapshot from a previous detached container.
      */
     public static async rehydrateDetachedFromSnapshot(
-        loader: Loader,
+        services: ILoaderServices,
         snapshot: ISnapshotTree,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            services,
             {});
         await container.rehydrateDetachedFromSnapshot(snapshot);
         return container;
@@ -417,8 +417,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this._deltaManager.submit(type, contents),
         () => this.activeConnection(),
-        this.loader.services.options?.noopTimeFrequency,
-        this.loader.services.options?.noopCountFrequency,
+        this.services.options?.noopTimeFrequency,
+        this.services.options?.noopCountFrequency,
     );
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -543,14 +543,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._dirtyContainer;
     }
 
-    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
-    private get urlResolver() {return this.loader.services.urlResolver;}
-    public get options(): ILoaderOptions { return this.loader.services.options; }
-    private get scope() { return this.loader.services.scope;}
-    private get codeLoader() { return this.loader.services.codeLoader;}
+    private get serviceFactory() {return this.services.documentServiceFactory;}
+    private get urlResolver() {return this.services.urlResolver;}
+    public get options(): ILoaderOptions { return this.services.options; }
+    private get scope() { return this.services.scope;}
+    private get codeLoader() { return this.services.codeLoader;}
 
     constructor(
-        private readonly loader: Loader,
+        private readonly services: ILoaderServices,
         config: IContainerConfig,
     ) {
         super();
@@ -570,7 +570,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            loader.services.subLogger,
+            services.subLogger,
             undefined,
             {
                 all: {
@@ -606,7 +606,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
-                maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+                maxClientLeaveWaitTime: this.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
@@ -1713,7 +1713,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, this);
+        const loader = new RelativeLoader(this, this.services, this.scope.ILoader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,

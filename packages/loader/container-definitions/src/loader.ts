@@ -225,15 +225,6 @@ export type ILoaderOptions = {
      */
     cache?: boolean;
 
-    /**
-     * Provide the current Loader through the scope object when creating Containers.  It is added
-     * as the `ILoader` property, and will overwrite an existing property of the same name on the
-     * scope.  Useful for when the host wants to provide the current Loader's functionality to
-     * individual Data Stores.
-     * Defaults to false.
-     */
-    provideScopeLoader?: boolean;
-
     // Below two are the options based on which we decide how often client needs to send noops in case of active
     // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
     // should hit the min time and count to send the noop.

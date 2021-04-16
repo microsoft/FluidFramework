@@ -80,7 +80,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 
         try {
             await Container.load(
-                loader,
+                loader.services,
                 {
                     canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                     clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
