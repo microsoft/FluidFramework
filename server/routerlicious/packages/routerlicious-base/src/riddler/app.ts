@@ -77,7 +77,7 @@ export function create(
 
     // Error handlers
 
-    app.use(handleError());
+    app.use(handleError(app.get("env") === "development"));
 
     return app;
 }

@@ -12,7 +12,8 @@ export const catch404: () => RequestHandler = () => (req, res, next) => {
     next(err);
 };
 
-export const handleError: () => ErrorRequestHandler = () => (err, req, res, next) => {
-    res.status(err?.status || 500);
-    res.json({ error: safeStringify(err), message: err?.message });
-};
+export const handleError: (showStackTrace?: boolean) => ErrorRequestHandler =
+    (showStackTrace = true) => (err, req, res, next) => {
+        res.status(err?.status || 500);
+        res.json({ error: showStackTrace ? safeStringify(err) : "", message: err?.message });
+    };
