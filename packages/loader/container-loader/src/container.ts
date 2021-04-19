@@ -764,8 +764,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
-        const serializedSnapshot = combineAppAndProtocolSummary(appSummary, protocolSummary);
-        return JSON.stringify(serializedSnapshot);
+        const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+        return JSON.stringify(combinedSummary);
     }
 
     public async attach(request: IRequest): Promise<void> {
