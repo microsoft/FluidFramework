@@ -268,7 +268,7 @@ export enum LoaderHeader {
     /**
      * Start the container in a paused, unconnected state. Defaults to false
      */
-    pause = "pause",
+    loadMode = "loadMode",
     reconnect = "fluid-reconnect",
     sequenceNumber = "fluid-sequence-number",
 
@@ -281,13 +281,55 @@ export enum LoaderHeader {
     version = "version",
 }
 
+export interface IContainerLoadMode {
+    opsBeforeReturn?:
+        /*
+         * No trailing ops are applied before container is returned.
+         * Default value.
+         */
+        | undefined
+        /*
+         * Only cached trailing ops are applied before returning container.
+         * Caching is optional and could be implemented by the driver.
+         * If driver does not implement any kind of local caching strategy, this is same as above.
+         * Driver may cache a lot of ops, so care needs to be exercised (see below).
+         */
+        | "cached"
+        /*
+         * All trailing ops in storage are fetched and applied before container is returned
+         * This mode might have significant impact on boot speed (depends on storage perf characteristics)
+         * Also there might be a lot of trailing ops and applying them might take time, so hosts are
+         * recommended to have some progress UX / cancellation built into loading flow when using this option.
+         */
+        | "all"
+    deltaConnection?:
+        /*
+         * Connection to delta stream is made only when Container.resume() call is made. Op processing
+         * is paused (when container is returned from Loader.resolve()) until Container.resume() call is made.
+         */
+        | "none"
+        /*
+         * Connection to delta stream is made only when Container.resume() call is made.
+         * Op fetching from storage is performed and ops are applied as they come in.
+         * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
+         * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
+         */
+        | "delayed"
+        /*
+         * Connection to delta stream is made right away.
+         * Ops processing is enabled and ops are flowing through the system.
+         * Default value.
+         */
+        | undefined
+}
+
 /**
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
-    [LoaderHeader.pause]: boolean;
+    [LoaderHeader.loadMode]: IContainerLoadMode;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;
