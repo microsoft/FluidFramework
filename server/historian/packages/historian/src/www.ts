@@ -4,16 +4,18 @@
  */
 
 import * as path from "path";
-import * as nconf from "nconf";
 import * as winston from "winston";
-import { runService } from "@fluidframework/server-services-utils";
+import { runService } from "@fluidframework/server-routerlicious-base";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import { HistorianResourcesFactory, HistorianRunnerFactory } from "@fluidframework/historian-base";
 
-const configFile = path.join(__dirname, "../config.json");
-const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
+const configPath = path.join(__dirname, "../config.json");
+
+configureLogging(configPath);
+
 runService(
     new HistorianResourcesFactory(),
     new HistorianRunnerFactory(),
     winston,
     "historian",
-    config);
+    configPath);
