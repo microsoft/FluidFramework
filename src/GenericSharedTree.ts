@@ -281,7 +281,8 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
 			this.expensiveValidation,
 			undefined,
 			this.logger,
-			this.transactionFactory
+			this.transactionFactory,
+			0
 		);
 
 		// Upload any full blobs that have yet to be uploaded

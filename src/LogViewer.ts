@@ -146,7 +146,8 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		expensiveValidation = false,
 		processEditResult: EditResultCallback = noop,
 		logger: ITelemetryBaseLogger,
-		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>
+		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
+		minimumSequenceNumber = 0
 	) {
 		this.log = log;
 		if (expensiveValidation) {
@@ -161,7 +162,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		const initialSnapshot = Snapshot.fromTree(baseTree, expensiveValidation);
 		this.sequencedSnapshotCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
-			log.numberOfSequencedEdits, // The cache needs the minimum known revision, so pass in the length of the sequenced edit list
+			minimumSequenceNumber,
 			[...knownRevisions, [0, initialSnapshot]]
 		);
 		this.processEditResult = processEditResult ?? noop;
