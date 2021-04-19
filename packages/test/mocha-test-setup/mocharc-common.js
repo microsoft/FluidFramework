@@ -14,8 +14,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
+        ...(additionalRequiredModules ? additionalRequiredModules : []),
         `@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
-        ...(additionalRequiredModules ? additionalRequiredModules : [])
     ];
 
     // mocha install node_modules directory might not be the same as the module required because of hoisting
@@ -32,7 +32,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
 
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         // Inject implementation of getTestLogger
-        requiredModulePaths.push(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
     }
 
     const config = {
