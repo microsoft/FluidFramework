@@ -16,7 +16,7 @@ import {
     LocalPersistentCache,
     snapshotKey,
 } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {

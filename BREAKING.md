@@ -1,6 +1,26 @@
+## 0.39 Breaking changes
+- [connect event removed from Container](#connect-event-removed-from-Container)
+- [LoaderHeader.pause](#LoaderHeader.pause)
+
+### connect event removed from Container
+The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
+
+### LoaderHeader.pause
+LoaderHeader.pause has been removed. instead of
+```typescript
+[LoaderHeader.pause]: true
+```
+use
+```typescript
+[LoaderHeader.loadMode]: { deltaConnection: "none" }
+```
+
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
+- [ODSP Driver url resolver for share link parameter consolidation](#ODSP-Driver-url-resolver-for-share-link-parameter-consolidation)
+- [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations)
+- [Removed containerUrl from IContainerLoadOptions and IContainerConfig](#Removed-containerUrl-from-IContainerLoadOptions-and-IContainerConfig)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -11,7 +31,7 @@ Please note that format of data stored by driver changed. It will ignore cache e
 ## ODSP Driver Type Unification
 This change reuses existing contracts to reduce redundancy improve consistency.
 
-The breaking protion of  this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
+The breaking portion of this change does rename some parameters to some helper functions, but the change are purely mechanical. In most cases you will likely find you are pulling properties off an object individually to pass them as params, whereas now you can just pass the object itself.
 
 ``` typescript
 // before:
@@ -57,6 +77,128 @@ getFileLink(
 )
 ```
 
+## ODSP Driver url resolver for share link parameter consolidation
+OdspDriverUrlResolverForShareLink constructor signature has been changed to simplify instance
+creation in case resolver is not supposed to generate share link. Instead of separately specifying
+constructor parameters that are used to fetch share link there will be single parameter in shape of
+object that consolidates all properties that are necessary to get share link.
+
+``` typescript
+// before:
+new OdspDriverUrlResolverForShareLink(
+    tokenFetcher,
+    identityType,
+    logger,
+    appName,
+);
+
+// After:
+new OdspDriverUrlResolverForShareLink(
+    { tokenFetcher, identityType },
+    logger,
+    appName,
+);
+```
+
+### AgentScheduler-related deprecations
+`AgentScheduler` is currently a built-in part of `ContainerRuntime`, but will be removed in an upcoming release.  Correspondingly, the API surface of `ContainerRuntime` that relates to or relies on the `AgentScheduler` is deprecated.
+
+#### Leadership deprecation
+A `.leader` property and `"leader"`/`"notleader"` events are currently exposed on the `ContainerRuntime`, `FluidDataStoreContext`, and `FluidDataStoreRuntime`.  These are deprecated and will be removed in an upcoming release.
+
+A `TaskSubscription` has been added to the `@fluidframework/agent-scheduler` package which can be used in conjunction with an `AgentScheduler` to get equivalent API surface:
+
+```typescript
+const leadershipTaskSubscription = new TaskSubscription(agentScheduler, "leader");
+if (leadershipTaskSubscription.haveTask()) {
+    // client is the leader
+}
+leadershipTaskSubscription.on("gotTask", () => {
+    // client just became leader
+});
+leadershipTaskSubscription.on("lostTask", () => {
+    // client is no longer leader
+});
+```
+
+The `AgentScheduler` can be one of your choosing, or the built-in `AgentScheduler` can be retrieved for this purpose using `ContainerRuntime.getRootDataStore()` (however, as noted above this will be removed in an upcoming release):
+
+```typescript
+const agentScheduler = await requestFluidObject<IAgentScheduler>(
+    await containerRuntime.getRootDataStore("_scheduler"),
+    "",
+);
+```
+
+#### IContainerRuntimeDirtyable deprecation
+The `IContainerRuntimeDirtyable` interface provides the `isMessageDirtyable()` method, for use with last-edited functionality.  This is only used to differentiate messages for the built-in `AgentScheduler`.  With the deprecation of the `AgentScheduler`, this interface and method are no longer necessary and so are deprecated and will be removed in an upcoming release.  From the `ContainerRuntime`'s perspective all messages are considered dirtyable with this change.
+
+If you continue to use the built-in `AgentScheduler` and want to replicate this filtering in your last-edited behavior, you can use the following in your `shouldDiscardMessage()` check:
+
+```typescript
+import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { IEnvelope, InboundAttachMessage } from "@fluidframework/runtime-definitions";
+
+// In shouldDiscardMessage()...
+if (type === ContainerMessageType.Attach) {
+    const attachMessage = contents as InboundAttachMessage;
+    if (attachMessage.id === "_scheduler") {
+        return true;
+    }
+} else if (type === ContainerMessageType.FluidDataStoreOp) {
+    const envelope = contents as IEnvelope;
+    if (envelope.address === "_scheduler") {
+        return true;
+    }
+}
+// Otherwise, proceed with other discard logic...
+```
+
+#### Deprecation of AgentScheduler in the container registry and instantiation of the _scheduler
+Finally, the automatic addition to the registry and creation of the `AgentScheduler` with ID `_scheduler` is deprecated and will also be removed in an upcoming release.  To prepare for this, you can proactively opt-out of the built-in by turning off the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.
+
+For backwards compat with documents created prior to this change, you'll need to ensure the `AgentSchedulerFactory.registryEntry` is present in the container registry.  You can add it explicitly in your calls to `Container.load` or in the constructor of your `BaseContainerRuntimeFactory` or `ContainerRuntimeFactoryWithDefaultDataStore`.  The examples below show how to opt-out of the built-in while maintaining backward-compat with documents that were created with a built-in `AgentScheduler`.
+
+```typescript
+const runtime = await ContainerRuntime.load(
+    context,
+    [
+        // Any other registry entries...
+        AgentSchedulerFactory.registryEntry,
+    ],
+    requestHandler,
+    // Opt-out of adding the AgentScheduler
+    { addGlobalAgentSchedulerAndLeaderElection: false },
+    scope);
+```
+
+```typescript
+const SomeContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+    DefaultFactory,
+    new Map([
+        // Any other registry entries...
+        AgentSchedulerFactory.registryEntry,
+    ]),
+    providerEntries,
+    requestHandlers,
+    // Opt-out of adding the AgentScheduler
+    { addGlobalAgentSchedulerAndLeaderElection: false },
+);
+```
+
+If you use `AgentScheduler` functionality, it is recommended to instantiate this as a normal (non-root) data store (probably on your root data object).  But if you are not yet ready to migrate away from the root data store, you can instantiate it yourself on new containers (you should do this while the container is still detached):
+
+```typescript
+if (!context.existing) {
+    await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
+}
+```
+
+The option will be turned off by default in an upcoming release before being turned off permanently, so it is recommended to make these updates proactively.
+
+### Removed containerUrl from IContainerLoadOptions and IContainerConfig
+Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
+>>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

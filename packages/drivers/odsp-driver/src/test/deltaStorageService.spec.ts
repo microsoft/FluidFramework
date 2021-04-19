@@ -28,11 +28,11 @@ describe("DeltaStorageService", () => {
     it("Should build the correct sharepoint delta url with auth", async () => {
         const logger = new TelemetryUTLogger();
         const deltaStorageService = new OdspDeltaStorageService(
-            async () => testDeltaStorageUrl,
+            testDeltaStorageUrl,
             async (_refresh) => "?access_token=123",
             createUtEpochTracker(fileEntry, logger),
             logger);
-        const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
+        const actualDeltaUrl = await deltaStorageService.buildUrl(3, 8);
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
@@ -78,7 +78,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);
@@ -134,7 +134,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);

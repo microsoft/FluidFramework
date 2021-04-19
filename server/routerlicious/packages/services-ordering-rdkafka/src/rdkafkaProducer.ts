@@ -256,7 +256,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 							this.handleError(err);
 						} else {
 							boxcar.deferred.resolve();
-							this.emit("produced", boxcarMessage, offset);
+							this.emit("produced", boxcarMessage, offset, message.length);
 						}
 					},
 				);

@@ -82,13 +82,8 @@ export interface ICodeAllowList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
-    /**
-     * @param opsBehind - number of ops this client is behind (if present).
-     */
-    (event: "connect", listener: (opsBehind?: number) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
-    (event: "contextDisposed" | "contextChanged",
-        listener: (codeDetails: IFluidCodeDetails, previousCodeDetails: IFluidCodeDetails | undefined) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -221,15 +216,6 @@ export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
     /**
-     * Affects the behavior of the Container when a new code proposal
-     * is accepted that the current loaded code does not satisfy.
-     * True to reload the context without closing the container, or
-     * false to only close the container.
-     * Defaults to false.
-     */
-    hotSwapContext?: boolean;
-
-    /**
      * Set caching behavior for the loader.  If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If
      * false, always load a new container and don't cache it. If the container has already been
@@ -282,7 +268,7 @@ export enum LoaderHeader {
     /**
      * Start the container in a paused, unconnected state. Defaults to false
      */
-    pause = "pause",
+    loadMode = "loadMode",
     reconnect = "fluid-reconnect",
     sequenceNumber = "fluid-sequence-number",
 
@@ -295,13 +281,55 @@ export enum LoaderHeader {
     version = "version",
 }
 
+export interface IContainerLoadMode {
+    opsBeforeReturn?:
+        /*
+         * No trailing ops are applied before container is returned.
+         * Default value.
+         */
+        | undefined
+        /*
+         * Only cached trailing ops are applied before returning container.
+         * Caching is optional and could be implemented by the driver.
+         * If driver does not implement any kind of local caching strategy, this is same as above.
+         * Driver may cache a lot of ops, so care needs to be exercised (see below).
+         */
+        | "cached"
+        /*
+         * All trailing ops in storage are fetched and applied before container is returned
+         * This mode might have significant impact on boot speed (depends on storage perf characteristics)
+         * Also there might be a lot of trailing ops and applying them might take time, so hosts are
+         * recommended to have some progress UX / cancellation built into loading flow when using this option.
+         */
+        | "all"
+    deltaConnection?:
+        /*
+         * Connection to delta stream is made only when Container.resume() call is made. Op processing
+         * is paused (when container is returned from Loader.resolve()) until Container.resume() call is made.
+         */
+        | "none"
+        /*
+         * Connection to delta stream is made only when Container.resume() call is made.
+         * Op fetching from storage is performed and ops are applied as they come in.
+         * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
+         * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
+         */
+        | "delayed"
+        /*
+         * Connection to delta stream is made right away.
+         * Ops processing is enabled and ops are flowing through the system.
+         * Default value.
+         */
+        | undefined
+}
+
 /**
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
-    [LoaderHeader.pause]: boolean;
+    [LoaderHeader.loadMode]: IContainerLoadMode;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
     [LoaderHeader.version]: string | undefined | null;

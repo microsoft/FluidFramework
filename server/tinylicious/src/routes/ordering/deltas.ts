@@ -9,7 +9,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam, queryParamToNumber } from "../../utils";
 
-export async function getDeltas(
+async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
