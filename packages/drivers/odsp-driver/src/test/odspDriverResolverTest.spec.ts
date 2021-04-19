@@ -8,8 +8,9 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
+import { IOdspResolvedUrl } from "../contracts";
 
 describe("Odsp Driver Resolver", () => {
     const siteUrl = "https://localhost";
@@ -49,15 +50,17 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        assert.deepStrictEqual(resolvedUrl, {
+        const expected: IOdspResolvedUrl = {
             endpoints: {
                 snapshotStorageUrl: "",
                 attachmentGETStorageUrl: "",
                 attachmentPOSTStorageUrl: "",
+                deltaStorageUrl: "",
             },
             tokens: {},
             type: "fluid",
             odspResolvedUrl: true,
+            id: "odspCreateNew",
             url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
             siteUrl: "https://localhost",
             hashedDocumentId: "",
@@ -67,7 +70,8 @@ describe("Odsp Driver Resolver", () => {
             fileVersion: undefined,
             summarizer: false,
             codeHint: { containerPackageName: undefined },
-        });
+        };
+        assert.deepStrictEqual(resolvedUrl, expected);
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
 
         const [url, queryString] = response?.split("?") ?? [];

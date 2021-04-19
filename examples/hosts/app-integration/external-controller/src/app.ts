@@ -5,6 +5,7 @@
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import Fluid from "@fluid-experimental/fluid-static";
 import { TinyliciousService } from "@fluid-experimental/get-container";
+import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
 
@@ -20,34 +21,48 @@ if (location.hash.length === 0) {
 const containerId = location.hash.substring(1);
 document.title = containerId;
 
-const dataObjectId = "dice";
+// Define the configuration of our Container.
+// This includes the DataObjects we support and any initial DataObjects we want created
+// when the container is first created.
+export const containerConfig = {
+    name: "dice-roller-container",
+    initialObjects: {
+        /* [id]: DataObject */
+        kvp: KeyValueDataObject,
+        map: SharedMap,
+    },
+};
 
 async function start(): Promise<void> {
-    // Define the configuration of our Container.
-    // This includes the DataObjects we support and any initial DataObjects we want created
-    // when the container is first created.
-    const containerConfig = {
-        dataObjects: [KeyValueDataObject],
-        initialDataObjects: {
-            /* [id]: DataObject */
-            [dataObjectId]: KeyValueDataObject,
-        },
-    };
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
         ? await Fluid.createContainer(containerId, containerConfig)
         : await Fluid.getContainer(containerId, containerConfig);
 
     // We now get the DataObject from the container
-    const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId);
+    const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.
-    const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(diceRollerController, div);
+    const contentDiv = document.getElementById("content") as HTMLDivElement;
+    const div1 = document.createElement("div");
+    contentDiv.appendChild(div1);
+    renderDiceRoller(diceRollerController, div1);
+
+    // We now get the SharedMap from the container
+    const sharedMap = fluidContainer.initialObjects.map as SharedMap;
+
+    // Our controller manipulates the data object (model).
+    const diceRollerController2 = new DiceRollerController(sharedMap);
+    await diceRollerController2.initialize(createNew);
+
+    const div2 = document.createElement("div");
+    contentDiv.appendChild(div2);
+    // We render a view which uses the controller.
+    renderDiceRoller(diceRollerController2, div2);
 }
 
 start().catch((error) => console.error(error));

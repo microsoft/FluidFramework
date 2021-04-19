@@ -5,7 +5,8 @@
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
+import { emptyMessageStream } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -33,12 +34,12 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         }
     }
 
-    public async get(
-        from?: number,
-        to?: number,
-    ): Promise<IDeltasFetchResult> {
-        // Do not allow container move forward
-        return { messages: [], partialResult: false };
+    public fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<api.ISequencedDocumentMessage[]> {
+        return emptyMessageStream;
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {

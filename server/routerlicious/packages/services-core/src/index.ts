@@ -23,6 +23,7 @@ export * from "./orderer";
 export * from "./pendingBoxcar";
 export * from "./publisher";
 export * from "./queue";
+export * from "./runner";
 export * from "./secretManager";
 export * from "./taskMessages";
 export * from "./tenant";

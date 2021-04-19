@@ -74,7 +74,7 @@ Uses [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/se
 
 ### `start:tiny`
 
-> Requires `tinylicious` Fluid server running locally at `http://localhost:3000`.
+> Requires `tinylicious` Fluid server running locally at `http://localhost:7070`.
 
 Uses `webpack-dev-server` to start a local webserver that will host your webpack file.
 

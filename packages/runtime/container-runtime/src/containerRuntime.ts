@@ -27,7 +27,6 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
-    IRuntimeState,
     ContainerWarning,
     ICriticalContainerError,
     AttachState,
@@ -40,7 +39,6 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
-    Deferred,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -120,7 +118,6 @@ import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerate
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
-import { SummaryCollection } from "./summaryCollection";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
@@ -133,6 +130,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
+import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -160,16 +158,6 @@ export interface IChunkedOp {
 export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
-}
-
-export interface IPreviousState {
-    summaryCollection?: SummaryCollection,
-    reload?: boolean,
-
-    // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
-    // the SummaryManager that spawned it will have that deferred's promise
-    nextSummarizerP?: Promise<Summarizer>,
-    nextSummarizerD?: Deferred<Summarizer>,
 }
 
 export interface IGeneratedSummaryData {
@@ -249,6 +237,9 @@ export interface ISummaryRuntimeOptions {
     // and the root node when generating a summary if set to true.
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
+
+    // Defaults to 3000 ops
+    maxOpsSinceLastSummary?: number;
 }
 
 /**
@@ -257,6 +248,15 @@ export interface ISummaryRuntimeOptions {
 export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
+    /**
+     * Control whether the ContainerRuntime includes AgentScheduler in its registry, whether an instance is created
+     * at _scheduler, and whether it subscribes to leadership.  This option will be removed in a future release, so it
+     * is recommended to opt-out in preparation for that change.  If you still require AgentScheduler and/or leader
+     * election, you should explicitly include AgentSchedulerFactory in the container registry, explicitly instantiate
+     * an instance of it using createRootDataStore, and explicitly register for leadership election using
+     * TaskSubscription.
+     */
+    addGlobalAgentSchedulerAndLeaderElection?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -510,7 +510,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         runFullGC: oldRuntimeOptions.runFullGC,
     };
 
-    return { summaryOptions, gcOptions };
+    return {
+        summaryOptions,
+        gcOptions,
+        addGlobalAgentSchedulerAndLeaderElection: runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection,
+    };
 }
 
 /**
@@ -526,7 +530,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    public get IContainerRuntimeDirtyable() { return this; }
+    /**
+     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
+     * an upcoming release.
+     */
+    public get IContainerRuntimeDirtyable() {
+        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
+        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
+        return this;
+    }
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -568,7 +583,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const registry = new ContainerRuntimeDataStoreRegistry(registryEntries);
+        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
+        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
+            summaryOptions: { generateSummaries: true },
+            gcOptions: {},
+            addGlobalAgentSchedulerAndLeaderElection: true,
+        };
+        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
+        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
+            // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
+            console.warn("ContainerRuntime with AgentScheduler built-in is deprecated, "
+                + "see BREAKING.md for more details and migration instructions");
+            // Disabling noisy telemetry until customers have had some time to migrate
+            // logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
+        }
+
+        const registry = combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false
+            ? new ContainerRuntimeDataStoreRegistry(registryEntries)
+            : new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -581,30 +613,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
 
-        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
-        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
-            summaryOptions: { generateSummaries: true },
-            gcOptions: {},
-        };
-
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
             chunks,
-            { ...defaultRuntimeOptions, ...backCompatRuntimeOptions },
+            combinedRuntimeOptions,
             containerScope,
             logger,
             requestHandler,
             storage);
 
-        // Create all internal data stores if not already existing on storage or loaded a detached
-        // container from snapshot(ex. draft mode).
-        if (!context.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-        }
+        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
+            // Create all internal data stores if not already existing on storage or loaded a detached
+            // container from snapshot(ex. draft mode).
+            if (!context.existing) {
+                await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
+            }
 
-        runtime.subscribeToLeadership();
+            runtime.subscribeToLeadership();
+        }
 
         return runtime;
     }
@@ -680,9 +708,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
-    public nextSummarizerP?: Promise<Summarizer>;
-    public nextSummarizerD?: Deferred<Summarizer>;
-
     // Back compat: 0.28, can be removed in 0.29
     public readonly IFluidSerializer: IFluidSerializer;
 
@@ -690,9 +715,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
-    public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private latestSummaryAck: Omit<ISummaryContext, "referenceSequenceNumber">;
+    private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -711,7 +735,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._connected;
     }
 
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     public get leader(): boolean {
+        // The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
+        console.warn("The ContainerRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
         return this._leader;
     }
 
@@ -795,11 +827,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
-        this.latestSummaryAck = {
-            proposalHandle: undefined,
-            ackHandle: this.context.getLoadedFromVersion()?.id,
-        };
-
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
             this.logger,
@@ -876,12 +903,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
+        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+                this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                // unregister default to no log on every op after falling behind
+                // and register summary ack handler to re-register this handler
+                // after successful summary
+                opActions.default = undefined;
+                opActions.summaryAck = summaryAckAction;
+            }
+        };
+        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
+            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+            // we've caught up, so re-register the default action to monitor for
+            // falling behind, and unregister ourself
+            opActions.default = defaultAction;
+            opActions.summaryAck = undefined;
+        };
+        const opActions: SummaryCollectionOpActions = {
+            default: defaultAction,
+        };
 
-        if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
-            this.previousState = {};
-        } else {
-            this.previousState = this.context.previousRuntimeState.state as IPreviousState;
-        }
+        this.summaryCollection = new SummaryCollection(
+            this.deltaManager,
+            this.logger,
+            opActions,
+        );
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -893,16 +940,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             () => this.summaryConfiguration,
             this /* ISummarizerInternalsProvider */,
             this.IFluidHandleContext,
-            this.previousState.summaryCollection);
+            this.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            (summarizer) => { this.nextSummarizerP = summarizer; },
-            this.previousState.nextSummarizerP,
-            !!this.previousState.reload,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
@@ -1126,7 +1170,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
     }
 
-    public async stop(): Promise<IRuntimeState> {
+    public async stop() {
         this.verifyNotClosed();
 
         // Reload would not work properly with local changes.
@@ -1138,17 +1182,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadRuntime"});
         }
 
-        const snapshot = await this.snapshot();
-        const state: IPreviousState = {
-            reload: true,
-            summaryCollection: this.summarizer.summaryCollection,
-            nextSummarizerP: this.nextSummarizerP,
-            nextSummarizerD: this.nextSummarizerD,
-        };
-
         this.dispose(new Error("ContainerRuntimeStopped"));
-
-        return { snapshot, state };
+        return { };
     }
 
     private replayPendingStates() {
@@ -1482,8 +1517,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * the IFluidDataStoreRuntime.isDirty call returns true/false
      * @param type - The type of ContainerRuntime message that is being checked
      * @param contents - The contents of the message that is being verified
+     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
+     * an upcoming release.
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
+        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
         assert(
             isRuntimeMessage(message) === true,
             0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
@@ -1679,10 +1721,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 lastSequenceNumber === summaryRefSeqNum,
                 0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
             );
+            const lastAck = this.summaryCollection.latestAck;
+            const summaryContext: ISummaryContext =
+                lastAck === undefined
+                ? {
+                    proposalHandle: undefined,
+                    ackHandle: this.context.getLoadedFromVersion()?.id,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                }
+                : {
+                    proposalHandle: lastAck.summaryOp.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
 
             const handle = await this.storage.uploadSummaryWithContext(
                 summarizeResult.summary,
-                { ... this.latestSummaryAck, referenceSequenceNumber: summaryRefSeqNum });
+                summaryContext);
 
             if (refreshLatestAck) {
                 const version = await this.getVersionFromStorage(this.id);
@@ -1694,7 +1749,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 );
             }
 
-            const parent = this.latestSummaryAck.ackHandle;
+            const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2006,7 +2061,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        if (this.leader) {
+        if (this._leader) {
             assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
                 0x136 /* "Leader must either have undefined clientId or be connected with active delta manager!" */);
             this.emit("leader");
@@ -2024,8 +2079,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
         version?: IVersion,
     ) {
-        this.latestSummaryAck = { proposalHandle, ackHandle };
-
         const getSnapshot = async () => {
             const perfEvent = PerformanceEvent.start(summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",

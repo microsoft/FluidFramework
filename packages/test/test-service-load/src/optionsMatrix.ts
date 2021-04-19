@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions  } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -12,19 +11,17 @@ import {
     OptionsMatrix,
     numberCases,
 } from "@fluid-internal/test-pairwise-generator";
-import { Lazy } from "@fluidframework/common-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
-    hotSwapContext: booleanCases,
     provideScopeLoader: booleanCases,
     maxClientLeaveWaitTime: numberCases,
     noopCountFrequency: numberCases,
     noopTimeFrequency: numberCases,
 };
 
-export const pairwiseLoaderOptions = new Lazy(()=>
-    generatePairwiseOptions<ILoaderOptions>(loaderOptionsMatrix));
+export const generateLoaderOptions = (seed: number)=>
+    generatePairwiseOptions<ILoaderOptions>(loaderOptionsMatrix, seed);
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
@@ -32,24 +29,20 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     runFullGC: booleanCases,
 };
 
-const summaryConfigurationMatrix: OptionsMatrix<Partial<ISummaryConfiguration>> = {
-    idleTime: numberCases,
-    maxAckWaitTime: numberCases,
-    maxOps: numberCases,
-    maxTime: numberCases,
-};
+export function generateRuntimeOptions(seed: number) {
+    const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
+        disableIsolatedChannels: booleanCases,
+        generateSummaries: booleanCases,
+        initialSummarizerDelayMs: numberCases,
+        summaryConfigOverrides:[undefined],
+        maxOpsSinceLastSummary: numberCases,
+    };
 
-const summaryOptionsMatrix = new Lazy<OptionsMatrix<ISummaryRuntimeOptions>>(()=>({
-    disableIsolatedChannels: booleanCases,
-    generateSummaries: booleanCases,
-    initialSummarizerDelayMs: numberCases,
-    summaryConfigOverrides:[undefined, ...generatePairwiseOptions(summaryConfigurationMatrix)],
-}));
+    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+        gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
+        summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
+        addGlobalAgentSchedulerAndLeaderElection: [undefined],
+    };
 
-const runtimeOptionsMatrix = new Lazy<OptionsMatrix<IContainerRuntimeOptions>>(()=>({
-    gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix)],
-    summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix.value)],
-}));
-
-export const pairwiseRuntimeOptions = new Lazy<IContainerRuntimeOptions[]>(()=>
-    generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix.value));
+    return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);
+}

@@ -74,6 +74,7 @@ export async function start(): Promise<void> {
             ordererUrl: ordererEndpoint,
             storageUrl,
         },
+        id: documentId,
         tokens: { jwt: token },
         type: "fluid",
         url: documentUrl,

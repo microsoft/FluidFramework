@@ -4,13 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
     ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
+import {
+    Container,
+    ConnectionState,
+    Loader,
+    ILoaderProps,
+    waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
@@ -21,6 +27,7 @@ import {
     LoaderContainerTracker,
     TestContainerRuntimeFactory,
     ITestObjectProvider,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -34,7 +41,7 @@ import {
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
-
+const codeDetails: IFluidCodeDetails = {package: "test"};
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -48,6 +55,18 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             this.skip();
         }
     });
+    before(async ()=>{
+        const loader = new Loader({
+            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            urlResolver: provider.urlResolver,
+            documentServiceFactory:
+                provider.documentServiceFactory,
+            codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+        });
+        loaderContainerTracker.add(loader);
+        const container = await loader.createDetachedContainer(codeDetails);
+        await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+    });
     afterEach(() => {
         loaderContainerTracker.reset();
     });
@@ -58,7 +77,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
                 props?.documentServiceFactory ?? provider.documentServiceFactory,
-            codeLoader: props?.codeLoader ?? new LocalCodeLoader([]),
+            codeLoader: props?.codeLoader ?? new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
         });
         loaderContainerTracker.add(loader);
 
@@ -69,18 +88,16 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                containerUrl: testRequest.url,
-                docId: "documentId",
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
-                pause: testRequest.headers?.[LoaderHeader.pause],
+                loadMode: testRequest.headers?.[LoaderHeader.loadMode],
             },
         );
     }
 
     it("Load container successfully", async () => {
         const container = await loadContainer();
-        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.id, "containerTest", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
@@ -121,7 +138,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
-            await loadContainer({ documentServiceFactory: mockFactory });
+            const container2 = await loadContainer({ documentServiceFactory: mockFactory });
+            await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
             assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");

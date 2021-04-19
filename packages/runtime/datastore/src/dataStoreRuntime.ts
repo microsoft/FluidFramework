@@ -121,7 +121,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.connected;
     }
 
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     public get leader(): boolean {
+        // The FluidDataStoreRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
+        console.warn("The FluidDataStoreRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedDataStoreRuntimeLeaderProperty" });
         return this.dataStoreContext.leader;
     }
 

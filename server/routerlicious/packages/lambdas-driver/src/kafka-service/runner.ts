@@ -6,8 +6,13 @@
 import { inspect } from "util";
 import { Deferred } from "@fluidframework/common-utils";
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import { IConsumer, IContextErrorData, ILogger, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IRunner } from "@fluidframework/server-services-utils";
+import {
+    IConsumer,
+    IContextErrorData,
+    ILogger,
+    IPartitionLambdaFactory,
+    IRunner,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
@@ -46,6 +51,8 @@ export class KafkaRunner implements IRunner {
                 logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
                 logger?.error(inspect(error));
             } else {
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.");
+                logger?.error(inspect(error));
                 deferred.reject(error);
             }
         });
