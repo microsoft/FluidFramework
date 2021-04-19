@@ -5,6 +5,7 @@
 
 import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
+import { ISummarySnapshotPayload, ISummarySnapshotResponse } from "@fluidframework/protocol-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
@@ -235,5 +236,9 @@ export class TestHistorian implements IHistorian {
             }
             return finalTree;
         }
+    }
+
+    public async createSummary(summary: ISummarySnapshotPayload): Promise<ISummarySnapshotResponse> {
+        throw new Error("Not Supported");
     }
 }
