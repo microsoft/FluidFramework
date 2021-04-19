@@ -10,14 +10,18 @@ import { Context } from "mocha";
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent) {
-        event.testName = this.context.currentTest?.fullTitle();
+        event.testName = this.testName;
+        console.log(event.testName);
         this.parentLogger.send(event);
     }
     async flush() {
         return this.parentLogger.flush();
     }
+    pass(title: string | undefined) {
+        this.testName = title;
+    }
     constructor(private readonly parentLogger: ITelemetryBufferedLogger,
-        private readonly context: Context) {}
+        private testName: string | undefined) {}
 }
 const nullLogger: ITelemetryBufferedLogger = {
     send: () => {},
@@ -26,20 +30,21 @@ const nullLogger: ITelemetryBufferedLogger = {
 
 const log = console.log;
 const error = console.log;
-
+let testLogger: TestLogger;
 export const mochaHooks = {
     beforeAll() {
-        const parentLogger = _global.getTestLogger() ?? nullLogger;
-        console.log("helloimhere",parentLogger);
-        const testLogger = new TestLogger(parentLogger, this as any as Context);
+        const parentLogger = _global.getTestLogger ?? nullLogger;
+        testLogger = new TestLogger(parentLogger, "");
         _global.getTestLogger = () => testLogger;
     },
     beforeEach() {
         // Suppress console.log if not verbose mode
-        // if (process.env.FLUID_TEST_VERBOSE === undefined) {
-        //     console.log = () => { };
-        //     console.error = () => { };
-        // }
+        if (process.env.FLUID_TEST_VERBOSE === undefined) {
+            console.log = () => { };
+            console.error = () => { };
+        }
+        const context = this as any as Context;
+        testLogger.pass(context.currentTest?.fullTitle());
     },
     afterEach() {
         console.log = log;
