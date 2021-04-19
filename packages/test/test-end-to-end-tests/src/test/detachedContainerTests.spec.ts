@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState, IDetachedContainerSnapshot, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import {
     ITestContainerConfig,
@@ -658,11 +658,11 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         const subDataStore1 = await createFluidObject(dataStore.context, "default");
         dataStore.root.set("attachKey", subDataStore1.handle);
 
-        const summaryForAttach: IDetachedContainerSnapshot = JSON.parse(container.serialize());
+        const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
         const resolvedUrl = await provider.urlResolver.resolve(request);
         assert(resolvedUrl);
         const service = await provider.documentServiceFactory.createContainer(
-            summaryForAttach.summary as ISummaryTree,
+            summaryForAttach,
             resolvedUrl,
         );
         const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");

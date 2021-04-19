@@ -154,12 +154,11 @@ export enum ConnectionState {
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
 export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
-    let snapshotTree: ISnapshotTree;
     const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
     const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
     assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
         "Protocol and App summary trees should be present");
-    snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
         protocolSummaryTree,
         appSummaryTree,
     );
