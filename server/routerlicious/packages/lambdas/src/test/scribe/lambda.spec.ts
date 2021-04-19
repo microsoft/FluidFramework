@@ -79,7 +79,8 @@ describe("Routerlicious", () => {
                     testMessageCollection,
                     testProducer,
                     testTenantManager,
-                    DefaultServiceConfiguration);
+                    DefaultServiceConfiguration,
+                    false);
 
                 testContext = new TestContext();
                 const config = (new nconf.Provider({})).defaults({ documentId: testDocumentId, tenantId: testTenantId })

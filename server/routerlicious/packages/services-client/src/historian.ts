@@ -126,7 +126,7 @@ export class Historian implements IHistorian {
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.getQueryString(tree));
+        return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.getQueryString());
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
