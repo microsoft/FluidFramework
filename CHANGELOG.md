@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.85.1
+
+* fix: Correctly use minimum sequence number in cache
+  * Associated pull request: [29797](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29797)
+  * Commit: [0e27b3c423570da27b2e2f10786a35bb481eb103](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0e27b3c423570da27b2e2f10786a35bb481eb103)
+
 ## 0.85.0
 
 * refactor: BREAKING CHANGE: separate shared-tree code into edit-specific and edit-agnostic classes and types
