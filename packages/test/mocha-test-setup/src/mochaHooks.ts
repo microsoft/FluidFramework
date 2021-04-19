@@ -30,15 +30,16 @@ const error = console.log;
 export const mochaHooks = {
     beforeAll() {
         const parentLogger = _global.getTestLogger() ?? nullLogger;
+        console.log("helloimhere",parentLogger);
         const testLogger = new TestLogger(parentLogger, this as any as Context);
         _global.getTestLogger = () => testLogger;
     },
     beforeEach() {
         // Suppress console.log if not verbose mode
-        if (process.env.FLUID_TEST_VERBOSE === undefined) {
-            console.log = () => { };
-            console.error = () => { };
-        }
+        // if (process.env.FLUID_TEST_VERBOSE === undefined) {
+        //     console.log = () => { };
+        //     console.error = () => { };
+        // }
     },
     afterEach() {
         console.log = log;
