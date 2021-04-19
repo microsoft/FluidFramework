@@ -151,29 +151,18 @@ export enum ConnectionState {
     Connected,
 }
 
-// It specifies the summary taken by the serialize api on detached container.
-export interface IDetachedContainerSnapshot {
-    summary: ISummaryTree,
-    formatVersion: string,
-}
-
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: IDetachedContainerSnapshot) => {
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
     let snapshotTree: ISnapshotTree;
-    if (detachedContainerSnapshot.formatVersion === "0.1") {
-        const summaryTree = detachedContainerSnapshot.summary as ISummaryTree;
-        const protocolSummaryTree = summaryTree.tree[".protocol"] as ISummaryTree;
-        const appSummaryTree = summaryTree.tree[".app"] as ISummaryTree;
-        assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
-            "Protocol and App summary trees should be present");
-        snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
-            protocolSummaryTree,
-            appSummaryTree,
-        );
-    } else {
-        assert(false, "No other version supported yet!");
-    }
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        "Protocol and App summary trees should be present");
+    snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
     return snapshotTree;
 };
 
@@ -775,11 +764,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
-        const combinedTree = combineAppAndProtocolSummary(appSummary, protocolSummary);
-        const serializedSnapshot: IDetachedContainerSnapshot = {
-            summary: combinedTree,
-            formatVersion: "0.1",
-        };
+        const serializedSnapshot = combineAppAndProtocolSummary(appSummary, protocolSummary);
         return JSON.stringify(serializedSnapshot);
     }
 
