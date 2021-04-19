@@ -9,6 +9,7 @@ import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGitManager, IHistorian } from "./storage";
+import { convertTreeToSnapshotTree } from "./snapshotTreeUploadManager";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -140,6 +141,10 @@ export class GitManager implements IGitManager {
         return this.historian.createCommit(commit);
     }
 
+    public async createSummary(summary: api.ISummarySnapshotPayload): Promise<api.ISummarySnapshotResponse> {
+        return this.historian.createSummary(summary);
+    }
+
     public async getRef(ref: string): Promise<resources.IRef> {
         return this.historian
             .getRef(`heads/${ref}`)
@@ -198,8 +203,17 @@ export class GitManager implements IGitManager {
         branch: string,
         inputTree: api.ITree,
         parents: string[],
-        message: string): Promise<resources.ICommit> {
-        const tree = await this.createTree(inputTree);
+        message: string,
+        singleSummaryUploadApi: boolean = true): Promise<resources.ICommit> {
+        let treeId;
+        if (singleSummaryUploadApi)
+        {
+            treeId = await this.createTree(inputTree).then((response) => response.sha);
+        }
+        else
+        {
+            treeId = await this.singleCallUpload(inputTree);
+        }
 
         // Construct a commit for the tree
         const commitParams: resources.ICreateCommitParams = {
@@ -210,7 +224,7 @@ export class GitManager implements IGitManager {
             },
             message,
             parents,
-            tree: tree.sha,
+            tree: treeId,
         };
 
         const commit = await this.historian.createCommit(commitParams);
@@ -226,6 +240,17 @@ export class GitManager implements IGitManager {
         }
 
         return commit;
+    }
+
+    private async singleCallUpload(inputTree: api.ITree): Promise<string> {
+        const tree = await convertTreeToSnapshotTree(inputTree);
+
+        const snapshotPayload: api.ISummarySnapshotPayload = {
+            entries: tree.entries,
+            type: api.SummarySnapshotType.Channel,
+        };
+
+        return this.createSummary(snapshotPayload).then((response) => response.id);
     }
 
     private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {

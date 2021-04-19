@@ -109,6 +109,32 @@ describe("Routerlicious", () => {
             });
 
             describe(".handler", () => {
+                // it("Should updateAndUploadSnapshotTree", async () => {
+                //     const serviceProtocolEntries: ITreeEntry[] = [
+                //         {
+                //             mode: FileMode.File,
+                //             path: "deli",
+                //             type: TreeEntry.Blob,
+                //             value: {
+                //                 contents: "deli content",
+                //                 encoding: "utf-8",
+                //             },
+                //         },
+                //         {
+                //             mode: FileMode.File,
+                //             path: "scribe",
+                //             type: TreeEntry.Blob,
+                //             value: {
+                //                 contents: "scribe content",
+                //                 encoding: "utf-8",
+                //             },
+                //         },
+                //     ];
+                //     const result = await factory.updateAndUploadSnapshotTree(serviceProtocolEntries, "");
+                //     console.log(result);
+                //     assert(result !== "");
+                // });
+
                 it("Should nack a client that has not sent a join", async () => {
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(MessageType.Operation, 10, 2000), testId));
                     await quiesce();

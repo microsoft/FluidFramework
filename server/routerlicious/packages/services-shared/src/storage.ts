@@ -9,8 +9,18 @@ import {
     ICommittedProposal,
     ISequencedDocumentMessage,
     ISummaryTree,
+    SummarySnapshotTreeEntry,
+    ISummarySnapshotPayload,
+    SummarySnapshotType,
 } from "@fluidframework/protocol-definitions";
-import { IGitCache, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
+import {
+    buildSnapshotTreeHierarchy,
+    convertTreeToSnapshotTree,
+    IGitCache,
+    IGitManager,
+    SnapshotTreeUploadManager,
+    SummaryTreeUploadManager,
+} from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDeliState,
@@ -34,6 +44,7 @@ export class DocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,
+        private readonly singleSummaryUploadApi = true,
     ) { }
 
     /**
@@ -62,8 +73,11 @@ export class DocumentStorage implements IDocumentStorage {
         const gitManager = tenant.gitManager;
 
         const blobsShaCache = new Map<string, string>();
-        const summaryTreeUploadManager = new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
-        const handle = await summaryTreeUploadManager.writeSummaryTree(summary, "");
+        const summaryUploadManager = this.singleSummaryUploadApi
+            ? new SnapshotTreeUploadManager(gitManager)
+            : new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
+        // await (new SnapshotTreeUploadManager(gitManager)).writeSummaryTree(summary, "");
+        const handle = await summaryUploadManager.writeSummaryTree(summary, "");
 
         // At this point the summary op and its data are all valid and we can perform the write to history
         const quorumSnapshot: IQuorumSnapshot = {
@@ -74,19 +88,26 @@ export class DocumentStorage implements IDocumentStorage {
         const entries: ITreeEntry[] =
             getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
 
-        const [protocolTree, appSummaryTree] = await Promise.all([
-            gitManager.createTree({ entries }),
-            gitManager.getTree(handle, false),
-        ]);
-
         const messageMetaData = { documentId, tenantId };
-        winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
-        winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
 
-        // Combine the app summary with .protocol
-        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+        let summaryId;
+        if (this.singleSummaryUploadApi)
+        {
+            summaryId = await this.updateAndUploadSnapshotTree(
+                handle,
+                entries,
+                gitManager,
+                messageMetaData);
+        }
+        else
+        {
+            summaryId = await this.updateAndUploadSummaryTree(
+                handle,
+                entries,
+                gitManager,
+                messageMetaData);
+        }
 
-        const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
             author: {
                 date: new Date().toISOString(),
@@ -95,7 +116,7 @@ export class DocumentStorage implements IDocumentStorage {
             },
             message: "New document",
             parents: [],
-            tree: gitTree.sha,
+            tree: summaryId,
         };
 
         const commit = await gitManager.createCommit(commitParams);
@@ -216,6 +237,54 @@ export class DocumentStorage implements IDocumentStorage {
             },
             code,
         };
+    }
+
+    private async updateAndUploadSummaryTree(
+        handle: string,
+        protocolTreeEntries: ITreeEntry[],
+        gitManager: IGitManager,
+        messageMetaData: { documentId: string, tenantId: string }): Promise<string> {
+            const [protocolTree, appSummaryTree] = await Promise.all([
+                gitManager.createTree({ entries: protocolTreeEntries }),
+                gitManager.getTree(handle, false),
+            ]);
+
+            winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
+            winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
+
+            // Combine the app summary with .protocol
+            const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+
+            const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
+
+            return gitTree.sha;
+    }
+
+    private async updateAndUploadSnapshotTree(
+        handle: string,
+        protocolTreeEntries: ITreeEntry[],
+        gitManager: IGitManager,
+        messageMetaData: { documentId: string, tenantId: string }): Promise<string> {
+            const appSummaryTree = await gitManager.getTree(handle, true);
+            const summarySnapshot = buildSnapshotTreeHierarchy(appSummaryTree);
+            const summarySnapshotEntries = summarySnapshot.entries !== undefined ? summarySnapshot.entries : [];
+
+            const protocolTree = await convertTreeToSnapshotTree({ entries: protocolTreeEntries });
+            const protocolEntry: SummarySnapshotTreeEntry = {
+                type: "tree",
+                path: ".protocol",
+                value: protocolTree,
+            };
+            summarySnapshotEntries.push(protocolEntry);
+            winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
+            winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
+
+            const snapshotPayload: ISummarySnapshotPayload = {
+                entries: summarySnapshotEntries,
+                type: SummarySnapshotType.Channel,
+            };
+
+            return gitManager.createSummary(snapshotPayload).then((response) => response.id);
     }
 
     private async createObject(

@@ -10,6 +10,7 @@ export * from "./error";
 export * from "./protocol";
 export * from "./storage";
 export * from "./summary";
+export * from "./summarySnapshot";
 export * from "./users";
 export * from "./tokens";
 export * from "./scopes";
