@@ -374,7 +374,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
-        const deserializedSummary = JSON.parse(snapshot);
+        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
         await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
@@ -1272,7 +1272,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: IDetachedContainerSnapshot) {
+    private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
