@@ -153,15 +153,13 @@ export enum ConnectionState {
 
 // It specifies the summary taken by the serialize api on detached container.
 export interface IDetachedContainerSnapshot {
-    summary: ISummaryTree | ISnapshotTree,
-    // In format version >= 0.1, we would always have summary. However due to back-compat
-    // we would always have ISnapshotTree for version 0.0.
+    summary: ISummaryTree,
     formatVersion: string,
 }
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const convertDetachedContainerSnapshot = (detachedContainerSnapshot: IDetachedContainerSnapshot) => {
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: IDetachedContainerSnapshot) => {
     let snapshotTree: ISnapshotTree;
     if (detachedContainerSnapshot.formatVersion === "0.1") {
         const summaryTree = detachedContainerSnapshot.summary as ISummaryTree;
@@ -174,7 +172,7 @@ export const convertDetachedContainerSnapshot = (detachedContainerSnapshot: IDet
             appSummaryTree,
         );
     } else {
-        snapshotTree = detachedContainerSnapshot.summary as ISnapshotTree;
+        assert(false, "No other version supported yet!");
     }
     return snapshotTree;
 };
@@ -388,17 +386,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             {});
         const deserializedSummary = JSON.parse(snapshot);
-        let snapshotWithFormatVersion: IDetachedContainerSnapshot;
-        if (deserializedSummary.formatVersion === undefined) {
-            snapshotWithFormatVersion = {
-                summary: deserializedSummary,
-                formatVersion: "0.0",
-            };
-        } else {
-            snapshotWithFormatVersion = deserializedSummary;
-        }
-        await container.rehydrateDetachedFromSnapshot(snapshotWithFormatVersion);
-
+        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
 
@@ -1300,7 +1288,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: IDetachedContainerSnapshot) {
-        const snapshotTree: ISnapshotTree = convertDetachedContainerSnapshot(detachedContainerSnapshot);
+        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
