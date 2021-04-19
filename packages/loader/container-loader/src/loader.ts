@@ -279,9 +279,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.rehydrateDetachedFromSnapshot(
-            this,
-            JSON.parse(snapshot));
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
