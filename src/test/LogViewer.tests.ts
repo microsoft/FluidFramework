@@ -163,7 +163,8 @@ describe('CachingLogViewer', () => {
 			/* expensiveValidation */ true,
 			editCallback,
 			logger ?? getMockLogger(),
-			Transaction.factory
+			Transaction.factory,
+			log.numberOfSequencedEdits
 		);
 	}
 
