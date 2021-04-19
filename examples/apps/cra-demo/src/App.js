@@ -4,47 +4,44 @@
  */
 
 import React from "react";
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import Fluid from "@fluid-experimental/fluid-static";
-import { TinyliciousService } from "@fluid-experimental/get-container";
+import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { TinyliciousService, RouterliciousService } from "@fluid-experimental/get-container";
 
-const getContainerId = (): { containerId: string; isNew: boolean } => {
+const getContainerId = () => {
     let isNew = false;
-    if (location.hash.length === 0) {
+    if (window.location.hash.length === 0) {
         isNew = true;
-        location.hash = Date.now().toString();
+        window.location.hash = Date.now().toString();
     }
-    const containerId = location.hash.substring(1);
+    const containerId = window.location.hash.substring(1);
     return { containerId, isNew };
 };
 
-const service = new TinyliciousService();
-Fluid.init(service);
+Fluid.init(new TinyliciousService());
 
-const dataObjectId = "dateTracker";
-
-const containerConfig = {
-    dataObjects: [KeyValueDataObject],
-    initialDataObjects: { [dataObjectId]: KeyValueDataObject }
-};
 
 function App() {
 
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
-    const [data, setData] = React.useState<{ [key: string]: any }>({});
+    const [dataObject, setDataObject] = React.useState();
+    const [data, setData] = React.useState({});
 
     React.useEffect(() => {
         if (!dataObject) {
             const { containerId, isNew } = getContainerId();
+            const containerConfig = {
+                name: 'container-name',
+                initialObjects: { kvpair: KeyValueDataObject }
+            };
 
             const load = async () => {
                 const fluidContainer = isNew
                     ? await Fluid.createContainer(containerId, containerConfig)
                     : await Fluid.getContainer(containerId, containerConfig);
 
-                const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
+                const initialObjects = fluidContainer.initialObjects;
 
-                setDataObject(keyValueDataObject);
+                setDataObject(initialObjects.kvpair);
             }
 
             load();
@@ -56,7 +53,7 @@ function App() {
         }
     }, [dataObject]);
 
-    if (!dataObject) return <div />;
+    if (!dataObject) return <div>loading</div>;
 
     return (
         <div className="App">
