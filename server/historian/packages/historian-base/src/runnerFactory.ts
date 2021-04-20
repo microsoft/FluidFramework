@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { AsyncLocalStorage } from "async_hooks";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import winston from "winston";
@@ -13,7 +12,7 @@ import * as historianServices from "./services";
 import { normalizePort } from "./utils";
 import { HistorianRunner } from "./runner";
 
-export class HistorianResources implements utils.IResources {
+export class HistorianResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
@@ -31,7 +30,7 @@ export class HistorianResources implements utils.IResources {
     }
 }
 
-export class HistorianResourcesFactory implements utils.IResourcesFactory<HistorianResources> {
+export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
     public async create(config: Provider): Promise<HistorianResources> {
         const redisConfig = config.get("redis");
         const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
@@ -83,8 +82,8 @@ export class HistorianResourcesFactory implements utils.IResourcesFactory<Histor
     }
 }
 
-export class HistorianRunnerFactory implements utils.IRunnerFactory<HistorianResources> {
-    public async create(resources: HistorianResources): Promise<utils.IRunner> {
+export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianResources> {
+    public async create(resources: HistorianResources): Promise<core.IRunner> {
         return new HistorianRunner(
             resources.webServerFactory,
             resources.config,

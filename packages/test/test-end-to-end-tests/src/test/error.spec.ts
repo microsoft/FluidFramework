@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,8 +22,8 @@ import { createWriteError } from "@fluidframework/driver-utils";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
-    OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,

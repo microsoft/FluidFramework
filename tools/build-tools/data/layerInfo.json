@@ -20,7 +20,8 @@
             },
             "Driver-Definitions": {
                 "packages": [
-                    "@fluidframework/driver-definitions"
+                    "@fluidframework/driver-definitions",
+                    "@fluidframework/odsp-driver-definitions"
                 ],
                 "deps": [
                     "Protocol-Definitions",

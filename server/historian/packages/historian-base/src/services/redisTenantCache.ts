@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -35,12 +35,14 @@ export class RedisTenantCache {
         value: string = "",
         expiresInSeconds: number = this.expireInSeconds): Promise<void> {
         const result = await this.setAsync(this.getKey(key), value);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result !== "OK" ?
             Promise.reject(result) :
             this.expire(this.getKey(key), expiresInSeconds);
     }
 
     public async get(key: string): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.getAsync(this.getKey(key));
     }
 
