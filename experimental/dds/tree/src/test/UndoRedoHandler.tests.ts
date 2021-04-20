@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UndoRedoStackManager } from '@fluidframework/undo-redo';
 import { EditId } from '../Identifiers';
 import { SharedTree, SharedTreeUndoRedoHandler } from '../default-edits';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
+import { UndoRedoStackManager } from './undoRedoStackManager';
 
 describe('SharedTreeUndoRedoHandler', () => {
 	let undoRedoStack: UndoRedoStackManager;

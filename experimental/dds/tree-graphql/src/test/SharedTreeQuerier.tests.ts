@@ -10,7 +10,7 @@ import { Maybe } from 'graphql-tools';
 import { SharedTreeQuerier } from '../SharedTreeQuerier';
 import { typeDefs } from '../graphql-schemas/Pizza';
 import { Drink, Pizza, PizzaBase, Query, resolvers } from '../graphql-generated/Pizza';
-import { createTestQueryTree, encodeScalar, NodeIdGenerator } from './TestUtilities';
+import { createTestQueryTree, NodeIdGenerator } from './TestUtilities';
 
 describe('SharedTreeQuerier', () => {
 	let id = new NodeIdGenerator();
@@ -24,7 +24,7 @@ describe('SharedTreeQuerier', () => {
 			definition: 'String' as Definition,
 			identifier: id.new(),
 			traits: {},
-			payload: encodeScalar(value),
+			payload: value,
 		};
 	}
 
@@ -33,7 +33,7 @@ describe('SharedTreeQuerier', () => {
 			definition: 'Boolean' as Definition,
 			identifier: id.new(),
 			traits: {},
-			payload: encodeScalar(value),
+			payload: value,
 		};
 	}
 
@@ -43,7 +43,7 @@ describe('SharedTreeQuerier', () => {
 			definition: 'Int' as Definition,
 			identifier: id.new(),
 			traits: {},
-			payload: encodeScalar(value),
+			payload: value,
 		};
 	}
 
@@ -52,7 +52,7 @@ describe('SharedTreeQuerier', () => {
 			definition: 'Float' as Definition,
 			identifier: id.new(),
 			traits: {},
-			payload: encodeScalar(value),
+			payload: value,
 		};
 	}
 
@@ -65,7 +65,7 @@ describe('SharedTreeQuerier', () => {
 			definition: type as Definition,
 			identifier: id.new(),
 			traits: {},
-			payload: encodeScalar(value),
+			payload: value,
 		};
 	}
 
