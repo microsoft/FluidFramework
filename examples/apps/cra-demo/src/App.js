@@ -6,7 +6,7 @@
 import React from "react";
 import Fluid from "@fluid-experimental/fluid-static";
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import { TinyliciousService, RouterliciousService } from "@fluid-experimental/get-container";
+import { TinyliciousService } from "@fluid-experimental/get-container";
 
 const getContainerId = () => {
     let isNew = false;
@@ -30,7 +30,7 @@ function App() {
         if (!dataObject) {
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
-                name: 'container-name',
+                name: 'cra-demo-container',
                 initialObjects: { kvpair: KeyValueDataObject }
             };
 
@@ -40,7 +40,6 @@ function App() {
                     : await Fluid.getContainer(containerId, containerConfig);
 
                 const initialObjects = fluidContainer.initialObjects;
-
                 setDataObject(initialObjects.kvpair);
             }
 
