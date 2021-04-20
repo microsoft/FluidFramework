@@ -4,7 +4,7 @@ This is an experimental learning tutorial demonstrating an integration between [
 Concepts you will learn:
 1. How to integrate Fluid into a React application
 2. How to run and connect your application to a local Fluid service (Tinylicious)
-3. How to create and get Fluid Containers and DataObjects
+3. How to create and get Fluid Containers and collaborative objects
 4. How to use a single KeyValuePair (KVPair) DataObject to sync data between connected clients
 
 
@@ -43,7 +43,7 @@ cd my-app-name
 There are three packages to install to get started with Fluid:
 
 `@fluid-experimental/fluid-static` - Manages creating and getting Fluid containers
-`@fluid-experimental/data-objects` - Contains the KVPair DataObject you will use to sync data
+`@fluid-experimental/data-objects` - Contains the KeyValueDataObject you will use to sync data
 `@fluid-experimental/get-container` - Defines the service connection to our local Fluid server
 
 ### Using NPM
@@ -136,8 +136,8 @@ The second time `useEffect` fires, the `dataObject` will have been set and we ca
 ```jsx
 function App() {
 
-    const [data, setData] = React.useState<{ [key: string]: any }>({});
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+    const [data, setData] = React.useState({});
+    const [dataObject, setDataObject] = React.useState();
 
     React.useEffect(() => {
         if (dataObject === undefined) {
@@ -183,8 +183,8 @@ To make sure we don't render the app too soon, we return a blank `<div />` until
 ```jsx
 function App() {
 
-    const [data, setData] = React.useState<{ [key: string]: any }>({});
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+    const [data, setData] = React.useState({});
+    const [dataObject, setDataObject] = React.useState();
 
     React.useEffect(() => {
         if (dataObject === undefined) {
@@ -251,4 +251,4 @@ When the app loads it will update the URL. Copy that new URL into a second brows
 
 - Try extending the demo with more key/value pairs and a more complex UI
   - `npm install @fluentui/react` is a great way to add [UI controls](https://developer.microsoft.com/en-us/fluentui#/)
-- Try extending the [KeyValueDataObject ](https://github.com/microsoft/FluidFramework/blob/release/0.36/experimental/framework/data-objects/src/kvpair/DataObject.ts) class and adding your own custom functionality
+- Try using other collaborative objects such as the [SharedMap](https://fluidframework.com/docs/apis/map/)
