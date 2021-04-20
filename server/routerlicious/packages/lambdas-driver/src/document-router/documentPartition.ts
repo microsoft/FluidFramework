@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,13 +10,13 @@ import {
     IQueuedMessage,
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
-import { AsyncQueue, queue } from "async";
+import { QueueObject, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private readonly q: AsyncQueue<IQueuedMessage>;
+    private readonly q: QueueObject<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda | undefined;
     private corrupt = false;
@@ -88,7 +88,7 @@ export class DocumentPartition {
             return;
         }
 
-        this.q.push(message);
+        void this.q.push(message);
         this.updateActivityTime();
     }
 
