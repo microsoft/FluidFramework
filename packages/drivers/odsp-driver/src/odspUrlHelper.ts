@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "./contracts";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 // Centralized store for all ODC/SPO logic
 

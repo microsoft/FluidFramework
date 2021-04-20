@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,15 +12,17 @@ import {
     offlineFetchFailureStatusCode,
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
-    OdspErrorType,
     throwOdspNetworkError,
     getSPOAndGraphRequestIdsFromResponse,
 } from "@fluidframework/odsp-doclib-utils";
+import {
+    IOdspResolvedUrl,
+    TokenFetchOptions,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import { debug } from "./debug";
 import { fetch } from "./fetch";
-import { TokenFetchOptions } from "./tokenFetch";
 import { RateLimiter } from "./rateLimiter";
-import { IOdspResolvedUrl } from "./contracts";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;

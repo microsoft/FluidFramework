@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -23,26 +23,27 @@ import {
     DriverErrorType,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import {
+    IOdspResolvedUrl,
+    TokenFetchOptions,
+    IEntry,
+    snapshotKey,
+    ISnapshotOptions,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
-    IOdspResolvedUrl,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
     HostStoragePolicyInternal,
-    ISnapshotOptions,
     ITree,
     IBlob,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import {
-    IOdspCache,
-    IEntry,
-    snapshotKey,
-} from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
-import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { RateLimiter } from "./rateLimiter";

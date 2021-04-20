@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { createOdspNetworkError, OdspError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "./contracts";
 
 /**
