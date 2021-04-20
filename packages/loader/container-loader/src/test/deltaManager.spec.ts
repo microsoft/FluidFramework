@@ -33,9 +33,6 @@ describe("Loader", () => {
 
             async function startDeltaManager() {
                 await deltaManager.connect({ reason: "test" });
-                deltaManager.inbound.resume();
-                deltaManager.outbound.resume();
-                deltaManager.inboundSignal.resume();
             }
 
             // function to yield control in the Javascript event loop.

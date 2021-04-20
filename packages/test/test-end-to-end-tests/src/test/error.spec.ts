@@ -64,7 +64,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
             // eslint-disable-next-line prefer-promise-reject-errors
-            service.connectToDeltaStorage = async () => Promise.reject(false);
+            service.connectToDeltaStream = async () => Promise.reject(false);
             return service;
         };
 
@@ -84,11 +84,9 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                 {
                     canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                     clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                    containerUrl: testRequest.url,
-                    docId: "documentId",
                     resolvedUrl: testResolved,
                     version: testRequest.headers?.[LoaderHeader.version],
-                    pause: testRequest.headers?.[LoaderHeader.pause],
+                    loadMode: testRequest.headers?.[LoaderHeader.loadMode],
                 },
             );
 

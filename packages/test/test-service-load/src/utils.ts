@@ -8,16 +8,16 @@ import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, pairwiseOdspHostStoragePolicy } from "@fluidframework/test-drivers";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createFluidTestDriver, generateOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import random from "random-js";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { createFluidExport } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import { pairwiseLoaderOptions } from "./optionsMatrix";
+import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -83,16 +83,19 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const createCodeLoader =
-    (runId: number | undefined)=> new LocalCodeLoader([[codeDetails, createFluidExport(runId)]]);
+export const createCodeLoader =
+    (options: IContainerRuntimeOptions)=>
+        new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver) {
-    const options = pairwiseLoaderOptions.value[Math.floor(pairwiseLoaderOptions.value.length * Math.random())];
+export async function initialize(testDriver: ITestDriver, seed: number) {
+    const randEng = random.engines.mt19937();
+    randEng.seed(seed);
+    const options = random.pick(randEng, generateLoaderOptions(seed));
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader: createCodeLoader(undefined),
+        codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
         options,
     });
@@ -110,37 +113,14 @@ export async function initialize(testDriver: ITestDriver) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function load(
-    testDriver: ITestDriver,
-    documentServiceFactory: FaultInjectionDocumentServiceFactory,
-    url: string,
-    runId: number)
-{
-    const options = pairwiseLoaderOptions.value[runId % pairwiseLoaderOptions.value.length];
-    // Construct the loader
-    const loader = new Loader({
-        urlResolver: testDriver.createUrlResolver(),
-        documentServiceFactory,
-        codeLoader: createCodeLoader(runId),
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
-        options,
-    });
-
-    const container = await loader.resolve({ url });
-    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
-}
-
-export async function createTestDriver(driver: TestDriverTypes, runId: number | undefined) {
-    const optionsIndex = runId === undefined
-        ? Math.floor(pairwiseOdspHostStoragePolicy.value.length * Math.random())
-        : runId % pairwiseOdspHostStoragePolicy.value.length;
-
+export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+    const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
         {
             odsp: {
                 directory: "stress",
-                options: pairwiseOdspHostStoragePolicy.value[optionsIndex],
+                options: options[ (runId ?? seed) % options.length],
             },
         });
 }

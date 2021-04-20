@@ -13,7 +13,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
-export const defaultTinyliciousPort = 35843;
+export const defaultTinyliciousPort = 7070;
 
 /**
  * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
@@ -22,23 +22,26 @@ export const defaultTinyliciousPort = 35843;
  * documentId/containerRelativePathing
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
+    public constructor(private readonly tinyliciousPort = defaultTinyliciousPort) { }
+
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const url = request.url.replace(`http://localhost:${defaultTinyliciousPort}/`, "");
+        const url = request.url.replace(`http://localhost:${this.tinyliciousPort}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
         const documentRelativePath = url.slice(documentId.length);
 
         // eslint-disable-next-line max-len
-        const documentUrl = `fluid://localhost:${defaultTinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
-        const deltaStorageUrl = `http://localhost:${defaultTinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
-        const storageUrl = `http://localhost:${defaultTinyliciousPort}/repos/tinylicious`;
+        const documentUrl = `fluid://localhost:${this.tinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
+        const deltaStorageUrl = `http://localhost:${this.tinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
+        const storageUrl = `http://localhost:${this.tinyliciousPort}/repos/tinylicious`;
 
         const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
-                ordererUrl: `http://localhost:${defaultTinyliciousPort}`,
+                ordererUrl: `http://localhost:${this.tinyliciousPort}`,
                 storageUrl,
             },
+            id: documentId,
             tokens: { jwt: this.auth(documentId) },
             type: "fluid",
             url: documentUrl,
@@ -48,7 +51,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
         const documentId = decodeURIComponent(
-            resolvedUrl.url.replace(`fluid://localhost:${defaultTinyliciousPort}/tinylicious/`, ""),
+            resolvedUrl.url.replace(`fluid://localhost:${this.tinyliciousPort}/tinylicious/`, ""),
         );
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by

@@ -159,7 +159,7 @@ export async function runTest(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: number]: (MyDataInput | undefined)[] },
+    expected: { [key: string]: (MyDataInput | undefined)[] },
     initialWritesExpected: number,
     totalWritesExpected: number)
 {
@@ -200,12 +200,12 @@ describe("OpsCache write", () => {
                 { sequenceNumber: 105, data: "105" },
             ],
             {
-                20: [
-                undefined,
-                { sequenceNumber: 101, data: "101" },
-                { sequenceNumber: 102, data: "102" },
-                { sequenceNumber: 103, data: "103" },
-                { sequenceNumber: 104, data: "104" },
+                "5_20": [
+                    undefined,
+                    { sequenceNumber: 101, data: "101" },
+                    { sequenceNumber: 102, data: "102" },
+                    { sequenceNumber: 103, data: "103" },
+                    { sequenceNumber: 104, data: "104" },
                 ],
             },
             1,
@@ -223,10 +223,10 @@ describe("OpsCache write", () => {
             101,
             mockData3,
             {
-            51: [
-                { sequenceNumber: 102, data: "102" },
-                { sequenceNumber: 103, data: "103" },
-            ],
+                "2_51": [
+                    { sequenceNumber: 102, data: "102" },
+                    { sequenceNumber: 103, data: "103" },
+                ],
             },
             1,
             1);
@@ -238,8 +238,8 @@ describe("OpsCache write", () => {
             101,
             mockData3,
             {
-            102: [{ sequenceNumber: 102, data: "102" }],
-            103: [{ sequenceNumber: 103, data: "103" }],
+                "1_102": [{ sequenceNumber: 102, data: "102" }],
+                "1_103": [{ sequenceNumber: 103, data: "103" }],
             },
             2,
             2);

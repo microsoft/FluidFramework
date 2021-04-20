@@ -46,7 +46,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
             //     docId: decodeURI(this.id),
             //     resolvedUrl: this.resolved,
             //     version: request.headers?.[LoaderHeader.version],
-            //     pause: request.headers?.[LoaderHeader.pause],
+            //     loadMode: request.headers?.[LoaderHeader.loadMode],
             // },
         );
         this.container = container;
