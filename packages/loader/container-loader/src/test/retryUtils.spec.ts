@@ -8,12 +8,23 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../utils";
 
+const _setTimeout = global.setTimeout;
+const fastSetTimeout: any =
+    (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) => _setTimeout(callback, ms / 1000.0, ...args);
+
 describe("Retry Util Tests", () => {
     const deltaManager = {
         refreshDelayInfo: () => {},
         emitDelayInfo: () => {},
     };
     const logger = new TelemetryNullLogger();
+
+    before(()=>{
+        global.setTimeout = fastSetTimeout;
+    });
+    after(()=>{
+        global.setTimeout = _setTimeout;
+    });
 
     it("Should succeed at first time", async () => {
         let retryTimes: number = 1;
