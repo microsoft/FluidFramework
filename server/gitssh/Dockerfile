@@ -1,9 +1,6 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License.
-
 FROM alpine:3.12
 
 # Install Git and OpenSSH so we can run a git server

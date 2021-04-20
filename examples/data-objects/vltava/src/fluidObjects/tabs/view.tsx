@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import React from "react";
