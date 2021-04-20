@@ -51,6 +51,6 @@ export const mochaHooks = {
     afterEach() {
         console.log = log;
         console.error = error;
-        testLogger.pass("");
+        testLogger.pass(undefined);
     },
 };
