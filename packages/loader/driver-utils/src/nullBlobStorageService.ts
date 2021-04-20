@@ -16,6 +16,7 @@ export class NullBlobStorageService implements IDocumentStorageService {
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+        // eslint-disable-next-line no-null/no-null
         return version ? Promise.reject(new Error("Invalid operation")) : null;
     }
 

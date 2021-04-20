@@ -9,10 +9,10 @@ import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definit
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { NullBlobStorageService } from "@fluidframework/driver-utils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
-import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousStorageRestWrapper } from "./restWrapper";
 

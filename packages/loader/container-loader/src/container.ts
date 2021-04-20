@@ -50,6 +50,8 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    BlobCacheStorageService,
+    NullBlobStorageService,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -375,7 +377,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _attachState = AttachState.Detached;
 
     // Active chaincode and associated runtime
-    private _storageService: IDocumentStorageService | undefined;
+    private readonly _storageService: IDocumentStorageService;
+    private internalStorageService: IDocumentStorageService;
+    private readonly blobsMap = new Map();
     private get storageService() {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
@@ -624,6 +628,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.internalStorageService = new NullBlobStorageService();
+        this._storageService = new BlobCacheStorageService(this.internalStorageService, this.blobsMap);
 
         // keep track of last time page was visible for telemetry
         if (typeof document === "object" && document !== null) {
@@ -802,9 +808,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            if (this._storageService === undefined) {
-                this._storageService = await this.getDocumentStorageService();
-            }
+            this.internalStorageService = await this.connectToStorage();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
@@ -903,7 +907,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args).catch(() => { });
     }
 
-    public get storage(): IDocumentStorageService | undefined {
+    public get storage(): IDocumentStorageService {
         return this._storageService;
     }
 
@@ -1110,7 +1114,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             startConnectionP.catch((error) => { });
         }
 
-        this._storageService = await this.getDocumentStorageService();
+        this.internalStorageService = await this.connectToStorage();
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
@@ -1276,7 +1280,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
     }
 
-    private async getDocumentStorageService(): Promise<IDocumentStorageService> {
+    private async connectToStorage(): Promise<IDocumentStorageService> {
         return this._deltaManager.connectToStorage();
     }
 
