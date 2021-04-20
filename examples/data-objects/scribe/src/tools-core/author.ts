@@ -222,11 +222,11 @@ export async function typeFile(
                     metricsArray.push(metric);
                 });
             }
-            q.drain = () => {
+            q.drain(() => {
                 const now = Date.now();
                 metrics.time = now - startTime;
                 resolve(metricsArray[0]);
-            };
+            });
         });
     }
 }
