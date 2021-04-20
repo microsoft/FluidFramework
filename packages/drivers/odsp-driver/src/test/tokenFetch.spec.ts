@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { tokenFromResponse, isTokenFromCache } from "../tokenFetch";
+import { tokenFromResponse, isTokenFromCache } from "@fluidframework/odsp-driver-definitions";
 
 describe("tokenFromResponse", () => {
   it("returns token verbatim when token value is passed as a string", async () => {

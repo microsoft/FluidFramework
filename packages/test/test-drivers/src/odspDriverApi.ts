@@ -8,17 +8,18 @@ import {
     createOdspCreateContainerRequest,
     createOdspUrl,
     OdspDriverUrlResolver,
+} from "@fluidframework/odsp-driver";
+import {
     HostStoragePolicy,
     ISnapshotOptions,
     IOpsCachingPolicy,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver-definitions";
 import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
  } from "@fluid-internal/test-pairwise-generator";
-import { Lazy } from "@fluidframework/common-utils";
 import { pkgVersion } from "./packageVersion";
 
 export const OdspDriverApi = {
@@ -31,7 +32,7 @@ export const OdspDriverApi = {
 
 export type OdspDriverApiType = typeof OdspDriverApi;
 
-export const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
+const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
     blobs: numberCases,
     channels: numberCases,
     deltas: numberCases,
@@ -39,20 +40,20 @@ export const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
     timeout: numberCases,
 };
 
-export const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
+const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
     batchSize: [undefined, -1],
     timerGranularity: numberCases,
     totalOpsToCache: numberCases,
 };
 
-export const odspHostPolicyMatrix = new Lazy<OptionsMatrix<HostStoragePolicy>> (()=>({
-    blobDeduping: booleanCases,
-    concurrentSnapshotFetch: booleanCases,
-    opsBatchSize: numberCases,
-    concurrentOpsBatches: numberCases,
-    snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions)],
-    opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching)],
-}));
-
-export const pairwiseOdspHostStoragePolicy = new Lazy(()=>
-    generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix.value));
+export const generateOdspHostStoragePolicy = (seed: number)=> {
+    const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
+        blobDeduping: booleanCases,
+        concurrentSnapshotFetch: booleanCases,
+        opsBatchSize: numberCases,
+        concurrentOpsBatches: numberCases,
+        snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
+        opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
+    };
+    return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
+};

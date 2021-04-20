@@ -4,11 +4,14 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { HostStoragePolicy } from "./contracts";
-import { IPersistedCache } from "./odspCache";
+import {
+    OdspResourceTokenFetchOptions,
+    TokenFetcher,
+    IPersistedCache,
+    HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
-import { OdspResourceTokenFetchOptions, TokenFetcher } from "./tokenFetch";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

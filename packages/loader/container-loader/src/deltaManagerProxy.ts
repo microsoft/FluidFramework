@@ -65,6 +65,10 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
     public async resume(): Promise<void> {
         this.queue.resume();
     }
+
+    public async waitTillProcessingDone() {
+        return this.queue.waitTillProcessingDone();
+    }
 }
 
 /**

@@ -7,16 +7,14 @@ import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "../contracts";
 import {
-    EpochTrackerWithRedemption,
-} from "../epochTracker";
-import {
+    IOdspResolvedUrl,
     IEntry,
-    LocalPersistentCache,
     snapshotKey,
-} from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
+} from "@fluidframework/odsp-driver-definitions";
+import { EpochTrackerWithRedemption } from "../epochTracker";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {

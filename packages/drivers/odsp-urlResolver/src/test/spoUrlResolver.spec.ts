@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspUrlResolver } from "../urlResolver";
 
 describe("Spo Url Resolver", () => {

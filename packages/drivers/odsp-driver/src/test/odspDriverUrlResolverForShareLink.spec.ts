@@ -9,12 +9,13 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import * as fileLinkImport from "../getFileLink";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
-import { IOdspResolvedUrl, SharingLinkHeader } from "../contracts";
+import { SharingLinkHeader } from "../contractsPublic";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 
 describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {

@@ -296,6 +296,22 @@
             "outFiles": [
                 "${fileDirname}/../../dist/**/*.js"
             ],
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current Jest Test (JS)",
+            "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+            "cwd": "${fileDirname}/..",
+            "args": [
+                "--verbose",
+                "-i",
+                "--no-cache",
+                "${file}"
+            ],
+            "runtimeArgs": ["--unhandled-rejections=strict"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }

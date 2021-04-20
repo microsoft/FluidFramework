@@ -1,8 +1,32 @@
+## 0.39 Breaking changes
+- [connect event removed from Container](#connect-event-removed-from-Container)
+- [LoaderHeader.pause](#LoaderHeader.pause)
+- [ODSP driver definitions](#ODSP-driver-definitions)
+
+### connect event removed from Container
+The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
+
+### LoaderHeader.pause
+LoaderHeader.pause has been removed. instead of
+```typescript
+[LoaderHeader.pause]: true
+```
+use
+```typescript
+[LoaderHeader.loadMode]: { deltaConnection: "none" }
+```
+
+### ODSP driver definitions
+A lot of definitions have been moved from @fluidframework/odsp-driver to @fluidframework/odsp-driver-definitions. This change is required in preparation for driver to be dynamically loaded by host.
+This new package contains all the dependencies of ODSP driver factory (like HostStoragePolicy, IPersistedCache, TokenFetcher) as well as outputs (OdspErrorType).
+@fluidframework/odsp-driver will continue to have defintions for non-factory functionality (like URI resolver, helper functionality to deal with sharing links, URI parsing, etc.)
+
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
 - [ODSP Driver Type Unification](#ODSP-Driver-Type-Unification)
 - [ODSP Driver url resolver for share link parameter consolidation](#ODSP-Driver-url-resolver-for-share-link-parameter-consolidation)
 - [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations)
+- [Removed containerUrl from IContainerLoadOptions and IContainerConfig](#Removed-containerUrl-from-IContainerLoadOptions-and-IContainerConfig)
 
 ### IPersistedCache changes
 IPersistedCache implementation no longer needs to implement updateUsage() method (removed form interface).
@@ -177,6 +201,10 @@ if (!context.existing) {
 ```
 
 The option will be turned off by default in an upcoming release before being turned off permanently, so it is recommended to make these updates proactively.
+
+### Removed containerUrl from IContainerLoadOptions and IContainerConfig
+Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
+>>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

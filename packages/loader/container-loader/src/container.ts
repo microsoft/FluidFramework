@@ -9,7 +9,7 @@ import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -30,6 +30,7 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     ILoaderOptions,
+    IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
     CreateContainerError,
@@ -96,12 +97,11 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 
 const detachedContainerRefSeqNumber = 0;
 
-export const connectEventName = "connect";
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
@@ -114,8 +114,6 @@ export interface IContainerLoadOptions {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    containerUrl: string;
-    docId: string;
     resolvedUrl: IFluidResolvedUrl;
     /**
      * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
@@ -124,22 +122,16 @@ export interface IContainerLoadOptions {
     /**
      * Loads the Container in paused state if true, unpaused otherwise.
      */
-    pause?: boolean;
+    loadMode?: IContainerLoadMode;
 }
 
 export interface IContainerConfig {
-    resolvedUrl?: IResolvedUrl;
+    resolvedUrl?: IFluidResolvedUrl;
     canReconnect?: boolean;
-    /**
-     * A url for the Container.  Critically, we expect Loader.resolve using this URL to resolve back to this Container
-     * for purposes of creating a separate Container instance for the summarizer to use.
-     */
-    containerUrl?: string;
     /**
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-    id?: string;
 }
 
 export enum ConnectionState {
@@ -158,6 +150,20 @@ export enum ConnectionState {
      */
     Connected,
 }
+
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        "Protocol and App summary trees should be present");
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return snapshotTree;
+};
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -300,9 +306,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {
-                containerUrl: loadOptions.containerUrl,
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
-                id: loadOptions.docId,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
             });
@@ -310,8 +314,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
-                // always load unpaused with pending ops
-                const pause = pendingLocalState !== undefined ? false : loadOptions.pause;
+
+                // always load unpaused with pending ops!
+                // It is also default mode in general.
+                const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
+                assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
+                    "pending state requires immidiate connection!");
+                const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -323,7 +332,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, pause === true, pendingLocalState)
+                container.load(version, mode, pendingLocalState)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -359,12 +368,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
-        snapshot: ISnapshotTree,
+        snapshot: string,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {});
-        await container.rehydrateDetachedFromSnapshot(snapshot);
+        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
 
@@ -388,8 +398,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._storageService;
     }
 
-    private _id: string | undefined;
-    private containerUrl: string | undefined;
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
@@ -417,7 +425,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
-    private _resolvedUrl: IResolvedUrl | undefined;
+    private _resolvedUrl: IFluidResolvedUrl | undefined;
     private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
     private _dirtyContainer = false;
@@ -479,7 +487,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get id(): string {
-        return this._id ?? "";
+        return this._resolvedUrl?.id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -569,10 +577,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         super();
         this._audience = new Audience();
 
-        // Initialize from config
-        this.containerUrl = config.containerUrl;
         this.clientDetailsOverride = config.clientDetailsOverride;
-        this._id = config.id;
         this._resolvedUrl = config.resolvedUrl;
         if (config.canReconnect !== undefined) {
             this._canReconnect = config.canReconnect;
@@ -621,16 +626,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                propagateConnectionState: () => this.propagateConnectionState(),
-                isContainerLoaded: () => this.loaded,
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
         );
 
-        this.connectionStateHandler.on(connectEventName, (opsBehind?: number) => {
-            this.emit(connectEventName, opsBehind);
+        this.connectionStateHandler.on("connectionStateChanged", () => {
+            if (this.loaded) {
+                this.propagateConnectionState();
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -673,11 +678,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                          break;
                     case disconnectedEventName:
                         if (!this.connected) {
-                            listener(event);
-                        }
-                        break;
-                    case connectEventName:
-                        if (this.connectionState !== ConnectionState.Disconnected) {
                             listener(event);
                         }
                         break;
@@ -763,8 +763,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
-        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
-        return JSON.stringify(snapshotTree);
+        const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+        return JSON.stringify(combinedSummary);
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -800,32 +800,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
+            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
-                this.service = await this.serviceFactory.createContainer(
-                    this.cachedAttachSummary,
-                    createNewResolvedUrl,
-                    this.subLogger,
+                this.service = await runWithRetry(
+                    async () => this.serviceFactory.createContainer(
+                        summary,
+                        createNewResolvedUrl,
+                        this.subLogger,
+                    ),
+                    "containerAttach",
+                    this._deltaManager,
+                    this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const url = await this.urlResolver.getAbsoluteUrl(
-                resolvedUrl,
-                "",
-                this._context?.codeDetails,
-            );
-            assert(url !== undefined, 0x0d8 /* "Container url undefined" */);
-            this.containerUrl = url;
-            const parsedUrl = parseUrl(resolvedUrl.url);
-            if (parsedUrl === undefined) {
-                throw new Error("Unable to parse Url");
-            }
-
-            const [, docId] = parsedUrl.id.split("/");
-            this._id = decodeURI(docId);
-
             if (this._storageService === undefined) {
                 this._storageService = await this.getDocumentStorageService();
             }
@@ -905,7 +896,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public resume() {
         if (!this.closed) {
-            this.resumeInternal({ reason: "DocumentOpenResume" });
+            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+            // assuming that resume() is called quickly after initial container boot.
+            this.resumeInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
         }
     }
 
@@ -916,7 +910,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this.resumedOpProcessingAfterLoad) {
             this.resumedOpProcessingAfterLoad = true;
             this._deltaManager.inbound.resume();
-            this._deltaManager.outbound.resume();
             this._deltaManager.inboundSignal.resume();
         }
 
@@ -1102,7 +1095,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean, pendingLocalState?: unknown) {
+    private async load(
+        specifiedVersion: string | null | undefined,
+        loadMode: IContainerLoadMode,
+        pendingLocalState?: unknown)
+    {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1119,11 +1116,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write" };
+        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write", fetchOpsFromStorage: false };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        if (!pause) {
+        if (loadMode.deltaConnection === undefined) {
             startConnectionP = this.connectToDeltaStream(connectionArgs);
             startConnectionP.catch((error) => { });
         }
@@ -1144,26 +1141,49 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocolHandlerP =
             this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
-        let loadDetailsP: Promise<void>;
+        let opsBeforeReturnP: Promise<void> | undefined;
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
         if (snapshot !== undefined) {
             this._existing = true;
-            loadDetailsP = Promise.resolve();
+            switch (loadMode.opsBeforeReturn) {
+                case undefined:
+                    if (loadMode.deltaConnection !== "none") {
+                        // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        this._deltaManager.preFetchOps(false);
+                    }
+                    break;
+                case "cached":
+                    opsBeforeReturnP = this._deltaManager.preFetchOps(true);
+                    // Keep going with fetching ops from storage once we have all cached ops in.
+                    // Ops processing will start once cached ops are in and and will stop when queue is empty
+                    // (which in most cases will happen when we are done processing cached ops)
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
+                    break;
+                case "all":
+                    opsBeforeReturnP = this._deltaManager.preFetchOps(false);
+                    break;
+                default:
+                    unreachableCase(loadMode.opsBeforeReturn);
+            }
         } else {
+            //
+            // THIS IS LEGACY PATH
+            //
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
-            loadDetailsP = startConnectionP.then((details) => {
-                this._existing = details.existing;
-            });
+            const details = await startConnectionP;
+            this._existing = details.existing;
         }
 
         // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
-        [this._protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
+        // instantiateRuntime which will want to know existing state.
+        this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
@@ -1171,12 +1191,37 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Propagate current connection state through the system.
         this.propagateConnectionState();
 
-        if (!pause) {
-            this.resume();
-        }
-
         // Internal context is fully loaded at this point
         this.loaded = true;
+
+        // We might have hit some failure that did not manifest itself in exception in this flow,
+        // do not start op processing in such case - static version of Container.load() will handle it correctly.
+        if (!this.closed) {
+            if (opsBeforeReturnP !== undefined) {
+                this._deltaManager.inbound.resume();
+
+                await opsBeforeReturnP;
+                await this._deltaManager.inbound.waitTillProcessingDone();
+
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this._deltaManager.inbound.pause();
+            }
+
+            switch (loadMode.deltaConnection) {
+                case undefined:
+                    this.resume();
+                    break;
+                case "delayed":
+                    this.resumedOpProcessingAfterLoad = true;
+                    this._deltaManager.inbound.resume();
+                    this._deltaManager.inboundSignal.resume();
+                    break;
+                case "none":
+                    break;
+                default:
+                    unreachableCase(loadMode.deltaConnection);
+            }
+        }
 
         return {
             existing: this._existing,
@@ -1226,7 +1271,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
+        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
@@ -1476,7 +1522,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => this.activeConnection(),
         );
 
-        deltaManager.on(connectEventName, (details: IConnectionDetails, opsBehind?: number) => {
+        // Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        deltaManager.inbound.pause();
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        deltaManager.inboundSignal.pause();
+
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             this.connectionStateHandler.receivedConnectEvent(
                 this._deltaManager.connectionMode,
                 details,
@@ -1516,10 +1568,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.close(error);
         });
 
-        // If we're the outer frame, do we want to do this?
-        // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
-        // It seems like something, like reconnection, that we would want to retry but otherwise allow
-        // the document to load
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1743,7 +1791,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, () => this.containerUrl);
+        const loader = new RelativeLoader(this.loader, this);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1766,7 +1814,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState,
         );
 
-        loader.resolveContainer(this);
         this.emit("contextChanged", codeDetails);
     }
 

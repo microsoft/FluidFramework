@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "./contracts";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 // Centralized store for all ODC/SPO logic
 

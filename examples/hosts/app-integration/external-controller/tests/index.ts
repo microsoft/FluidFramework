@@ -1,8 +1,9 @@
-/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable import/no-internal-modules */
 
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";

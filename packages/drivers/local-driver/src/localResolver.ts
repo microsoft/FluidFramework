@@ -52,6 +52,7 @@ export class LocalResolver implements IUrlResolver {
                 ordererUrl: "http://localhost:3000",
                 storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
             },
+            id: documentId,
             tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
             url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,

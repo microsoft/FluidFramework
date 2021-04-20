@@ -16,11 +16,19 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
+import {
+    IOdspResolvedUrl,
+    TokenFetchOptions,
+    OdspResourceTokenFetchOptions,
+    isTokenFromCache,
+    tokenFromResponse,
+    TokenFetcher,
+    IPersistedCache,
+    HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     LocalPersistentCache,
     NonPersistentCache,
-    IPersistedCache,
 } from "./odspCache";
 import {
     createOdspCacheAndTracker,
@@ -29,13 +37,6 @@ import {
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
-import {
-    TokenFetchOptions,
-    isTokenFromCache,
-    tokenFromResponse,
-    OdspResourceTokenFetchOptions,
-    TokenFetcher,
-} from "./tokenFetch";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -98,7 +99,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     createNewSummary,
                     cacheAndTracker.epochTracker,
                 );
-                const docService = this.createDocumentService(odspResolvedUrl, logger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, logger, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -125,6 +126,13 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
+        return this.createDocumentServiceCore(resolvedUrl, logger);
+    }
+
+    private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
