@@ -261,9 +261,6 @@ describe("OdspDeltaStorageWithCache", () => {
         return ops;
     }
 
-    const batchSize = 100;
-    const concurrency = 1;
-
     function createOps(fromArg: number, length: number) {
         const ops: ISequencedDocumentMessage[] = [];
         let from = fromArg;
@@ -297,6 +294,8 @@ describe("OdspDeltaStorageWithCache", () => {
         opsFromSnapshot: number,
         opsFromCache: number,
         opsFromStorage: number,
+        concurrency = 1,
+        batchSize = 100,
     ) {
         const snapshotOps = createOps(fromTotal, opsFromSnapshot);
         const cachedOps = createOps(fromTotal + opsFromSnapshot, opsFromCache);
@@ -308,7 +307,7 @@ describe("OdspDeltaStorageWithCache", () => {
         const askingOps = actualTo - fromTotal;
         totalOps = Math.min(totalOps, askingOps);
 
-        const opsToCache: ISequencedDocumentMessage[] = [];
+        let opsToCache: ISequencedDocumentMessage[] = [];
 
         const storage = new OdspDeltaStorageWithCache(
             snapshotOps,
@@ -338,11 +337,12 @@ describe("OdspDeltaStorageWithCache", () => {
         if (cacheOnly) {
             assert(opsToCache.length === 0);
         } else {
+            opsToCache = opsToCache.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             validateOps(opsToCache, fromTotal + opsFromSnapshot + opsFromCache, fromTotal + totalOps);
         }
     }
 
-    it("test all", async () => {
+    it("basic permutations", async () => {
         await testStorage(105, undefined, false, 0, 0, 0);
         await testStorage(105, undefined, false, 110, 0, 0);
         await testStorage(105, undefined, false, 110, 245, 0);
@@ -357,7 +357,7 @@ describe("OdspDeltaStorageWithCache", () => {
         await testStorage(105, undefined, false, 0, 0, 150);
     });
 
-    it("test cached", async () => {
+    it("cached", async () => {
         await testStorage(105, undefined, true, 0, 0, 0);
         await testStorage(105, undefined, true, 110, 0, 0);
         await testStorage(105, undefined, true, 110, 245, 0);
@@ -371,7 +371,7 @@ describe("OdspDeltaStorageWithCache", () => {
         await testStorage(105, undefined, true, 0, 0, 150);
     });
 
-    it("test fixed to", async () => {
+    it("fixed to", async () => {
         await testStorage(105, 105 + 110, false, 110, 0, 0);
         await testStorage(105, 105 + 110 + 245, false, 110, 245, 0);
         await testStorage(105, 105 + 110 + 245 + 500, false, 110, 245, 1000);
@@ -380,5 +380,20 @@ describe("OdspDeltaStorageWithCache", () => {
 
         await testStorage(105, 105 + 110 + 150, false, 110, 0, 150);
         await testStorage(105, 105 + 140, false, 0, 0, 150);
+    });
+
+    it("concurency", async () => {
+        await testStorage(105, undefined, false, 0, 0, 0, 2);
+        await testStorage(105, undefined, false, 110, 0, 0, 2);
+        await testStorage(105, undefined, false, 110, 245, 0, 2);
+        await testStorage(105, undefined, false, 110, 245, 1000, 2);
+        await testStorage(105, undefined, false, 110, 9001, 8002, 2);
+
+        await testStorage(105, undefined, false, 0, 245, 0, 2);
+        await testStorage(105, undefined, false, 0, 9000, 0, 2);
+        await testStorage(105, undefined, false, 0, 245, 150, 2);
+
+        await testStorage(105, undefined, false, 110, 0, 150, 2);
+        await testStorage(105, undefined, false, 0, 0, 150, 2);
     });
 });
