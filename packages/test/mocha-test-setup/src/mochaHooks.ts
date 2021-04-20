@@ -11,7 +11,6 @@ const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent) {
         event.testName = this.testName;
-        console.log("helloimhere",event.testName);
         this.parentLogger.send(event);
     }
     async flush() {
@@ -45,7 +44,6 @@ export const mochaHooks = {
         //     console.error = () => { };
         // }
         const context = this as any as Context;
-        console.log("isthisworking",context.currentTest?.fullTitle());
         testLogger.pass(context.currentTest?.fullTitle());
     },
     afterEach() {
