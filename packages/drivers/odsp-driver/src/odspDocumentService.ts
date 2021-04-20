@@ -220,7 +220,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const snapshotOps = this.storageManager?.ops;
+        const snapshotOps = this.storageManager?.ops ?? [];
         const service = new OdspDeltaStorageService(
             this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
@@ -233,11 +233,11 @@ export class OdspDocumentService implements IDocumentService {
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
 
         return new OdspDeltaStorageWithCache(
-            snapshotOps,
-            service,
+            snapshotOps.map((op) => op.op),
             this.logger,
             batchSize,
             concurrency,
+            async (from, to) => service.get(from, to),
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];

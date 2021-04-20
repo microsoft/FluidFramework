@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { IDeltasFetchResult, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
@@ -77,11 +78,11 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
     private firstCacheMiss = Number.MAX_SAFE_INTEGER;
 
     public constructor(
-        private snapshotOps: ISequencedDeltaOpMessage[] | undefined,
-        private readonly service: OdspDeltaStorageService,
+        private snapshotOps: ISequencedDocumentMessage[] | undefined,
         private readonly logger: ITelemetryLogger,
         private readonly batchSize: number,
         private readonly concurrency: number,
+        private readonly getFromStorage: (from: number, to: number) => Promise<IDeltasFetchResult>,
         private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
     ) {
@@ -93,6 +94,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         abortSignal?: AbortSignal,
         cachedOnly?: boolean)
     {
+        // We do not control what's in the cache. Current API assumes that fetchMessages() keeps banging on
+        // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
+        // cache and it's not there.
+        // Better implementation would be to return only what we have in cache, but that also breaks API
+        assert(!cachedOnly || toTotal === undefined, "");
+
         let opsFromSnapshot = 0;
         let opsFromCache = 0;
         let opsFromStorage = 0;
@@ -101,9 +108,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             async (from: number, to: number) => {
                 if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
                     const messages = this.snapshotOps.filter((op) =>
-                        op.sequenceNumber >= from).map((op) => op.op);
+                        op.sequenceNumber >= from && op.sequenceNumber < to);
                     if (messages.length > 0 && messages[0].sequenceNumber === from) {
-                        this.snapshotOps = undefined;
+                        this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
                         opsFromSnapshot = messages.length;
                         return { messages, partialResult: true };
                     }
@@ -135,7 +142,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                     return { messages: [], partialResult: false };
                 }
 
-                const ops = await this.service.get(from, to);
+                const ops = await this.getFromStorage(from, to);
                 opsFromStorage += ops.messages.length;
                 this.opsReceived(ops.messages);
                 return ops;
