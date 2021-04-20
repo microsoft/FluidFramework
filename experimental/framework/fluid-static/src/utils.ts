@@ -31,7 +31,7 @@ export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => 
  * of both SharedObject or DataObject. This function seperates the two and returns a registery
  * of DataObject types and an array of SharedObjects.
  */
-export const parseDataObjectsFromSharedObjects = (config: ContainerSchema):
+export const parseDataObjectsFromSharedObjects = (schema: ContainerSchema):
     [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
     const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
     const sharedObjects: Set<IChannelFactory> = new Set();
@@ -47,13 +47,13 @@ export const parseDataObjectsFromSharedObjects = (config: ContainerSchema):
     };
 
     // Add the object types that will be initialized
-    Object.values(config.initialObjects).forEach((obj) => {
+    Object.values(schema.initialObjects).forEach((obj) => {
         tryAddObject(obj);
     });
 
     // If there are dynamic object types we will add them now
-    if (config.dynamicObjectTypes) {
-        for (const obj of config.dynamicObjectTypes) {
+    if (schema.dynamicObjectTypes) {
+        for (const obj of schema.dynamicObjectTypes) {
             tryAddObject(obj);
         }
     }
