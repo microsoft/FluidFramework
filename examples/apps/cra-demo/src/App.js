@@ -5,7 +5,7 @@
 
 import React from "react";
 import Fluid from "@fluid-experimental/fluid-static";
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { SharedMap } from "@fluidframework/map";
 import { TinyliciousService } from "@fluid-experimental/get-container";
 
 const getContainerId = () => {
@@ -20,18 +20,17 @@ const getContainerId = () => {
 
 Fluid.init(new TinyliciousService());
 
-
 function App() {
 
-    const [dataObject, setDataObject] = React.useState();
-    const [data, setData] = React.useState({});
+    const [map, setMap] = React.useState();
+    const [time, setTime] = React.useState('');
 
     React.useEffect(() => {
-        if (!dataObject) {
+        if (!map) {
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
                 name: 'cra-demo-container',
-                initialObjects: { kvpair: KeyValueDataObject }
+                initialObjects: { map: SharedMap }
             };
 
             const load = async () => {
@@ -39,27 +38,29 @@ function App() {
                     ? await Fluid.createContainer(containerId, containerConfig)
                     : await Fluid.getContainer(containerId, containerConfig);
 
-                const initialObjects = fluidContainer.initialObjects;
-                setDataObject(initialObjects.kvpair);
+                setMap(fluidContainer.initialObjects.map);
             }
 
             load();
         } else {
-            const updateData = () => setData(dataObject.query());
-            updateData();
-            dataObject.on("changed", updateData);
-            return () => { dataObject.off("change", updateData) }
-        }
-    }, [dataObject]);
+            // set up initial state
+            setTime(map.get("time"));
+            // if the map's event key is "time", update state
+            const handleChange = (e) => e?.key === "time" ? setTime(map.get("time")) : null;
 
-    if (!dataObject) return <div>loading</div>;
+            map.on("valueChanged", handleChange);
+            return () => { map.off("change", handleChange) }
+        }
+    }, [map]);
+
+    if (!map) return <div>loading</div>;
 
     return (
         <div className="App">
-            <button onClick={() => dataObject.set("time", Date.now().toString())}>
+            <button onClick={() => map.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data["time"]}</span>
+            <span>{time}</span>
         </div>
     )
 }
