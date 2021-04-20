@@ -16,7 +16,7 @@ import {
 const PJV = require("package-json-validator").PJV;
 
 const licenseId = 'MIT';
-const author = 'Microsoft';
+const author = 'Microsoft and contributors';
 const repository = 'https://github.com/microsoft/FluidFramework';
 const homepage = 'https://fluidframework.com';
 const trademark = `
