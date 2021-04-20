@@ -15,6 +15,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -221,21 +222,15 @@ export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
 
 // @public
 export enum EditResult {
-    // (undocumented)
     Applied = 2,
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0
 }
 
 // @public
 export enum EditValidationResult {
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0,
-    // (undocumented)
     Valid = 2
 }
 
@@ -254,6 +249,8 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
     constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
+    // (undocumented)
+    protected applyStashedOp(): void;
     // (undocumented)
     get currentView(): Snapshot;
     // (undocumented)
@@ -384,6 +381,8 @@ export interface NodeInTrait {
     readonly trait: TraitLocation;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "noHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
+//
 // @public
 export function noHistorySummarizer(_editLog: OrderedEditSet<Change>, currentView: Snapshot): SharedTreeSummary_0_0_2<Change>;
 
@@ -398,7 +397,9 @@ export interface OrderedEditSet<TChange> {
     // @internal (undocumented)
     getEditLogSummary(useHandles?: boolean): EditLogSummary<TChange>;
     // (undocumented)
-    indexOf(editId: EditId): number;
+    getIdAtIndex(index: number): EditId;
+    // (undocumented)
+    getIndexOfId(editId: EditId): number;
     // (undocumented)
     length: number;
     // (undocumented)
@@ -655,12 +656,14 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
     constructor(snapshot: Snapshot, nodeId: NodeId);
     // (undocumented)
     get definition(): Definition;
+    demandTree(): ChangeNode;
     // (undocumented)
     get identifier(): NodeId;
-    // (undocumented)
-    get node(): TreeNode<TreeNodeHandle>;
+    get node(): ChangeNode;
     // (undocumented)
     get payload(): Payload | undefined;
+    // (undocumented)
+    toString(): string;
     // (undocumented)
     get traits(): TraitMap<TreeNodeHandle>;
 }
