@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import FluidTinylicious, { ITinyliciousServiceConfig } from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient, { ITinyliciousContainerConfig } from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
-FluidTinylicious.init();
+TinyliciousClient.init();
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -19,10 +19,10 @@ if (location.hash.length === 0) {
 const containerId = location.hash.substring(1);
 document.title = containerId;
 
-// Define the configuration of our Container.
+// Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
-export const containerConfig = {
+export const containerSchema = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
@@ -33,10 +33,10 @@ export const containerConfig = {
 
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
-    const serviceConfig: ITinyliciousServiceConfig = { id: containerId };
+    const containerConfig: ITinyliciousContainerConfig = { id: containerId };
     const fluidContainer = createNew
-        ? await FluidTinylicious.createContainer(serviceConfig, containerConfig)
-        : await FluidTinylicious.getContainer(serviceConfig, containerConfig);
+        ? await TinyliciousClient.createContainer(containerConfig, containerSchema)
+        : await TinyliciousClient.getContainer(containerConfig, containerSchema);
 
     // We now get the DataObject from the container
     const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;

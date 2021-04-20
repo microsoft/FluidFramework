@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
@@ -16,17 +14,13 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { IUser } from "@fluidframework/protocol-definitions";
 import jwt from "jsonwebtoken";
-import { getContainer, IGetContainerService } from "./getContainer";
+import { IGetContainerService } from "./getContainer";
 
 export interface IRouterliciousConfig {
     orderer: string,
     storage: string,
     tenantId: string,
     key: string,
-}
-
-export interface IRouterliciousServiceConfig {
-    id: string;
 }
 
 class SimpleUrlResolver implements IUrlResolver {
@@ -79,24 +73,5 @@ export class RouterliciousService implements IGetContainerService {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
         this.urlResolver = new SimpleUrlResolver(config, user);
-    }
-
-    public async createContainer(
-        serviceConfig: IRouterliciousServiceConfig,
-        containerRuntimeFactory: IRuntimeFactory,
-    ): Promise<Container> {
-        return getContainer(this, serviceConfig.id, containerRuntimeFactory, true);
-    }
-
-    public async getContainer(
-        serviceConfig: IRouterliciousServiceConfig,
-        containerRuntimeFactory: IRuntimeFactory,
-    ): Promise<Container> {
-        return getContainer(
-            this,
-            serviceConfig.id,
-            containerRuntimeFactory,
-            false,
-        );
     }
 }

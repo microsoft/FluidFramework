@@ -6,7 +6,7 @@
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
-    ContainerConfig,
+    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     SharedObjectClass,
@@ -27,11 +27,11 @@ export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => 
 };
 
 /**
- * The ContainerConfig consists of initialObjects and dynamicObjectTypes. These types can be
+ * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
  * of both SharedObject or DataObject. This function seperates the two and returns a registery
  * of DataObject types and an array of SharedObjects.
  */
-export const parseDataObjectsFromSharedObjects = (config: ContainerConfig):
+export const parseDataObjectsFromSharedObjects = (config: ContainerSchema):
     [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
     const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
     const sharedObjects: Set<IChannelFactory> = new Set();

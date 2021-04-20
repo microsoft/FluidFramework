@@ -45,20 +45,20 @@ const container = await Fluid.getContainer("_unique-id_", /* config */);
 
 ## Defining Fluid Containers
 
-Fluid Containers are defined by a config. The config includes initial properties of the Container as well as what collaborative objects can be dynamically created.
+Fluid Containers are defined by a schema. The schema includes initial properties of the Container as well as what collaborative objects can be dynamically created.
 
-See [`ContainerConfig`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) for details about the specific properties.
+See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) for details about the specific properties.
 
 ```javascript
-const config = {
+const schema = {
     name: "my-container",
     initialObjects: {
         /* ... */
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-await Fluid.createContainer("_unique-id_", config);
-const container = await Fluid.getContainer("_unique-id_", config);
+await Fluid.createContainer("_unique-id_", schema);
+const container = await Fluid.getContainer("_unique-id_", schema);
 ```
 
 ## Using initial objects
@@ -87,14 +87,14 @@ const pair1 = initialObjects["pair1"];
 
 ## Using dynamic objects
 
-LoadableObjects can also be created dynamically during runtime. Dynamic object types need to be defined in the  `dynamicObjectTypes` property of the ContainerConfig.
+LoadableObjects can also be created dynamically during runtime. Dynamic object types need to be defined in the  `dynamicObjectTypes` property of the ContainerSchema.
 
 The Container has a `create` method that will create a new instance of the provided type. This instance will be local to the user until attached to another LoadableObject. Dynamic objects created this way should be stored in initialObjects, which are attached when the Container is created. When storing a LoadableObject you must store a reference to the object and not the object itself. To do this use the `handle` property on the LoadableObject.
 
 Dynamic objects are loaded on-demand to optimize for data virtualization. To get the LoadableObject, first get the stored handle then resolve that handle.
 
 ```javascript
-const config = {
+const schema = {
     name: "my-container",
     initialObjects: {
         map1: SharedMap,
@@ -102,7 +102,7 @@ const config = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const container = await Fluid.getContainer("_unique-id_", config);
+const container = await Fluid.getContainer("_unique-id_", schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
@@ -13,14 +15,6 @@ import {
 export interface IGetContainerService {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
-    createContainer(
-        serviceConfig: any,
-        containerRuntimeFactory: IRuntimeFactory
-    ): Promise<Container>;
-    getContainer(
-        serviceConfig: any,
-        containerRuntimeFactory: IRuntimeFactory
-    ): Promise<Container>;
 }
 
 export async function getContainer(
@@ -44,10 +38,7 @@ export async function getContainer(
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
-        container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
+        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         await container.attach({ url: containerId });
     } else {
         // Request must be appropriate and parseable by resolver.

@@ -6,23 +6,23 @@ This package is marked as experimental and currently under development. The API 
 
 ## Using tinylicious-client
 
-The tinylicious-client package has a default `FluidTinylicious` object that allows you to interact with Fluid.
+The tinylicious-client package has a default `TinyliciousClient` object that allows you to interact with Fluid.
 
 ```javascript
-import FluidTinylicious from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 ```
 
-## Initializing FluidTinylicious
+## Initializing TinyliciousClient
 
-Fluid requires a backing service to enable collaborative communication. The FluidTinylicious instance will be instantitated against the Tinylicious service.
+Fluid requires a backing service to enable collaborative communication. The TinyliciousClient instance will be instantitated against the Tinylicious service.
 
-In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070.
+In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070 by filling out the optional `port` parameter in `ITinyliciousConnectionConfig`.
 
 ```javascript
-import FluidTinylicious from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient, { ITinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
 
-const port = 7070
-FluidTinylicious.init(port);
+const config: ITinyliciousConnectionConfig = { port: 7070 };
+TinyliciousClient.init(config);
 ```
 
 ## Fluid Containers
@@ -33,31 +33,31 @@ Containers are created and identified by unique ids. Management and storage of t
 
 ## Using Fluid Containers
 
-Using the default `Fluid` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
+Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
 
 ```javascript
-import FluidTinylicious from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 
-await FluidTinylicious.createContainer( { id: "_unique-id_" }, /* config */);
-const container = await FluidTinylicious.getContainer({ id: "_unique-id_" }, /* config */);
+await TinyliciousClient.createContainer( { id: "_unique-id_" }, /* schema */);
+const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
 ## Defining Fluid Containers
 
-Fluid Containers are defined by a config. The config includes initial properties of the Container as well as what collaborative objects can be dynamically created.
+Fluid Containers are defined by a schema. The schema includes initial properties of the Container as well as what collaborative objects can be dynamically created.
 
-See [`ContainerConfig`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) for details about the specific properties.
+See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) for details about the specific properties.
 
 ```javascript
-const config = {
+const schema = {
     name: "my-container",
     initialObjects: {
         /* ... */
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-await FluidTinylicious.createContainer({ id: "_unique-id_" }, config);
-const container = await FluidTinylicious.getContainer({ id: "_unique-id_" }, config);
+await TinyliciousClient.createContainer({ id: "_unique-id_" }, schema);
+const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -66,10 +66,10 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 > Note: Collaborative objects are referred to as LoadableObjects within Fluid. LoadableObjects are specific to Fluid and expose a collaborative interface. DistributedDataStructures and DataObjects are types of LoadableObjects.
 
-`initialObjects` are loaded into memory when the Container is loaded and the developer can access them off the Container via the `initialObjects` property. The `initialObjects` property has the same signature as the Container config.
+`initialObjects` are loaded into memory when the Container is loaded and the developer can access them off the Container via the `initialObjects` property. The `initialObjects` property has the same signature as the Container schema.
 
 ```javascript
-const config = {
+const schema = {
     name: "my-container",
     initialObjects: {
         map1: SharedMap,
@@ -77,7 +77,7 @@ const config = {
     }
 }
 
-const container = await FluidTinylicious.getContainer({ id: "_unique-id_" }, config);
+const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
@@ -86,14 +86,14 @@ const pair1 = initialObjects["pair1"];
 
 ## Using dynamic objects
 
-LoadableObjects can also be created dynamically during runtime. Dynamic object types need to be defined in the  `dynamicObjectTypes` property of the ContainerConfig.
+LoadableObjects can also be created dynamically during runtime. Dynamic object types need to be defined in the  `dynamicObjectTypes` property of the ContainerSchema.
 
 The Container has a `create` method that will create a new instance of the provided type. This instance will be local to the user until attached to another LoadableObject. Dynamic objects created this way should be stored in initialObjects, which are attached when the Container is created. When storing a LoadableObject you must store a reference to the object and not the object itself. To do this use the `handle` property on the LoadableObject.
 
 Dynamic objects are loaded on-demand to optimize for data virtualization. To get the LoadableObject, first get the stored handle then resolve that handle.
 
 ```javascript
-const config = {
+const schema = {
     name: "my-container",
     initialObjects: {
         map1: SharedMap,
@@ -101,7 +101,7 @@ const config = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const container = await FluidTinylicious.getContainer({ id: "_unique-id_" } config);
+const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

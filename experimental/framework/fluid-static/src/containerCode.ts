@@ -17,7 +17,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
-    ContainerConfig,
+    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     LoadableObjectClassRecord,
@@ -167,7 +167,7 @@ const rootDataStoreId = "rootDOId";
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory
     private readonly initialObjects: LoadableObjectClassRecord;
-    constructor(config: ContainerConfig) {
+    constructor(config: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(config);
         const rootDataObjectFactory =
             // eslint-disable-next-line @typescript-eslint/ban-types

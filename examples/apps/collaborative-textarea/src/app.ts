@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/tinylicious-client";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { CollaborativeText } from "./fluid-object";
