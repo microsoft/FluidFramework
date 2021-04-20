@@ -35,6 +35,7 @@ export const mochaHooks = {
     beforeAll() {
         const parentLogger = _global.getTestLogger ?? nullLogger;
         testLogger = new TestLogger(parentLogger, "");
+        console.log(parentLogger,"parent logger");
         _global.getTestLogger = () => testLogger;
     },
     beforeEach() {
@@ -44,6 +45,7 @@ export const mochaHooks = {
         //     console.error = () => { };
         // }
         const context = this as any as Context;
+        console.log("isthisworking",context.currentTest?.fullTitle());
         testLogger.pass(context.currentTest?.fullTitle());
     },
     afterEach() {
