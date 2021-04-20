@@ -6,10 +6,10 @@
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLog';
-import { Edit, EditWithoutId } from '../PersistedTypes';
-import { newEdit } from '../EditUtilities';
+import { Change } from '../default-edits';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
+import { newEdit, Edit, EditWithoutId } from '../generic';
 
 describe('EditLog', () => {
 	const edit0 = newEdit([]);
@@ -198,8 +198,8 @@ describe('EditLog', () => {
 	});
 
 	it('can correctly compare equality to other edit logs', () => {
-		const edit0Copy: Edit = { ...edit0 };
-		const edit1Copy: Edit = { ...edit1 };
+		const edit0Copy: Edit<Change> = { ...edit0 };
+		const edit1Copy: Edit<Change> = { ...edit1 };
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
@@ -212,7 +212,7 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
+		const log2 = new EditLog<Change>({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
 		log2.addLocalEdit(edit1Copy);
 
 		expect(log0.equals(log2)).to.be.true;
@@ -238,11 +238,11 @@ describe('EditLog', () => {
 
 	it('can load edits from a handle', async () => {
 		const editIds: EditId[] = [];
-		const editChunks: EditWithoutId[][] = [];
+		const editChunks: EditWithoutId<Change>[][] = [];
 		const numberOfChunks = 2;
 		const editsPerChunk = 5;
 
-		let inProgessChunk: EditWithoutId[] = [];
+		let inProgessChunk: EditWithoutId<Change>[] = [];
 		for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
 			const { id, editWithoutId } = separateEditAndId(newEdit([]));
 			editIds.push(id);

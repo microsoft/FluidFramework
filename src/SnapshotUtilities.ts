@@ -6,7 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { compareArrays, copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, Payload, TraitMap } from './PersistedTypes';
+import { ChangeNode, Payload, TraitMap } from './generic';
 import { Snapshot, SnapshotNode } from './Snapshot';
 
 /**
@@ -239,6 +239,6 @@ function makeTraits(
  *
  * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
  */
-export function compareFiniteNumbers(a, b): number {
+export function compareFiniteNumbers(a: number, b: number): number {
 	return a - b;
 }

@@ -6,11 +6,11 @@
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { TreeNodeHandle } from '../..';
 import { noop } from '../../Common';
+import { Change, SharedTree, StablePlace, StableRange } from '../../default-edits';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { Change, ChangeNode, StablePlace, StableRange, TraitLocation } from '../../PersistedTypes';
-import { SharedTree } from '../../SharedTree';
+import { ChangeNode, TraitLocation } from '../../generic';
+import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deepCompareNodes, makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 
 /** Options used to generate a SharedTree undo/redo test suite. */

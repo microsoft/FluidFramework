@@ -89,16 +89,22 @@ export class RevisionValueCache<TValue> {
 		}
 		const prevRetentionWindowStart = this.retentionWindowStart;
 		this.retentionWindowStart = newRetentionWindowStart;
+		const oldWindowEntries: [Revision, TValue][] = [];
 		this.sortedEntries.forRange(
 			prevRetentionWindowStart,
 			this.retentionWindowStart,
 			false,
 			(windowRevision, windowEntry) => {
 				if (!this.retainedRevisions.has(windowRevision)) {
-					this.evictableRevisions.set(windowRevision, windowEntry);
+					// Adding to the LRU can cause eviction which in turn mutates the b-tree we are enumerating. Thus, store list of
+					// old window entries separately.
+					oldWindowEntries.push([windowRevision, windowEntry]);
 				}
 			}
 		);
+		oldWindowEntries.forEach(([revision, value]) => {
+			this.evictableRevisions.set(revision, value);
+		});
 	}
 
 	/**

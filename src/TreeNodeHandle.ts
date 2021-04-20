@@ -4,7 +4,7 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { ChangeNode, Payload, TraitMap, TreeNode } from './PersistedTypes';
+import { ChangeNode, Payload, TraitMap, TreeNode } from './generic';
 import { Snapshot } from './Snapshot';
 import { memoizeGetter } from './Common';
 import { getChangeNodeFromSnapshot } from './SnapshotUtilities';

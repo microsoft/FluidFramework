@@ -34,6 +34,7 @@ module.exports = {
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'prefer-arrow/prefer-arrow-functions': 'off',
+		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
 	},
 	overrides: [
 		{

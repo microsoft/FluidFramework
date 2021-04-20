@@ -23,13 +23,19 @@ import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { compareArrays, fail } from '../../Common';
-import { ChangeNode, NodeData, TraitLocation } from '../../PersistedTypes';
-import { SharedTree } from '../../SharedTree';
-import { newEdit, setTrait } from '../../EditUtilities';
-import { fullHistorySummarizer, SharedTreeSummarizer } from '../../Summary';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
+import { SharedTree, Change, setTrait } from '../../default-edits';
 import { comparePayloads } from '../../SnapshotUtilities';
+import {
+	ChangeNode,
+	fullHistorySummarizer,
+	GenericSharedTree,
+	newEdit,
+	NodeData,
+	SharedTreeSummarizer,
+	TraitLocation,
+} from '../../generic';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -64,7 +70,7 @@ export interface SharedTreeTestingOptions {
 	/**
 	 * If not set, full history will be preserved.
 	 */
-	summarizer?: SharedTreeSummarizer;
+	summarizer?: SharedTreeSummarizer<Change>;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -132,11 +138,11 @@ export function setUpTestSharedTree(
 const TestDataStoreType = '@fluid-example/test-dataStore';
 
 /** Objects returned by setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingComponents {
+export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree> {
 	/** The testObjectProvider created if one was not set in the options. */
 	testObjectProvider: TestObjectProvider<unknown>;
 	/** The SharedTree created and set up. */
-	tree: SharedTree;
+	tree: TSharedTree;
 }
 
 /** Options used to customize setUpLocalServerTestSharedTree */
@@ -154,7 +160,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/**
 	 * If not set, full history will be preserved.
 	 */
-	summarizer?: SharedTreeSummarizer;
+	summarizer?: SharedTreeSummarizer<Change>;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -206,7 +212,11 @@ export async function setUpLocalServerTestSharedTree(
 }
 
 /** Sets testTrait to contain `node`. */
-export function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+export function setTestTree<TExtraChangeTypes = never>(
+	tree: GenericSharedTree<TExtraChangeTypes | Change>,
+	node: ChangeNode,
+	overrideId?: EditId
+): EditId {
 	const edit = newEdit(setTrait(testTrait, [node]));
 	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
 	return overrideId || edit.id;
@@ -233,7 +243,7 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta(tree: SharedTree, editor: () => void) {
+export function assertNoDelta<TChange>(tree: GenericSharedTree<TChange>, editor: () => void) {
 	const snapshotA = tree.currentView;
 	editor();
 	const snapshotB = tree.currentView;
