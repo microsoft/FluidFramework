@@ -167,8 +167,8 @@ const rootDataStoreId = "rootDOId";
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory
     private readonly initialObjects: LoadableObjectClassRecord;
-    constructor(config: ContainerSchema) {
-        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(config);
+    constructor(schema: ContainerSchema) {
+        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
             // eslint-disable-next-line @typescript-eslint/ban-types
             new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
@@ -180,7 +180,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
             );
         super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
-        this.initialObjects = config.initialObjects;
+        this.initialObjects = schema.initialObjects;
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
