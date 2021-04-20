@@ -3,29 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
-import { RedisClient } from "redis";
+import { Redis } from "ioredis";
+import * as winston from "winston";
 import { ICache } from "./definitions";
 
 /**
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    private readonly getAsync;
-    private readonly setAsync;
-
-    constructor(client: RedisClient, private readonly prefix = "git") {
-        this.getAsync = util.promisify(client.get.bind(client));
-        this.setAsync = util.promisify(client.set.bind(client));
+    constructor(private readonly client: Redis, private readonly prefix = "git") {
+        client.on("error", (error) => {
+            winston.error("Redis Cache Error:", error);
+        });
     }
 
     public async get<T>(key: string): Promise<T> {
-        const stringValue = await this.getAsync(this.getKey(key));
+        const stringValue = await this.client.get(this.getKey(key));
         return JSON.parse(stringValue) as T;
     }
 
     public async set<T>(key: string, value: T): Promise<void> {
-        const result = await this.setAsync(this.getKey(key), JSON.stringify(value));
+        const result = await this.client.set(this.getKey(key), JSON.stringify(value));
         if (result !== "OK") {
             return Promise.reject(result);
         }
