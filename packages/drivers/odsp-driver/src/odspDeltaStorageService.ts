@@ -74,13 +74,15 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
+    private firstCacheMiss = Number.MAX_SAFE_INTEGER;
+
     public constructor(
         private snapshotOps: ISequencedDeltaOpMessage[] | undefined,
         private readonly service: OdspDeltaStorageService,
         private readonly logger: ITelemetryLogger,
         private readonly batchSize: number,
         private readonly concurrency: number,
-        private readonly get: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
+        private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
     ) {
     }
@@ -91,48 +93,52 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         abortSignal?: AbortSignal,
         cachedOnly?: boolean)
     {
-        let missed = false;
+        let opsFromSnapshot = 0;
+        let opsFromCache = 0;
+        let opsFromStorage = 0;
+
         const stream = requestOps(
             async (from: number, to: number) => {
                 if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
                     const messages = this.snapshotOps.filter((op) =>
                         op.sequenceNumber >= from).map((op) => op.op);
                     if (messages.length > 0 && messages[0].sequenceNumber === from) {
-                        // Consider not caching these ops as they will be cached as part of
-                        // snapshot cache entry
-                        this.opsReceived(messages);
                         this.snapshotOps = undefined;
+                        opsFromSnapshot = messages.length;
                         return { messages, partialResult: true };
-                    } else {
-                        this.logger.sendErrorEvent({
-                            eventName: "SnapshotOpsNotUsed",
-                            length: this.snapshotOps.length,
-                            first: this.snapshotOps[0].sequenceNumber,
-                            from,
-                            to,
-                        });
-                        this.snapshotOps = undefined;
                     }
+                    this.logger.sendErrorEvent({
+                        eventName: "SnapshotOpsNotUsed",
+                        length: this.snapshotOps.length,
+                        first: this.snapshotOps[0].sequenceNumber,
+                        from,
+                        to,
+                    });
+                    this.snapshotOps = undefined;
                 }
-                // We always write ops sequentially. Once there is a miss, stop consulting cache.
+
+                // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
                 // This saves a bit of processing time
-                if (!missed) {
-                    const messagesFromCache = await this.get(from, to);
-                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
+                if (from < this.firstCacheMiss) {
+                    const messagesFromCache = await this.getCached(from, to);
+                    if (messagesFromCache.length !== 0) {
+                        opsFromCache += messagesFromCache.length;
                         return {
                             messages: messagesFromCache,
                             partialResult: true,
                         };
                     }
-                    missed = true;
+                    this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
                 }
 
-                // Proper implementaiton Coming in future
                 if (cachedOnly) {
                     return { messages: [], partialResult: false };
                 }
 
-                return this.service.get(from, to);
+                const ops = await this.service.get(from, to);
+                opsFromStorage += ops.messages.length;
+                this.opsReceived(ops.messages);
+                return ops;
             },
             // Staging: starting with no concurrency, listening for feedback first.
             // In future releases we will switch to actual concurrency
@@ -144,6 +150,15 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             abortSignal,
         );
 
-        return streamObserver(stream, (ops) => this.opsReceived(ops));
-    }
+        return streamObserver(stream, (result) => {
+            if (result.done) {
+                this.logger.sendPerformanceEvent({
+                    eventName: "CacheOpsRetrieved",
+                    opsFromSnapshot,
+                    opsFromCache,
+                    opsFromStorage,
+                });
+            }
+        });
+}
 }
