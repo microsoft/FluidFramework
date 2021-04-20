@@ -8,7 +8,7 @@ Concepts you will learn:
 4. How to use a single KeyValuePair (KVPair) DataObject to sync data between connected clients
 
 
-\* This demo is a work in progress. There will be rough sections that need refactoring or refinement
+\* Want to just see the code? Jump to the [finished tutorial.](https://github.com/microsoft/FluidFramework/blob/release/0.38/examples/apps/cra-demo/src/App.tsx).
 
 ## Demo introduction
 
@@ -70,6 +70,9 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 ```js
 // App.js
+// Add the Fluid imports after React.
+
+import React from "react";
 import Fluid from "@fluid-experimental/fluid-static";
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { TinyliciousService } from "@fluid-experimental/get-container";
@@ -80,7 +83,7 @@ import { TinyliciousService } from "@fluid-experimental/get-container";
 Fluid collaboration happens in [containers](https://fluidframework.com/docs/glossary/#container), which have unique identifiers (like a document filename). For this example we'll use the hash part of the URL as the identifier, and generate a new one if there isn't one present already. The `getContainerId` function will automate this for you.
 
 ```jsx
-// below imports
+// add below imports
 const getContainerId = () => {
     let isNew = false;
     if (window.location.hash.length === 0) {
@@ -97,6 +100,7 @@ const getContainerId = () => {
 The Fluid import can be initialized with a number of different services. The `TinyliciousService` defines the schema for connecting to a locally deployed [tinylicious](https://www.npmjs.com/package/tinylicious) Fluid service. You'll use different provided services, like `RouterliciousService`, when connecting to production Fluid services.
 
 ```js
+// add below getContainerId
 Fluid.init(new TinyliciousService());
 ```
 
@@ -119,7 +123,7 @@ function App() {
     const [data, setData] = React.useState({});
     const [dataObject, setDataObject] = React.useState();
 
-    // render
+    // return(...)
 };
 ```
 
@@ -167,7 +171,7 @@ function App() {
 
     }, [dataObject]);
 
-    // render
+    // return(...)
 }
 ```
 
