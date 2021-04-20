@@ -4,8 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { DetachedSequenceId, EditId } from './Identifiers';
-import { Edit, TreeNodeSequence, EditNode, Change, StableRange, TraitLocation } from './PersistedTypes';
+import { EditId } from '../Identifiers';
+import { Edit, TraitLocation } from './PersistedTypes';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -32,20 +32,9 @@ export function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boo
 }
 
 /**
- * Create a sequence of changes that resets the contents of `trait`.
- * @public
- */
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[] {
-	const id = 0 as DetachedSequenceId;
-	const traitContents = StableRange.all(trait);
-
-	return [Change.detach(traitContents), Change.build(nodes, id), Change.insert(id, traitContents.start)];
-}
-
-/**
  * Generates a new edit object from the supplied changes.
  */
-export function newEdit(changes: readonly Change[]): Edit {
+export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
 	return { id: newEditId(), changes };
 }
 
@@ -54,12 +43,4 @@ export function newEdit(changes: readonly Change[]): Edit {
  */
 export function newEditId(): EditId {
 	return uuidv4() as EditId;
-}
-
-/**
- * Determine if an EditNode is a DetachedSequenceId.
- * @internal
- */
-export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
-	return typeof node !== 'object';
 }

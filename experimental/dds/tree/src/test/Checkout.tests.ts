@@ -36,11 +36,11 @@ import {
  */
 export function checkoutTests(
 	suiteName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout>
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change>>
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true }
-	): Promise<{ checkout: Checkout; tree: SharedTree }> {
+	): Promise<{ checkout: Checkout<Change>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -52,7 +52,7 @@ export function checkoutTests(
 	 * @param options Options object used to construct the initial SharedTree
 	 */
 	async function countViewChange(
-		action: (checkout: Checkout, data: { changeCount: number }) => void | Promise<void>,
+		action: (checkout: Checkout<Change>, data: { changeCount: number }) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout } = await setUpTestCheckout(options);
@@ -331,27 +331,15 @@ export function checkoutTests(
 			expect(changes).equals(2);
 		});
 
-		it('emits EditCommitted event synchronously for edits', async () => {
-			const { checkout } = await setUpTestCheckout();
+		it('emits ViewChange events for edits directly on tree', async () => {
+			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
 			let changeCount = 0;
-			checkout.on(CheckoutEvent.EditCommitted, () => {
+			checkout.on(CheckoutEvent.ViewChange, () => {
 				changeCount += 1;
 			});
 			expect(changeCount).equals(0);
-			checkout.applyEdit();
-			expect(changeCount).greaterThan(0); // Duplicate events are allowed for CheckoutEvent.EditCommitted in this case.
-		});
-
-		it('emits EditCommitted events for edits directly on tree', async () => {
-			const { checkout } = await setUpTestCheckout();
-			let changeCount = 0;
-			checkout.on(CheckoutEvent.EditCommitted, () => {
-				changeCount += 1;
-			});
-			expect(changeCount).equals(0);
-			checkout.tree.applyEdit();
-			// Since this edit is not actually required to be visible synchronously, wait for it to be included in checkout:
-			// event currently allowed to occur anywhere in this time window.
+			checkout.tree.applyEdit(Delete.create(StableRange.only(left)));
+			// Wait for edit to be included in checkout.
 			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(1);
 		});
@@ -362,7 +350,7 @@ export function checkoutTests(
 			localMode: false,
 		};
 
-		it('emits EditCommitted events for remote edits', async () => {
+		it('emits ViewChange events for remote edits', async () => {
 			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ ...treeOptions });
 
 			const { tree: secondTree } = setUpTestSharedTree({
@@ -374,15 +362,14 @@ export function checkoutTests(
 			const checkout = await checkoutFactory(tree);
 
 			let changeCount = 0;
-			checkout.on(CheckoutEvent.EditCommitted, () => {
+			checkout.on(CheckoutEvent.ViewChange, () => {
 				changeCount += 1;
 			});
 
-			secondTree.applyEdit();
+			secondTree.applyEdit(Delete.create(StableRange.only(left)));
 			expect(changeCount).equals(0);
 			containerRuntimeFactory.processAllMessages();
-			// Since this edit is not actually required to be visible synchronously, wait for it to be included in checkout:
-			// event currently allowed to occur anywhere in this time window.
+			// Wait for edit to be included in checkout.
 			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(1);
 		});

@@ -6,18 +6,10 @@
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import {
-	Change,
-	StableRange,
-	Side,
-	ChangeType,
-	ConstraintEffect,
-	EditResult,
-	Insert,
-	StablePlace,
-} from '../PersistedTypes';
+import { EditResult } from '../generic';
+import { Transaction, Change, ChangeType, ConstraintEffect, Insert, StableRange, StablePlace } from '../default-edits';
 import { initialTree } from '../InitialTree';
-import { Transaction } from '../Transaction';
+import { Side } from '../Snapshot';
 import {
 	makeEmptyNode,
 	testTrait,

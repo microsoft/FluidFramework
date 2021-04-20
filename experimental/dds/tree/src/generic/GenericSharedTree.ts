@@ -6,32 +6,22 @@
 import { bufferToString } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
-import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
+import {
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+	IChannelAttributes,
+} from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from './Common';
-import { editsPerChunk, EditLog, OrderedEditSet } from './EditLog';
-import {
-	Edit,
-	Delete,
-	Change,
-	EditNode,
-	Insert,
-	Move,
-	ChangeNode,
-	StableRange,
-	StablePlace,
-	SharedTreeOpType,
-	SharedTreeEditOp,
-	SharedTreeHandleOp,
-	EditWithoutId,
-} from './PersistedTypes';
-import { newEdit } from './EditUtilities';
-import { EditId } from './Identifiers';
-import { SharedTreeFactory } from './Factory';
-import { Snapshot } from './Snapshot';
+import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from '../Common';
+import { editsPerChunk, EditLog, OrderedEditSet } from '../EditLog';
+import { EditId } from '../Identifiers';
+import { Snapshot } from '../Snapshot';
+import { initialTree } from '../InitialTree';
+import { CachingLogViewer, LogViewer } from '../LogViewer';
+import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
 import {
 	SharedTreeSummarizer,
 	serialize,
@@ -39,23 +29,16 @@ import {
 	fullHistorySummarizer,
 	SharedTreeSummaryBase,
 } from './Summary';
-import * as HistoryEditFactory from './HistoryEditFactory';
-import { initialTree } from './InitialTree';
-import { CachingLogViewer, LogViewer } from './LogViewer';
-import { convertSummaryToReadFormat, deserialize, readFormatVersion } from './SummaryBackCompatibility';
+import { Edit, SharedTreeOpType, SharedTreeEditOp, SharedTreeHandleOp, EditWithoutId } from './PersistedTypes';
+import { GenericTransaction } from './GenericTransaction';
+import { newEdit } from './GenericEditUtilities';
 
 /**
  * Filename where the snapshot is stored.
  */
 const snapshotFileName = 'header';
 
-/**
- * A developer facing (non-localized) error message.
- * TODO: better error system.
- */
-export type ErrorString = string;
-
-const initialSummary: SharedTreeSummary = {
+const initialSummary: SharedTreeSummary<unknown> = {
 	version: readFormatVersion,
 	currentTree: initialTree,
 	editHistory: {
@@ -84,112 +67,26 @@ export enum SharedTreeEvent {
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
  * @public
  */
-export interface EditCommittedEventArguments {
+export interface EditCommittedEventArguments<TSharedTree> {
 	/** The ID of the edit committed. */
 	editId: EditId;
 	/** Whether or not this is a local edit. */
 	local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	tree: SharedTree;
+	tree: TSharedTree;
 }
 
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
  */
-export interface ISharedTreeEvents extends IErrorEvent {
-	(event: 'committedEdit', listener: EditCommittedHandler);
+export interface ISharedTreeEvents<TSharedTree> extends IErrorEvent {
+	(event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>);
 }
 
 /**
  * Expected type for a handler of the `EditCommitted` event.
  */
-export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
-
-/**
- * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
- *
- * @example
- * // The following two lines of code are equivalent:
- * tree.applyEdit(...Insert.create([newNode], StablePlace.before(existingNode)));
- * tree.editor.insert(newNode, StablePlace.before(existingNode))
- * @public
- */
-export class SharedTreeEditor {
-	private readonly tree: SharedTree;
-
-	public constructor(tree: SharedTree) {
-		this.tree = tree;
-	}
-
-	/**
-	 * Inserts a node at a location.
-	 * @param node - Node to insert.
-	 * @param destination - StablePlace at which the insert should take place.
-	 */
-	public insert(node: EditNode, destination: StablePlace): EditId;
-	/**
-	 * Inserts nodes at a location.
-	 * @param nodes - Nodes to insert.
-	 * @param destination - StablePlace at which the insert should take place.
-	 */
-	public insert(nodes: EditNode[], destination: StablePlace): EditId;
-	public insert(nodeOrNodes: EditNode | EditNode[], destination: StablePlace): EditId {
-		return this.tree.applyEdit(
-			...Insert.create(Array.isArray(nodeOrNodes) ? nodeOrNodes : [nodeOrNodes], destination)
-		);
-	}
-
-	/**
-	 * Moves a node to a specified location.
-	 * @param source - Node to move.
-	 * @param destination - StablePlace to which the node should be moved.
-	 */
-	public move(source: ChangeNode, destination: StablePlace): EditId;
-	/**
-	 * Moves a part of a trait to a specified location.
-	 * @param source - Portion of a trait to move.
-	 * @param destination - StablePlace to which the portion of the trait should be moved.
-	 */
-	public move(source: StableRange, destination: StablePlace): EditId;
-	public move(source: ChangeNode | StableRange, destination: StablePlace): EditId {
-		if (this.isNode(source)) {
-			return this.tree.applyEdit(...Move.create(StableRange.only(source), destination));
-		}
-
-		return this.tree.applyEdit(...Move.create(source, destination));
-	}
-
-	/**
-	 * Deletes a node.
-	 * @param target - Node to delete
-	 */
-	public delete(target: ChangeNode): EditId;
-	/**
-	 * Deletes a portion of a trait.
-	 * @param target - Range of nodes to delete, specified as a `StableRange`
-	 */
-	public delete(target: StableRange): EditId;
-	public delete(target: ChangeNode | StableRange): EditId {
-		if (this.isNode(target)) {
-			return this.tree.applyEdit(Delete.create(StableRange.only(target)));
-		}
-
-		return this.tree.applyEdit(Delete.create(target));
-	}
-
-	/**
-	 * Reverts a previous edit.
-	 * @param edit - the edit to revert
-	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
-	 */
-	public revert(edit: Edit, view: Snapshot): EditId {
-		return this.tree.applyEdit(...HistoryEditFactory.revert(edit.changes, view));
-	}
-
-	private isNode(source: ChangeNode | StableRange): source is ChangeNode {
-		return (source as ChangeNode).definition !== undefined && (source as ChangeNode).identifier !== undefined;
-	}
-}
+export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArguments<TSharedTree>) => void;
 
 const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedTreeEvent: true };
 
@@ -198,39 +95,24 @@ const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedT
  * @public
  * @sealed
  */
-export class SharedTree extends SharedObject<ISharedTreeEvents> {
-	/**
-	 * Create a new SharedTree. It will contain the default value (see initialTree).
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree {
-		return runtime.createChannel(id, SharedTreeFactory.Type) as SharedTree;
-	}
-
-	/**
-	 * Get a factory for SharedTree to register with the data store.
-	 * @returns A factory that creates SharedTrees and loads them from storage.
-	 */
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
-	}
-
+export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
 	/**
 	 * Handler for summary generation.
 	 * See 'SharedTreeSummarizer' for details.
 	 */
-	public summarizer: SharedTreeSummarizer = fullHistorySummarizer;
+	public summarizer: SharedTreeSummarizer<TChange> = fullHistorySummarizer;
 
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
-	private editLog: EditLog;
+	private editLog: EditLog<TChange>;
 
 	/**
 	 * As an implementation detail, SharedTree uses a log viewer that caches snapshots at different revisions.
 	 * It is not exposed to avoid accidental correctness issues, but `logViewer` is exposed in order to give clients a way
 	 * to access the revision history.
 	 */
-	private cachingLogViewer: CachingLogViewer;
+	private cachingLogViewer: CachingLogViewer<TChange>;
 
 	/**
 	 * Viewer for trees defined by editLog. This allows access to views of the tree at different revisions (various points in time).
@@ -246,15 +128,24 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 */
 	private readonly expensiveValidation: boolean;
 
+	public readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
 	 */
-	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
-		super(id, runtime, SharedTreeFactory.Attributes);
+	public constructor(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
+		attributes: IChannelAttributes,
+		expensiveValidation = false
+	) {
+		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
+		this.transactionFactory = transactionFactory;
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', { all: sharedTreeTelemetryProperties });
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary);
@@ -273,21 +164,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	/**
 	 * @returns the edit history of the tree.
 	 */
-	public get edits(): OrderedEditSet {
+	public get edits(): OrderedEditSet<TChange> {
 		return this.editLog;
-	}
-
-	private _editor: SharedTreeEditor | undefined;
-
-	/**
-	 * Returns a `SharedTreeEditor` for editing this tree in an imperative fashion. All edits are performed on the current tree view.
-	 */
-	public get editor(): SharedTreeEditor {
-		if (!this._editor) {
-			this._editor = new SharedTreeEditor(this);
-		}
-
-		return this._editor;
 	}
 
 	/**
@@ -297,7 +175,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * For convenient imperative variants of edits, see `editor`.
 	 * @internal
 	 */
-	public applyEdit(...changes: Change[]): EditId {
+	public applyEdit(...changes: TChange[]): EditId {
 		const edit = newEdit(changes);
 		this.processLocalEdit(edit);
 		return edit.id;
@@ -312,7 +190,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	/**
 	 * Uploads the edit chunk and sends the chunk key along with the resulting handle as an op.
 	 */
-	private async uploadEditChunk(edits: EditWithoutId[], chunkKey: number): Promise<void> {
+	private async uploadEditChunk(edits: EditWithoutId<TChange>[], chunkKey: number): Promise<void> {
 		// TODO:#49901: Enable writing of edit chunk blobs to summary
 		// const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
 		// this.submitLocalMessage({
@@ -386,8 +264,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 
 	private createEditLogFromSummary(
 		summary: SharedTreeSummaryBase
-	): { editLog: EditLog; cachingLogViewer: CachingLogViewer } {
-		const convertedSummary = convertSummaryToReadFormat(summary);
+	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
+		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary);
 		}
@@ -402,7 +280,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			[[editLog.length, currentView]],
 			this.expensiveValidation,
 			undefined,
-			this.logger
+			this.logger,
+			this.transactionFactory,
+			0
 		);
 
 		// Upload any full blobs that have yet to be uploaded
@@ -427,7 +307,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 *   - registered event listeners
 	 *   - state of caches
 	 * */
-	public equals(sharedTree: SharedTree): boolean {
+	public equals<TOtherChangeTypes>(sharedTree: GenericSharedTree<TOtherChangeTypes>): boolean {
 		if (!this.currentView.equals(sharedTree.currentView)) {
 			return false;
 		}
@@ -475,7 +355,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 			// TODO:Performance:#48025: Avoid this serialization round trip.
 			const stringEdit = JSON.stringify(semiSerializedEdit);
 			const parsedEdit = this.serializer.parse(stringEdit);
-			const edit = parsedEdit as Edit;
+			const edit = parsedEdit as Edit<TChange>;
 			this.processSequencedEdit(edit);
 		}
 	}
@@ -494,7 +374,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		// Do nothing
 	}
 
-	private processSequencedEdit(edit: Edit): void {
+	private processSequencedEdit(edit: Edit<TChange>): void {
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
 
@@ -510,7 +390,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 
 		this.editLog.addSequencedEdit(edit);
 		if (!wasLocalEdit) {
-			const eventArguments: EditCommittedEventArguments = { editId, local: false, tree: this };
+			const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
+				editId,
+				local: false,
+				tree: this,
+			};
 			this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 		} else {
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
@@ -531,8 +415,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 	 * This is exposed as it is useful for testing, particularly with invalid and malformed Edits.
 	 * @internal
 	 */
-	public processLocalEdit(edit: Edit): void {
-		const editOp: SharedTreeEditOp = {
+	public processLocalEdit(edit: Edit<TChange>): void {
+		const editOp: SharedTreeEditOp<TChange> = {
 			type: SharedTreeOpType.Edit,
 			edit,
 		};
@@ -546,7 +430,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> {
 		this.submitLocalMessage(semiSerialized);
 		this.editLog.addLocalEdit(edit);
 
-		const eventArguments: EditCommittedEventArguments = { editId: edit.id, local: true, tree: this };
+		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
+			editId: edit.id,
+			local: true,
+			tree: this,
+		};
 		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 	}
 

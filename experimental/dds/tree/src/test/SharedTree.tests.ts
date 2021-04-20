@@ -9,21 +9,26 @@ import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
-import { SharedTree, SharedTreeEvent } from '../SharedTree';
+import {
+	EditNode,
+	ChangeNode,
+	SharedTreeOpType,
+	SharedTreeEvent,
+	fullHistorySummarizer,
+	serialize,
+	newEdit,
+} from '../generic';
 import {
 	Change,
 	ChangeType,
-	EditNode,
 	Delete,
 	Insert,
-	ChangeNode,
 	StablePlace,
 	StableRange,
-	SharedTreeOpType,
-} from '../PersistedTypes';
+	noHistorySummarizer,
+	SharedTree,
+} from '../default-edits';
 import { editsPerChunk } from '../EditLog';
-import { newEdit } from '../EditUtilities';
-import { fullHistorySummarizer, noHistorySummarizer, serialize } from '../Summary';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
@@ -486,7 +491,7 @@ describe('SharedTree', () => {
 
 			// Serialize the state of one uninitialized tree into a second tree
 			const serialized = serialize(uninitializedTree.saveSummary(), testSerializer, testHandle);
-			const parsedTree = deserialize(serialized, testSerializer) as SharedTreeSummary_0_0_2;
+			const parsedTree = deserialize(serialized, testSerializer) as SharedTreeSummary_0_0_2<unknown>;
 			expect(parsedTree.sequencedEdits).deep.equal([]);
 			expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
 		});
@@ -506,7 +511,7 @@ describe('SharedTree', () => {
 
 				const serialized = serialize(tree.saveSummary(), testSerializer, testHandle);
 				const treeContent = JSON.parse(serialized);
-				const parsedTree = treeContent as SharedTreeSummary_0_0_2;
+				const parsedTree = treeContent as SharedTreeSummary_0_0_2<Change>;
 
 				expect(parsedTree.currentTree).to.not.be.undefined;
 				const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTrait.label]);

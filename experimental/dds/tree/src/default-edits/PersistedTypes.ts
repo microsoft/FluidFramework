@@ -8,9 +8,10 @@
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel, UuidString } from './Identifiers';
-import { assertNotUndefined, assert } from './Common';
+import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
+import { assertNotUndefined, assert } from '../Common';
+import { Side } from '../Snapshot';
+import { ChangeNode, EditBase, EditNode, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -40,44 +41,10 @@ import { assertNotUndefined, assert } from './Common';
  */
 
 /**
- * A collection of changes to the tree that are applied atomically along with a unique identifier for the edit.
- * If any individual change fails to apply, the entire Edit will fail to apply.
- * @public
- */
-export interface Edit extends EditBase {
-	/**
-	 * Unique identifier for this edit. Must never be reused.
-	 * Used for referencing and de-duplicating edits.
-	 */
-	readonly id: EditId;
-}
-
-/**
- * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
- * the entire Edit will fail to apply.
- * @public
- */
-export interface EditWithoutId extends EditBase {
-	/**
-	 * Used to explicitly state that EditWithoutId cannot contain an id and prevents type Edit from being assigned to type EditWithoutId.
-	 */
-	readonly id?: never;
-}
-
-/**
  * The information included in an edit.
  * @public
  */
-export interface EditBase {
-	/**
-	 * Actual changes to apply.
-	 * Applied in order as part of a single transaction.
-	 */
-	readonly changes: readonly Change[];
-
-	// Add more metadata fields as needed in the future.
-	// Include "high level"/"Domain Specific"/"Hierarchal" edits for application/domain use in implementing domain aware merge heuristics.
-}
+export type DefaultEditBase = EditBase<Change>;
 
 /**
  * The type of a Change
@@ -247,255 +214,6 @@ export enum ConstraintEffect {
 	ValidRetry,
 }
 
-/**
- * Json compatible map as object.
- * Keys are TraitLabels,
- * Values are the content of the trait specified by the key.
- * @public
- */
-export interface TraitMap<TChild> {
-	readonly [key: string]: TreeNodeSequence<TChild>;
-}
-
-/**
- * A sequence of Nodes that make up a trait under a Node
- * @public
- */
-export type TreeNodeSequence<TChild> = readonly TChild[];
-
-/**
- * Json compatible representation of a payload storing arbitrary Serializable data.
- *
- * Keys starting with "IFluid" are reserved for special use such as the JavaScript feature detection pattern and should not be used.
- *
- * See {@link comparePayloads} for equality semantics and related details (like what is allowed to be lost when serializing)
- *
- * TODO:#51984: Allow opting into heuristic blobbing in snapshots with a special IFluid key.
- *
- * @public
- */
-export type Payload = Serializable;
-
-/**
- * The fields required by a node in a tree
- * @public
- */
-export interface NodeData {
-	readonly payload?: Payload;
-
-	/**
-	 * The meaning of this node.
-	 * Provides contexts/semantics for this node and its content.
-	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-	 */
-	readonly definition: Definition;
-
-	/**
-	 * Identifier which can be used to refer to this Node.
-	 */
-	readonly identifier: NodeId;
-}
-
-/**
- * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
- * @public
- */
-export interface TreeNode<TChild> extends NodeData {
-	readonly traits: TraitMap<TChild>;
-}
-
-/**
- * JSON-compatible Node type. Objects of type `ChangeNode` will be persisted in `Changes` (under Edits) in the SharedTree history.
- * @public
- */
-export type ChangeNode = TreeNode<ChangeNode>;
-
-/**
- * Node or sequence of Nodes for use in a Build change.
- *
- * Other formats for sub-sequences of Nodes can be added here, and those formats should be supported in blobs as well.
- * Future formats will include referenced blobs containing sequences of Nodes,
- * template based metadata and identity deduplication, and possibly compressed and binary formats.
- * These optimized formats should also be used within snapshots.
- * @public
- */
-export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
-
-/**
- * The result of an attempt to apply the changes in an Edit.
- * @public
- */
-export enum EditResult {
-	/**
-	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
-	 * or contained a sequence of changes that could not possibly be applied sequentially without error
-	 * (e.g. an edit which tries to insert the same detached node twice).
-	 */
-	Malformed,
-	/**
-	 * The edit contained a well-formed sequence of changes that couldn't be applied to the current view,
-	 * generally because concurrent changes caused one or more merge conflicts.
-	 */
-	Invalid,
-	/**
-	 * The edit was applied to the current view successfully.
-	 */
-	Applied,
-}
-
-/**
- * A location in a trait.
- * This is NOT the location of a node, but a location where a node could be inserted:
- * it is next to a sibling or at one end of the trait.
- *
- * To be well formed, either `sibling` or `trait` must be defined, but not both.
- *
- * Any given insertion location can be described by two `StablePlace` objects, one with `Side.After` and one with `Side.Before`.
- * For example, in a trait containing two strings "foo" and "bar", there are 6 places corresponding to 3 places into the trait a new node
- * could be inserted: at the start, before "foo", after "foo", before "bar", after "bar", and at the end.
- * The anchor (`referenceSibling` or `referenceTrait`) used for a particular `StablePlace` can have an impact in collaborative scenarios.
- *
- * `StablePlace` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
- * @example
- * StablePlace.before(node)
- * StablePlace.atStartOf(trait)
- * @public
- */
-export interface StablePlace {
-	/**
-	 * Where this StablePlace is relative to the sibling (if specified), or an end of the trait (if no sibling specified).
-	 * If 'After' and there is no sibling, this StablePlace is after the front of the trait.
-	 * If 'Before' and there is no sibling, this StablePlace is before the back of the trait.
-	 */
-	readonly side: Side;
-
-	/**
-	 * The sibling to which this 'StablePlace' is anchored (by 'side').
-	 * If specified, referenceTrait must be unspecified.
-	 */
-	readonly referenceSibling?: NodeId;
-
-	/**
-	 * The trait to which this 'StablePlace' is anchored (by 'side').
-	 * If specified, referenceSibling must be unspecified.
-	 */
-	readonly referenceTrait?: TraitLocation;
-}
-
-/**
- * Specifies the range of nodes from `start` to `end` within a trait.
- * Valid iff start and end are valid and are within the same trait.
- *
- * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
- * @example
- * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
- * @public
- */
-export interface StableRange {
-	readonly start: StablePlace;
-	readonly end: StablePlace;
-}
-
-/**
- * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @public
- */
-export interface TraitLocation {
-	readonly parent: NodeId;
-	readonly label: TraitLabel;
-}
-
-/**
- * Defines a place relative to sibling.
- * The "outside" of a trait is the `undefined` sibling,
- * so After `undefined` is the beginning of the trait, and before `undefined` is the end.
- *
- * For this purpose, traits look like:
- *
- * `{undefined} - {Node 0} - {Node 1} - ... - {Node N} - {undefined}`
- *
- * Each `{value}` in the diagram is a possible sibling, which is either a Node or undefined.
- * Each `-` in the above diagram is a `Place`, and can be describe as being `After` a particular `{sibling}` or `Before` it.
- * This means that `After` `{undefined}` means the same `Place` as before the first node
- * and `Before` `{undefined}` means the `Place` after the last Node.
- *
- * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
- * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
- * two place description may no longer evaluate to the same place.
- * @public
- */
-export enum Side {
-	Before = 0,
-	After = 1,
-}
-
-/**
- * The remainder of this file consists of ergonomic factory methods for persisted types, or common combinations thereof (e.g. "Move" as a
- * combination of a "Detach" change and an "Insert" change).
- *
- * None of these helpers are persisted in documents, and therefore changes to their semantics need only follow standard semantic versioning
- * practices.
- */
-
-// Note: Documentation of this constant is merged with documentation of the `StablePlace` interface.
-/**
- * @public
- */
-export const StablePlace = {
-	/**
-	 * @returns The location directly before `node`.
-	 */
-	before: (node: ChangeNode): StablePlace => ({ side: Side.Before, referenceSibling: node.identifier }),
-	/**
-	 * @returns The location directly after `node`.
-	 */
-	after: (node: ChangeNode): StablePlace => ({ side: Side.After, referenceSibling: node.identifier }),
-	/**
-	 * @returns The location at the start of `trait`.
-	 */
-	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
-	/**
-	 * @returns The location at the end of `trait`.
-	 */
-	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
-};
-
-// Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
-/**
- * @public
- */
-export const StableRange = {
-	/**
-	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
-	 * @example
-	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
-	 */
-	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
-		to: (end: StablePlace): StableRange => {
-			if (start.referenceTrait && end.referenceTrait) {
-				const message = 'StableRange must be constructed with endpoints from the same trait';
-				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
-				assert(start.referenceTrait.label === end.referenceTrait.label, message);
-			}
-			return { start, end };
-		},
-	}),
-	/**
-	 * @returns a `StableRange` which contains only the provided `node`.
-	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
-	 */
-	only: (node: ChangeNode): StableRange => ({ start: StablePlace.before(node), end: StablePlace.after(node) }),
-	/**
-	 * @returns a `StableRange` which contains everything in the trait.
-	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
-	 * it does not use sibling anchoring.
-	 */
-	all: (trait: TraitLocation): StableRange => ({
-		start: StablePlace.atStartOf(trait),
-		end: StablePlace.atEndOf(trait),
-	}),
-};
-
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
 /**
  * @public
@@ -593,34 +311,121 @@ export const Move = {
 };
 
 /**
- * Types of ops handled by SharedTree.
+ * A location in a trait.
+ * This is NOT the location of a node, but a location where a node could be inserted:
+ * it is next to a sibling or at one end of the trait.
+ *
+ * To be well formed, either `sibling` or `trait` must be defined, but not both.
+ *
+ * Any given insertion location can be described by two `StablePlace` objects, one with `Side.After` and one with `Side.Before`.
+ * For example, in a trait containing two strings "foo" and "bar", there are 6 places corresponding to 3 places into the trait a new node
+ * could be inserted: at the start, before "foo", after "foo", before "bar", after "bar", and at the end.
+ * The anchor (`referenceSibling` or `referenceTrait`) used for a particular `StablePlace` can have an impact in collaborative scenarios.
+ *
+ * `StablePlace` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ * @example
+ * StablePlace.before(node)
+ * StablePlace.atStartOf(trait)
+ * @public
  */
-export enum SharedTreeOpType {
-	Edit,
-	Handle,
+export interface StablePlace {
+	/**
+	 * Where this StablePlace is relative to the sibling (if specified), or an end of the trait (if no sibling specified).
+	 * If 'After' and there is no sibling, this StablePlace is after the front of the trait.
+	 * If 'Before' and there is no sibling, this StablePlace is before the back of the trait.
+	 */
+	readonly side: Side;
+
+	/**
+	 * The sibling to which this 'StablePlace' is anchored (by 'side').
+	 * If specified, referenceTrait must be unspecified.
+	 */
+	readonly referenceSibling?: NodeId;
+
+	/**
+	 * The trait to which this 'StablePlace' is anchored (by 'side').
+	 * If specified, referenceSibling must be unspecified.
+	 */
+	readonly referenceTrait?: TraitLocation;
 }
 
 /**
- * Requirements for SharedTree ops.
+ * Specifies the range of nodes from `start` to `end` within a trait.
+ * Valid iff start and end are valid and are within the same trait.
+ *
+ * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ * @example
+ * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+ * @public
  */
-export interface SharedTreeOp {
-	type: SharedTreeOpType;
+export interface StableRange {
+	readonly start: StablePlace;
+	readonly end: StablePlace;
 }
 
 /**
- * A SharedTree op that includes edit information.
+ * The remainder of this file consists of ergonomic factory methods for persisted types, or common combinations thereof (e.g. "Move" as a
+ * combination of a "Detach" change and an "Insert" change).
+ *
+ * None of these helpers are persisted in documents, and therefore changes to their semantics need only follow standard semantic versioning
+ * practices.
  */
-export interface SharedTreeEditOp extends SharedTreeOp {
-	edit: Edit;
-}
 
+// Note: Documentation of this constant is merged with documentation of the `StablePlace` interface.
 /**
- * A SharedTree op that includes edit handle information.
- * The handle corresponds to an edit chunk in the edit log.
+ * @public
  */
-export interface SharedTreeHandleOp extends SharedTreeOp {
-	/** The serialized handle to an uploaded edit chunk. */
-	editHandle: string;
-	/** The index of the first edit in the chunk that corresponds to the handle. */
-	chunkKey: number;
-}
+export const StablePlace = {
+	/**
+	 * @returns The location directly before `node`.
+	 */
+	before: (node: ChangeNode): StablePlace => ({ side: Side.Before, referenceSibling: node.identifier }),
+	/**
+	 * @returns The location directly after `node`.
+	 */
+	after: (node: ChangeNode): StablePlace => ({ side: Side.After, referenceSibling: node.identifier }),
+	/**
+	 * @returns The location at the start of `trait`.
+	 */
+	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
+	/**
+	 * @returns The location at the end of `trait`.
+	 */
+	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
+};
+
+// Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
+/**
+ * @public
+ */
+export const StableRange = {
+	/**
+	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 * @example
+	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 */
+	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
+		to: (end: StablePlace): StableRange => {
+			if (start.referenceTrait && end.referenceTrait) {
+				const message = 'StableRange must be constructed with endpoints from the same trait';
+				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
+				assert(start.referenceTrait.label === end.referenceTrait.label, message);
+			}
+			return { start, end };
+		},
+	}),
+	/**
+	 * @returns a `StableRange` which contains only the provided `node`.
+	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
+	 */
+	only: (node: ChangeNode): StableRange => ({ start: StablePlace.before(node), end: StablePlace.after(node) }),
+	/**
+	 * @returns a `StableRange` which contains everything in the trait.
+	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
+	 * it does not use sibling anchoring.
+	 */
+	all: (trait: TraitLocation): StableRange => ({
+		start: StablePlace.atStartOf(trait),
+		end: StablePlace.atEndOf(trait),
+	}),
+};

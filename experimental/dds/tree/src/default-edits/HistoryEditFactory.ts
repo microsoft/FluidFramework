@@ -3,22 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId } from './Identifiers';
-import { assert, fail } from './Common';
-import {
-	Change,
-	ChangeType,
-	Detach,
-	EditNode,
-	Insert,
-	TreeNode,
-	SetValue,
-	StableRange,
-	StablePlace,
-	Side,
-} from './PersistedTypes';
-import { Snapshot } from './Snapshot';
+import { DetachedSequenceId, NodeId } from '../Identifiers';
+import { assert, fail } from '../Common';
+import { Snapshot, Side } from '../Snapshot';
+import { EditNode, TreeNode } from '../generic';
+import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
+import { rangeFromStableRange } from './EditUtilities';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -163,7 +154,7 @@ function createInvertedDetach(
 ): { invertedDetach: Change[]; detachedNodeIds: NodeId[] } {
 	const { source } = detach;
 
-	const { start, end } = snapshotBeforeEdit.rangeFromStableRange(source);
+	const { start, end } = rangeFromStableRange(snapshotBeforeEdit, source);
 	const { trait: referenceTrait } = start;
 	const nodes = snapshotBeforeEdit.getTrait(referenceTrait);
 
