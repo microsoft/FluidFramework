@@ -20,6 +20,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	commitRetryDelay: number;
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
+    shouldCallbackOffsetCommit: boolean;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -53,6 +54,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			commitRetryDelay: options?.commitRetryDelay ?? 1000,
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
+            shouldCallbackOffsetCommit: options?.shouldCallbackOffsetCommit ?? true,
 		};
 	}
 
@@ -113,11 +115,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		consumer.on("data", this.processMessage.bind(this));
 
 		consumer.on("offset.commit", (err, offsets) => {
-			let shouldRetryCommit = false;
+            let shouldRetryCommit = false;
             console.log("[RDKAFKA OFFSET COMMIT LISTENER] Entered listener.");
 
+            if (!this.consumerOptions.shouldCallbackOffsetCommit) {
+                console.log("[RDKAFKA OFFSET COMMIT LISTENER] Skipping callback.");
+                return;
+            }
+
 			if (err) {
-                console.log("[RDKAFKA OFFSET COMMIT LISTENER] There was an error.");
+                console.log("[RDKAFKA OFFSET COMMIT LISTENER] There was an error: ",
+                JSON.stringify(err.code), "Full error: ", JSON.stringify(err));
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =

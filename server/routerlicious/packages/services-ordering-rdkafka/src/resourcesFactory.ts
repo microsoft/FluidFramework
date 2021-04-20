@@ -48,6 +48,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
         const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const replicationFactor = config.get("kafka:lib:replicationFactor");
+        const shouldCallbackOffsetCommit = config.get("kafka:lib:shouldCallbackOffsetCommit");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -67,7 +68,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
             clientId,
             receiveTopic,
             groupId,
-            { numberOfPartitions, replicationFactor, optimizedRebalance: true },
+            { numberOfPartitions, replicationFactor, optimizedRebalance: true, shouldCallbackOffsetCommit },
         );
 
         return new RdkafkaResources(
