@@ -151,6 +151,20 @@ export enum ConnectionState {
     Connected,
 }
 
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        "Protocol and App summary trees should be present");
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return snapshotTree;
+};
+
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -354,12 +368,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
-        snapshot: ISnapshotTree,
+        snapshot: string,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {});
-        await container.rehydrateDetachedFromSnapshot(snapshot);
+        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
 
@@ -748,8 +763,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
-        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
-        return JSON.stringify(snapshotTree);
+        const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+        return JSON.stringify(combinedSummary);
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -1256,7 +1271,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
+        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
