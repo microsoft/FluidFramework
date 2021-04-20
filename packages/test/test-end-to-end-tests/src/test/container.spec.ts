@@ -10,7 +10,13 @@ import {
     ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { Container, ConnectionState, Loader, ILoaderProps } from "@fluidframework/container-loader";
+import {
+    Container,
+    ConnectionState,
+    Loader,
+    ILoaderProps,
+    waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
@@ -84,7 +90,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
                 resolvedUrl: testResolved,
                 version: testRequest.headers?.[LoaderHeader.version],
-                pause: testRequest.headers?.[LoaderHeader.pause],
+                loadMode: testRequest.headers?.[LoaderHeader.loadMode],
             },
         );
     }
@@ -132,7 +138,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 service.connectToDeltaStorage = async () => Promise.reject(false);
                 return service;
             };
-            await loadContainer({ documentServiceFactory: mockFactory });
+            const container2 = await loadContainer({ documentServiceFactory: mockFactory });
+            await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
             assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
