@@ -306,7 +306,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
                 assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    "pending state requires immidiate connection!");
+                    0x1e0 /* "pending state requires immidiate connection!" */);
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
