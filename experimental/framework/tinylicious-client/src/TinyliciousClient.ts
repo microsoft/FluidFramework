@@ -20,8 +20,8 @@ import {
 } from "@fluidframework/tinylicious-driver";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
-    ITinyliciousConnectionConfig,
-    ITinyliciousContainerConfig,
+    TinyliciousConnectionConfig,
+    TinyliciousContainerConfig,
 } from "./interfaces";
 
 /**
@@ -31,7 +31,7 @@ export class TinyliciousClientInstance {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
-    constructor(serviceConnectionConfig?: ITinyliciousConnectionConfig) {
+    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             serviceConnectionConfig?.port,
@@ -42,7 +42,7 @@ export class TinyliciousClientInstance {
     }
 
     public async createContainer(
-        serviceContainerConfig: ITinyliciousContainerConfig,
+        serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
@@ -57,7 +57,7 @@ export class TinyliciousClientInstance {
     }
 
     public async getContainer(
-        serviceContainerConfig: ITinyliciousContainerConfig,
+        serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
@@ -121,7 +121,7 @@ export class TinyliciousClientInstance {
  */
 let globalTinyliciousClient: TinyliciousClientInstance | undefined;
 export const TinyliciousClient = {
-    init(serviceConnectionConfig?: ITinyliciousConnectionConfig) {
+    init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (globalTinyliciousClient) {
             throw new Error(
                 "TinyliciousClient cannot be initialized more than once",
@@ -132,7 +132,7 @@ export const TinyliciousClient = {
         );
     },
     async createContainer(
-        serviceConfig: ITinyliciousContainerConfig,
+        serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
         if (!globalTinyliciousClient) {
@@ -146,7 +146,7 @@ export const TinyliciousClient = {
         );
     },
     async getContainer(
-        serviceConfig: ITinyliciousContainerConfig,
+        serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
         if (!globalTinyliciousClient) {

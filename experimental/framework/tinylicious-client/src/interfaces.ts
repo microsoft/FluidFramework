@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export interface ITinyliciousContainerConfig {
+export interface TinyliciousContainerConfig {
     id: string;
 }
 
-export interface ITinyliciousConnectionConfig {
+export interface TinyliciousConnectionConfig {
     port?: number;
 }

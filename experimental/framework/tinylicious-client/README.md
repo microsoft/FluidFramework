@@ -16,12 +16,12 @@ import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 
 Fluid requires a backing service to enable collaborative communication. The TinyliciousClient instance will be instantitated against the Tinylicious service.
 
-In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070 by filling out the optional `port` parameter in `ITinyliciousConnectionConfig`.
+In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070 by filling out the optional `port` parameter in `TinyliciousConnectionConfig`.
 
 ```javascript
-import TinyliciousClient, { ITinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient, { TinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
 
-const config: ITinyliciousConnectionConfig = { port: 7070 };
+const config: TinyliciousConnectionConfig = { port: 7070 };
 TinyliciousClient.init(config);
 ```
 
