@@ -51,9 +51,7 @@ module.exports.TSConfig = function(fileType, generateDeclarations, distTypesPath
         rules: [
           {
             test: /\.tsx?$/,
-            // we exclude @adsk because all mono-repo packages are resolved to their real path with
-            // resolve.symlinks: true (webpack default) and don't contain 'node_modules' anymore.
-            exclude: [/node_modules/, /@adsk/],
+            exclude: [/node_modules/],
             use: {
               loader: 'ts-loader',
               options: options

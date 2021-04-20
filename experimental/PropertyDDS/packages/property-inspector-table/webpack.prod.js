@@ -125,7 +125,7 @@ const CommonWebpackLibTSConfig = function (args) {
       rules: [
         {
           test: /\.[tj]sx?$/,
-          exclude: [/node_modules/, /@adsk/, /\.min\.js$/],
+          exclude: [/node_modules/, /\.min\.js$/],
           use: {
             loader: 'babel-loader',
             options: {
@@ -177,7 +177,7 @@ const CommonWebpackLibTSConfig = function (args) {
 
 module.exports = (env) => CommonWebpackLibTSConfig({
   distPath: path.resolve(__dirname, 'dist', 'lib'),
-  name: '@adsk/forge-appfw-hfdm-inspector-table',
+  name: '@fluid-experimental/property-inspector-table',
   dir: path.resolve(__dirname, 'src'),
   merge: merge(common(env), {
     externals: [{

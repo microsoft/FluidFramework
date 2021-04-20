@@ -110,7 +110,6 @@ const CommonWebpackLibTSConfig = function(args) {
       path: params.distPath
     },
     externals: {
-      '@adsk/forge-appfw-di': '@adsk/forge-appfw-di',
       "@fluid-experimental/property-properties": {
         amd: "@fluid-experimental/property-properties",
         commonjs: "@fluid-experimental/property-properties",
@@ -128,7 +127,7 @@ const CommonWebpackLibTSConfig = function(args) {
       rules: [
         {
           test: /\.[tj]sx?$/,
-          exclude: [/node_modules/, /@adsk/, /\.min\.js$/],
+          exclude: [/node_modules/, /\.min\.js$/],
           use: {
             loader: 'babel-loader',
             options: {
@@ -181,7 +180,7 @@ const CommonWebpackLibTSConfig = function(args) {
 
 const config = CommonWebpackLibTSConfig({
   dir: path.join(__dirname, 'src'),
-  name: '@adsk/forge-appfw-databinder',
+  name: '@fluid-experimental/property-binder',
   merge: {
     externals: {
       'underscore': {

@@ -1,10 +1,10 @@
 /**
- * @fileoverview This file was derived from using the tsd-jsdoc tool (https://www.npmjs.com/package/tsd-jsdoc).
+ * @fileoverview This file was derived using the tsd-jsdoc tool (https://www.npmjs.com/package/tsd-jsdoc).
  * Specifically, by running 'jsdoc -t node_modules/tsd-jsdoc -r src/' in the databinder repo. The following
  * modifications had to be made after running this tool (ideally, the above tool would output the correct
  * declaration file without modification):
  *
- * 1. The addition of a 'declare module' statement so that *.ts files that import '@adsk/forge-appfw-databinder'
+ * 1. The addition of a 'declare module' statement so that *.ts files that import '@fluid-experimental/property-binder'
  *    pick up definitions from this file.
  * 2. By wrapping everything in the 'declare module' statement, all of the 'declare' statements had to change to
  *    'export'.
@@ -12,7 +12,8 @@
  *    (params: any, params.arg0: any, ..., params.argn: any), which is a syntax error in typescript.
  */
 declare module "@fluid-experimental/property-binder" {
-    import { BaseProperty, ContainerProperty, ValueProperty, Workspace } from '@adsk/forge-hfdm';
+    import { BaseProperty, ContainerProperty, ValueProperty} from '@fluid-experimental/property-properties';
+    import { Workspace } from '@adsk/forge-hfdm';
     namespace ForgeAppfwDatabinder {
         class DataBinderHandle {
             constructor(
@@ -1549,4 +1550,4 @@ declare module "@fluid-experimental/property-binder" {
     } // namespace ForgeAppfwDatabinder
 
     export = ForgeAppfwDatabinder;
-} // module "@adsk/forge-appfw-databinder"
+} // module "@fluid-experimental/property-binder"
