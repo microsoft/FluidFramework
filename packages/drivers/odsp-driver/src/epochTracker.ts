@@ -5,20 +5,23 @@
 
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
+    snapshotKey,
     ICacheEntry,
     IEntry,
     IFileEntry,
-    IOdspCache,
     IPersistedCache,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
+import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
+import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import {
+    IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
-    snapshotKey,
  } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
 

@@ -6,16 +6,18 @@
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
-import { IOdspResolvedUrl } from "../contracts";
+import {
+    IOdspResolvedUrl,
+    ICacheEntry,
+    IEntry,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     EpochTracker,
     IVersionedValueWithEpoch,
     persistedCacheValueVersion,
 } from "../epochTracker";
 import {
-    ICacheEntry,
-    IEntry,
     LocalPersistentCache,
  } from "../odspCache";
  import { getHashedDocumentId } from "../odspPublicUtils";

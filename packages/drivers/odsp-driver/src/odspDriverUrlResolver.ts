@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";

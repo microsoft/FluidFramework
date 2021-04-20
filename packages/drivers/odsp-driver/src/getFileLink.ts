@@ -7,15 +7,15 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspUrlParts } from "./contracts";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 import {
-    IdentityType,
+    IOdspUrlParts,
     OdspResourceTokenFetchOptions,
+    IdentityType,
     TokenFetcher,
     tokenFromResponse,
-} from "./tokenFetch";
+} from "@fluidframework/odsp-driver-definitions";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
  * returns a promise that resolves after timeMs

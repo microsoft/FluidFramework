@@ -10,6 +10,7 @@ import { assert, hashFile, IsoBuffer, Uint8ArrayToString, unreachableCase } from
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
+import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     HostStoragePolicyInternal,
@@ -25,7 +26,6 @@ import {
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
-import { TokenFetchOptions } from "./tokenFetch";
 
 /* eslint-disable max-len */
 

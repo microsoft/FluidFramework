@@ -4,7 +4,7 @@
  */
 
 import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { OdspFluidDataStoreLocator } from "./contracts";
+import { OdspFluidDataStoreLocator } from "./contractsPublic";
 import { OdcFileSiteOrigin, OdcApiSiteOrigin } from "./constants";
 
 const fluidSignature = "1";

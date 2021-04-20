@@ -4,10 +4,13 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { IPersistedCache } from "./odspCache";
+import {
+    OdspResourceTokenFetchOptions,
+    TokenFetcher,
+    IPersistedCache,
+    HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-import { HostStoragePolicy } from "./contracts";
-import { TokenFetcher, OdspResourceTokenFetchOptions } from ".";
 
 export class OdspDocumentServiceFactoryWithCodeSplit
     extends OdspDocumentServiceFactoryCore

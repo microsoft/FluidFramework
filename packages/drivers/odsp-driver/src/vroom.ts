@@ -5,10 +5,10 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspUrlParts, ISocketStorageDiscovery } from "./contracts";
+import { IOdspUrlParts, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 
 /**
