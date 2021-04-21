@@ -196,6 +196,55 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.send(perfEvent);
     }
 
+    /**
+     * @deprecated - use sendErrorEvent
+     * Log generic error with the logger
+     *
+     * @param eventName - the name of the event
+     * @param error - the error object to include in the event, require to be JSON-able
+     */
+    public logGenericError(eventName: string, error: any) {
+        this.sendErrorEvent({ eventName }, error);
+    }
+
+    /**
+     * @deprecated - use sendErrorEvent
+     * Helper method to log exceptions
+     * @param event - the event to send
+     * @param exception - Exception object to add to an event
+     */
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        this.sendErrorEvent({ ...event, isException: true }, exception);
+    }
+
+    /**
+     * @deprecated - use sendErrorEvent
+
+     * Log an debug assert with the logger
+     *
+     * @param condition - the condition to assert on
+     * @param event - the event to log if the condition fails
+     */
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.shipAssert(condition, event);
+    }
+
+    /**
+     * @deprecated - use sendErrorEvent
+     * Log an ship assert with the logger
+     *
+     * @param condition - the condition to assert on
+     * @param event - the event to log if the condition fails
+     */
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        if (!condition) {
+            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
+            realEvent.isAssert = true;
+            realEvent.stack = TelemetryLogger.getStack();
+            this.sendErrorEvent(realEvent);
+        }
+    }
+
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEvent = {
@@ -415,7 +464,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {
@@ -601,6 +650,18 @@ export class LoggingError extends Error implements ILoggingError {
         this.reportError("errorEvent in UT logger!", event, error);
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+        this.reportError(`genericError in UT logger!`, { eventName }, error);
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        this.reportError("exception in UT logger!", event, exception);
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("debugAssert in UT logger!");
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.reportError("shipAssert in UT logger!");
     }
 
     private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
