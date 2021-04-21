@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -42,7 +42,7 @@ export const plugin: PluginFunction<unknown> = (
 	});
 
 	return `/*!
-    * Copyright (c) Microsoft Corporation. All rights reserved.
+    * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
     * Licensed under the MIT License.
     */
 
@@ -190,17 +190,17 @@ function isScalarTypeName(typeName: string): boolean {
 
 export function getString(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): string | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
-	return decodeString(node?.payload?.base64);
+	return node?.payload as string | null;
 }
 
 export function getFloat(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): number | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
-	return decodeFloat(node?.payload?.base64);
+	return node?.payload as number | null;
 }
 
 export function getInt(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): number | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
-	return decodeInt(node?.payload?.base64);
+	return node?.payload as number | null;
 }
 
 export function getBoolean(
@@ -210,12 +210,12 @@ export function getBoolean(
 	info: GraphQLResolveInfo
 ): boolean | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
-	return decodeBoolean(node?.payload?.base64);
+	return node?.payload as boolean | null;
 }
 
 export function getID(source: NodeId, args: unknown, context: SharedTree, info: GraphQLResolveInfo): string | null {
 	const node = getScalar(source, context.currentView, info.fieldName);
-	return decodeID(node?.payload?.base64);
+	return node?.payload as string | null;
 }
 
 /** A special hack for retrieving NodeId_s */
@@ -244,7 +244,7 @@ export function getStringList(
 	info: GraphQLResolveInfo
 ): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => decodeString(context.currentView.getSnapshotNode(id).payload?.base64));
+	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as string | null);
 }
 
 export function getFloatList(
@@ -254,7 +254,7 @@ export function getFloatList(
 	info: GraphQLResolveInfo
 ): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => decodeFloat(context.currentView.getSnapshotNode(id).payload?.base64));
+	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as number | null);
 }
 
 export function getIntList(
@@ -264,7 +264,7 @@ export function getIntList(
 	info: GraphQLResolveInfo
 ): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => decodeInt(context.currentView.getSnapshotNode(id).payload?.base64));
+	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as number | null);
 }
 
 export function getBooleanList(
@@ -274,7 +274,7 @@ export function getBooleanList(
 	info: GraphQLResolveInfo
 ): (boolean | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => decodeBoolean(context.currentView.getSnapshotNode(id).payload?.base64));
+	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as boolean | null);
 }
 
 export function getIDList(
@@ -284,7 +284,7 @@ export function getIDList(
 	info: GraphQLResolveInfo
 ): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => decodeID(context.currentView.getSnapshotNode(id).payload?.base64));
+	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as string | null);
 }
 
 // Resolvers for descending into non-leaf traits
@@ -305,26 +305,4 @@ export function getListTrait(
 	info: GraphQLResolveInfo
 ): readonly NodeId[] {
 	return context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-}
-
-// Helpers for decoding primitives from their encoded string format
-
-function decodeString(s?: string): string | null {
-	return s ?? null;
-}
-
-function decodeFloat(s?: string): number | null {
-	return s === undefined ? null : parseFloat(s);
-}
-
-function decodeInt(s?: string): number | null {
-	return s === undefined ? null : parseInt(s, 10);
-}
-
-function decodeBoolean(s?: string): boolean | null {
-	return s === undefined ? null : s === 'true';
-}
-
-function decodeID(s?: string): string | null {
-	return s ?? null;
 }

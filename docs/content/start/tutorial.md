@@ -154,7 +154,7 @@ needs (in this case, just the single model type).  This list is called the **con
 
 ```ts
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory.type,
+    DiceRollerInstantiationFactory,
     new Map([
         DiceRollerInstantiationFactory.registryEntry,
     ]),

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -53,7 +53,7 @@ class SharedTreeAssertionError extends Error {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
-	// Rationale: Assert condition is permitted to by truthy.
+	// Rationale: Assert condition is permitted to be truthy.
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
@@ -208,3 +208,9 @@ export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDs
 		(destination as any)[property] = value;
 	}
 }
+
+/**
+ * A developer facing (non-localized) error message.
+ * TODO: better error system.
+ */
+export type ErrorString = string;

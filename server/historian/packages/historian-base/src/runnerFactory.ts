@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { AsyncLocalStorage } from "async_hooks";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import * as redis from "redis";
+import Redis from "ioredis";
 import winston from "winston";
 import * as historianServices from "./services";
 import { normalizePort } from "./utils";
@@ -33,17 +33,18 @@ export class HistorianResources implements core.IResources {
 export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
     public async create(config: Provider): Promise<HistorianResources> {
         const redisConfig = config.get("redis");
-        const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
+        const redisOptions: Redis.RedisOptions = {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.pass,
+        };
         if (redisConfig.tls) {
             redisOptions.tls = {
-                serverName: redisConfig.host,
+                servername: redisConfig.host,
             };
         }
 
-        const redisClient = redis.createClient(
-            redisConfig.port,
-            redisConfig.host,
-            redisOptions);
+        const redisClient = new Redis(redisOptions);
         const gitCache = new historianServices.RedisCache(redisClient);
         const tenantCache = new historianServices.RedisTenantCache(redisClient);
         // Create services
@@ -53,16 +54,17 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
-        const redisOptionsForThrottling: redis.ClientOpts = { password: redisConfigForThrottling.pass };
+        const redisOptionsForThrottling: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
+        };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
-                serverName: redisConfigForThrottling.host,
+                servername: redisConfigForThrottling.host,
             };
         }
-        const redisClientForThrottling = redis.createClient(
-            redisConfigForThrottling.port,
-            redisConfigForThrottling.host,
-            redisOptionsForThrottling);
+        const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         const throttleMaxRequestsPerMs = config.get("throttling:maxRequestsPerMs") as number | undefined;
         const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number | undefined;

@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 /**
- * \@intentional/shared-tree
- *
  * Libraries related to whiteboard collaboration using FluidFramework
+ *
  * @packageDocumentation
  */
 
@@ -18,16 +17,29 @@
 // API Exports
 
 export { initialTree } from './InitialTree';
-export { BlobId, SharedTree, SharedTreeEvent, SharedTreeEditor } from './SharedTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer, noHistorySummarizer } from './Summary';
 export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
+export * from './Identifiers';
+export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
-	Edit,
-	EditWithoutId,
-	EditBase,
+	NodeInTrait,
+	PlaceIndex,
+	SnapshotNode,
+	Snapshot,
+	TraitNodeIndex,
+	SnapshotPlace,
+	SnapshotRange,
+	Side,
+} from './Snapshot';
+export { LogViewer, Revision } from './LogViewer';
+export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
+export { BasicCheckout } from './BasicCheckout';
+export { comparePayloads } from './SnapshotUtilities';
+export {
+	SharedTree,
+	SharedTreeEditor,
 	ChangeType,
 	Change,
 	Build,
@@ -36,6 +48,31 @@ export {
 	SetValue,
 	Constraint,
 	ConstraintEffect,
+	Delete,
+	Move,
+	StablePlace,
+	StableRange,
+	SharedTreeFactory,
+	revert,
+	setTrait,
+	validateStablePlace,
+	validateStableRange,
+	rangeFromStableRange,
+	placeFromStablePlace,
+	Transaction,
+	noHistorySummarizer,
+	isDetachedSequenceId,
+} from './default-edits';
+export {
+	EditCommittedHandler,
+	EditCommittedEventArguments,
+	ISharedTreeEvents,
+	GenericSharedTree,
+	SharedTreeEvent,
+	Edit,
+	newEdit,
+	EditWithoutId,
+	EditBase,
 	TraitMap,
 	TreeNodeSequence,
 	Payload,
@@ -44,28 +81,12 @@ export {
 	ChangeNode,
 	EditNode,
 	EditResult,
-	StablePlace,
-	StableRange,
 	TraitLocation,
-	Side,
-	Delete,
-	Move,
-} from './PersistedTypes';
-export * from './Factory';
-export * from './HistoryEditFactory';
-export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, SerializedChunk } from './EditLog';
-export {
-	EditValidationResult,
-	NodeInTrait,
-	PlaceIndex,
-	SnapshotNode,
-	Snapshot,
-	TraitNodeIndex,
-	SnapshotPlace,
-	SnapshotRange,
-} from './Snapshot';
-export { setTrait, newEdit } from './EditUtilities';
-export { LogViewer } from './LogViewer';
-export { Checkout, CheckoutEvent } from './Checkout';
-export { BasicCheckout } from './BasicCheckout';
+	GenericTransaction,
+	EditingResult,
+	ValidEditingResult,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummarizer,
+	fullHistorySummarizer,
+} from './generic';

@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
 import {
-    ContainerConfig,
+    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     SharedObjectClass,
@@ -27,11 +27,11 @@ export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => 
 };
 
 /**
- * The ContainerConfig consists of initialObjects and dynamicObjectTypes. These types can be
+ * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
  * of both SharedObject or DataObject. This function seperates the two and returns a registery
  * of DataObject types and an array of SharedObjects.
  */
-export const parseDataObjectsFromSharedObjects = (config: ContainerConfig):
+export const parseDataObjectsFromSharedObjects = (schema: ContainerSchema):
     [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
     const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
     const sharedObjects: Set<IChannelFactory> = new Set();
@@ -47,13 +47,13 @@ export const parseDataObjectsFromSharedObjects = (config: ContainerConfig):
     };
 
     // Add the object types that will be initialized
-    Object.values(config.initialObjects).forEach((obj) => {
+    Object.values(schema.initialObjects).forEach((obj) => {
         tryAddObject(obj);
     });
 
     // If there are dynamic object types we will add them now
-    if (config.dynamicObjectTypes) {
-        for (const obj of config.dynamicObjectTypes) {
+    if (schema.dynamicObjectTypes) {
+        for (const obj of schema.dynamicObjectTypes) {
             tryAddObject(obj);
         }
     }
