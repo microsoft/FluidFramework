@@ -52,7 +52,7 @@ Please see specific sections for more details on these states and events - this 
 2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSes in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
-5. Notify Container about presence or lack of unsaved changed though IContainerContext.updateDirtyContainerState callback. This is required for [Dirty events](#Dirty-events) to correctly represent state of user edits to host.
+5. Notify Container about presence or lack of unsaved changed through IContainerContext.updateDirtyContainerState callback. This is required for [Dirty events](#Dirty-events) to correctly represent state of user edits to host.
 
 ## Container Lifetime
 
@@ -188,4 +188,3 @@ This information can be used by host to build appropriate UX that allows user to
 Please note that when active conneciton is in place, it's just a matter of time for changes to be flushed to storage (unless there is some source of continuous local changes being generated that prevents container from ever being fully saved). But if there is no active connection (let's say user is offline, or service experiences issues), then document may stay in dirty state for very long time.
 
 `Container.isDirty` can be used to get current state of container.
-
