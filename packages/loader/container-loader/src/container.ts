@@ -712,8 +712,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
-        // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about file,
-        // like file being overwritten in storage, but client having stale local cache.
+        // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about
+        // file, like file being overwritten in storage, but client having stale local cache.
         // Driver need to ensure all caches are cleared on critical errors
         this.service?.dispose(error?.errorType === DriverErrorType.epochVersionMismatch);
 
