@@ -15,7 +15,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
 
     const requiredModules = [
         ...(additionalRequiredModules ? additionalRequiredModules : []),
-        `@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
+        // General mocha setup e.g. suppresses console.log
+        // Moved to last in required modules, so that aria logger will be ready to access in mochaHooks.ts
+        `@fluidframework/mocha-test-setup`,
     ];
 
     // mocha install node_modules directory might not be the same as the module required because of hoisting
