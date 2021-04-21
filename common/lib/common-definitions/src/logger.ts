@@ -93,39 +93,4 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Helper method to log generic errors
-     * @param eventName - Name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    logGenericError(eventName: string, error: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    logException(event: ITelemetryErrorEvent, exception: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Report ignorable errors in code logic or data integrity.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Report ignorable errors in code logic or data integrity.
-     * Similar to debugAssert(), but is not supposed to be optimized out.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
 }
