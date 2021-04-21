@@ -7,29 +7,14 @@
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": false,
-  "dependencies": {
-    "@fluid-experimental/fluid-static": "^0.38.1",
-    "@fluid-experimental/get-container": "^0.38.1",
-    "@fluidframework/map": "^0.38.1",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2",
-    "react-scripts": "4.0.2",
-    "web-vitals": "^1.0.1"
-  },
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "eject": "react-scripts eject",
+    "start": "react-scripts start",
+    "test": "react-scripts test"
   },
   "browserslist": {
     "production": [
@@ -42,5 +27,18 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "dependencies": {
+    "@fluid-experimental/fluid-static": "^0.38.2",
+    "@fluid-experimental/get-container": "^0.38.2",
+    "@fluidframework/map": "^0.38.2",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "react-scripts": "4.0.2"
   }
 }
