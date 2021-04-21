@@ -32,8 +32,6 @@
     "test": "jest",
     "pretest:coverage": "rimraf coverage/",
     "test:coverage": "jest --coverage",
-    "test:performance": "karma start  karma.performance.conf.js --single-run",
-    "test:performance:dev": "karma start  karma.performance.conf.js --browsers ChromeDebug",
     "tsc": "tsc"
   },
   "dependencies": {

@@ -16,8 +16,7 @@
  *    (params: any, params.arg0: any, ..., params.argn: any), which is a syntax error in typescript.
  */
 declare module "@fluid-experimental/property-binder" {
-    import { BaseProperty, ContainerProperty, ValueProperty} from '@fluid-experimental/property-properties';
-    //import { Workspace } from '@adsk/forge-hfdm';
+    import type { BaseProperty, ContainerProperty, ValueProperty} from '@fluid-experimental/property-properties';
     type Workspace = any;
 
     namespace ForgeAppfwDatabinder {
