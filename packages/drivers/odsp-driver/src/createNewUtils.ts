@@ -5,28 +5,28 @@
 
 import { v4 as uuid } from "uuid";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { IBlob, IOdspSnapshot, ITree, ITreeEntry } from "./contracts";
+import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import { IBlob, IOdspSnapshot, ITreeEntry } from "./contracts";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to IOdspSnapshot tree
  */
 export function convertSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspSnapshot {
-    const trees: ITree[] = [];
     const blobs: IBlob[] = [];
-    const mainTree: ITree = {
-        entries: [],
-        id: uuid(),
-        sequenceNumber: 0,
-    };
-    trees.push(mainTree);
+    const treeId = uuid();
     const snapshotTree: IOdspSnapshot = {
-        trees,
+        trees: [
+            {
+                entries: [],
+                id: treeId,
+                sequenceNumber: 0,
+            },
+        ],
         blobs,
-        id: mainTree.id,
+        id: treeId,
     };
 
-    convertSummaryTreeToIOdspSnapshotCore(summary, mainTree.entries, blobs);
+    convertSummaryTreeToIOdspSnapshotCore(summary, snapshotTree.trees[0].entries, blobs);
     return snapshotTree;
 }
 
@@ -53,10 +53,10 @@ function convertSummaryTreeToIOdspSnapshotCore(
             }
             case SummaryType.Blob: {
                 const content = typeof summaryObject.content === "string" ?
-                    fromUtf8ToBase64(summaryObject.content) : Uint8ArrayToString(summaryObject.content, "base64");
+                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
                 const blob: IBlob = {
                     id: uuid(),
-                    encoding: "base64",
+                    encoding: typeof summaryObject.content === "string" ? undefined : "base64",
                     content,
                     size: content.length,
                 };
@@ -68,11 +68,12 @@ function convertSummaryTreeToIOdspSnapshotCore(
                 });
                 break;
             }
-            case SummaryType.Handle: {
-                throw new Error("No handle should be present for detached summary!!");
+            case SummaryType.Handle:
+            case SummaryType.Attachment: {
+                throw new Error(`No ${summaryObject.type} should be present for detached summary!`);
             }
             default: {
-                throw new Error(`Unknown tree type ${summaryObject.type}`);
+                unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
             }
         }
     }
