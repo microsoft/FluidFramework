@@ -97,7 +97,7 @@ const getContainerId = () => {
 
 ### 3.b Initialize Fluid with the appropriate service
 
-The Fluid import can be initialized with a number of different services. The `TinyliciousService` defines the schema for connecting to a locally deployed [tinylicious](https://www.npmjs.com/package/tinylicious) Fluid service. You'll use different provided services, like `RouterliciousService`, when connecting to production Fluid services.
+The Fluid import can be initialized with a number of different services. The `TinyliciousService` defines the schema for connecting to a locally deployed [tinylicious](https://www.npmjs.com/package/tinylicious) Fluid service. You'll use different provided service packages depending on the service you are connecting to.
 
 ```js
 // add below getContainerId
