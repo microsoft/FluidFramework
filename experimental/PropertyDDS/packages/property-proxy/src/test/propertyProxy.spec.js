@@ -12,10 +12,8 @@ import {
 // --------------------- unit testing ----------------------------------
 
 describe('JS-Object-like property accessing ', function() {
-  let workspace;
+  let rootNode;
   let testProperty;
-
-  let repoRefWorkspace;
 
   // ---------- toJs()-----------------------------
   let state;
@@ -23,57 +21,33 @@ describe('JS-Object-like property accessing ', function() {
   /**
    * @inheritdoc
    */
-  function prepareWorkspace() {
+  function prepareRootNode() {
     // Creating custom properties
     testProperty = PropertyFactory.create('autodesk.appframework.tests:myGenericTemplate-1.0.0');
 
-    // Naming the custom properties (i.e. inserting them into the workspace)
-   workspace.root.insert('myTestProperty', testProperty);
-   workspace.root.insert('myBook', PropertyFactory.create(bookDataTemplate.typeid, 'single'));
+    // Naming the custom properties (i.e. inserting them into the root node)
+    rootNode.insert('myTestProperty', testProperty);
+    rootNode.insert('myBook', PropertyFactory.create(bookDataTemplate.typeid, 'single'));
 
-   workspace.root.insert('constantCollections', PropertyFactory.create(collectionConstants.typeid));
+    rootNode.insert('constantCollections', PropertyFactory.create(collectionConstants.typeid));
 
     // Create an Array of NodeProperties, we should be able to create arrays of collections
-   workspace.root.insert('myGenericArray', PropertyFactory.create(vector2DTemplate.typeid, 'array'));
-    workspace.get('myGenericArray').push(PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
-    workspace.get('myGenericArray').push(PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
-    workspace.get('myGenericArray').push(PropertyFactory.create('NamedProperty', 'set'));
-    workspace.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
-    workspace.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
+    rootNode.insert('myGenericArray', PropertyFactory.create(vector2DTemplate.typeid, 'array'));
+    rootNode.get('myGenericArray').push(PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
+    rootNode.get('myGenericArray').push(PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
+    rootNode.get('myGenericArray').push(PropertyFactory.create('NamedProperty', 'set'));
+    rootNode.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
+    rootNode.get('myGenericArray').get(2).set(PropertyFactory.create('NamedProperty', 'single'));
 
-   workspace.root.insert('myGenericMap', PropertyFactory.create('NodeProperty', 'map'));
-    workspace.get('myGenericMap').insert('array', PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
-    workspace.get('myGenericMap').insert('map', PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
-    workspace.get('myGenericMap').insert('set', PropertyFactory.create('NamedProperty', 'set'));
-    workspace.get('myGenericMap').get('set').set(PropertyFactory.create('NamedProperty', 'single'));
-    workspace.get('myGenericMap').get('set').set(PropertyFactory.create('NamedProperty', 'single'));
-
-    // Repository References
-    // const repoRefWorkspaceProp = PropertyFactory.create(
-    //   'NodeProperty',
-    //   'single',
-    //   {
-    //     repositoryGUID: "repoRefWorkspace.getActiveRepository().getGuid()",
-    //     branchGUID: "repoRefWorkspace.getActiveBranch().getGuid()",
-    //     commitGUID: "repoRefWorkspace.getActiveCommit().getGuid()"
-    //   }
-    // );
-    // workspace.root.insert('repoRef', repoRefWorkspaceProp);
-
-    // const repoRefArray = PropertyFactory.create('RepositoryReferenceProperty', 'array', [
-    //   repoRefWorkspaceProp.clone(),
-    //   repoRefWorkspaceProp.clone()
-    // ]);
-    // workspace.root.insert('repoRefArray', repoRefArray);
-
-    // const repoRefMap = PropertyFactory.create('RepositoryReferenceProperty', 'map', {
-    //   a: repoRefWorkspaceProp.clone(),
-    //   b: repoRefWorkspaceProp.clone()
-    // });
-    // workspace.root.insert('repoRefMap', repoRefMap);
+    rootNode.insert('myGenericMap', PropertyFactory.create('NodeProperty', 'map'));
+    rootNode.get('myGenericMap').insert('array', PropertyFactory.create('Int32', 'array', [0, 1, 2, 3]));
+    rootNode.get('myGenericMap').insert('map', PropertyFactory.create('Int32', 'map', { a: 0, b: 1, c: 2 }));
+    rootNode.get('myGenericMap').insert('set', PropertyFactory.create('NamedProperty', 'set'));
+    rootNode.get('myGenericMap').get('set').set(PropertyFactory.create('NamedProperty', 'single'));
+    rootNode.get('myGenericMap').get('set').set(PropertyFactory.create('NamedProperty', 'single'));
 
     // Calling things from PropertyProxy
-    state = PropertyProxy.proxify(workspace);
+    state = PropertyProxy.proxify(rootNode);
   }
 
   /**
@@ -87,11 +61,8 @@ describe('JS-Object-like property accessing ', function() {
     PropertyFactory.register(collectionConstants);
     PropertyFactory.register(enumUnoDosTresTemplate);
 
-    repoRefWorkspace = PropertyFactory.create('NodeProperty');
-    repoRefWorkspace.insert('myTestProperty', PropertyFactory.create(genericTemplate.typeid));
-
-    workspace = PropertyFactory.create('NodeProperty');
-    prepareWorkspace();
+    rootNode = PropertyFactory.create('NodeProperty');
+    prepareRootNode();
   }
 
   beforeAll(prerequisite);
@@ -103,19 +74,19 @@ describe('JS-Object-like property accessing ', function() {
     });
 
     it('should return the value if a value property is supplied', function() {
-      const value = PropertyProxy.proxify(workspace.get('myTestProperty').get('myF32Number'));
+      const value = PropertyProxy.proxify(rootNode.get('myTestProperty').get('myF32Number'));
       expect(typeof value).toEqual('number');
       expect(value).toEqual(3);
     });
 
     it('should be able to proxy Array/Map/SetProperties directly', function() {
-      const proxiedI32Array = PropertyProxy.proxify(workspace.resolvePath('myTestProperty.myI32Array'));
+      const proxiedI32Array = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myI32Array'));
       expect(proxiedI32Array.length).toEqual(5);
 
-      const proxiedI32Map = PropertyProxy.proxify(workspace.resolvePath('myTestProperty.myMap'));
+      const proxiedI32Map = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myMap'));
       expect(proxiedI32Map.size).toEqual(3);
 
-      const proxiedSet = PropertyProxy.proxify(workspace.resolvePath('myTestProperty.myBookSet'));
+      const proxiedSet = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myBookSet'));
       expect(proxiedSet.size).toEqual(3);
     });
   });
@@ -133,8 +104,8 @@ describe('JS-Object-like property accessing ', function() {
 
   describe('The following work as JS object: ', function() {
     beforeEach(function() {
-      workspace.remove('myTestProperty');
-     workspace.root.insert('myTestProperty', PropertyFactory.create(genericTemplate.typeid));
+      rootNode.remove('myTestProperty');
+      rootNode.insert('myTestProperty', PropertyFactory.create(genericTemplate.typeid));
     });
 
     it('The property that is registered', function() {
@@ -142,9 +113,9 @@ describe('JS-Object-like property accessing ', function() {
     });
 
     it('should be able to obtain the proxied property and its direct children via getProperty()', function() {
-      expect(state.getProperty()).toEqual(workspace.getRoot());
-      expect(state.getProperty('myTestProperty')).toEqual(workspace.get('myTestProperty'));
-      expect(state.getProperty(['myTestProperty'])).toEqual(workspace.get('myTestProperty'));
+      expect(state.getProperty()).toEqual(rootNode.getRoot());
+      expect(state.getProperty('myTestProperty')).toEqual(rootNode.get('myTestProperty'));
+      expect(state.getProperty(['myTestProperty'])).toEqual(rootNode.get('myTestProperty'));
 
       expect(state.getProperty('myTestProperty.myVector')).toBe.undefined;
       expect(() => { state.getProperty(['myTestProperty', 'myVector']); }).toThrow(Error, 'PropertyProxy-010');
@@ -156,22 +127,22 @@ describe('JS-Object-like property accessing ', function() {
 
       expect('someThingThatIsNoChild' in state.myTestProperty).toEqual(false);
       expect(
-        workspace.resolvePath('myTestProperty.myI32Array').getLength() in state.myTestProperty.myI32Array).toEqual(
+        rootNode.resolvePath('myTestProperty.myI32Array').getLength() in state.myTestProperty.myI32Array).toEqual(
           false);
     });
 
     describe('NodeProperty', function() {
       it('should be able to insert primitive and non-primitive properties', function() {
         state.myFirstPrimitivePropertyInsertedViaProxy = PropertyFactory.create('Int32', 'single', 42);
-        expect(workspace.get('myFirstPrimitivePropertyInsertedViaProxy').getValue()).toEqual(42);
+        expect(rootNode.get('myFirstPrimitivePropertyInsertedViaProxy').getValue()).toEqual(42);
 
         state.myFirstNonPrimitivePropertyInsertedViaProxy = PropertyFactory.create(
           vector2DTemplate.typeid, 'single', { x: 1, y: 2 },
         );
-        expect(workspace.get('myFirstNonPrimitivePropertyInsertedViaProxy').get('x').getValue()).toEqual(1);
-        expect(workspace.get('myFirstNonPrimitivePropertyInsertedViaProxy').get('y').getValue()).toEqual(2);
+        expect(rootNode.get('myFirstNonPrimitivePropertyInsertedViaProxy').get('x').getValue()).toEqual(1);
+        expect(rootNode.get('myFirstNonPrimitivePropertyInsertedViaProxy').get('y').getValue()).toEqual(2);
 
-        // add a proxied property that has a parent and is in the workspace should throw
+        // add a proxied property that has a parent and already is in the tree should throw
         expect(() => {
           state.mySecondNonPrimitivePropertyInsertedViaProxy = state.myFirstNonPrimitivePropertyInsertedViaProxy;
         }).toThrow();
@@ -189,11 +160,11 @@ describe('JS-Object-like property accessing ', function() {
       it('should be able to delete primitive and non-primitive properties', function() {
         let removed = delete state.myFirstPrimitivePropertyInsertedViaProxy;
         expect(removed).toEqual(true);
-        expect(workspace.get('myFirstPrimitivePropertyInsertedViaProxy')).toBe.undefined;
+        expect(rootNode.get('myFirstPrimitivePropertyInsertedViaProxy')).toBe.undefined;
 
         removed = delete state.myFirstNonPrimitivePropertyInsertedViaProxy;
         expect(removed).toEqual(true);
-        expect(workspace.get('myFirstNonPrimitivePropertyInsertedViaProxy')).toBe.undefined;
+        expect(rootNode.get('myFirstNonPrimitivePropertyInsertedViaProxy')).toBe.undefined;
 
         // Trying to delete something that is not a child of a NodeProperty should throw
         expect(() => { delete state.myTestProperty.myVector; }).toThrow(Error, 'PropertyProxy-006');
@@ -202,7 +173,7 @@ describe('JS-Object-like property accessing ', function() {
 
     describe('ReferenceProperties', function() {
       beforeEach(function() {
-        workspace.resolvePath('myTestProperty.myReference*').setValue('myVector');
+        rootNode.resolvePath('myTestProperty.myReference*').setValue('myVector');
       });
 
       describe('single', function() {
@@ -210,17 +181,17 @@ describe('JS-Object-like property accessing ', function() {
           expect(state.myTestProperty.myReference.getProperty()).toEqual(
             state.myTestProperty.myVector.getProperty());
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('myI32Array[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('myI32Array[0]');
           expect(state.myTestProperty.myReference).toEqual(0);
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myI32Array[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myI32Array[0]');
           expect(state.myTestProperty.myReference).toEqual(0);
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('myComplexArray[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('myComplexArray[0]');
           expect(state.myTestProperty.myReference.getProperty()).toEqual(
             state.myTestProperty.myComplexArray[0].getProperty());
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myComplexArray[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myComplexArray[0]');
           expect(state.myTestProperty.myReference.getProperty()).toEqual(
             state.myTestProperty.myComplexArray[0].getProperty());
         });
@@ -231,35 +202,35 @@ describe('JS-Object-like property accessing ', function() {
         });
 
         it('should be able to change the referenced property', function() {
-          let oldValue = workspace.resolvePath('myTestProperty.myVector').getValues();
+          let oldValue = rootNode.resolvePath('myTestProperty.myVector').getValues();
           state.myTestProperty.myReference = { x: 7, y: 8 };
-          expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
-          expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
-          workspace.resolvePath('myTestProperty.myVector').setValues(oldValue);
+          expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
+          expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
+          rootNode.resolvePath('myTestProperty.myVector').setValues(oldValue);
 
-          oldValue = workspace.resolvePath('myTestProperty.myI32Array[0]');
-          workspace.resolvePath('myTestProperty.myReference*').setValue('myI32Array[0]');
+          oldValue = rootNode.resolvePath('myTestProperty.myI32Array[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('myI32Array[0]');
           state.myTestProperty.myReference = 10;
           expect(state.myTestProperty.myReference).toEqual(10);
-          workspace.resolvePath('myTestProperty.myI32Array').set(0, oldValue);
+          rootNode.resolvePath('myTestProperty.myI32Array').set(0, oldValue);
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myI32Array[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myI32Array[0]');
           state.myTestProperty.myReference = 10;
           expect(state.myTestProperty.myReference).toEqual(10);
-          workspace.resolvePath('myTestProperty.myI32Array').set(0, oldValue);
+          rootNode.resolvePath('myTestProperty.myI32Array').set(0, oldValue);
 
-          oldValue = workspace.resolvePath('myTestProperty.myComplexArray[0]').getValues();
-          workspace.resolvePath('myTestProperty.myReference*').setValue('myComplexArray[0]');
+          oldValue = rootNode.resolvePath('myTestProperty.myComplexArray[0]').getValues();
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('myComplexArray[0]');
           state.myTestProperty.myReference = { x: 7, y: 8 };
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
-          workspace.resolvePath('myTestProperty.myComplexArray[0]').setValues(oldValue);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+          rootNode.resolvePath('myTestProperty.myComplexArray[0]').setValues(oldValue);
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myComplexArray[0]');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('/myTestProperty.myComplexArray[0]');
           state.myTestProperty.myReference = { x: 7, y: 8 };
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
-          workspace.resolvePath('myTestProperty.myComplexArray[0]').setValues(oldValue);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+          rootNode.resolvePath('myTestProperty.myComplexArray[0]').setValues(oldValue);
         });
 
         it('should be able to access the stored path via *', function() {
@@ -270,13 +241,13 @@ describe('JS-Object-like property accessing ', function() {
         it('should be able to obtain the reference property via getProperty() from the parent', function() {
           expect(
             state.myTestProperty.getProperty(['myReference', BaseProperty.PATH_TOKENS.REF]),
-          ).toEqual(workspace.resolvePath('myTestProperty.myReference*'));
+          ).toEqual(rootNode.resolvePath('myTestProperty.myReference*'));
 
           expect(
             state.myTestProperty.getProperty('myReference',
               { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER },
             ),
-          ).toEqual(workspace.resolvePath('myTestProperty.myReference*'));
+          ).toEqual(rootNode.resolvePath('myTestProperty.myReference*'));
         });
 
         it('should be able to assign another path/property to reference another property', function() {
@@ -312,33 +283,33 @@ describe('JS-Object-like property accessing ', function() {
           }).toThrow(Error, 'PropertyProxy-008');
         });
 
-        it('should throw if not in workspace and referenced via absolute path', function() {
+        it('should throw if not in in the same tree and referenced via absolute path', function() {
           const prop = PropertyFactory.create('NodeProperty', 'single');
           prop.insert('ref', PropertyFactory.create('Reference', 'single', '/myTestProperty.myF32Number'));
           const proxiedProp = PropertyProxy.proxify(prop);
           expect(() => { proxiedProp.ref = 5; }).toThrow(Error, 'PropertyProxy-009');
 
-         workspace.root.insert('prop', prop);
+         rootNode.insert('prop', prop);
           expect(() => { proxiedProp.ref = 3; }).not.toThrow();
-          workspace.remove('prop');
+          rootNode.remove('prop');
         });
 
         it('should throw if trying to set a non valid reference', function() {
-          workspace.resolvePath('myTestProperty.myReference*').setValue('relativeInvalid');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('relativeInvalid');
           expect(() => { state.myTestProperty.myReference = 10; }).toThrow(Error, 'PropertyProxy-009');
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('/absoluteInvalid');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('/absoluteInvalid');
           expect(() => { state.myTestProperty.myReference = 10; }).toThrow(Error, 'PropertyProxy-009');
 
-          workspace.resolvePath('myTestProperty.myReference*').setValue('myVector');
+          rootNode.resolvePath('myTestProperty.myReference*').setValue('myVector');
         });
       });
 
       describe.skip('RepositoryReference', function() {
         it('should return property if accessed via * syntax', function() {
-          expect(state['repoRef*'].getProperty()).toEqual(workspace.resolvePath('repoRef*'));
-          expect(state.repoRefArray['0*'].getProperty()).toEqual(workspace.resolvePath('repoRefArray[0]*'));
-          expect(state.repoRefMap.get('a*').getProperty()).toEqual(workspace.resolvePath('repoRefMap[a]*'));
+          expect(state['repoRef*'].getProperty()).toEqual(rootNode.resolvePath('repoRef*'));
+          expect(state.repoRefArray['0*'].getProperty()).toEqual(rootNode.resolvePath('repoRefArray[0]*'));
+          expect(state.repoRefMap.get('a*').getProperty()).toEqual(rootNode.resolvePath('repoRefMap[a]*'));
         });
 
         it('should be able to access properties in the repository reference', function() {
@@ -358,7 +329,7 @@ describe('JS-Object-like property accessing ', function() {
         const refArrayEntriesToString = [];
 
         beforeAll(function() {
-          refArray = workspace.resolvePath('myTestProperty.myReferenceArray');
+          refArray = rootNode.resolvePath('myTestProperty.myReferenceArray');
           for (let i = 0; i < refArray.getLength(); ++i) {
             const entry = refArray.get(i);
             if (PropertyFactory.instanceOf(entry, 'BaseProperty')) {
@@ -504,10 +475,10 @@ describe('JS-Object-like property accessing ', function() {
         it('check .concat() functionality', function() {
           const concat = state.myTestProperty.myReferenceArray.concat(state.myTestProperty.myI32Array);
           expect(concat.length).toEqual(
-            refArray.getLength() + workspace.resolvePath('myTestProperty.myI32Array').getLength());
+            refArray.getLength() + rootNode.resolvePath('myTestProperty.myI32Array').getLength());
 
           const synthToString = `${refArrayEntriesToString.join(',')
-            },${workspace.resolvePath('myTestProperty.myI32Array').getEntriesReadOnly().toString()}`;
+            },${rootNode.resolvePath('myTestProperty.myI32Array').getEntriesReadOnly().toString()}`;
 
           expect(concat.toString()).toEqual(synthToString);
         });
@@ -581,7 +552,7 @@ describe('JS-Object-like property accessing ', function() {
         });
 
         it('check .foreach() functionality', function() {
-          workspace.resolvePath('myTestProperty.myReferenceArray').push('myI32Array');
+          rootNode.resolvePath('myTestProperty.myReferenceArray').push('myI32Array');
 
           let referenceArraySum = 0;
           let numNonPrimitiveProps = 0;
@@ -596,13 +567,13 @@ describe('JS-Object-like property accessing ', function() {
           });
           expect(numNonPrimitiveProps).toEqual(18);
           expect(referenceArraySum).toEqual(100);
-          workspace.resolvePath('myTestProperty.myReferenceArray').pop();
+          rootNode.resolvePath('myTestProperty.myReferenceArray').pop();
         });
 
         it('check .includes() functionality', function() {
           expect(state.myTestProperty.myReferenceArray.includes(3)).toEqual(true);
           expect(
-            state.myTestProperty.myReferenceArray.includes(workspace.resolvePath('myTestProperty.myVector')),
+            state.myTestProperty.myReferenceArray.includes(rootNode.resolvePath('myTestProperty.myVector')),
           ).toEqual(true);
           expect(state.myTestProperty.myReferenceArray.includes({ x: 1, y: 2 })).toEqual(false);
         });
@@ -669,13 +640,13 @@ describe('JS-Object-like property accessing ', function() {
 
         describe('Setting', function() {
           const reset = () => {
-            workspace.resolvePath('myTestProperty.myF32Number').setValue(3);
-            workspace.resolvePath('myTestProperty.myVector').setValues({ x: 1, y: 2 });
-            workspace.resolvePath('myTestProperty.myI32Array').set(0, 0);
-            workspace.resolvePath('myTestProperty.myComplexArray').set(0, { x: 1, y: 2 });
-            workspace.resolvePath('myTestProperty.myMap').set('firstNumber', 1111);
-            workspace.resolvePath('myTestProperty.myComplexMap[firstEntry]').setValues({ x: 10, y: 20 });
-            workspace.resolvePath('myTestProperty.myReferenceArray').setValues([
+            rootNode.resolvePath('myTestProperty.myF32Number').setValue(3);
+            rootNode.resolvePath('myTestProperty.myVector').setValues({ x: 1, y: 2 });
+            rootNode.resolvePath('myTestProperty.myI32Array').set(0, 0);
+            rootNode.resolvePath('myTestProperty.myComplexArray').set(0, { x: 1, y: 2 });
+            rootNode.resolvePath('myTestProperty.myMap').set('firstNumber', 1111);
+            rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry]').setValues({ x: 10, y: 20 });
+            rootNode.resolvePath('myTestProperty.myReferenceArray').setValues([
               'myF32Number',
               '../myTestProperty.myF32Number',
               '/myTestProperty.myF32Number',
@@ -727,180 +698,180 @@ describe('JS-Object-like property accessing ', function() {
 
           it('should be able to change the referenced properties', function() {
             state.myTestProperty.myReferenceArray[0] = 4;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[1] = 5;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
             state.myTestProperty.myReferenceArray[2] = 6;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
 
             state.myTestProperty.myReferenceArray[3] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[4] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[5] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
 
             state.myTestProperty.myReferenceArray[6] = 1;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
             state.myTestProperty.myReferenceArray[7] = 2;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
             state.myTestProperty.myReferenceArray[8] = 3;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
 
             state.myTestProperty.myReferenceArray[9] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[10] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[11] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
 
             state.myTestProperty.myReferenceArray[12] = 1;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
             state.myTestProperty.myReferenceArray[13] = 2;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
             state.myTestProperty.myReferenceArray[14] = 3;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
 
             state.myTestProperty.myReferenceArray[15] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[16] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[17] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
           });
 
           it('should be able to change the referenced properties in the presence of multi-hops', function() {
             state.myTestProperty.myReferenceArray[18] = 4;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[19] = 5;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
             state.myTestProperty.myReferenceArray[20] = 6;
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
 
             state.myTestProperty.myReferenceArray[21] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[22] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[23] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
 
             state.myTestProperty.myReferenceArray[24] = 1;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
             state.myTestProperty.myReferenceArray[25] = 2;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
             state.myTestProperty.myReferenceArray[26] = 3;
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
 
             state.myTestProperty.myReferenceArray[27] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[28] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[29] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
 
             state.myTestProperty.myReferenceArray[30] = 1;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
             state.myTestProperty.myReferenceArray[31] = 2;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
             state.myTestProperty.myReferenceArray[32] = 3;
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
 
             state.myTestProperty.myReferenceArray[33] = { x: 3, y: 4 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
             state.myTestProperty.myReferenceArray[34] = { x: 5, y: 6 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
             state.myTestProperty.myReferenceArray[35] = { x: 7, y: 8 };
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
           });
 
           it('should be able to assign another path/property to reference another property', function() {
             // Relative
             state.myTestProperty.myReferenceArray['0*'] = 'myVector';
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
 
             // Complex Relative
             state.myTestProperty.myReferenceArray['0*'] = '../myBook';
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myBook'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myBook'));
 
             // Property
-            state.myTestProperty.myReferenceArray['0*'] = workspace.resolvePath('myTestProperty.myF32Number');
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
+            state.myTestProperty.myReferenceArray['0*'] = rootNode.resolvePath('myTestProperty.myF32Number');
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
 
             // Absolute Path
             state.myTestProperty.myReferenceArray['0*'] = '/myTestProperty.myVector';
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
           });
 
           it('should be able to assign a new iterable', function() {
             state.myTestProperty.myReferenceArray = [
               'myVector',
               '../myTestProperty',
-              workspace.resolvePath('myTestProperty.myF32Number'),
+              rootNode.resolvePath('myTestProperty.myF32Number'),
               '/myBook',
             ];
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
-              workspace.resolvePath('myTestProperty'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
-              workspace.resolvePath('myBook'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
+              rootNode.resolvePath('myTestProperty'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
+              rootNode.resolvePath('myBook'));
           });
 
           it('check .copyWithin() functionality', function() {
             state.myTestProperty.myReferenceArray.copyWithin(0, 3, 4);
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myReferenceArray[3]'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myReferenceArray[3]'));
           });
 
           it('check .fill() functionality', function() {
             state.myTestProperty.myReferenceArray.fill('myVector');
             for (let i = 0; i < state.myTestProperty.length; ++i) {
-              expect(workspace.resolvePath('myTestProperty.myReferenceArray').get(i)).toEqual(
-                workspace.resolvePath('myTestProperty.myVector'));
+              expect(rootNode.resolvePath('myTestProperty.myReferenceArray').get(i)).toEqual(
+                rootNode.resolvePath('myTestProperty.myVector'));
             }
           });
 
           it('check .pop() functionality', function() {
             const proxiedRefArray = state.myTestProperty.myReferenceArray;
             const popped = proxiedRefArray.pop();
-            expect(popped.getProperty()).toEqual(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry]'));
+            expect(popped.getProperty()).toEqual(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry]'));
           });
 
           it('check .push() functionality', function() {
-            workspace.resolvePath('myTestProperty.myReferenceArray').clear();
+            rootNode.resolvePath('myTestProperty.myReferenceArray').clear();
             state.myTestProperty.myReferenceArray.push('myVector',
-              workspace.resolvePath('myTestProperty.myF32Number'),
+              rootNode.resolvePath('myTestProperty.myF32Number'),
               '/myBook');
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
-              workspace.resolvePath('myBook'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
+              rootNode.resolvePath('myBook'));
           });
 
           it('check .reverse() functionality', function() {
@@ -912,7 +883,7 @@ describe('JS-Object-like property accessing ', function() {
 
           it('check .sort() functionality', function() {
             // Primitive
-            workspace.resolvePath('myTestProperty.myReferenceArray').setValues([
+            rootNode.resolvePath('myTestProperty.myReferenceArray').setValues([
               'myI32Array[0]',
               'myI32Array[1]',
               'myI32Array[2]',
@@ -922,26 +893,26 @@ describe('JS-Object-like property accessing ', function() {
 
             state.myTestProperty.myReferenceArray.sort((a, b) => (b - a));
             for (let i = 0; i < state.myTestProperty.myReferenceArray.length; ++i) {
-              expect(workspace.resolvePath('myTestProperty.myReferenceArray').get(i)).toEqual(
-                workspace.resolvePath('myTestProperty.myI32Array').get(
+              expect(rootNode.resolvePath('myTestProperty.myReferenceArray').get(i)).toEqual(
+                rootNode.resolvePath('myTestProperty.myI32Array').get(
                   state.myTestProperty.myReferenceArray.length - 1 - i));
             }
 
             // Non-Primitive
-            workspace.resolvePath('myTestProperty.myReferenceArray').setValues([
+            rootNode.resolvePath('myTestProperty.myReferenceArray').setValues([
               'myComplexArray[0]',
               'myComplexArray[1]',
             ]);
 
             state.myTestProperty.myReferenceArray.sort((a, b) => (b.x - a.x));
             for (let i = 0; i < state.myTestProperty.myReferenceArray.length; ++i) {
-              expect(workspace.resolvePath('myTestProperty.myReferenceArray').get(i).get('x').getValue()).toEqual(
-                workspace.resolvePath('myTestProperty.myComplexArray').get(
+              expect(rootNode.resolvePath('myTestProperty.myReferenceArray').get(i).get('x').getValue()).toEqual(
+                rootNode.resolvePath('myTestProperty.myComplexArray').get(
                   state.myTestProperty.myReferenceArray.length - 1 - i).get('x').getValue());
             }
 
             // Mix and multi-hops
-            workspace.resolvePath('myTestProperty.myReferenceArray').setValues([
+            rootNode.resolvePath('myTestProperty.myReferenceArray').setValues([
               'myComplexArray[1]',
               'myMultiHopReference',
               'myI32Array[0]',
@@ -959,59 +930,59 @@ describe('JS-Object-like property accessing ', function() {
               return (a - b);
             });
 
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray').getValue(0)).toEqual('myI32Array[0]');
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray').getValue(1)).toEqual('myMultiHopReference');
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray').getValue(2)).toEqual('myComplexArray[1]');
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray').getValue(0)).toEqual('myI32Array[0]');
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray').getValue(1)).toEqual('myMultiHopReference');
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray').getValue(2)).toEqual('myComplexArray[1]');
           });
 
           it('check .splice() functionality', function() {
             const removed = state.myTestProperty.myReferenceArray.splice(0, 6, 'myI32Array[0]', 'myI32Array[1]');
             expect(removed.length).toEqual(6);
-            expect(removed[0]).toEqual(workspace.resolvePath('myTestProperty.myF32Number').getValue());
-            expect(removed[1]).toEqual(workspace.resolvePath('myTestProperty.myF32Number').getValue());
-            expect(removed[2]).toEqual(workspace.resolvePath('myTestProperty.myF32Number').getValue());
+            expect(removed[0]).toEqual(rootNode.resolvePath('myTestProperty.myF32Number').getValue());
+            expect(removed[1]).toEqual(rootNode.resolvePath('myTestProperty.myF32Number').getValue());
+            expect(removed[2]).toEqual(rootNode.resolvePath('myTestProperty.myF32Number').getValue());
 
-            expect(removed[3].getProperty()).toEqual(workspace.resolvePath('myTestProperty.myVector'));
-            expect(removed[4].getProperty()).toEqual(workspace.resolvePath('myTestProperty.myVector'));
-            expect(removed[5].getProperty()).toEqual(workspace.resolvePath('myTestProperty.myVector'));
+            expect(removed[3].getProperty()).toEqual(rootNode.resolvePath('myTestProperty.myVector'));
+            expect(removed[4].getProperty()).toEqual(rootNode.resolvePath('myTestProperty.myVector'));
+            expect(removed[5].getProperty()).toEqual(rootNode.resolvePath('myTestProperty.myVector'));
 
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray').getLength()).toEqual(32);
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(0);
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(10);
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray').getLength()).toEqual(32);
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(0);
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(10);
           });
 
           it('check .shift() functionality', function() {
             const first = state.myTestProperty.myReferenceArray.shift();
-            expect(first).toEqual(workspace.resolvePath('myTestProperty.myF32Number').getValue());
+            expect(first).toEqual(rootNode.resolvePath('myTestProperty.myF32Number').getValue());
           });
 
           it('check .swap() functionality', function() {
             state.myTestProperty.myReferenceArray.swap(0, 3);
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
           });
 
           it('check .unshift() functionality', function() {
-            workspace.resolvePath('myTestProperty.myReferenceArray').clear();
+            rootNode.resolvePath('myTestProperty.myReferenceArray').clear();
             state.myTestProperty.myReferenceArray.unshift('myVector',
-              workspace.resolvePath('myTestProperty.myF32Number'),
+              rootNode.resolvePath('myTestProperty.myF32Number'),
               '/myBook',
               '../myTestProperty');
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
-              workspace.resolvePath('myBook'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
-              workspace.resolvePath('myTestProperty'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[0]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[1]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[2]')).toEqual(
+              rootNode.resolvePath('myBook'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceArray[3]')).toEqual(
+              rootNode.resolvePath('myTestProperty'));
           });
 
           it('should throw if trying to set a property referenced via an absolute path ' +
-            'if the ReferenceArray is not yet in the workspace', function() {
-              // Property not in workspace
+            'if the ReferenceArray is not yet in the property tree', function() {
+              // Property not in property tree
               const tempRefArray = PropertyProxy.proxify(PropertyFactory.create('Reference', 'array', [
                 '/myTestProperty.myF32Number',
               ]));
@@ -1019,9 +990,9 @@ describe('JS-Object-like property accessing ', function() {
             });
 
           it('should throw if trying to set invalid references', function() {
-            workspace.resolvePath('myTestProperty.myReferenceArray').clear();
-            workspace.resolvePath('myTestProperty.myReferenceArray').insert(0, 'relativeInvalid');
-            workspace.resolvePath('myTestProperty.myReferenceArray').insert(1, '/absoluteInvalid');
+            rootNode.resolvePath('myTestProperty.myReferenceArray').clear();
+            rootNode.resolvePath('myTestProperty.myReferenceArray').insert(0, 'relativeInvalid');
+            rootNode.resolvePath('myTestProperty.myReferenceArray').insert(1, '/absoluteInvalid');
 
             expect(() => { state.myTestProperty.myReferenceArray[0] = 100; }).toThrow(Error, 'PropertyProxy-009');
             expect(() => { state.myTestProperty.myReferenceArray[1] = 100; }).toThrow(Error, 'PropertyProxy-009');
@@ -1034,7 +1005,7 @@ describe('JS-Object-like property accessing ', function() {
         let refMap;
 
         beforeAll(function() {
-          refMap = workspace.resolvePath('myTestProperty.myReferenceMap');
+          refMap = rootNode.resolvePath('myTestProperty.myReferenceMap');
           const refMapIds = refMap.getIds();
           for (let i = 0; i < refMapIds.length; ++i) {
             const entry = refMap.get(refMapIds[i]);
@@ -1241,13 +1212,13 @@ describe('JS-Object-like property accessing ', function() {
 
         describe('Setting', function() {
           const reset = () => {
-            workspace.resolvePath('myTestProperty.myF32Number').setValue(3);
-            workspace.resolvePath('myTestProperty.myVector').setValues({ x: 1, y: 2 });
-            workspace.resolvePath('myTestProperty.myI32Array').set(0, 0);
-            workspace.resolvePath('myTestProperty.myComplexArray').set(0, { x: 1, y: 2 });
-            workspace.resolvePath('myTestProperty.myMap').set('firstNumber', 1111);
-            workspace.resolvePath('myTestProperty.myComplexMap[firstEntry]').setValues({ x: 10, y: 20 });
-            workspace.resolvePath('myTestProperty.myReferenceMap').setValues({
+            rootNode.resolvePath('myTestProperty.myF32Number').setValue(3);
+            rootNode.resolvePath('myTestProperty.myVector').setValues({ x: 1, y: 2 });
+            rootNode.resolvePath('myTestProperty.myI32Array').set(0, 0);
+            rootNode.resolvePath('myTestProperty.myComplexArray').set(0, { x: 1, y: 2 });
+            rootNode.resolvePath('myTestProperty.myMap').set('firstNumber', 1111);
+            rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry]').setValues({ x: 10, y: 20 });
+            rootNode.resolvePath('myTestProperty.myReferenceMap').setValues({
               a: 'myF32Number',
               b: '../myTestProperty.myF32Number',
               c: '/myTestProperty.myF32Number',
@@ -1301,110 +1272,110 @@ describe('JS-Object-like property accessing ', function() {
             const rM = state.myTestProperty.myReferenceMap;
 
             rM.set('a', 4);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
             rM.set('b', 5);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
             rM.set('c', 6);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
 
             rM.set('d', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
             rM.set('e', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
             rM.set('f', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
 
             rM.set('g', 1);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
             rM.set('h', 2);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
             rM.set('i', 3);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
 
             rM.set('j', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
             rM.set('k', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
             rM.set('l', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
 
             rM.set('m', 1);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
             rM.set('n', 2);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
             rM.set('o', 3);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
 
             rM.set('p', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
             rM.set('q', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
             rM.set('r', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
           });
 
           it('should be able to change the referenced properties in the presence of multi-hops', function() {
             const rM = state.myTestProperty.myReferenceMap;
 
             rM.set('aa', 4);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(4);
             rM.set('bb', 5);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(5);
             rM.set('cc', 6);
-            expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(6);
 
             rM.set('dd', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(4);
             rM.set('ee', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(6);
             rM.set('ff', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myVector.x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myVector.y').getValue()).toEqual(8);
 
             rM.set('gg', 1);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(1);
             rM.set('hh', 2);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(2);
             rM.set('ii', 3);
-            expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(3);
 
             rM.set('jj', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
             rM.set('kk', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(6);
             rM.set('ll', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(8);
 
             rM.set('mm', 1);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(1);
             rM.set('nn', 2);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(2);
             rM.set('oo', 3);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(3);
 
             rM.set('pp', { x: 3, y: 4 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(4);
             rM.set('qq', { x: 5, y: 6 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(5);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(6);
             rM.set('rr', { x: 7, y: 8 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
           });
 
           it('should be able to assign another path/property to reference another property', function() {
@@ -1412,32 +1383,32 @@ describe('JS-Object-like property accessing ', function() {
 
             // Relative
             rM.set('a*', 'myVector');
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
 
             // Property
-            rM.set('a*', workspace.resolvePath('myTestProperty.myF32Number'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
+            rM.set('a*', rootNode.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
 
             // Absolute Path
             rM.set('a*', '/myTestProperty.myVector');
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
           });
 
           it('should be able to assign a new iterable', function() {
             state.myTestProperty.myReferenceMap = [
               ['a', 'myVector'],
-              ['b', workspace.resolvePath('myTestProperty.myF32Number')],
+              ['b', rootNode.resolvePath('myTestProperty.myF32Number')],
               ['c', '/myBook'],
             ];
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
-              workspace.resolvePath('myTestProperty.myVector'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[b]')).toEqual(
-              workspace.resolvePath('myTestProperty.myF32Number'));
-            expect(workspace.resolvePath('myTestProperty.myReferenceMap[c]')).toEqual(
-              workspace.resolvePath('myBook'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[a]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myVector'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[b]')).toEqual(
+              rootNode.resolvePath('myTestProperty.myF32Number'));
+            expect(rootNode.resolvePath('myTestProperty.myReferenceMap[c]')).toEqual(
+              rootNode.resolvePath('myBook'));
           });
         });
       });
@@ -1451,22 +1422,22 @@ describe('JS-Object-like property accessing ', function() {
       it('Setting Float32 number', function() {
         state.myTestProperty.myF32Number = 5;
         expect(state.myTestProperty.myF32Number).toEqual(5);
-        expect(workspace.get('myTestProperty').get('myF32Number').getValue()).toEqual(5);
+        expect(rootNode.get('myTestProperty').get('myF32Number').getValue()).toEqual(5);
 
         // Property
         state.myTestProperty.myF32Number = PropertyFactory.create('Float32', 'single', 10);
-        expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(10);
+        expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(10);
 
         state.myTestProperty.myF32Number = PropertyProxy.proxify(
           PropertyFactory.create('Float32', 'single', 11));
-        expect(workspace.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(11);
+        expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(11);
 
         expect(() => { state.myTestProperty.myF32Number = [1, 2, 3]; }).toThrow(Error, 'PropertyProxy-007');
       });
 
       it('Obtain the property via the parent', function() {
         expect(state.myTestProperty.getProperty('myF32Number')).toEqual(
-          workspace.resolvePath('myTestProperty.myF32Number'));
+          rootNode.resolvePath('myTestProperty.myF32Number'));
       });
     });
 
@@ -1535,35 +1506,35 @@ describe('JS-Object-like property accessing ', function() {
 
       it('setting', function() {
         state.myTestProperty.myEnumCases.myEnum = 2;
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnum').getValue()).toEqual(2);
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnum').getEnumString()).toEqual('dos');
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnum').getValue()).toEqual(2);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnum').getEnumString()).toEqual('dos');
 
         state.myTestProperty.myEnumCases.myEnum = 'tres';
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnum').getValue()).toEqual(3);
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnum').getEnumString()).toEqual('tres');
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnum').getValue()).toEqual(3);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnum').getEnumString()).toEqual('tres');
 
         expect(() => { state.myTestProperty.myEnumCases.myEnum = 'notAValidEnumString'; }).toThrow(
         );
         expect(() => { state.myTestProperty.myEnumCases.myEnum = '100'; }).toThrow();
 
         state.myTestProperty.myEnumCases.myEnumArray = ['dos', 1];
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(2);
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(1)).toEqual(1);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(2);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(1)).toEqual(1);
 
         expect(state.myTestProperty.myEnumCases.myEnumArray.pop()).toEqual(1);
         expect(state.myTestProperty.myEnumCases.myEnumArray.shift()).toEqual(2);
         state.myTestProperty.myEnumCases.myEnumArray.push(2);
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(2);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(2);
         state.myTestProperty.myEnumCases.myEnumArray.unshift('uno');
-        expect(workspace.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(1);
+        expect(rootNode.resolvePath('myTestProperty.myEnumCases.myEnumArray').get(0)).toEqual(1);
       });
     });
 
     describe('(U)int64/(U)int64Array/(U)int64Map', function() {
       it('accessing', function() {
-        const uint64Value = workspace.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue();
-        const valueOfUint64ArrayAtZero = workspace.resolvePath('myTestProperty.myUint64Int64Cases.myUint64Array[0]');
-        const valueOfInt64MapAtA = workspace.resolvePath('myTestProperty.myUint64Int64Cases.myInt64Map[a]');
+        const uint64Value = rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue();
+        const valueOfUint64ArrayAtZero = rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myUint64Array[0]');
+        const valueOfInt64MapAtA = rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myInt64Map[a]');
 
         const stringVal = '4294967296';
 
@@ -1659,23 +1630,23 @@ describe('JS-Object-like property accessing ', function() {
       it('setting', function() {
         state.myTestProperty.myUint64Int64Cases.myUint64 = 1024;
         expect(
-          workspace.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue().getValueLow(),
+          rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue().getValueLow(),
         ).toEqual(1024);
         state.myTestProperty.myUint64Int64Cases.myUint64 = '4294967296';
         expect(
-          workspace.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue().getValueHigh(),
+          rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myUint64').getValue().getValueHigh(),
         ).toEqual(1);
 
         // state.myTestProperty.myUint64Int64Cases.myEnumArray = ['dos', 1];
-        // workspace.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(2);
-        // workspace.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(1).should.equal(1);
+        // rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(2);
+        // rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(1).should.equal(1);
 
         // state.myTestProperty.myUint64Int64Cases.myEnumArray.pop().should.equal(1);
         // state.myTestProperty.myUint64Int64Cases.myEnumArray.shift().should.equal(2);
         // state.myTestProperty.myUint64Int64Cases.myEnumArray.push(2);
-        // workspace.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(2);
+        // rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(2);
         // state.myTestProperty.myUint64Int64Cases.myEnumArray.unshift('uno');
-        // workspace.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(1);
+        // rootNode.resolvePath('myTestProperty.myUint64Int64Cases.myEnumArray').get(0).should.equal(1);
       });
     });
 
@@ -1687,19 +1658,19 @@ describe('JS-Object-like property accessing ', function() {
 
       it('Setting', function() {
         state.myTestProperty.myVector = { x: 3, y: 4 };
-        expect(workspace.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(3);
-        expect(workspace.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(4);
+        expect(rootNode.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(3);
+        expect(rootNode.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(4);
 
         // Property
         state.myTestProperty.myVector = PropertyFactory.create(vector2DTemplate.typeid,
           'single', { x: 5, y: 6 });
-        expect(workspace.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(5);
-        expect(workspace.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(6);
+        expect(rootNode.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(5);
+        expect(rootNode.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(6);
 
         state.myTestProperty.myVector = PropertyProxy.proxify(
           PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 7, y: 8 }));
-        expect(workspace.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(7);
-        expect(workspace.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(8);
+        expect(rootNode.get('myTestProperty').get('myVector').get('x').getValue()).toEqual(7);
+        expect(rootNode.get('myTestProperty').get('myVector').get('y').getValue()).toEqual(8);
 
         expect(() => { state.myTestProperty.myF32Number = [{ x: 1, y: 2 }]; }).toThrow(Error, 'PropertyProxy-007');
       });
@@ -1717,7 +1688,7 @@ describe('JS-Object-like property accessing ', function() {
           expect(typeof (state.myTestProperty.myI32Array.length)).toEqual('number');
           expect(
             state.myTestProperty.myI32Array.length,
-          ).toEqual(workspace.get('myTestProperty').get('myI32Array').getLength());
+          ).toEqual(rootNode.get('myTestProperty').get('myI32Array').getLength());
         });
 
         it('Looping through the array indices using a for loop', function() {
@@ -1919,14 +1890,14 @@ describe('JS-Object-like property accessing ', function() {
 
       describe('Setting', function() {
         afterEach(function() {
-          workspace.get('myTestProperty').get('myI32Array').clear();
-          workspace.get('myTestProperty').get('myI32Array').insertRange(0, [0, 10, 20, 30, 40]);
+          rootNode.get('myTestProperty').get('myI32Array').clear();
+          rootNode.get('myTestProperty').get('myI32Array').insertRange(0, [0, 10, 20, 30, 40]);
         });
 
         it('should set via direct access', function() {
           state.myTestProperty.myI32Array[0] = 1;
           expect(state.myTestProperty.myI32Array[0]).toEqual(1);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('0')).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('0')).toEqual(1);
 
           expect(() => { state.myTestProperty.myI32Array[0] = [1, 2, 3]; }).toThrow(Error, 'PropertyProxy-007');
         });
@@ -1934,19 +1905,19 @@ describe('JS-Object-like property accessing ', function() {
         it('should set an element out of range', function() {
           // Setting and element out of range
           state.myTestProperty.myI32Array[10] = 100;
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(11);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('10')).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(11);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('10')).toEqual(100);
         });
 
         it('check .copyWithin() functionality', function() {
           state.myTestProperty.myI32Array.copyWithin(0, 3, 4);
-          expect(workspace.get('myTestProperty').get('myI32Array').getValues().toString()).toEqual('30,10,20,30,40');
+          expect(rootNode.get('myTestProperty').get('myI32Array').getValues().toString()).toEqual('30,10,20,30,40');
         });
 
         it('check .fill() functionality', function() {
           state.myTestProperty.myI32Array.fill(0);
           for (let i = 0; i < state.myTestProperty.myI32Array.length; i++) {
-            expect(workspace.get('myTestProperty').get('myI32Array').get(i.toString())).toEqual(0);
+            expect(rootNode.get('myTestProperty').get('myI32Array').get(i.toString())).toEqual(0);
           }
 
           state.myTestProperty.myI32Array[0] = 0;
@@ -1960,7 +1931,7 @@ describe('JS-Object-like property accessing ', function() {
           const popped = state.myTestProperty.myI32Array.pop();
           expect(popped).toEqual(40);
           expect(state.myTestProperty.myI32Array.length).toEqual(4);
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(4);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(4);
         });
 
         it('check .push() functionality', function() {
@@ -1969,39 +1940,39 @@ describe('JS-Object-like property accessing ', function() {
           expect(testArray.push(50)).toEqual(6);
           expect(testArray.length).toEqual(6);
           expect(testArray[5]).toEqual(50);
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(6);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('5')).toEqual(50);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(6);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('5')).toEqual(50);
 
           // multiple elements
           expect(state.myTestProperty.myI32Array.push(60, 70)).toEqual(8);
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(8);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('6')).toEqual(60);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('7')).toEqual(70);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(8);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('6')).toEqual(60);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('7')).toEqual(70);
 
           // (proxied) property
           state.myTestProperty.myI32Array.push(PropertyFactory.create('Int32', 'single', 80));
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(9);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('8')).toEqual(80);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(9);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('8')).toEqual(80);
 
           const proxied = PropertyProxy.proxify(PropertyFactory.create('Int32', 'single', 90));
           state.myTestProperty.myI32Array.push(proxied);
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(10);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('9')).toEqual(90);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(10);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('9')).toEqual(90);
 
           state.myTestProperty.myI32Array.push(
             PropertyFactory.create('Int32', 'single', 100),
             PropertyFactory.create('Int32', 'single', 110),
           );
-          expect(workspace.get('myTestProperty').get('myI32Array').getLength()).toEqual(12);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('10')).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myI32Array').get('11')).toEqual(110);
+          expect(rootNode.get('myTestProperty').get('myI32Array').getLength()).toEqual(12);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('10')).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myI32Array').get('11')).toEqual(110);
 
           expect(() => state.myTestProperty.myI32Array.push([1, 2, 3])).toThrow(Error, 'PropertyProxy-002');
         });
 
         it('check .reverse() functionality', function() {
           state.myTestProperty.myI32Array.reverse();
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('40,30,20,10,0');
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('40,30,20,10,0');
         });
 
         it('check .shift() functionality', function() {
@@ -2009,13 +1980,13 @@ describe('JS-Object-like property accessing ', function() {
           const first = state.myTestProperty.myI32Array.shift();
           expect(first).toEqual(0);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength - 1);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength - 1);
-          expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(10);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength - 1);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(10);
         });
 
         it('check .sort() functionality', function() {
           state.myTestProperty.myI32Array.sort((a, b) => b - a);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('40,30,20,10,0');
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('40,30,20,10,0');
         });
 
         it('check .splice() functionality', function() {
@@ -2023,13 +1994,13 @@ describe('JS-Object-like property accessing ', function() {
           // Replace first element
           state.myTestProperty.myI32Array.splice(0, 1, 0);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
 
           // Add some elements
           state.myTestProperty.myI32Array.splice(5, 0, 50, 60, 70);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength + 3);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 3);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 3);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
             '0,10,20,30,40,50,60,70',
           );
 
@@ -2039,9 +2010,9 @@ describe('JS-Object-like property accessing ', function() {
           expect(removed[1]).toEqual(60);
           expect(removed[2]).toEqual(70);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
 
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('0,10,20,30,40');
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual('0,10,20,30,40');
 
           // Re-add elements
           state.myTestProperty.myI32Array.splice(5, 0, 50, 60, 70);
@@ -2052,7 +2023,7 @@ describe('JS-Object-like property accessing ', function() {
           expect(removed[1]).toEqual(60);
           expect(removed[2]).toEqual(70);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
 
           // Re-add elements
           state.myTestProperty.myI32Array.splice(5, 0, 50, 60, 70);
@@ -2063,15 +2034,15 @@ describe('JS-Object-like property accessing ', function() {
           expect(removed[1]).toEqual(60);
           expect(removed[2]).toEqual(70);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength);
 
           // Add (proxied) properties
           state.myTestProperty.myI32Array.splice(5, 0,
             PropertyProxy.proxify(PropertyFactory.create('Int32', 'single', 50)),
             PropertyFactory.create('Int32', 'single', 60),
           );
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 2);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 2);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
             '0,10,20,30,40,50,60',
           );
 
@@ -2083,16 +2054,16 @@ describe('JS-Object-like property accessing ', function() {
           const oldLength = state.myTestProperty.myI32Array.length;
           state.myTestProperty.myI32Array.unshift(-10);
           expect(state.myTestProperty.myI32Array.length).toEqual(oldLength + 1);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 1);
-          expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(-10);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 1);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(-10);
 
           // Add (proxied) properties
           state.myTestProperty.myI32Array.unshift(
             PropertyProxy.proxify(PropertyFactory.create('Int32', 'single', -20)),
             PropertyFactory.create('Int32', 'single', -30),
           );
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 3);
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(oldLength + 3);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getValues().toString()).toEqual(
             '-20,-30,-10,0,10,20,30,40',
           );
 
@@ -2101,10 +2072,10 @@ describe('JS-Object-like property accessing ', function() {
 
         it('should be able to adjust array size be setting length', function() {
           state.myTestProperty.myI32Array.length = 10;
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(10);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(10);
 
           state.myTestProperty.myI32Array.length = 5;
-          expect(workspace.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(5);
+          expect(rootNode.resolvePath('myTestProperty.myI32Array').getLength()).toEqual(5);
 
           expect(() => { state.myTestProperty.myI32Array.length = -10; }).toThrow(RangeError);
         });
@@ -2112,14 +2083,14 @@ describe('JS-Object-like property accessing ', function() {
         it('should update proxy from remote changes', function() {
           const proxy = state.myTestProperty.myI32Array;
           expect(proxy[0]).toEqual(0);
-          workspace.get('myTestProperty').get('myI32Array').set(0, 42);
-          expect(state.myTestProperty.myI32Array[0]).toEqual(workspace.resolvePath('myTestProperty.myI32Array[0]'));
-          expect(proxy[0]).toEqual(workspace.resolvePath('myTestProperty.myI32Array[0]'));
+          rootNode.get('myTestProperty').get('myI32Array').set(0, 42);
+          expect(state.myTestProperty.myI32Array[0]).toEqual(rootNode.resolvePath('myTestProperty.myI32Array[0]'));
+          expect(proxy[0]).toEqual(rootNode.resolvePath('myTestProperty.myI32Array[0]'));
 
-          workspace.get('myTestProperty').get('myI32Array').push(888);
-          expect(proxy.length).toEqual(workspace.get('myTestProperty').get('myI32Array').getLength());
+          rootNode.get('myTestProperty').get('myI32Array').push(888);
+          expect(proxy.length).toEqual(rootNode.get('myTestProperty').get('myI32Array').getLength());
           expect(state.myTestProperty.myI32Array.length).toEqual(
-            workspace.get('myTestProperty').get('myI32Array').getLength(),
+            rootNode.get('myTestProperty').get('myI32Array').getLength(),
           );
           expect(proxy[proxy.length - 1]).toEqual(888);
         });
@@ -2140,7 +2111,7 @@ describe('JS-Object-like property accessing ', function() {
           // This will fill the target with clones of the entry;
           state.myTestProperty.myI32Array = state.constantCollections.primitiveArray;
 
-          const myI32Array = workspace.resolvePath('myTestProperty.myI32Array');
+          const myI32Array = rootNode.resolvePath('myTestProperty.myI32Array');
           expect(myI32Array.getLength()).toEqual(3);
           expect(myI32Array.get(0)).toEqual(42);
           expect(myI32Array.get(1)).toEqual(43);
@@ -2149,7 +2120,7 @@ describe('JS-Object-like property accessing ', function() {
 
         it('should be possible to assign a new iterable', function() {
           const checkAssignment = () => {
-            const myI32Array = workspace.resolvePath('myTestProperty.myI32Array');
+            const myI32Array = rootNode.resolvePath('myTestProperty.myI32Array');
             expect(myI32Array.getLength()).toEqual(4);
             expect(myI32Array.get(0)).toEqual(1);
             expect(myI32Array.get(1)).toEqual(2);
@@ -2175,13 +2146,13 @@ describe('JS-Object-like property accessing ', function() {
           state.myTestProperty.myI32Array = numbersAsProperties();
           checkAssignment();
 
-          // Assign iterables of primitive properties in the workspace should work
-         workspace.root.insert('Int32Prop', PropertyFactory.create('Int32', 'single', 42));
+          // Assign iterables of primitive properties in the property tree should work
+         rootNode.insert('Int32Prop', PropertyFactory.create('Int32', 'single', 42));
 
-          state.myTestProperty.myI32Array = [workspace.resolvePath('Int32Prop')];
-          expect(workspace.resolvePath('myTestProperty.myI32Array[0]')).toEqual(
-            workspace.resolvePath('Int32Prop').getValue());
-          workspace.resolvePath('myTestProperty.myI32Array').clear();
+          state.myTestProperty.myI32Array = [rootNode.resolvePath('Int32Prop')];
+          expect(rootNode.resolvePath('myTestProperty.myI32Array[0]')).toEqual(
+            rootNode.resolvePath('Int32Prop').getValue());
+          rootNode.resolvePath('myTestProperty.myI32Array').clear();
 
           // Assigning a non-iterable should throw
           expect(() => {
@@ -2287,7 +2258,7 @@ describe('JS-Object-like property accessing ', function() {
           arrayWithJsOutfit.includes(arrayWithJsOutfit[0]),
         );
         expect(
-          state.myTestProperty.myComplexArray.includes(workspace.resolvePath('myTestProperty.myComplexArray[0]')),
+          state.myTestProperty.myComplexArray.includes(rootNode.resolvePath('myTestProperty.myComplexArray[0]')),
         ).toEqual(true);
         expect(
           state.myTestProperty.myComplexArray.includes({ x: 1, y: 2 }),
@@ -2330,7 +2301,7 @@ describe('JS-Object-like property accessing ', function() {
           arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[1], -1),
         );
         expect(
-          state.myTestProperty.myComplexArray.lastIndexOf(workspace.resolvePath('myTestProperty.myComplexArray[0]')),
+          state.myTestProperty.myComplexArray.lastIndexOf(rootNode.resolvePath('myTestProperty.myComplexArray[0]')),
         ).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[0]));
         expect(
           state.myTestProperty.myComplexArray.lastIndexOf(state.myTestProperty.myComplexArray[0], -1),
@@ -2386,8 +2357,8 @@ describe('JS-Object-like property accessing ', function() {
 
       describe('Setting', function() {
         afterEach(function() {
-          workspace.get('myTestProperty').get('myComplexArray').clear();
-          workspace.get('myTestProperty').get('myComplexArray').insertRange(0,
+          rootNode.get('myTestProperty').get('myComplexArray').clear();
+          rootNode.get('myTestProperty').get('myComplexArray').insertRange(0,
             [
               PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 1, y: 2 }),
               PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 10, y: 20 }),
@@ -2397,42 +2368,42 @@ describe('JS-Object-like property accessing ', function() {
 
         it('should set via direct access', function() {
           state.myTestProperty.myComplexArray[0].x = 42;
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(42);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(42);
           expect(state.myTestProperty.myComplexArray[0].x).toEqual(42);
           state.myTestProperty.myComplexArray[0] = { x: 3, y: 4 };
           expect(state.myTestProperty.myComplexArray[0].x).toEqual(3);
           expect(state.myTestProperty.myComplexArray[0].y).toEqual(4);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(3);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(4);
 
           // (proxied) properties
           state.myTestProperty.myComplexArray[0] = PropertyProxy.proxify(
             PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 30, y: 40 }),
           );
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(30);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(40);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(30);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(40);
 
           state.myTestProperty.myComplexArray[0] = PropertyFactory.create(
             vector2DTemplate.typeid, 'single', { x: 5, y: 6 },
           );
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(5);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(6);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(5);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(6);
 
           // polymorphic
           state.myTestProperty.myComplexArray[0] = PropertyFactory.create(
             vector3DTemplate.typeid, 'single', { x: 50, y: 60, z: 1 },
           );
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(50);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(60);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('0').get('z').getValue()).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('x').getValue()).toEqual(50);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('y').getValue()).toEqual(60);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('0').get('z').getValue()).toEqual(1);
         });
 
         it('should set an element out of range', function() {
           // Setting and element out of range
           state.myTestProperty.myComplexArray[10] = { x: 100, y: 100 };
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(11);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(10).get('x').getValue()).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(10).get('y').getValue()).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(11);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(10).get('x').getValue()).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(10).get('y').getValue()).toEqual(100);
         });
 
         it('check .concat() functionality', function() {
@@ -2444,29 +2415,29 @@ describe('JS-Object-like property accessing ', function() {
           concat[0].x = 42;
           expect(state.myTestProperty.myComplexArray[0].x).toEqual(42);
           expect(concat[5].x).toEqual(42);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(42);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(42);
         });
 
         it('check .copyWithin() functionality', function() {
           // add polymorphic entry
-          workspace.resolvePath('myTestProperty.myComplexArray').push(
+          rootNode.resolvePath('myTestProperty.myComplexArray').push(
             PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 100, y: 100, z: 1 }),
           );
-          const entry = workspace.resolvePath('myTestProperty.myComplexArray[2]');
+          const entry = rootNode.resolvePath('myTestProperty.myComplexArray[2]');
 
           state.myTestProperty.myComplexArray.copyWithin(0, 2, 3);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(0).getValues().x).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(0).getValues().y).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(0).getValues().z).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(0).getValues().x).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(0).getValues().y).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(0).getValues().z).toEqual(1);
 
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(2).getValues().x).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(2).getValues().y).toEqual(100);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(2).getValues().z).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(2).getValues().x).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(2).getValues().y).toEqual(100);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(2).getValues().z).toEqual(1);
 
-          expect(workspace.get('myTestProperty').get('myComplexArray').get(2)).toEqual(entry);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get(2)).toEqual(entry);
 
           expect(() => {
-            state.myTestProperty.myComplexArray[0] = workspace.resolvePath('myTestProperty.myVector');
+            state.myTestProperty.myComplexArray[0] = rootNode.resolvePath('myTestProperty.myVector');
           }).toThrow();
         });
 
@@ -2474,10 +2445,10 @@ describe('JS-Object-like property accessing ', function() {
           state.myTestProperty.myComplexArray.fill({ x: 1, y: 2 });
           for (let i = 0; i < state.myTestProperty.myComplexArray.length; i++) {
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
             ).toEqual(1);
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
             ).toEqual(2);
           }
 
@@ -2486,10 +2457,10 @@ describe('JS-Object-like property accessing ', function() {
           );
           for (let i = 0; i < state.myTestProperty.myComplexArray.length; i++) {
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
             ).toEqual(3);
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
             ).toEqual(4);
           }
 
@@ -2498,10 +2469,10 @@ describe('JS-Object-like property accessing ', function() {
           );
           for (let i = 0; i < state.myTestProperty.myComplexArray.length; i++) {
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
             ).toEqual(5);
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
             ).toEqual(6);
           }
 
@@ -2511,18 +2482,18 @@ describe('JS-Object-like property accessing ', function() {
               { x: 7, y: 8, z: 1 })));
           for (let i = 0; i < state.myTestProperty.myComplexArray.length; i++) {
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('x').getValue(),
             ).toEqual(7);
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('y').getValue(),
             ).toEqual(8);
             expect(
-              workspace.get('myTestProperty').get('myComplexArray').get(i.toString()).get('z').getValue(),
+              rootNode.get('myTestProperty').get('myComplexArray').get(i.toString()).get('z').getValue(),
             ).toEqual(1);
           }
 
           expect(() => {
-            state.myTestProperty.myComplexArray[0] = workspace.resolvePath('myTestProperty.myVector');
+            state.myTestProperty.myComplexArray[0] = rootNode.resolvePath('myTestProperty.myVector');
           }).toThrow();
         });
 
@@ -2530,22 +2501,22 @@ describe('JS-Object-like property accessing ', function() {
           const popped = state.myTestProperty.myComplexArray.pop();
           expect(popped.x).toEqual(10);
           expect(popped.y).toEqual(20);
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(1);
         });
 
         it('check .push() functionality', function() {
           expect(state.myTestProperty.myComplexArray.push({ x: 3, y: 4 })).toEqual(3);
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(3);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('2').get('x').getValue()).toEqual(3);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('2').get('y').getValue()).toEqual(4);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(3);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('2').get('x').getValue()).toEqual(3);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('2').get('y').getValue()).toEqual(4);
 
           // multiple elements
           expect(state.myTestProperty.myComplexArray.push({ x: 30, y: 40 }, { x: 5, y: 6 })).toEqual(5);
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(5);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('3').get('x').getValue()).toEqual(30);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('3').get('y').getValue()).toEqual(40);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('4').get('x').getValue()).toEqual(5);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('4').get('y').getValue()).toEqual(6);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(5);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('3').get('x').getValue()).toEqual(30);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('3').get('y').getValue()).toEqual(40);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('4').get('x').getValue()).toEqual(5);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('4').get('y').getValue()).toEqual(6);
 
           // (proxied) properties
           state.myTestProperty.myComplexArray.push(
@@ -2553,32 +2524,32 @@ describe('JS-Object-like property accessing ', function() {
               { x: 50, y: 60 })),
             PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 7, y: 8 }),
           );
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(7);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('5').get('x').getValue()).toEqual(50);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('5').get('y').getValue()).toEqual(60);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('6').get('x').getValue()).toEqual(7);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('6').get('y').getValue()).toEqual(8);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(7);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('5').get('x').getValue()).toEqual(50);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('5').get('y').getValue()).toEqual(60);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('6').get('x').getValue()).toEqual(7);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('6').get('y').getValue()).toEqual(8);
 
           // polymorphic
           state.myTestProperty.myComplexArray.push(
             PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 70, y: 80, z: 1 }),
           );
-          expect(workspace.get('myTestProperty').get('myComplexArray').getLength()).toEqual(8);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('7').get('x').getValue()).toEqual(70);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('7').get('y').getValue()).toEqual(80);
-          expect(workspace.get('myTestProperty').get('myComplexArray').get('7').get('z').getValue()).toEqual(1);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(8);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('7').get('x').getValue()).toEqual(70);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('7').get('y').getValue()).toEqual(80);
+          expect(rootNode.get('myTestProperty').get('myComplexArray').get('7').get('z').getValue()).toEqual(1);
         });
 
         it('check .reverse() functionality', function() {
-          const entry = workspace.resolvePath('myTestProperty.myComplexArray[0]');
+          const entry = rootNode.resolvePath('myTestProperty.myComplexArray[0]');
           state.myTestProperty.myComplexArray.reverse();
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(10);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(10);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(1);
           // Check that it still refers to the same property
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1]')).toEqual(entry);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1]')).toEqual(entry);
 
           expect(() => {
-            state.myTestProperty.myComplexArray[0] = workspace.resolvePath('myTestProperty.myVector');
+            state.myTestProperty.myComplexArray[0] = rootNode.resolvePath('myTestProperty.myVector');
           }).toThrow();
         });
 
@@ -2588,52 +2559,52 @@ describe('JS-Object-like property accessing ', function() {
           expect(first.x).toEqual(1);
           expect(first.y).toEqual(2);
           expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength - 1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength - 1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength - 1);
 
           expect(() => {
-            state.myTestProperty.myComplexArray[0] = workspace.resolvePath('myTestProperty.myVector');
+            state.myTestProperty.myComplexArray[0] = rootNode.resolvePath('myTestProperty.myVector');
           }).toThrow();
         });
 
         it('check .sort() functionality', function() {
-          const entry = workspace.resolvePath('myTestProperty.myComplexArray[0]');
+          const entry = rootNode.resolvePath('myTestProperty.myComplexArray[0]');
 
           // add polymorphic entry
-          workspace.resolvePath('myTestProperty.myComplexArray').push(
+          rootNode.resolvePath('myTestProperty.myComplexArray').push(
             PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 100, y: 100, z: 1 }),
           );
 
           state.myTestProperty.myComplexArray.sort((a, b) => b.x - a.x);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(100);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(10);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[2].x').getValue()).toEqual(1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(100);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(10);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[2].x').getValue()).toEqual(1);
 
           expect(
-            workspace.resolvePath('myTestProperty.myComplexArray[0]').getTypeid(),
+            rootNode.resolvePath('myTestProperty.myComplexArray[0]').getTypeid(),
           ).toEqual(vector3DTemplate.typeid);
           expect(
-            workspace.resolvePath('myTestProperty.myComplexArray[1]').getTypeid(),
+            rootNode.resolvePath('myTestProperty.myComplexArray[1]').getTypeid(),
           ).toEqual(vector2DTemplate.typeid);
           expect(
-            workspace.resolvePath('myTestProperty.myComplexArray[2]').getTypeid(),
+            rootNode.resolvePath('myTestProperty.myComplexArray[2]').getTypeid(),
           ).toEqual(vector2DTemplate.typeid);
 
           // Check that it still refers to the same property
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[2]')).toEqual(entry);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[2]')).toEqual(entry);
         });
 
         it('check .swap() functionality', function() {
-          const entry0 = workspace.resolvePath('myTestProperty.myComplexArray[0]');
-          const entry1 = workspace.resolvePath('myTestProperty.myComplexArray[1]');
+          const entry0 = rootNode.resolvePath('myTestProperty.myComplexArray[0]');
+          const entry1 = rootNode.resolvePath('myTestProperty.myComplexArray[1]');
 
           state.myTestProperty.myComplexArray.swap(0, 1);
 
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1]')).toEqual(entry0);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0]')).toEqual(entry1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[1].y').getValue()).toEqual(2);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(10);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(20);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1]')).toEqual(entry0);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0]')).toEqual(entry1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1].x').getValue()).toEqual(1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[1].y').getValue()).toEqual(2);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(10);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(20);
         });
 
         it('check .splice() functionality', function() {
@@ -2641,19 +2612,19 @@ describe('JS-Object-like property accessing ', function() {
           // Replace first element
           state.myTestProperty.myComplexArray.splice(0, 1, { x: 1, y: 2 });
           expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength);
 
           // Add some elements
           state.myTestProperty.myComplexArray.splice(2, 0, { x: 3, y: 4 }, { x: 30, y: 40 });
           expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength + 2);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength + 2);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength + 2);
           const newArrayWithJsOutfit = [
             { x: 1, y: 2 },
             { x: 10, y: 20 },
             { x: 3, y: 4 },
             { x: 30, y: 40 },
           ];
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getValues().toString()).toEqual(
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getValues().toString()).toEqual(
             newArrayWithJsOutfit.toString(),
           );
 
@@ -2665,10 +2636,10 @@ describe('JS-Object-like property accessing ', function() {
           expect(removed[1].y).toEqual(40);
 
           expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength);
 
           arrayWithJsOutfit.splice(2, 2);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getValues().toString()).toEqual(
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getValues().toString()).toEqual(
             arrayWithJsOutfit.toString(),
           );
         });
@@ -2677,21 +2648,21 @@ describe('JS-Object-like property accessing ', function() {
           const oldLength = state.myTestProperty.myComplexArray.length;
           expect(state.myTestProperty.myComplexArray.unshift({ x: -1, y: -2 })).toEqual(oldLength + 1);
           expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength + 1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength + 1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(-1);
-          expect(workspace.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(-2);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(oldLength + 1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].x').getValue()).toEqual(-1);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray[0].y').getValue()).toEqual(-2);
         });
 
         it('should be able to adjust array size be setting length', function() {
           state.myTestProperty.myComplexArray.length = 4;
-          expect(workspace.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(4);
+          expect(rootNode.resolvePath('myTestProperty.myComplexArray').getLength()).toEqual(4);
         });
 
         it('should be possible to assign another ArrayProperty', function() {
           // This will fill the target with clones of the entry;
           state.myTestProperty.myComplexArray = state.constantCollections.nonPrimitiveArray;
 
-          const myComplexArray = workspace.resolvePath('myTestProperty.myComplexArray');
+          const myComplexArray = rootNode.resolvePath('myTestProperty.myComplexArray');
           expect(myComplexArray.getLength()).toEqual(2);
           expect(myComplexArray.get(0).get('x').getValue()).toEqual(42);
           expect(myComplexArray.get(0).get('y').getValue()).toEqual(43);
@@ -2701,7 +2672,7 @@ describe('JS-Object-like property accessing ', function() {
 
         it('should be possible to assign a new iterable', function() {
           const checkAssignment = () => {
-            const complexArray = workspace.resolvePath('myTestProperty.myComplexArray');
+            const complexArray = rootNode.resolvePath('myTestProperty.myComplexArray');
             expect(complexArray.getLength()).toEqual(2);
             expect(complexArray.get(0).get('x').getValue()).toEqual(1);
             expect(complexArray.get(0).get('y').getValue()).toEqual(2);
@@ -2725,9 +2696,9 @@ describe('JS-Object-like property accessing ', function() {
           state.myTestProperty.myComplexArray = vectorsAsProperties();
           checkAssignment();
 
-          // Assign iterables of properties in the workspace should throw
+          // Assign iterables of properties in the property tree should throw
           expect(() => {
-            state.myTestProperty.myComplexArray = [workspace.get('myTestProperty').get('myVector')];
+            state.myTestProperty.myComplexArray = [rootNode.get('myTestProperty').get('myVector')];
           }).toThrow();
 
           // Assigning a non-iterable should throw
@@ -2759,49 +2730,49 @@ describe('JS-Object-like property accessing ', function() {
 
       it('should be able to set entries of nested collections', function() {
         state.myGenericArray[0][0] = 84;
-        expect(workspace.resolvePath('myGenericArray[0][0]')).toEqual(84);
+        expect(rootNode.resolvePath('myGenericArray[0][0]')).toEqual(84);
 
         state.myGenericArray[1].set('a', 85);
-        expect(workspace.resolvePath('myGenericArray[1][a]')).toEqual(85);
+        expect(rootNode.resolvePath('myGenericArray[1][a]')).toEqual(85);
 
         // Assign primitive array property
         state.myGenericArray[0] = state.constantCollections.primitiveArray;
-        expect(workspace.resolvePath('myGenericArray[0]').getLength()).toEqual(3);
-        expect(workspace.resolvePath('myGenericArray[0][0]')).toEqual(42);
-        expect(workspace.resolvePath('myGenericArray[0][1]')).toEqual(43);
-        expect(workspace.resolvePath('myGenericArray[0][2]')).toEqual(44);
+        expect(rootNode.resolvePath('myGenericArray[0]').getLength()).toEqual(3);
+        expect(rootNode.resolvePath('myGenericArray[0][0]')).toEqual(42);
+        expect(rootNode.resolvePath('myGenericArray[0][1]')).toEqual(43);
+        expect(rootNode.resolvePath('myGenericArray[0][2]')).toEqual(44);
 
         // Assign non-primitive array property
-        workspace.resolvePath('myGenericArray').shift();
-        workspace.resolvePath('myGenericArray').unshift(
+        rootNode.resolvePath('myGenericArray').shift();
+        rootNode.resolvePath('myGenericArray').unshift(
           PropertyFactory.create(vector2DTemplate.typeid, 'array'));
         state.myGenericArray[0] = state.constantCollections.nonPrimitiveArray;
-        expect(workspace.resolvePath('myGenericArray[0]').getLength()).toEqual(2);
-        expect(workspace.resolvePath('myGenericArray[0][0].x').getValue()).toEqual(42);
-        expect(workspace.resolvePath('myGenericArray[0][0].y').getValue()).toEqual(43);
-        expect(workspace.resolvePath('myGenericArray[0][1].x').getValue()).toEqual(44);
-        expect(workspace.resolvePath('myGenericArray[0][1].y').getValue()).toEqual(45);
+        expect(rootNode.resolvePath('myGenericArray[0]').getLength()).toEqual(2);
+        expect(rootNode.resolvePath('myGenericArray[0][0].x').getValue()).toEqual(42);
+        expect(rootNode.resolvePath('myGenericArray[0][0].y').getValue()).toEqual(43);
+        expect(rootNode.resolvePath('myGenericArray[0][1].x').getValue()).toEqual(44);
+        expect(rootNode.resolvePath('myGenericArray[0][1].y').getValue()).toEqual(45);
 
         // Assign primitive map property
         state.myGenericArray[1] = state.constantCollections.primitiveMap;
-        expect(workspace.resolvePath('myGenericArray[1]').getIds().length).toEqual(2);
-        expect(workspace.resolvePath('myGenericArray[1][a]')).toEqual(42);
-        expect(workspace.resolvePath('myGenericArray[1][b]')).toEqual(43);
+        expect(rootNode.resolvePath('myGenericArray[1]').getIds().length).toEqual(2);
+        expect(rootNode.resolvePath('myGenericArray[1][a]')).toEqual(42);
+        expect(rootNode.resolvePath('myGenericArray[1][b]')).toEqual(43);
 
         // Assign non-primitive map property
-        workspace.get('myGenericArray').remove(1);
-        workspace.get('myGenericArray').insert(1,
+        rootNode.get('myGenericArray').remove(1);
+        rootNode.get('myGenericArray').insert(1,
           PropertyFactory.create(vector2DTemplate.typeid, 'map'));
         state.myGenericArray[1] = state.constantCollections.nonPrimitiveMap;
-        expect(workspace.resolvePath('myGenericArray[1]').getIds().length).toEqual(2);
-        expect(workspace.resolvePath('myGenericArray[1][a].x').getValue()).toEqual(42);
-        expect(workspace.resolvePath('myGenericArray[1][a].y').getValue()).toEqual(43);
-        expect(workspace.resolvePath('myGenericArray[1][b].x').getValue()).toEqual(44);
-        expect(workspace.resolvePath('myGenericArray[1][b].y').getValue()).toEqual(45);
+        expect(rootNode.resolvePath('myGenericArray[1]').getIds().length).toEqual(2);
+        expect(rootNode.resolvePath('myGenericArray[1][a].x').getValue()).toEqual(42);
+        expect(rootNode.resolvePath('myGenericArray[1][a].y').getValue()).toEqual(43);
+        expect(rootNode.resolvePath('myGenericArray[1][b].x').getValue()).toEqual(44);
+        expect(rootNode.resolvePath('myGenericArray[1][b].y').getValue()).toEqual(45);
 
         // Assign a set
         state.myGenericArray[2] = state.constantCollections.bookSet;
-        const setEntries = workspace.resolvePath('myGenericArray[2]').getAsArray();
+        const setEntries = rootNode.resolvePath('myGenericArray[2]').getAsArray();
         expect(setEntries.length).toEqual(2);
         expect(setEntries[0].get('book').getValue()).toEqual('The Hobbit');
         expect(setEntries[0].get('author').getValue()).toEqual('Tolkien');
@@ -2882,64 +2853,64 @@ describe('JS-Object-like property accessing ', function() {
         it('should reflect remote changes', function() {
           const myMap = state.myTestProperty.myMap;
           expect(myMap.size).toEqual(3);
-          workspace.resolvePath('myTestProperty.myMap').insert('fourthNumber', 4444);
+          rootNode.resolvePath('myTestProperty.myMap').insert('fourthNumber', 4444);
           expect(myMap.size).toEqual(4);
           expect(myMap.get('fourthNumber')).toEqual(4444);
-          workspace.resolvePath('myTestProperty.myMap').remove('fourthNumber');
+          rootNode.resolvePath('myTestProperty.myMap').remove('fourthNumber');
           expect(myMap.size).toEqual(3);
         });
 
         describe('Setting', function() {
           afterEach(function() {
-            workspace.resolvePath('myTestProperty.myMap').clear();
-            workspace.resolvePath('myTestProperty.myMap').insert('firstNumber', 1111);
-            workspace.resolvePath('myTestProperty.myMap').insert('secondNumber', 2222);
-            workspace.resolvePath('myTestProperty.myMap').insert('thirdNumber', 3333);
+            rootNode.resolvePath('myTestProperty.myMap').clear();
+            rootNode.resolvePath('myTestProperty.myMap').insert('firstNumber', 1111);
+            rootNode.resolvePath('myTestProperty.myMap').insert('secondNumber', 2222);
+            rootNode.resolvePath('myTestProperty.myMap').insert('thirdNumber', 3333);
           });
 
           it('check .clear() functionality', function() {
-            expect(workspace.resolvePath('myTestProperty.myMap').getIds().length).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myMap').getIds().length).toEqual(3);
             state.myTestProperty.myMap.clear();
-            expect(workspace.resolvePath('myTestProperty.myMap').getIds().length).toEqual(0);
+            expect(rootNode.resolvePath('myTestProperty.myMap').getIds().length).toEqual(0);
           });
 
           it('check .delete() functionality', function() {
             expect(state.myTestProperty.myMap.has('firstNumber')).toEqual(true);
-            expect(workspace.get('myTestProperty').get('myMap').has('firstNumber')).toEqual(true);
+            expect(rootNode.get('myTestProperty').get('myMap').has('firstNumber')).toEqual(true);
             expect(state.myTestProperty.myMap.delete('firstNumber')).toEqual(true);
             expect(state.myTestProperty.myMap.delete('nonExistingEntry')).toEqual(false);
             expect(state.myTestProperty.myMap.has('fistNumber')).toEqual(false);
-            expect(workspace.get('myTestProperty').get('myMap').has('firstNumber')).toEqual(false);
+            expect(rootNode.get('myTestProperty').get('myMap').has('firstNumber')).toEqual(false);
           });
 
           it('check .set() functionality', function() {
             // Modify entry
             state.myTestProperty.myMap.set('firstNumber', 42);
-            expect(workspace.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(42);
+            expect(rootNode.resolvePath('myTestProperty.myMap[firstNumber]')).toEqual(42);
 
             // Insert entry
             state.myTestProperty.myMap.set('fourthNumber', 4444);
-            expect(workspace.resolvePath('myTestProperty.myMap[fourthNumber]')).toEqual(4444);
+            expect(rootNode.resolvePath('myTestProperty.myMap[fourthNumber]')).toEqual(4444);
 
             // Insert (proxied) property
             state.myTestProperty.myMap.set('fifthNumber',
               PropertyFactory.create('Int32', 'single', 5555));
-            expect(workspace.resolvePath('myTestProperty.myMap[fifthNumber]')).toEqual(5555);
+            expect(rootNode.resolvePath('myTestProperty.myMap[fifthNumber]')).toEqual(5555);
 
             state.myTestProperty.myMap.set('sixthNumber',
               PropertyProxy.proxify(PropertyFactory.create('Int32', 'single', 6666)));
-            expect(workspace.resolvePath('myTestProperty.myMap[sixthNumber]')).toEqual(6666);
+            expect(rootNode.resolvePath('myTestProperty.myMap[sixthNumber]')).toEqual(6666);
 
             // Insert non matching property
             const floatProperty = PropertyFactory.create('Float32', 'single', 7.7);
             state.myTestProperty.myMap.set('seventhNumber', floatProperty);
-            expect(workspace.resolvePath('myTestProperty.myMap[seventhNumber]')).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myMap[seventhNumber]')).toEqual(7);
           });
 
           it('should be possible to assign another MapProperty', function() {
             state.myTestProperty.myMap = state.constantCollections.primitiveMap;
 
-            const map = workspace.resolvePath('myTestProperty.myMap');
+            const map = rootNode.resolvePath('myTestProperty.myMap');
             expect(map.getIds().length).toEqual(2);
             expect(map.get('a')).toEqual(42);
             expect(map.get('b')).toEqual(43);
@@ -2947,9 +2918,9 @@ describe('JS-Object-like property accessing ', function() {
 
           it('should be possible to assign a new iterable', function() {
             const checkAssignment = () => {
-              expect(workspace.resolvePath('myTestProperty.myMap[a]')).toEqual(1);
-              expect(workspace.resolvePath('myTestProperty.myMap[b]')).toEqual(2);
-              workspace.resolvePath('myTestProperty.myMap').clear();
+              expect(rootNode.resolvePath('myTestProperty.myMap[a]')).toEqual(1);
+              expect(rootNode.resolvePath('myTestProperty.myMap[b]')).toEqual(2);
+              rootNode.resolvePath('myTestProperty.myMap').clear();
             };
 
             // Assign pure javascript iterables
@@ -3095,78 +3066,78 @@ describe('JS-Object-like property accessing ', function() {
         it('should reflect remote changes', function() {
           const myComplexMap = state.myTestProperty.myComplexMap;
           expect(myComplexMap.size).toEqual(3);
-          workspace.resolvePath('myTestProperty.myComplexMap').insert('fourthEntry',
+          rootNode.resolvePath('myTestProperty.myComplexMap').insert('fourthEntry',
             PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 70, y: 80 }));
           expect(myComplexMap.size).toEqual(4);
           expect(myComplexMap.get('fourthEntry').x).toEqual(70);
-          workspace.resolvePath('myTestProperty.myComplexMap').remove('fourthEntry');
+          rootNode.resolvePath('myTestProperty.myComplexMap').remove('fourthEntry');
           expect(myComplexMap.size).toEqual(3);
         });
 
         describe('Setting', function() {
           afterEach(function() {
-            workspace.resolvePath('myTestProperty.myComplexMap').clear();
-            workspace.resolvePath('myTestProperty.myComplexMap').insert('firstEntry',
+            rootNode.resolvePath('myTestProperty.myComplexMap').clear();
+            rootNode.resolvePath('myTestProperty.myComplexMap').insert('firstEntry',
               PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 10, y: 20 }));
-            workspace.resolvePath('myTestProperty.myComplexMap').insert('secondEntry',
+            rootNode.resolvePath('myTestProperty.myComplexMap').insert('secondEntry',
               PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 30, y: 40 }));
-            workspace.resolvePath('myTestProperty.myComplexMap').insert('thirdEntry',
+            rootNode.resolvePath('myTestProperty.myComplexMap').insert('thirdEntry',
               PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 50, y: 60 }));
           });
 
           it('check .clear() functionality', function() {
-            expect(workspace.resolvePath('myTestProperty.myComplexMap').getIds().length).toEqual(3);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap').getIds().length).toEqual(3);
             state.myTestProperty.myComplexMap.clear();
-            expect(workspace.resolvePath('myTestProperty.myComplexMap').getIds().length).toEqual(0);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap').getIds().length).toEqual(0);
           });
 
           it('check .delete() functionality', function() {
             expect(state.myTestProperty.myComplexMap.has('firstEntry')).toEqual(true);
-            expect(workspace.get('myTestProperty').get('myComplexMap').has('firstEntry')).toEqual(true);
+            expect(rootNode.get('myTestProperty').get('myComplexMap').has('firstEntry')).toEqual(true);
             expect(state.myTestProperty.myComplexMap.delete('firstEntry')).toEqual(true);
             expect(state.myTestProperty.myComplexMap.delete('nonExistingEntry')).toEqual(false);
             expect(state.myTestProperty.myComplexMap.has('firstEntry')).toEqual(false);
-            expect(workspace.get('myTestProperty').get('myComplexMap').has('firstEntry')).toEqual(false);
+            expect(rootNode.get('myTestProperty').get('myComplexMap').has('firstEntry')).toEqual(false);
           });
 
           it('check .set() functionality', function() {
             // replace entry
             state.myTestProperty.myComplexMap.set('firstEntry',
               PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 7, y: 8 }));
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
 
             // replace with polymorphic
             state.myTestProperty.myComplexMap.set('firstEntry',
               PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 10, y: 20, z: 1 }));
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(10);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(20);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[firstEntry].z').getValue()).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(10);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(20);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].z').getValue()).toEqual(1);
 
             // insert entry
             state.myTestProperty.myComplexMap.set('fourthEntry', { x: 70, y: 80 });
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[fourthEntry].x').getValue()).toEqual(70);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[fourthEntry].y').getValue()).toEqual(80);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[fourthEntry].x').getValue()).toEqual(70);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[fourthEntry].y').getValue()).toEqual(80);
 
             // proxied property
             state.myTestProperty.myComplexMap.set('fifthEntry',
               PropertyProxy.proxify(PropertyFactory.create(vector2DTemplate.typeid, 'single',
                 { x: 90, y: 100 })));
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[fifthEntry].x').getValue()).toEqual(90);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[fifthEntry].y').getValue()).toEqual(100);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[fifthEntry].x').getValue()).toEqual(90);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[fifthEntry].y').getValue()).toEqual(100);
 
             // polymorphic
             state.myTestProperty.myComplexMap.set('sixthEntry',
               PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 110, y: 120, z: 1 }));
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[sixthEntry].x').getValue()).toEqual(110);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[sixthEntry].y').getValue()).toEqual(120);
-            expect(workspace.resolvePath('myTestProperty.myComplexMap[sixthEntry].z').getValue()).toEqual(1);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].x').getValue()).toEqual(110);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].y').getValue()).toEqual(120);
+            expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].z').getValue()).toEqual(1);
           });
 
           it('should be possible to assign another MapProperty', function() {
             state.myTestProperty.myComplexMap = state.constantCollections.nonPrimitiveMap;
 
-            const myComplexMap = workspace.resolvePath('myTestProperty.myComplexMap');
+            const myComplexMap = rootNode.resolvePath('myTestProperty.myComplexMap');
             expect(myComplexMap.getIds().length).toEqual(2);
             expect(myComplexMap.get('a').get('x').getValue()).toEqual(42);
             expect(myComplexMap.get('a').get('y').getValue()).toEqual(43);
@@ -3176,11 +3147,11 @@ describe('JS-Object-like property accessing ', function() {
 
           it('should be possible to assign a new iterable', function() {
             const checkAssignment = () => {
-              expect(workspace.resolvePath('myTestProperty.myComplexMap[a].x').getValue()).toEqual(1);
-              expect(workspace.resolvePath('myTestProperty.myComplexMap[a].y').getValue()).toEqual(2);
-              expect(workspace.resolvePath('myTestProperty.myComplexMap[b].x').getValue()).toEqual(3);
-              expect(workspace.resolvePath('myTestProperty.myComplexMap[b].y').getValue()).toEqual(4);
-              workspace.resolvePath('myTestProperty.myComplexMap').clear();
+              expect(rootNode.resolvePath('myTestProperty.myComplexMap[a].x').getValue()).toEqual(1);
+              expect(rootNode.resolvePath('myTestProperty.myComplexMap[a].y').getValue()).toEqual(2);
+              expect(rootNode.resolvePath('myTestProperty.myComplexMap[b].x').getValue()).toEqual(3);
+              expect(rootNode.resolvePath('myTestProperty.myComplexMap[b].y').getValue()).toEqual(4);
+              rootNode.resolvePath('myTestProperty.myComplexMap').clear();
             };
 
             // Assign pure javascript iterables
@@ -3227,43 +3198,43 @@ describe('JS-Object-like property accessing ', function() {
 
         it('should be able to set entries of nested collections', function() {
           state.myGenericMap.get('array')[0] = 84;
-          expect(workspace.resolvePath('myGenericMap[array][0]')).toEqual(84);
+          expect(rootNode.resolvePath('myGenericMap[array][0]')).toEqual(84);
 
           state.myGenericMap.get('map').set('a', 85);
-          expect(workspace.resolvePath('myGenericMap[map][a]')).toEqual(85);
+          expect(rootNode.resolvePath('myGenericMap[map][a]')).toEqual(85);
 
           // Assign primitive array property
           state.myGenericMap.set('array', state.constantCollections.primitiveArray.getProperty().clone());
-          expect(workspace.resolvePath('myGenericMap[array]').getLength()).toEqual(3);
-          expect(workspace.resolvePath('myGenericMap[array][0]')).toEqual(42);
-          expect(workspace.resolvePath('myGenericMap[array][1]')).toEqual(43);
-          expect(workspace.resolvePath('myGenericMap[array][2]')).toEqual(44);
+          expect(rootNode.resolvePath('myGenericMap[array]').getLength()).toEqual(3);
+          expect(rootNode.resolvePath('myGenericMap[array][0]')).toEqual(42);
+          expect(rootNode.resolvePath('myGenericMap[array][1]')).toEqual(43);
+          expect(rootNode.resolvePath('myGenericMap[array][2]')).toEqual(44);
 
           // Assign non-primitive array property
           state.myGenericMap.set('array', state.constantCollections.nonPrimitiveArray.getProperty().clone());
-          expect(workspace.resolvePath('myGenericMap[array]').getLength()).toEqual(2);
-          expect(workspace.resolvePath('myGenericMap[array][0].x').getValue()).toEqual(42);
-          expect(workspace.resolvePath('myGenericMap[array][0].y').getValue()).toEqual(43);
-          expect(workspace.resolvePath('myGenericMap[array][1].x').getValue()).toEqual(44);
-          expect(workspace.resolvePath('myGenericMap[array][1].y').getValue()).toEqual(45);
+          expect(rootNode.resolvePath('myGenericMap[array]').getLength()).toEqual(2);
+          expect(rootNode.resolvePath('myGenericMap[array][0].x').getValue()).toEqual(42);
+          expect(rootNode.resolvePath('myGenericMap[array][0].y').getValue()).toEqual(43);
+          expect(rootNode.resolvePath('myGenericMap[array][1].x').getValue()).toEqual(44);
+          expect(rootNode.resolvePath('myGenericMap[array][1].y').getValue()).toEqual(45);
 
           // Assign primitive map property
           state.myGenericMap.set('map', state.constantCollections.primitiveMap.getProperty().clone());
-          expect(workspace.resolvePath('myGenericMap[map]').getIds().length).toEqual(2);
-          expect(workspace.resolvePath('myGenericMap[map][a]')).toEqual(42);
-          expect(workspace.resolvePath('myGenericMap[map][b]')).toEqual(43);
+          expect(rootNode.resolvePath('myGenericMap[map]').getIds().length).toEqual(2);
+          expect(rootNode.resolvePath('myGenericMap[map][a]')).toEqual(42);
+          expect(rootNode.resolvePath('myGenericMap[map][b]')).toEqual(43);
 
           // Assign non-primitive map property
           state.myGenericMap.set('map', state.constantCollections.nonPrimitiveMap.getProperty().clone());
-          expect(workspace.resolvePath('myGenericMap[map]').getIds().length).toEqual(2);
-          expect(workspace.resolvePath('myGenericMap[map][a].x').getValue()).toEqual(42);
-          expect(workspace.resolvePath('myGenericMap[map][a].y').getValue()).toEqual(43);
-          expect(workspace.resolvePath('myGenericMap[map][b].x').getValue()).toEqual(44);
-          expect(workspace.resolvePath('myGenericMap[map][b].y').getValue()).toEqual(45);
+          expect(rootNode.resolvePath('myGenericMap[map]').getIds().length).toEqual(2);
+          expect(rootNode.resolvePath('myGenericMap[map][a].x').getValue()).toEqual(42);
+          expect(rootNode.resolvePath('myGenericMap[map][a].y').getValue()).toEqual(43);
+          expect(rootNode.resolvePath('myGenericMap[map][b].x').getValue()).toEqual(44);
+          expect(rootNode.resolvePath('myGenericMap[map][b].y').getValue()).toEqual(45);
 
           // Assign a set
           state.myGenericMap.set('set', state.constantCollections.bookSet.getProperty().clone());
-          const setEntries = workspace.resolvePath('myGenericMap[set]').getAsArray();
+          const setEntries = rootNode.resolvePath('myGenericMap[set]').getAsArray();
           expect(setEntries.length).toEqual(2);
           expect(setEntries[0].get('book').getValue()).toEqual('The Hobbit');
           expect(setEntries[0].get('author').getValue()).toEqual('Tolkien');
@@ -3275,14 +3246,14 @@ describe('JS-Object-like property accessing ', function() {
 
     describe('Set', function() {
       afterEach(function() {
-        workspace.resolvePath('myTestProperty.myBookSet').clear();
-        workspace.resolvePath('myTestProperty.myBookSet').insert(
+        rootNode.resolvePath('myTestProperty.myBookSet').clear();
+        rootNode.resolvePath('myTestProperty.myBookSet').insert(
           PropertyFactory.create(bookDataTemplate.typeid, 'single',
             { book: 'Principia Mathematica', author: 'Newton' }));
-        workspace.resolvePath('myTestProperty.myBookSet').insert(
+        rootNode.resolvePath('myTestProperty.myBookSet').insert(
           PropertyFactory.create(bookDataTemplate.typeid, 'single',
             { book: 'Chamber of Secrets', author: 'Rowling' }));
-        workspace.resolvePath('myTestProperty.myBookSet').insert(
+        rootNode.resolvePath('myTestProperty.myBookSet').insert(
           PropertyFactory.create(bookDataTemplate.typeid, 'single',
             { book: 'Brief History of Time', author: 'Hawking' }));
       });
@@ -3317,7 +3288,7 @@ describe('JS-Object-like property accessing ', function() {
         state.myTestProperty.myBookSet.add(PropertyFactory.create(bookDataTemplate.typeid, 'single',
           { author: 'Goethe', book: 'Faust' }));
 
-        const bookSet = workspace.get('myTestProperty').get('myBookSet').getAsArray();
+        const bookSet = rootNode.get('myTestProperty').get('myBookSet').getAsArray();
         expect(bookSet[bookSet.length - 2].get('author').getValue()).toEqual('Tolkien');
         expect(bookSet[bookSet.length - 2].get('book').getValue()).toEqual('The Hobbit');
         expect(bookSet[bookSet.length - 1].get('author').getValue()).toEqual('Goethe');
@@ -3325,9 +3296,9 @@ describe('JS-Object-like property accessing ', function() {
       });
 
       it('check .clear() functionality', function() {
-        expect(workspace.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(3);
+        expect(rootNode.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(3);
         state.myTestProperty.myBookSet.clear();
-        expect(workspace.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(0);
+        expect(rootNode.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(0);
       });
 
       it('check .delete() functionality', function() {
@@ -3335,13 +3306,13 @@ describe('JS-Object-like property accessing ', function() {
           { author: 'Sagan', book: 'Contact' });
 
         state.myTestProperty.myBookSet.add(myProperty);
-        expect(workspace.get('myTestProperty').get('myBookSet').has(myProperty.getId())).toEqual(true);
+        expect(rootNode.get('myTestProperty').get('myBookSet').has(myProperty.getId())).toEqual(true);
         expect(state.myTestProperty.myBookSet.has(myProperty)).toEqual(true);
         // Should be able to delete it
         expect(state.myTestProperty.myBookSet.delete(myProperty)).toEqual(true);
         // Should no longer be able to delete it
         expect(state.myTestProperty.myBookSet.delete(myProperty)).toEqual(false);
-        expect(workspace.get('myTestProperty').get('myBookSet').has(myProperty.getId())).toEqual(false);
+        expect(rootNode.get('myTestProperty').get('myBookSet').has(myProperty.getId())).toEqual(false);
         expect(state.myTestProperty.myBookSet.has(myProperty)).toEqual(false);
       });
 
@@ -3395,7 +3366,7 @@ describe('JS-Object-like property accessing ', function() {
       it('should reflect remote changes', function() {
         const myBookSet = state.myTestProperty.myBookSet;
         expect(myBookSet.size).toEqual(3);
-        workspace.resolvePath('myTestProperty.myBookSet').insert(
+        rootNode.resolvePath('myTestProperty.myBookSet').insert(
           PropertyFactory.create(bookDataTemplate.typeid, 'single', { author: 'Tolkien', book: 'The Hobbit' }));
         expect(myBookSet.size).toEqual(4);
       });
@@ -3404,7 +3375,7 @@ describe('JS-Object-like property accessing ', function() {
         const checkAssignment = () => {
           let foundHobbit = false;
           let foundFaust = false;
-          workspace.resolvePath('myTestProperty.myBookSet').getAsArray().forEach(function(value) {
+          rootNode.resolvePath('myTestProperty.myBookSet').getAsArray().forEach(function(value) {
             if (value.get('book').getValue() === 'The Hobbit') {
               foundHobbit = true;
               expect(value.get('author').getValue()).toEqual('Tolkien');
@@ -3415,9 +3386,9 @@ describe('JS-Object-like property accessing ', function() {
           });
           expect(foundHobbit).toEqual(true);
           expect(foundFaust).toEqual(true);
-          expect(workspace.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(2);
-          workspace.resolvePath('myTestProperty.myBookSet').clear();
-          expect(workspace.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(0);
+          expect(rootNode.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(2);
+          rootNode.resolvePath('myTestProperty.myBookSet').clear();
+          expect(rootNode.resolvePath('myTestProperty.myBookSet').getIds().length).toEqual(0);
         };
 
         // Assign pure javascript iterables
@@ -3441,9 +3412,9 @@ describe('JS-Object-like property accessing ', function() {
         state.myTestProperty.myBookSet = booksAsProperties();
         checkAssignment();
 
-        // Assign iterables of properties in the workspace should throw
+        // Assign iterables of properties in the property tree should throw
         expect(() => {
-          state.myTestProperty.myBookSet = new Set([workspace.get('myBook')]);
+          state.myTestProperty.myBookSet = new Set([rootNode.get('myBook')]);
         }).toThrow();
 
         // Assigning a non-iterable should throw
