@@ -25,11 +25,6 @@ describe("Retry Util Tests", () => {
     };
     const logger = new TelemetryNullLogger();
 
-    before(()=>{
-    });
-    after(()=>{
-    });
-
     it("Should succeed at first time", async () => {
         let retryTimes: number = 1;
         let success = false;
