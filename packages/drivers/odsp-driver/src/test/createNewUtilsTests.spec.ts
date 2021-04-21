@@ -11,7 +11,7 @@ describe("Create New Utils Tests", () => {
     beforeEach(() => {
     });
 
-    it("Should populate caches properly", async () => {
+    it("Should convert as expected and check contents", async () => {
         const rootBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
             content: JSON.stringify("root"),
