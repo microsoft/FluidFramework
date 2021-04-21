@@ -4,7 +4,7 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { ChangeNode } from './PersistedTypes';
+import { ChangeNode } from './generic';
 
 /**
  * The initial tree.

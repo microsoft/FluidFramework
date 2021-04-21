@@ -4,16 +4,24 @@
  */
 
 import { expect } from 'chai';
-import { NodeId } from '../Identifiers';
-import { Side } from '../PersistedTypes';
-import { EditValidationResult } from '../Snapshot';
-import { simpleTreeSnapshot, left, right, leftTraitLocation } from './utilities/TestUtilities';
+import { NodeId, TraitLabel } from '../Identifiers';
+import { Side, Snapshot } from '../Snapshot';
+import { EditValidationResult } from '../Checkout';
+import { detachRange, insertIntoTrait, StablePlace, StableRange, validateStableRange } from '../default-edits';
+import { ChangeNode } from '../generic';
+import {
+	simpleTreeSnapshotWithValidation,
+	left,
+	right,
+	leftTraitLocation,
+	makeEmptyNode,
+} from './utilities/TestUtilities';
 
 describe('Snapshot', () => {
 	describe('StableRange validation', () => {
 		it('is malformed when anchors are malformed', () => {
 			expect(
-				simpleTreeSnapshot.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					// trait and sibling should be mutually exclusive
 					start: { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before },
 					end: { referenceSibling: left.identifier, side: Side.After },
@@ -22,7 +30,7 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when anchors are incorrectly ordered', () => {
 			expect(
-				simpleTreeSnapshot.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: left.identifier, side: Side.After },
 					end: { referenceSibling: left.identifier, side: Side.Before },
 				})
@@ -30,7 +38,7 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when anchors are in different traits', () => {
 			expect(
-				simpleTreeSnapshot.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: left.identifier, side: Side.Before },
 					end: { referenceSibling: right.identifier, side: Side.After },
 				})
@@ -38,11 +46,62 @@ describe('Snapshot', () => {
 		});
 		it('is invalid when an anchor is invalid', () => {
 			expect(
-				simpleTreeSnapshot.validateStableRange({
+				validateStableRange(simpleTreeSnapshotWithValidation, {
 					start: { referenceSibling: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId, side: Side.Before },
 					end: { referenceSibling: right.identifier, side: Side.After },
 				})
 			).equals(EditValidationResult.Invalid);
+		});
+	});
+
+	describe('Mutators', () => {
+		const label = 'label' as TraitLabel;
+		const nodeA = makeEmptyNode();
+		const nodeB = makeEmptyNode();
+		const tree: ChangeNode = {
+			...makeEmptyNode(),
+			traits: { [label]: [nodeA, nodeB] },
+		};
+		const startingSnapshot = Snapshot.fromTree(tree, true);
+		it('can detach a single node', () => {
+			expect(startingSnapshot.getIndexInTrait(nodeA.identifier)).to.equal(0);
+			expect(startingSnapshot.getIndexInTrait(nodeB.identifier)).to.equal(1);
+			const { snapshot } = detachRange(startingSnapshot, StableRange.only(nodeA));
+			expect(snapshot.size).to.equal(3);
+			expect(snapshot.hasNode(nodeA.identifier)).to.be.true;
+			expect(snapshot.getParentSnapshotNode(nodeA.identifier)).to.be.undefined;
+			expect(snapshot.getParentSnapshotNode(nodeB.identifier)?.identifier).to.equal(tree.identifier);
+			expect(snapshot.getIndexInTrait(nodeB.identifier)).to.equal(0);
+		});
+		it('can detach an entire trait', () => {
+			const { snapshot, detached } = detachRange(
+				startingSnapshot,
+				StableRange.all({ parent: tree.identifier, label })
+			);
+			expect(detached).deep.equals([nodeA.identifier, nodeB.identifier]);
+			expect(snapshot.size).to.equal(3);
+			expect(snapshot.hasNode(nodeA.identifier)).to.be.true;
+			expect(snapshot.hasNode(nodeB.identifier)).to.be.true;
+			expect(snapshot.getParentSnapshotNode(nodeA.identifier)).to.be.undefined;
+			expect(snapshot.getParentSnapshotNode(nodeB.identifier)).to.be.undefined;
+		});
+		it('can insert a node', () => {
+			const newNode = makeEmptyNode();
+			let snapshot = startingSnapshot.insertSnapshotNodes([
+				[newNode.identifier, { ...newNode, traits: new Map() }],
+			]);
+			expect(snapshot.size).to.equal(4);
+			expect(snapshot.hasNode(newNode.identifier)).to.be.true;
+			expect(snapshot.getParentSnapshotNode(newNode.identifier)).to.be.undefined;
+			snapshot = insertIntoTrait(
+				snapshot,
+				[newNode.identifier],
+				StablePlace.atStartOf({ parent: tree.identifier, label })
+			);
+			expect(snapshot.getParentSnapshotNode(newNode.identifier)?.identifier).to.equal(tree.identifier);
+			expect(snapshot.getIndexInTrait(newNode.identifier)).to.equal(0);
+			expect(snapshot.getIndexInTrait(nodeA.identifier)).to.equal(1);
+			expect(snapshot.getIndexInTrait(nodeB.identifier)).to.equal(2);
 		});
 	});
 });

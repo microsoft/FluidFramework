@@ -3,43 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId } from './Identifiers';
-import { fail } from './Common';
-import {
-	Change,
-	ChangeType,
-	Detach,
-	EditNode,
-	Insert,
-	TreeNode,
-	Edit,
-	SetValue,
-	StableRange,
-	StablePlace,
-	Side,
-} from './PersistedTypes';
-import { Snapshot } from './Snapshot';
+import { DetachedSequenceId, NodeId } from '../Identifiers';
+import { assert, fail } from '../Common';
+import { Snapshot, Side } from '../Snapshot';
+import { EditNode, TreeNode } from '../generic';
+import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
+import { rangeFromStableRange } from './EditUtilities';
 
 /**
- * Creates the changes required to revert the given edit associated with respect to the supplied view.
+ * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
+ * @param changes - the changes for which to produce an inverse.
+ * @param before - a snapshot of the tree state before `changes` are/were applied - used as a basis for generating the inverse.
+ * @returns a sequence of changes _r_ that will produce `before` if applied to a snapshot _A_, where _A_ is the result of
+ * applying `changes` to `before`. Applying _r_ to snapshots other than _A_ is legal but may cause the changes to fail to apply or may
+ * not be a true semantic inverse.
+ *
+ * TODO: what should this do if `changes` fails to apply to `before`?
  * @public
  */
-export function revert(edit: Edit, view: Snapshot): Change[] {
+export function revert(changes: readonly Change[], before: Snapshot): Change[] {
 	const result: Change[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
 	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
-	const insertSources = new Set<DetachedSequenceId>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = new Transaction(view);
-	// Roll back target edit
-	for (const change of edit.changes) {
+	const editor = new Transaction(before);
+	// Apply `edit`, generating an inverse as we go.
+	for (const change of changes) {
+		// Generate an inverse of each change
 		switch (change.type) {
 			case ChangeType.Build: {
 				// Save nodes added to the detached state for use in future changes
 				const { destination, source } = change;
+				assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
+				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
 				builtNodes.set(
 					destination,
 					source.map((node) => (node as TreeNode<EditNode>).identifier)
@@ -54,38 +53,32 @@ export function revert(edit: Edit, view: Snapshot): Change[] {
 				if (nodesBuilt !== undefined) {
 					result.unshift(createInvertedInsert(change, nodesBuilt));
 					builtNodes.delete(source);
-
-					// Save source ids of inserts for use in future changes
-					insertSources.add(source);
-				}
-
-				if (nodesDetached !== undefined) {
+				} else if (nodesDetached !== undefined) {
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
-					builtNodes.delete(source);
-
-					// Save source ids of inserts for use in future changes
-					insertSources.add(source);
+					detachedNodes.delete(source);
+				} else {
+					fail('Cannot revert Insert: source has not been built or detached.');
 				}
 
 				break;
 			}
 			case ChangeType.Detach: {
-				const { destination: source } = change;
-
-				const { invertedDetach, detachedNodeIds } = createInvertedDetach(
-					source !== undefined && insertSources.has(source) ? change : { ...change, destination: undefined },
-					editor.view
-				);
-
 				const { destination } = change;
+				const { invertedDetach, detachedNodeIds } = createInvertedDetach(change, editor.view);
+
 				if (destination !== undefined) {
+					assert(
+						!builtNodes.has(destination),
+						`Cannot revert Detach: destination is already used by a Build`
+					);
+					assert(
+						!detachedNodes.has(destination),
+						`Cannot revert Detach: destination is already used by a Detach`
+					);
 					detachedNodes.set(destination, detachedNodeIds);
 				}
 
 				result.unshift(...invertedDetach);
-				if (source !== undefined) {
-					insertSources.delete(source);
-				}
 				break;
 			}
 			case ChangeType.SetValue:
@@ -94,7 +87,6 @@ export function revert(edit: Edit, view: Snapshot): Change[] {
 			case ChangeType.Constraint:
 				// TODO:#46759: Support Constraint in reverts
 				fail('Revert currently does not support Constraints');
-				break;
 			default:
 				fail('Revert does not support the change type.');
 		}
@@ -162,7 +154,7 @@ function createInvertedDetach(
 ): { invertedDetach: Change[]; detachedNodeIds: NodeId[] } {
 	const { source } = detach;
 
-	const { start, end } = snapshotBeforeEdit.rangeFromStableRange(source);
+	const { start, end } = rangeFromStableRange(snapshotBeforeEdit, source);
 	const { trait: referenceTrait } = start;
 	const nodes = snapshotBeforeEdit.getTrait(referenceTrait);
 
@@ -175,9 +167,15 @@ function createInvertedDetach(
 	let insertDestination: StablePlace;
 
 	if (start.side === Side.After) {
-		insertDestination = start;
+		insertDestination =
+			start.sibling === undefined
+				? { side: Side.After, referenceTrait }
+				: { side: Side.After, referenceSibling: start.sibling };
 	} else if (end.side === Side.Before) {
-		insertDestination = end;
+		insertDestination =
+			end.sibling === undefined
+				? { side: Side.Before, referenceTrait }
+				: { side: Side.Before, referenceSibling: end.sibling };
 	} else {
 		const referenceSibling = leftOfDetached.pop();
 		insertDestination = {
@@ -208,7 +206,9 @@ function createInvertedSetValue(setValue: SetValue, revisionBeforeEdit: Snapshot
 	const { nodeToModify } = setValue;
 	const oldPayload = revisionBeforeEdit.getSnapshotNode(nodeToModify).payload;
 
-	if (oldPayload) {
+	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
+	// eslint-disable-next-line no-null/no-null
+	if (oldPayload !== null) {
 		return [Change.setPayload(nodeToModify, oldPayload)];
 	}
 	return [Change.clearPayload(nodeToModify)];
