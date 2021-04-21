@@ -24,7 +24,7 @@ export const makeScalar = (value: Jsonable): TreeNode<EditNode> => ({
     identifier: nodeId(),
     definition: NodeKind.scalar as Definition,
     traits: {},
-    payload: { base64: JSON.stringify(value) },
+    payload: value,
 });
 
 /* eslint-disable no-null/no-null */

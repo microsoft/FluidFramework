@@ -15,6 +15,7 @@
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+    "build:docs:ci": "api-extractor run",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -60,7 +61,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.21.0",
+    "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.13.1",
     "@types/assert": "^1.5.1",

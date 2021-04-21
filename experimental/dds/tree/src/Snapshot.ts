@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from './Common';
+import { assert, copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitLocation, StableRange, Side, StablePlace, NodeData } from './PersistedTypes';
-import { compareTraits } from './EditUtilities';
 import { compareSnapshotNodes, getChangeNodeFromSnapshot } from './SnapshotUtilities';
 import { createForest, Delta, Forest as GenericForest } from './Forest';
+import { ChangeNode, NodeData, TraitLocation } from './generic';
 
 /**
  * An immutable view of a distributed tree node.
@@ -48,6 +47,30 @@ export interface SnapshotPlace {
 }
 
 /**
+ * Defines a place relative to sibling.
+ * The "outside" of a trait is the `undefined` sibling,
+ * so After `undefined` is the beginning of the trait, and before `undefined` is the end.
+ *
+ * For this purpose, traits look like:
+ *
+ * `{undefined} - {Node 0} - {Node 1} - ... - {Node N} - {undefined}`
+ *
+ * Each `{value}` in the diagram is a possible sibling, which is either a Node or undefined.
+ * Each `-` in the above diagram is a `Place`, and can be describe as being `After` a particular `{sibling}` or `Before` it.
+ * This means that `After` `{undefined}` means the same `Place` as before the first node
+ * and `Before` `{undefined}` means the `Place` after the last Node.
+ *
+ * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
+ * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
+ * two place description may no longer evaluate to the same place.
+ * @public
+ */
+export enum Side {
+	Before = 0,
+	After = 1,
+}
+
+/**
  * Specifies the range of nodes from `start` to `end` within a trait within a particular `Snapshot`.
  * Valid iff start and end are valid and are withing the same trait.
  * @public
@@ -57,7 +80,7 @@ export interface SnapshotRange {
 	readonly end: SnapshotPlace;
 }
 
-type Forest = GenericForest<NodeId, SnapshotNode, { label: TraitLabel; index: TraitNodeIndex }>;
+type Forest = GenericForest<NodeId, SnapshotNode, { label: TraitLabel }>;
 
 /** Yield the direct children of the given `SnapshotNode` */
 function* getSnapshotNodeChildren(
@@ -73,6 +96,14 @@ function* getSnapshotNodeChildren(
 }
 
 /**
+ * Compares strings lexically to form a strict partial ordering.
+ * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
+ */
+function compareStrings(a: string, b: string): number {
+	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
  * An immutable view of a distributed tree.
  * @public
  */
@@ -81,10 +112,17 @@ export class Snapshot {
 	private readonly forest: Forest;
 
 	/**
+	 * A cache of node's index within their parent trait.
+	 * Used to avoid redundant linear scans of traits.
+	 * Not shared across snapshots; initialized to empty each time a Snapshot is created.
+	 */
+	private traitIndicesCache?: Map<NodeId, TraitNodeIndex>;
+
+	/**
 	 * Constructs a Snapshot using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `Snapshot`
 	 */
-	public static fromTree(root: ChangeNode): Snapshot {
+	public static fromTree(root: ChangeNode, expensiveValidation = false): Snapshot {
 		function insertNodeRecursive(node: ChangeNode, newSnapshotNodes: Map<NodeId, SnapshotNode>): NodeId {
 			const { identifier, definition } = node;
 			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
@@ -105,7 +143,10 @@ export class Snapshot {
 		}
 
 		const map = new Map<NodeId, SnapshotNode>();
-		return new Snapshot(insertNodeRecursive(root, map), createForest(getSnapshotNodeChildren).addAll(map));
+		return new Snapshot(
+			insertNodeRecursive(root, map),
+			createForest(getSnapshotNodeChildren, compareStrings, expensiveValidation).add(map)
+		);
 	}
 
 	private constructor(root: NodeId, forest: Forest) {
@@ -157,151 +198,55 @@ export class Snapshot {
 	 * Inserts all nodes (and their descendants) in a NodeSequence into the forest.
 	 */
 	public insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot {
-		return new Snapshot(this.root, this.forest.addAll(sequence));
-	}
-
-	/**
-	 * Add the given nodes into the forest. If an entry contains a key that is already present in the forest,
-	 * run the merger function to resolve the conflict.
-	 * @param nodes - the nodes to add to the forest
-	 * @param merger - a function which, given two conflicting values for the same key, returns the correct value.
-	 */
-	public mergeWith(
-		nodes: Iterable<[NodeId, SnapshotNode]>,
-		merger: (oldVal: SnapshotNode, newVal: SnapshotNode, key: NodeId) => SnapshotNode
-	): Snapshot {
-		return new Snapshot(this.root, this.forest.mergeWith(nodes, merger));
+		return new Snapshot(this.root, this.forest.add(sequence));
 	}
 
 	/**
 	 * Remove all nodes with the given ids from the forest
 	 */
 	public deleteNodes(nodes: Iterable<NodeId>): Snapshot {
-		return new Snapshot(this.root, this.forest.deleteAll(nodes, true));
+		return new Snapshot(this.root, this.forest.delete(nodes, true));
 	}
 
 	/**
-	 * Check the validity of the given `StablePlace`
-	 * @param place - the `StablePlace` to check
+	 * Replaces the node associated with `id`. The inserted node will have the same NodeId. A node with `id` must exist in the snapshot.
+	 *
+	 * By default, no re-parenting is performed. The optionally provided iterators can be used to adjust the children of the replaced node.
+	 * Any added children must already exist in the forest and be unparented.
+	 * Any removed children will be unparented and remain in the forest.
+	 *
+	 * Care should be taken to ensure that the child set that results from the adds/deletes are consistent with those returned by the
+	 * `getChildren` delegate provided to `createForest`. This will be checked automatically when `expensiveValidation` is true.
+	 *
 	 */
-	public validateStablePlace(place: StablePlace): EditValidationResult {
-		/* A StablePlace is valid if the following conditions are met:
-		 *     1. A sibling or trait is defined.
-		 *     2. If a sibling is defined, both it and its parent exist in the `Snapshot`.
-		 *     3. If a trait is defined, its parent node exists in the `Snapshot`.
-		 *     4. If a sibling and a trait location are both specified, the sibling needs to actually be in that trait.
-		 */
-		const { referenceSibling, referenceTrait } = place;
-
-		// A well-formed `StablePlace` specifies exactly one of `referenceSibling` and `referenceTrait`.
-		if (
-			(referenceSibling === undefined && referenceTrait === undefined) ||
-			(referenceSibling !== undefined && referenceTrait !== undefined)
-		) {
-			return EditValidationResult.Malformed;
-		}
-
-		if (referenceSibling !== undefined) {
-			const siblingNode = this.forest.tryGet(referenceSibling);
-			if (siblingNode === undefined) {
-				return EditValidationResult.Invalid;
-			}
-
-			// Detached nodes and the root are invalid anchors.
-			if (this.forest.tryGetParent(referenceSibling) === undefined) {
-				return EditValidationResult.Invalid;
-			}
-
-			return EditValidationResult.Valid;
-		}
-
-		if (this.forest.tryGet(assertNotUndefined(referenceTrait).parent) === undefined) {
-			return EditValidationResult.Invalid;
-		}
-
-		return EditValidationResult.Valid;
+	public replace(
+		id: NodeId,
+		node: SnapshotNode,
+		childrenAdded?: [NodeId, { label: TraitLabel }][],
+		childrenRemoved?: NodeId[]
+	): Snapshot {
+		return new Snapshot(this.root, this.forest.replace(id, node, childrenAdded, childrenRemoved));
 	}
 
 	/**
-	 * Check the validity of the given `StableRange`
-	 * @param range - the `StableRange` to check
-	 */
-	public validateStableRange(range: StableRange): EditValidationResult {
-		/* A StableRange is valid if the following conditions are met:
-		 *     1. Its start and end places are valid.
-		 *     2. Its start and end places are within the same trait.
-		 *     3. Its start place is before its end place.
-		 */
-		const { start, end } = range;
-
-		const startValidationResult = this.validateStablePlace(start);
-		if (startValidationResult !== EditValidationResult.Valid) {
-			return startValidationResult;
-		}
-
-		const endValidationResult = this.validateStablePlace(end);
-		if (endValidationResult !== EditValidationResult.Valid) {
-			return endValidationResult;
-		}
-
-		const startTraitLocation =
-			start.referenceTrait || this.getTraitAddress(assertNotUndefined(start.referenceSibling)).trait;
-		const endTraitLocation =
-			end.referenceTrait || this.getTraitAddress(assertNotUndefined(end.referenceSibling)).trait;
-
-		if (!compareTraits(startTraitLocation, endTraitLocation)) {
-			return EditValidationResult.Invalid;
-		}
-
-		const { start: startPlace, end: endPlace } = this.rangeFromStableRange(range);
-		const startIndex = this.findIndexWithinTrait(startPlace);
-		const endIndex = this.findIndexWithinTrait(endPlace);
-
-		if (startIndex > endIndex) {
-			return EditValidationResult.Invalid;
-		}
-
-		return EditValidationResult.Valid;
-	}
-
-	/**
-	 * Set the contents of the given trait
-	 * @param traitLocation - the location of the trait
-	 * @param newContents - the contents of the trait
-	 */
-	public updateTraitContents(traitLocation: TraitLocation, newContents: NodeId[]): Snapshot {
-		const deleteTrait = newContents.length === 0;
-		const { parent } = traitLocation;
-		const oldNode = this.getSnapshotNode(parent);
-		const traits = new Map(oldNode.traits.entries());
-		if (deleteTrait) {
-			traits.delete(traitLocation.label);
-		} else {
-			traits.set(traitLocation.label, newContents);
-		}
-		const node: SnapshotNode = { ...oldNode, traits };
-		const snapshot = this.replaceNode(parent, node);
-		assert(deleteTrait || snapshot.getTrait(traitLocation) === newContents, 'updateTraitContents should work');
-		return snapshot;
-	}
-
-	/**
-	 * Replaces a node. The node must exist in this `Snapshot`.
+	 * Replaces a node's data and leaves the children parented. The node must exist in this `Snapshot`.
 	 * @param nodeId - the id of the node to replace
-	 * @param node - the new node
+	 * @param nodeData - the new data
 	 */
-	public replaceNode(nodeId: NodeId, node: SnapshotNode): Snapshot {
-		return new Snapshot(this.root, this.forest.replace(nodeId, node));
+	public replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot {
+		const existingNode = this.getSnapshotNode(nodeId);
+		return new Snapshot(this.root, this.forest.replace(nodeId, { ...nodeData, traits: existingNode.traits }));
 	}
 
 	/**
 	 * @returns the index just after place (which specifies a location between items).
+	 * Performance note: this is O(siblings in trait).
 	 */
 	public findIndexWithinTrait(place: SnapshotPlace): PlaceIndex {
 		if (place.sibling === undefined) {
 			return this.getIndexOfSide(place.side, place.trait);
 		}
-		return getIndex(place.side, this.getTraitAddress(place.sibling).index);
+		return getIndex(place.side, this.getIndexInTrait(place.sibling));
 	}
 
 	/**
@@ -330,33 +275,44 @@ export class Snapshot {
 	}
 
 	/**
-	 * @param range - must be well formed and valid
+	 * @param node - must have a parent.
 	 */
-	private getTraitLocationOfRange(range: StableRange): TraitLocation {
-		const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;
-		if (referenceTrait) {
-			return referenceTrait;
-		}
-		const sibling =
-			range.start.referenceSibling ??
-			range.end.referenceSibling ??
-			fail('malformed range does not indicate trait');
-		return this.getTraitAddress(sibling).trait;
-	}
-
-	/**
-	 * @param node - must have a parent
-	 */
-	public getTraitAddress(node: NodeId): NodeInTrait {
+	public getTraitLocation(node: NodeId): TraitLocation {
 		const parentData = this.forest.getParent(node);
 		assert(parentData !== undefined, 'node must have parent');
 		return {
-			index: parentData.parentData.index,
-			trait: {
-				parent: parentData.parentNode,
-				label: parentData.parentData.label,
-			},
+			parent: parentData.parentNode,
+			label: parentData.parentData.label,
 		};
+	}
+
+	/**
+	 * @param node - must have a parent.
+	 * Performance note: this is O(siblings in trait).
+	 */
+	public getIndexInTrait(node: NodeId): TraitNodeIndex {
+		if (this.traitIndicesCache === undefined) {
+			this.traitIndicesCache = new Map();
+		} else {
+			const cached = this.traitIndicesCache.get(node);
+			if (cached !== undefined) {
+				return cached;
+			}
+		}
+		const parentData = this.forest.getParent(node);
+		const parent = this.forest.get(parentData.parentNode);
+		const traitParent =
+			parent.traits.get(parentData.parentData.label) ?? fail('invalid parentData: trait parent not found.');
+		let foundIndex = -1 as TraitNodeIndex;
+		for (let i = 0; i < traitParent.length; i++) {
+			const nodeInTrait = traitParent[i];
+			const index = i as TraitNodeIndex;
+			this.traitIndicesCache.set(nodeInTrait, index);
+			if (nodeInTrait === node) {
+				foundIndex = index;
+			}
+		}
+		return foundIndex !== -1 ? foundIndex : fail('invalidParentData: node not found in specified trait');
 	}
 
 	/**
@@ -369,44 +325,6 @@ export class Snapshot {
 
 	private getIndexOfSide(side: Side, traitLocation: TraitLocation): PlaceIndex {
 		return side === Side.After ? (0 as PlaceIndex) : (this.getTrait(traitLocation).length as PlaceIndex);
-	}
-
-	private sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitLocation): SnapshotPlace {
-		const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
-		return {
-			trait,
-			side: siblingRelative.side,
-			sibling: siblingRelative.referenceSibling,
-		};
-	}
-
-	/**
-	 * Express the given `StableRange` as a `Range`
-	 */
-	public rangeFromStableRange(range: StableRange): SnapshotRange {
-		const location = this.getTraitLocationOfRange(range);
-		// This can be optimized for better constant factors.
-		return {
-			start: this.sideOfRange(range, SideOfRange.Start, location),
-			end: this.sideOfRange(range, SideOfRange.End, location),
-		};
-	}
-
-	/**
-	 * Express the given `StablePlace` as a `Place`
-	 */
-	public placeFromStablePlace(stablePlace: StablePlace): SnapshotPlace {
-		const { side } = stablePlace;
-		if (stablePlace.referenceSibling === undefined) {
-			assert(stablePlace.referenceTrait !== undefined);
-			return { trait: stablePlace.referenceTrait, side };
-		}
-		const nodeInTrait = this.getTraitAddress(stablePlace.referenceSibling);
-		return {
-			trait: nodeInTrait.trait,
-			side: stablePlace.side,
-			sibling: stablePlace.referenceSibling,
-		};
 	}
 
 	/** Compares this snapshot to another for equality. */
@@ -456,32 +374,4 @@ function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
 export interface NodeInTrait {
 	readonly trait: TraitLocation;
 	readonly index: TraitNodeIndex;
-}
-
-/**
- * The result of validation of an Edit.
- * @public
- */
-export enum EditValidationResult {
-	/**
-	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
-	 * or contained a sequence of changes that could not possibly be applied sequentially without error
-	 * (e.g. an edit which tries to insert the same detached node twice).
-	 */
-	Malformed,
-	/**
-	 * The edit is well-formed but cannot be applied to the current view, generally because concurrent changes
-	 * caused one or more merge conflicts.
-	 * For example, the edit refers to the `StablePlace` after node `C`, but `C` has since been deleted.
-	 */
-	Invalid,
-	/**
-	 * The edit is well-formed and can be applied to the current view.
-	 */
-	Valid,
-}
-
-enum SideOfRange {
-	Start = 0,
-	End = 1,
 }
