@@ -1,16 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
-import { TokenFetchOptions } from "./tokenFetch";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.

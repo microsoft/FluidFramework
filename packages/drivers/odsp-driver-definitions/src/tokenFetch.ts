@@ -1,7 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable no-null/no-null */
 
 /**
  * Represents token response
@@ -66,11 +68,10 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @param tokenResponse - return value for TokenFetcher method
  * @returns Token value
  */
-export function tokenFromResponse(tokenResponse: string | TokenResponse | null | undefined): string | null {
-    return tokenResponse === null || typeof tokenResponse === "string"
+export const tokenFromResponse = (tokenResponse: string | TokenResponse | null | undefined): string | null =>
+    tokenResponse === null || typeof tokenResponse === "string"
         ? tokenResponse
         : tokenResponse === undefined ? null : tokenResponse.token;
-}
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache
@@ -78,11 +79,10 @@ export function tokenFromResponse(tokenResponse: string | TokenResponse | null |
  * @returns Value indicating whether response came from cache.
  * Undefined is returned when we could not determine the source of token.
  */
-export function isTokenFromCache(tokenResponse: string | TokenResponse | null): boolean | undefined {
-    return tokenResponse === null || typeof tokenResponse === "string"
+export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): boolean | undefined =>
+    tokenResponse === null || typeof tokenResponse === "string"
         ? undefined
         : tokenResponse.fromCache;
-}
 
 /**
  * Identity types supported by ODSP driver.

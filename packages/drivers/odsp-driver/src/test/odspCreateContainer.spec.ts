@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,9 +9,9 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { IOdspResolvedUrl } from "../contracts";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";

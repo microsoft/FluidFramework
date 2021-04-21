@@ -1,12 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { createOdspUrl, IOdspUrlParts, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
+import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 const fluidOfficeAndOneNoteServers = [
     "dev.fluidpreview.office.net",

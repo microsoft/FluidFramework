@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl } from "../contracts";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
 import { EpochTracker } from "../epochTracker";

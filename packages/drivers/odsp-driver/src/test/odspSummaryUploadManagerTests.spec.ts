@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,11 +12,11 @@ import * as api from "@fluidframework/protocol-definitions";
 import { hashFile, IsoBuffer } from "@fluidframework/common-utils";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
-import { IBlob, IOdspResolvedUrl } from "../contracts";
+import { IBlob } from "../contracts";
 import { LocalPersistentCache } from "../odspCache";
-import { TokenFetchOptions } from "../tokenFetch";
 import { mockFetchOk } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
