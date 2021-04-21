@@ -28,7 +28,7 @@ import { theme } from './theme';
 import { PropertyProxy } from '@fluid-experimental/property-proxy';
 
 import { FluidBinder } from '@fluid-experimental/property-binder';
-import { IPropertyTree } from './dataObject';
+import { SharedPropertyTree } from '@fluid-experimental/property-dds';
 
 const useStyles = makeStyles({
     activeGraph: {
@@ -108,7 +108,7 @@ export const InspectorApp = (props: any) => {
 
 
 
-export function renderApp(propertyTree: IPropertyTree, element: HTMLElement) {
+export function renderApp(propertyTree: SharedPropertyTree, element: HTMLElement) {
     const fluidBinder = new FluidBinder();
 
     fluidBinder.attachTo(propertyTree);
@@ -118,7 +118,7 @@ export function renderApp(propertyTree: IPropertyTree, element: HTMLElement) {
     fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
         // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
         // Note: This is what currently inspector table expect for "data" prop.
-        const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);
+        const proxifiedDDS = PropertyProxy.proxify(propertyTree.root);
         ReactDOM.render(<InspectorApp data={proxifiedDDS} />, element);
     }, 20));
 }

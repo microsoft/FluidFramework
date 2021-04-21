@@ -516,7 +516,7 @@ const InheritTestBaseType = {
   ]
 };
 
-const registerTestTemplates = function () {
+const registerTestTemplates = function() {
   if (PropertyFactory.getTemplate(ChildTemplate.typeid)) {
     return;
   }

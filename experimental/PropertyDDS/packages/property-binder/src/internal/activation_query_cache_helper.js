@@ -58,7 +58,7 @@ export class ActivationQueryCacheHelper {
         // Note, we don't check the root of the template; we are only interested in the children properties
         const template = getLocalOrRemoteSchema(in_typeid, this._workspace);
         if (template && template.properties) {
-          const checkNested = properties => {
+          const checkNested = (properties) => {
             let result = false;
             for (let i = 0; !result && i < properties.length; ++i) {
               if (properties[i].typeid) {
@@ -141,7 +141,7 @@ export class ActivationQueryCacheHelper {
         // Get all the definitions for this typeid, and then filter them for ones that are activated.
         const definitions = this._dataBinder._registry.getApplicableBindingDefinitions(
           in_typeid, rule.bindingType, this._workspace
-        ).filter(definition => {
+        ).filter((definition) => {
           return this._dataBinder._activationAppliesToTypeId(
             rule.activationSplitType,
             propertySplitType,

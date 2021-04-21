@@ -112,7 +112,6 @@ const CommonWebpackLibTSConfig = function(args) {
       path: params.distPath
     },
     externals: {
-      '@adsk/forge-appfw-di': '@adsk/forge-appfw-di',
      "@fluid-experimental/property-properties": {
         amd: "@fluid-experimental/property-properties",
         commonjs: "@fluid-experimental/property-properties",
@@ -130,7 +129,7 @@ const CommonWebpackLibTSConfig = function(args) {
       rules: [
         {
           test: /\.[tj]sx?$/,
-          exclude: [/node_modules/, /@adsk/, /\.min\.js$/],
+          exclude: [/node_modules/, /\.min\.js$/],
           use: {
             loader: 'babel-loader',
             options: {

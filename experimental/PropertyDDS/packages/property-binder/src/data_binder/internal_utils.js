@@ -864,7 +864,7 @@ const _unregisterOperation = function(in_handle, in_details, in_operation) {
     const handlerList = _getHandlerList(
       in_details.bindingConstructor, in_details.paths[i], '_registeredPaths', in_operation
     );
-    const myIndex = _.findIndex(handlerList, handler => handler.registrationId === in_details.registrationId);
+    const myIndex = _.findIndex(handlerList, (handler) => handler.registrationId === in_details.registrationId);
     if (myIndex === -1) {
       throw new Error('Unregistering an operation twice/operation not registered');
     }
@@ -880,7 +880,7 @@ const _unregisterOperation = function(in_handle, in_details, in_operation) {
  * @param {*} in_details -
  */
 const _unregisterPathHandle = function(in_handle, in_details) {
-  _.each(in_details.operations.slice(), operation => _unregisterOperation(in_handle, in_details, operation));
+  _.each(in_details.operations.slice(), (operation) => _unregisterOperation(in_handle, in_details, operation));
 
   const allPathHandles = getOrCreateMemberOnPrototype(in_details.bindingConstructor, '_allPathHandles', []);
   allPathHandles.splice(allPathHandles.indexOf(in_handle), 1);

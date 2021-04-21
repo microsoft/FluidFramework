@@ -59,12 +59,12 @@ describe('forEachProperty', () => {
   beforeAll(registerTestTemplates);
 
   // Silence the actual console.error, so the test logs are clean
-  console.error = function () {
+  console.error = function() {
   };
 
   catchConsoleErrors();
 
-  it('should always pass a Property, case 1 (enums)', function () {
+  it('should always pass a Property, case 1 (enums)', function() {
     const initialValues = {
       aString: 'some string',
       aNumber: 1,
@@ -82,13 +82,13 @@ describe('forEachProperty', () => {
     const primitiveChildrenPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid,
       'single',
       initialValues);
-    forEachProperty(primitiveChildrenPset, in_property => {
+    forEachProperty(primitiveChildrenPset, (in_property) => {
       expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
 
-  it('should always pass a Property, case 2 (EnumArray)', function () {
+  it('should always pass a Property, case 2 (EnumArray)', function() {
     const enumUnoDosTresSchema = {
       inherits: 'Enum',
       properties: [
@@ -107,13 +107,13 @@ describe('forEachProperty', () => {
     enumArray.push(2);
     root.insert('enumSingle', enumSingle);
     root.insert('enumArray', enumArray);
-    forEachProperty(root, in_property => {
+    forEachProperty(root, (in_property) => {
       expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
 
-  it('should always pass a Property, case 3 (inlined enums/EnumArrays)', function () {
+  it('should always pass a Property, case 3 (inlined enums/EnumArrays)', function() {
     const enumCasesSchema = {
       properties: [
         {
@@ -170,7 +170,7 @@ describe('forEachProperty', () => {
     // enums should already be populated, so no need to insert values into its various maps/arrays
     root.insert('enums', enums);
     let propertyCounter = 0;
-    forEachProperty(root, in_property => {
+    forEachProperty(root, (in_property) => {
       expect(in_property).toBeInstanceOf(BaseProperty);
       propertyCounter++;
       return true;
@@ -178,7 +178,7 @@ describe('forEachProperty', () => {
     expect(propertyCounter).toEqual(10); // root + enums + 8 properties inside 'enums' (5 + 3 extra for the map entries)
   });
 
-  it('should always pass a Property, case 4 (ReferenceArray/Map)', function () {
+  it('should always pass a Property, case 4 (ReferenceArray/Map)', function() {
     const root = PropertyFactory.create('NodeProperty', 'single');
     const refArray = PropertyFactory.create('Reference', 'array');
     refArray.push('/foo');
@@ -188,13 +188,13 @@ describe('forEachProperty', () => {
     refMap.set('barref', '/bar');
     root.insert('refArray', refArray);
     root.insert('refMap', refMap);
-    forEachProperty(root, in_property => {
+    forEachProperty(root, (in_property) => {
       expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
   });
 
-  it('should work with invalid/cyclic references', function () {
+  it('should work with invalid/cyclic references', function() {
     const root = PropertyFactory.create('NodeProperty', 'single');
     const invalidRef = PropertyFactory.create('Reference', 'single');
     const cyclicRef = PropertyFactory.create('Reference', 'single');
@@ -202,7 +202,7 @@ describe('forEachProperty', () => {
     cyclicRef.setValue('/cyclicRef');
     root.insert('invalidRef', invalidRef);
     root.insert('cyclicRef', cyclicRef);
-    forEachProperty(root, in_property => {
+    forEachProperty(root, (in_property) => {
       expect(in_property).toBeInstanceOf(BaseProperty);
       return true;
     });
@@ -222,10 +222,10 @@ describe('visitTypeHierarchy', async () => {
 
   it('should get schemas', () => {
     PropertyFactory.register(PrimitiveChildrenTemplate);
-   workspace.root.insert('dummy', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+    workspace.root.insert('dummy', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
     visitTypeHierarchy(
       PrimitiveChildrenTemplate.typeid,
-      typeid => { callbackSpy(typeid); return true; },
+      (typeid) => { callbackSpy(typeid); return true; },
       workspace
     );
 
@@ -238,7 +238,7 @@ describe('visitTypeHierarchy', async () => {
     callbackSpy.mockClear();
     visitTypeHierarchy(
       PrimitiveChildrenTemplate.typeid,
-      typeid => { callbackSpy(typeid); return true; }
+      (typeid) => { callbackSpy(typeid); return true; }
     );
 
     expect(callbackSpy).toHaveBeenCalledWith(PrimitiveChildrenTemplate.typeid);
@@ -255,10 +255,10 @@ describe('visitTypeHierarchy', async () => {
     };
     PropertyFactory.register(AnimalSchema);
     PropertyFactory.register(SlothSchema);
-   workspace.root.insert('sloth', PropertyFactory.create(SlothSchema.typeid));
+    workspace.root.insert('sloth', PropertyFactory.create(SlothSchema.typeid));
     visitTypeHierarchy(
       SlothSchema.typeid,
-      typeid => { callbackSpy(typeid); return true; },
+      (typeid) => { callbackSpy(typeid); return true; },
       workspace
     );
     expect(callbackSpy).toHaveBeenCalledWith(SlothSchema.typeid);
@@ -276,7 +276,7 @@ describe('visitTypeHierarchy', async () => {
     PropertyFactory.register(RedPandaSchema);
     visitTypeHierarchy(
       RedPandaSchema.typeid,
-      typeid => { callbackSpy(typeid); return true; },
+      (typeid) => { callbackSpy(typeid); return true; },
       workspace
     );
 

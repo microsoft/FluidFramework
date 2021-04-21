@@ -30,39 +30,39 @@ const setupScenario = (typeid, dataBinder) => {
   };
 };
 
-const tearDownScenario = scenario => {
+const tearDownScenario = (scenario) => {
   scenario.activationHandle.destroy();
   scenario.definitionHandle.destroy();
 };
 
-describe('DataBinder ActivationQueryCacheHelper', function () {
+describe('DataBinder ActivationQueryCacheHelper', function() {
 
   let dataBinder;
   let workspace;
 
   // Silence the actual console.error, so the test logs are clean
-  console.error = function () {
+  console.error = function() {
   };
 
   catchConsoleErrors();
 
-  beforeAll(function () {
+  beforeAll(function() {
   });
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     dataBinder = new DataBinder();
     workspace = await MockSharedPropertyTree();
     dataBinder.attachTo(workspace);
   });
 
-  afterEach(function () {
+  afterEach(function() {
     // Unbind checkout view
     dataBinder.detach();
     dataBinder = null;
   });
 
-  describe('inheritance cases, scenario 1', function () {
-    beforeAll(function () {
+  describe('inheritance cases, scenario 1', function() {
+    beforeAll(function() {
       PropertyFactory.register({
         typeid: 'test1:cube-1.0.0',
         properties: [
@@ -111,7 +111,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       });
     });
 
-    it('root matches', function () {
+    it('root matches', function() {
       const scenario = setupScenario('test1:thing-1.0.0', dataBinder);
 
       // test1:thing-1.0.0 can be found in test1:thing-1.0.0
@@ -126,7 +126,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('leaf matches', function () {
+    it('leaf matches', function() {
       const scenario = setupScenario('test1:cube-1.0.0', dataBinder);
 
       // test1:cube-1.0.0 can be found in test1:thing-1.0.0
@@ -141,7 +141,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('deeper leaf matches', function () {
+    it('deeper leaf matches', function() {
       const scenario = setupScenario('test1:prism-1.0.0', dataBinder);
 
       // test1:prism-1.0.0 can be found in test1:thing-1.0.0
@@ -156,7 +156,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('leaf doesnt always match, inheriting class', function () {
+    it('leaf doesnt always match, inheriting class', function() {
       const scenario = setupScenario('test1:cylinder-1.0.0', dataBinder);
 
       // test1:cylinder-1.0.0 cannot be found in test1:thing-1.0.0
@@ -171,7 +171,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('leaf doesnt always match, base class', function () {
+    it('leaf doesnt always match, base class', function() {
       const scenario = setupScenario('test1:sphere-1.0.0', dataBinder);
 
       // test1:sphere-1.0.0 cannot be found in test1:thing-1.0.0
@@ -187,8 +187,8 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
     });
   });
 
-  describe('Nodeproperty cases', function () {
-    beforeAll(function () {
+  describe('Nodeproperty cases', function() {
+    beforeAll(function() {
       PropertyFactory.register({
         typeid: 'test2:thing-1.0.0',
         properties: [
@@ -231,7 +231,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       });
     });
 
-    it('nodeproperty always returns true', function () {
+    it('nodeproperty always returns true', function() {
       const scenario = setupScenario('test2:thing-1.0.0', dataBinder);
 
       // test2:thing-1.0.0 is obviously in test2:thing-1.0.0
@@ -251,8 +251,8 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
     });
   });
 
-  describe('Array cases', function () {
-    beforeAll(function () {
+  describe('Array cases', function() {
+    beforeAll(function() {
       PropertyFactory.register({
         typeid: 'test3:cube-1.0.0',
         properties: [
@@ -308,7 +308,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       });
     });
 
-    it('can find in a base class array', function () {
+    it('can find in a base class array', function() {
       const scenario = setupScenario('test3:cube-1.0.0', dataBinder);
 
       // Can find a cube type in an array of cubes
@@ -319,7 +319,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find in an explicit array type', function () {
+    it('can find in an explicit array type', function() {
       const scenario = setupScenario('test3:cube-1.0.0', dataBinder);
 
       // Can find a cube type in an array of cubes
@@ -330,7 +330,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('relevant type is an explicit array', function () {
+    it('relevant type is an explicit array', function() {
       const scenario = setupScenario('array<test3:cube-1.0.0>', dataBinder);
 
       // Cubes aren't arrays of cubes
@@ -343,7 +343,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find a base type in an array of inherited types', function () {
+    it('can find a base type in an array of inherited types', function() {
       const scenario = setupScenario('test3:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in a array of inheriting cylinders
@@ -354,7 +354,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find in a nested base class array', function () {
+    it('can find in a nested base class array', function() {
       const scenario = setupScenario('test3:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in the nested array of cylinders
@@ -365,7 +365,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('cannot always find in an inherited class array', function () {
+    it('cannot always find in an inherited class array', function() {
       const scenario = setupScenario('test3:sphere-1.0.0', dataBinder);
 
       // Cannot find a sphere type in the array of cubes in the thing class
@@ -376,7 +376,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('cannot always find in a nested inherited class array', function () {
+    it('cannot always find in a nested inherited class array', function() {
       const scenario = setupScenario('test3:prism-1.0.0', dataBinder);
 
       // Cannot find a prism type in the thing class
@@ -389,8 +389,8 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
 
   });
 
-  describe('Map cases', function () {
-    beforeAll(function () {
+  describe('Map cases', function() {
+    beforeAll(function() {
       PropertyFactory.register({
         typeid: 'test4:cube-1.0.0',
         properties: [
@@ -446,7 +446,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       });
     });
 
-    it('can find in a base class map', function () {
+    it('can find in a base class map', function() {
       const scenario = setupScenario('test4:cube-1.0.0', dataBinder);
 
       // Can find a cube type in the map of cubes in thing
@@ -457,7 +457,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('map<>', function () {
+    it('map<>', function() {
       const scenario = setupScenario('map<>', dataBinder);
 
       // map<> matches map<test4:cube-1.0.0>
@@ -470,7 +470,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('map with inheritance', function () {
+    it('map with inheritance', function() {
       const scenario = setupScenario('map<test4:thing-1.0.0>', dataBinder);
 
       // map<test4:thing-1.0.0> does not match map<test4:cube-1.0.0>
@@ -481,7 +481,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find in an explicit map type', function () {
+    it('can find in an explicit map type', function() {
       const scenario = setupScenario('test4:cube-1.0.0', dataBinder);
 
       // Can find a cube type in a map of cubes
@@ -492,7 +492,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('relevant type is an explicit map', function () {
+    it('relevant type is an explicit map', function() {
       const scenario = setupScenario('map<test4:cube-1.0.0>', dataBinder);
 
       // Cubes aren't maps of cubes
@@ -505,7 +505,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find a base type in a map of inherited types', function () {
+    it('can find a base type in a map of inherited types', function() {
       const scenario = setupScenario('test4:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in a map of inheriting cylinders
@@ -516,7 +516,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('can find in a nested base class map', function () {
+    it('can find in a nested base class map', function() {
       const scenario = setupScenario('test4:cylinder-1.0.0', dataBinder);
 
       // Can find a cylinder type in the nested map of cylinders
@@ -527,7 +527,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('cannot always find in an inherited class map', function () {
+    it('cannot always find in an inherited class map', function() {
       const scenario = setupScenario('test4:sphere-1.0.0', dataBinder);
 
       // Cannot find a sphere type in an map of cubes
@@ -538,7 +538,7 @@ describe('DataBinder ActivationQueryCacheHelper', function () {
       tearDownScenario(scenario);
     });
 
-    it('cannot always find in a nested inherited class map', function () {
+    it('cannot always find in a nested inherited class map', function() {
       const scenario = setupScenario('test4:prism-1.0.0', dataBinder);
 
       // Cannot find a prism type in the thing class

@@ -42,6 +42,7 @@
     "@babel/preset-env": "^7.2.0",
     "@fluidframework/build-common": "^0.21.0-0",
     "@fluidframework/test-utils": "^0.39.0",
+    "@fluidframework/test-runtime-utils": "^0.39.0",
     "@types/jest": "22.2.3",
     "@types/underscore": "^1.9.1",
     "async": "^2.6.1",

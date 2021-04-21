@@ -21,7 +21,7 @@ import _ from 'underscore';
  * @package
  * @hidden
  */
-var insertInNestedObjects = function (in_object) {
+var insertInNestedObjects = function(in_object) {
   var currentObject = in_object;
 
   // Insert all intermediate steps as needed
@@ -51,7 +51,7 @@ var insertInNestedObjects = function (in_object) {
  * @package
  * @hidden
  */
-var existsInNestedObjects = function (in_object) {
+var existsInNestedObjects = function(in_object) {
   var currentObject = in_object;
 
   // traverse all intermediate steps as needed
@@ -77,7 +77,7 @@ var existsInNestedObjects = function (in_object) {
  * @package
  * @hidden
  */
-var getInNestedObjects = function (in_object) {
+var getInNestedObjects = function(in_object) {
   var currentObject = in_object;
 
   // traverse all intermediate steps as needed
@@ -104,7 +104,7 @@ var getInNestedObjects = function (in_object) {
  * @package
  * @hidden
  */
-var getOrInsertDefaultInNestedObjects = function (in_object) {
+var getOrInsertDefaultInNestedObjects = function(in_object) {
   var currentObject = in_object;
 
   // traverse all intermediate steps as needed
@@ -132,7 +132,7 @@ var getOrInsertDefaultInNestedObjects = function (in_object) {
  * @package
  * @hidden
  */
-var deleteInNestedObjects = function (in_object) {
+var deleteInNestedObjects = function(in_object) {
   var currentObject = in_object;
 
   // traverse all intermediate steps as needed
@@ -176,7 +176,7 @@ var deleteInNestedObjects = function (in_object) {
  * @package
  * @hidden
  */
-var traverseNestedObjects = function (in_object, in_levels, in_invokeForHigherLevels, in_callback) {
+var traverseNestedObjects = function(in_object, in_levels, in_invokeForHigherLevels, in_callback) {
   // We use a stack based traversal to avoid too many recursions
   var argumentStack = [];
   var objectStack = [in_object];

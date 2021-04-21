@@ -5,7 +5,7 @@
 'use strict';
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./dist/lib/@adsk/forge-appfw-databinder.min.js');
+  module.exports = require('./dist/lib/@fluid-experimental/property-binder.min.js');
 } else {
-  module.exports = require('./dist/lib/@adsk/forge-appfw-databinder.js');
+  module.exports = require('./dist/lib/@fluid-experimental/property-binder.js');
 }

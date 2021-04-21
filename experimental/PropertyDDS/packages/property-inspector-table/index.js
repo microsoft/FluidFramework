@@ -5,7 +5,7 @@
 'use strict';
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./dist/lib/@adsk/forge-appfw-hfdm-inspector-table.min.js');
+  module.exports = require('./dist/lib/@fluid-experimental/property-inspector-table.min.js');
 } else {
-  module.exports = require('./dist/lib/@adsk/forge-appfw-hfdm-inspector-table.js');
+  module.exports = require('./dist/lib/@fluid-experimental/property-inspector-table.js');
 }

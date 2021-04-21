@@ -1,6 +1,6 @@
 
 // @ts-ignore
-import {PropertyFactory} from "@fluid-experimental/property-properties"
+import {ContainerProperty, PropertyFactory} from "@fluid-experimental/property-properties"
 
 // import { IPropertyTree } from "../dataObject";
 import { FluidBinder } from "@fluid-experimental/property-binder";
@@ -13,6 +13,7 @@ import { ColoredSquareBinding } from './bindings/coloredSquareBinding';
 import { SquaresBoardBinding } from './bindings/squaresBoardBinding';
 import { renderMoveButton } from '../view';
 import { SQUARES_DEMO_SCHEMAS } from '@fluid-experimental/schemas';
+import { assert } from "@fluidframework/common-utils";
 
 export function moveSquares(propertyNode: any, guid: string) {
     const board = propertyNode.get(guid);
@@ -62,15 +63,17 @@ export class SquaresApp {
         this.fluidBinder.defineRepresentation('view', 'autofluid:squaresBoard-1.0.0', (property) => {
             const board =  new SquaresBoard([], this.container);
             // Rendering move button to move board's squares randomly
-            renderMoveButton(this.fluidBinder.getWorkspace(), board.wrapper, property.getId());
+            renderMoveButton(this.fluidBinder.getWorkspace(), board.wrapper, property.getId() as string);
             return board;
         })
 
         // Note: FluidBinder will create the most specialized representation to a given a typeid.
         this.fluidBinder.defineRepresentation('view', 'autofluid:coloredSquare-1.0.0', (property) => {
-            const values = property.getValues();
+            assert(property instanceof ContainerProperty, "Property should always be a ContainerProperty.");
+
+            const values = property.getValues() as any;
             return new Square(values.position, values.color, (pos: IPoint2D) => {
-                property.get('position').setValues(pos);
+                property.get<ContainerProperty>("position")!.setValues(pos);
 
                 this.fluidBinder.requestChangesetPostProcessing(_.debounce(() => {
                     // TODO: clean getWorkspace

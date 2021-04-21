@@ -14,7 +14,7 @@ import {
 
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 
-describe('Stateless Binder', function () {
+describe('Stateless Binder', function() {
   catchConsoleErrors();
 
   let workspace;
@@ -24,17 +24,17 @@ describe('Stateless Binder', function () {
   let numDogs = 0;
   let numChinchillas = 0;
 
-  const createCat = function (in_initialValues) {
+  const createCat = function(in_initialValues) {
     numCats++;
     return PropertyFactory.create(CatSchema.typeid, 'single', in_initialValues);
   };
 
-  const createDog = function (in_initialValues) {
+  const createDog = function(in_initialValues) {
     numDogs++;
     return PropertyFactory.create(DogSchema.typeid, 'single', in_initialValues);
   };
 
-  const createChincilla = function (in_initialValues) {
+  const createChincilla = function(in_initialValues) {
     numChinchillas++;
     return PropertyFactory.create(ChinchillaSchema.typeid, 'single', in_initialValues);
   };
@@ -128,14 +128,13 @@ describe('Stateless Binder', function () {
   let dogHandle;
   let chinchillaHandle;
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     numCats = 0;
     numDogs = 0;
     numChinchillas = 0;
 
     workspace = await MockSharedPropertyTree();
     dataBinder = new DataBinder();
-
 
     dataBinder.attachTo(workspace);
 
@@ -159,32 +158,32 @@ describe('Stateless Binder', function () {
     animalHandle = dataBinder.registerStateless('DataBindingTestAnimal', AnimalSchema.typeid, animalSingleton);
 
     // Cats are just children of the root
-   workspace.root.insert('markcat', createCat({ name: 'Mark' }));
-   workspace.root.insert('harrycat', createCat({ name: 'Harry' }));
-   workspace.root.insert('bobcat', createCat({ name: 'Bob' }));
+    workspace.root.insert('markcat', createCat({ name: 'Mark' }));
+    workspace.root.insert('harrycat', createCat({ name: 'Harry' }));
+    workspace.root.insert('bobcat', createCat({ name: 'Bob' }));
 
     // The dogs use arrays
     const array = PropertyFactory.create(DogSchema.typeid, 'array');
-   workspace.root.insert('dogarray', array);
+    workspace.root.insert('dogarray', array);
     array.push(createDog({ name: 'Amanda' }));
     array.push(createDog({ name: 'Karen' }));
 
     // Chinchillas are in maps
     const chinchillaMap = PropertyFactory.create(ChinchillaSchema.typeid, 'map');
-   workspace.root.insert('chinchillamap', chinchillaMap);
+    workspace.root.insert('chinchillamap', chinchillaMap);
     chinchillaMap.insert('pedro', createChincilla({ name: 'Pedro' }));
     chinchillaMap.insert('alessandro', createChincilla({ name: 'Alessandro' }));
 
     // A map of animals
     const animalMap = PropertyFactory.create(AnimalSchema.typeid, 'map');
-   workspace.root.insert('animalmap', animalMap);
+    workspace.root.insert('animalmap', animalMap);
     animalMap.insert('thedog', createDog({ name: 'Woofers' }));
     animalMap.insert('thecat', createCat({ name: 'Mittens' }));
     animalMap.insert('thechinchilla', createChincilla({ name: 'Andres' }));
   });
 
   // #region Create callback counts
-  it('should get called back for onPostCreate', function () {
+  it('should get called back for onPostCreate', function() {
     expect(catSingleton.onPostCreate).toHaveBeenCalledTimes(numCats);
     expect(dogSingleton.onPostCreate).toHaveBeenCalledTimes(numDogs);
     expect(chinchillaSingleton.onPostCreate).toHaveBeenCalledTimes(numChinchillas);
@@ -193,7 +192,7 @@ describe('Stateless Binder', function () {
   // #endregion Callback counts
 
   // #region Modify callback counts
-  it('should get called back for onModify', function () {
+  it('should get called back for onModify', function() {
     workspace.root.get(['markcat', 'attitude']).setValue(1);
     workspace.root.get(['harrycat', 'attitude']).setValue(2);
     workspace.root.get(['dogarray', 1, 'salivaPower']).setValue(1000);
@@ -211,7 +210,7 @@ describe('Stateless Binder', function () {
   // #endregion Modify callback counts
 
   // #region Removal callback counts
-  it('should get called back for onRemove', function () {
+  it('should get called back for onRemove', function() {
     workspace.root.remove(workspace.root.get(['markcat']));
     workspace.root.get(['dogarray']).remove(1);
     workspace.root.get(['animalmap']).remove('thechinchilla');
@@ -231,7 +230,7 @@ describe('Stateless Binder', function () {
   // #endregion Removal callback counts
 
   // #region Unregister check
-  it('should be able to unregister', function () {
+  it('should be able to unregister', function() {
     animalHandle.destroy();
     catHandle.destroy();
     dogHandle.destroy();
@@ -244,19 +243,19 @@ describe('Stateless Binder', function () {
   });
   // #endregion Unregister check
 
-  it('should not be able to unregister twice', function () {
+  it('should not be able to unregister twice', function() {
     animalHandle.destroy();
     catHandle.destroy();
     dogHandle.destroy();
     chinchillaHandle.destroy();
 
-    expect((function () { animalHandle.destroy(); })).toThrow();
-    expect((function () { catHandle.destroy(); })).toThrow();
-    expect((function () { dogHandle.destroy(); })).toThrow();
-    expect((function () { chinchillaHandle.destroy(); })).toThrow();
+    expect((function() { animalHandle.destroy(); })).toThrow();
+    expect((function() { catHandle.destroy(); })).toThrow();
+    expect((function() { dogHandle.destroy(); })).toThrow();
+    expect((function() { chinchillaHandle.destroy(); })).toThrow();
   });
 
-  it('should not hear about changes after unregistering', function () {
+  it('should not hear about changes after unregistering', function() {
     animalHandle.destroy();
     catHandle.destroy();
     dogHandle.destroy();
@@ -279,25 +278,25 @@ describe('Stateless Binder', function () {
     expect(animalSingleton.onModify).toHaveBeenCalledTimes(animalBeforeCount);
   });
 
-  it('should get the correct databinder instance', function () {
+  it('should get the correct databinder instance', function() {
     expect(catSingleton.getDataBinder()).toEqual(dataBinder);
     expect(dogSingleton.getDataBinder()).toEqual(dataBinder);
     expect(animalSingleton.getDataBinder()).toEqual(dataBinder);
   });
 
-  it('should get the correct databinding type', function () {
+  it('should get the correct databinding type', function() {
     expect(catSingleton.getDataBindingType()).toEqual('DataBindingTest');
     expect(dogSingleton.getDataBindingType()).toEqual('DataBindingTest');
     expect(animalSingleton.getDataBindingType()).toEqual('DataBindingTestAnimal');
   });
 
-  it('should get the correct userdata', function () {
+  it('should get the correct userdata', function() {
     expect(catSingleton.getUserData()).toEqual(catUserData);
     expect(dogSingleton.getUserData()).toBeUndefined();
     expect(animalSingleton.getUserData()).toBeUndefined();
   });
 
-  it('using the deprecated API should still work', function () {
+  it('using the deprecated API should still work', function() {
     // Register a singleton using the deprecated API
     const deprecatedCat = new TestSingletonBinding({ dataBinder: dataBinder });
     const singletonHandle = dataBinder.registerSingleton('SingletonTest', CatSchema.typeid, deprecatedCat);

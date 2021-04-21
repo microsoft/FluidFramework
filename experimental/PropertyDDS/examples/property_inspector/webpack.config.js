@@ -36,10 +36,7 @@ module.exports = env => {
             new Dotenv()
         ],
         resolve: {
-            extensions: [".ts", ".tsx", ".js"],
-            alias: {
-                "@fluid-experimental/property-inspector-table": path.resolve(__dirname, '../../packages/property-inspector-table/dist/lib/@adsk/forge-appfw-hfdm-inspector-table.js')
-            }
+            extensions: [".ts", ".tsx", ".js"]
         },
     }
 }
