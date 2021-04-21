@@ -10,19 +10,21 @@ import * as winston from "winston";
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    constructor(private readonly client: Redis, private readonly prefix = "page") {
+    constructor(
+        private readonly client: Redis,
+        private readonly expireAfterSeconds = 60 * 60 * 24,
+        private readonly prefix = "page") {
         client.on("error", (err) => {
             winston.error("Error with Redis:", err);
         });
     }
 
     public async get(key: string): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.client.get(this.getKey(key));
     }
 
     public async set(key: string, value: string): Promise<void> {
-        const result = await this.client.set(this.getKey(key), value);
+        const result = await this.client.set(this.getKey(key), value, "EX", this.expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
         }

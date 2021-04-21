@@ -7,6 +7,7 @@ import {
     IThrottleStorageManager,
     IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
+import { executeRedisMultiWithHmsetExpire } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 
@@ -30,12 +31,11 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     ): Promise<void> {
         const key = this.getKey(id);
 
-        const result = await this.client.hmset(key, throttlingMetric as { [key: string]: any });
-        if (result !== "OK") {
-            return Promise.reject(result);
-        }
-
-        await this.client.expire(key, this.expireAfterSeconds);
+        return executeRedisMultiWithHmsetExpire(
+            this.client,
+            key,
+            throttlingMetric as { [key: string]: any },
+            this.expireAfterSeconds);
     }
 
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
