@@ -5,6 +5,7 @@
 
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 import { IClientManager } from "@fluidframework/server-services-core";
+import { executeRedisMultiWithHmsetExpire } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 
@@ -20,13 +21,13 @@ export class ClientManager implements IClientManager {
     }
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
-        const result = await this.client.hmset(this.getKey(tenantId, documentId), clientId, JSON.stringify(details));
-        if (result !== "OK")
-        {
-            return  Promise.reject(result);
-        }
-
-        await this.client.expire(this.getKey(tenantId, documentId), this.expireAfterSeconds);
+        const key = this.getKey(tenantId, documentId);
+        const data: { [key: string]: any } = { [clientId]: JSON.stringify(details) };
+        return executeRedisMultiWithHmsetExpire(
+            this.client,
+            key,
+            data,
+            this.expireAfterSeconds);
     }
 
     public async removeClient(tenantId: string, documentId: string, clientId: string): Promise<void> {
