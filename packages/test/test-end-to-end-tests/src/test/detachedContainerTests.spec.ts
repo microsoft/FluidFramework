@@ -607,7 +607,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         loader = provider.makeTestLoader(testContainerConfig) as Loader;
     });
 
-    it("Retry attaching detached container", async () => {
+    it.only("Retry attaching detached container", async () => {
         let retryTimes = 1;
         const documentServiceFactory: IDocumentServiceFactory = {
             ...provider.documentServiceFactory,
@@ -646,7 +646,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
-    });
+    }).timeout(5000);
 
     it("Directly attach container through service factory, should resolve to same container", async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
