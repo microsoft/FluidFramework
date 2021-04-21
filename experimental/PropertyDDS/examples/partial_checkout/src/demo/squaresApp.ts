@@ -69,7 +69,7 @@ export class SquaresApp {
 
         // Note: FluidBinder will create the most specialized representation to a given a typeid.
         this.fluidBinder.defineRepresentation('view', 'autofluid:coloredSquare-1.0.0', (property) => {
-            assert(property instanceof ContainerProperty, "");
+            assert(property instanceof ContainerProperty, "Property should always be a ContainerProperty.");
 
             const values = property.getValues() as any;
             return new Square(values.position, values.color, (pos: IPoint2D) => {
