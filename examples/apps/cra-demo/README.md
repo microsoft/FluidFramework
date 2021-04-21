@@ -5,10 +5,10 @@ Concepts you will learn:
 1. How to integrate Fluid into a React application
 2. How to run and connect your application to a local Fluid service (Tinylicious)
 3. How to create and get Fluid Containers and collaborative objects
-4. How to use a single KeyValuePair (KVPair) DataObject to sync data between connected clients
+4. How to use a [SharedMap distributed data structure (DDS)](https://fluidframework.com/docs/apis/map/sharedmap/) to sync data between connected clients
 
 
-\* Want to just see the code? Jump to the [finished tutorial.](https://github.com/microsoft/FluidFramework/blob/release/0.38/examples/apps/cra-demo/src/App.tsx).
+\* Just want to see the code? Jump to the [finished tutorial.](https://github.com/microsoft/FluidFramework/blob/release/0.38/examples/apps/cra-demo/src/App.tsx).
 
 ## Demo introduction
 
@@ -43,17 +43,17 @@ cd my-app-name
 There are three packages to install to get started with Fluid:
 
 `@fluid-experimental/fluid-static` - Manages creating and getting Fluid containers
-`@fluid-experimental/data-objects` - Contains the KeyValueDataObject you will use to sync data
+`@fluidframework/map` - Contains the SharedMap you will use to sync data
 `@fluid-experimental/get-container` - Defines the service connection to our local Fluid server
 
 ### Using NPM
 ```bash
-npm install @fluid-experimental/fluid-static @fluid-experimental/data-objects @fluid-experimental/get-container
+npm install @fluid-experimental/fluid-static @fluidframework/map @fluid-experimental/get-container
 ```
 
 ### Using Yarn
 ```bash
-yarn add @fluid-experimental/fluid-static @fluid-experimental/data-objects @fluid-experimental/get-container
+yarn add @fluid-experimental/fluid-static @fluidframework/map @fluid-experimental/get-container
 ```
 
 \* These are still experimental packages, and not ready for production
@@ -62,11 +62,14 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 ## 3. <a style="position: relative; top: 20px" name="import"></a> Import and Initialize Fluid Dependencies
 
-`Fluid` provides methods for creating a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a default set of [DataObjects](https://fluidframework.com/docs/glossary/#dataobject)
+`Fluid` provides methods for creating a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a default set of [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) or [DDSes](https://fluidframework.com/docs/concepts/dds/).
 
-`KeyValueDataObject` is the DataObject that we will initialize on our container, and will give us an API to set and retrieve key value pairs from Fluid.
+> The Fluid container interacts with the processes and distributes operations, manages the lifecycle of Fluid objects, and provides a request API for accessing Fluid objects.
 
-> `KeyValueDataObject` is a rudimentary data object that is useful for powering small projects and getting started learning Fluid. If you need more than a flat key/value data structure, considering forking the existing [KVPair data object](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/data-objects/src/kvpair/DataObject.ts), and learning more about [DDS'es](https://fluidframework.com/docs/concepts/dds/).
+`SharedMap` is the DDS that we will initialize on our container.
+
+`TinyliciousService` is the service we will use to connect to our local Tinylicious server.
+
 
 ```js
 // App.js
@@ -74,7 +77,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 import React from "react";
 import Fluid from "@fluid-experimental/fluid-static";
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { SharedMap } from "@fluidframework/map";
 import { TinyliciousService } from "@fluid-experimental/get-container";
 ```
 
@@ -106,22 +109,22 @@ Fluid.init(new TinyliciousService());
 
 ## 4. <a style="position: relative; top: 20px" name="init"></a>  Connect React to Fluid Data
 
-Before we can actually render our view we need to create, or get, our Fluid container and KeyValueDataObject. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
+Before we can actually render our view we need to get our Fluid container. We can do this within the React lifecycle by using the React hooks, `useState` and `useEffect`.
 
-[`useState`](https://reactjs.org/docs/hooks-state.html) provides storage that we can modify over the lifecycle of the component, and [`useEffect`](https://reactjs.org/docs/hooks-effect.html) is a method that gets called as soon as the component renders, and again any time state changes.
+[`useState`](https://reactjs.org/docs/hooks-state.html) provides storage that we can modify over the lifecycle of the component, and [`useEffect`](https://reactjs.org/docs/hooks-effect.html) is a method that gets called as soon as the component renders, and again any time the state changes.
 
 All of the code in step 4 will go before the `return` method.
 
 ### 4.a Create a place to store state
 
-Since changes to the data in Fluid won't trigger an update to our React view, we need to store the view's `data` in React state and then modify that state each time our view should update.
+In our demo, we'll be storing a single date value in our `SharedMap` and displaying that value in our view. Since changes to the `SharedMap` won't trigger an update in our React view, we need to store the view's `date` in React state and then modify that state each time our view should update via `setDate`.
 
-We will also need to store the `KeyValueDataObject` because it will only be created after we create the Fluid container.
+We will also need to store the `SharedMap` because it will only be created after we create the Fluid container.
 
 ```jsx
 function App() {
-    const [data, setData] = React.useState({});
-    const [dataObject, setDataObject] = React.useState();
+    const [date, setDate] = React.useState('');
+    const [map, setMap] = React.useState();
 
     // return(...)
 };
@@ -131,45 +134,44 @@ Now that we have state, we need a way to update that state when our React compon
 
 ### 4.b Load container and subscribe to changes to Fluid data
 
-React's `useEffect` takes a function as its first parameter that fires as soon as the component loads and then fires again if any of its dependencies change (in our case the `dataObject` state variable, specified in the second parameter).
+React's `useEffect` takes a function as its first parameter that fires as soon as the component loads and then fires again if any of its dependencies change (in our case the `map` state variable, specified in the second parameter).
 
 Our `useEffect` will end up firing twice. The first time, on component load, it will either create or load the container depending on if it's a new 'document'.
 
-The second time `useEffect` fires, the `dataObject` will have been set and we can set up a listener to update the view's data each time the `changed` event is fired. For this example, we are updating all of the Fluid data on any change, but you could be more selective here if desired.
+The second time `useEffect` fires, the `map` will have been set and we can set up a listener to update `date` each time the `valueChanged` event is fired.
 
 ```jsx
 function App() {
 
-    const [data, setData] = React.useState({});
-    const [dataObject, setDataObject] = React.useState();
+    const [map, setMap] = React.useState();
+    const [time, setTime] = React.useState('');
 
     React.useEffect(() => {
-        if (dataObject === undefined) {
-        // First time: create/get the Fluid container, then create/get KeyValueDataObject
+        if (!map) {
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
-                name: 'demo-container',
-                initialObjects: { kvpair: KeyValueDataObject }
+                name: 'cra-demo-container',
+                initialObjects: { map: SharedMap }
             };
+
             const load = async () => {
                 const fluidContainer = isNew
                     ? await Fluid.createContainer(containerId, containerConfig)
                     : await Fluid.getContainer(containerId, containerConfig);
 
-                const initialObjects = fluidContainer.initialObjects;
-                setDataObject(initialObjects.kvpair);
+                setMap(fluidContainer.initialObjects.map);
             }
-
             load();
         } else {
-        // Second time: set our local state with a query from the KeyValueDataObject
-            const updateData = () => setData(dataObject.query());
-            updateData();
-            dataObject.on("changed", updateData);
-            return () => { dataObject.off("changed", updateData) }
-        }
+            // set up initial state
+            setTime(map.get("time"));
+            // update state each time our map changes
+            const handleChange = () => setTime(map.get("time"));
 
-    }, [dataObject]);
+            map.on("valueChanged", handleChange);
+            return () => { map.off("valueChanged", handleChange) }
+        }
+    }, [map]);
 
     // return(...)
 }
@@ -182,52 +184,52 @@ function App() {
 
 In this simple multi-user app, we are going to build a button that, when pressed, shows the current timestamp. We will store that timestamp in Fluid. This allows co-authors to automatically see the most recent timestamp at which any author pressed the button.
 
-To make sure we don't render the app too soon, we return a blank `<div />` until the `dataObject` is defined. Once that's done, we'll render a button that sets the `time` key in our `KeyValueDataObject` to the current timestamp. Anytime this button is pressed, every user will see the latest value stored in the `time` key of `data`.
+To make sure we don't render the app too soon, we return a blank `<div />` until the `map` is defined. Once that's done, we'll render a button that sets the `time` key in our `map` to the current timestamp. Each time this button is pressed, every user will see the latest value stored in the `time` state variable.
 
 ```jsx
 function App() {
 
-    const [data, setData] = React.useState({});
-    const [dataObject, setDataObject] = React.useState();
+    const [map, setMap] = React.useState();
+    const [time, setTime] = React.useState('');
 
     React.useEffect(() => {
-        if (dataObject === undefined) {
-        // First time: create/get the Fluid container, then create/get KeyValueDataObject
+        if (!map) {
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
-                name: 'demo-container',
-                initialObjects: { kvpair: KeyValueDataObject }
+                name: 'cra-demo-container',
+                initialObjects: { map: SharedMap }
             };
+
             const load = async () => {
                 const fluidContainer = isNew
                     ? await Fluid.createContainer(containerId, containerConfig)
                     : await Fluid.getContainer(containerId, containerConfig);
 
-                const initialObjects = fluidContainer.initialObjects;
-                setDataObject(initialObjects.kvpair);
+                setMap(fluidContainer.initialObjects.map);
             }
 
             load();
         } else {
-        // Second time: set our local state with a query from the KeyValueDataObject
-            const updateData = () => setData(dataObject.query());
-            updateData();
-            dataObject.on("changed", updateData);
-            return () => { dataObject.off("changed", updateData) }
-        }
+            // set up initial state
+            setTime(map.get("time"));
+            // update state each time our map changes
+            const handleChange = () => setTime(map.get("time"));
 
-    }, [dataObject]);
+            map.on("valueChanged", handleChange);
+            return () => { map.off("valueChanged", handleChange) }
+        }
+    }, [map]);
 
     // update the view below
 
-    if (!dataObject) return <div />;
+    if (!map) return <div/>;
 
     return (
         <div className="App">
-            <button onClick={() => dataObject.set("time", Date.now().toString())}>
+            <button onClick={() => map.set("time", Date.now().toString())}>
                 click
             </button>
-            <span>{data["time"]}</span>
+            <span>{time}</span>
         </div>
     )
 }
@@ -255,4 +257,4 @@ When the app loads it will update the URL. Copy that new URL into a second brows
 
 - Try extending the demo with more key/value pairs and a more complex UI
   - `npm install @fluentui/react` is a great way to add [UI controls](https://developer.microsoft.com/en-us/fluentui#/)
-- Try using other collaborative objects such as the [SharedMap](https://fluidframework.com/docs/apis/map/)
+- Try using other DDSes such as the [SharedString](https://fluidframework.com/docs/apis/sequence/sharedstring/)

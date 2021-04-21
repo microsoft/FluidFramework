@@ -45,15 +45,15 @@ function App() {
         } else {
             // set up initial state
             setTime(map.get("time"));
-            // if the map's event key is "time", update state
-            const handleChange = (e) => e?.key === "time" ? setTime(map.get("time")) : null;
+            // update state each time our map changes
+            const handleChange = () => setTime(map.get("time"));
 
             map.on("valueChanged", handleChange);
             return () => { map.off("valueChanged", handleChange) }
         }
     }, [map]);
 
-    if (!map) return <div>loading</div>;
+    if (!map) return <div/>;
 
     return (
         <div className="App">
