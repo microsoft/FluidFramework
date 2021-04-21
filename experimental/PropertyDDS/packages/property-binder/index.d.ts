@@ -114,13 +114,6 @@ declare module "@fluid-experimental/property-binder" {
         }
 
         /**
-         * A Component that is defined in the `@adsk/forge-appfw-hfdm` package and represents an HFDM workspace.
-         */
-        type HFDMWorkspaceComponent = {
-          initializeComponent(): Promise<Workspace>
-        }
-
-        /**
          * @classdesc  A DataBinder allows one to register a number of bindings for different HFDM property types. The
          * DataBinder can then be bound to
          * a {@link https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/Workspace.html|Workspace} to have the
@@ -141,7 +134,7 @@ declare module "@fluid-experimental/property-binder" {
              * Constructor for the DataBinder.
              * @param in_workspace - The Workspace to bind to.
              */
-            constructor(in_workspace?: Workspace | HFDMWorkspaceComponent);
+            constructor(in_workspace?: Workspace);
 
             /**
              * Registers a data binding.

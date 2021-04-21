@@ -32,10 +32,6 @@ import { IRegisterOnPathOptions } from './IRegisterOnPathOptions'; /* eslint-dis
 import { ActivationQueryCacheHelper } from '../internal/activation_query_cache_helper';
 
 /**
- * @typedef {import("@adsk/forge-appfw-hfdm/src/index").HFDMWorkspaceComponent} HFDMWorkspaceComponent
- */
-
-/**
  * @hidden
  */
 const _INTERNAL_DATA_BINDINGTYPE = '__DataBinderInternal';
@@ -139,24 +135,14 @@ const _popUserData = function(in_context) {
 /**
  * A DataBinder allows one to register a number of bindings for different property types. The
  * DataBinder can then be bound to
- * a {@link https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.Workspace.html|Workspace} to have the
- * data bindings created automatically.
+ * a PropertyTree to have the data bindings created automatically.
+ *
  * These data bindings are notified of the modification and removal of the underlying property.
- *
- * Default provider registration type: <i>DataBinderComponent</i>.
- *
- * You can use this component without calling the `initializeComponent` method, except for when you intend to use the
- * `getWorkspace` method after passing an HFDMWorkspaceComponent to the constructor.
  *
  * @example
  * ```
  * const databinder = new DataBinder(workspace);
  * databinder.defineDataBinding(...);
- * // ...
- * databinder.initializeComponent().then(() => {
- *   const workspace = databinder.getWorkspace();
- * });
- * // ...
  *
  * // or
  * const databinder = new DataBinder();
@@ -170,7 +156,7 @@ const _popUserData = function(in_context) {
 class DataBinder {
   /**
    * Constructor for the DataBinder.
-   * @param {Workspace | HFDMWorkspaceComponent} [in_workspace] - The Workspace to bind to.
+   * @param {Workspace} [in_workspace] - The Workspace to bind to.
    */
   constructor(in_workspace) {
 
@@ -220,8 +206,7 @@ class DataBinder {
     // Make sure the initialization method is called after all other code in the constructor, as it might synchronously
     // attach a workspace, which relies on internal data structures being set up properly.
     if (in_workspace) {
-      this._params = { HFDMWorkspaceComponent: in_workspace };
-      this.initializeComponent();
+      this.attachTo(in_workspace);
     }
   }
 
@@ -2981,64 +2966,6 @@ class DataBinder {
     this._dataBindingCreatedCounter = 0;
     this._dataBindingRemovedCounter = 0;
   }
-
-  /**
-   * Defines the dependencies of this component in a format that the Forge DI system is able to parse.
-   * Note that the order of dependencies must match the order of constructor parameters.
-   * @return {IAppComponentDependency[]} Array of dependency definitions
-   */
-  static defineDependencies() {
-    return [
-      {
-        type: 'HFDMWorkspaceComponent'
-      }
-    ];
-  }
-
-  /**
-   * The initialization method of this component.
-   * @return {Promise<DataBinder>} A promise that resolves as soon as the component has been initialized and rejects on
-   *  error. Unlike most other components, the DataBinder can already be used before this promise resolves, for example
-   *  to register DataBindings.
-   * @public
-   */
-  initializeComponent() {
-    if (this._initPromise) { return this._initPromise; }
-
-    this._initPromise = new Promise((resolve, reject) => {
-      // Initialize the workspace dependency (if necessary) before resolving this promise.
-      if (this._params && this._params.HFDMWorkspaceComponent) {
-        if (this._params.HFDMWorkspaceComponent.initializeComponent) {
-          this._params.HFDMWorkspaceComponent.initializeComponent().then((workspaceObj) => {
-            this.attachTo(workspaceObj);
-            resolve(this);
-          }).catch((error) => {
-            reject(error);
-          });
-        } else {
-          this.attachTo(this._params.HFDMWorkspaceComponent);
-          resolve(this);
-        }
-      } else {
-        // When no workspace has been passed to the constructor, simply resolve the promise.
-        resolve(this);
-      }
-    });
-    return this._initPromise;
-  }
-
-  /**
-   * Uninitialize the component instance.
-   * @return {Promise<void>} A promise that resolves as soon as the instance is fully uninitialized and rejects on
-   *  error.
-   */
-  uninitializeComponent() {
-    if (this.isAttached()) {
-      this.detach();
-    }
-    return Promise.resolve();
-  }
-
 }
 
 export { DataBinder };

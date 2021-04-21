@@ -10,11 +10,12 @@ import { IDataCreationOptions, IInspectorRow, fetchRegisteredTemplates ,
     InspectorTable, IInspectorTableProps, handlePropertyDataCreation, ModalManager, ModalRoot,
 } from "@fluid-experimental/property-inspector-table";
 
+import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { FluidBinder } from "@fluid-experimental/property-binder";
 import { SquaresApp , randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
 
-import { IPropertyTree, PropertyTree } from "./dataObject";
+import { IPropertyTree } from "./dataObject";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
@@ -54,7 +55,7 @@ export function renderButtons(propertyTree: IPropertyTree, div: HTMLDivElement) 
     buttons.append(commitButton);
 }
 
-export const renderMoveButton = function(propertyTree: PropertyTree, content: HTMLElement, guid: string) {
+export const renderMoveButton = function(propertyTree: SharedPropertyTree, content: HTMLElement, guid: string) {
     const moveBtn = document.createElement("button");
     moveBtn.style.fontSize = "15px";
     let isMoving = false;
@@ -62,7 +63,7 @@ export const renderMoveButton = function(propertyTree: PropertyTree, content: HT
     moveBtn.textContent = "Move";
     moveBtn.addEventListener("click", () => {
         if (!isMoving) {
-            intervalID = moveSquares(propertyTree.pset, guid);
+            intervalID = moveSquares(propertyTree.root, guid);
             moveBtn.textContent = "Stop";
             isMoving = true;
         } else {
