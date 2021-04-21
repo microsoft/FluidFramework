@@ -34,10 +34,9 @@ export function create(
         return service.createSnapshot(params);
     }
 
-    router.post("/:tenantId/:documentId/snapshots",
+    router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            //winston.info(`DEBUG-SUCCESS: ${documentId} ${options.method} ${options.url}`);
             const commitP = createSnapshot(request.params.tenantId, request.get("Authorization"), request.body);
 
             utils.handleResponse(

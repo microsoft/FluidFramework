@@ -176,7 +176,7 @@ export class RestGitService {
 
     public async createSnapshot(snapshotParams: contract.ISummaryPayload): Promise<contract.ISnapshotResponse> {
         const snapshotResponse = await this.post<contract.ISnapshotResponse>(
-            `/${this.tenantId}/${this.documentId}/snapshots`,
+            `/repos/fluid/git/summaries`,
              snapshotParams);
 
         return snapshotResponse;
@@ -368,15 +368,18 @@ export class RestGitService {
     private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             winston.info(
-                `DEBUG-SUCCESS: ${this.documentId} ${options.method} ${options.url} ${JSON.stringify(options.body)}`);
+                `DEBUG-INFO: ${this.tenantId} ${this.documentId}
+                 ${options.method} ${options.url} ${JSON.stringify(options.body)}`);
             options.headers["Storage-Routing-Id"] = this.getStorageRoutingHeaderValue();
             request(
                 options,
                 (error, response, body) => {
                     if (error) {
+                        winston.info(`DEBUG-ERROR: ${options.url}, ${error}`);
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
                         winston.info(response.body);
+                        winston.info(`DEBUG-STATUSCODE: ${response.statusCode}, ${JSON.stringify(response.body)}`);
                         return reject(response.statusCode);
                     } else {
                         return resolve(response.body);
