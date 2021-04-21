@@ -49,7 +49,7 @@ function App() {
             const handleChange = (e) => e?.key === "time" ? setTime(map.get("time")) : null;
 
             map.on("valueChanged", handleChange);
-            return () => { map.off("change", handleChange) }
+            return () => { map.off("valueChanged", handleChange) }
         }
     }, [map]);
 
