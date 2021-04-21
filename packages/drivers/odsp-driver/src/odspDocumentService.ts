@@ -508,8 +508,16 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    public dispose() {
-        this._opsCache?.flushOps();
+    public dispose(criticalError: boolean) {
+        if (criticalError) {
+            // Error might indicate mismatch between client & server knowlege about file.
+            // For exaple, file might have been overwritten in storage without generating new epoch
+            // In such case client cached info is stale and has to be removed.
+            this.epochTracker.removeEntries().catch(() => {});
+        } else {
+            this._opsCache?.flushOps();
+        }
+        this._opsCache?.dispose();
     }
 
     protected get opsCache() {

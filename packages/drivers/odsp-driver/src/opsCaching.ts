@@ -51,6 +51,13 @@ export class OpsCache {
         }
     }
 
+    public dispose() {
+        if (this.timer !== undefined) {
+            clearTimeout(this.timer);
+            this.timer = undefined;
+        }
+    }
+
     public flushOps() {
         for (const [key, value] of this.batches) {
             if (value === null || !value.dirty) {

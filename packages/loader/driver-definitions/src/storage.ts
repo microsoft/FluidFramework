@@ -278,8 +278,12 @@ export interface IDocumentService {
      * Useful for storage to commit any pending state if any (including any local caching).
      * Please note that it does not remove the need for caller to close all active delta connections,
      * as storage may not be tracking such objects.
+     * @param criticalError - tells if container (and storage) are closed due to critical error.
+     * Error might be due to disconnect between client & server knowlege about file, like file being overwritten
+     * in storage, but client having stale local cache.
+     * If driver implements any kind of local caching, such caches needs to be cleared on on critical errors.
      */
-    dispose(): void;
+    dispose(criticalError: boolean): void;
 }
 
 export interface IDocumentServiceFactory {
