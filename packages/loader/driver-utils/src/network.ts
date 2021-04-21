@@ -57,7 +57,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     }
 }
 
-class NetworkErrorBasic<T> extends LoggingError {
+export class NetworkErrorBasic<T> extends LoggingError {
     constructor(
         errorMessage: string,
         readonly errorType: T,
