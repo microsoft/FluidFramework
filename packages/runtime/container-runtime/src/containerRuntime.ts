@@ -1627,7 +1627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing
                 // scenarios involving access to deleted data.
-                if (this.runtimeOptions.gcOptions.runGCInTestMode) {
+                if (this.runtimeOptions.gcOptions?.runGCInTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
