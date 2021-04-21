@@ -20,7 +20,6 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist",
-    "lint": "tslint -t verbose --config tslint.json --project tsconfig.json",
     "storybook": "start-storybook -p 6006",
     "test": "jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit"
