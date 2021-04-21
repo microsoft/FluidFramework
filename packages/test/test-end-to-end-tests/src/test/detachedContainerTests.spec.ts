@@ -669,5 +669,5 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
-    });
+    }).timeout(5000);
 });
