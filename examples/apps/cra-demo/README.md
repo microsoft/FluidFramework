@@ -36,7 +36,7 @@ npx create-react-app my-app-name
 cd my-app-name
 ```
 
-\* Don't start the React application yet. We'll do that at the end.
+\* Don't start the React application yet. We'll do that in step #6.
 
 ## 2. <a style="position: relative; top: 20px" name="install"></a> Install Fluid Package Dependencies
 
