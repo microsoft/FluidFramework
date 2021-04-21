@@ -6,6 +6,11 @@
 import { Deferred } from "@fluidframework/common-utils";
 import { Redis } from "ioredis";
 
+export interface IRedisParameters {
+    prefix?: string;
+    expireAfterSeconds?: number;
+}
+
 export async function executeRedisMultiWithHmsetExpire(
     client: Redis,
     key: string,
