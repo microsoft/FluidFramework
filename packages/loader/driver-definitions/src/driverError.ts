@@ -62,6 +62,13 @@ export enum DriverErrorType {
      * Unexpected response from server. Either JSON is malformed, or some required properties are missing
      */
     incorrectServerResponse = "incorrectServerResponse",
+
+    /**
+     * Epoch version mismatch failures.
+     * This error occurs when the file is modified externally. So the version at the client receiving this error
+     * does not match the one at the server.
+     */
+     epochVersionMismatch = "epochVersionMismatch",
 }
 
 /**
@@ -97,13 +104,13 @@ export interface IAuthorizationError extends IDriverErrorBase {
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
     DriverErrorType.genericError
-    | DriverErrorType.authorizationError
     | DriverErrorType.fileNotFoundOrAccessDeniedError
     | DriverErrorType.offlineError
     | DriverErrorType.unsupportedClientProtocolVersion
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
-    | DriverErrorType.incorrectServerResponse;
+    | DriverErrorType.incorrectServerResponse
+    | DriverErrorType.epochVersionMismatch;
     readonly statusCode?: number;
 }
 

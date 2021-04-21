@@ -9,7 +9,7 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, ITaggableTelemetryProperties } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -62,9 +62,9 @@ export class NetworkErrorBasic<T> extends LoggingError {
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -72,9 +72,19 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, errorType, false, statusCode);
+        super(errorMessage, errorType, false, props);
+    }
+}
+
+export class RetryableError<T> extends NetworkErrorBasic<T> {
+    constructor(
+        errorMessage: string,
+        readonly errorType: T,
+        props?: ITaggableTelemetryProperties,
+    ) {
+        super(errorMessage, errorType, false, props);
     }
 }
 
@@ -95,7 +105,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError, undefined /* statusCodes */);
+    new NonRetryableError(errorMessage, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     errorMessage: string,
