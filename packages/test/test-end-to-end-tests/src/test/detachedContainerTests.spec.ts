@@ -607,7 +607,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         loader = provider.makeTestLoader(testContainerConfig) as Loader;
     });
 
-    it.only("Retry attaching detached container", async () => {
+    it("Retry attaching detached container", async () => {
         let retryTimes = 1;
         const documentServiceFactory: IDocumentServiceFactory = {
             ...provider.documentServiceFactory,
