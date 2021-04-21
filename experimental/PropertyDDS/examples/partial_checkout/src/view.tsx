@@ -115,7 +115,7 @@ export function renderApp(propertyTree: IPropertyTree, content: HTMLDivElement):
     squaresApp.init();
 
     // Attaching FluidBinder to a PropertyTree instance in order to start listening to changes.
-    fluidBinder.attachTo(propertyTree);
+    fluidBinder.attachTo(propertyTree.tree);
 
     // Rendering buttons
     renderButtons(propertyTree, content);

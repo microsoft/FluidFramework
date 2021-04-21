@@ -32,7 +32,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const defaultObject = await getDefaultObjectFromContainer<PropertyTree>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderApp(defaultObject, document.getElementById(elementId)!);
+    renderApp(defaultObject.tree, document.getElementById(elementId)!);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

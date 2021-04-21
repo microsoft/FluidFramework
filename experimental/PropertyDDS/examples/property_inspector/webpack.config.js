@@ -37,9 +37,9 @@ module.exports = env => {
         ],
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
-            alias: {
+            /*alias: {
                 "@fluid-experimental/property-inspector-table": path.resolve(__dirname, '../../packages/property-inspector-table/dist/lib/@adsk/forge-appfw-hfdm-inspector-table.js')
-            }
+            }*/
         },
     }
 }

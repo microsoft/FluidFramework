@@ -14,6 +14,7 @@ import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframewo
 export interface IPropertyTree extends EventEmitter {
     readonly changeSet : SerializedChangeSet;
     pset : any;
+    tree : SharedPropertyTree;
 
     on(event: "changeSetModified" | "commit", listener: (CS : any) => void): this;
 
@@ -60,7 +61,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         });
     }
 
-    private get tree() { return this._tree!; }
+    public get tree() { return this._tree!; }
 
     public get changeSet() {
         return this.tree.changeSet;
