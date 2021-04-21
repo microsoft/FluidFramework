@@ -197,7 +197,7 @@ class DataBinding {
   _invokeInsertCallbacks(in_modificationContext) {
     if (this._registeredPaths) {
       if (!in_modificationContext.isSimulated()) {
-        this._forEachPrototypeMember('_registeredPaths', in_registeredPaths => {
+        this._forEachPrototypeMember('_registeredPaths', (in_registeredPaths) => {
           this._handleModifications(
             in_modificationContext, in_registeredPaths,
             this._referencePropertyTable, false /* called for reference */,
@@ -206,7 +206,7 @@ class DataBinding {
         });
       } else {
         // We got a (forced) insert event, so we should call all registered insert handlers
-        this._forEachPrototypeMember('_registeredPaths', in_registeredPaths => {
+        this._forEachPrototypeMember('_registeredPaths', (in_registeredPaths) => {
           this._invokeInsertCallbacksForPaths(
             [], in_registeredPaths, this._property, true, true
           );
@@ -264,7 +264,7 @@ class DataBinding {
    */
   _invokeModifyCallbacks(in_modificationContext) {
     if (this._registeredPaths) {
-      this._forEachPrototypeMember('_registeredPaths', in_registeredPaths => {
+      this._forEachPrototypeMember('_registeredPaths', (in_registeredPaths) => {
         this._handleModifications(
           in_modificationContext, in_registeredPaths,
           this._referencePropertyTable, false /* called for reference */,
@@ -304,7 +304,7 @@ class DataBinding {
    */
   _invokeRemoveCallbacks(in_tokenizedAbsolutePath, in_simulated) {
     if (this._registeredPaths) {
-      this._forEachPrototypeMember('_registeredPaths', in_registeredPaths => {
+      this._forEachPrototypeMember('_registeredPaths', (in_registeredPaths) => {
         this._handleRemovals(
           in_tokenizedAbsolutePath,
           in_registeredPaths,
@@ -927,55 +927,55 @@ class DataBinding {
         var index, i;
         while (!arrayIterator.atEnd()) {
           switch (arrayIterator.type) {
-          case ArrayChangeSetIterator.types.INSERT:
-          case ArrayChangeSetIterator.types.MODIFY:
-            for (i = 0; i < arrayIterator.operation[1].length; ++i) {
-              index = arrayIterator.operation[0] + i + arrayIterator.offset;
-              this._registerCallbacksForSingleReferenceProperty(
-                in_tokenizedPath,
-                in_tokenizedFullPath,
-                in_nestedRegisteredPath,
-                in_referencePropertySubTable,
-                level,
-                referenceProperty,
-                in_previousSourceReferencePropertyInfo,
-                false, // not registering retroactively
-                index
-              );
-            }
-            break;
-          case ArrayChangeSetIterator.types.REMOVE:
-            for (i = 0; i < arrayIterator.operation[1]; ++i) {
+            case ArrayChangeSetIterator.types.INSERT:
+            case ArrayChangeSetIterator.types.MODIFY:
+              for (i = 0; i < arrayIterator.operation[1].length; ++i) {
+                index = arrayIterator.operation[0] + i + arrayIterator.offset;
+                this._registerCallbacksForSingleReferenceProperty(
+                  in_tokenizedPath,
+                  in_tokenizedFullPath,
+                  in_nestedRegisteredPath,
+                  in_referencePropertySubTable,
+                  level,
+                  referenceProperty,
+                  in_previousSourceReferencePropertyInfo,
+                  false, // not registering retroactively
+                  index
+                );
+              }
+              break;
+            case ArrayChangeSetIterator.types.REMOVE:
+              for (i = 0; i < arrayIterator.operation[1]; ++i) {
               // We don't have a changeset for this. Since we assume that the previous elements have already
               // been removed, we don't add the range index i in this call
               // Provide context (even w/o a valid changeset) to make writing callbacks easier
-              index = arrayIterator.operation[0] + arrayIterator.offset;
-              referenceInformation = getInNestedObjects.apply(undefined, [in_referencePropertySubTable].concat(
-                escapeTokenizedPathForMap(in_tokenizedPath.concat(index))));
-              // we only need to call _handleRemovals if we actually had a reference there (we might have deleted
-              // an "empty" reference from the array in which case we don't need to do anything
-              if (referenceInformation) {
-                nestedRegisteredPath = in_nestedRegisteredPath[index] ? in_nestedRegisteredPath[index] :
-                  in_nestedRegisteredPath;
-                tokenizedAbsolutePath.push(arrayIterator.offset);
-                this._handleRemovals(
-                  tokenizedAbsolutePath,
-                  nestedRegisteredPath,
-                  referenceInformation,
-                  level, {
-                    simulated: false,
-                    calledForReferenceTargetChanged: in_calledForReferenceTargetChanged,
-                    removeRootCallbacks: true,
-                    callRootRemovals: false,
-                    callRemovals: true
-                  }
-                );
-                tokenizedAbsolutePath.pop();
+                index = arrayIterator.operation[0] + arrayIterator.offset;
+                referenceInformation = getInNestedObjects.apply(undefined, [in_referencePropertySubTable].concat(
+                  escapeTokenizedPathForMap(in_tokenizedPath.concat(index))));
+                // we only need to call _handleRemovals if we actually had a reference there (we might have deleted
+                // an "empty" reference from the array in which case we don't need to do anything
+                if (referenceInformation) {
+                  nestedRegisteredPath = in_nestedRegisteredPath[index] ? in_nestedRegisteredPath[index] :
+                    in_nestedRegisteredPath;
+                  tokenizedAbsolutePath.push(arrayIterator.offset);
+                  this._handleRemovals(
+                    tokenizedAbsolutePath,
+                    nestedRegisteredPath,
+                    referenceInformation,
+                    level, {
+                      simulated: false,
+                      calledForReferenceTargetChanged: in_calledForReferenceTargetChanged,
+                      removeRootCallbacks: true,
+                      callRootRemovals: false,
+                      callRemovals: true
+                    }
+                  );
+                  tokenizedAbsolutePath.pop();
+                }
               }
-            }
-            break;
-          default:
-            throw new Error('ArrayChangeSetIterator: unknown operator ' + arrayIterator.type);
+              break;
+            default:
+              throw new Error('ArrayChangeSetIterator: unknown operator ' + arrayIterator.type);
           }
           arrayIterator.next();
         }
@@ -1543,7 +1543,7 @@ class DataBinding {
 
     if (!in_function) {
       // Common to mistake this.myFunc vs. this.prototype.myFunc.
-      throw new Error('No callback provided to DataBinding registration function (are you missing this.prototype?)');
+      throw new Error('No callback provided to DataBinding registration function(are you missing this.prototype?)');
     }
 
     // Install a callback that will allow the querying of _registerPaths etc. on all the prototypes.
@@ -1555,8 +1555,8 @@ class DataBinding {
 
     const paths = _.isArray(in_path) ? in_path : [in_path];
 
-    var tokenizedPaths = _.map(paths, p => PathHelper.tokenizePathString(p));
-    var escapedPaths = _.map(tokenizedPaths, p => escapeTokenizedPathForMap(p));
+    var tokenizedPaths = _.map(paths, (p) => PathHelper.tokenizePathString(p));
+    var escapedPaths = _.map(tokenizedPaths, (p) => escapeTokenizedPathForMap(p));
 
     // Create a handle to represent this registration.
     const handle = createHandle(in_dataBindingConstructor, escapedPaths, filteredOperations, callback);

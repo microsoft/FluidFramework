@@ -527,7 +527,7 @@ import { PropertyFactory, HFDM } from '@adsk/forge-hfdm';
           modifySceneCallCount.should.equal(0); // dataBinder should not be called yet
           // now modify the properties and measure how long HFDM takes
           in_workspace.pushModifiedEventScope();
-          createdProperties.forEach(prop => {
+          createdProperties.forEach((prop) => {
             prop.get(in_subProperty).setValue(in_newValue);
           });
           // measure HFDM
@@ -561,7 +561,7 @@ import { PropertyFactory, HFDM } from '@adsk/forge-hfdm';
           modifySceneCallCount.should.equal(1);
           // now do the same modifications again, but this time measure the time dataBinder takes
           in_workspace.pushModifiedEventScope();
-          createdProperties.forEach(prop => {
+          createdProperties.forEach((prop) => {
             prop.get(in_subProperty).setValue(in_newValue);
           });
           in_workspace.popModifiedEventScope();

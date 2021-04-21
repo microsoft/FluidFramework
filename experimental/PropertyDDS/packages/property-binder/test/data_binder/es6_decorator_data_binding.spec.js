@@ -15,7 +15,7 @@ import { ModificationContext } from '../../src/data_binder/modification_context'
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
-describe('Decorated DataBinding', function () {
+describe('Decorated DataBinding', function() {
   catchConsoleErrors();
   let workspace, dataBinder;
   let testProp, dataBindingInstance;
@@ -36,14 +36,14 @@ describe('Decorated DataBinding', function () {
     typeid: 'test:person-1.0.0'
   };
 
-  const createPerson = function () {
+  const createPerson = function() {
     return PropertyFactory.create(personTemplate.typeid);
   };
 
   const logData = [];
-  const log = function (target, property, descriptor) {
+  const log = function(target, property, descriptor) {
     const original = descriptor.value;
-    descriptor.value = jest.fn(function (...args) {
+    descriptor.value = jest.fn(function(...args) {
       let path = args[0].getAbsolutePath();
       if (path[0] === '/') {
         path = path.slice(1);
@@ -55,9 +55,9 @@ describe('Decorated DataBinding', function () {
   };
 
   // A decorator which adds a spy to a class method. This spy is per class and not per instance.
-  const spyDecorator = function (target, property, descriptor) {
+  const spyDecorator = function(target, property, descriptor) {
     const original = descriptor.value;
-    descriptor.value = jest.fn(function (...args) {
+    descriptor.value = jest.fn(function(...args) {
       return original.apply(this, args);
     });
     return descriptor;
@@ -122,7 +122,7 @@ describe('Decorated DataBinding', function () {
     }
   }
 
-  beforeAll(async function () {
+  beforeAll(async function() {
     PropertyFactory.register(personTemplate);
     PropertyFactory.register(infoTemplate);
 
@@ -131,35 +131,35 @@ describe('Decorated DataBinding', function () {
     dataBinder.attachTo(workspace);
     dataBinder.register('View', personTemplate.typeid, TestDataBindingClass);
     testProp = createPerson();
-   workspace.root.insert('person', testProp);
+    workspace.root.insert('person', testProp);
     dataBindingInstance = dataBinder.resolve('person', 'View');
   });
 
-  it('should have instantiated a TestDataBindingClass data binding', function () {
+  it('should have instantiated a TestDataBindingClass data binding', function() {
     expect(dataBindingInstance).toBeDefined();
     expect(dataBindingInstance).toBeInstanceOf(TestDataBindingClass);
   });
 
-  it('should call onPropertyChange callback', function () {
+  it('should call onPropertyChange callback', function() {
     dataBindingInstance = dataBinder.resolve('person', 'View');
     testProp.get(['name']).setValue('John Foo');
     expect(dataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onPropertyRegisteredCallback.mock.calls[0][0]).toBeInstanceOf(BaseProperty);
   });
 
-  it('should call onPathRegisteredCallback callback', function () {
+  it('should call onPathRegisteredCallback callback', function() {
     testProp.get(['lastName']).setValue('Bar');
     expect(dataBindingInstance.onPathRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onPathRegisteredCallback.mock.calls[0][0]).toBeInstanceOf(ModificationContext);
   });
 
-  it('should call onValuesRegisteredCallback callback', function () {
+  it('should call onValuesRegisteredCallback callback', function() {
     testProp.get(['nickname']).setValue('Johnnie');
     expect(dataBindingInstance.onValuesRegisteredCallback).toHaveBeenCalledTimes(1);
     expect(dataBindingInstance.onValuesRegisteredCallback.mock.calls[0][0]).toEqual(testProp.get(['nickname']).value);
   });
 
-  it('should register commonCallback for each of the stacked calls of the registration decorators', function () {
+  it('should register commonCallback for each of the stacked calls of the registration decorators', function() {
     let new_value = 'John Foobar';
     testProp.get(['parent', 'name']).setValue(new_value);
     expect(dataBindingInstance.commonCallback.mock.calls[0][0]).toEqual(new_value);
@@ -169,7 +169,7 @@ describe('Decorated DataBinding', function () {
     expect(dataBindingInstance.commonCallback).toHaveBeenCalledTimes(2);
   });
 
-  it('should call decorated callbacks if some decorator changes the callback', function () {
+  it('should call decorated callbacks if some decorator changes the callback', function() {
     // Assuming a callback changes the callback function, e.g. a simple logging decorator,
     // the decorated callback should be registered. This is based on decorator order as callbacks are
     // chained.
@@ -203,9 +203,9 @@ describe('Decorated DataBinding', function () {
     expect(logData[2]).toEqual('anotherEmptyCallback person.parent.lastName');
   });
 
-  it('should trigger the callback once', function () {
+  it('should trigger the callback once', function() {
     const anotherPerson = createPerson();
-   workspace.root.insert('anotherPerson', anotherPerson);
+    workspace.root.insert('anotherPerson', anotherPerson);
     const anotherDataBindingInstance = dataBinder.resolve('anotherPerson', 'View');
     // We need to reset the spy, as it is per class and was already called for our dataBindingInstance.
     anotherDataBindingInstance.onPropertyRegisteredCallback.mockClear();
@@ -216,7 +216,7 @@ describe('Decorated DataBinding', function () {
     expect(anotherDataBindingInstance.onPropertyRegisteredCallback).toHaveBeenCalledTimes(1);
   });
 
-  it('Documentation example - onValuesChanged decorator', function () {
+  it('Documentation example - onValuesChanged decorator', function() {
     /* eslint-disable require-jsdoc */
     // SnippetStart{onValueDecorator}
     var orderEntrySchema = {
@@ -248,7 +248,7 @@ describe('Decorated DataBinding', function () {
     PropertyFactory.register(orderEntrySchema);
     dataBinder.register('MODEL', orderEntrySchema.typeid, OrderEntryDataBinding);
     const order = PropertyFactory.create(orderEntrySchema.typeid);
-   workspace.root.insert('order', order);
+    workspace.root.insert('order', order);
 
     expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);

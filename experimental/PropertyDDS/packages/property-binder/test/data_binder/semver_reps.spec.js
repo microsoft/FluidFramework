@@ -45,10 +45,10 @@ describe('DataBinder runtime representations', () => {
       );
 
       // Get an HFDM workspace and insert a new property
-     workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
-     workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
-     workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
-     workspace.root.insert('Newest', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
+      workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
+      workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
+      workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
+      workspace.root.insert('Newest', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
 
@@ -81,10 +81,10 @@ describe('DataBinder runtime representations', () => {
       );
 
       // Get an HFDM workspace and insert a new property
-     workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
-     workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
-     workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
-     workspace.root.insert('Newest', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
+      workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
+      workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
+      workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
+      workspace.root.insert('Newest', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
 
@@ -125,12 +125,12 @@ describe('DataBinder runtime representations', () => {
       );
 
       // Get an HFDM workspace and insert a new property
-     workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
-     workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
-     workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
-     workspace.root.insert('120', PropertyFactory.create('Test:Versioned-1.2.0', 'single'));
-     workspace.root.insert('130', PropertyFactory.create('Test:Versioned-1.3.0', 'single'));
-     workspace.root.insert('200', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
+      workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
+      workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
+      workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
+      workspace.root.insert('120', PropertyFactory.create('Test:Versioned-1.2.0', 'single'));
+      workspace.root.insert('130', PropertyFactory.create('Test:Versioned-1.3.0', 'single'));
+      workspace.root.insert('200', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
 
@@ -174,12 +174,12 @@ describe('DataBinder runtime representations', () => {
       );
 
       // Get an HFDM workspace and insert a new property
-     workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
-     workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
-     workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
-     workspace.root.insert('120', PropertyFactory.create('Test:Versioned-1.2.0', 'single'));
-     workspace.root.insert('130', PropertyFactory.create('Test:Versioned-1.3.0', 'single'));
-     workspace.root.insert('200', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
+      workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
+      workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
+      workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
+      workspace.root.insert('120', PropertyFactory.create('Test:Versioned-1.2.0', 'single'));
+      workspace.root.insert('130', PropertyFactory.create('Test:Versioned-1.3.0', 'single'));
+      workspace.root.insert('200', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
 
@@ -228,10 +228,10 @@ describe('DataBinder runtime representations', () => {
       map110.insert('bob', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
       map200.insert('bob', PropertyFactory.create('Test:Versioned-2.0.0', 'single'));
 
-     workspace.root.insert('Older', map100);
-     workspace.root.insert('Patched', map101);
-     workspace.root.insert('Newer', map110);
-     workspace.root.insert('Newest', map200);
+      workspace.root.insert('Older', map100);
+      workspace.root.insert('Patched', map101);
+      workspace.root.insert('Newer', map110);
+      workspace.root.insert('Newest', map200);
 
       myDataBinder.attachTo(workspace);
 
@@ -265,7 +265,7 @@ describe('DataBinder runtime representations', () => {
 
       myDataBinder.attachTo(workspace);
 
-     workspace.root.insert('myRelationship', PropertyFactory.create('RelationshipProperty', 'single'));
+      workspace.root.insert('myRelationship', PropertyFactory.create('RelationshipProperty', 'single'));
 
       const lookup = myDataBinder.getRepresentationAtPath('myRelationship', 'MYBINDINGTYPE');
       expect(lookup).toBeDefined();
@@ -281,7 +281,7 @@ describe('DataBinder runtime representations', () => {
 
       myDataBinder.attachTo(workspace);
 
-     workspace.root.insert('inherited', PropertyFactory.create('Test:InheritedTestBaseType-1.0.0', 'single'));
+      workspace.root.insert('inherited', PropertyFactory.create('Test:InheritedTestBaseType-1.0.0', 'single'));
 
       const lookup = myDataBinder.getRepresentationAtPath('inherited', 'MYBINDINGTYPE');
       expect(lookup).toBeDefined();

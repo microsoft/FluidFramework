@@ -6,19 +6,18 @@
 import { DataBindingTree } from '../../src/data_binder/data_binding_tree';
 import { catchConsoleErrors } from './catch_console_errors';
 
-
-describe('DataBindingTree', function () {
+describe('DataBindingTree', function() {
   catchConsoleErrors();
 
-  beforeAll(function () {
+  beforeAll(function() {
     jest.setTimeout(20000);
   });
 
-  it('exists', function () {
+  it('exists', function() {
     expect(DataBindingTree).toBeDefined();
   });
 
-  it('should insert', function () {
+  it('should insert', function() {
     var tree = new DataBindingTree();
 
     // Should return the node
@@ -65,7 +64,7 @@ describe('DataBindingTree', function () {
     expect(node).toBeNull();
   });
 
-  it('should remove', function () {
+  it('should remove', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a.b.c.d', 1);
@@ -110,7 +109,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('a.b.e.f').getValue()).toEqual(2);
   });
 
-  it('should insert/remove correctly with absolute paths', function () {
+  it('should insert/remove correctly with absolute paths', function() {
     var tree = new DataBindingTree();
 
     tree.insert('/a.b.c.d', 1);
@@ -155,11 +154,11 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('/a.b.e.f').getValue()).toEqual(2);
   });
 
-  it('should support array inserts', function () {
+  it('should support array inserts', function() {
     var tree = new DataBindingTree();
 
-    expect(function () { tree.insert('a.b.c[]', 6); }).toThrow();
-    expect(function () { tree.insert('a.b.c[0', 6); }).toThrow();
+    expect(function() { tree.insert('a.b.c[]', 6); }).toThrow();
+    expect(function() { tree.insert('a.b.c[0', 6); }).toThrow();
     var node0 = tree.insert('a', 0);
     expect(node0).toBeDefined();
     var node1 = tree.insert('a.b.c[0].d', 1);
@@ -174,12 +173,12 @@ describe('DataBindingTree', function () {
     expect(node5).toBeDefined();
 
     // Should throw if no index provided
-    expect((function () { tree.insert('a.b.c[]', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[]', 6); })).toThrow();
 
     // Should throw if invalid index provided
-    expect((function () { tree.insert('a.b.c[-1]', 6); })).toThrow();
-    expect((function () { tree.insert('a.b.c[4]', 6); })).toThrow();
-    expect((function () { tree.insert('a.b.c[4', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[-1]', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[4]', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[4', 6); })).toThrow();
 
     // Tree should now be
     //            root
@@ -223,7 +222,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('a.b.c[3]')).toBeNull(); // Out of bounds index
   });
 
-  it('should support array removal', function () {
+  it('should support array removal', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 0);
@@ -286,7 +285,7 @@ describe('DataBindingTree', function () {
 
     // Should not remove unknown index
     expect(tree.remove('a.b.c[2]')).toBeNull();
-    expect((function () { tree.remove('a.b.c[2'); })).toThrow(); // Invalid path should throw
+    expect((function() { tree.remove('a.b.c[2'); })).toThrow(); // Invalid path should throw
     // Tree should not have changed
     expect(tree.getNode('a.b.c[0].d').getValue()).toEqual(2);
     expect(tree.getNode('a.b.c[1].d').getValue()).toEqual(4);
@@ -296,7 +295,7 @@ describe('DataBindingTree', function () {
     expect(subtree.getValue()).toEqual(2);
     expect(tree.getNode('a.b.c[0]')).toBeDefined();
   });
-  it('should support nested arrays', function () {
+  it('should support nested arrays', function() {
     var tree = new DataBindingTree();
 
     tree.insert('Widget5.aa[0].bb[0].cc[0]', 1);
@@ -315,7 +314,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('Widget5.aa[0]').getValue()).toEqual(4);
 
   });
-  it('should support (nested) arrays with multiple children', function () {
+  it('should support (nested) arrays with multiple children', function() {
     var tree = new DataBindingTree();
 
     tree.insert('Widget5.aa[0].bb[0].cc[0].a', 1);
@@ -331,7 +330,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('Widget5.ccc[0].c').getValue()).toEqual(5);
 
   });
-  it('should support nested maps', function () {
+  it('should support nested maps', function() {
     var tree = new DataBindingTree();
 
     tree.insert('Widget5.aa[a0].bb[a0].cc[a0]', 1);
@@ -350,7 +349,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('Widget5.aa[a0]').getValue()).toEqual(4);
 
   });
-  it('should support (nested) maps with multiple children', function () {
+  it('should support (nested) maps with multiple children', function() {
     var tree = new DataBindingTree();
 
     tree.insert('Widget5.aa[a0].bb[a0].cc[a0].a', 1);
@@ -373,7 +372,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('Widget5.aaa[a0]').getValue()).toEqual(6);
 
   });
-  it('should support deeply nested arrays ', function () {
+  it('should support deeply nested arrays ', function() {
     var tree = new DataBindingTree();
 
     tree.insert('Widget5.children[0]', 1);
@@ -407,7 +406,7 @@ describe('DataBindingTree', function () {
 
   });
 
-  it('should support map/set inserts', function () {
+  it('should support map/set inserts', function() {
     var tree = new DataBindingTree();
 
     var node0 = tree.insert('a', 0);
@@ -424,10 +423,10 @@ describe('DataBindingTree', function () {
     expect(node5).toBeDefined();
 
     // Should throw if no index provided
-    expect((function () { tree.insert('a.b.c[]', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[]', 6); })).toThrow();
 
     // Should throw if invalid index provided
-    expect((function () { tree.insert('a.b.c[missingBracket', 6); })).toThrow();
+    expect((function() { tree.insert('a.b.c[missingBracket', 6); })).toThrow();
 
     // Tree should now be
     //            root
@@ -461,7 +460,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('a.b.c[notInTheCollection]')).toBeNull(); // Not in the collection
   });
 
-  it('should support map/set removal', function () {
+  it('should support map/set removal', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 0);
@@ -484,7 +483,7 @@ describe('DataBindingTree', function () {
 
     // Should not remove unknown paths
     expect(tree.remove('a.b.c[xy]')).toBeNull();
-    expect((function () { tree.remove('a.b.c[xy'); })).toThrow(); // Invalid path should throw
+    expect((function() { tree.remove('a.b.c[xy'); })).toThrow(); // Invalid path should throw
 
     // Should remove sub-property
     var subtree = tree.remove('a.b.c[fg].d');
@@ -503,7 +502,7 @@ describe('DataBindingTree', function () {
     expect(tree.getNode('a.b.c[de]')).toBeNull();
   });
 
-  it('should get closest node', function () {
+  it('should get closest node', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 0);
@@ -566,7 +565,7 @@ describe('DataBindingTree', function () {
     expect(closest.node).toEqual(tree.getNode('a.b.d'));
   });
 
-  it('should get closest node with absolute paths', function () {
+  it('should get closest node with absolute paths', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 0);
@@ -629,7 +628,7 @@ describe('DataBindingTree', function () {
     expect(closest.node).toEqual(tree.getNode('a.b.d'));
   });
 
-  it('should traverse tree', function () {
+  it('should traverse tree', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 1);
@@ -654,7 +653,7 @@ describe('DataBindingTree', function () {
     //             5                    8
 
     var sum = 0;
-    tree.forEachChild(function (value) {
+    tree.forEachChild(function(value) {
       sum += value;
     });
 
@@ -662,7 +661,7 @@ describe('DataBindingTree', function () {
     expect(sum).toEqual(36);
   });
 
-  it('should return child nodes', function () {
+  it('should return child nodes', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 1);
@@ -703,7 +702,7 @@ describe('DataBindingTree', function () {
     expect(subtreePaths.has('d')).toEqual(true);
   });
 
-  it('should return all subtree paths', function () {
+  it('should return all subtree paths', function() {
     var tree = new DataBindingTree();
 
     tree.insert('a', 1);
@@ -766,7 +765,7 @@ describe('DataBindingTree', function () {
 
   });
 
-  it('should return whether it has children correctly', function () {
+  it('should return whether it has children correctly', function() {
     var tree = new DataBindingTree();
     expect(tree.hasChildren()).toEqual(false);
     tree.insert('a', 1);

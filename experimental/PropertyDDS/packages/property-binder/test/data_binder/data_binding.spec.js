@@ -81,26 +81,25 @@ const Object3DSchema = {
 };
 // SnippetEnd{DataBinder.Object3DBinding.Schema}
 
-
-describe('DataBinding.registerOnPath() should work for', function () {
+describe('DataBinding.registerOnPath() should work for', function() {
   var dataBinder, hfdm, workspace;
 
   catchConsoleErrors();
 
-  beforeAll(function () {
+  beforeAll(function() {
     registerTestTemplates();
 
     PropertyFactory.register(Vector3DSchema);
     PropertyFactory.register(Object3DSchema);
   });
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     // console.log('inner before each');
     dataBinder = new DataBinder();
     workspace = await MockSharedPropertyTree();
   });
 
-  afterEach(function () {
+  afterEach(function() {
     // Unbind checkout view
     dataBinder.detach();
 
@@ -112,18 +111,18 @@ describe('DataBinding.registerOnPath() should work for', function () {
       InheritedChildDataBinding,
       DerivedDataBinding
     ],
-      unregisterAllOnPathListeners
+    unregisterAllOnPathListeners
     );
 
     dataBinder = null;
   });
 
-  it('registering deferred in a constructor', function () {
+  it('registering deferred in a constructor', function() {
     class MyBinding extends DataBinding {
       constructor(params) { // eslint-disable-line no-useless-constructor
         super(params);
 
-        this.getDataBinder().registerOnPath('/myPrimitiveChildTemplate', ['insert', 'modify'], function () {
+        this.getDataBinder().registerOnPath('/myPrimitiveChildTemplate', ['insert', 'modify'], function() {
           // Deferred, so this should be false
           expect(this.getDataBinder()._activeTraversal).toEqual(false);
         }, {
@@ -137,10 +136,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, MyBinding);
 
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
   });
 
-  it('onModify', function () {
+  it('onModify', function() {
     // Register the base (Child) typeid
     var stringSpy = jest.fn();
     var mapSpy = jest.fn();
@@ -155,7 +154,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     expect(primitiveChildDataBinding).toBeInstanceOf(PrimitiveChildrenDataBinding);
@@ -203,7 +202,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     ParentDataBinding.registerOnPath('node.child', ['modify'], nestedChildSpy);
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, ParentDataBinding);
 
-   workspace.root.insert('myNodePropertyTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
+    workspace.root.insert('myNodePropertyTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
     workspace.root.get('myNodePropertyTemplate').insert('node', PropertyFactory.create('NodeProperty'));
     workspace.root.get('myNodePropertyTemplate').get('node').insert('child', PropertyFactory.create('String'));
     expect(nodeSpy).toHaveBeenCalledTimes(1);
@@ -213,7 +212,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(nestedChildSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('onInsert', function () {
+  it('onInsert', function() {
     // Register the base (Child) typeid
     var anotherThingSpy = jest.fn();
     ParentDataBinding.registerOnPath('anotherThing', ['insert'], anotherThingSpy);
@@ -230,7 +229,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
+    workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const parentDataBinding = dataBinder.resolve(nodeContainerPset.getAbsolutePath(), 'BINDING');
     expect(parentDataBinding).toBeInstanceOf(ParentDataBinding);
@@ -273,7 +272,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(nestedChildSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('onRemove', function () {
+  it('onRemove', function() {
     var anotherThingRemoveSpy = jest.fn();
     var textRemoveSpy = jest.fn();
     var nestedChildRemoveSpy = jest.fn();
@@ -289,7 +288,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
     var nodeContainerPset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
+    workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
     nodeContainerPset.insert('node', PropertyFactory.create('NodeProperty'));
     nodeContainerPset.get('node').insert('child', PropertyFactory.create('String'));
 
@@ -299,7 +298,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(anotherThingRemoveSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('nested Paths', function () {
+  it('nested Paths', function() {
     var nestedSpy = jest.fn();
     PrimitiveChildrenDataBinding.registerOnPath('nested', ['modify'], nestedSpy);
     var numberSpy = jest.fn();
@@ -313,7 +312,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     const primitiveChildDataBinding = dataBinder.resolve(primitiveChildPset.getAbsolutePath(), 'BINDING');
     expect(primitiveChildDataBinding).toBeInstanceOf(PrimitiveChildrenDataBinding);
@@ -339,7 +338,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     numberSpy.mockClear();
   });
 
-  it('primitive collections', function () {
+  it('primitive collections', function() {
     // Register the base (Child) typeid
 
     var mapInsertSpy = jest.fn();
@@ -359,7 +358,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.root.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
@@ -427,7 +426,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapRemoveSpy.mockClear();
   });
 
-  it('composed type array', function () {
+  it('composed type array', function() {
     var arrayInsertSpy = jest.fn();
     var arrayModifySpy = jest.fn();
     var arrayRemoveSpy = jest.fn();
@@ -440,11 +439,11 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var arrayContainerPset = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
-   workspace.root.insert('myArrayContainerTemplate', arrayContainerPset);
+    workspace.root.insert('myArrayContainerTemplate', arrayContainerPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.root.get(['myArrayContainerTemplate', 'subArray']);
-    arrayProperty.insertRange(0, _.map([1, 2, 3, 4, 5, 6], function (i) {
+    arrayProperty.insertRange(0, _.map([1, 2, 3, 4, 5, 6], function(i) {
       return PropertyFactory.create('Test:ChildID-0.0.1', undefined, {
         text: String(i)
       });
@@ -487,7 +486,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     arrayRemoveSpy.mockClear();
   });
 
-  it('composed type map', function () {
+  it('composed type map', function() {
     var mapInsertSpy = jest.fn();
     var mapModifySpy = jest.fn();
     var mapRemoveSpy = jest.fn();
@@ -500,7 +499,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var mapContainerPset = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
-   workspace.root.insert('myMapContainerTemplate', mapContainerPset);
+    workspace.root.insert('myMapContainerTemplate', mapContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var mapProperty = workspace.root.get(['myMapContainerTemplate', 'subMap']);
@@ -563,7 +562,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     mapRemoveSpy.mockClear();
   });
 
-  it('set', function () {
+  it('set', function() {
     var setInsertSpy = jest.fn();
     var setModifySpy = jest.fn();
     var setRemoveSpy = jest.fn();
@@ -576,7 +575,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var mapContainerPset = PropertyFactory.create(SetContainerTemplate.typeid, 'single');
-   workspace.root.insert('mySetContainerTemplate', mapContainerPset);
+    workspace.root.insert('mySetContainerTemplate', mapContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var setProperty = workspace.root.get(['mySetContainerTemplate', 'subSet']);
@@ -625,7 +624,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     }
   });
 
-  it('NodeProperty', function () {
+  it('NodeProperty', function() {
     var nodeInsertSpy = jest.fn();
     var nodeModifySpy = jest.fn();
     var nodeRemoveSpy = jest.fn();
@@ -638,7 +637,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var nodeContainerPset = PropertyFactory.create(NodeContainerTemplate.typeid, 'single');
-   workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
+    workspace.root.insert('myNodeContainerTemplate', nodeContainerPset);
 
     // Expect the insertion of map values to trigger onInsert messages
     var nodeProperty = workspace.root.get(['myNodeContainerTemplate', 'nested']);
@@ -687,7 +686,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     }
   });
 
-  it('arrays with primitive types (extra checks)', function () {
+  it('arrays with primitive types (extra checks)', function() {
     var arrayInsertSpy = jest.fn();
     var arrayModifySpy = jest.fn();
     var arrayRemoveSpy = jest.fn();
@@ -700,7 +699,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single');
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     // Expect the insertion of ranges to trigger onInsert messages
     var arrayProperty = workspace.root.get(['myPrimitiveChildTemplate', 'arrayOfNumbers']);
@@ -749,31 +748,31 @@ describe('DataBinding.registerOnPath() should work for', function () {
     arrayModifySpy.mockClear();
   });
 
-  it('registerOnProperty', function () {
+  it('registerOnProperty', function() {
     var stringProperty = PropertyFactory.create('String');
     var primitiveChildrenDataBinding = undefined;
-    var checkProperty = function (property) {
+    var checkProperty = function(property) {
       expect(this).toBeInstanceOf(PrimitiveChildrenDataBinding);
       expect(this).toEqual(primitiveChildrenDataBinding);
       expect(property).toEqual(stringProperty);
     };
     var insertSpy = jest.fn(checkProperty);
     var modifySpy = jest.fn(checkProperty);
-    var removeSpy = jest.fn(function (property) { expect(property).toBeUndefined(); });
+    var removeSpy = jest.fn(function(property) { expect(property).toBeUndefined(); });
 
     var invalidProperty = false; // we have to do this externally because HFDM would eat our exception from the spy
     var expectedInvalidProperty = false; // same as above...
-    var validPropertySpy = jest.fn(function (in_property) {
+    var validPropertySpy = jest.fn(function(in_property) {
       if (!in_property) {
         invalidProperty = true;
       }
     });
-    var invalidPropertySpy = jest.fn(function (in_property) {
+    var invalidPropertySpy = jest.fn(function(in_property) {
       if (!in_property) {
         expectedInvalidProperty = true;
       }
     });
-    var changeSpy = jest.fn(function (property) {
+    var changeSpy = jest.fn(function(property) {
       if (property) { // will be undefined if removed
         checkProperty.call(this, property);
       } else {
@@ -798,7 +797,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, PrimitiveChildrenDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('node', PropertyFactory.create(NodeContainerTemplate.typeid));
+    workspace.root.insert('node', PropertyFactory.create(NodeContainerTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     primitiveChildrenDataBinding = dataBinder.resolve('/node', 'BINDING');
 
@@ -834,12 +833,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(expectedInvalidProperty).toEqual(true);
   });
 
-  it('when invoked from the utility functions', function () {
+  it('when invoked from the utility functions', function() {
     var stringProperty = PropertyFactory.create('String');
     var stringArrayProperty = PropertyFactory.create('String', 'array');
     var insertSpy = jest.fn();
     var modifySpy = jest.fn();
-    var removeSpy = jest.fn(function (in_modificationContext) {
+    var removeSpy = jest.fn(function(in_modificationContext) {
       expect(in_modificationContext.getAbsolutePath()).toEqual('/node.string');
     });
     var collectionInsertSpy = jest.fn();
@@ -857,7 +856,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     var node = PropertyFactory.create(NodeContainerTemplate.typeid);
-   workspace.root.insert('node', node);
+    workspace.root.insert('node', node);
 
     node.insert('string', stringProperty);
     expect(insertSpy).toHaveBeenCalledTimes(1);
@@ -875,7 +874,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(collectionRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('same databinding on two workspaces should not matter', async function () {
+  it('same databinding on two workspaces should not matter', async function() {
     // In some tests, a databinding used in the first test was interfering with the second test.
     // We simulate that here
     const insertSpy = jest.fn();
@@ -913,7 +912,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(insertSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('should handle intermediate binding classes that are not registered', function () {
+  it('should handle intermediate binding classes that are not registered', function() {
     var parentModifySpy = jest.fn();
     var derivedModifySpy = jest.fn();
     var derivedDerivedModifySpy = jest.fn();
@@ -936,7 +935,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedDerivedModifySpy).toHaveBeenCalledTimes(0);
 
     // Test changing an instance of the parent class
-   workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
+    workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
@@ -949,7 +948,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived class
-   workspace.root.insert('myInheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+    workspace.root.insert('myInheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
 
@@ -962,7 +961,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedDerivedModifySpy.mockClear();
 
     // Test changing an instance of the derived derived class
-   workspace.root.insert(
+    workspace.root.insert(
       'myInheritedInheritedChildTemplate', PropertyFactory.create(InheritedInheritedChildTemplate.typeid)
     );
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
@@ -986,10 +985,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedModifySpy.mockClear();
   });
 
-  it('should not matter the order we register in, way 1', function () {
+  it('should not matter the order we register in, way 1', function() {
     let order = '';
-    const parentInsertSpy = jest.fn(function () { order += 'p'; });
-    const derivedInsertSpy = jest.fn(function () { order += 'd'; });
+    const parentInsertSpy = jest.fn(function() { order += 'p'; });
+    const derivedInsertSpy = jest.fn(function() { order += 'd'; });
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -1003,7 +1002,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+    workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1012,10 +1011,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(order).toEqual('dp');
   });
 
-  it('should not matter the order we register in, way 2', function () {
+  it('should not matter the order we register in, way 2', function() {
     let order = '';
-    const parentInsertSpy = jest.fn(function () { order += 'p'; });
-    const derivedInsertSpy = jest.fn(function () { order += 'd'; });
+    const parentInsertSpy = jest.fn(function() { order += 'p'; });
+    const derivedInsertSpy = jest.fn(function() { order += 'd'; });
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -1029,7 +1028,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+    workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1038,10 +1037,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(order).toEqual('dp');
   });
 
-  it('should not matter the order we register in, way 3', function () {
+  it('should not matter the order we register in, way 3', function() {
     let order = '';
-    const parentInsertSpy = jest.fn(function () { order += 'p'; });
-    const derivedInsertSpy = jest.fn(function () { order += 'd'; });
+    const parentInsertSpy = jest.fn(function() { order += 'p'; });
+    const derivedInsertSpy = jest.fn(function() { order += 'd'; });
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -1055,7 +1054,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+    workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1064,10 +1063,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(order).toEqual('dp');
   });
 
-  it('should not matter the order we register in, way 4', function () {
+  it('should not matter the order we register in, way 4', function() {
     let order = '';
-    const parentInsertSpy = jest.fn(function () { order += 'p'; });
-    const derivedInsertSpy = jest.fn(function () { order += 'd'; });
+    const parentInsertSpy = jest.fn(function() { order += 'p'; });
+    const derivedInsertSpy = jest.fn(function() { order += 'd'; });
 
     unregisterAllOnPathListeners(ParentDataBinding);
     unregisterAllOnPathListeners(DerivedDataBinding);
@@ -1081,7 +1080,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
     expect(order).toEqual('');
 
-   workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
+    workspace.root.insert('InheritedChildTemplate', PropertyFactory.create(InheritedChildTemplate.typeid));
 
     expect(parentInsertSpy).toHaveBeenCalledTimes(1);
     expect(derivedInsertSpy).toHaveBeenCalledTimes(1);
@@ -1090,7 +1089,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(order).toEqual('dp');
   });
 
-  it('derived DataBindings with unrelated templates', function () {
+  it('derived DataBindings with unrelated templates', function() {
     var parentModifySpy = jest.fn();
     var derivedModifySpy = jest.fn();
 
@@ -1103,13 +1102,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, DerivedDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
+    workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
     expect(myParentDataBinding).toBeDefined();
     expect(myParentDataBinding).toBeInstanceOf(ParentDataBinding);
-   workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
+    workspace.root.insert('myChildTemplate', PropertyFactory.create(ChildTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myChildTemplate', 'BINDING');
@@ -1151,7 +1150,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     derivedModifySpy.mockClear();
   });
 
-  it('should not call us back for non-existing items', function () {
+  it('should not call us back for non-existing items', function() {
     dataBinder.attachTo(workspace);
     const pathSpy = jest.fn();
 
@@ -1162,7 +1161,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     const nodePset = PropertyFactory.create('NodeProperty', 'single');
     expect(pathSpy).toHaveBeenCalledTimes(0);
-   workspace.root.insert('node', nodePset);
+    workspace.root.insert('node', nodePset);
 
     const stringPset = PropertyFactory.create('String', 'single');
     nodePset.insert('aString', stringPset);
@@ -1176,14 +1175,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathSpy).toHaveBeenCalledTimes(3);
   });
 
-  it('derived DataBindings with unrelated templates and replacing parent callback', function () {
+  it('derived DataBindings with unrelated templates and replacing parent callback', function() {
     var parentModifySpy = jest.fn();
     var derivedModifySpy = jest.fn();
     var parentInsertSpy = jest.fn();
     var derivedInsertSpy = jest.fn();
-    var parentRemoveSpy = jest.fn(function (in_modificationContext) {
+    var parentRemoveSpy = jest.fn(function(in_modificationContext) {
     });
-    var derivedRemoveSpy = jest.fn(function (in_modificationContext) {
+    var derivedRemoveSpy = jest.fn(function(in_modificationContext) {
     });
 
     unregisterAllOnPathListeners(ParentDataBinding);
@@ -1199,7 +1198,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', NodeContainerTemplate.typeid, DerivedDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
+    workspace.root.insert('myParentTemplate', PropertyFactory.create(ParentTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myParentDataBinding = dataBinder.resolve('/myParentTemplate', 'BINDING');
@@ -1209,7 +1208,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(derivedInsertSpy).toHaveBeenCalledTimes(0);
     parentInsertSpy.mockClear();
     derivedInsertSpy.mockClear();
-   workspace.root.insert('myNodeContainerTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
+    workspace.root.insert('myNodeContainerTemplate', PropertyFactory.create(NodeContainerTemplate.typeid));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     const myDerivedDataBinding = dataBinder.resolve('/myNodeContainerTemplate', 'BINDING');
@@ -1264,28 +1263,28 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
   });
 
-  it('should handle double references in a relative path', function () {
+  it('should handle double references in a relative path', function() {
     dataBinder.attachTo(workspace);
 
     // Add our child (referenced) pset
     var childPset = PropertyFactory.create(ChildTemplate.typeid, 'single');
-   workspace.root.insert('myChild1', childPset);
+    workspace.root.insert('myChild1', childPset);
 
     // referenceParentPSet should produce a ParentDataBinding
     // Most basic case, insert with an already valid reference
     const referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
     referenceParentPSet.get('single_ref', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
       .setValue('/myChild1');
-   workspace.root.insert('myReferenceParent', referenceParentPSet);
+    workspace.root.insert('myReferenceParent', referenceParentPSet);
 
     // Now we have a two stage reference
     const referenceParentPSet2 = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
     referenceParentPSet2.get('single_ref', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
       .setValue('/myReferenceParent');
-   workspace.root.insert('myReferenceParent2', referenceParentPSet2);
+    workspace.root.insert('myReferenceParent2', referenceParentPSet2);
 
     // Register the DataBindings
-    var doubleReferenceModifySpy = jest.fn(function () {
+    var doubleReferenceModifySpy = jest.fn(function() {
     });
     ParentDataBinding.registerOnPath('single_ref.single_ref.text', ['modify'], doubleReferenceModifySpy);
     dataBinder.register('BINDING', ReferenceParentTemplate.typeid, ParentDataBinding);
@@ -1297,14 +1296,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(referenceParentPSet2.get(['single_ref', 'single_ref', 'text'])).toEqual(childPset.get('text'));
     expect(doubleReferenceModifySpy).toHaveBeenCalledTimes(1);
   });
-  it('getAbsolutePath() should return the correct path', function () {
+  it('getAbsolutePath() should return the correct path', function() {
 
-    var pathSpy = jest.fn(function (modificationContext) {
+    var pathSpy = jest.fn(function(modificationContext) {
       // WARNING: We have to do this test inline. After the event, the modification context is no
       // longer valid
       expect(modificationContext.getAbsolutePath()).toEqual(modificationContext.getProperty().getAbsolutePath());
     });
-    var collectionSpy = jest.fn(function (key, modificationContext) {
+    var collectionSpy = jest.fn(function(key, modificationContext) {
       //          console.log('key/index: ' + key + ' op: ' + modificationContext.getOperationType());
       expect(modificationContext.getAbsolutePath()).toEqual(modificationContext.getProperty().getAbsolutePath());
     });
@@ -1316,9 +1315,9 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild2', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild3', PropertyFactory.create('NodeProperty', 'single'));
@@ -1331,7 +1330,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     workspace.root.get(['child1', 'myChild1']).insert('myArray', PropertyFactory.create('NodeProperty', 'array'));
     workspace.root.get(['child1', 'myChild1']).insert('myMap', PropertyFactory.create('NodeProperty', 'map'));
     var arrayProperty = workspace.root.get(['child1', 'myChild1', 'myArray']);
-    arrayProperty.insertRange(0, _.map([1, 2, 3, 4, 5, 6], function () {
+    arrayProperty.insertRange(0, _.map([1, 2, 3, 4, 5, 6], function() {
       return PropertyFactory.create('NodeProperty', 'single');
     }));
     // arrayProperty -> NodeProperty -> ChildTemplate
@@ -1349,7 +1348,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       { text: 'forty-two' }));
   });
 
-  it('Documentation example - registerOnProperty', function () {
+  it('Documentation example - registerOnProperty', function() {
     // *** NOTE *** this is copied into the documentation
     // SnippetStart{DataBinding.registerOnProperty}
     var orderEntrySchema = {
@@ -1386,7 +1385,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     PropertyFactory.register(orderEntrySchema);
     dataBinder.register('MODEL', orderEntrySchema.typeid, OrderEntryDataBinding);
     const order = PropertyFactory.create(orderEntrySchema.typeid);
-   workspace.root.insert('order', order);
+    workspace.root.insert('order', order);
 
     expect(eventLog.length).toEqual(2);
     order.get('price').setValue(100);
@@ -1395,10 +1394,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(eventLog.length).toEqual(4);
   });
 
-  it('getDataBinding() should work for relative path callbacks even in remove operations', function () {
+  it('getDataBinding() should work for relative path callbacks even in remove operations', function() {
 
     var childSpyError = false;
-    var childSpy = jest.fn(function (modificationContext) {
+    var childSpy = jest.fn(function(modificationContext) {
       //  console.log('childSpy: op type: ' + modificationContext.getOperationType());
       //  console.log('childSpy: absolute path: ' + modificationContext.getAbsolutePath());
       //  console.log('childSpy: # of DataBindings: ' + modificationContext.getDataBinding().length);
@@ -1414,7 +1413,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       }
     });
     var collectionInsertSpyError = false;
-    var collectionInsertSpy = jest.fn(function (index, modificationContext) {
+    var collectionInsertSpy = jest.fn(function(index, modificationContext) {
       // have to do it this way because HFDM swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         collectionInsertSpyError = true;
@@ -1425,7 +1424,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       }
     });
     var collectionModifySpyError = false;
-    var collectionModifySpy = jest.fn(function (index, modificationContext) {
+    var collectionModifySpy = jest.fn(function(index, modificationContext) {
       // have to do it this way because HFDM swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         collectionModifySpyError = true;
@@ -1441,7 +1440,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       }
     });
     var mapCollectionModifySpyError = false;
-    var mapCollectionModifySpy = jest.fn(function (index, modificationContext) {
+    var mapCollectionModifySpy = jest.fn(function(index, modificationContext) {
       // have to do it this way because HFDM swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         mapCollectionModifySpyError = true;
@@ -1459,7 +1458,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     var receivedDataBindings = new Set();
     var createdDataBindings = [];
     var collectionRemoveSpyError = false;
-    var collectionRemoveSpy = jest.fn(function (index, modificationContext) {
+    var collectionRemoveSpy = jest.fn(function(index, modificationContext) {
       // console.log('index: ' + index);
       var removedDataBinding = modificationContext.getDataBinding();
       // have to do it this way because HFDM swallows exceptions in callbacks :(
@@ -1491,7 +1490,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     workspace.root.get('parent').insert('child', PropertyFactory.create(ChildTemplate.typeid, undefined,
@@ -1600,7 +1599,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(collectionRemoveSpyError).toEqual(false);
   });
 
-  it('array of strings', function () {
+  it('array of strings', function() {
     const collectionInsert = jest.fn();
     const collectionModify = jest.fn();
     const collectionRemove = jest.fn();
@@ -1610,7 +1609,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, PrimitiveChildrenDataBinding);
     dataBinder.attachTo(workspace);
-   workspace.root.insert('bob', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+    workspace.root.insert('bob', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
     workspace.root.get(['bob', 'arrayOfStrings']).push('Hi there');
     expect(collectionInsert).toHaveBeenCalledTimes(1);
     expect(collectionRemove).toHaveBeenCalledTimes(0);
@@ -1648,12 +1647,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(collectionRemove).toHaveBeenCalledTimes(0);
   });
 
-  it('resolve() should work for DataBindings that replace DataBindings with the same path', function () {
+  it('resolve() should work for DataBindings that replace DataBindings with the same path', function() {
 
     var dataBindings = [];
     var resolvedDataBindings;
     var error = false;
-    var collectionRemoveSpy = jest.fn(function (index, modificationContext) {
+    var collectionRemoveSpy = jest.fn(function(index, modificationContext) {
       // have to do it this way because HFDM swallows exceptions in callbacks :(
       if (index !== 2) {
         error = true;
@@ -1679,7 +1678,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     dataBinder.attachTo(workspace);
 
-   workspace.root.insert('childArray', PropertyFactory.create(ChildTemplate.typeid, 'array'));
+    workspace.root.insert('childArray', PropertyFactory.create(ChildTemplate.typeid, 'array'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     var childArrayProperty = workspace.root.get('childArray');
@@ -1710,29 +1709,29 @@ describe('DataBinding.registerOnPath() should work for', function () {
   });
 
   it('should be able to register on some path from an explicity nested schema and react to changes in the subtree',
-    function () {
+    function() {
       dataBinder.attachTo(workspace);
 
       const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-     workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+      workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
       workspace.root.get('point2D').get('position').get('x').value = 42;
       workspace.root.get('point2D').get('position').get('y').value = 42;
       expect(pathSpy).toHaveBeenCalledTimes(2);
     });
 
-  it('can tell if inserts/removes are simulated or real - attach/detach', function () {
+  it('can tell if inserts/removes are simulated or real - attach/detach', function() {
     let simulated;
     const called = jest.fn();
 
-    const checkSimulated = function (context) {
+    const checkSimulated = function(context) {
       called();
       expect(simulated).toEqual(context.isSimulated());
     };
-    const checkCollectionSimulated = function (stupidOrder, context) {
+    const checkCollectionSimulated = function(stupidOrder, context) {
       called();
       expect(simulated).toEqual(context.isSimulated());
     };
@@ -1754,14 +1753,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // retroactively adding bindings - we will get simulated callbacks for data1
     expect(called).toHaveBeenCalledTimes(0);
     simulated = true;
-   workspace.root.insert('data1', data1);
+    workspace.root.insert('data1', data1);
     dataBinder.attachTo(workspace);
     expect(called).toHaveBeenCalledTimes(2);
 
     // bindings are attached - we will get real callbacks for data2
     simulated = false;
     called.mockClear();
-   workspace.root.insert('data2', data2);
+    workspace.root.insert('data2', data2);
     expect(called).toHaveBeenCalledTimes(2);
 
     // real callbacks for data2 being removed
@@ -1779,15 +1778,15 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(called).toHaveBeenCalledTimes(1);
   });
 
-  it('can tell if inserts/removes are simulated or real - destroy handle', function () {
+  it('can tell if inserts/removes are simulated or real - destroy handle', function() {
     let simulated;
     const called = jest.fn();
 
-    const checkSimulated = function (context) {
+    const checkSimulated = function(context) {
       called();
       expect(simulated).toEqual(context.isSimulated());
     };
-    const checkCollectionSimulated = function (stupidOrder, context) {
+    const checkCollectionSimulated = function(stupidOrder, context) {
       called();
       expect(simulated).toEqual(context.isSimulated());
     };
@@ -1804,7 +1803,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // bindings are attached - we will get real callbacks for data1
     expect(called).toHaveBeenCalledTimes(0);
     simulated = false;
-   workspace.root.insert('data1', data1);
+    workspace.root.insert('data1', data1);
     expect(called).toHaveBeenCalledTimes(2);
 
     // simulated callbacks for handles being destroyed
@@ -1819,21 +1818,21 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(called).toHaveBeenCalledTimes(0); // broken
   });
 
-  it('should not be able to register on multiple paths for registerOnProperty etc.', function () {
+  it('should not be able to register on multiple paths for registerOnProperty etc.', function() {
     const pathSpy = jest.fn();
     const paths = ['position.x', 'position.y'];
-    expect(function () { ParentDataBinding.registerOnProperty(paths, ['modify'], pathSpy); }).toThrow();
-    expect(function () { ParentDataBinding.registerOnValues(paths, ['modify'], pathSpy); }).toThrow();
+    expect(function() { ParentDataBinding.registerOnProperty(paths, ['modify'], pathSpy); }).toThrow();
+    expect(function() { ParentDataBinding.registerOnValues(paths, ['modify'], pathSpy); }).toThrow();
   });
 
-  it('should be able to register on multiple paths and get called back once', function () {
+  it('should be able to register on multiple paths and get called back once', function() {
     dataBinder.attachTo(workspace);
 
     const pathSpy = jest.fn();
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-   workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+    workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
     // Push a scope, and modify both position variables
     workspace.pushNotificationDelayScope();
@@ -1862,14 +1861,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('should be able to unregister a multiple paths binding', function () {
+  it('should be able to unregister a multiple paths binding', function() {
     dataBinder.attachTo(workspace);
 
     const pathSpy = jest.fn();
     ParentDataBinding.registerOnPath(['position.x', 'position.y'], ['modify'], pathSpy);
     const handle = dataBinder.register('BINDING', point2DExplicitTemplate.typeid, ParentDataBinding);
 
-   workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
+    workspace.root.insert('point2D', PropertyFactory.create(point2DExplicitTemplate.typeid, 'single'));
 
     // Push a scope, and modify both position variables
     workspace.pushNotificationDelayScope();
@@ -1900,7 +1899,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('should be able to register on multiple paths and independently hear from different callbacks', function () {
+  it('should be able to register on multiple paths and independently hear from different callbacks', function() {
     // We are registering on two paths, for insert and modify. The goal of this test is to ensure that the
     // callback is called _once_ for the modify, and _once_ for the insert. i.e., there are two inserts, so
     // insert should only be called once, but we want to make sure that the 'call once' mechanism doesn't prevent
@@ -1912,7 +1911,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.register('BINDING', 'NodeProperty', ParentDataBinding);
 
     // child1 is already there, child2 is inserted later, inside the push/pop modified event scope.
-   workspace.root.insert('child1', PropertyFactory.create(positionTemplate.typeid, 'single'));
+    workspace.root.insert('child1', PropertyFactory.create(positionTemplate.typeid, 'single'));
 
     // Should have heard of the insert of child1, once
     expect(pathSpy).toHaveBeenCalledTimes(1);
@@ -1922,7 +1921,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     // to be called.
     workspace.pushNotificationDelayScope();
 
-   workspace.root.insert('child2', PropertyFactory.create(positionTemplate.typeid, 'single'));
+    workspace.root.insert('child2', PropertyFactory.create(positionTemplate.typeid, 'single'));
 
     workspace.root.get('child1').get('x').value = 42;
     workspace.root.get('child1').get('y').value = 42;
@@ -1936,9 +1935,9 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('getRelativeTokenizedPath - relative path', function () {
+  it('getRelativeTokenizedPath - relative path', function() {
     let worked = false;
-    PrimitiveChildrenDataBinding.registerOnPath('nested.aNumber', ['modify'], function (in_context) {
+    PrimitiveChildrenDataBinding.registerOnPath('nested.aNumber', ['modify'], function(in_context) {
       const path = in_context.getRelativeTokenizedPath();
       worked = path.length === 2 && path[0] === 'nested' && path[1] === 'aNumber';
     });
@@ -1952,7 +1951,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     // primitiveChildPset should produce a PrimitiveChildrenDataBinding
-   workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
+    workspace.root.insert('myPrimitiveChildTemplate', primitiveChildPset);
 
     expect(worked).toEqual(false);
     primitiveChildPset.resolvePath('nested.aNumber').setValue(23);
@@ -1960,14 +1959,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
   });
 
   it('should be able to register on some path from an implicitly nested schema and react to changes in the subtree',
-    function () {
+    function() {
       dataBinder.attachTo(workspace);
 
       const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
-     workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
+      workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
 
       workspace.root.get('point2D').get('position').get('x').value = 42;
       workspace.root.get('point2D').get('position').get('y').value = 42;
@@ -1977,14 +1976,14 @@ describe('DataBinding.registerOnPath() should work for', function () {
     });
 
   it('register on a structure modify and react to changes in the subtree LYNXDEV-5365',
-    function () {
+    function() {
       dataBinder.attachTo(workspace);
 
       const pathSpy = jest.fn();
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DImplicitTemplate.typeid, ParentDataBinding);
 
-     workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
+      workspace.root.insert('point2D', PropertyFactory.create(point2DImplicitTemplate.typeid, 'single'));
 
       workspace.pushNotificationDelayScope();
       workspace.root.get('point2D').get('position').get('x').value = 42;
@@ -1996,7 +1995,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     });
 
   it('register on a structure modify and react to changes in the subtree LYNXDEV-5365, differing types',
-    function () {
+    function() {
       // Similar to the above test, but x and y are differing types and hence in different subhierarchies
       // in the HFDM change set
       const point2DWeirdTemplate = {
@@ -2020,7 +2019,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ParentDataBinding.registerOnPath('position', ['modify'], pathSpy);
       dataBinder.register('BINDING', point2DWeirdTemplate.typeid, ParentDataBinding);
 
-     workspace.root.insert('point2D', PropertyFactory.create(point2DWeirdTemplate.typeid, 'single'));
+      workspace.root.insert('point2D', PropertyFactory.create(point2DWeirdTemplate.typeid, 'single'));
 
       workspace.pushNotificationDelayScope();
       workspace.root.get('point2D').get('position').get('x').value = 42;
@@ -2031,7 +2030,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       expect(pathSpy).toHaveBeenCalledTimes(1);
     });
 
-  it('call onPostCreate/onModify before calling relative path callbacks, onRemove after (LYNXDEV-5746)', function () {
+  it('call onPostCreate/onModify before calling relative path callbacks, onRemove after (LYNXDEV-5746)', function() {
     class myDerivedDataBinding extends DataBinding {
       constructor(params) {
         super(params);
@@ -2056,13 +2055,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     }
 
     dataBinder.attachTo(workspace);
-    const pathInsertSpy = jest.fn(function () {
+    const pathInsertSpy = jest.fn(function() {
       expect(this._insertMockObject).toEqual(true);
     });
-    const pathModifySpy = jest.fn(function () {
+    const pathModifySpy = jest.fn(function() {
       expect(this._modifyMockObject).toEqual(true);
     });
-    const pathRemoveSpy = jest.fn(function () {
+    const pathRemoveSpy = jest.fn(function() {
       // this should be called *before* onRemove
       expect(this._removeMockObject).toEqual(false);
       this._removeMockObject = true;
@@ -2071,7 +2070,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myDerivedDataBinding.registerOnPath('text', ['modify'], pathModifySpy);
     myDerivedDataBinding.registerOnPath('text', ['remove'], pathRemoveSpy);
     dataBinder.register('BINDING', ParentTemplate.typeid, myDerivedDataBinding);
-   workspace.root.insert('parentProperty', PropertyFactory.create(ParentTemplate.typeid, 'single'));
+    workspace.root.insert('parentProperty', PropertyFactory.create(ParentTemplate.typeid, 'single'));
     expect(pathInsertSpy).toHaveBeenCalledTimes(1);
     workspace.root.get(['parentProperty', 'text']).setValue('forty-two');
     expect(pathModifySpy).toHaveBeenCalledTimes(1);
@@ -2079,10 +2078,10 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(pathRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('relative path callback on nested reference (LYNXDEV-6013)', function () {
+  it('relative path callback on nested reference (LYNXDEV-6013)', function() {
 
-    const modifySpy = jest.fn(function (in_context) { });
-    const insertRemoveSpy = jest.fn(function (in_context) { });
+    const modifySpy = jest.fn(function(in_context) { });
+    const insertRemoveSpy = jest.fn(function(in_context) { });
     class myDerivedDataBinding extends DataBinding {
       constructor(params) { // eslint-disable-line no-useless-constructor
         super(params);
@@ -2100,9 +2099,9 @@ describe('DataBinding.registerOnPath() should work for', function () {
     myDerivedDataBinding.initialize();
     dataBinder.attachTo(workspace);
     dataBinder.register('BINDING', referenceContainerTemplate.typeid, myDerivedDataBinding);
-   workspace.root.insert('refContainer', PropertyFactory.create(referenceContainerTemplate.typeid, 'single'));
+    workspace.root.insert('refContainer', PropertyFactory.create(referenceContainerTemplate.typeid, 'single'));
     workspace.root.get(['refContainer', 'container', 'ref'], RESOLVE_NO_LEAFS).setValue('/child');
-   workspace.root.insert('child', PropertyFactory.create(ChildTemplate.typeid, 'single'));
+    workspace.root.insert('child', PropertyFactory.create(ChildTemplate.typeid, 'single'));
     expect(insertRemoveSpy).toHaveBeenCalledTimes(1); // insert
     workspace.root.get(['child', 'text']).setValue('this is still 42');
     expect(modifySpy).toHaveBeenCalledTimes(1); // modify
@@ -2110,13 +2109,13 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(insertRemoveSpy).toHaveBeenCalledTimes(2); // insert + remove
   });
 
-  it('should pass correct args to callbacks when binding multiple paths in a single call (LYNXDEV-6095)', function () {
+  it('should pass correct args to callbacks when binding multiple paths in a single call (LYNXDEV-6095)', function() {
     dataBinder.attachTo(workspace);
 
     let collectionCallbackCalled = false;
     let singleCallbackCalled = false;
     let expectedPath = '';
-    const collectionPathSpy = jest.fn(function (in_position, in_context) {
+    const collectionPathSpy = jest.fn(function(in_position, in_context) {
       expect(in_context).toBeInstanceOf(ModificationContext);
       // the wired in order / keys aren't very nice but it's simple and we control the order/keys (see below)
       if (!collectionCallbackCalled) {
@@ -2126,7 +2125,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       }
       collectionCallbackCalled = true;
     });
-    const singlePathSpy = jest.fn(function (in_context) {
+    const singlePathSpy = jest.fn(function(in_context) {
       expect(in_context).toBeInstanceOf(ModificationContext);
       if (!singleCallbackCalled) {
         expect(in_context.getOperationType()).toEqual('insert'); // the first call is for the insert
@@ -2142,7 +2141,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       ['collectionInsert', 'collectionModify'], collectionPathSpy);
     const handle = dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, ParentDataBinding);
 
-   workspace.root.insert('props', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
+    workspace.root.insert('props', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     expect(singlePathSpy).toHaveBeenCalledTimes(1); // called once for the insert
 
     workspace.root.get('props').get('arrayOfNumbers').push(42);
@@ -2162,7 +2161,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     handle.destroy();
   });
 
-  it('documentation example - inheritance', function () {
+  it('documentation example - inheritance', function() {
 
     class Object3DDataBinding extends DataBinding {
     }
@@ -2174,7 +2173,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     dataBinder.attachTo(workspace);
 
     const scene = PropertyFactory.create('NodeProperty');
-   workspace.root.insert('scene', scene);
+    workspace.root.insert('scene', scene);
 
     // We assume Light3D-1.0.0 and Camera3D-1.0.0 inherit from Object3D-1.0.0
     // We define a binding for Object3D and for Camera3D
@@ -2195,12 +2194,12 @@ describe('DataBinding.registerOnPath() should work for', function () {
 
     // When this camera is added, it does not match the 'scene' prefix specified in the activateDataBinding call
     // so nothing is created
-   workspace.root.insert('lostCamera', PropertyFactory.create('autodesk.samples:Camera3D-1.0.0'));
+    workspace.root.insert('lostCamera', PropertyFactory.create('autodesk.samples:Camera3D-1.0.0'));
     console.assert(dataBinder.resolve('lostCamera', 'BINDING') === undefined);
     // SnippetEnd{DataBinder.DataBindingInheritance}
   });
 
-  it('documentation example - simple register callbacks', function () {
+  it('documentation example - simple register callbacks', function() {
     // SnippetStart{DataBinder.Object3DBinding}
     class Object3DDataBinding extends DataBinding {
       constructor(in_params) {
@@ -2252,7 +2251,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       },
       name: 'myObject'
     });
-   workspace.root.insert('object', myObject);
+    workspace.root.insert('object', myObject);
 
     const binding = dataBinder.resolve('object', 'BINDING');
 
@@ -2269,7 +2268,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
     expect(binding._object.scale).toEqual({ x: 1, y: 12, z: 1 });
   });
 
-  it('documentation example - simple register callbacks - decorators', function () {
+  it('documentation example - simple register callbacks - decorators', function() {
     // SnippetStart{DataBinder.Object3DBinding.Decorator}
     class Object3DDataBinding extends DataBinding {
       constructor(in_params) {
@@ -2315,7 +2314,7 @@ describe('DataBinding.registerOnPath() should work for', function () {
       },
       name: 'myObject'
     });
-   workspace.root.insert('object', myObject);
+    workspace.root.insert('object', myObject);
 
     const binding = dataBinder.resolve('object', 'BINDING');
 

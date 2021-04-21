@@ -58,19 +58,19 @@ describe('JS-Object-like property accessing ', function() {
     //     commitGUID: "repoRefWorkspace.getActiveCommit().getGuid()"
     //   }
     // );
-    //workspace.root.insert('repoRef', repoRefWorkspaceProp);
+    // workspace.root.insert('repoRef', repoRefWorkspaceProp);
 
     // const repoRefArray = PropertyFactory.create('RepositoryReferenceProperty', 'array', [
     //   repoRefWorkspaceProp.clone(),
     //   repoRefWorkspaceProp.clone()
     // ]);
-    //workspace.root.insert('repoRefArray', repoRefArray);
+    // workspace.root.insert('repoRefArray', repoRefArray);
 
     // const repoRefMap = PropertyFactory.create('RepositoryReferenceProperty', 'map', {
     //   a: repoRefWorkspaceProp.clone(),
     //   b: repoRefWorkspaceProp.clone()
     // });
-    //workspace.root.insert('repoRefMap', repoRefMap);
+    // workspace.root.insert('repoRefMap', repoRefMap);
 
     // Calling things from PropertyProxy
     state = PropertyProxy.proxify(workspace);

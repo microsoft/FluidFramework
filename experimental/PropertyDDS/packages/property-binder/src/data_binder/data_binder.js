@@ -65,7 +65,7 @@ let _dataBinderId = 0;
  *
  * @throws {Error} if there is an invalid path
  */
-const _normalizePath = function (in_path) {
+const _normalizePath = function(in_path) {
   let result;
   if (in_path === undefined || in_path === '') {
     result = '';
@@ -93,7 +93,7 @@ const _normalizePath = function (in_path) {
  *
  * @hidden
  */
-const _getStartPath = function (in_exactPath, in_includePrefix) {
+const _getStartPath = function(in_exactPath, in_includePrefix) {
   let startPath;
   if (in_exactPath !== '') {
     startPath = in_exactPath;
@@ -114,7 +114,7 @@ const _getStartPath = function (in_exactPath, in_includePrefix) {
  *
  * @hidden
  */
-const _pushUserData = function (in_context, in_data) {
+const _pushUserData = function(in_context, in_data) {
   in_data.__oldUserData = in_context.getUserData();
   in_context.setUserData(in_data);
 };
@@ -128,7 +128,7 @@ const _pushUserData = function (in_context, in_data) {
  *
  * @hidden
  */
-const _popUserData = function (in_context) {
+const _popUserData = function(in_context) {
   const currentUserData = in_context.getUserData();
   console.assert(currentUserData);
   if (currentUserData) {
@@ -300,13 +300,13 @@ class DataBinder {
     const definitionHandle = this.defineDataBinding(in_bindingType, in_typeID, in_bindingConstructor);
     const activationHandle = this.activateDataBinding(in_bindingType, in_typeID, in_options);
 
-    const handle = new DataBinderHandle(function () {
+    const handle = new DataBinderHandle(function() {
       activationHandle.destroy();
       definitionHandle.destroy();
     });
 
     // Be nice to current clients
-    handle.unregister = function () {
+    handle.unregister = function() {
       console.warn('unregister() on a handle is deprecated. Please use destroy()');
       this.destroy();
     };
@@ -603,7 +603,7 @@ class DataBinder {
 
       const delayedActivationRules = [];
 
-      handles.forEach(function (in_handle) {
+      handles.forEach(function(in_handle) {
         const rule = in_handle.getUserData();
         delayedActivationRules.push(rule);
 
@@ -778,7 +778,7 @@ class DataBinder {
   _fastCreateRetroactive(in_rootPropertyElement, in_activationRules, io_instantiatedBindings) {
     const activationHelper = new ActivationQueryCacheHelper(in_activationRules, this);
 
-    const simpleVisitor = property => {
+    const simpleVisitor = (property) => {
       // Consider each possible binding, in order.
       const typeId = property.getFullTypeid();
       const bindings = activationHelper.typeRootBindings(typeId);
@@ -851,7 +851,7 @@ class DataBinder {
       let recurse = false;
 
       // Check each rule, and see which ones apply
-      _.each(in_activationRules, rule => {
+      _.each(in_activationRules, (rule) => {
         let instantiate;
         let thisRecurse;
 
@@ -888,7 +888,7 @@ class DataBinder {
           // Get all the definitions for this typeid, and then filter them for ones that are activated.
           const definitions = this._registry.getApplicableBindingDefinitions(
             typeId, rule.bindingType, this._workspace
-          ).filter(definition => {
+          ).filter((definition) => {
             return this._activationAppliesToTypeId(rule.activationSplitType, propertySplitType, definition.splitType);
           });
 
@@ -987,7 +987,7 @@ class DataBinder {
         // If there are no exactpaths (which may go through references, exclude prefixes, and all of the
         // paths start at the same root, we can use a significantly leaner traverser.
         const easy = _.all(in_rules,
-          rule => rule.exactPath === '' && rule.excludePrefix === '' && rule.startPath === in_root
+          (rule) => rule.exactPath === '' && rule.excludePrefix === '' && rule.startPath === in_root
         );
         if (easy) {
           this._fastCreateRetroactive(subTreeRootElement, in_rules, instantiated);
@@ -1018,7 +1018,7 @@ class DataBinder {
     const removedBindings = [];
     const bindingType = in_activationRule.bindingType;
 
-    const visit = function (in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+    const visit = function(in_propertyElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
       if (in_activationRule.excludePrefix !== '' && in_path === in_activationRule.excludePrefix) {
         // Falls under our exclusion path: don't check this property, and don't recurse
         return false;
@@ -1027,7 +1027,7 @@ class DataBinder {
       const value = in_dataBindingTreeNode ? in_dataBindingTreeNode.getValue() : undefined;
       if (value && value.ordered) {
         // Find the binding with this binding type
-        const index = _.findIndex(value.ordered, binding => (binding.getDataBindingType() === bindingType));
+        const index = _.findIndex(value.ordered, (binding) => (binding.getDataBindingType() === bindingType));
         if (index !== -1) {
           // We have found a databinding that was created for this binding type. Decrement the reference count
           const dataBinding = value.ordered[index];
@@ -1112,7 +1112,7 @@ class DataBinder {
    */
   _getDataBindingsByType(in_bindingType) {
     var dataBindings = [];
-    this._dataBindingTree.forEachChild(function (value) {
+    this._dataBindingTree.forEachChild(function(value) {
       if (value) {
         var dataBinding = value.groupedByDataBindingType.get(in_bindingType);
         if (dataBinding) {
@@ -1163,7 +1163,7 @@ class DataBinder {
     }
     let callback;
     if (isDeferred) {
-      callback = function (context) {
+      callback = function(context) {
         dataBinder.requestChangesetPostProcessing(in_callback.bind(null, context), null);
       };
     } else {
@@ -1256,12 +1256,12 @@ class DataBinder {
       if (array && in_absolutePath.length > 1) {
         callback = makeCallbackOncePerChangeSet(callback);
         const allHandles = [];
-        in_absolutePath.forEach(path => {
+        in_absolutePath.forEach((path) => {
           const handle = this._internalRegisterOnPath(path, in_operations, callback, newOptions);
           allHandles.push(handle);
         });
-        resultHandle = new DataBinderHandle(function () {
-          allHandles.forEach(handle => {
+        resultHandle = new DataBinderHandle(function() {
+          allHandles.forEach((handle) => {
             handle.destroy();
           });
         });
@@ -1383,7 +1383,7 @@ class DataBinder {
     }
 
     this._workspace = in_workspace;
-    this._onModifiedRegistrationKey  = this._modifyScene.bind(this);
+    this._onModifiedRegistrationKey = this._modifyScene.bind(this);
     this._workspace.on('localModification', this._onModifiedRegistrationKey);
 
     this._buildDataBindingTree();
@@ -1442,7 +1442,7 @@ class DataBinder {
     const dataBinder = this;
     this.pushBindingActivationScope();
 
-    this._activationHandlesByBindingType.forEach(function (in_handles, in_key) {
+    this._activationHandlesByBindingType.forEach(function(in_handles, in_key) {
       for (let i = 0; i < in_handles.length; ++i) {
         dataBinder._unbindActiveBindings(in_handles[i].getUserData());
         dataBinder._delayedActivationHandles.add(in_handles[i]);
@@ -1484,14 +1484,14 @@ class DataBinder {
     this.pushBindingActivationScope();
 
     let keys = in_bindingType ? [in_bindingType] : [...this._activationHandlesByBindingType.keys()];
-    keys = keys.filter(key => key !== _INTERNAL_DATA_BINDINGTYPE);
-    keys.forEach(in_currBindingType => {
+    keys = keys.filter((key) => key !== _INTERNAL_DATA_BINDINGTYPE);
+    keys.forEach((in_currBindingType) => {
       const handles = this._activationHandlesByBindingType.get(in_currBindingType) || [];
       while (handles.length) {
         handles[0].destroy();
       }
     });
-    this._delayedActivationHandles.forEach(function (in_handle) {
+    this._delayedActivationHandles.forEach(function(in_handle) {
       if ((!in_bindingType || in_handle.getUserData().bindingType === in_bindingType) &&
         in_handle.getUserData().bindingType !== _INTERNAL_DATA_BINDINGTYPE) {
         in_handle.destroy();
@@ -1518,8 +1518,8 @@ class DataBinder {
     this.pushBindingActivationScope();
 
     let keys = in_bindingType ? [in_bindingType] : [...this._definitionsByBindingType.keys()];
-    keys = keys.filter(key => key !== _INTERNAL_DATA_BINDINGTYPE);
-    keys.forEach(in_currBindingType => {
+    keys = keys.filter((key) => key !== _INTERNAL_DATA_BINDINGTYPE);
+    keys.forEach((in_currBindingType) => {
       const handles = this._definitionsByBindingType.get(in_currBindingType) || [];
       while (handles.length) {
         handles[0].destroy();
@@ -1682,7 +1682,7 @@ class DataBinder {
 
     // Create the corresponding DataBindings and add them to the DataBinding tree
     const dataBinder = this;
-    definitions.forEach(function (in_definition) {
+    definitions.forEach(function(in_definition) {
       // Get all the activations that apply to this binding type
       const activations = dataBinder._activationHandlesByBindingType.get(in_definition.bindingType) || [];
       for (const handle of activations) {
@@ -1808,12 +1808,12 @@ class DataBinder {
     const fullTokenizedPath = PathHelper.tokenizePathString(in_path);
 
     const reinsertions = [];
-    var callback = function (post, value, tokenizedPath, dataBindingNode) {
+    var callback = function(post, value, tokenizedPath, dataBindingNode) {
       if (!value) {
         return;
       }
       var dataBindingPath = in_path || '';
-      tokenizedPath.forEach(segment => {
+      tokenizedPath.forEach((segment) => {
         const escapedSegment = _.isString(segment) ? PathHelper.quotePathSegmentIfNeeded(segment) : segment;
         if (dataBindingPath.length) {
           dataBindingPath += '.' + escapedSegment;
@@ -1824,7 +1824,7 @@ class DataBinder {
       if (value.ordered) {
         const oldLength = fullTokenizedPath.length;
         fullTokenizedPath.push(...tokenizedPath);
-        value.ordered.forEach(function (dataBinding) {
+        value.ordered.forEach(function(dataBinding) {
           var removalContext;
           if (post) {
             // the removalContext is dependent on the DataBinding so we need to create a new one for each DataBinding
@@ -1879,7 +1879,7 @@ class DataBinder {
         }
         // Keep the callbacks in the tree
         let insertionPath = rootPath;
-        tokenizedPath.forEach(segment => {
+        tokenizedPath.forEach((segment) => {
           const escapedSegment = _.isString(segment) ? PathHelper.quotePathSegmentIfNeeded(segment) : segment;
           if (insertionPath.length) {
             insertionPath += '.' + escapedSegment;
@@ -1912,7 +1912,7 @@ class DataBinder {
     in_parentNode.removeChild(in_index);
 
     // Reinsert any remove callbacks
-    reinsertions.forEach(entry => {
+    reinsertions.forEach((entry) => {
       in_parentNode.insertNodeForPathCallback(entry.path, entry.data);
     });
   }
@@ -2491,7 +2491,7 @@ class DataBinder {
     if (!in_representationInfo.stateless) {
       const dataBinder = this;
 
-      const visit = function (in_propElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
+      const visit = function(in_propElement, in_path, in_tokenizedPath, in_dataBindingTreeNode) {
         if (!in_propElement.isPrimitiveCollectionElement() &&
           in_propElement.getTypeId() === in_representationInfo.typeID) {
           // Found a property that should have a runtime representation associated with it
@@ -2534,7 +2534,7 @@ class DataBinder {
     if (this._workspace) {
       const dataBinder = this;
       this._dataBindingTree.forEachChild(
-        function (value, path, dataBindingNode) {
+        function(value, path, dataBindingNode) {
           dataBinder._destroyAllRepresentationsAtNode(dataBindingNode);
         }
       );
@@ -2557,7 +2557,7 @@ class DataBinder {
     const dataBinder = this;
 
     if (value && value.representations) {
-      value.representations.forEach(function (representationEntry, bindingType) {
+      value.representations.forEach(function(representationEntry, bindingType) {
         dataBinder._destroyRepresentation(
           representationEntry.representation, representationEntry.representationInfo
         );
@@ -2815,7 +2815,7 @@ class DataBinder {
     let bestRepresentationInfo;
     const byBindingType = dataBinder._representationGenerators.get(in_bindingType);
     if (byBindingType) {
-      visitTypeHierarchy(in_property.getFullTypeid(), function (in_typeID) {
+      visitTypeHierarchy(in_property.getFullTypeid(), function(in_typeID) {
         const handle = byBindingType.best(in_typeID);
         if (handle) {
           bestRepresentationInfo = handle.getUserData();
@@ -2941,7 +2941,7 @@ class DataBinder {
    */
   undefineAllRepresentations(in_bindingType = undefined) {
     const keys = in_bindingType ? [in_bindingType] : [...this._representationHandlesByBindingType.keys()];
-    keys.forEach(in_currBindingType => {
+    keys.forEach((in_currBindingType) => {
       const allByBindingType = this._representationHandlesByBindingType.get(in_currBindingType);
       if (allByBindingType) {
         // The 'destroy' will remove the handle from the allByBindingType list.
@@ -3012,10 +3012,10 @@ class DataBinder {
       // Initialize the workspace dependency (if necessary) before resolving this promise.
       if (this._params && this._params.HFDMWorkspaceComponent) {
         if (this._params.HFDMWorkspaceComponent.initializeComponent) {
-          this._params.HFDMWorkspaceComponent.initializeComponent().then(workspaceObj => {
+          this._params.HFDMWorkspaceComponent.initializeComponent().then((workspaceObj) => {
             this.attachTo(workspaceObj);
             resolve(this);
-          }).catch(error => {
+          }).catch((error) => {
             reject(error);
           });
         } else {

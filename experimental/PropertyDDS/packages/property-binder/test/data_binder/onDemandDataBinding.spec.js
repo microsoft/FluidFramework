@@ -30,22 +30,22 @@ import { catchConsoleErrors } from './catch_console_errors';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 
-describe('on demand DataBindings', function () {
+describe('on demand DataBindings', function() {
   var dataBinder, workspace;
 
   catchConsoleErrors();
 
-  beforeAll(function () {
+  beforeAll(function() {
     registerTestTemplates();
   });
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     dataBinder = new DataBinder();
     workspace = await MockSharedPropertyTree();
     dataBinder.attachTo(workspace);
   });
 
-  afterEach(function () {
+  afterEach(function() {
 
     // Unbind checkout view
     dataBinder.detach();
@@ -58,12 +58,12 @@ describe('on demand DataBindings', function () {
     );
   });
 
-  it('should correctly create on demand DataBindings', function () {
+  it('should correctly create on demand DataBindings', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myFloat1', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat2', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat3', PropertyFactory.create('Float64', 'single'));
@@ -104,10 +104,10 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
   });
 
-  it('should correctly create on demand DataBindings with invalid reference values', function () {
+  it('should correctly create on demand DataBindings with invalid reference values', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('parent').insert('reference', PropertyFactory.create('Reference', 'single'));
     workspace.root.get(['parent', 'reference'],
       { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).setValue('/invalid');
@@ -138,12 +138,12 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
   });
 
-  it('should correctly create on demand DataBindings with relative path callbacks', function () {
+  it('should correctly create on demand DataBindings with relative path callbacks', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('child1').insert('myChild2', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('child1').insert('myChild3', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
@@ -155,7 +155,7 @@ describe('on demand DataBindings', function () {
     workspace.root.get('child3').insert('myChild9', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get(['child1', 'myChild2', 'aString']).setValue('sixty-four');
 
-    var stringInsertSpy = jest.fn(function (in_modificationContext) {
+    var stringInsertSpy = jest.fn(function(in_modificationContext) {
       expect(this).toBeInstanceOf(ParentDataBinding);
       expect(this.getProperty()).toEqual(in_modificationContext.getProperty().getParent());
     });
@@ -222,11 +222,11 @@ describe('on demand DataBindings', function () {
     expect(nestedNumberInsertSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should correctly create on demand DataBindings with relative path callbacks and references', function () {
+  it('should correctly create on demand DataBindings with relative path callbacks and references', function() {
 
     // Add the data we will be referencing
-   workspace.root.insert('node1', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('node2', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('node1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('node2', PropertyFactory.create('NodeProperty', 'single'));
     var childPset = PropertyFactory.create(ChildTemplate.typeid, 'single');
     workspace.root.get('node1').insert('theData', childPset);
 
@@ -358,7 +358,7 @@ describe('on demand DataBindings', function () {
     // TODO: reference property itself and not the referenced property.
   });
 
-  it('should correctly remove bindings when unregistering while bindings are installed', function () {
+  it('should correctly remove bindings when unregistering while bindings are installed', function() {
 
     // register a 'classic' DataBinding to make sure we remove the right one
     dataBinder.register('BINDING', 'Float64', ParentDataBinding);
@@ -366,9 +366,9 @@ describe('on demand DataBindings', function () {
     dataBinder.register('TEST', 'Float64', ParentDataBinding);
 
     // insert some values into the workspace so we can register a binding after they are already present
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
-   workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child2', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child3', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myFloat1', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat2', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat3', PropertyFactory.create('Float64', 'single'));
@@ -415,10 +415,10 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
   });
 
-  it('should unregister bindings on the root property when the properties are present', function () {
+  it('should unregister bindings on the root property when the properties are present', function() {
 
     // insert some values into the workspace so we can register our on demand DataBindings
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myFloat1', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat2', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('child1').insert('myFloat3', PropertyFactory.create('Float64', 'single'));
@@ -450,7 +450,7 @@ describe('on demand DataBindings', function () {
     dataBinder._resetDebugCounters();
 
     expect(childDataBinding.onModify).toHaveBeenCalledTimes(0);
-   workspace.root.insert('child2', PropertyFactory.create('Float64', 'single'));
+    workspace.root.insert('child2', PropertyFactory.create('Float64', 'single'));
     expect(childDataBinding.onModify).toHaveBeenCalledTimes(1);
     childDataBinding.onModify.mockClear();
     // again, this should trigger all removal-related callbacks
@@ -460,7 +460,7 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     // should not trigger anymore
-   workspace.root.insert('child3', PropertyFactory.create('Float64', 'single'));
+    workspace.root.insert('child3', PropertyFactory.create('Float64', 'single'));
     expect(childDataBinding.onModify).toHaveBeenCalledTimes(0);
     // re-register root
     dataBinder.register('BINDING', 'NodeProperty', ChildDataBinding, { exactPath: '/' });
@@ -468,14 +468,14 @@ describe('on demand DataBindings', function () {
     childDataBinding = dataBinder.resolve('/', 'BINDING');
     expect(childDataBinding).toBeInstanceOf(ChildDataBinding);
     // this should trigger
-   workspace.root.insert('child4', PropertyFactory.create('Float64', 'single'));
+    workspace.root.insert('child4', PropertyFactory.create('Float64', 'single'));
     expect(childDataBinding.onModify).toHaveBeenCalledTimes(1);
   });
 
-  it('should correctly remove databindings with relative path callbacks', function () {
+  it('should correctly remove databindings with relative path callbacks', function() {
 
     // insert some values into the workspace so we can register after they are created
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('child1').insert('myChild2', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('child1').insert('myChild3', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
@@ -523,10 +523,10 @@ describe('on demand DataBindings', function () {
     expect(nestedNumberRemoveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should not create on demand DataBindings multiple times', function () {
+  it('should not create on demand DataBindings multiple times', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('parent').insert('myFloat1', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('parent').insert('myFloat2', PropertyFactory.create('Float64', 'single'));
 
@@ -537,12 +537,12 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
   });
 
-  it('should only unregister bindings based on the handle used', function () {
+  it('should only unregister bindings based on the handle used', function() {
     // Register some bindings in advance
     const h1 = dataBinder.register('BINDING', 'Float64', ParentDataBinding);
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('parent', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('parent').insert('myFloat1', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('parent').insert('myFloat2', PropertyFactory.create('Float64', 'single'));
 
@@ -558,10 +558,10 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingRemovedCounter).toEqual(4);
   });
 
-  it('should correctly create on demand DataBindings bound to collections', function () {
+  it('should correctly create on demand DataBindings bound to collections', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('myFloat', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('root').insert('myFloatMap', PropertyFactory.create('Float64', 'map'));
     workspace.root.get('root').insert('myFloatArray', PropertyFactory.create('Float64', 'array'));
@@ -583,10 +583,10 @@ describe('on demand DataBindings', function () {
     expect(parentDataBinding.getProperty()).toEqual(workspace.root.get(['root', 'myFloatArray']));
   });
 
-  it('should correctly create on demand DataBindings bound to BaseProperty', function () {
+  it('should correctly create on demand DataBindings bound to BaseProperty', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('myFloat', PropertyFactory.create('Float64', 'single'));
     workspace.root.get('root').insert('myFloatMap', PropertyFactory.create('Float64', 'map'));
     workspace.root.get('root').insert('myFloatArray', PropertyFactory.create('Float64', 'array'));
@@ -618,10 +618,10 @@ describe('on demand DataBindings', function () {
     expect(parentDataBinding.getProperty()).toEqual(workspace.root.get(['root', 'myFloatArray']));
   });
 
-  it('should correctly create on demand DataBindings with relative path collectionInsert callbacks', function () {
+  it('should correctly create on demand DataBindings with relative path collectionInsert callbacks', function() {
 
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('child1').insert('myChild2', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get(['child1', 'myChild1', 'aString']).setValue('sixty-four');
@@ -635,7 +635,7 @@ describe('on demand DataBindings', function () {
     var insertSpiesError = false;
     var expectedArrayIndices = [0, 1, 2];
     var expectedMapKeys = ['a', 'b'];
-    var arrayInsertSpy = jest.fn(function (in_index, in_modificationContext) {
+    var arrayInsertSpy = jest.fn(function(in_index, in_modificationContext) {
       if (in_modificationContext.getOperationType() !== 'insert') {
         console.warn('Failure in arrayInsertSpy');
         insertSpiesError = true;
@@ -650,7 +650,7 @@ describe('on demand DataBindings', function () {
       expect(this).toBeInstanceOf(ParentDataBinding);
       expectedArrayIndices.splice(index, 1);
     });
-    var mapInsertSpy = jest.fn(function (in_key, in_modificationContext) {
+    var mapInsertSpy = jest.fn(function(in_key, in_modificationContext) {
       // console.log('key: ' + in_key);
       // console.log('path: ' + in_modificationContext.getAbsolutePath());
       if (in_modificationContext.getOperationType() !== 'insert') {
@@ -711,7 +711,7 @@ describe('on demand DataBindings', function () {
     expect(expectedMapKeys.length).toEqual(0);
   });
 
-  it('creates on demand DataBindings with relative path collectionInsert callbacks with nodeprops', function () {
+  it('creates on demand DataBindings with relative path collectionInsert callbacks with nodeprops', function() {
     // This caused issues due to the use of NodeProperty.getValues()
     var arrayInsertSpy = jest.fn();
     var mapInsertSpy = jest.fn();
@@ -722,18 +722,18 @@ describe('on demand DataBindings', function () {
 
     // We specifically create a node property with an undefined ref. getValues crashes traversing
     // this.
-    const makeNodeProperty = function () {
+    const makeNodeProperty = function() {
       const nodep = PropertyFactory.create('NodeProperty');
       nodep.insert('badref', PropertyFactory.create('Reference', 'single'));
       return nodep;
     };
 
-   workspace.root.insert('arrayOfNodeProperty', PropertyFactory.create('NodeProperty', 'array'));
+    workspace.root.insert('arrayOfNodeProperty', PropertyFactory.create('NodeProperty', 'array'));
 
     workspace.root.get(['arrayOfNodeProperty']).push(makeNodeProperty());
     workspace.root.get(['arrayOfNodeProperty']).push(makeNodeProperty());
 
-   workspace.root.insert('mapOfNodeProperty', PropertyFactory.create('NodeProperty', 'map'));
+    workspace.root.insert('mapOfNodeProperty', PropertyFactory.create('NodeProperty', 'map'));
     workspace.root.get(['mapOfNodeProperty']).insert('a', makeNodeProperty());
     workspace.root.get(['mapOfNodeProperty']).insert('b', makeNodeProperty());
 
@@ -750,9 +750,9 @@ describe('on demand DataBindings', function () {
     mapInsertSpy.mockClear();
   });
 
-  it('should support delaying creation until pop', function () {
+  it('should support delaying creation until pop', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
 
     dataBinder.pushBindingActivationScope();
@@ -771,9 +771,9 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
   });
 
-  it('should support unregistering before the pop', function () {
+  it('should support unregistering before the pop', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('child1').insert('myChild1', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
 
     dataBinder.pushBindingActivationScope();
@@ -803,9 +803,9 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingRemovedCounter).toEqual(1);
   });
 
-  it('should support delaying creation until pop and excluding paths', function () {
+  it('should support delaying creation until pop and excluding paths', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('child2', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get(['root', 'child1']).insert(
@@ -832,23 +832,23 @@ describe('on demand DataBindings', function () {
     expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
   });
 
-  it('should not be able to unregister twice', function () {
+  it('should not be able to unregister twice', function() {
     const handle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     handle.destroy();
-    expect((function () { handle.destroy(); })).toThrow();
+    expect((function() { handle.destroy(); })).toThrow();
   });
 
-  it('should not be able to unregister twice even if we reregistered the same thing', function () {
+  it('should not be able to unregister twice even if we reregistered the same thing', function() {
     const handle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
     handle.destroy();
     const otherHandle = dataBinder.register('BINDING', ChildTemplate.typeid, ChildDataBinding);
-    expect((function () { handle.destroy(); })).toThrow();
+    expect((function() { handle.destroy(); })).toThrow();
     otherHandle.destroy();
   });
 
-  it('should support delaying creation in collections', function () {
+  it('should support delaying creation in collections', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('child1', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('child2', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get(['root', 'child1']).insert(
@@ -903,14 +903,14 @@ describe('on demand DataBindings', function () {
 
   });
 
-  it('should support delaying creation in arrays', function () {
+  it('should support delaying creation in arrays', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('myArray', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'array'));
+    workspace.root.insert('myArray', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'array'));
     workspace.root.get('myArray').push(PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('myArray').push(PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('myArray').push(PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
     workspace.root.get('myArray').push(PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
-   workspace.root.insert('data', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
+    workspace.root.insert('data', PropertyFactory.create(PrimitiveChildrenTemplate.typeid, 'single'));
 
     dataBinder.pushBindingActivationScope();
 
@@ -948,9 +948,9 @@ describe('on demand DataBindings', function () {
 
   });
 
-  it('should not call absolute path functions when retroactively inserting/removing bindings', function () {
+  it('should not call absolute path functions when retroactively inserting/removing bindings', function() {
     // insert some values into the workspace so we can register our on demand DataBinding
-   workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('root', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('root').insert('child1', PropertyFactory.create(ChildTemplate.typeid, 'single'));
     workspace.root.get('root').insert('child2', PropertyFactory.create(ChildTemplate.typeid, 'single'));
 
@@ -971,11 +971,11 @@ describe('on demand DataBindings', function () {
     expect(absolutePathCB).toHaveBeenCalledTimes(0);
   });
 
-  it('should register DataBindings on popBindingActivationScope and account for excludePrefix', function () {
+  it('should register DataBindings on popBindingActivationScope and account for excludePrefix', function() {
     // Add some properties
-   workspace.root.insert('nodeA', PropertyFactory.create(ParentTemplate.typeid, 'single'));
-   workspace.root.insert('nodeB', PropertyFactory.create(ParentTemplate.typeid, 'single'));
-   workspace.root.insert('nodeC', PropertyFactory.create(ParentTemplate.typeid, 'single'));
+    workspace.root.insert('nodeA', PropertyFactory.create(ParentTemplate.typeid, 'single'));
+    workspace.root.insert('nodeB', PropertyFactory.create(ParentTemplate.typeid, 'single'));
+    workspace.root.insert('nodeC', PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
     workspace.root.get('nodeB').insert('nodeD', PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
@@ -1012,9 +1012,9 @@ describe('on demand DataBindings', function () {
     handle2.destroy();
   });
 
-  it('should create DataBindings based on tree level if registered in a scope', function () {
+  it('should create DataBindings based on tree level if registered in a scope', function() {
     // Create tree
-   workspace.root.insert('nodeA', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('nodeA', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').insert('nodeB', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').insert('nodeC', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').get('nodeC').insert('nodeD', PropertyFactory.create('NodeProperty', 'single'));
@@ -1034,7 +1034,7 @@ describe('on demand DataBindings', function () {
         super(params);
         lastCreatedDataBindingCtor = 'DataBindingA ctor';
 
-        this.onPostCreate = jest.fn(function () {
+        this.onPostCreate = jest.fn(function() {
           lastCalledOnPostCreate = 'DataBindingA onPostCreate';
         });
       }
@@ -1052,7 +1052,7 @@ describe('on demand DataBindings', function () {
         super(params);
         lastCreatedDataBindingCtor = 'DataBindingB ctor';
 
-        this.onPostCreate = jest.fn(function () {
+        this.onPostCreate = jest.fn(function() {
           lastCalledOnPostCreate = 'DataBindingB onPostCreate';
         });
       }
@@ -1114,9 +1114,9 @@ describe('on demand DataBindings', function () {
     lastCalledOnPostCreate = '';
   });
 
-  it('should correctly handle includePrefix, excludePrefix and exactPath', function () {
+  it('should correctly handle includePrefix, excludePrefix and exactPath', function() {
     // add some properties
-   workspace.root.insert('nodeA', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('nodeA', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').insert('nodeB', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').insert('nodeC', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeA').insert('nodeD', PropertyFactory.create('NodeProperty', 'single'));
@@ -1125,7 +1125,7 @@ describe('on demand DataBindings', function () {
     workspace.root.get(['nodeA', 'nodeC']).insert('nodeG', PropertyFactory.create(ParentTemplate.typeid, 'map'));
     workspace.root.get(['nodeA', 'nodeD']).insert('nodeH', PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
-   workspace.root.insert('nodeX', PropertyFactory.create('NodeProperty', 'single'));
+    workspace.root.insert('nodeX', PropertyFactory.create('NodeProperty', 'single'));
     workspace.root.get('nodeX').insert('nodeY', PropertyFactory.create(ParentTemplate.typeid, 'single'));
 
     workspace.root.get(['nodeA', 'nodeB', 'nodeE']).push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
@@ -1163,12 +1163,12 @@ describe('on demand DataBindings', function () {
     handleC.destroy();
   });
 
-  it('should work with delayed data bindings', function () {
+  it('should work with delayed data bindings', function() {
     const modificationCallbackSpy = jest.fn();
     ParentDataBinding.registerOnPath('text', ['insert', 'modify'], modificationCallbackSpy);
     dataBinder.defineDataBinding('BINDING', ParentTemplate.typeid, ParentDataBinding);
     const parentProp = PropertyFactory.create(ParentTemplate.typeid, 'single');
-   workspace.root.insert('thingy', parentProp);
+    workspace.root.insert('thingy', parentProp);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     dataBinder.activateDataBinding('BINDING', ParentTemplate.typeid, {
       exactPath: parentProp.getAbsolutePath()
@@ -1177,7 +1177,7 @@ describe('on demand DataBindings', function () {
     expect(modificationCallbackSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should be able to activate a data binding that uses inheritance', function () {
+  it('should be able to activate a data binding that uses inheritance', function() {
     // We have a binding for Child, and we insert inheritedChild. It should apply (LYNXDEV-5570)
     const insertSpy = jest.fn();
     ChildDataBinding.registerOnPath('text', ['insert'], insertSpy);
@@ -1187,13 +1187,13 @@ describe('on demand DataBindings', function () {
     dataBinder.activateDataBinding('BINDING', InheritedChildTemplate.typeid);
 
     const inheritedChild = PropertyFactory.create(InheritedChildTemplate.typeid, 'single');
-   workspace.root.insert('thingy', inheritedChild);
+    workspace.root.insert('thingy', inheritedChild);
 
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1); // insert
     expect(insertSpy).toHaveBeenCalledTimes(1); // insert
   });
 
-  it('should be able to activate a data binding that uses inheritance, retroactively', function () {
+  it('should be able to activate a data binding that uses inheritance, retroactively', function() {
     // We have a binding for Child, and we insert inheritedChild. It should apply (LYNXDEV-5570)
     const insertSpy = jest.fn();
     ChildDataBinding.registerOnPath('text', ['insert'], insertSpy);
@@ -1201,7 +1201,7 @@ describe('on demand DataBindings', function () {
 
     // We are inserting an InheritedChildTemplate; but the ChildTemplate binding hasn't been activated
     const inheritedChild = PropertyFactory.create(InheritedChildTemplate.typeid, 'single');
-   workspace.root.insert('thingy', inheritedChild);
+    workspace.root.insert('thingy', inheritedChild);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
     // Activate after inserting
@@ -1211,7 +1211,7 @@ describe('on demand DataBindings', function () {
     expect(insertSpy).toHaveBeenCalledTimes(1); // insert
   });
 
-  it('should choose the best data binding that uses inheritance', function () {
+  it('should choose the best data binding that uses inheritance', function() {
     const childCallbackSpy = jest.fn();
     const inheritedCallbackSpy = jest.fn();
 
@@ -1226,7 +1226,7 @@ describe('on demand DataBindings', function () {
     dataBinder.activateDataBinding('BINDING', InheritedChildTemplate.typeid);
 
     const inheritedChild = PropertyFactory.create(InheritedChildTemplate.typeid, 'single');
-   workspace.root.insert('thingy', inheritedChild);
+    workspace.root.insert('thingy', inheritedChild);
 
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1); // insert
     dataBinder._resetDebugCounters();
@@ -1236,14 +1236,14 @@ describe('on demand DataBindings', function () {
     inheritedCallbackSpy.mockClear();
 
     const child = PropertyFactory.create(ChildTemplate.typeid, 'single');
-   workspace.root.insert('otherThingy', child);
+    workspace.root.insert('otherThingy', child);
 
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1); // insert
     expect(childCallbackSpy).toHaveBeenCalledTimes(1); // insert
     expect(inheritedCallbackSpy).toHaveBeenCalledTimes(0); // does not apply
   });
 
-  it('should be able to handle deactivating a data binding that uses inheritance', function () {
+  it('should be able to handle deactivating a data binding that uses inheritance', function() {
     // We have a binding for Child, and we insert inheritedChild. It should apply (LYNXDEV-5570)
     const modificationCallbackSpy = jest.fn();
     ChildDataBinding.registerOnPath('text', ['insert'], modificationCallbackSpy);
@@ -1252,7 +1252,7 @@ describe('on demand DataBindings', function () {
     // Activating the inherited
     dataBinder.activateDataBinding('BINDING', InheritedChildTemplate.typeid);
 
-   workspace.root.insert('thingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
+    workspace.root.insert('thingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
 
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1); // insert
     dataBinder._resetDebugCounters();
@@ -1263,12 +1263,12 @@ describe('on demand DataBindings', function () {
     childDefineHandle.destroy();
 
     // Creating shouldn't do anything
-   workspace.root.insert('otherthingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
+    workspace.root.insert('otherthingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     expect(modificationCallbackSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('should not activate a data binding that is on the inherited class', function () {
+  it('should not activate a data binding that is on the inherited class', function() {
     // Here, we have a template on inheritedChild, and insert type Child. So the binding should _not_ be
     // created
     const modificationCallbackSpy = jest.fn();
@@ -1276,7 +1276,7 @@ describe('on demand DataBindings', function () {
     dataBinder.defineDataBinding('BINDING', InheritedChildTemplate.typeid, ChildDataBinding);
 
     const child = PropertyFactory.create(ChildTemplate.typeid, 'single');
-   workspace.root.insert('thingy', child);
+    workspace.root.insert('thingy', child);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
     dataBinder.activateDataBinding('BINDING', InheritedChildTemplate.typeid);
@@ -1285,13 +1285,13 @@ describe('on demand DataBindings', function () {
     expect(modificationCallbackSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('should not create a binding activated for the inherited class, if only the base class exists', function () {
+  it('should not create a binding activated for the inherited class, if only the base class exists', function() {
     const modificationCallbackSpy = jest.fn();
     ChildDataBinding.registerOnPath('text', ['insert'], modificationCallbackSpy);
     dataBinder.defineDataBinding('BINDING', ChildTemplate.typeid, ChildDataBinding);
 
     const child = PropertyFactory.create(ChildTemplate.typeid, 'single');
-   workspace.root.insert('thingy', child);
+    workspace.root.insert('thingy', child);
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 
     // We are activating for InheritedChild; it shouldn't activate for Child
@@ -1301,7 +1301,7 @@ describe('on demand DataBindings', function () {
     expect(modificationCallbackSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('Definition that is chosen should depend on creation time, not activation time', function () {
+  it('Definition that is chosen should depend on creation time, not activation time', function() {
     const childCallbackSpy = jest.fn();
     const inheritedCallbackSpy = jest.fn();
 
@@ -1317,7 +1317,7 @@ describe('on demand DataBindings', function () {
     // Create an Inherited child
     // Only the InheritedChildTemplate binding should have been created, even if it was unknown when
     // InheritedChildTemplate was first activated
-   workspace.root.insert('thingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
+    workspace.root.insert('thingy', PropertyFactory.create(InheritedChildTemplate.typeid, 'single'));
     expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     dataBinder._resetDebugCounters();
     expect(childCallbackSpy).toHaveBeenCalledTimes(0);
@@ -1327,7 +1327,7 @@ describe('on demand DataBindings', function () {
     inheritedCallbackSpy.mockClear();
 
     // Plain old ChildTemplate doesn't do anything because we only activated the inherited type.
-   workspace.root.insert('otherthingy', PropertyFactory.create(ChildTemplate.typeid, 'single'));
+    workspace.root.insert('otherthingy', PropertyFactory.create(ChildTemplate.typeid, 'single'));
 
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
     expect(childCallbackSpy).toHaveBeenCalledTimes(0);
