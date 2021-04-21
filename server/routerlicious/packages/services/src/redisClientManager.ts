@@ -5,16 +5,28 @@
 
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 import { IClientManager } from "@fluidframework/server-services-core";
-import { executeRedisMultiWithHmsetExpire } from "@fluidframework/server-services-utils";
+import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 export class ClientManager implements IClientManager {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "client";
+
     constructor(
         private readonly client: Redis,
-        private readonly expireAfterSeconds = 60 * 60 * 24,
-        private readonly prefix = "client") {
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+            console.log("Overriding client expiry");
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+            console.log("Overriding client prefix");
+        }
+
         client.on("error", (error) => {
             winston.error("Client Manager Redis Error:", error);
         });
