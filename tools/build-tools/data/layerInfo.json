@@ -153,7 +153,8 @@
                 "dev": true,
                 "packages": [
                     "@fluid-experimental/get-container",
-                    "@fluid-experimental/fluid-static"
+                    "@fluid-experimental/fluid-static",
+                    "@fluid-experimental/tinylicious-client"
                 ],
                 "deps": [
                     "Loader",

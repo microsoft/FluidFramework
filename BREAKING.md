@@ -2,6 +2,7 @@
 - [connect event removed from Container](#connect-event-removed-from-Container)
 - [LoaderHeader.pause](#LoaderHeader.pause)
 - [ODSP driver definitions](#ODSP-driver-definitions)
+- [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
@@ -20,6 +21,9 @@ use
 A lot of definitions have been moved from @fluidframework/odsp-driver to @fluidframework/odsp-driver-definitions. This change is required in preparation for driver to be dynamically loaded by host.
 This new package contains all the dependencies of ODSP driver factory (like HostStoragePolicy, IPersistedCache, TokenFetcher) as well as outputs (OdspErrorType).
 @fluidframework/odsp-driver will continue to have defintions for non-factory functionality (like URI resolver, helper functionality to deal with sharing links, URI parsing, etc.)
+
+### ITelemetryLogger Remove redundant methods
+Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused. These methods were deprecated in 0.36.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
