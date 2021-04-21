@@ -4,13 +4,12 @@
  */
 
 import { expect } from 'chai';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLog';
-import { Edit, EditWithoutId } from '../PersistedTypes';
-import { newEdit } from '../EditUtilities';
+import { Change } from '../default-edits';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
+import { newEdit, Edit, EditWithoutId } from '../generic';
 
 describe('EditLog', () => {
 	const edit0 = newEdit([]);
@@ -56,6 +55,22 @@ describe('EditLog', () => {
 
 		expect(log.getIndexOfId(id0)).to.equal(0);
 		expect(log.getIndexOfId(id1)).to.equal(1);
+	});
+
+	describe('tryGetIndexOfId', () => {
+		it('can get the index from an existing edit', () => {
+			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editIds = [id0];
+			const log = new EditLog({ editChunks, editIds });
+			expect(log.tryGetIndexOfId(id0)).to.equal(0);
+		});
+
+		it('returns undefined when queried with a nonexistent edit', () => {
+			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editIds = ['f9379af1-6f1a-4f71-8f8c-859359621404' as EditId];
+			const log = new EditLog({ editChunks, editIds });
+			expect(log.tryGetIndexOfId('aa203fc3-bc28-437d-b01c-f9398dc859ef' as EditId)).to.equal(undefined);
+		});
 	});
 
 	it('can get an edit from an index', async () => {
@@ -151,6 +166,15 @@ describe('EditLog', () => {
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain sequenced edit.');
 	});
 
+	it('Throws on duplicate sequenced edits', async () => {
+		const log = new EditLog();
+		log.addSequencedEdit(edit0);
+		expect(() => log.addSequencedEdit(edit0))
+			.to.throw(Error)
+			.that.has.property('message')
+			.which.matches(/Duplicate/);
+	});
+
 	it('can sequence multiple local edits', async () => {
 		const log = new EditLog();
 		const ids: EditId[] = [];
@@ -174,8 +198,8 @@ describe('EditLog', () => {
 	});
 
 	it('can correctly compare equality to other edit logs', () => {
-		const edit0Copy: Edit = { ...edit0 };
-		const edit1Copy: Edit = { ...edit1 };
+		const edit0Copy: Edit<Change> = { ...edit0 };
+		const edit1Copy: Edit<Change> = { ...edit1 };
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
@@ -188,7 +212,7 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
+		const log2 = new EditLog<Change>({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
 		log2.addLocalEdit(edit1Copy);
 
 		expect(log0.equals(log2)).to.be.true;
@@ -213,28 +237,12 @@ describe('EditLog', () => {
 	});
 
 	it('can load edits from a handle', async () => {
-		const handleMap = new Map<string, EditHandle>();
-		const serializationHelpers = {
-			serializeHandle: (handle: EditHandle) => {
-				const mapSize = String(handleMap.size);
-				const serializedHandle: ISerializedHandle = {
-					type: '__fluid_handle__',
-					url: mapSize,
-				};
-				handleMap.set(mapSize, handle);
-				return serializedHandle;
-			},
-			deserializeHandle: (serializedHandle: ISerializedHandle) => {
-				return assertNotUndefined(handleMap.get(serializedHandle.url));
-			},
-		};
-
 		const editIds: EditId[] = [];
-		const editChunks: EditWithoutId[][] = [];
+		const editChunks: EditWithoutId<Change>[][] = [];
 		const numberOfChunks = 2;
 		const editsPerChunk = 5;
 
-		let inProgessChunk: EditWithoutId[] = [];
+		let inProgessChunk: EditWithoutId<Change>[] = [];
 		for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
 			const { id, editWithoutId } = separateEditAndId(newEdit([]));
 			editIds.push(id);
@@ -256,16 +264,16 @@ describe('EditLog', () => {
 		});
 
 		let chunkKey = 0;
-		const serializedHandles = handles.map((chunk) => {
-			const serializedHandle = {
+		const handlesWithKeys = handles.map((chunk) => {
+			const handle = {
 				key: chunkKey,
-				chunk: serializationHelpers.serializeHandle(chunk),
+				chunk,
 			};
 			chunkKey = chunkKey + 5;
-			return serializedHandle;
+			return handle;
 		});
 
-		const log = new EditLog({ editChunks: serializedHandles, editIds }, serializationHelpers);
+		const log = new EditLog({ editChunks: handlesWithKeys, editIds });
 
 		// Check that each edit can be retrieved correctly
 		for (let i = 0; i < 10; i++) {

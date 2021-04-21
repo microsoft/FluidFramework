@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import BTree from 'sorted-btree';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
+import BTree from '@taylorsw04/sorted-btree';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
-import { Edit, EditWithoutId } from './PersistedTypes';
+import { Edit, EditWithoutId } from './generic';
 import { EditId } from './Identifiers';
+import { compareFiniteNumbers } from './SnapshotUtilities';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -18,7 +18,7 @@ import { EditId } from './Identifiers';
  * @public
  * @sealed
  */
-export interface OrderedEditSet {
+export interface OrderedEditSet<TChange> {
 	/**
 	 * @returns the length of this `OrderedEditSet`
 	 */
@@ -40,19 +40,24 @@ export interface OrderedEditSet {
 	getIdAtIndex(index: number): EditId;
 
 	/**
+	 * @returns the index of the edit with the given editId within this `OrderedEditSet`, or `undefined` if no such edit exists.
+	 */
+	tryGetIndexOfId(editId: EditId): number | undefined;
+
+	/**
 	 * @returns the edit at the given index within this `OrderedEditSet`.
 	 */
-	getEditAtIndex(index: number): Promise<Edit>;
+	getEditAtIndex(index: number): Promise<Edit<TChange>>;
 
 	/**
 	 * @returns the edit at the given index. Must have been added to the log during the current session.
 	 */
-	getEditInSessionAtIndex(index: number): Edit;
+	getEditInSessionAtIndex(index: number): Edit<TChange>;
 
 	/**
 	 * @returns the Edit associated with the EditId or undefined if there is no such edit in the set.
 	 */
-	tryGetEdit(editId: EditId): Promise<Edit | undefined>;
+	tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
 
 	/**
 	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
@@ -60,19 +65,19 @@ export interface OrderedEditSet {
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
-	getEditLogSummary(useHandles?: boolean): EditLogSummary;
+	getEditLogSummary(useHandles?: boolean): EditLogSummary<TChange>;
 }
 
 /**
  * Information used to populate an edit log.
  * @internal
  */
-export interface EditLogSummary {
+export interface EditLogSummary<TChange> {
 	/**
 	 * A of list of serialized chunks and their corresponding keys.
 	 * Keys are the index of the first edit in the chunk in relation to the edit log.
 	 */
-	readonly editChunks: readonly { key: number; chunk: SerializedChunk }[];
+	readonly editChunks: readonly { key: number; chunk: EditChunkOrHandle<TChange> }[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -83,20 +88,10 @@ export interface EditLogSummary {
 /**
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * Can be satisfied by IFluidHandle<ArrayBufferLike>.
+ * @internal
  */
 export interface EditHandle {
 	get: () => Promise<ArrayBufferLike>;
-}
-
-/**
- * Helpers used to serialize and deserialize fields on EditLogSummary.
- */
-interface SerializationHelpers {
-	/** JSON serializes a handle that corresponds to an uploaded edit chunk. */
-	serializeHandle: (handle: EditHandle) => ISerializedHandle;
-
-	/** Deserializes a JSON serialized handle into an IFluidHandle that can be used to retrieve uploaded blobs.  */
-	deserializeHandle: (serializedHandle: ISerializedHandle) => EditHandle;
 }
 
 interface SequencedOrderedEditId {
@@ -109,28 +104,29 @@ interface LocalOrderedEditId {
 	readonly localSequence: number;
 }
 
-interface EditChunk {
+interface EditChunk<TChange> {
 	handle?: EditHandle;
-	edits?: EditWithoutId[];
+	edits?: EditWithoutId<TChange>[];
 }
 
 /**
- * Either a chunk of edits or a serialized handle that can be used to load that chunk.
+ * Either a chunk of edits or a handle that can be used to load that chunk.
+ * @internal
  */
-export type SerializedChunk = ISerializedHandle | EditWithoutId[];
+export type EditChunkOrHandle<TChange> = EditHandle | EditWithoutId<TChange>[];
 
 type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
  */
-export function separateEditAndId(edit: Edit): { id: EditId; editWithoutId: EditWithoutId } {
+export function separateEditAndId<TChange>(edit: Edit<TChange>): { id: EditId; editWithoutId: EditWithoutId<TChange> } {
 	const editWithoutId = { ...edit, id: undefined };
 	delete editWithoutId.id;
 	return { id: edit.id, editWithoutId };
 }
 
-function joinEditAndId(id: EditId, edit: EditWithoutId): Edit {
+function joinEditAndId<TChange>(id: EditId, edit: EditWithoutId<TChange>): Edit<TChange> {
 	return { id, ...edit };
 }
 
@@ -151,7 +147,7 @@ const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
  * @param edit - The edit that was added to the log
  * @param isLocal - true iff this edit was generated locally
  */
-export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
+export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, wasLocal: boolean) => void;
 
 /**
  * The edit history log for SharedTree.
@@ -160,47 +156,36 @@ export type EditAddedHandler = (edit: Edit, isLocal: boolean) => void;
  * May not contain more than one edit with the same ID.
  * @sealed
  */
-export class EditLog implements OrderedEditSet {
+export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 
 	private readonly sequencedEditIds: EditId[];
-	private readonly editChunks: BTree<number, EditChunk>;
-	private readonly localEdits: Edit[] = [];
+	private readonly editChunks: BTree<number, EditChunk<TChange>>;
+	private readonly localEdits: Edit<TChange>[] = [];
 
 	private readonly loadedChunkCache: number[] = [];
 	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
-	private readonly editAddedHandlers: EditAddedHandler[] = [];
-
-	private readonly serializationHelpers?: SerializationHelpers;
+	private readonly editAddedHandlers: EditAddedHandler<TChange>[] = [];
 
 	/**
 	 * Construct an `EditLog` using the given options.
 	 * @param summary - An edit log summary used to populate the edit log.
-	 * @param serializationHelpers - Helpers for serializing and deserializing edit handles. Required for virtualization support.
 	 */
-	public constructor(
-		summary: EditLogSummary = { editIds: [], editChunks: [] },
-		serializationHelpers?: SerializationHelpers
-	) {
+	public constructor(summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] }) {
 		const { editChunks, editIds } = summary;
 
-		this.serializationHelpers = serializationHelpers;
+		this.editChunks = new BTree<number, EditChunk<TChange>>(undefined, compareFiniteNumbers);
 
-		this.editChunks = new BTree<number, EditChunk>();
-
-		editChunks.forEach((serializedChunk) => {
-			const { key, chunk } = serializedChunk;
+		editChunks.forEach((editChunkOrHandle) => {
+			const { key, chunk } = editChunkOrHandle;
 
 			if (Array.isArray(chunk)) {
 				this.editChunks.set(key, { edits: chunk });
 			} else {
 				this.editChunks.set(key, {
-					handle: assertNotUndefined(
-						this.serializationHelpers,
-						'Edit logs that store handles should have serialization helpers.'
-					).deserializeHandle(chunk),
+					handle: chunk,
 				});
 			}
 		});
@@ -214,7 +199,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * Registers a handler for when an edit is added to this `EditLog`.
 	 */
-	public registerEditAddedHandler(handler: EditAddedHandler): void {
+	public registerEditAddedHandler(handler: EditAddedHandler<TChange>): void {
 		this.editAddedHandlers.push(handler);
 	}
 
@@ -240,7 +225,7 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * Returns all edit IDs in the log (sequenced and local).
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.editIds}
 	 */
 	public get editIds(): EditId[] {
 		return this.sequencedEditIds.concat(this.localEdits.map(({ id }) => id));
@@ -255,10 +240,20 @@ export class EditLog implements OrderedEditSet {
 	}
 
 	/**
-	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.indexOf}
+	 * @returns true iff the revision is a local revision (not sequenced).
 	 */
-	public getIndexOfId(editId: EditId): number {
-		const orderedEdit = this.allEditIds.get(editId) ?? fail('edit not found');
+	public isSequencedRevision(revision: number): boolean {
+		return revision <= this.sequencedEditIds.length;
+	}
+
+	/**
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetIndexOfId}
+	 */
+	public tryGetIndexOfId(editId: EditId): number | undefined {
+		const orderedEdit = this.allEditIds.get(editId);
+		if (orderedEdit === undefined) {
+			return undefined;
+		}
 
 		if (orderedEdit.isLocal) {
 			const firstLocal = assertNotUndefined(this.allEditIds.get(this.localEdits[0].id));
@@ -266,6 +261,13 @@ export class EditLog implements OrderedEditSet {
 			return this.numberOfSequencedEdits + orderedEdit.localSequence - firstLocal.localSequence;
 		}
 		return orderedEdit.index;
+	}
+
+	/**
+	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getIndexOfId}
+	 */
+	public getIndexOfId(editId: EditId): number {
+		return this.tryGetIndexOfId(editId) ?? fail('edit not found');
 	}
 
 	/**
@@ -282,14 +284,15 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndex}
 	 */
-	public async getEditAtIndex(index: number): Promise<Edit> {
+	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
 		if (index < this.numberOfSequencedEdits) {
 			const [key, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
 			const { handle, edits } = editChunk;
 
 			if (edits === undefined) {
 				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
-				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString()).edits as EditWithoutId[];
+				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString())
+					.edits as EditWithoutId<TChange>[];
 
 				// Make sure the loaded edit chunk is the correct size. If a higher key is set, the length is the difference of both.
 				// Otherwise, it means that there are no sequenced edits in memory so the length is the difference of the number of
@@ -313,7 +316,7 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getAtIndexSynchronous}
 	 */
-	public getEditInSessionAtIndex(index: number): Edit {
+	public getEditInSessionAtIndex(index: number): Edit<TChange> {
 		assert(
 			index > this.maximumEvictableIndex,
 			'Edit to retrieve must have been added to the log during the current session.'
@@ -335,12 +338,34 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.tryGetEdit}
 	 */
-	public async tryGetEdit(editId: EditId): Promise<Edit | undefined> {
+	public async tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined> {
 		try {
 			const index = this.getIndexOfId(editId);
 			return await this.getEditAtIndex(index);
 		} catch {
 			return undefined;
+		}
+	}
+
+	/**
+	 * @returns The edits of edit chunks that do not have associated edit handles, does not include the last edit chunk if it is not full.
+	 */
+	public *getEditChunksReadyForUpload(): Iterable<[number, EditWithoutId<TChange>[]]> {
+		const maxKey = this.editChunks.maxKey();
+
+		if (maxKey === undefined) {
+			return;
+		}
+
+		for (const [key, chunk] of this.editChunks.entries(undefined, [])) {
+			if (chunk.handle === undefined) {
+				const edits = assertNotUndefined(chunk.edits);
+
+				// If there is no handle, the chunk should either not be the last chunk or should be full if it is.
+				if (maxKey !== key || edits.length === editsPerChunk) {
+					yield [key, edits];
+				}
+			}
 		}
 	}
 
@@ -371,22 +396,8 @@ export class EditLog implements OrderedEditSet {
 	 * Adds a sequenced (non-local) edit to the edit log.
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
 	 */
-	public addSequencedEdit(edit: Edit): void {
+	public addSequencedEdit(edit: Edit<TChange>): void {
 		const { id, editWithoutId } = separateEditAndId(edit);
-		const maxChunkKey = this.editChunks.maxKey();
-		if (maxChunkKey === undefined) {
-			this.editChunks.set(0, { edits: [editWithoutId] });
-		} else {
-			// Add to the last edit chunk if it has room, otherwise create a new chunk.
-			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
-			// and so a new chunk should be created.
-			const { edits: lastEditChunk } = assertNotUndefined(this.editChunks.get(maxChunkKey));
-			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
-				lastEditChunk.push(editWithoutId);
-			} else {
-				this.editChunks.set(this.numberOfSequencedEdits, { edits: [editWithoutId] });
-			}
-		}
 
 		// Remove the edit from local edits if it exists.
 		const encounteredEditId = this.allEditIds.get(id);
@@ -398,33 +409,63 @@ export class EditLog implements OrderedEditSet {
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
+		// The key of the target edit chunk to be returned.
+		const key = this.numberOfSequencedEdits;
+		// The edits of the target edit chunk to be returned.
+		const edits: EditWithoutId<TChange>[] = [editWithoutId];
+
+		const lastPair = this.editChunks.nextLowerPair(undefined);
+		if (lastPair === undefined) {
+			this.editChunks.set(key, { edits });
+		} else {
+			// Add to the last edit chunk if it has room, otherwise create a new chunk.
+			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
+			// and so a new chunk should be created.
+			const { edits: lastEditChunk } = lastPair[1];
+			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
+				lastEditChunk.push(editWithoutId);
+			} else {
+				this.editChunks.set(key, { edits });
+			}
+		}
+
 		this.sequencedEditIds.push(id);
 		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
 		this.allEditIds.set(id, sequencedEditId);
-		this.emitAdd(edit, false);
+		this.emitAdd(edit, false, encounteredEditId !== undefined);
+	}
+
+	/**
+	 * @returns The last edit chunk i.e. the chunk which the most recent sequenced edits have been placed into, as well as its key.
+	 * Returns undefined iff there are no sequenced edits.
+	 * When defined, this chunk is guaranteed to contain at least one edit
+	 * (though it may be necessary to load the chunk via its handle to use it)
+	 */
+	public getLastEditChunk(): [key: number, edits: EditChunk<TChange>] | undefined {
+		return this.editChunks.nextLowerPair(undefined);
 	}
 
 	/**
 	 * Adds a non-sequenced (local) edit to the edit log.
 	 * Duplicate edits are ignored.
 	 */
-	public addLocalEdit(edit: Edit): void {
+	public addLocalEdit(edit: Edit<TChange>): void {
 		this.localEdits.push(edit);
 		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
 		this.allEditIds.set(edit.id, localEditId);
-		this.emitAdd(edit, true);
+		this.emitAdd(edit, true, false);
 	}
 
-	private emitAdd(editAdded: Edit, isLocal: boolean): void {
+	private emitAdd(editAdded: Edit<TChange>, isLocal: boolean, wasLocal: boolean): void {
 		for (const handler of this.editAddedHandlers) {
-			handler(editAdded, isLocal);
+			handler(editAdded, isLocal, wasLocal);
 		}
 	}
 
 	/**
 	 * @returns true iff this `EditLog` and `other` are equivalent, regardless of locality.
 	 */
-	public equals(other: EditLog): boolean {
+	public equals<TOtherChangeTypes>(other: EditLog<TOtherChangeTypes>): boolean {
 		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 		return compareArrays(this.editIds, other.editIds);
@@ -433,21 +474,14 @@ export class EditLog implements OrderedEditSet {
 	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getEditLogSummary}
 	 */
-	public getEditLogSummary(useHandles = false): EditLogSummary {
+	public getEditLogSummary(useHandles = false): EditLogSummary<TChange> {
 		if (useHandles) {
-			const serializationHelpers = assertNotUndefined(
-				this.serializationHelpers,
-				'Edit logs that store handles should include serialization helpers.'
-			);
 			return {
 				editChunks: this.editChunks.toArray().map(([key, { handle, edits }]) => {
-					if (handle !== undefined) {
-						return {
-							key,
-							chunk: serializationHelpers.serializeHandle(handle),
-						};
-					}
-					return { key, chunk: assertNotUndefined(edits) };
+					return {
+						key,
+						chunk: handle ?? edits ?? fail('An edit chunk must have either a handle or a list of edits.'),
+					};
 				}),
 				editIds: this.sequencedEditIds,
 			};
