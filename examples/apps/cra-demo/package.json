@@ -8,7 +8,6 @@
   "author": "Microsoft",
   "sideEffects": false,
   "dependencies": {
-    "@fluid-experimental/data-objects": "^0.38.1",
     "@fluid-experimental/fluid-static": "^0.38.1",
     "@fluid-experimental/get-container": "^0.38.1",
     "@fluidframework/map": "^0.38.1",
