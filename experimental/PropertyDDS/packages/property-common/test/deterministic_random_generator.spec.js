@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Autodesk, Inc. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 /* eslint-disable no-unused-expressions */
