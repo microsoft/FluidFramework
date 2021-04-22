@@ -35,7 +35,7 @@ let testLogger: TestLogger;
 export const mochaHooks = {
     beforeAll() {
         const parentLogger = _global.getTestLogger?.() ?? nullLogger;
-        testLogger = new TestLogger(parentLogger, "");
+        testLogger = new TestLogger(parentLogger);
         _global.getTestLogger = () => testLogger;
     },
     beforeEach() {
