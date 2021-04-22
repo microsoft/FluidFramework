@@ -22,13 +22,7 @@ import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { CachingLogViewer, LogViewer } from '../LogViewer';
 import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
-import {
-	SharedTreeSummarizer,
-	serialize,
-	SharedTreeSummary,
-	fullHistorySummarizer,
-	SharedTreeSummaryBase,
-} from './Summary';
+import { serialize, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { Edit, SharedTreeOpType, SharedTreeEditOp, SharedTreeHandleOp, EditWithoutId } from './PersistedTypes';
 import { GenericTransaction } from './GenericTransaction';
 import { newEdit } from './GenericEditUtilities';
@@ -93,15 +87,8 @@ const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedT
 /**
  * A distributed tree.
  * @public
- * @sealed
  */
-export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
-	/**
-	 * Handler for summary generation.
-	 * See 'SharedTreeSummarizer' for details.
-	 */
-	public summarizer: SharedTreeSummarizer<TChange> = fullHistorySummarizer;
-
+export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
@@ -123,25 +110,22 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
 
 	protected readonly logger: ITelemetryLogger;
 
-	/**
-	 * Iff true, additional assertions for correctness in CachingLogViewer will run.
-	 */
-	private readonly expensiveValidation: boolean;
-
 	public readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
 
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
-	 * @param expensiveValidation - enable expensive asserts
+	 * @param expensiveValidation - Enable expensive asserts.
+	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
 		attributes: IChannelAttributes,
-		expensiveValidation = false
+		private readonly expensiveValidation = false,
+		protected readonly summarizeHistory = true
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
@@ -192,12 +176,14 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
 	 */
 	private async uploadEditChunk(edits: EditWithoutId<TChange>[], chunkKey: number): Promise<void> {
 		// TODO:#49901: Enable writing of edit chunk blobs to summary
-		// const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-		// this.submitLocalMessage({
-		// 	editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-		// 	chunkKey,
-		// 	type: SharedTreeOpType.Handle,
-		// });
+		// if (this.summarizeHistory) {
+		// 	const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+		// 	this.submitLocalMessage({
+		// 		editHandle: serializeHandles(editHandle, this.serializer, this.handle),
+		// 		chunkKey,
+		// 		type: SharedTreeOpType.Handle,
+		// 	});
+		// }
 	}
 
 	/**
@@ -249,8 +235,15 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
 			this.editLog.sequenceLocalEdits();
 		}
 
-		return this.summarizer(this.editLog, this.currentView);
+		assert(this.editLog.numberOfLocalEdits === 0, 'generateSummary must not be called with local edits');
+		return this.generateSummary(this.editLog);
 	}
+
+	/**
+	 * Generates a SharedTree summary for the current state of the tree.
+	 * Will never be called when local edits are present.
+	 */
+	protected abstract generateSummary(editLog: OrderedEditSet<TChange>): SharedTreeSummaryBase;
 
 	/**
 	 * Initialize shared tree with a summary.

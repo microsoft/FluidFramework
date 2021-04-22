@@ -18,6 +18,7 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 	newEdit,
+	serialize,
 } from '../generic';
 import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
@@ -95,8 +96,7 @@ describe('Summary', () => {
 
 	const validateSummaryWrite = (summarizer: SharedTreeSummarizer<unknown>): void => {
 		// Save a new summary with the expected tree and use it to load a new SharedTree
-		expectedTree.summarizer = summarizer;
-		const newSummary = expectedTree.saveSummary();
+		const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
 		const { tree: tree2 } = setUpTestSharedTree();
 		tree2.loadSummary(newSummary);
 
@@ -139,8 +139,11 @@ describe('Summary', () => {
 					await testObjectProvider.opProcessingController.process();
 
 					// Write a new summary with the specified version
-					expectedTree.summarizer = summarizer;
-					const newSummary = expectedTree.saveSerializedSummary();
+					const newSummary = serialize(
+						summarizer(expectedTree.edits, expectedTree.currentView),
+						testSerializer,
+						expectedTree.handle
+					);
 
 					// Check the newly written summary is equivalent to its corresponding test summary file
 					const fileName = `${summaryType}-${version}`;

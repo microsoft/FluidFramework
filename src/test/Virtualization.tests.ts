@@ -3,7 +3,7 @@
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditHandle, editsPerChunk } from '../EditLog';
-import { fullHistorySummarizer_0_1_0, SharedTreeSummary, Edit, EditWithoutId, newEdit } from '../generic';
+import { SharedTreeSummary, Edit, EditWithoutId, newEdit } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
@@ -14,7 +14,9 @@ describe.skip('SharedTree history virtualization', () => {
 	let testObjectProvider: TestObjectProvider<unknown>;
 
 	beforeEach(async () => {
-		const testingComponents = await setUpLocalServerTestSharedTree({ summarizer: fullHistorySummarizer_0_1_0 });
+		const testingComponents = await setUpLocalServerTestSharedTree({
+			summarizeHistory: true,
+		});
 		sharedTree = testingComponents.tree;
 		testObjectProvider = testingComponents.testObjectProvider;
 	});
@@ -114,11 +116,11 @@ describe.skip('SharedTree history virtualization', () => {
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
-			summarizer: fullHistorySummarizer_0_1_0,
+			summarizeHistory: true,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
-			summarizer: fullHistorySummarizer_0_1_0,
+			summarizeHistory: true,
 		});
 
 		// All shared trees should have no edits or chunks

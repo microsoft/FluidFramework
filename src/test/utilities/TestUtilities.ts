@@ -27,15 +27,7 @@ import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait } from '../../default-edits';
 import { comparePayloads } from '../../SnapshotUtilities';
-import {
-	ChangeNode,
-	fullHistorySummarizer,
-	GenericSharedTree,
-	newEdit,
-	NodeData,
-	SharedTreeSummarizer,
-	TraitLocation,
-} from '../../generic';
+import { ChangeNode, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -70,7 +62,7 @@ export interface SharedTreeTestingOptions {
 	/**
 	 * If not set, full history will be preserved.
 	 */
-	summarizer?: SharedTreeSummarizer<Change>;
+	summarizeHistory?: boolean;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -108,8 +100,8 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const tree = new SharedTree(componentRuntime, id ?? 'testSharedTree', true);
-	tree.summarizer = options.summarizer ?? fullHistorySummarizer;
+	const factory = SharedTree.getFactory(options.summarizeHistory ?? true);
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
 
 	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
 
@@ -160,7 +152,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/**
 	 * If not set, full history will be preserved.
 	 */
-	summarizer?: SharedTreeSummarizer<Change>;
+	summarizeHistory?: boolean;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -176,10 +168,10 @@ export interface LocalServerSharedTreeTestingOptions {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizer } = options;
+	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory } = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory()]];
+	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory(summarizeHistory)]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			initialSummarizerDelayMs: 0,
@@ -202,10 +194,6 @@ export async function setUpLocalServerTestSharedTree(
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
-	}
-
-	if (summarizer !== undefined) {
-		tree.summarizer = summarizer;
 	}
 
 	return { tree, testObjectProvider: provider };

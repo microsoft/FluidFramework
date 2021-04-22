@@ -18,16 +18,7 @@ import {
 	serialize,
 	newEdit,
 } from '../generic';
-import {
-	Change,
-	ChangeType,
-	Delete,
-	Insert,
-	StablePlace,
-	StableRange,
-	noHistorySummarizer,
-	SharedTree,
-} from '../default-edits';
+import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree } from '../default-edits';
 import { editsPerChunk } from '../EditLog';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
@@ -561,12 +552,14 @@ describe('SharedTree', () => {
 		});
 
 		it('asserts when loading a summary with duplicated edits', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+				...treeOptions,
+				summarizeHistory: true,
+			});
 			const { tree: secondTree } = setUpTestSharedTree();
 
 			tree.editor.insert(newNode, StablePlace.before(left));
 			containerRuntimeFactory.processAllMessages();
-			tree.summarizer = fullHistorySummarizer;
 			const summary = tree.saveSummary() as ReturnType<typeof fullHistorySummarizer>;
 			const sequencedEdits = assertNotUndefined(summary.sequencedEdits).slice();
 			sequencedEdits.push(sequencedEdits[0]);
@@ -584,7 +577,7 @@ describe('SharedTree', () => {
 			const { tree } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
 				localMode: true,
-				summarizer: noHistorySummarizer,
+				summarizeHistory: false,
 			});
 
 			const editID = tree.editor.insert(newNode, StablePlace.before(left));

@@ -6,11 +6,20 @@
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
-import { ChangeNode, Edit, EditNode, GenericSharedTree } from '../generic';
+import {
+	ChangeNode,
+	Edit,
+	EditNode,
+	fullHistorySummarizer,
+	GenericSharedTree,
+	SharedTreeSummaryBase,
+} from '../generic';
+import { OrderedEditSet } from '../EditLog';
 import { Change, Delete, Insert, Move, StableRange, StablePlace } from './PersistedTypes';
-import { SharedTreeFactory } from './Factory';
+import { SharedTreeFactory, SharedTreeFactoryNoHistory } from './Factory';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { Transaction } from './Transaction';
+import { noHistorySummarizer } from './Summary';
 
 /**
  * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
@@ -113,10 +122,11 @@ export class SharedTree extends GenericSharedTree<Change> {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @returns A factory that creates SharedTrees and loads them from storage.
+	 * @param historySummarizing - determines how history is summarized by the returned `SharedTree`.
+	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
+	public static getFactory(summarizeHistory = true): SharedTreeFactory {
+		return summarizeHistory ? new SharedTreeFactory() : new SharedTreeFactoryNoHistory();
 	}
 
 	/**
@@ -124,9 +134,15 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
+	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 */
-	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
-		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation);
+	public constructor(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		expensiveValidation = false,
+		summarizeHistory = true
+	) {
+		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation, summarizeHistory);
 	}
 
 	private _editor: SharedTreeEditor | undefined;
@@ -140,5 +156,15 @@ export class SharedTree extends GenericSharedTree<Change> {
 		}
 
 		return this._editor;
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 */
+	protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase {
+		if (!this.summarizeHistory) {
+			return noHistorySummarizer(editLog, this.currentView);
+		}
+		return fullHistorySummarizer(editLog, this.currentView);
 	}
 }

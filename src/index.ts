@@ -19,7 +19,6 @@
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
@@ -60,7 +59,6 @@ export {
 	rangeFromStableRange,
 	placeFromStablePlace,
 	Transaction,
-	noHistorySummarizer,
 	isDetachedSequenceId,
 } from './default-edits';
 export {
@@ -87,6 +85,4 @@ export {
 	ValidEditingResult,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
-	SharedTreeSummarizer,
-	fullHistorySummarizer,
 } from './generic';

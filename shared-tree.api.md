@@ -239,14 +239,9 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
     readonly id?: never;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "fullHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
-//
 // @public
-export function fullHistorySummarizer<TChange>(editLog: OrderedEditSet<TChange>, currentView: Snapshot): SharedTreeSummary_0_0_2<TChange>;
-
-// @public @sealed
-export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean);
+export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
@@ -254,6 +249,7 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
     // (undocumented)
     get edits(): OrderedEditSet<TChange>;
     equals<TOtherChangeTypes>(sharedTree: GenericSharedTree<TOtherChangeTypes>): boolean;
+    protected abstract generateSummary(editLog: OrderedEditSet<TChange>): SharedTreeSummaryBase;
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
     // (undocumented)
@@ -277,7 +273,8 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
     snapshotCore(serializer: IFluidSerializer): ITree;
-    summarizer: SharedTreeSummarizer<TChange>;
+    // (undocumented)
+    protected readonly summarizeHistory: boolean;
     // (undocumented)
     readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
     }
@@ -379,11 +376,6 @@ export interface NodeInTrait {
     readonly trait: TraitLocation;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "noHistorySummarizer" is marked as @public, but its signature references "SharedTreeSummary_0_0_2" which is marked as @internal
-//
-// @public
-export function noHistorySummarizer(_editLog: OrderedEditSet<Change>, currentView: Snapshot): SharedTreeSummary_0_0_2<Change>;
-
 // @public @sealed
 export interface OrderedEditSet<TChange> {
     // (undocumented)
@@ -440,10 +432,11 @@ export interface SetValue {
 
 // @public @sealed
 export class SharedTree extends GenericSharedTree<Change> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean);
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     get editor(): SharedTreeEditor;
-    static getFactory(): SharedTreeFactory;
+    protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
+    static getFactory(summarizeHistory?: boolean): SharedTreeFactory;
 }
 
 // @public
@@ -466,13 +459,14 @@ export enum SharedTreeEvent {
     EditCommitted = "committedEdit"
 }
 
-// @public @sealed
+// @public
 export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     static Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
+    create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree;
+    protected includeHistoryInSummary(): boolean;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedObject>;
     // (undocumented)
@@ -482,23 +476,11 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @public
-export type SharedTreeSummarizer<TChange> = (editLog: OrderedEditSet<TChange>, currentView: Snapshot) => SharedTreeSummaryBase;
-
-// @public
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
     // (undocumented)
     readonly currentTree: ChangeNode;
     // Warning: (ae-incompatible-release-tags) The symbol "editHistory" is marked as @public, but its signature references "EditLogSummary" which is marked as @internal
     readonly editHistory?: EditLogSummary<TChange>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SharedTreeSummary_0_0_2" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
-    // (undocumented)
-    readonly currentTree: ChangeNode;
-    readonly sequencedEdits: readonly Edit<TChange>[];
 }
 
 // @public
