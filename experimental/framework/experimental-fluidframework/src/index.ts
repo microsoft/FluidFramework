@@ -13,7 +13,6 @@ export * from "./mergeTree";
 export * from "./sequence";
 export * from "./viewInterfaces";
 export * from "./taskManager";
-export * from "./fluidStatic";
 export * from "./cell";
 export * from "./counter";
 export * from "./matrix";

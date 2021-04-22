@@ -25,7 +25,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-experimental/fluid-static": "^0.39.0",
     "@fluid-experimental/task-manager": "^0.39.0",
     "@fluidframework/aqueduct": "^0.39.0",
     "@fluidframework/cell": "^0.39.0",
