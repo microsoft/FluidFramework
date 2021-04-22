@@ -42,31 +42,33 @@ export async function fetchJoinSession(
                 attempts: options.refresh ? 2 : 1,
                 ...extraProps,
             },
-            async (event) =>
-        {
-            // TODO Extract the auth header-vs-query logic out
-            const siteOrigin = getOrigin(urlParts.siteUrl);
-            let queryParams = `access_token=${token}`;
-            let headers = {};
-            if (queryParams.length > 2048) {
-                queryParams = "";
-                headers = { Authorization: `Bearer ${token}` };
-            }
+            async (event) => {
+                // TODO Extract the auth header-vs-query logic out
+                const siteOrigin = getOrigin(urlParts.siteUrl);
+                let queryParams = `access_token=${token}`;
+                let headers = {};
+                if (queryParams.length > 2048) {
+                    queryParams = "";
+                    headers = { Authorization: `Bearer ${token}` };
+                }
 
-            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
-                { method, headers },
-                "joinSession",
-            );
+                const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+                    // eslint-disable-next-line max-len
+                    `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
+                    { method, headers },
+                    "joinSession",
+                );
 
-            // TODO SPO-specific telemetry
-            event.end(response.commonSpoHeaders);
+                // TODO SPO-specific telemetry
+                event.end(response.commonSpoHeaders);
 
-            if (response.content.runtimeTenantId && !response.content.tenantId) {
-                response.content.tenantId = response.content.runtimeTenantId;
-            }
+                if (response.content.runtimeTenantId && !response.content.tenantId) {
+                    response.content.tenantId = response.content.runtimeTenantId;
+                }
 
-            return response.content;
-        });
+                return response.content;
+            },
+            { end: true, cancel: "generic" },
+        );
     });
 }

@@ -201,7 +201,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         throwOdspNetworkError(`${name || defaultEventName} Token is null`, fetchTokenErrorCode);
                     }
                     return token;
-                }));
+                }),
+                { end: true, cancel: "generic" },
+            );
         };
     }
 }

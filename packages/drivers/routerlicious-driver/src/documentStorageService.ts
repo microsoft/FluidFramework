@@ -97,6 +97,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                 count,
             },
             async () =>  this.manager.getCommits(id, count),
+            { end: true, cancel: "generic"},
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,
