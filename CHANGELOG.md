@@ -1,5 +1,23 @@
 # Change Log
 
+## 0.90.0
+
+* refactor: BREAKING CHANGE: move benchmarking code into its own package
+  * Associated pull request: [29566](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29566)
+  * Commit: [3630a510a3c153c6f948155872210b176bfc990e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3630a510a3c153c6f948155872210b176bfc990e)
+* merge: `releases/2021.04.4` into `master`
+  * Associated pull request: [29823](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29823)
+  * Commit: [63e986504f887cf196eb1664b37184d9507c05fc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/63e986504f887cf196eb1664b37184d9507c05fc)
+* fix: Correctly use minimum sequence number in cache
+  * Associated pull request: [29789](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29789)
+  * Commit: [763796c99908653b98d6a5cdf2b0580d1be946cb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/763796c99908653b98d6a5cdf2b0580d1be946cb)
+* merge: `releases/2021.04.3` into `master`
+  * Associated pull request: [29739](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29739)
+  * Commit: [e36e5221d3bde2ee10af9abd013d204c32f26bc7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e36e5221d3bde2ee10af9abd013d204c32f26bc7)
+* refactor: move change-agnostic code to /generic folder
+  * Associated pull request: [29733](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29733)
+  * Commit: [027c414b9e91d45cd35ee9643af09f11248d9dba](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/027c414b9e91d45cd35ee9643af09f11248d9dba)
+
 ## 0.85.1
 
 * fix: Correctly use minimum sequence number in cache
