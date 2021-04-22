@@ -158,7 +158,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+        const fluidModule = await PerformanceEvent.timedExecAsyncEndOnly(this.logger, { eventName: "CodeLoad" },
             async () => this.codeLoader.load(this.codeDetails),
         );
 

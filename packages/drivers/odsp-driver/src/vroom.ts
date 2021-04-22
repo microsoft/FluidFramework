@@ -36,7 +36,7 @@ export async function fetchJoinSession(
         const extraProps = options.refresh
             ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
             : {};
-        return PerformanceEvent.timedExecAsync(
+        return PerformanceEvent.timedExecAsyncEndOnly(
             logger, {
                 eventName: "JoinSession",
                 attempts: options.refresh ? 2 : 1,
@@ -67,8 +67,6 @@ export async function fetchJoinSession(
                 }
 
                 return response.content;
-            },
-            { end: true, cancel: "generic" },
-        );
+            });
     });
 }

@@ -181,7 +181,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             // Host should optimize and provide non-expired tokens on all critical paths.
             // Exceptions: race conditions around expiration, revoked tokens, host that does not care
             // (fluid-fetcher)
-            return PerformanceEvent.timedExecAsync(
+            return PerformanceEvent.timedExecAsyncEndOnly(
                 logger,
                 {
                     eventName: `${name || defaultEventName}_GetToken`,
@@ -201,9 +201,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         throwOdspNetworkError(`${name || defaultEventName} Token is null`, fetchTokenErrorCode);
                     }
                     return token;
-                }),
-                { end: true, cancel: "generic" },
-            );
+                }));
         };
     }
 }

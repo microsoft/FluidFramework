@@ -513,7 +513,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (tokenFetchOptions.refresh) {
                     cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
                 } else {
-                    cachedSnapshot = await PerformanceEvent.timedExecAsync(
+                    cachedSnapshot = await PerformanceEvent.timedExecAsyncEndOnly(
                         this.logger,
                         { eventName: "ObtainSnapshot" },
                         async (event: PerformanceEvent) => {

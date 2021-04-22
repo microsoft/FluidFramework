@@ -89,16 +89,14 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         const id = versionId ? versionId : this.id;
-        const commits = await PerformanceEvent.timedExecAsync(
+        const commits = await PerformanceEvent.timedExecAsyncEndOnly(
             this.logger,
             {
                 eventName: "getVersions",
                 versionId: id,
                 count,
             },
-            async () =>  this.manager.getCommits(id, count),
-            { end: true, cancel: "generic"},
-        );
+            async () =>  this.manager.getCommits(id, count));
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,
