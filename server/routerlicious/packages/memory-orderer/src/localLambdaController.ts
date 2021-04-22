@@ -75,11 +75,11 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.removeAllListeners();
     }
 
-    public process(message: IQueuedMessage): void {
+    public process(message: IQueuedMessage): Promise<void> | undefined {
         if (!this.lambda) {
             throw new Error("The lambda has not started yet");
         }
 
-        this.lambda.handler(message);
+        return this.lambda.handler(message);
     }
 }

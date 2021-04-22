@@ -58,7 +58,7 @@ export interface IPartitionLambda {
     /**
      * Processes an incoming message
      */
-    handler(message: IQueuedMessage): void;
+    handler(message: IQueuedMessage): Promise<void> | undefined;
 
     /**
      * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel

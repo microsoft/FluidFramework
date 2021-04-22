@@ -10,5 +10,4 @@ export * from "./deli";
 export * from "./foreman";
 export * from "./scribe";
 export * from "./scriptorium";
-export * from "./sequencedLambda";
 export * from "./utils";
