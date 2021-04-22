@@ -76,7 +76,6 @@ export enum EditValidationResult {
  * Exceptions thrown during event handling will be emitted as error events, which are automatically surfaced as error events on the
  * `SharedTree` used at construction time.
  * @public
- * @sealed
  */
 export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**

@@ -70,7 +70,7 @@ export enum ChangeType {
     SetValue = 3
 }
 
-// @public @sealed
+// @public
 export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
     protected constructor(tree: GenericSharedTree<TChange>, currentView: Snapshot, onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>);
     abortEdit(): void;
