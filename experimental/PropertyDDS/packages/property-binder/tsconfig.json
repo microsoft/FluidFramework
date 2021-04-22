@@ -1,10 +1,13 @@
 {
-  "extends": "./tsconfig.linting",
+	"extends": "@fluidframework/build-common/ts-common-config.json",
   "exclude": [
     "node_modules",
     "test/**/*.js"
   ],
-  "compilerOptions": {
-    "allowJs": false
-  }
+    "compilerOptions": {
+        "allowJs": true,
+		"outDir": "./dist",
+		"rootDir": "./src"
+	},
+	"include": ["src/**/*"]
 }
