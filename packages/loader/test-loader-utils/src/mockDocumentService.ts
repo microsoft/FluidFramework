@@ -55,7 +55,4 @@ export class MockDocumentService implements IDocumentService {
             ? this.deltaConnectionFactory()
             : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
     }
-    public getErrorTrackingService(): IErrorTrackingService {
-        throw new Error("Method not implemented.");
-    }
 }

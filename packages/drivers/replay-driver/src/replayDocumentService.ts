@@ -66,8 +66,4 @@ export class ReplayDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaStorage;
     }
-
-    public getErrorTrackingService() {
-        return null;
-    }
 }

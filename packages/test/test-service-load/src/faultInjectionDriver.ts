@@ -84,13 +84,6 @@ export class FaultInjectionDocumentService implements IDocumentService {
         this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
         return this._currentDeltaStream;
     }
-
-    /**
-     * Returns the error tracking service
-     */
-    getErrorTrackingService(): IErrorTrackingService | null {
-        return this.internal.getErrorTrackingService();
-    }
 }
 
 export class FaultInjectionDocumentDeltaConnection

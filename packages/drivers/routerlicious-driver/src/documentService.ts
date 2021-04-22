@@ -139,8 +139,4 @@ export class DocumentService implements api.IDocumentService {
             throw error;
         }
     }
-
-    public getErrorTrackingService() {
-        return this.errorTracking;
-    }
 }

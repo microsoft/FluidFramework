@@ -301,10 +301,6 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
-    public getErrorTrackingService(): IErrorTrackingService {
-        return { track: () => null };
-    }
-
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
