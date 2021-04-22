@@ -150,6 +150,7 @@
                 ]
             },
             "HostUtils": {
+                "dev": true,
                 "packages": [
                     "@fluid-experimental/get-container",
                     "@fluid-experimental/fluid-static",
