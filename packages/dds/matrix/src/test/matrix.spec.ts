@@ -705,6 +705,42 @@ describe("Matrix", () => {
             ]);
         });
 
+        it("can resend 'setCell()' at correct position when multiple reconnects occur", async () => {
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+
+            await expect([[undefined]]);
+
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+            // Note: Inserting '3' helps expose incorrect range check logic that fails to
+            //       consider unallocated handles.  Consider the empty leading segment:
+            //
+            //           start  = -1  (unallocated)
+            //           length = 3
+            //           end    = -1 + 3 = 2
+            //
+            //       In which case, pass the empty segment into 'findReconnectionPostition()'.
+
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
+
+            // Disconnect and reconnect the client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Disconnect and reconnect the client a second time to catch bugs caused by not preserving
+            // the original 'localSeq' or caused by state mutations during reconnection.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Verify that the 'setCells()' op targeted the original position of (0,0),
+            // not the current local position of (0,3).
+            await expect([
+                [undefined, undefined, undefined, "A"],
+            ]);
+        });
+
         it("can resend unacked ops on reconnection", async () => {
             // Insert a row and a column in the first shared matrix.
             matrix1.insertCols(0, 1);
