@@ -148,6 +148,7 @@ function App() {
 
     React.useEffect(() => {
         if (!map) {
+            // First time: create/get the Fluid container
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
                 name: 'cra-demo-container',
@@ -163,9 +164,8 @@ function App() {
             }
             load();
         } else {
-            // set up initial state
+            // Second time: set state and subscribe to further changes
             setTime(map.get("time"));
-            // update state each time our map changes
             const handleChange = () => setTime(map.get("time"));
 
             map.on("valueChanged", handleChange);
@@ -194,6 +194,7 @@ function App() {
 
     React.useEffect(() => {
         if (!map) {
+            // First time: create/get the Fluid container
             const { containerId, isNew } = getContainerId();
             const containerConfig = {
                 name: 'cra-demo-container',
@@ -207,12 +208,10 @@ function App() {
 
                 setMap(fluidContainer.initialObjects.map);
             }
-
             load();
         } else {
-            // set up initial state
+            // Second time: set state and subscribe to further changes
             setTime(map.get("time"));
-            // update state each time our map changes
             const handleChange = () => setTime(map.get("time"));
 
             map.on("valueChanged", handleChange);
