@@ -96,7 +96,8 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
-        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
+        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type,
+                hostName: "Stress Tests" }}),
         options,
     });
 

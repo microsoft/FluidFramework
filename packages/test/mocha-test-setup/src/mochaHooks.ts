@@ -13,6 +13,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         if (this.testName !== undefined) {
             event.testName = this.testName;
         }
+        event.hostName = "Mocha";
         this.parentLogger.send(event);
     }
     async flush() {
