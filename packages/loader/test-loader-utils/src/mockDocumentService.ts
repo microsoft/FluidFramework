@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {

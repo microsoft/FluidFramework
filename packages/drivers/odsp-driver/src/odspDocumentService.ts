@@ -23,7 +23,6 @@ import {
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {

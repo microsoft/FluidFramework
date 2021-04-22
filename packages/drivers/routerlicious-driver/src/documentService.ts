@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
+import { IClient} from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -26,7 +26,6 @@ export class DocumentService implements api.IDocumentService {
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
-        private readonly errorTracking: IErrorTrackingService,
         private readonly disableCache: boolean,
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,

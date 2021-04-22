@@ -17,7 +17,6 @@ import {
 import {
     IClient,
     ISummaryTree,
-    IErrorTrackingService,
     IDocumentMessage,
     INack,
     NackErrorType,

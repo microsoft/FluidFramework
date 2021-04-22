@@ -10,7 +10,6 @@ import {
     IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
-    IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
     ISignalClient,
@@ -87,12 +86,6 @@ export interface IDocumentStorageServicePolicies {
     // If this policy is provided, it tells runtime on ideal size for blobs
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
-
-    /**
-     * if true, the client can include and upload the protocol tree
-     * as part of the summary
-     */
-    readonly canUploadSummaryProtocolTree?: true;
 }
 
 /**

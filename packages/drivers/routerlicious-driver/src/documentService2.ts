@@ -21,7 +21,6 @@ export class DocumentService2 extends DocumentService {
         ordererUrl: string,
         deltaStorageUrl: string,
         gitUrl: string,
-        errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
         directCredentials: ICredentials | undefined,
         logger: ITelemetryLogger,

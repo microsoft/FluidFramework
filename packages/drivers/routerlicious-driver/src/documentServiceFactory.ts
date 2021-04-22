@@ -11,7 +11,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IErrorTrackingService, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
@@ -34,7 +34,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     constructor(
         private readonly tokenProvider: ITokenProvider,
         private readonly useDocumentService2: boolean = false,
-        private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private readonly disableCache: boolean = false,
         private readonly historianApi: boolean = true,
         private readonly gitCache: IGitCache | undefined = undefined,
