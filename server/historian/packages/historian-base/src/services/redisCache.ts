@@ -5,13 +5,28 @@
 
 import { Redis } from "ioredis";
 import * as winston from "winston";
-import { ICache } from "./definitions";
+import { ICache, IRedisParameters } from "./definitions";
 
 /**
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    constructor(private readonly client: Redis, private readonly prefix = "git") {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "git";
+
+    constructor(
+        private readonly client: Redis,
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+            console.log("Overriding git expiry");
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+            console.log("Overriding git prefix");
+        }
+
         client.on("error", (error) => {
             winston.error("Redis Cache Error:", error);
         });
@@ -22,8 +37,8 @@ export class RedisCache implements ICache {
         return JSON.parse(stringValue) as T;
     }
 
-    public async set<T>(key: string, value: T): Promise<void> {
-        const result = await this.client.set(this.getKey(key), JSON.stringify(value));
+    public async set<T>(key: string, value: T, expireAfterSeconds: number = this.expireAfterSeconds): Promise<void> {
+        const result = await this.client.set(this.getKey(key), JSON.stringify(value), "EX", expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
         }

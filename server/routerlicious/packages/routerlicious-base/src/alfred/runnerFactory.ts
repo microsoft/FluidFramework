@@ -139,7 +139,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             };
         }
 
-        const redisParams2 = { expireAfterSeconds: redisConfig2.keyExpireAfterSeconds };
+        const redisParams2 = {
+            expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+        };
 
         const redisClient = new Redis(redisOptions2);
         const clientManager = new services.ClientManager(redisClient, redisParams2);
@@ -190,7 +192,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 servername: redisConfigForThrottling.host,
             };
         }
-        const redisParamsForThrottling = { expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds };
+        const redisParamsForThrottling = {
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         // Rest API Throttler

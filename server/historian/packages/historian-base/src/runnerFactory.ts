@@ -44,9 +44,13 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
             };
         }
 
+        const redisParams = {
+            expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClient = new Redis(redisOptions);
-        const gitCache = new historianServices.RedisCache(redisClient);
-        const tenantCache = new historianServices.RedisTenantCache(redisClient);
+        const gitCache = new historianServices.RedisCache(redisClient, redisParams);
+        const tenantCache = new historianServices.RedisTenantCache(redisClient, redisParams);
         // Create services
         const riddlerEndpoint = config.get("riddler");
         const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
