@@ -44,7 +44,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
