@@ -5,6 +5,7 @@
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],
 		"declaration": false,
+		"noUnusedLocals": false,
 		"declarationMap": false
 	},
 	"include": ["./**/*"],
