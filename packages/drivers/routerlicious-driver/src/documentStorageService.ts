@@ -16,6 +16,7 @@ import {
     IDocumentStorageService,
     ISummaryContext,
     IDocumentStorageServicePolicies,
+    LoaderCachingPolicy,
  } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType, getGitMode } from "@fluidframework/protocol-base";
@@ -31,6 +32,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import type { GitManager } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+
+const defaultDocumentStorageServicePolicies = {
+    // Disable container-based caching/prefetch. Rely on built-in browser caching mechanisms.
+    caching: LoaderCachingPolicy.NoCaching,
+};
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -53,7 +59,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         public readonly id: string,
         public manager: GitManager,
         private readonly logger: ITelemetryLogger,
-        public readonly policies?: IDocumentStorageServicePolicies) {
+        public readonly policies: IDocumentStorageServicePolicies = defaultDocumentStorageServicePolicies) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
