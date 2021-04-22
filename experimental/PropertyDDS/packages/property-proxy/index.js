@@ -5,7 +5,7 @@
 'use strict';
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./dist/lib/@fluid-experimental/property-proxy.min.js');
+  module.exports = require('./dist/index.js');
 } else {
-  module.exports = require('./dist/lib/@fluid-experimental/property-proxy.js');
+  module.exports = require('./dist/index.js');
 }

@@ -13,5 +13,7 @@ eslintConfig.rules = jsOnlyRules;
 
 eslintConfig.extends = eslintConfig.extends.filter(noTypeScript);
 eslintConfig.plugins = eslintConfig.plugins.filter(noTypeScript);
-
+eslintConfig.parserOptions = {
+    "project": ["./tsconfig.json"]
+};
 module.exports = eslintConfig;
