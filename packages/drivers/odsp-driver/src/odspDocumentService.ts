@@ -477,11 +477,13 @@ export class OdspDocumentService implements IDocumentService {
         this._opsCache = new OpsCache(
             seqNumber,
             this.logger,
+            // ICache
             {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
                 },
                 read: async (batch: string) => undefined,
+                remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
             this.hostPolicy.opsCaching?.batchSize ?? 100,
             this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
