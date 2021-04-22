@@ -47,12 +47,9 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Error telemetry event.
  * Maps to category = "error"
  */
-export type ITelemetryErrorEvent = Omit<ITelemetryGenericEvent, "category"> & {
-    /**
-     * @deprecated - category will always be error
-     */
-    category?: TelemetryEventCategory;
-};
+ export interface ITelemetryErrorEvent extends ITelemetryProperties {
+    eventName: string;
+}
 
 /**
  * Performance telemetry event.
