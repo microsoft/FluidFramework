@@ -218,6 +218,11 @@ export interface IGCRuntimeOptions {
      * changed or not.
      */
     runFullGC?: boolean;
+
+    /**
+     * Allows additional GC options to be passed.
+     */
+    [key: string]: any;
 }
 
 export interface ISummaryRuntimeOptions {
@@ -868,7 +873,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
-            this._logger);
+            this._logger,
+            this.runtimeOptions);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1621,7 +1627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing
                 // scenarios involving access to deleted data.
-                if (this.options.runGCInTestMode) {
+                if (this.runtimeOptions.gcOptions?.runGCInTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {

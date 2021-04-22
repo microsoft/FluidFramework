@@ -19,8 +19,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     canRetryOnError,
-    requestOps,
-    streamObserver,
 } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
@@ -39,7 +37,7 @@ import {
     ISocketStorageDiscovery,
 } from "./contracts";
 import { IOdspCache } from "./odspCache";
-import { OdspDeltaStorageService } from "./odspDeltaStorageService";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
@@ -222,7 +220,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        let snapshotOps = this.storageManager?.ops;
+        const snapshotOps = this.storageManager?.ops ?? [];
         const service = new OdspDeltaStorageService(
             this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
@@ -234,68 +232,18 @@ export class OdspDocumentService implements IDocumentService {
         const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
 
-        return {
-            fetchMessages: (
-                fromTotal: number,
-                toTotal: number | undefined,
-                abortSignal?: AbortSignal,
-                cachedOnly?: boolean) => {
-                    let missed = false;
-                    const stream = requestOps(
-                        async (from: number, to: number) => {
-                            if (snapshotOps !== undefined && snapshotOps.length !== 0) {
-                                const messages = snapshotOps.filter((op) =>
-                                    op.sequenceNumber >= from).map((op) => op.op);
-                                if (messages.length > 0 && messages[0].sequenceNumber === from) {
-                                    // Consider not caching these ops as they will be cached as part of
-                                    // snapshot cache entry
-                                    this.opsReceived(messages);
-                                    snapshotOps = undefined;
-                                    return { messages, partialResult: true };
-                                } else {
-                                    this.logger.sendErrorEvent({
-                                        eventName: "SnapshotOpsNotUsed",
-                                        length: snapshotOps.length,
-                                        first: snapshotOps[0].sequenceNumber,
-                                        from,
-                                        to,
-                                    });
-                                    snapshotOps = undefined;
-                                }
-                            }
-                                    // We always write ops sequentially. Once there is a miss, stop consulting cache.
-                            // This saves a bit of processing time
-                            if (!missed) {
-                                const messagesFromCache = await this.opsCache?.get(from, to);
-                                if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
-                                    return {
-                                        messages: messagesFromCache as ISequencedDocumentMessage[],
-                                        partialResult: true,
-                                    };
-                                }
-                                missed = true;
-                            }
-
-                            // Proper implementaiton Coming in future
-                            if (cachedOnly) {
-                                return { messages: [], partialResult: false };
-                            }
-
-                            return service.get(from, to);
-                        },
-                        // Staging: starting with no concurrency, listening for feedback first.
-                        // In future releases we will switch to actual concurrency
-                        concurrency,
-                        fromTotal, // inclusive
-                        toTotal, // exclusive
-                        batchSize,
-                        this.logger,
-                        abortSignal,
-                    );
-
-                    return streamObserver(stream, (ops) => this.opsReceived(ops));
-                },
-        };
+        return new OdspDeltaStorageWithCache(
+            snapshotOps.map((op) => op.op),
+            this.logger,
+            batchSize,
+            concurrency,
+            async (from, to) => service.get(from, to),
+            async (from, to) => {
+                const res = await this.opsCache?.get(from, to);
+                return res as ISequencedDocumentMessage[] ?? [];
+            },
+            (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
+        );
     }
 
     /**
