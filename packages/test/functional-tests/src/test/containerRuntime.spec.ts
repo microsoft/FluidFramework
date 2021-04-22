@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,9 +32,6 @@ describe("Container Runtime", () => {
 
         async function startDeltaManager() {
             await deltaManager.connect({ reason: "test" });
-            deltaManager.inbound.resume();
-            deltaManager.outbound.resume();
-            deltaManager.inboundSignal.resume();
         }
 
         // Function to yield control in the Javascript event loop.

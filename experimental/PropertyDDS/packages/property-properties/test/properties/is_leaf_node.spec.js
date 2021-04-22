@@ -43,7 +43,7 @@
 
   var createPropertyInsertAndCommit = function(workspace, typeid, context, propId) {
     const prop = PropertyFactory.create(typeid, context);
-   workspace.root.insert(propId, prop);
+    workspace.insert(propId, prop);
   };
 
   describe('property-properties.Utils isLeafNode', function() {

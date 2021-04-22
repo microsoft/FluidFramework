@@ -1898,18 +1898,20 @@ PropertyFactory.prototype.resolveSchemas = function () {
       resolve({ errors: {}, schemas: {} });
       that.templateRequestsQueue = undefined;
     } else {
-      that.templateRequestsQueue.drain = function () {
-        var errors = _.compact(_.pluck(that.templateRequestsResults.errors, 'typeid'));
-        var results = that.templateRequestsResults;
-        that.templateRequestsResults = { errors: {}, schemas: {} };
-        if (errors.length && errors.length > 0) {
-          reject(new Error('Some errors occurs'));
-        } else {
-          that.missingDependencies = {};
-          resolve(results);
+      that.templateRequestsQueue.drain(
+        function () {
+          var errors = _.compact(_.pluck(that.templateRequestsResults.errors, 'typeid'));
+          var results = that.templateRequestsResults;
+          that.templateRequestsResults = { errors: {}, schemas: {} };
+          if (errors.length && errors.length > 0) {
+            reject(new Error('Some errors occurs'));
+          } else {
+            that.missingDependencies = {};
+            resolve(results);
+          }
+          that.templateRequestsQueue = undefined;
         }
-        that.templateRequestsQueue = undefined;
-      }
+      );
     }
   });
 };

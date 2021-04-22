@@ -17,7 +17,7 @@
     "@fluid-experimental/property-common": "0.1.0",
     "ajv": "7.1.1",
     "ajv-keywords": "4.0.0",
-    "async": "^2.6.1",
+    "async": "^3.2.0",
     "lodash": "^4.17.21",
     "semver": "^7.3.4",
     "traverse": "0.6.6"

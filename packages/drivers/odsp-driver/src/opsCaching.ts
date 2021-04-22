@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 
 // ISequencedDocumentMessage
 export interface IMessage {
@@ -110,6 +111,7 @@ export class OpsCache {
     public async get(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
         let batchNumber = this.getBatchNumber(from + 1);
+        const start = performance.now();
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const res = await this.cache.read(`${this.batchSize}_${batchNumber}`);
@@ -144,6 +146,7 @@ export class OpsCache {
                 from,
                 to,
                 length: messages.length,
+                duration: performance.now() - start,
             });
         }
         return messages;

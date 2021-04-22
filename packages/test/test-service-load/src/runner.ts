@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,6 +9,9 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { LoaderHeader } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -79,6 +82,39 @@ async function main() {
     await safeExit(result, url, runId);
 }
 
+function *factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+    let counter = 0;
+    const factoryReused = create();
+
+    while (true) {
+        counter++;
+        // Switch between creating new factory vs. reusing factory.
+        // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+        // At the same time we want to test newly created factory.
+        let documentServiceFactory: T = factoryReused;
+        let headers: IRequestHeader = {};
+        switch (counter % 5) {
+            default:
+            case 0:
+                documentServiceFactory = create();
+                break;
+            case 1:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "cached"} };
+                break;
+            case 2:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "all"} };
+                break;
+            case 3:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "none"} };
+                break;
+            case 4:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "delayed"} };
+                break;
+        }
+        yield { documentServiceFactory, headers };
+    }
+}
+
 /**
  * Implementation of the runner process. Returns the return code to exit the process with.
  */
@@ -95,17 +131,17 @@ async function runnerProcess(
         const testDriver = await createTestDriver(driver, seed, runConfig.runId);
         const logger = ChildLogger.create(
             await loggerP, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
-        const documentServiceFactoryReused =
-            new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
-        let done = false;
-        for(let iteration = 0; !done; iteration++) {
+        let iteration = 0;
+        const iterator = factoryPermutations(
+            () => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()));
+
+        for (const {documentServiceFactory, headers} of iterator) {
+            iteration++;
+
             // Switch between creating new factory vs. reusing factory.
             // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
             // At the same time we want to test newly created factory.
-            const documentServiceFactory = iteration % 2 === 0 ?
-                documentServiceFactoryReused :
-                new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
 
             // Construct the loader
             const loader = new Loader({
@@ -116,7 +152,8 @@ async function runnerProcess(
                 options: loaderOptions,
             });
 
-            const container = await loader.resolve({ url });
+            const container = await loader.resolve({ url, headers });
+            container.resume();
             const test = await requestFluidObject<ILoadTest>(container,"/");
 
             scheduleContainerClose(container, runConfig);
@@ -124,8 +161,11 @@ async function runnerProcess(
             try{
                 printProgress(runConfig);
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, iteration === 0 /* reset */);
+                const done = await test.run(runConfig, iteration === 0 /* reset */);
                 printStatus(runConfig, done ?  `finished` : "closed");
+                if (done) {
+                    break;
+                }
             }catch(error) {
                 await loggerP.then(
                     async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));

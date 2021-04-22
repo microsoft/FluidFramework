@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,8 +22,8 @@ import { createWriteError } from "@fluidframework/driver-utils";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
-    OdspErrorType,
 } from "@fluidframework/odsp-doclib-utils";
+import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
@@ -64,7 +64,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
             // eslint-disable-next-line prefer-promise-reject-errors
-            service.connectToDeltaStorage = async () => Promise.reject(false);
+            service.connectToDeltaStream = async () => Promise.reject(false);
             return service;
         };
 
@@ -86,7 +86,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                     clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
                     resolvedUrl: testResolved,
                     version: testRequest.headers?.[LoaderHeader.version],
-                    pause: testRequest.headers?.[LoaderHeader.pause],
+                    loadMode: testRequest.headers?.[LoaderHeader.loadMode],
                 },
             );
 

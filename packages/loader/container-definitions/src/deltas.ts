@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -80,6 +80,10 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
     (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
+    /**
+     * The connect event fires once we've received the connect_document_success message from the
+     * server.  This happens prior to the client's join message (if there is a join message).
+     */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
     (event: "disconnect", listener: (reason: string) => void);
     (event: "readonly", listener: (readonly: boolean) => void);
@@ -207,6 +211,8 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      * Returns all the items in the queue as an array. Does not remove them from the queue.
      */
     toArray(): T[];
+
+    waitTillProcessingDone(): Promise<void>;
 }
 
 export type ReadOnlyInfo = {

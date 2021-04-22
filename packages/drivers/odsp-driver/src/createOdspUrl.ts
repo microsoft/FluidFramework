@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import {  OdspFluidDataStoreLocator } from "./contracts";
+import {  OdspFluidDataStoreLocator } from "./contractsPublic";
 
 /*
  * Per https://github.com/microsoft/FluidFramework/issues/1556, isolating createOdspUrl() in its own file.
