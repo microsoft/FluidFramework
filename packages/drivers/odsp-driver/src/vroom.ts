@@ -39,7 +39,7 @@ export async function fetchJoinSession(
     getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     epochTracker: EpochTracker,
     requestSocketToken: boolean,
-    guestDisplayName?: string
+    guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
