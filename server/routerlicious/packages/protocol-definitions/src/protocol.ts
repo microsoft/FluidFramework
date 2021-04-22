@@ -181,7 +181,6 @@ export interface ISignalMessage {
 }
 
 export interface IUploadedSummaryDetails {
-
     // Indicates whether the uploaded summary contains ".protocol" tree
     includesProtocolTree?: boolean;
 }
