@@ -1,8 +1,6 @@
-PropertyTree Proxy
-=======================
+# @fluid-experimental/property-proxy
 
-Overview
---------
+## Overview
 
 The proxy allows interaction with properties as if they were common
 JavaScript objects. In general every property that can be mapped in a

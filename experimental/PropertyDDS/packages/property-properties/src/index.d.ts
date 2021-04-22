@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 declare module "@fluid-experimental/property-properties" {
     import {ChangeSet, SerializedChangeSet} from "@fluid-experimental/property-changeset"
     namespace HFDM_NS {

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ContainerProperty } from '@fluid-experimental/property-properties';
 import Switch, { SwitchProps } from '@material-ui/core/Switch';
 import * as React from 'react';

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BaseProxifiedProperty } from '@fluid-experimental/property-proxy';
 import { IRepoExpiryGetter, IRepoExpirySetter } from './CommonTypes';
 import { BaseProperty } from '@fluid-experimental/property-properties'

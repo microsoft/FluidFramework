@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-env jest */
 /* eslint-disable no-param-reassign */
 import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"

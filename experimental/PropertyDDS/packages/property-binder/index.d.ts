@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 /**
  * @fileoverview This file was derived using the tsd-jsdoc tool (https://www.npmjs.com/package/tsd-jsdoc).
  * Specifically, by running 'jsdoc -t node_modules/tsd-jsdoc -r src/' in the databinder repo. The following

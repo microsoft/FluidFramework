@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ContainerProperty } from '@fluid-experimental/property-properties';
 import TextField, { TextFieldProps } from '@material-ui/core/TextField';
 import * as React from 'react';

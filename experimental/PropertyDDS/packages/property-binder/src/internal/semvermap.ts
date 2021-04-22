@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export enum UpgradeType  {
   NONE = 0,     // Only applies for exact matches
   PATCH = 1,    // Allow a higher patch version

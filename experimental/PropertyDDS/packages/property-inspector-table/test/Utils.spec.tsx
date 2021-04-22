@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { PropertyProxy } from '@fluid-experimental/property-proxy';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";

@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 /**
  * Utility class in charge of input validation.
  */
@@ -15,4 +19,3 @@ export class InputValidator {
       }
     }
   }
-  

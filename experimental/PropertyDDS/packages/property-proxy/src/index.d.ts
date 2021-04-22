@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ValueArrayProperty, ValueMapProperty, ValueProperty, ArrayProperty, BaseProperty,MapProperty,ReferenceProperty,  ContainerProperty, ReferenceMapProperty, ReferenceArrayProperty, SetProperty } from '@fluid-experimental/property-properties';
 
 export abstract class ProxifiedPropertyValueArray  {

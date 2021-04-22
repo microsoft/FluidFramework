@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { DataBinder } from './data_binder/data_binder';
 import { FluidBinder } from './data_binder/fluid_binder';
 

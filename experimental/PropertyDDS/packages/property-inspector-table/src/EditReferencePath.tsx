@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { ErrorPopup } from './ErrorPopup';
 import { SvgIcon } from './SVGIcon';
 import { LoadingButton } from './LoadingButton';
