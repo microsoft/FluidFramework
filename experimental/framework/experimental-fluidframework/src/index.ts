@@ -7,7 +7,6 @@
 
 export * from "./aqueduct";
 export * from "./coreInterfaces";
-export * from "./dataObjects";
 export * from "./datastoreDefinitions";
 export * from "./map";
 export * from "./mergeTree";
