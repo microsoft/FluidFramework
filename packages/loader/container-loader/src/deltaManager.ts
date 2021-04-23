@@ -1217,7 +1217,7 @@ export class DeltaManager
                     if (message1 !== message2) {
                         const error = new NonRetryableError(
                             "Two messages with same seq# and different payload!",
-                            DriverErrorType.epochVersionMismatch,
+                            DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,
                                 sequenceNumber: message.sequenceNumber,

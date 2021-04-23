@@ -94,7 +94,7 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(errorMessage, DriverErrorType.epochVersionMismatch, { statusCode });
+            error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
         case 413:
             error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });

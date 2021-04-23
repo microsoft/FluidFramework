@@ -42,7 +42,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -715,7 +714,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about
         // file, like file being overwritten in storage, but client having stale local cache.
         // Driver need to ensure all caches are cleared on critical errors
-        this.service?.dispose(error?.errorType === DriverErrorType.epochVersionMismatch);
+        this.service?.dispose(error);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better

@@ -268,8 +268,8 @@ describe("Odsp Error", () => {
 
     it("Check Epoch Mismatch error props", async () => {
         const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
-        assert.strictEqual(error.errorType, DriverErrorType.epochVersionMismatch, "Error type should be epoch mismatch");
+        assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should be epoch mismatch");
         const errorBag = { ...error.getTelemetryProperties() };
-        assert.strictEqual(errorBag.errorType, DriverErrorType.epochVersionMismatch, "Error type should exist in prop bag");
+        assert.strictEqual(errorBag.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should exist in prop bag");
     });
 });

@@ -68,7 +68,7 @@ export enum DriverErrorType {
      * This error occurs when the file is modified externally. So the version at the client receiving this error
      * does not match the one at the server.
      */
-     epochVersionMismatch = "epochVersionMismatch",
+     fileOverwrittenInStorage = "fileOverwrittenInStorage",
 }
 
 /**
@@ -110,7 +110,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
-    | DriverErrorType.epochVersionMismatch;
+    | DriverErrorType.fileOverwrittenInStorage;
     readonly statusCode?: number;
 }
 

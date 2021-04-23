@@ -456,11 +456,12 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    public dispose(criticalError: boolean) {
-        if (criticalError) {
-            // Error might indicate mismatch between client & server knowlege about file.
-            // For exaple, file might have been overwritten in storage without generating new epoch
-            // In such case client cached info is stale and has to be removed.
+    public dispose(error?: any) {
+        // Error might indicate mismatch between client & server knowlege about file
+        // (DriverErrorType.fileOverwrittenInStorage).
+        // For exaple, file might have been overwritten in storage without generating new epoch
+        // In such case client cached info is stale and has to be removed.
+        if (error !== undefined) {
             this.epochTracker.removeEntries().catch(() => {});
         } else {
             this._opsCache?.flushOps();
