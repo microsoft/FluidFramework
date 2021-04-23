@@ -387,8 +387,6 @@ export interface ISnapshotTree {
     trees: {
         [path: string]: ISnapshotTree;
     };
-    // (undocumented)
-    unreferenced?: true;
 }
 
 // @public (undocumented)
@@ -457,8 +455,6 @@ export interface ISummaryConfiguration {
 
 // @public (undocumented)
 export interface ISummaryContent {
-    // (undocumented)
-    details?: IUploadedSummaryDetails;
     // (undocumented)
     handle: string;
     // (undocumented)
@@ -576,12 +572,6 @@ export type ITreeEntry = {
     type: TreeEntry.Attachment;
     value: IAttachment;
 });
-
-// @public (undocumented)
-export interface IUploadedSummaryDetails {
-    // (undocumented)
-    includesProtocolTree?: boolean;
-}
 
 // @public
 export interface IUser {
