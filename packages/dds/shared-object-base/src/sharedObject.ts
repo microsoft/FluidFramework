@@ -406,7 +406,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param message - Actual message to log; ideally should be unique message to identify call site
      */
     protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
-        logIfFalse(this.logger, condition, event);
+        logIfFalse(condition, this.logger, event);
     }
 
     private attachDeltaHandler() {

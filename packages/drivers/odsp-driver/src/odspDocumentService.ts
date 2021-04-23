@@ -23,7 +23,6 @@ import {
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -299,10 +298,6 @@ export class OdspDocumentService implements IDocumentService {
                 throw error;
             }
         });
-    }
-
-    public getErrorTrackingService(): IErrorTrackingService {
-        return { track: () => null };
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {

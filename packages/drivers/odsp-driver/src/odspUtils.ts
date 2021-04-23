@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
     offlineFetchFailureStatusCode,
@@ -23,6 +24,7 @@ import {
 import { debug } from "./debug";
 import { fetch } from "./fetch";
 import { RateLimiter } from "./rateLimiter";
+import { pkgVersion } from "./packageVersion";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -205,3 +207,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
     assert((resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true, 0x1de /* "Not an ODSP resolved url" */);
     return resolvedUrl as IOdspResolvedUrl;
 }
+
+export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
+    ChildLogger.create(
+        logger,
+        "OdspDriver",
+        { all :
+            {
+                driverVersion: pkgVersion,
+            },
+        });

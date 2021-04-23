@@ -76,6 +76,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             return new NoOpLambda(context);
         }
 
+        // Fetch pending ops from scribeDeltas collection
         const dbMessages =
             await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
         let opMessages = dbMessages.map((message) => message.operation);
@@ -106,6 +107,20 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
+        }
+
+        // Filter and keep ops after protocol state
+        const opsSinceLastSummary = opMessages
+        .filter((message) => message.sequenceNumber > lastCheckpoint.protocolState.sequenceNumber);
+
+        let expectedSequenceNumber = lastCheckpoint.protocolState.sequenceNumber + 1;
+        for (const message of opsSinceLastSummary) {
+            if (message.sequenceNumber !== expectedSequenceNumber) {
+                throw new Error(`Invalid message sequence from checkpoint/summary.`
+                + `Current message @${message.sequenceNumber}.`
+                + `Expected message @${expectedSequenceNumber}`);
+            }
+            ++expectedSequenceNumber;
         }
 
         const protocolHandler = initializeProtocol(lastCheckpoint.protocolState, latestSummary.term);

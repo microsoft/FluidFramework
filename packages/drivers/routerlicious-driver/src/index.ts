@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./errorTracking";
 export * from "./deltaStorageService";
 export * from "./documentService";
 export * from "./documentStorageService";

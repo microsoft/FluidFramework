@@ -196,55 +196,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.send(perfEvent);
     }
 
-    /**
-     * @deprecated - use sendErrorEvent
-     * Log generic error with the logger
-     *
-     * @param eventName - the name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    public logGenericError(eventName: string, error: any) {
-        this.sendErrorEvent({ eventName }, error);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-        this.sendErrorEvent({ ...event, isException: true }, exception);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-
-     * Log an debug assert with the logger
-     *
-     * @param condition - the condition to assert on
-     * @param event - the event to log if the condition fails
-     */
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        this.shipAssert(condition, event);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Log an ship assert with the logger
-     *
-     * @param condition - the condition to assert on
-     * @param event - the event to log if the condition fails
-     */
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
-            realEvent.isAssert = true;
-            realEvent.stack = TelemetryLogger.getStack();
-            this.sendErrorEvent(realEvent);
-        }
-    }
-
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEvent = {
