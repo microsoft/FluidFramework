@@ -169,10 +169,6 @@ export class PartitionManager extends EventEmitter {
                     return;
                 }
 
-                // For simplicity we will close the entire manager whenever any partition errors. In the case that the
-                // restart flag is false and there was an error we will eventually need a way to signify that a
-                // partition is 'poisoned'.
-                errorData.restart = true;
                 this.emit("error", error, errorData);
             });
 
