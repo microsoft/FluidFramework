@@ -138,8 +138,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 servername: redisConfig2.host,
             };
         }
+
+        const redisParams2 = {
+            expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClient = new Redis(redisOptions2);
-        const clientManager = new services.ClientManager(redisClient);
+        const clientManager = new services.ClientManager(redisClient, redisParams2);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -187,6 +192,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 servername: redisConfigForThrottling.host,
             };
         }
+        const redisParamsForThrottling = {
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         // Rest API Throttler
@@ -198,7 +207,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
+        const throttleStorageManager =
+            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
