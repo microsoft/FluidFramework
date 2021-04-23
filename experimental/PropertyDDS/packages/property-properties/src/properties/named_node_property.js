@@ -51,7 +51,6 @@ NamedNodeProperty.prototype.getGuid = NamedProperty.prototype.getGuid;
 
 /**
  * Return the URN for this named property
- * urn:adsk.hfdm${env}:hfdm.named-property:${repoGuid}/${branchGuid}:${propertyGuid}
  * @return {string} The URN
  */
 NamedNodeProperty.prototype.getUrn = NamedProperty.prototype.getUrn;

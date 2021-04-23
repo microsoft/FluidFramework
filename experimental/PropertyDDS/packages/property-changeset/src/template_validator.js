@@ -275,7 +275,7 @@ var _validateBasic = function(in_template) {
 };
 
 /**
- * Validations performed when the version increases between consecutive HFDM templates.
+ * Validations performed when the version increases between consecutive templates.
  * For example: 1.1.3 -> 2.0.0
  * This function checks the change level (PATCH, MINOR, MAJOR) and analyses the template content
  * to emit warnings if the change level should be higher, given the content that changed.
@@ -496,7 +496,7 @@ var _validatePositiveIncrement = function(in_template, in_templatePrevious, in_v
 
 
 /**
- * Validations performed when the version between consecutive HFDM templates doesn't change.
+ * Validations performed when the version between consecutive templates doesn't change.
  * For example: 1.1.3 -> 1.1.3.
  * Templates whose version didn't change should have identical content.
  * @param {Object} in_template The latest template object.

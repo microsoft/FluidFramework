@@ -4,8 +4,7 @@
  */
 /* globals expect*/
 /**
- * @fileoverview In this file, we will test the functions of a HFDM object
- *    described in /src/property_factory.js
+ * @fileoverview In this file, we will test the functions of the property factory.
  */
 describe('Reversible ChangeSets', function() {
   var PropertyFactory, ChangeSet, deepCopy, Int64, Uint64, _;

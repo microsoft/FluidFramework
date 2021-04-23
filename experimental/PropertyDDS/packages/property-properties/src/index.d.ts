@@ -5,7 +5,7 @@
 
 declare module "@fluid-experimental/property-properties" {
     import {ChangeSet, SerializedChangeSet} from "@fluid-experimental/property-changeset"
-    namespace HFDM_NS {
+    namespace PROPERTY_TREE_NS {
         class EventEmitter {
           static defaultMaxListeners: number;
           emit(type: string): boolean;
@@ -336,36 +336,11 @@ declare module "@fluid-experimental/property-properties" {
         type ReferenceProperty_resolvePath_in_options_TYPE = {
           referenceResolutionMode: REFERENCE_RESOLUTION_TYPE; // How should this function behave during reference resolution?
         }
-        type HFDM_connect_in_options_TYPE = {
-          serverUrl: string; // The url pointing to the PropertySetsServer
-          getBearerToken?: getBearerTokenFn; // Function that accepts a callback.
-              //     Function that should be called with an error or the OAuth2 bearer token representing the user.
-          in_params?: {
-              requestOptions: object
-          };
-          headers?: object; // Arbitrary object passed as a header to HFDM connection websocket.
-          type?: string; // TODO (cesarin) this doesn't appear in the documentation, but is used in forge-appfw-core
-        }
         type CoarsePermission = 'read' | 'write' | 'delete';
         type RepositoryPermission = 'repository.read' | 'repository.write' | 'repository.delete' | 'repository.share';
         type BranchPermission = 'branch.read' | 'branch.write' | 'branch.delete' | 'branch.share';
         type PropertyPermission = 'property.read' | 'property.insert' | 'property.modify' | 'property.remove' | 'property.share';
         type Permission = RepositoryPermission | BranchPermission | PropertyPermission | CoarsePermission;
-        type HFDM_share_in_options_TYPE = {
-          serviceIds: Array<string>; // The service ids which will get policies assigned/unassigned
-          actions: Permission[]; // The actions to be added on the URNs to the oxygen ids
-          noInherit?: boolean; // Optional flag to set noInherit on a single resource
-        }
-        type HFDM_unshare_in_options_TYPE = {
-          serviceIds: Array<string>; // The service ids which will get policies assigned/unassigned
-          actions: Permission[]; // The actions to be added on the URNs to the oxygen ids
-        }
-        type HFDM_delete_in_options_TYPE = {
-          method: string; // 'soft' | 'hard'
-              //   'soft': Expires the asset, which can be undeleted within the grace period (30 days).
-              //   'hard': Destroys the asset after a short grace period (5 minutes).
-              //   Defaults to 'soft' if undefined.
-        }
         type Repository_getBranchNodes_in_options_TYPE = {
           array: boolean; // Flag used to control the return
               //  type of the function. If set to true, the return value will be an Array
@@ -458,7 +433,7 @@ declare module "@fluid-experimental/property-properties" {
           actions: PropertyPermission[]; // The actions to grant to the subject on the property
         }
         type NamedProperty_share_options_TYPE = {
-          synchronous?: boolean; // whether the share sould be sent to hfdm immediatly or on next sync
+          synchronous?: boolean; // whether the share sould be sent to the PropertyTree immediatly or on next sync
           noInherit?: boolean; // Optional flag to set noInherit on the property
         }
         type NamedProperty_unshare_permission_TYPE = {
@@ -468,7 +443,7 @@ declare module "@fluid-experimental/property-properties" {
           actions: PropertyPermission[]; // The actions to grant to the subject on the property
         }
         type NamedProperty_unshare_options_TYPE = {
-          synchronous?: boolean; // whether the share sould be sent to hfdm immediatly or on next sync
+          synchronous?: boolean; // whether the share sould be sent to the PropertyTree immediatly or on next sync
         }
         type BranchIdentifier = any; // TODO
         type CommitOrBranchIdentifier = any; // TODO
@@ -505,14 +480,6 @@ declare module "@fluid-experimental/property-properties" {
         }
 
         class ChangeSetError {
-
-        }
-
-        class HFDMError {
-
-        }
-
-        class WorkspaceError {
 
         }
 
@@ -1305,8 +1272,7 @@ declare module "@fluid-experimental/property-properties" {
            */
           removeListener(eventName: string, eventListener: (...args: any[]) => any): void;
           /**
-           * Register HFDM template which are used to instantiate properties. To find out more about templates,
-           * see https://docs.google.com/document/d/1-7kXkKTu3AZLjKyKl7XK2VuAJRSbUxo3ZuPA8bzWocs/edit
+           * Register template which are used to instantiate properties.
            *
            * In addition to json structures
            * it also accepts typeids, as well as arrays of jsons ans arrays of typeids
@@ -1393,7 +1359,7 @@ declare module "@fluid-experimental/property-properties" {
 
         class Workspace extends EventEmitter {
           /**
-           * The Workspace object encapsulates a HFDM to proxy function calls.
+           * The Workspace object encapsulates a PropertyTree to proxy function calls.
            * A Workspace can be seen as a view to the state of the data at a point in time.
            * It is the main interface for adding/removing/modifying high frequency data.
            */
@@ -1419,7 +1385,7 @@ declare module "@fluid-experimental/property-properties" {
           /**
            * Commit the current pending changes. The new commit node will be
            * the new head of the current branch. In detached head state, a new branch will be created.
-           * If the HFDM is connected to the backend, the new commit will also be persisted and broadcasted.
+           * If the the PropertyTree is connected to the backend, the new commit will also be persisted and broadcasted.
            * If SYNC_MODE is set to SYNCHRONIZE, any conflict occurred will be resolved by automatically
            * rebasing the local branch and synchronizing with the remote repository.
            * @param in_options Additional options
@@ -2705,5 +2671,5 @@ declare module "@fluid-experimental/property-properties" {
         }
 
     }
-    export = HFDM_NS;
+    export = PROPERTY_TREE_NS;
 }

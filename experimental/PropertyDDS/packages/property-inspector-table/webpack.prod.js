@@ -118,7 +118,7 @@ const CommonWebpackLibTSConfig = function (args) {
         amd: "@fluid-experimental/property-properties",
         commonjs: "@fluid-experimental/property-properties",
         commonjs2: "@fluid-experimental/property-properties",
-        root: ["Forge", "HFDM"]
+        root: ["Properties"]
       }
     },
     module: {

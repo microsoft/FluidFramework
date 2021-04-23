@@ -44,7 +44,7 @@ describe('DataBinder runtime representations', () => {
         },
       );
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
       workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
       workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
@@ -80,7 +80,7 @@ describe('DataBinder runtime representations', () => {
         },
       );
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Older', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
       workspace.root.insert('Patched', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
       workspace.root.insert('Newer', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
@@ -124,7 +124,7 @@ describe('DataBinder runtime representations', () => {
         },
       );
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
       workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
       workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
@@ -173,7 +173,7 @@ describe('DataBinder runtime representations', () => {
         },
       );
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('100', PropertyFactory.create('Test:Versioned-1.0.0', 'single'));
       workspace.root.insert('101', PropertyFactory.create('Test:Versioned-1.0.1', 'single'));
       workspace.root.insert('110', PropertyFactory.create('Test:Versioned-1.1.0', 'single'));
@@ -217,7 +217,7 @@ describe('DataBinder runtime representations', () => {
         },
       );
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       const map100 = PropertyFactory.create('Test:Versioned-1.0.0', 'map');
       const map101 = PropertyFactory.create('Test:Versioned-1.0.1', 'map');
       const map110 = PropertyFactory.create('Test:Versioned-1.1.0', 'map');

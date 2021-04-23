@@ -8,7 +8,7 @@ export type IExpiryState = 'live' | 'expired';
 export type IExpiryAction = 'expire' | 'destroy';
 
 /**
- * The expiry information retrieved by HFDM's `getExpiry` method.
+ * The expiry information retrieved by the `getExpiry` method.
  */
 export interface IExpiryInfo {
   state: IExpiryState;

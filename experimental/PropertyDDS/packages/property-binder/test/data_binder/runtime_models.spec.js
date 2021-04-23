@@ -45,7 +45,7 @@ describe('DataBinder runtime representations', function() {
       // NOTE: This is the example in the documentation, please keep it in tune!
       myDataBinder.defineRepresentation('PETSTORE', 'Test:Dog-1.0.0', () => new DogRepresentation());
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -369,7 +369,7 @@ describe('DataBinder runtime representations', function() {
     });
 
     it('should not be able to get unknown things', function() {
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -390,7 +390,7 @@ describe('DataBinder runtime representations', function() {
         destroyer: destroyer
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -420,7 +420,7 @@ describe('DataBinder runtime representations', function() {
         destroyer: destroyer
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspaceand insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -459,7 +459,7 @@ describe('DataBinder runtime representations', function() {
         userData: theUserData
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -1088,7 +1088,7 @@ describe('DataBinder runtime representations', function() {
         stateless: true
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -1112,7 +1112,7 @@ describe('DataBinder runtime representations', function() {
         stateless: true
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -1144,7 +1144,7 @@ describe('DataBinder runtime representations', function() {
         stateless: true
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);
@@ -1271,7 +1271,7 @@ describe('DataBinder runtime representations', function() {
         stateless: true
       });
 
-      // Get an HFDM workspace and insert a new property
+      // Get a workspace and insert a new property
       workspace.root.insert('Fido', PropertyFactory.create('Test:Dog-1.0.0', 'single'));
 
       myDataBinder.attachTo(workspace);

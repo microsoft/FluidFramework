@@ -100,7 +100,6 @@ const LazyLoadedProperties = require('./properties/lazy_loaded_properties');
  * @param {bool} skipSemver flag passed to the constructor of the
  * TemplateValidator. Skips semver validation
  *
- * @category HFDM
  * @ignore
  */
 var _createTemplateValidator = function (skipSemver) {
@@ -126,10 +125,9 @@ var _createTemplateValidator = function (skipSemver) {
  * @constructor
  * @protected
  * @alias property-properties.PropertyFactory
- * @category HFDM
  */
 var PropertyFactory = function () {
-  // Unfortunately, PropertyFactory can't inherit from HfdmEventEmitter class as
+  // Unfortunately, PropertyFactory can't inherit from EventEmitter class as
   // it shares the same member methods names `register` and `unregister`.
   this._eventEmitter = new EventEmitter();
 
@@ -418,8 +416,7 @@ var registerLocal = function (in_template) {
 };
 
 /**
- * Register HFDM template which are used to instantiate properties. To find out more about templates,
- * see https://github.com/hfdm/hfdm/blob/master/documentation/guide/propertysets/schemas.rst
+ * Register template which are used to instantiate properties.
  *
  * In addition to json structures
  * it also accepts typeids, as well as arrays of jsons ans arrays of typeids

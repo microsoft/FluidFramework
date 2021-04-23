@@ -9,7 +9,7 @@
  */
 (function() {
   /**
-   * @namespace FORGE.HFDMSchemaValidator.Test
+   * @namespace property-changeset.Test
    * @alias good_reserved_types.js
    * Namespace containing all schema-related data for property set validation
    */

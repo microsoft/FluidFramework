@@ -82,7 +82,7 @@ const Object3DSchema = {
 // SnippetEnd{DataBinder.Object3DBinding.Schema}
 
 describe('DataBinding.registerOnPath() should work for', function() {
-  var dataBinder, hfdm, workspace;
+  var dataBinder, workspace;
 
   catchConsoleErrors();
 
@@ -760,7 +760,8 @@ describe('DataBinding.registerOnPath() should work for', function() {
     var modifySpy = jest.fn(checkProperty);
     var removeSpy = jest.fn(function(property) { expect(property).toBeUndefined(); });
 
-    var invalidProperty = false; // we have to do this externally because HFDM would eat our exception from the spy
+    // we have to do this externally because the PropertyTree would eat our exception from the spy
+    var invalidProperty = false;
     var expectedInvalidProperty = false; // same as above...
     var validPropertySpy = jest.fn(function(in_property) {
       if (!in_property) {
@@ -824,7 +825,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
 
     workspace.root.get('node').insert('string2', stringProperty);
 
-    // TODO: This creates a stack overflow! (this probably refers to a bug in HFDM that's likely fixed now)
+    // TODO: This creates a stack overflow! (this probably refers to a bug in PropertyTree that's likely fixed now)
     workspace.root.get('node').insert('string', PropertyFactory.create('Reference', undefined, '/node.string2'));
     //expect(false).toEqual(true);
     // this should not have been changed to true
@@ -1403,7 +1404,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
       //  console.log('childSpy: # of DataBindings: ' + modificationContext.getDataBinding().length);
       //  console.log(modificationContext._baseDataBinding.getDataBinder().resolve(
       //      modificationContext.getAbsolutePath()));
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         childSpyError = true;
       }
@@ -1414,7 +1415,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     });
     var collectionInsertSpyError = false;
     var collectionInsertSpy = jest.fn(function(index, modificationContext) {
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         collectionInsertSpyError = true;
       }
@@ -1425,7 +1426,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     });
     var collectionModifySpyError = false;
     var collectionModifySpy = jest.fn(function(index, modificationContext) {
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         collectionModifySpyError = true;
       }
@@ -1441,7 +1442,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     });
     var mapCollectionModifySpyError = false;
     var mapCollectionModifySpy = jest.fn(function(index, modificationContext) {
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (!modificationContext.getDataBinding()) {
         mapCollectionModifySpyError = true;
       }
@@ -1461,7 +1462,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     var collectionRemoveSpy = jest.fn(function(index, modificationContext) {
       // console.log('index: ' + index);
       var removedDataBinding = modificationContext.getDataBinding();
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (!removedDataBinding) {
         collectionRemoveSpyError = true;
       }
@@ -1591,7 +1592,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     expect(dataBinder._dataBindingRemovedCounter).toEqual(2);
     dataBinder._resetDebugCounters();
 
-    // check error flags ->  have to do it this way because HFDM swallows exceptions in callbacks :(
+    // check error flags ->  have to do it this way because the PropertyTree swallows exceptions in callbacks :(
     expect(childSpyError).toEqual(false);
     expect(collectionInsertSpyError).toEqual(false);
     expect(collectionModifySpyError).toEqual(false);
@@ -1653,7 +1654,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     var resolvedDataBindings;
     var error = false;
     var collectionRemoveSpy = jest.fn(function(index, modificationContext) {
-      // have to do it this way because HFDM swallows exceptions in callbacks :(
+      // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
       if (index !== 2) {
         error = true;
       }
@@ -1704,7 +1705,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
     var newResolvedDataBindings = dataBinder.resolve('/childArray[2]', 'BINDING');
     expect(newResolvedDataBindings).toEqual(newDataBinding);
     expect(newResolvedDataBindings).toEqual(resolvedDataBindings);
-    // have to do it this way because HFDM swallows exceptions in callbacks :(
+    // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
     expect(error).toEqual(false);
   });
 
@@ -1997,7 +1998,7 @@ describe('DataBinding.registerOnPath() should work for', function() {
   it('register on a structure modify and react to changes in the subtree LYNXDEV-5365, differing types',
     function() {
       // Similar to the above test, but x and y are differing types and hence in different subhierarchies
-      // in the HFDM change set
+      // in the change set
       const point2DWeirdTemplate = {
         properties: [
           { id: 'color', typeid: 'String' },

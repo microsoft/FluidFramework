@@ -30,7 +30,7 @@ const createMapIterator = (target) => function * () {
   };
 
 /**
- * ComponentMap extends Map in such a way that a referenced HFDM {@link external:MapProperty MapProperty}
+ * ComponentMap extends Map in such a way that a referenced {@link external:MapProperty MapProperty}
  * can be modified and accessed directly.
  * @extends Map
  * @hidden

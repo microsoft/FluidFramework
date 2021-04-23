@@ -44,7 +44,6 @@ const isReservedKeyword = require('./is_reseved_keyword');
  * @constructor
  * @protected
  * @alias property-changeset.ChangeSet
- * @category HFDM
  */
 var ChangeSet = function(in_changes) {
   if (in_changes === undefined || in_changes === null) {
