@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluid-internal/fluidapp-odsp-urlresolver": "^0.39.0",
-    "@fluidframework/common-utils": "^0.29.0",
+    "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/container-runtime": "^0.39.0",
     "@fluidframework/datastore": "^0.39.0",
     "@fluidframework/driver-definitions": "^0.39.0",
@@ -36,7 +36,7 @@
     "@fluidframework/odsp-driver": "^0.39.0",
     "@fluidframework/odsp-driver-definitions": "^0.39.0",
     "@fluidframework/odsp-urlresolver": "^0.39.0",
-    "@fluidframework/protocol-definitions": "^0.1022.0",
+    "@fluidframework/protocol-definitions": "^0.1024.0-0",
     "@fluidframework/routerlicious-driver": "^0.39.0",
     "@fluidframework/routerlicious-urlresolver": "^0.39.0",
     "@fluidframework/runtime-definitions": "^0.39.0",

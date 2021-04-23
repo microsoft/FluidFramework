@@ -31,14 +31,14 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
+    IPartitionLambda,
 } from "@fluidframework/server-services-core";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { SequencedLambda } from "../sequencedLambda";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol } from "./utils";
 
-export class ScribeLambda extends SequencedLambda {
+export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
     private lastOffset: number;
 
@@ -80,8 +80,6 @@ export class ScribeLambda extends SequencedLambda {
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
     ) {
-        super(context);
-
         this.lastOffset = scribe.logOffset;
         this.setStateFromCheckpoint(scribe);
         // Filter and keep messages after protocol state
@@ -89,7 +87,7 @@ export class ScribeLambda extends SequencedLambda {
             messages.filter((message) => message.sequenceNumber > scribe.protocolState.sequenceNumber));
     }
 
-    public async handlerCore(message: IQueuedMessage): Promise<void> {
+    public async handler(message: IQueuedMessage) {
         // Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
         // we had already checkpointed at a given offset.
         if (message.offset <= this.lastOffset) {
@@ -153,12 +151,9 @@ export class ScribeLambda extends SequencedLambda {
                             this.pendingMessages.push(additionalPendingMessage);
                         }
                     } else {
-                        this.context.error(new Error(`Invalid message sequence number`), {
-                            restart: true,
-                            tenantId: this.tenantId,
-                            documentId: this.documentId,
-                        });
-                        return;
+                        throw new Error(`Invalid message sequence number.`
+                            + `Current message @${value.operation.sequenceNumber}.`
+                            + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`);
                     }
                 }
 
@@ -388,7 +383,6 @@ export class ScribeLambda extends SequencedLambda {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
             this.pendingCheckpointScribe = checkpoint;
             this.pendingCheckpointOffset = queuedMessage;

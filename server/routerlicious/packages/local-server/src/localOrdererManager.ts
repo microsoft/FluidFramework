@@ -35,6 +35,14 @@ export class LocalOrdererManager implements IOrdererManager {
     }
 
     /**
+     * Closes all local orderers
+     */
+    public async close() {
+        await Promise.all(Array.from(this.map.values()).map(async (orderer) => (await orderer).close()));
+        this.map.clear();
+    }
+
+    /**
      * Returns true if there are any received ops that are not yet ordered.
      */
     public async hasPendingWork(): Promise<boolean> {

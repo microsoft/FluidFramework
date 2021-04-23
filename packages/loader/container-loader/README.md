@@ -19,6 +19,7 @@
     - [`permissions`](#permissions)
     - [`forced`](#forced)
     - [`storageOnly`](#storageonly)
+  - [Dirty events](#Dirty-events)
 
 **Related topics covered elsewhere:**
 
@@ -43,6 +44,7 @@ Please see specific sections for more details on these states and events - this 
 1. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
 2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
 3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+4. [Dirty events](#Dirty-events): Host should have some reasonable UX / workflows to ensure user does not lose edits unexpectedly. I.e. there is enough signals (potentially including blocking user from closing container) ensuring that all user edits make it to storage, unless user explicitly choses to lose such edits.
 
 ## Expectations from container runtime and data store implementers
 
@@ -50,6 +52,7 @@ Please see specific sections for more details on these states and events - this 
 2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSes in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
+5. Notify Container about presence or lack of unsaved changed through IContainerContext.updateDirtyContainerState callback. This is required for [Dirty events](#Dirty-events) to correctly represent state of user edits to host.
 
 ## Container Lifetime
 
@@ -178,3 +181,10 @@ Hosts can also force readonly-mode for a container via calling `Container.forceR
 
 ### `storageOnly`
 Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.
+
+## Dirty events
+The Container runtime can communicate with the container to get the container's current state. In response, the container will raise two events - `"dirty"` and `"saved"` events. Transitions between these two events signify presence (or lack of) user changes that were not saved to storage. In other words, if container is dirty, closing it at that moment will result in data loss from user perspective, because not all user changes made it to storage.
+This information can be used by a host to build appropriate UX that allows user to be confident in the platform. For example, a host may chose to show a dialog asking the user if they want to save their changes before closing. Instead of, or in addition to this, the host may choose to show "Saving..." and "Saved" text somewhere in UX. Coupled with lack of connectivity to ordering service (and appropriate notification to the user) that may create enough continuous notification to user not to require a blocking dialog on closing.
+Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
+
+`Container.isDirty` can be used to get current state of container.

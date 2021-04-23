@@ -27,7 +27,7 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     epochTracker: EpochTracker,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {

@@ -30,7 +30,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
         epochTracker = new EpochTracker(createUtLocalCache(), { docId: "docId", resolvedUrl: resolvedUrl! }, logger);
         odspSummaryUploadManager = new OdspSummaryUploadManager(
             "snapshotStorageUrl",
-            async (options: TokenFetchOptions, name?: string) => "token",
+            async (options: TokenFetchOptions, name: string) => "token",
             logger,
             epochTracker,
             { blobDeduping: true },

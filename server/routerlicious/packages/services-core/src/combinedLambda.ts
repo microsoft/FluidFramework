@@ -16,10 +16,18 @@ export class CombinedLambda implements IPartitionLambda {
 	/**
 	 * Processes an incoming message
 	 */
-	public handler(message: IQueuedMessage): void {
+	public async handler(message: IQueuedMessage) {
+		const promises: Promise<void>[] = [];
+
 		for (const lambda of this.lambdas) {
-			lambda.handler(message);
+			const optionalPromise = lambda.handler(message);
+			if (optionalPromise !== undefined) {
+				promises.push(optionalPromise);
+			}
 		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return promises ? Promise.all(promises) as any : undefined;
 	}
 
 	/**
