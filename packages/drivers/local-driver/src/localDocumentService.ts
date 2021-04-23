@@ -93,14 +93,6 @@ export class LocalDocumentService implements api.IDocumentService {
 
         return documentDeltaConnection;
     }
-
-    /**
-     * Returns null
-     */
-    public getErrorTrackingService(): any {
-        // eslint-disable-next-line no-null/no-null
-        return null;
-    }
 }
 
 /**

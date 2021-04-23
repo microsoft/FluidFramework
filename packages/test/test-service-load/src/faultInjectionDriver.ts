@@ -17,7 +17,6 @@ import {
 import {
     IClient,
     ISummaryTree,
-    IErrorTrackingService,
     IDocumentMessage,
     INack,
     NackErrorType,
@@ -83,13 +82,6 @@ export class FaultInjectionDocumentService implements IDocumentService {
         const internal = await this.internal.connectToDeltaStream(client);
         this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
         return this._currentDeltaStream;
-    }
-
-    /**
-     * Returns the error tracking service
-     */
-    getErrorTrackingService(): IErrorTrackingService | null {
-        return this.internal.getErrorTrackingService();
     }
 }
 

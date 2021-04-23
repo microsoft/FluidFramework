@@ -44,8 +44,4 @@ export class FileDocumentService implements api.IDocumentService {
         client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaConnection;
     }
-
-    public getErrorTrackingService() {
-        return null;
-    }
 }
