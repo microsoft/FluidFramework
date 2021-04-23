@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { DataBinder } from './data_binder';
 /**
  * Definition of the options block for {@link StatelessDataBinding}
  */
