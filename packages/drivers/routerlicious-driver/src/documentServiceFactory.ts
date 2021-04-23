@@ -21,7 +21,6 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
-import { DefaultErrorTracking } from "./errorTracking";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
@@ -118,7 +117,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
-                this.errorTracking,
                 this.disableCache,
                 this.historianApi,
                 this.credentials,
@@ -132,7 +130,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
-                this.errorTracking,
                 this.disableCache,
                 this.historianApi,
                 this.credentials,

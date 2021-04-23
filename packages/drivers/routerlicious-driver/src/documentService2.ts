@@ -32,7 +32,6 @@ export class DocumentService2 extends DocumentService {
             ordererUrl,
             deltaStorageUrl,
             gitUrl,
-            errorTracking,
             disableCache,
             historianApi,
             directCredentials,
