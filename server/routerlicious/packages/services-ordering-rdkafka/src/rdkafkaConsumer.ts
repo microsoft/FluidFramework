@@ -296,10 +296,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					offset: queuedMessage.offset + 1,
 				});
 
-                const result = await deferredCommit.promise;
+				const result = await deferredCommit.promise;
 				const latency = Date.now() - startTime;
 				this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
-                return result;
+				return result;
 			} catch (ex) {
 				const hasPartition = this.assignedPartitions.has(partitionId);
 				const willRetry = this.consumer?.isConnected()
