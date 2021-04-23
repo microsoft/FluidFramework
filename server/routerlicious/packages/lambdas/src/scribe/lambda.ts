@@ -151,12 +151,9 @@ export class ScribeLambda implements IPartitionLambda {
                             this.pendingMessages.push(additionalPendingMessage);
                         }
                     } else {
-                        this.context.error(new Error(`Invalid message sequence number`), {
-                            restart: true,
-                            tenantId: this.tenantId,
-                            documentId: this.documentId,
-                        });
-                        return;
+                        throw new Error(`Invalid message sequence number.`
+                            + `Current message @${value.operation.sequenceNumber}.`
+                            + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`);
                     }
                 }
 
