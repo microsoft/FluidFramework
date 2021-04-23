@@ -16,20 +16,21 @@ import {
     IFluidRouter,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
+    AttachState,
+    ContainerWarning,
     IAudience,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
-    IDeltaManager,
     ICriticalContainerError,
-    ContainerWarning,
-    AttachState,
-    IThrottlingWarning,
-    IPendingLocalState,
-    ReadOnlyInfo,
+    IDeltaManager,
     ILoaderOptions,
+    IPendingLocalState,
+    IThrottlingWarning,
+    ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import {
     CreateContainerError,
@@ -955,11 +956,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Provided codeDetails are not IFluidCodeDetails");
         }
 
-        if (this.codeLoader.IFluidCodeDetailsComparer) {
-            const comparision = await this.codeLoader.IFluidCodeDetailsComparer.compare(
+        let comparator: IFluidCodeDetailsComparer | undefined;
+        if (this.codeLoader?.IFluidCodeDetailsComparer) {
+            comparator = this.codeLoader.IFluidCodeDetailsComparer;
+        } else if (this.loader.services.runtimeCallback) {
+            const runtimeFactory = this.loader.services.runtimeCallback(this.protocolHandler.quorum);
+            if ((runtimeFactory as any).IFluidCodeDetailsComparer !== undefined) {
+                comparator = (runtimeFactory as any).IFluidCodeDetailsComparer;
+            }
+        }
+
+        if (comparator !== undefined) {
+            const comparison = await comparator.compare(
                 codeDetails,
                 this.getCodeDetailsFromQuorum());
-            if (comparision !== undefined && comparision <= 0) {
+            if (comparison !== undefined && comparison <= 0) {
                 throw new Error("Proposed code details should be greater than the current");
             }
         }
@@ -1740,11 +1751,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this.loader, () => this.containerUrl);
+        const runtimeFactory = this.loader.services.runtimeCallback?.(this.protocolHandler.quorum);
+
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
             codeDetails,
+            runtimeFactory,
             snapshot,
             attributes,
             new DeltaManagerProxy(this._deltaManager),

@@ -23,6 +23,7 @@ import {
     ILoaderOptions,
     IProxyLoaderFactory,
     LoaderHeader,
+    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Deferred, performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -32,7 +33,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -134,9 +135,17 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     /**
      * The code loader handles loading the necessary code
-     * for running a container once it is loaded.
+     * for running a container once it is loaded.  Exactly one of
+     * codeLoader or runtimeCallback must be provided.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader?: ICodeLoader;
+
+    /**
+     * The runtimeCallback can be used to provide a runtime factory for
+     * static loading instead of the codeLoader.  Exactly one of
+     * codeLoader or runtimeCallback must be provided.
+     */
+    readonly runtimeCallback?: (q: IQuorum) => IRuntimeFactory;
 
     /**
      * A property bag of options used by various layers
@@ -180,9 +189,17 @@ export interface ILoaderServices {
     readonly documentServiceFactory: IDocumentServiceFactory;
     /**
      * The code loader handles loading the necessary code
-     * for running a container once it is loaded.
+     * for running a container once it is loaded.  Exactly one of
+     * codeLoader or runtimeCallback must be provided.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader?: ICodeLoader;
+
+    /**
+     * The runtimeCallback can be used to provide a runtime factory for
+     * static loading instead of the codeLoader.  Exactly one of
+     * codeLoader or runtimeCallback must be provided.
+     */
+    readonly runtimeCallback?: (q: IQuorum) => IRuntimeFactory;
 
     /**
      * A property bag of options used by various layers
@@ -243,6 +260,10 @@ export class Loader extends EventEmitter implements IHostLoader {
     constructor(loaderProps: ILoaderProps) {
         super();
 
+        if ((loaderProps.codeLoader === undefined) === (loaderProps.runtimeCallback === undefined)) {
+            throw new Error("codeLoader xor runtimeCallback must be defined");
+        }
+
         const scope = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader === true) {
             scope.ILoader = this;
@@ -252,6 +273,7 @@ export class Loader extends EventEmitter implements IHostLoader {
             urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
             documentServiceFactory: MultiDocumentServiceFactory.create(loaderProps.documentServiceFactory),
             codeLoader: loaderProps.codeLoader,
+            runtimeCallback: loaderProps.runtimeCallback,
             options: loaderProps.options ?? {},
             scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
