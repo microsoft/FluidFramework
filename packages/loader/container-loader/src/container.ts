@@ -626,7 +626,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolHandler: () => this._protocolHandler,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
             },
             this.logger,
@@ -1543,14 +1542,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
-        });
-
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
-            // Register submitOp event again as we only want to listen for first op from this client.
-            this.registerSubmitOpEvent();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1563,12 +1556,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         return deltaManager;
-    }
-
-    private registerSubmitOpEvent() {
-        this._deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
-        });
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
