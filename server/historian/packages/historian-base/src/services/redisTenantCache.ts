@@ -18,12 +18,10 @@ export class RedisTenantCache {
         parameters?: IRedisParameters) {
         if (parameters?.expireAfterSeconds) {
             this.expireAfterSeconds = parameters.expireAfterSeconds;
-            console.log("Overriding tenant expiry");
         }
 
         if (parameters?.prefix) {
             this.prefix = parameters.prefix;
-            console.log("Overriding tenant prefix");
         }
 
         client.on("error", (error) => {

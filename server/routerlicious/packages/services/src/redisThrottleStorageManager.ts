@@ -23,12 +23,10 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         parameters?: IRedisParameters) {
         if (parameters?.expireAfterSeconds) {
             this.expireAfterSeconds = parameters.expireAfterSeconds;
-            console.log("Overriding throttle expiry");
         }
 
         if (parameters?.prefix) {
             this.prefix = parameters.prefix;
-            console.log("Overriding throttle prefix");
         }
 
         client.on("error", (error) => {

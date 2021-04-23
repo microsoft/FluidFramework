@@ -19,12 +19,10 @@ export class RedisCache implements ICache {
         parameters?: IRedisParameters) {
         if (parameters?.expireAfterSeconds) {
             this.expireAfterSeconds = parameters.expireAfterSeconds;
-            console.log("Overriding git expiry");
         }
 
         if (parameters?.prefix) {
             this.prefix = parameters.prefix;
-            console.log("Overriding git prefix");
         }
 
         client.on("error", (error) => {

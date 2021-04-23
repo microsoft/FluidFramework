@@ -19,12 +19,10 @@ export class ClientManager implements IClientManager {
         parameters?: IRedisParameters) {
         if (parameters?.expireAfterSeconds) {
             this.expireAfterSeconds = parameters.expireAfterSeconds;
-            console.log("Overriding client expiry");
         }
 
         if (parameters?.prefix) {
             this.prefix = parameters.prefix;
-            console.log("Overriding client prefix");
         }
 
         client.on("error", (error) => {
