@@ -299,7 +299,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
                 const result = await deferredCommit.promise;
 				const latency = Date.now() - startTime;
 				this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
-				console.log("[RDKAFKA COMMIT LOG] Commit checkpoint success in RdKafkaConsumer! Retry: ", retries);
                 return result;
 			} catch (ex) {
 				const hasPartition = this.assignedPartitions.has(partitionId);
