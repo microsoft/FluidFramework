@@ -98,7 +98,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
         // cache and it's not there.
         // Better implementation would be to return only what we have in cache, but that also breaks API
-        assert(!cachedOnly || toTotal === undefined, "");
+        assert(!cachedOnly || toTotal === undefined, 0x1e3 /* "" */);
 
         let opsFromSnapshot = 0;
         let opsFromCache = 0;
