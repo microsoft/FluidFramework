@@ -6,7 +6,6 @@
 export * from "./clients";
 export * from "./consensus";
 export * from "./config";
-export * from "./error";
 export * from "./protocol";
 export * from "./storage";
 export * from "./summary";
