@@ -9,7 +9,7 @@ import { ModalRoot } from './ModalRoot';
 import { storiesOf } from '@storybook/react';
 import * as React from 'react';
 import { MockWorkspace, getPopulateFunctionWithSerializedBranchData, populateWorkspace } from '../test/testUtils';
-import { handlePropertyDataCreation, handlePropertyDataCreationOptionGeneration } from './HFDMDataCreationHandlers';
+import { handlePropertyDataCreation, handlePropertyDataCreationOptionGeneration } from './PropertyDataCreationHandlers';
 import { InspectorTable } from './InspectorTable';
 import { InspectorTableDecorator } from './InspectorTableDecorator';
 import { IInspectorTableProps } from './InspectorTableTypes';

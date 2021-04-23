@@ -15,7 +15,7 @@ import { HashCalculator } from '../src/HashCalculator';
 import {
   handlePropertyDataCreation,
   handlePropertyDataCreationOptionGeneration,
-} from '../src/HFDMDataCreationHandlers';
+} from '../src/PropertyDataCreationHandlers';
 import { InspectorTable } from '../src/InspectorTable';
 import { search } from '../src/utils';
 import {

@@ -10,7 +10,7 @@ import { ReactWrapper } from 'enzyme';
 import React from 'react';
 import { InspectorMessages } from '../src/constants';
 import { Empty } from '../src/Empty';
-import { fetchRegisteredTemplates } from '../src/HFDMDataCreationHandlers';
+import { fetchRegisteredTemplates } from '../src/PropertyDataCreationHandlers';
 import { IDataGetterParameter } from '../src/InspectorTableTypes';
 import { NameCell } from '../src/NameCell';
 import { BooleanView } from '../src/PropertyViews/Boolean';

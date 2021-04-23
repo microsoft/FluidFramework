@@ -52,7 +52,7 @@ class BaseContext {
 
   /**
    * Returns the nested ChangeSet for this modification.
-   * @return {SerializedChangeSet} The HFDM ChangeSet that corresponds to this modification.
+   * @return {SerializedChangeSet} The Property ChangeSet that corresponds to this modification.
    * @public
    */
   getNestedChangeSet() {
@@ -120,7 +120,7 @@ class BaseContext {
   }
 
   /**
-   * Insertion and removal events are normally fired when the state of the HFDM workspace changes,
+   * Insertion and removal events are normally fired when the state of the Property changes,
    * _i.e._, when properties are added and removed.
    * In the case where DataBindings are added that apply to properties that already exist in the
    * workspace, the databindings are said to be created retroactively. In this case, the DataBinder

@@ -137,16 +137,13 @@ const _popUserData = function(in_context) {
 };
 
 /**
- * A DataBinder allows one to register a number of bindings for different HFDM property types. The
+ * A DataBinder allows one to register a number of bindings for different property types. The
  * DataBinder can then be bound to
  * a {@link https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.Workspace.html|Workspace} to have the
  * data bindings created automatically.
- * These data bindings are notified of the modification and removal of the underlying HFDM property.
+ * These data bindings are notified of the modification and removal of the underlying property.
  *
  * Default provider registration type: <i>DataBinderComponent</i>.
- *
- * It depends on:
- * - HFDMWorkspaceComponent: A component that represents an HFDM workspace.
  *
  * You can use this component without calling the `initializeComponent` method, except for when you intend to use the
  * `getWorkspace` method after passing an HFDMWorkspaceComponent to the constructor.

@@ -36,7 +36,6 @@
     before(function() {
       PropertyFactory = require('../..').PropertyFactory;
       BaseProperty = require('../..').BaseProperty;
-      //HFDM = include('property-properties.HFDM');
       DeterministicRandomGenerator = require('@fluid-experimental/property-common').DeterministicRandomGenerator;
       ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
       _ = require('lodash');
