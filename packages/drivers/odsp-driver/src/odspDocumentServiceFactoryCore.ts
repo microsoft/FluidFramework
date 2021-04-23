@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-    ChildLogger,
+    TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -35,7 +35,7 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 
 /**
@@ -72,15 +72,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             filename: odspResolvedUrl.fileName,
         };
 
-        const logger2 = ChildLogger.create(logger, "OdspDriver");
+        const odspLogger = createOdspLogger(logger);
+
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            logger2);
+            odspLogger);
 
         return PerformanceEvent.timedExecAsync(
-            logger2,
+            odspLogger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
@@ -88,18 +89,17 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             async (event) => {
                 odspResolvedUrl = await createNewFluidFile(
                     this.toInstrumentedOdspTokenFetcher(
-                        logger2,
+                        odspLogger,
                         odspResolvedUrl,
                         this.getStorageToken,
-                        "CreateNewFile",
                         true /* throwOnNullToken */,
                     ),
                     newFileParams,
-                    logger2,
+                    odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, logger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -129,38 +129,39 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, logger);
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger,
+        odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger);
 
+        const storageTokenFetcher = this.toInstrumentedOdspTokenFetcher(
+            odspLogger,
+            odspResolvedUrl,
+            this.getStorageToken,
+            true /* throwOnNullToken */,
+        );
+
+        const webSocketTokenFetcher = this.toInstrumentedOdspTokenFetcher(
+            odspLogger,
+            odspResolvedUrl,
+            this.getWebsocketToken,
+            false /* throwOnNullToken */,
+        );
+
         return OdspDocumentService.create(
             resolvedUrl,
-            this.toInstrumentedOdspTokenFetcher(
-                odspLogger,
-                odspResolvedUrl,
-                this.getStorageToken,
-                "OdspDocumentService",
-                true /* throwOnNullToken */,
-            ),
-            this.toInstrumentedOdspTokenFetcher(
-                odspLogger,
-                odspResolvedUrl,
-                this.getWebsocketToken,
-                "GetWebsocketToken",
-                false /* throwOnNullToken */,
-            ),
+            storageTokenFetcher,
+            async (options: TokenFetchOptions) => webSocketTokenFetcher(options, "GetWebsocketToken"),
             odspLogger,
             this.getSocketIOClient,
             cacheAndTracker.cache,
@@ -173,10 +174,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         logger: ITelemetryLogger,
         resolvedUrl: IOdspResolvedUrl,
         tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
-        defaultEventName: string,
         throwOnNullToken: boolean,
-    ): (options: TokenFetchOptions, name?: string) => Promise<string | null> {
-        return async (options: TokenFetchOptions, name?: string) => {
+    ): (options: TokenFetchOptions, name: string) => Promise<string | null> {
+        return async (options: TokenFetchOptions, name: string) => {
             // Telemetry note: if options.refresh is true, there is a potential perf issue:
             // Host should optimize and provide non-expired tokens on all critical paths.
             // Exceptions: race conditions around expiration, revoked tokens, host that does not care
@@ -184,7 +184,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 {
-                    eventName: `${name || defaultEventName}_GetToken`,
+                    eventName: `${name}_GetToken`,
                     attempts: options.refresh ? 2 : 1,
                     hasClaims: !!options.claims,
                     hasTenantId: !!options.tenantId,
@@ -198,7 +198,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     const token = tokenFromResponse(tokenResponse);
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
                     if (token === null && throwOnNullToken) {
-                        throwOdspNetworkError(`${name || defaultEventName} Token is null`, fetchTokenErrorCode);
+                        throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
                     }
                     return token;
                 }));

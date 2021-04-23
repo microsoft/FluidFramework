@@ -11,7 +11,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IErrorTrackingService, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
@@ -21,7 +21,6 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
-import { DefaultErrorTracking } from "./errorTracking";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
@@ -34,7 +33,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     constructor(
         private readonly tokenProvider: ITokenProvider,
         private readonly useDocumentService2: boolean = false,
-        private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private readonly disableCache: boolean = false,
         private readonly historianApi: boolean = true,
         private readonly gitCache: IGitCache | undefined = undefined,
@@ -119,7 +117,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
-                this.errorTracking,
                 this.disableCache,
                 this.historianApi,
                 this.credentials,
@@ -133,7 +130,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
-                this.errorTracking,
                 this.disableCache,
                 this.historianApi,
                 this.credentials,

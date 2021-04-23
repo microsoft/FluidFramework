@@ -23,7 +23,6 @@ import {
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -116,7 +115,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
@@ -159,7 +158,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         private readonly getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
@@ -299,10 +298,6 @@ export class OdspDocumentService implements IDocumentService {
                 throw error;
             }
         });
-    }
-
-    public getErrorTrackingService(): IErrorTrackingService {
-        return { track: () => null };
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
@@ -477,11 +472,13 @@ export class OdspDocumentService implements IDocumentService {
         this._opsCache = new OpsCache(
             seqNumber,
             this.logger,
+            // ICache
             {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
                 },
                 read: async (batch: string) => undefined,
+                remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
             this.hostPolicy.opsCaching?.batchSize ?? 100,
             this.hostPolicy.opsCaching?.timerGranularity ?? 5000,

@@ -23,7 +23,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspDeltaStorageService {
     constructor(
         private readonly deltaFeedUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
     ) {

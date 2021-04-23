@@ -78,6 +78,16 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     }
 }
 
+export class RetryableError<T> extends NetworkErrorBasic<T> {
+    constructor(
+        errorMessage: string,
+        readonly errorType: T,
+        statusCode: number | undefined,
+    ) {
+        super(errorMessage, errorType, true, statusCode);
+    }
+}
+
 /**
  * Throttling error class - used to communicate all throttling errors
  */

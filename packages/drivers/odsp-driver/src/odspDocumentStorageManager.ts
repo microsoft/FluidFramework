@@ -268,7 +268,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     constructor(
         odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
@@ -569,7 +569,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 return id ? [{ id, treeId: undefined! }] : [];
             }).catch(async (error) => {
                 const errorType = error.errorType;
-                // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have permissions
+                // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have
                 // permissions for the file or it was deleted. So the user will again try to fetch from cache on any failure in future.
                 if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
                     await this.cache.persistedCache.removeEntries();
@@ -700,104 +700,113 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 eventName: "TreesLatest",
                 ...logOptions,
             },
-            async (event) =>
-        {
-            const startTime = performance.now();
-            const response: IOdspResponse<IOdspSnapshot> = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
-                url,
-                {
-                    body: postBody,
-                    headers,
-                    signal: controller?.signal,
-                    method: "POST",
-                },
-                "treesLatest",
-                true,
-            );
-            const endTime = performance.now();
-            const overallTime = endTime - startTime;
-            const snapshot: IOdspSnapshot = response.content;
-            let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
-            let redirectTime: number | undefined; // redirectEnd -redirectStart
-            let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
-            let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
-            let responseTime: number | undefined; // responsEnd - responseStart
-            let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
-            let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
-            let networkTime: number | undefined; // responseEnd - startTime
-            const spReqDuration = response.headers.get("sprequestduration");
+            async (event) => {
+                const startTime = performance.now();
+                const response: IOdspResponse<IOdspSnapshot> = await this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
+                    url,
+                    {
+                        body: postBody,
+                        headers,
+                        signal: controller?.signal,
+                        method: "POST",
+                    },
+                    "treesLatest",
+                    true,
+                );
+                const endTime = performance.now();
+                const overallTime = endTime - startTime;
+                const snapshot: IOdspSnapshot = response.content;
+                let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
+                let redirectTime: number | undefined; // redirectEnd -redirectStart
+                let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
+                let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
+                let responseTime: number | undefined; // responsEnd - responseStart
+                let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
+                let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
+                let networkTime: number | undefined; // responseEnd - startTime
+                const spReqDuration = response.headers.get("sprequestduration");
 
-            // getEntriesByType is only available in browser performance object
-            const resources1 = performance.getEntriesByType?.("resource") ?? [];
-            // Usually the latest fetch call is to the end of resources, so we start from the end.
-            for (let i = resources1.length - 1; i > 0; i--) {
-                const indResTime = resources1[i] as PerformanceResourceTiming;
-                const resource_name = indResTime.name;
-                const resource_initiatortype = indResTime.initiatorType;
-                if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
-                    redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-                    dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
-                    tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                    secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
-                    responseTime = indResTime.responseEnd - indResTime.responseStart;
-                    fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
-                    reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
-                    networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
-                    if (spReqDuration) {
-                        networkTime = networkTime - parseInt(spReqDuration, 10);
+                // getEntriesByType is only available in browser performance object
+                const resources1 = performance.getEntriesByType?.("resource") ?? [];
+                // Usually the latest fetch call is to the end of resources, so we start from the end.
+                for (let i = resources1.length - 1; i > 0; i--) {
+                    const indResTime = resources1[i] as PerformanceResourceTiming;
+                    const resource_name = indResTime.name;
+                    const resource_initiatortype = indResTime.initiatorType;
+                    if ((resource_initiatortype.localeCompare("fetch") === 0) && (resource_name.localeCompare(url) === 0)) {
+                        redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+                        dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                        tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
+                        secureConntime = (indResTime.secureConnectionStart > 0) ? (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
+                        responseTime = indResTime.responseEnd - indResTime.responseStart;
+                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ? (indResTime.responseEnd - indResTime.fetchStart) : 0;
+                        reqStToRespEndTime = (indResTime.requestStart > 0) ? (indResTime.responseEnd - indResTime.requestStart) : 0;
+                        networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
+                        if (spReqDuration) {
+                            networkTime = networkTime - parseInt(spReqDuration, 10);
+                        }
+                        break;
                     }
-                    break;
                 }
+
+                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
+                const clientTime = networkTime ? overallTime - networkTime : undefined;
+
+                // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we cannot cache using an HTTP response header.
+                const canCache = response.headers.get("disablebrowsercachingofusercontent") !== "true";
+                // There maybe no snapshot - TreesLatest would return just ops.
+                const sequenceNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
+                const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
+                    snapshot.ops[0].sequenceNumber - 1 :
+                    undefined;
+
+                const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
+
+                if (!Number.isInteger(sequenceNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber) {
+                    this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
+                    value.sequenceNumber = undefined;
+                } else if (canCache) {
+                    this.cache.persistedCache.put(
+                        this._snapshotCacheEntry,
+                        value,
+                    ).catch(() => {});
+                }
+
+                event.end({
+                    trees: numTrees,
+                    blobs: snapshot.blobs?.length ?? 0,
+                    leafNodes: numBlobs,
+                    encodedBlobsSize,
+                    decodedBlobsSize,
+                    sequenceNumber,
+                    ops: snapshot.ops?.length ?? 0,
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    redirecttime: redirectTime,
+                    dnsLookuptime: dnstime,
+                    responsenetworkTime: responseTime,
+                    tcphandshakeTime: tcpHandshakeTime,
+                    secureconnectiontime: secureConntime,
+                    fetchstarttorespendtime: fetchStToRespEndTime,
+                    reqstarttorespendtime: reqStToRespEndTime,
+                    overalltime: overallTime,
+                    networktime: networkTime,
+                    clienttime: clientTime,
+                    // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100, FRS; desc=S, FRP; desc=False
+                    // Here, FRL is the duration taken for redeem, FRS is the redeem status (S means success), and FRP is a flag to indicate if the permission has changed.
+                    sltelemetry: response.headers.get("x-fluid-sltelemetry"),
+                    ...response.commonSpoHeaders,
+                });
+                return value;
+            },
+        ).catch((error) => {
+            // Issue #5895:
+            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
+            // will run in circles calling getSnapshotTree, which would result in this class going getVersions / individual blob download path.
+            // This path is very slow, and will not work with delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
+            if (typeof error === "object" && error !== null) {
+                error.canRetry = false;
             }
-
-            const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
-            const clientTime = networkTime ? overallTime - networkTime : undefined;
-
-            // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we cannot cache using an HTTP response header.
-            const canCache = response.headers.get("disablebrowsercachingofusercontent") !== "true";
-            // There maybe no snapshot - TreesLatest would return just ops.
-            const sequenceNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
-            const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
-                snapshot.ops[0].sequenceNumber - 1 :
-                undefined;
-
-            const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-
-            if (!Number.isInteger(sequenceNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber) {
-                this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
-                value.sequenceNumber = undefined;
-            } else if (canCache) {
-                this.cache.persistedCache.put(
-                    this._snapshotCacheEntry,
-                    value,
-                ).catch(() => {});
-            }
-
-            event.end({
-                trees: numTrees,
-                blobs: snapshot.blobs?.length ?? 0,
-                leafNodes: numBlobs,
-                encodedBlobsSize,
-                decodedBlobsSize,
-                sequenceNumber,
-                ops: snapshot.ops?.length ?? 0,
-                headers: Object.keys(headers).length !== 0 ? true : undefined,
-                redirecttime: redirectTime,
-                dnsLookuptime: dnstime,
-                responsenetworkTime: responseTime,
-                tcphandshakeTime: tcpHandshakeTime,
-                secureconnectiontime: secureConntime,
-                fetchstarttorespendtime: fetchStToRespEndTime,
-                reqstarttorespendtime: reqStToRespEndTime,
-                overalltime: overallTime,
-                networktime: networkTime,
-                clienttime: clientTime,
-                // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100, FRS; desc=S, FRP; desc=False
-                // Here, FRL is the duration taken for redeem, FRS is the redeem status (S means success), and FRP is a flag to indicate if the permission has changed.
-                sltelemetry: response.headers.get("x-fluid-sltelemetry"),
-                ...response.commonSpoHeaders,
-            });
-            return value;
+            throw error;
         });
     }
 

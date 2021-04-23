@@ -48,7 +48,7 @@ export class BroadcasterLambda implements IPartitionLambda {
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -80,6 +80,8 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         this.pendingOffset = message;
         this.sendPending();
+
+        return undefined;
     }
 
     public close() {
