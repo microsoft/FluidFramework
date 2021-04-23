@@ -75,7 +75,7 @@ export class LocalKafka implements IProducer {
         }
 
         for (const subscription of this.subscriptions) {
-            subscription.process();
+            void subscription.process();
         }
     }
 
