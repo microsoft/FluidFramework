@@ -155,7 +155,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             odspLogger,
             odspResolvedUrl,
             this.getWebsocketToken,
-            true /* throwOnNullToken */,
+            false /* throwOnNullToken */,
         );
 
         return OdspDocumentService.create(
