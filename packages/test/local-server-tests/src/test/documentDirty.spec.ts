@@ -152,9 +152,8 @@ describe("Document Dirty", () => {
         registerDirtyContainerHandler();
     });
 
-    afterEach(async () => {
+    afterEach(() => {
         loaderContainerTracker.reset();
-        await deltaConnectionServer.close();
     });
 
     function checkDirtyState(

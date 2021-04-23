@@ -91,9 +91,8 @@ describe("LocalTestServer", () => {
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
     });
 
-    afterEach(async () => {
+    afterEach(() => {
         loaderContainerTracker.reset();
-        await deltaConnectionServer.close();
     });
 
     describe("Document.existing", () => {

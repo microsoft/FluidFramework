@@ -157,9 +157,8 @@ describe("Ops on Reconnect", () => {
         await loaderContainerTracker.ensureSynchronized();
     });
 
-    afterEach(async () => {
+    afterEach(() => {
         loaderContainerTracker.reset();
-        await deltaConnectionServer.close();
     });
 
     describe("Ops on Container reconnect", () => {
