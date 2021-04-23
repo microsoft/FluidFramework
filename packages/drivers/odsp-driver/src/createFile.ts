@@ -93,7 +93,7 @@ export async function createNewFluidFile(
                 });
                 return content.itemId;
             },
-            { cancel: "error" });
+            { end: true, cancel: "error" });
     });
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});

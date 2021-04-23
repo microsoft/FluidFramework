@@ -369,20 +369,24 @@ export class EpochTrackerWithRedemption extends EpochTracker {
         // It may result in failure for user, but refreshing document would address it.
         // Thus we use rather long timeout (not to get these failures as much as possible), but not large enough
         // to unblock the process.
-        await PerformanceEvent.timedExecAsync(this.logger, { eventName: "JoinSessionSyncWait" }, async (event) => {
-            const timeoutRes = 51; // anything will work here
-            let timer: ReturnType<typeof setTimeout>;
-            const timeoutP = new Promise<number>((accept) => {
-                timer = setTimeout(() => { accept(timeoutRes); }, 15000);
-            });
-            const res = await Promise.race([
-                timeoutP,
-                // cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
-                this.treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
-            if (res === timeoutRes) {
-                event.cancel();
-            }
-        });
+        await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "JoinSessionSyncWait" },
+            async (event) => {
+                const timeoutRes = 51; // anything will work here
+                let timer: ReturnType<typeof setTimeout>;
+                const timeoutP = new Promise<number>((accept) => {
+                    timer = setTimeout(() => { accept(timeoutRes); }, 15000);
+                });
+                const res = await Promise.race([
+                    timeoutP,
+                    // cancel timeout to unblock UTs (otherwise Node process does not exit for 15 sec)
+                    this.treesLatestDeferral.promise.finally(() => clearTimeout(timer))]);
+                if (res === timeoutRes) {
+                    event.cancel();
+                }
+            },
+            { start: true, end: true, cancel: "generic" });
         return super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody);
     }
 }

@@ -284,7 +284,7 @@ export class Loader extends EventEmitter implements IHostLoader {
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-        return PerformanceEvent.timedExecAsyncEndOnly(this.logger, { eventName }, async () => {
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
             const resolved = await this.resolveCore(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
@@ -294,7 +294,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsyncEndOnly(this.logger, { eventName: "Request" }, async () => {
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
             return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
         });

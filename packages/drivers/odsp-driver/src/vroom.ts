@@ -36,7 +36,7 @@ export async function fetchJoinSession(
         const extraProps = options.refresh
             ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
             : {};
-        return PerformanceEvent.timedExecAsyncEndOnly(
+        return PerformanceEvent.timedExecAsync(
             logger, {
                 eventName: "JoinSession",
                 attempts: options.refresh ? 2 : 1,

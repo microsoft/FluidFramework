@@ -437,14 +437,6 @@ export class PerformanceEvent {
         }
     }
 
-    public static async timedExecAsyncEndOnly<T>(
-        logger: ITelemetryLogger,
-        event: ITelemetryGenericEvent,
-        callback: (event: PerformanceEvent) => Promise<T>,
-    ) {
-        return PerformanceEvent.timedExecAsync(logger, event, callback, { end: true, cancel: "generic" });
-    }
-
     public static async timedExecAsync<T>(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
@@ -472,7 +464,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {
