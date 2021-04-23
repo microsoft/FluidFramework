@@ -186,6 +186,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
+                    inQuorum: client !== undefined,
                     hasTimer: this.prevClientLeftTimer.hasTimer,
                 });
             }
