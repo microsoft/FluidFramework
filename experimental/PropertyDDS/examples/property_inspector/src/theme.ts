@@ -2,13 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import '@hig/fonts/build/ArtifaktElement.css';
+import "@hig/fonts/build/ArtifaktElement.css";
 
+import { createMuiTheme } from "@material-ui/core/styles";
+import { ToggleButtonClassKey } from "@material-ui/lab/ToggleButton";
 
-import { createMuiTheme } from '@material-ui/core/styles';
-import { ToggleButtonClassKey } from '@material-ui/lab/ToggleButton';
-
-declare module '@material-ui/core/styles/overrides' {
+declare module "@material-ui/core/styles/overrides" {
   interface ComponentNameToClassKey {
     MuiToggleButton: ToggleButtonClassKey;
   }
@@ -19,22 +18,22 @@ export const theme = createMuiTheme({
   overrides: {
     MuiButton: {
       root: {
-        borderRadius: '2px',
+        borderRadius: "2px",
       },
     },
     MuiToggleButton: {
       root: {
-        '&:not(:first-child)': {
-          borderLeft: 'auto',
-          marginLeft: 'auto',
+        "&:not(:first-child)": {
+          borderLeft: "auto",
+          marginLeft: "auto",
         },
       },
     },
   },
   palette: {
     primary: {
-      contrastText: '#fff',
-      main:  '#0696d7',
+      contrastText: "#fff",
+      main:  "#0696d7",
     },
   },
 
@@ -49,12 +48,12 @@ export const theme = createMuiTheme({
   // You can disable transitions globally by providing the following in your theme:
   transitions: {
     // So we have `transition: none;` everywhere
-    create: () => 'none',
+    create: () => "none",
   },
   typography: {
     button: {
-      textTransform: 'none',
+      textTransform: "none",
     },
-    fontFamily: 'ArtifaktElement, Helvetica, Arial',
+    fontFamily: "ArtifaktElement, Helvetica, Arial",
   },
 });

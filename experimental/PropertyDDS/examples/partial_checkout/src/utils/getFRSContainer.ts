@@ -4,16 +4,16 @@
  */
 
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-//import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
-//import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
-//import { IRequest } from "@fluidframework/core-interfaces";
+// import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
+// import { IRequest } from "@fluidframework/core-interfaces";
 // import { getContainer } from "@fluidframework/get-tinylicious-container";
 import { getContainer } from "@fluid-experimental/get-container";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
+import { Container } from "@fluidframework/container-loader";
 
-
-/*class RouterliciousUrlResolver implements IUrlResolver {
+/* class RouterliciousUrlResolver implements IUrlResolver {
     constructor(private readonly token: string, private readonly tenant: string) {
     }
 
@@ -37,22 +37,22 @@ import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from
         }
         return `${resolvedUrl.url}/${relativeUrl}`;
     }
-}*/
+} */
 
 export async function getFRSContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-) {
-    if (process.env.ID === undefined) throw Error("Define ID in .env file");
-    if (process.env.KEY === undefined) throw Error("Define KEY in .env file");
-    if (process.env.ORDERER === undefined) throw Error("Define ORDERER in .env file");
-    if (process.env.STORAGE === undefined) throw Error("Define STORAGE in .env file");
+): Promise<Container> {
+    if (process.env.ID === undefined) {throw Error("Define ID in .env file");}
+    if (process.env.KEY === undefined) {throw Error("Define KEY in .env file");}
+    if (process.env.ORDERER === undefined) {throw Error("Define ORDERER in .env file");}
+    if (process.env.STORAGE === undefined) {throw Error("Define STORAGE in .env file");}
 
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
-    /*const user = {
+    /* const user = {
         id: "unique-id",
         name: "Unique Idee",
     };
@@ -66,27 +66,27 @@ export async function getFRSContainer(
             tenantId: tenantId,
             scopes: ["doc:read", "doc:write", "summary:write"],
         },
-        key);*/
+        key); */
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
     const containerService = {
-        documentServiceFactory: documentServiceFactory,
-        urlResolver: urlResolver
-    }
+        documentServiceFactory,
+        urlResolver,
+    };
     return getContainer(
         containerService,
         documentId,
         containerRuntimeFactory,
-        createNew
+        createNew,
     );
 }
 
 export function hasFRSEndpoints() {
     try {
-        if (process.env.ID === undefined) throw Error("Define ID in .env file");
-        if (process.env.KEY === undefined) throw Error("Define KEY in .env file");
-        if (process.env.ORDERER === undefined) throw Error("Define ORDERER in .env file");
-        if (process.env.STORAGE === undefined) throw Error("Define STORAGE in .env file");
+        if (process.env.ID === undefined) {throw Error("Define ID in .env file");}
+        if (process.env.KEY === undefined) {throw Error("Define KEY in .env file");}
+        if (process.env.ORDERER === undefined) {throw Error("Define ORDERER in .env file");}
+        if (process.env.STORAGE === undefined) {throw Error("Define STORAGE in .env file");}
     } catch {
         return false;
     }

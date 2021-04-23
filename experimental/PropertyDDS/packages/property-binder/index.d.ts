@@ -17,7 +17,9 @@
  */
 declare module "@fluid-experimental/property-binder" {
     import { BaseProperty, ContainerProperty, ValueProperty} from '@fluid-experimental/property-properties';
-    import { Workspace } from '@adsk/forge-hfdm';
+    //import { Workspace } from '@adsk/forge-hfdm';
+    type Workspace = any;
+
     namespace ForgeAppfwDatabinder {
         class DataBinderHandle {
             constructor(

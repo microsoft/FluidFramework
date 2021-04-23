@@ -37,7 +37,7 @@ const isNormalInteger = function(str) {
  * @package
  * @hidden
  */
-const concatTokenizedPath = function(in_tokenizedPath, in_pathDelimiters, in_position) {
+function concatTokenizedPath(in_tokenizedPath, in_pathDelimiters, in_position) {
   var path = '';
   for (var i = 0; i < in_position; ++i) {
     if (in_pathDelimiters[i] === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {

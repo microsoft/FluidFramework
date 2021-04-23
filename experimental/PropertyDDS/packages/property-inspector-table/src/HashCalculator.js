@@ -89,7 +89,6 @@ var fmix32 = function(h) {
   return h;
 };
 
-
 // Constants
 var c1 = 0x239b961b;
 var c2 = 0xab0e9789;
@@ -136,8 +135,6 @@ HashCalculator.prototype.pushUint16 = function(in_value) {
   }
 };
 
-
-
 /**
  * Pushes a string into the hash computation
  *
@@ -158,6 +155,7 @@ HashCalculator.prototype.pushString = function(in_string) {
  */
 HashCalculator.Type = {};
 
+/* eslint-disable no-multi-spaces */
 /** Signed integer with 8 bits */
 HashCalculator.Type.Int8    = 0;
 /** Signed integer with 16 bits */
@@ -174,6 +172,7 @@ HashCalculator.Type.Uint32  = 5;
 HashCalculator.Type.Float32 = 6;
 /** Floating point value with 64 bits */
 HashCalculator.Type.Float64 = 7;
+/* eslint-enable no-multi-spaces */
 
 /**
  * @return {string} the computed Hash
@@ -234,7 +233,7 @@ HashCalculator.prototype._finalizeHash = function() {
 
   // Compute the hash for the remaining bytes in the buffer
   var buffer = this.hashBuffer.Uint8HashArray;
-  /* eslint-disable no-fallthrough */  // Allows cases to fallthrough without complaints.
+  /* eslint-disable no-fallthrough, no-multi-spaces */  // Allows cases to fallthrough without complaints.
   switch (this.hashBuffer.pos) {
 
     case 15: k4 = (k4 ^ (buffer[14] << 16)) >>> 0;
@@ -279,8 +278,7 @@ HashCalculator.prototype._finalizeHash = function() {
     default:
       throw new Error('_finalizeHash: We should never get into the default case.');
   }
-  /* eslint-enable no-fallthrough */
-
+  /* eslint-enable no-fallthrough, no-multi-spaces */
 
   // Perform the finalization
   var len = this.length + this.hashBuffer.pos;

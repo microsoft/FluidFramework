@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DataBinding } from '@fluid-experimental/property-binder';
-import { Square } from '../views/square';
+import { DataBinding } from "@fluid-experimental/property-binder";
+import { Square } from "../views/square";
 
 export class ColoredSquareBinding extends DataBinding {
     private updatePosition(values: any) {
@@ -22,11 +22,10 @@ export class ColoredSquareBinding extends DataBinding {
     }
 
     static initialize() {
-        this.registerOnValues('position', ['modify'], this.prototype.updatePosition);
-        this.registerOnValues('color', ['modify'], this.prototype.updateColor);
-        this.registerOnValues('length', ['modify'], this.prototype.updateLength);
+        this.registerOnValues("position", ["modify"], this.prototype.updatePosition);
+        this.registerOnValues("color", ["modify"], this.prototype.updateColor);
+        this.registerOnValues("length", ["modify"], this.prototype.updateLength);
     }
 }
-
 
 ColoredSquareBinding.initialize();

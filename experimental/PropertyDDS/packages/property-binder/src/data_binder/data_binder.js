@@ -208,7 +208,7 @@ class DataBinder {
     /**
      * A binding built to hold all absolute path callbacks. One per databinder
      */
-    class AbsolutePathDataBinding extends DataBinding { }
+    const AbsolutePathDataBinding = class extends DataBinding { }
 
     this._AbsolutePathDataBinding = AbsolutePathDataBinding;
 

@@ -4,18 +4,17 @@
  */
 
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
-import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
 
-import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
-import { IPropertyTree } from "./dataObject";
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
-import _ from 'lodash';
+import _ from "lodash";
 
-import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { registerSchemas } from '@fluid-experimental/schemas';
+import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { registerSchemas } from "@fluid-experimental/schemas";
+import { IPropertyTree } from "./dataObject";
+import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
+import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
 import { renderApp } from "./inspector";
-
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -33,7 +32,6 @@ const documentId = location.hash.substring(1);
 document.title = documentId;
 
 async function start(): Promise<void> {
-
     // Register all schemas.
     // It's important to register schemas before loading an existing document
     // in order to process the changeset.
@@ -50,7 +48,7 @@ async function start(): Promise<void> {
 
     const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
 
-    renderApp(propertyTree.tree, document.getElementById('root')!);
+    renderApp(propertyTree.tree, document.getElementById("root")!);
 
     // Reload the page on any further hash changes, e.g. in case you want to paste in a different document ID.
     window.addEventListener("hashchange", () => {
@@ -59,4 +57,3 @@ async function start(): Promise<void> {
 }
 
 start().catch((error) => console.error(error));
-
