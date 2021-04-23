@@ -66,7 +66,11 @@ export class SquaresApp {
         this.fluidBinder.defineRepresentation("view", "autofluid:squaresBoard-1.0.0", (property) => {
             const board =  new SquaresBoard([], this.container);
             // Rendering move button to move board's squares randomly
-            renderMoveButton(this.fluidBinder.getWorkspace() as unknown as SharedPropertyTree, board.wrapper, property.getId() as string);
+            renderMoveButton(
+                this.fluidBinder.getWorkspace() as unknown as SharedPropertyTree,
+                board.wrapper,
+                property.getId() as string,
+            );
             return board;
         });
 

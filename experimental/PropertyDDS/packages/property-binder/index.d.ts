@@ -502,7 +502,7 @@ declare module "@fluid-experimental/property-binder" {
              * Constructor for the DataBinder.
              * @param in_workspace - The Workspace to bind to.
              */
-            constructor(in_workspace?: Workspace | HFDMWorkspaceComponent);
+            constructor(in_workspace?: Workspace);
 
             /**
              * Registers a data binding.
