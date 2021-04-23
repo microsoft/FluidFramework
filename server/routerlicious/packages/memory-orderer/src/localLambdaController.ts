@@ -75,7 +75,8 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.removeAllListeners();
     }
 
-    public async process(message: IQueuedMessage): Promise<void> | undefined {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public process(message: IQueuedMessage): Promise<void> | undefined {
         if (!this.lambda) {
             throw new Error("The lambda has not started yet");
         }

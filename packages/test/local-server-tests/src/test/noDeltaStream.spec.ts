@@ -85,8 +85,9 @@ describe("No Delta Stream", () => {
         await loaderContainerTracker.ensureSynchronized();
     });
 
-    afterEach(() => {
+    afterEach(async () => {
         loaderContainerTracker.reset();
+        await deltaConnectionServer.close();
     });
 
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {
