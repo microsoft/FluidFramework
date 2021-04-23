@@ -16,6 +16,7 @@ describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
+    let shouldClientJoinWrite: boolean;
     let connectionDetails: IConnectionDetails;
     let client: IClient;
     const expectedTimeout = 90000;
@@ -73,6 +74,7 @@ describe("ConnectionStateHandler Tests", () => {
                 logConnectionStateChangeTelemetry: () => undefined,
                 maxClientLeaveWaitTime: expectedTimeout,
                 protocolHandler: () => protocolHandler,
+                shouldClientJoinWrite: () => shouldClientJoinWrite,
             },
             new TelemetryNullLogger(),
         );
@@ -111,6 +113,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -139,6 +142,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -173,6 +177,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -218,6 +223,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -269,6 +275,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -318,6 +325,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
@@ -372,6 +380,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
+        shouldClientJoinWrite = true;
         client.mode = "write";
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");

@@ -15,6 +15,7 @@ export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
+    shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
 }
 
@@ -74,6 +75,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
                     waitOnClientId: this._clientId,
+                    hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
             }
             this.applyForConnectedState("addMemberEvent");
@@ -133,6 +135,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
+
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
@@ -176,11 +179,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
             // Only wait for "leave" message if the connected client exists in the quorum because only the write
-            // client will exist in the quorum and only for those clients we will receive "removeMember" event.
+            // client will exist in the quorum and only for those clients we will receive "removeMember" event and
+            // the client has some unacked ops.
             // Also server would not accept ops from read client. Also check if the timer is not already running as
             // we could receive "Disconnected" event multiple times without getting connected and in that case we
             // don't want to reset the timer as we still want to wait on original client which started this timer.
-            if (client !== undefined && this.prevClientLeftTimer.hasTimer === false) {
+            if (client !== undefined
+                && this.handler.shouldClientJoinWrite()
+                && this.prevClientLeftTimer.hasTimer === false
+            ) {
                 this.prevClientLeftTimer.restart();
             } else {
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
@@ -188,6 +195,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                     eventName: "noWaitOnDisconnected",
                     inQuorum: client !== undefined,
                     hasTimer: this.prevClientLeftTimer.hasTimer,
+                    shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
                 });
             }
         }
