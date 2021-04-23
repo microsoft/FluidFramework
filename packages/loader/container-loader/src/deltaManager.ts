@@ -607,8 +607,8 @@ export class DeltaManager
         // on the wire, we might be always behind.
         // See comment at the end of setupNewSuccessfulConnection()
         logIfFalse(
-            this.logger,
             this.handler !== undefined || !fetchOpsFromStorage,
+            this.logger,
             "CantFetchWithoutBaseline"); // can't fetch if no baseline
         if (fetchOpsFromStorage && this.handler !== undefined) {
             this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
