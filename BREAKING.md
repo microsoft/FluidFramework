@@ -2,6 +2,7 @@
 - [connect event removed from Container](#connect-event-removed-from-Container)
 - [LoaderHeader.pause](#LoaderHeader.pause)
 - [ODSP driver definitions](#ODSP-driver-definitions)
+- [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [epochVersionMismatch](#epochVersionMismatch)
 
 ### connect event removed from Container
@@ -21,6 +22,9 @@ use
 A lot of definitions have been moved from @fluidframework/odsp-driver to @fluidframework/odsp-driver-definitions. This change is required in preparation for driver to be dynamically loaded by host.
 This new package contains all the dependencies of ODSP driver factory (like HostStoragePolicy, IPersistedCache, TokenFetcher) as well as outputs (OdspErrorType).
 @fluidframework/odsp-driver will continue to have defintions for non-factory functionality (like URI resolver, helper functionality to deal with sharing links, URI parsing, etc.)
+
+### ITelemetryLogger Remove redundant methods
+Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused. These methods were deprecated in 0.36.
 
 ### epochVersionMismatch
 OdspErrorType.epochVersionMismatch move to become DriverErrorType.epochVersionMismatch

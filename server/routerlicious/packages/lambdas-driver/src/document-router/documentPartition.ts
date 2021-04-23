@@ -26,8 +26,8 @@ export class DocumentPartition {
     constructor(
         factory: IPartitionLambdaFactory,
         config: Provider,
-        tenantId: string,
-        documentId: string,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         public readonly context: DocumentContext,
         private readonly activityTimeout: number) {
         this.updateActivityTime();
@@ -44,7 +44,16 @@ export class DocumentPartition {
                 try {
                     if (!this.corrupt) {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.lambda!.handler(message);
+                        const optionalPromise = this.lambda!.handler(message);
+                        if (optionalPromise) {
+                            optionalPromise
+                                .then(callback as any)
+                                .catch((error) => {
+                                    this.markAsCorrupt(message, error);
+                                    callback();
+                                });
+                            return;
+                        }
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
                         this.context.checkpoint(message);
@@ -52,8 +61,7 @@ export class DocumentPartition {
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
-                    context.error(error, { restart: false, tenantId, documentId });
-                    this.corrupt = true;
+                    this.markAsCorrupt(message, error);
                 }
 
                 // Handle the next message
@@ -117,6 +125,16 @@ export class DocumentPartition {
 
     public isInactive(now: number = Date.now()) {
         return !this.context.hasPendingWork() && this.activityTimeoutTime && now > this.activityTimeoutTime;
+    }
+
+    /**
+     * Marks this document partition as corrupt
+     * Future messages will be checkpointed but no real processing will happen
+     */
+    private markAsCorrupt(message: IQueuedMessage, error: any) {
+        this.corrupt = true;
+        this.context.error(error, { restart: false, tenantId: this.tenantId, documentId: this.documentId });
+        this.context.checkpoint(message);
     }
 
     private updateActivityTime() {

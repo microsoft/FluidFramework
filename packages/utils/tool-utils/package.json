@@ -55,16 +55,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.29.0",
+    "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/odsp-doclib-utils": "^0.39.0",
-    "@fluidframework/protocol-base": "^0.1022.0",
-    "@fluidframework/protocol-definitions": "^0.1022.0",
+    "@fluidframework/protocol-base": "^0.1024.0-0",
+    "@fluidframework/protocol-definitions": "^0.1024.0-0",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
     "proper-lockfile": "^4.1.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.21.0-0",
+    "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.39.0",
     "@microsoft/api-extractor": "^7.13.1",

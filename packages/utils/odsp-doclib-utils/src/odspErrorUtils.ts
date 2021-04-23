@@ -83,12 +83,15 @@ export function createOdspNetworkError(
             error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
             break;
         case 404:
-            error = new RetryableError(
+            error = new NonRetryableError(
                 errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
             break;
         case 406:
-            error = new RetryableError(
+            error = new NonRetryableError(
                 errorMessage, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
+            break;
+        case 410:
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
             error = new NonRetryableError(errorMessage, DriverErrorType.epochVersionMismatch, { statusCode });
@@ -116,6 +119,7 @@ export function createOdspNetworkError(
             error = new RetryableError(errorMessage, DriverErrorType.fetchFailure, { statusCode });
             break;
         case fetchIncorrectResponse:
+            // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
             error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:

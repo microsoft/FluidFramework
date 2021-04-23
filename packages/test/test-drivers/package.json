@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@fluid-internal/test-pairwise-generator": "^0.39.0",
-    "@fluidframework/common-utils": "^0.29.0",
+    "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/driver-definitions": "^0.39.0",
     "@fluidframework/local-driver": "^0.39.0",
@@ -58,9 +58,9 @@
     "@fluidframework/odsp-driver": "^0.39.0",
     "@fluidframework/odsp-driver-definitions": "^0.39.0",
     "@fluidframework/odsp-urlresolver": "^0.39.0",
-    "@fluidframework/protocol-definitions": "^0.1022.0",
+    "@fluidframework/protocol-definitions": "^0.1024.0-0",
     "@fluidframework/routerlicious-driver": "^0.39.0",
-    "@fluidframework/server-local-server": "^0.1022.0",
+    "@fluidframework/server-local-server": "^0.1024.0-0",
     "@fluidframework/test-driver-definitions": "^0.39.0",
     "@fluidframework/test-runtime-utils": "^0.39.0",
     "@fluidframework/tinylicious-driver": "^0.39.0",
@@ -69,7 +69,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.21.0-0",
+    "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.13.1",
     "@types/mocha": "^5.2.5",

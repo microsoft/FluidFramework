@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.29.0",
+    "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/gitresources": "^0.1024.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1024.0",
@@ -34,7 +34,7 @@
     "nconf": "^0.11.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.21.0",
+    "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

@@ -9,8 +9,9 @@ export class NoOpLambda implements IPartitionLambda {
     constructor(private readonly context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         this.context.checkpoint(message);
+        return undefined;
     }
 
     public close(): void {
