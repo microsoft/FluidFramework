@@ -221,9 +221,9 @@ const _callCorrespondingHandlers = function(
 };
 
 /**
- * Helper for converting an HFDM array changeset iterator to an array of explicit indices
+ * Helper for converting an array changeset iterator to an array of explicit indices
  *
- * @param {Object} in_arrayIterator - the HFDM iterator
+ * @param {Object} in_arrayIterator - the iterator
  * @return {Array.<Number>} the generated indices
  *
  * @private
@@ -504,8 +504,7 @@ const minimalRootPaths = function(in_paths) {
 };
 
 /**
- * Recursively visit all HFDM properties and values, starting from in_rootProperty, calling in_callback on each item.
- * TODO: Add as a service to HFDM
+ * Recursively visit all properties and values, starting from in_rootProperty, calling in_callback on each item.
  *
  * @param {PropertyElement} in_rootPropertyElement - the property from which to recurse from
  * @param {string} in_elementAbsolutePath - the path from the root workspace for this element
@@ -574,15 +573,14 @@ const recursivelyVisitHierarchy = function(
  */
 const isPrimitiveCollection = function(in_property) {
   const context = in_property.getContext();
-  // TODO: we need to check whether in_property is instanceof EnumArrayProperty (because the HFDM API is inconsistent)
-  // but as EnumArrayProperty isn't exported from the HFDM SDK we check whether it inherits from the 'array' of 'Enum')
+  // TODO: we need to check whether in_property is instanceof EnumArrayProperty (because the API is inconsistent)
+  // but as EnumArrayProperty isn't exported from the packages we check whether it inherits from the 'array' of 'Enum')
   return (context === 'array' || context === 'map' || context === 'set') &&
     (TypeIdHelper.isPrimitiveType(in_property.getTypeid()) || PropertyFactory.instanceOf(in_property, 'Enum', 'array'));
 };
 
 /**
- * Recursively visit all HFDM properties and values, starting from in_rootProperty, calling in_callback on each item.
- * TODO: Add as a service to HFDM
+ * Recursively visit all properties and values, starting from in_rootProperty, calling in_callback on each item.
  *
  * @param {BaseProperty} in_rootProperty - the property from which to recurse from
  * @param {function()}

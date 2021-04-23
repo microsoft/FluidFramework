@@ -743,7 +743,7 @@ var mergeWithLastIfPossible = function(in_op, io_changeset, in_targetIndex, in_o
  * @param {Map} [in_options.applyAfterMetaInformation] - Additional meta information which help later to obtain
  *                                                       more compact changeset during the apply operation
  * @param {Object} [in_lastIteratorARemove] - Information about the last remove operation in iterator A
- * @param {HFDM.Property.ArrayOperations.OperationRange} [in_segment] - Segment this operation is part of
+ * @param {property-changeset.ArrayOperations.OperationRange} [in_segment] - Segment this operation is part of
  */
 var pushOp = function(in_op, io_changeset, in_indexOffset, in_options, in_lastIteratorARemove, in_segment) {
   var writeTargetIndex;

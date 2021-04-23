@@ -14,7 +14,7 @@ const nativeTypes = require('../template_schema').nativeTypes;
  * Helper for Type IDs
  * @public
  * @class
- * @alias FORGE.HFDMSchemaValidator.TypeIdHelper
+ * @alias property-changeset.TypeIdHelper
  * @description Helper functions to work with typeid strings
  */
 var TypeIdHelper = {};

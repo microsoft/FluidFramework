@@ -9,8 +9,8 @@
  */
 
 /**
- * @namespace FORGE.HFDMSchemaValidator.TemplateSchema
- * @alias FORGE.HFDMSchemaValidator.TemplateSchema
+ * @namespace property-changeset.SchemaValidator.TemplateSchema
+ * @alias property-changeset.SchameValidator.TemplateSchema
  * @description Declaration of the TemplateSchema module
  *
  * Namespace containing all schema-related data for property set validation

@@ -73,7 +73,7 @@ describe('JS-Object-like property accessing ', function() {
   beforeAll(prerequisite);
 
   describe('Proxy properties directly', function() {
-    it('should throw if something other than a HFDM property is supplied', function() {
+    it('should throw if something other than a property is supplied', function() {
       const someNonProperty = { a: 1, name: 'property' };
       expect(() => { PropertyProxy.proxify(someNonProperty); }).toThrow(Error, 'PropertyProxy-000');
     });

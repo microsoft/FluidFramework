@@ -106,7 +106,7 @@ var c4 = 0xa1e38b93;
  *
  * @param {number} [in_seed = 1] - Seed value used for the hash computation
  * @constructor
- * @alias HFDM.Utils.HashCalculator
+ * @alias property-inspector.HashCalculator
  * @private
  */
 export const HashCalculator = function(in_seed = 1) {

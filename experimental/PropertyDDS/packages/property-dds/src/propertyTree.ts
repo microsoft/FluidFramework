@@ -107,7 +107,7 @@ export class SharedPropertyTree extends SharedObject {
 		super(id, runtime, attributes);
 
 		this.options = options;
-		// Quick hack to let HFDM root be aware of the DDS hosting it.
+		// Quick hack to let the root be aware of the DDS hosting it.
 		this._root._tree = this;
 
 		// By default, we currently don't use the MH

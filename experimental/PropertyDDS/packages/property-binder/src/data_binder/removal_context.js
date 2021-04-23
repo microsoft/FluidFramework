@@ -65,9 +65,9 @@ class RemovalContext extends BaseContext {
   }
 
   /**
-   * The DataBinder responds to changes in HFDM _after_ they have already been applied to the in-memory
+   * The DataBinder responds to changes in the PropertyTree _after_ they have already been applied to the in-memory
    * representation. The implication is that at the time of a removal callback, the property that is being
-   * removed no longer exists in the in-memory representation of HFDM. As such, this callback can only
+   * removed no longer exists in the in-memory representation of the PropertyTree. As such, this callback can only
    * return undefined.
    *
    * @return {undefined} Will always return undefined.

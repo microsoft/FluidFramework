@@ -40,7 +40,7 @@ describe('General stuff', function() {
       expect(endCountConsoleMessages('warn')).toEqual(2);
     });
 
-    it('should fail on caught throws that use console (a la HFDM)', function() {
+    it('should fail on caught throws that use console', function() {
       expect(hadConsoleError()).toEqual(false);
       try {
         throw new Error('Intentional error');

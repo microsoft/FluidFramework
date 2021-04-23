@@ -114,24 +114,30 @@ declare module "@fluid-experimental/property-binder" {
         }
 
         /**
-         * @classdesc  A DataBinder allows one to register a number of bindings for different HFDM property types. The
-         * DataBinder can then be bound to
-         * a {@link https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/Workspace.html|Workspace} to have the
-         * data bindings created automatically.
-         * These data bindings are notified of the modification and removal of the underlying HFDM property.
+         * A FluidBinder allows one to register a number of bindings for different property types. The
+         * FluidBinder can then be bound to
+         * a PropertyTree to have the data bindings created automatically.
          *
-         * Default provider registration type: <i>DataBinderComponent</i>.
+         * These data bindings are notified of the modification and removal of the underlying property.
          *
-         * It depends on:
-         * - HFDMWorkspaceComponent: A component that represents an HFDM workspace.
+         * @example
+         * ```
+         * const databinder = new DataBinder(workspace);
+         * databinder.defineDataBinding(...);
          *
-         * You can use this component without calling an `initializeComponent` method.
-         * @public
+         * // or
+         * const databinder = new DataBinder();
+         * databinder.defineDataBinding(...);
+         * // ...
+         * databinder.attachTo(workspace);
+         * const workspace = databinder.getWorkspace();
+         * // ...
+         * ```
          */
         class FluidBinder {
 
             /**
-             * Constructor for the DataBinder.
+             * Constructor for the FluidBinder.
              * @param in_workspace - The Workspace to bind to.
              */
             constructor(in_workspace?: Workspace);
@@ -393,11 +399,11 @@ declare module "@fluid-experimental/property-binder" {
              * // Register a generator for runtime representations for the Dog Property
              * myDataBinder.defineRepresentation('PETSTORE', 'Types:Dog-1.0.0', (property) => new DogRepresentation());
              *
-             * // Get an HFDM workspace and insert a new property
-             * const workspace = getHFDMWorkspace();
-             * myDataBinder.attachTo(workspace);
+             * // Get a ShartedProperty tree and insert a new property
+             * const propertyTree = getSharedPropertyTree();
+             * myDataBinder.attachTo(propertyTree);
              *
-             *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+             * propertyTree.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
              *
              * // Request the runtime representation associated with the property
              * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
@@ -761,11 +767,11 @@ declare module "@fluid-experimental/property-binder" {
              * // Register a generator for runtime representations for the Dog Property
              * myDataBinder.defineRepresentation('PETSTORE', 'Types:Dog-1.0.0', (property) => new DogRepresentation());
              *
-             * // Get an HFDM workspace and insert a new property
-             * const workspace = getHFDMWorkspace();
-             * myDataBinder.attachTo(workspace);
+             * // Get a ShartedProperty tree and insert a new property
+             * const propertyTree = getSharedPropertyTree();
+             * myDataBinder.attachTo(propertyTree);
              *
-             *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+             * propertyTree.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
              *
              * // Request the runtime representation associated with the property
              * const fido = myDataBinder.getRepresentation(workspace.get('Fido'), 'PETSTORE');
@@ -931,8 +937,8 @@ declare module "@fluid-experimental/property-binder" {
         export function minimalRootPaths(in_paths: any[]): any[];
 
         /**
-         * Recursively visit all HFDM properties, starting from in_rootProperty, calling in_callback on each item.
-         * TODO: Add as a service to HFDM
+         * Recursively visit all properties, starting from in_rootProperty, calling in_callback on each item.
+         *
          * @param {BaseProperty} in_rootProperty - the property from which to recurse from
          * @param {function()}
          *        in_callback - function to call for each path. Recursion continues if the function returns true.
@@ -980,7 +986,7 @@ declare module "@fluid-experimental/property-binder" {
 
         /**
          * The base class all data bindings should inherit from. using {@link DataBinder.defineDataBinding} and
-         * {@link DataBinder.activateDataBinding}, the class can be instantiated for properties in the HFDM workspace
+         * {@link DataBinder.activateDataBinding}, the class can be instantiated for properties in the property tree
          * attached to the DataBinder.
          *
          * The DataBinding class is told of onPreModify, onModify, onPreRemove, onRemove etc. These can be overloaded
@@ -1366,7 +1372,7 @@ declare module "@fluid-experimental/property-binder" {
         }
 
         /**
-         * The PropertyElement is a helper class that abstracts an element in the HFDM property set tree,
+         * The PropertyElement is a helper class that abstracts an element in the property set tree,
          * whether it is a specific property, or an element of a primitive collections (array/map). It allows code to be
          * written with less special cases when it comes to primitive collections.
          */

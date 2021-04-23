@@ -30,8 +30,7 @@ export class PropertyProxy {
    * @param {ReferenceProperty|ReferenceArrayProperty|ReferenceMapProperty} property
    * The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
    * @param {String} [k] The key of the referenced property in the Reference(Array/Map)Property.
-   * @return {IParentAndPathOfReferencedProperty} The parent, a
-   * [`BaseProperty`](https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.BaseProperty.html),
+   * @return {IParentAndPathOfReferencedProperty} The parent, a BaseProperty,
    *  and the relative path to the parent as a `string`.
    * @public
    */
@@ -78,20 +77,18 @@ export class PropertyProxy {
   }
 
   /**
-   * Proxify a
-   * [`BaseProperty`](https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.BaseProperty.html).
+   * Proxify a BaseProperty
    * This proxy allows to access and modify properties in the workspace in a JavaScript like manner.
    * When using collection properties the proxy provides access via the matching
-   * JavaScript object e.g. an
-   * [`ArrayProperty`](https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.ArrayProperty.html)
-   * maps to an Array.
+   * JavaScript object e.g. an ArrayProperty maps to an Array.
+   *
    * Insertion of new properties into the workspace is triggered
    * if the specified property name does not yet exist on the parent and the parent is dynamic.
    * @example
    * ```
    *
    * // The data can be accessed and modified using standard JavaScript syntax. Operations directly
-   * // happen on the HFDM data, nothing is cached.
+   * // happen on the PropertyTree data, nothing is cached.
    * import {PropertyProxy} from '@fluid-experimental/property-proxy';
    *
    * // Given a workspace that contains some properties: someVector2D (with x = 1 and y = 2),
@@ -105,15 +102,14 @@ export class PropertyProxy {
    * console.log(workspace.get('someVector2D').get('x').getValue()); // 3
    *
    * // The methods available on the JavaScript Array class are accessible on proxied ArrayProperties
-   * // and operate directly on the HFDM data.
+   * // and operate directly on the PropertyTree data.
    * const proxiedArray = proxiedWorkspace.someArray;
    * proxiedArray.sort((a, b) = (b - a));
    * console.log(proxiedArray.toString()); // 4,3,2,1
    * console.log(workspace.get('someArray').getValues().toString()); // 4,3,2,1
    * ```
-   * @param {BaseProperty} property The
-   * [`BaseProperty`](https://pages.git.autodesk.com/LYNX/HFDM_SDK/doc/latest/LYNX.Property.BaseProperty.html)
-   * to be proxied.
+   * @param {BaseProperty} property The BaseProperty to be proxied.
+   *
    * @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
    * @public
    */

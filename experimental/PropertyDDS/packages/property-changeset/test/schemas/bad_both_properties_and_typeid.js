@@ -8,7 +8,7 @@
  */
 (function() {
   /**
-   * @namespace FORGE.HFDMSchemaValidator.Test
+   * @namespace property-changeset.Test
    * @alias bad_both_properties_and_typeid.js
    * Namespace containing all schema-related data for property set validation
    */

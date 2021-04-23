@@ -42,7 +42,7 @@ const validOptions = ['requireProperty', 'isDeferred'];
 
 /**
  * The base class all data bindings should inherit from. using {@link DataBinder.defineDataBinding} and
- * {@link DataBinder.activateDataBinding}, the class can be instantiated for properties in the HFDM workspace
+ * {@link DataBinder.activateDataBinding}, the class can be instantiated for properties in the workspace
  * attached to the DataBinder.
  *
  * The DataBinding class is told of onPreModify, onModify, onPreRemove, onRemove etc. These can be overloaded
@@ -56,7 +56,7 @@ const validOptions = ['requireProperty', 'isDeferred'];
 class DataBinding {
   /**
    * @param {object} in_params - An object containing the initialization parameters.
-   * @param {external:BaseProperty} in_params.property - The HFDM property that this binding represents.
+   * @param {external:BaseProperty} in_params.property - The property that this binding represents.
    * @param {DataBinder} in_params.dataBinder - The DataBinder that created this binding
    * @param {string} in_params.bindingType - The type of the binding.  (ex. 'VIEW', 'DRAW', 'UI', etc.)
    * @param {Object} params.activationInfo - the information relating to the activation (userData, databinder...)
@@ -117,9 +117,9 @@ class DataBinding {
   }
 
   /**
-   * Returns the HFDM property for which this DataBinding was instantiated.
+   * Returns the property for which this DataBinding was instantiated.
    *
-   * @return {BaseProperty} The corresponding HFDM property.
+   * @return {BaseProperty} The corresponding property.
    * @public
    */
   getProperty() {
@@ -293,7 +293,7 @@ class DataBinding {
    * @hidden
    */
   _onPreRemove(in_removalContext) {
-    delete this._property; // HFDM already deleted this, so we don't want dangling refs here
+    delete this._property; // The PropertyTree already deleted this, so we don't want dangling refs here
   }
 
   /**
@@ -423,7 +423,7 @@ class DataBinding {
   }
 
   /**
-   * helper function to work around a bug LYNXDEV-7507 in HFDM
+   * helper function to work around a bug in the Property Tree
    *
    * @param {BaseProperty} in_property - the property to dereference
    * @return {BaseProperty|undefined} the property at the end of the references, or undefined if there
@@ -1649,7 +1649,7 @@ class DataBinding {
 
   /**
    * Register a callback to a relative property path. It will be triggered on the given events. The callback will
-   * receive the HFDM property (at the relative path) as a parameter.
+   * receive the property (at the relative path) as a parameter.
    *
    * @example
    * @snippet javascript 'test/data_binder/data_binding.spec.js'
@@ -1673,12 +1673,12 @@ class DataBinding {
   /**
    * Register a callback to a property path relative to the property associated with the databinding. It will
    * be triggered on the given events.
-   * If multiple paths are provided for 'in_path', the callback will only be called once per HFDM changeset
+   * If multiple paths are provided for 'in_path', the callback will only be called once per changeset
    *
    * See {@link DataBinding.registerOnProperty} for an example; the only difference is the callback will
    * receive a {@link ModificationContext}.
    *
-   * @param {Array.<string>|string} in_path Path(s) relative to the HFDM property to bind on changes.
+   * @param {Array.<string>|string} in_path Path(s) relative to the property to bind on changes.
    * @param {Array.<String>} in_events Array of the event names to bind to:<br>
    * - modify: Triggered when the property found via the provided path is modified. When the path contains a
    *   ReferenceProperty this event tells us if the referenced property has been modified.<br>
@@ -1707,7 +1707,7 @@ class DataBinding {
    * See {@link DataBinding.registerOnProperty} for an example; the only difference is the callback will
    * receive a JSON representation of the value of the property.
    *
-   * @param {string} in_path Path relative to the HFDM property to bind on value changes.
+   * @param {string} in_path Path relative to the property to bind on value changes.
    * @param {Array.<String>} in_events See the `in_events` parameter in {@link DataBinding.registerOnPath}
    * @param {Function} in_callback The function to call, when the property behind the relative path changes.
    * @param {IRegisterOnPathOptions} in_options Additional user specified options on how the callback should be
@@ -1725,7 +1725,7 @@ class DataBinding {
 
   /**
    * Same as registerOnProperty, but the callback will get a JSON representation of the property.
-   * @param {string} in_path Path relative to the HFDM property to bind on value changes.
+   * @param {string} in_path Path relative to the property to bind on value changes.
    * @param {Array.<String>} in_events Array of the event names to bind to: modify, insert, remove.
    * @param {Function} in_callback The function to call, when the property behind the relative path changes.
    * @param {Object} in_options Additional user specified options on how the callback should be registered.
@@ -1742,7 +1742,7 @@ class DataBinding {
   /**
    * Same as registerOnProperty, but the callback will get a JSON representation of the property.
    * @param {function} in_register A function to register relative path callbacks.
-   * @param {string} in_path Path relative to the HFDM property to bind on value changes.
+   * @param {string} in_path Path relative to the property to bind on value changes.
    * @param {Array.<String>} in_events See {@link DataBinding.registerOnPath [events]} parameter
    * @param {function} in_callback See {@link DataBinding.registerOnPath [callback]} parameter
    * @param {Object} in_options See {@link DataBinding.registerOnPath [options]} parameter
@@ -1765,13 +1765,13 @@ class DataBinding {
 /**
  * Function to use as a decorator when defining a DataBinding class. When prefixed before a function
  * on your databinding class, the class will be statically extended to automatically be called back when the
- * values are changed in the corresponding HFDM property.
+ * values are changed in the corresponding property.
  *
  * @example
  * @snippet javascript 'test/data_binder/es6_decorator_data_binding.spec.js'
  *      SnippetStart{onValueDecorator} SnippetEnd{onValueDecorator}
  *
- * @param {string} in_path Path relative to the HFDM property to bind on value changes.
+ * @param {string} in_path Path relative to the property to bind on value changes.
  * @param {Array.<String>} in_events See the `in_events` parameter in {@link DataBinding.registerOnPath}
  * @param {IRegisterOnPathOptions} in_options Additional user specified options on how the callback should be
  * registered.
@@ -1785,12 +1785,12 @@ const onValuesChanged = function(in_path, in_events, in_options = {}) {
 /**
  * Function to use as a decorator when defining a DataBinding class. When prefixed before a function
  * on your databinding class, the class will be statically extended to automatically be called back when the
- * corresponding HFDM property is changed.
+ * corresponding property is changed.
  *
  * See {@link onValuesChanged} for an example of using decorators. The callback will receive a property
  * instead of a value.
  *
- * @param {string} in_path Path relative to the HFDM property to bind on property changes.
+ * @param {string} in_path Path relative to the property to bind on property changes.
  * @param {Array.<String>} in_events See the `in_events` parameter in {@link DataBinding.registerOnPath}
  * @param {IRegisterOnPathOptions} in_options Additional user specified options on how the callback should be
  * registered.
@@ -1804,14 +1804,14 @@ const onPropertyChanged = function(in_path, in_events, in_options = {}) {
 /**
  * Function to use as a decorator when defining a DataBinding class. When prefixed before a function
  * on your databinding class, the class will be statically extended to automatically be called back when the
- * corresponding HFDM property is changed.
+ * corresponding property is changed.
  *
- * If multiple paths are provided for 'in_path', the callback will only be called once per HFDM change set
+ * If multiple paths are provided for 'in_path', the callback will only be called once per change set
  *
  * See {@link onValuesChanged} for an example of using decorators. The callback will receive a
  * {@link ModificationContext} instead of a value.
  *
- * @param {Array.<string>|string} in_path Path(s) relative to the HFDM property to bind on changes.
+ * @param {Array.<string>|string} in_path Path(s) relative to the property to bind on changes.
  * @param {Array.<String>} in_events See the `in_events` parameter in {@link DataBinding.registerOnPath}
  * @param {IRegisterOnPathOptions} in_options Additional user specified options on how the callback should be
  * registered.

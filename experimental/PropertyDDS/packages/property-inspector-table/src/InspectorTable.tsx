@@ -183,14 +183,14 @@ const getCellSkeleton = (width: number) => themedSkeleton(<Skeleton width={getRa
 
 /**
  * The default implementation for the InspectorTable `childGetter` callback.
- * @param child The hierarchical child of the HFDM property the row represents.
+ * @param child The hierarchical child of the property the row represents.
  * @returns The passed in child.
  */
 export const defaultInspectorTableChildGetter = (child: any): any => child;
 
 /**
  * The default implementation for the InspectorTable `nameGetter` callback.
- * @param name The id of the HFDM property the row represents.
+ * @param name The id of the property the row represents.
  * @returns The passed in id.
  */
 export const defaultInspectorTableNameGetter = (name: string): any => name;
@@ -202,7 +202,7 @@ export const defaultInspectorTableNameGetter = (name: string): any => name;
 export const defaultInspectorTableDataGetter = (params: IDataGetterParameter): React.ReactNode | null => null;
 
 /**
- * A component for inspecting the HFDM workspace data. It supports displaying the name, context, typeid and value of
+ * A component for inspecting the workspace data. It supports displaying the name, context, typeid and value of
  * the data. How many columns and in which order these are shown is configurable by the user via the 'column' prop.
  * @hidden
  */
@@ -638,7 +638,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           (parentProp as unknown as  ReferenceMapProperty).isReferenceValid(rowData.name);
         } catch (e) {
           // if maximum call stack size is exceeded, user probably created cyclic reference
-          // HFDM can't delete cyclic references so we need set reference path to some other value
+          // we can't delete cyclic references so we need set reference path to some other value
           if (e.message.includes('Maximum call stack size exceeded')) {
             parentProp.setValues({[rowData.name]: 'Could not resolve the reference'});
           }

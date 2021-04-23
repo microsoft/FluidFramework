@@ -10,16 +10,16 @@ import { PropertyProxyErrors } from './errors';
 import { Utilities } from './utilities';
 
 /**
- * The additional proxy handlers for non-collection type HFDM properties.
+ * The additional proxy handlers for non-collection type properties.
  * @hidden
  */
 export const proxyHandler = {
   /**
    * The get trap that handles access to properties
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty} the Proxy handles.
+   * {@link external:BaseProperty BaseProperty} the Proxy handles.
    * @param {String} key The name of the property that is to be accessed.
-   * @return {Object | external:BaseProperty} The accessed primitive or HFDM Property.
+   * @return {Object | external:BaseProperty} The accessed primitive or Property.
    */
   get(target, key) {
     let asteriskFound = false;
@@ -45,11 +45,11 @@ export const proxyHandler = {
   },
 
   /**
-   * The set trap that handles assigning of values to properties. In case the underlying HFDM
+   * The set trap that handles assigning of values to properties. In case the underlying
    * {@link external:BaseProperty BaseProperty} is a {@link external:NodeProperty NodeProperty}
    * and the key does not yet exist an insertion happens.
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty} the Proxy handles.
+   * {@link external:BaseProperty BaseProperty} the Proxy handles.
    * @param {String} key The name of the property something is assigned to.
    * @param {Object} value The value to be assigned.
    * @return {Boolean} True on success.
@@ -93,7 +93,7 @@ export const proxyHandler = {
   /**
    * Traps the `delete`operator and removes the targeted property from the workspace.
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty} the Proxy handles.
+   * {@link external:BaseProperty BaseProperty} the Proxy handles.
    * @param {String} key The name of the property to be deleted.
    * @return {Boolean} Returns `true`on successful removal.
    */
@@ -111,7 +111,7 @@ export const proxyHandler = {
    * Trap for Object.getOwnPropertyDescriptor().
    * Returns a writeable and enumerable descriptor. Required for the ownKeys trap.
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty} the Proxy handles.
+   * {@link external:BaseProperty BaseProperty} the Proxy handles.
    * @param {String} key The name of the property.
    * @return {Object} The Descriptor
    */
@@ -133,7 +133,7 @@ export const proxyHandler = {
   /**
    * Trap for the `in` operator.
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty} the Proxy handles.
+   * {@link external:BaseProperty BaseProperty} the Proxy handles.
    * @param {String} key The name of the property.
    * @return {Boolean} true if `key` is a child of the property.
    */
@@ -143,7 +143,7 @@ export const proxyHandler = {
    * Trap for the Object.keys().
    * Returns the Ids of the ArrayProperty as an array.
    * @param {Object} target The Object that references a non-collection type
-   * HFDM {@link external:BaseProperty BaseProperty}
+   * {@link external:BaseProperty BaseProperty}
    * the Proxy handles.
    * @return {Array} The array containing the IDs of the {@link external:BaseProperty BaseProperty}.
    */

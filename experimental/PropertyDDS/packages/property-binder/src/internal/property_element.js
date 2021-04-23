@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /**
- * @fileoverview The PropertyElement is a helper class that abstracts an element in the HFDM property set tree,
+ * @fileoverview The PropertyElement is a helper class that abstracts an element in the property set tree,
  * whether it is a specific property, or an element of a primitive collections (array/map). It allows code to be
  * written with less special cases when it comes to primitive collections.
  */

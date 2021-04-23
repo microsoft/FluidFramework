@@ -160,7 +160,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
   /**
    * Transform expiry information to a state object.
-   * @param expiryInfo The expiry information object obtained from HFDM.
+   * @param expiryInfo The expiry information object.
    */
   const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
     const newState = {} as IModalExpiryState;
