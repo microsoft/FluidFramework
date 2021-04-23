@@ -12,7 +12,7 @@ import {
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -67,6 +67,7 @@ export async function initialize(
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             tokenProvider,
             false,
+            new DefaultErrorTracking(),
             false,
             true,
             cache));

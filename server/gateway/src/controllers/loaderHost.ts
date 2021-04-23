@@ -13,7 +13,7 @@ import {
     IFrameDocumentServiceProxyFactory,
 } from "@fluidframework/iframe-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
@@ -49,6 +49,7 @@ export async function initialize(
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             tokenProvider,
             false,
+            new DefaultErrorTracking(),
             false,
             true,
             cache));
