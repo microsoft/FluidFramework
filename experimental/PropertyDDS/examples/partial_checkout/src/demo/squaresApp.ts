@@ -10,6 +10,7 @@ import { FluidBinder } from "@fluid-experimental/property-binder";
 import _ from "lodash";
 import { SQUARES_DEMO_SCHEMAS } from "@fluid-experimental/schemas";
 import { assert } from "@fluidframework/common-utils";
+import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { IPropertyTree } from "../dataObject";
 import { renderMoveButton } from "../view";
 import { SquaresBoard } from "./views/squaresBoard";
@@ -65,7 +66,7 @@ export class SquaresApp {
         this.fluidBinder.defineRepresentation("view", "autofluid:squaresBoard-1.0.0", (property) => {
             const board =  new SquaresBoard([], this.container);
             // Rendering move button to move board's squares randomly
-            renderMoveButton(this.fluidBinder.getWorkspace(), board.wrapper, property.getId() as string);
+            renderMoveButton(this.fluidBinder.getWorkspace() as unknown as SharedPropertyTree, board.wrapper, property.getId() as string);
             return board;
         });
 
@@ -79,7 +80,7 @@ export class SquaresApp {
 
                 this.fluidBinder.requestChangesetPostProcessing(_.debounce(() => {
                     // TODO: clean getWorkspace
-                    this.fluidBinder.getWorkspace().commit();
+                    this.fluidBinder.getWorkspace()?.commit();
                 }, 20));
             },
                 values.length,
