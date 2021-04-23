@@ -344,10 +344,8 @@ export class OdspDocumentService implements IDocumentService {
     ): Promise<IDocumentDeltaConnection> {
         const connectWithNonAfd = async () => {
             const startTime = performance.now();
-            // pushV2 websocket urls will contain pushf
-            const pushV2 = nonAfdUrl.includes("pushf");
             try {
-                const connection = await OdspDocumentDeltaConnection.create(
+                return await OdspDocumentDeltaConnection.create(
                     tenantId,
                     documentId,
                     token,
@@ -358,13 +356,6 @@ export class OdspDocumentService implements IDocumentService {
                     60000,
                     this.epochTracker,
                 );
-                const endTime = performance.now();
-                this.logger.sendPerformanceEvent({
-                    eventName: "NonAfdConnectionSuccess",
-                    duration: endTime - startTime,
-                    pushV2,
-                });
-                return connection;
             } catch (connectionError) {
                 const endTime = performance.now();
                 // Log before throwing
@@ -374,7 +365,6 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "NonAfdConnectionFail",
                         canRetry,
                         duration: endTime - startTime,
-                        pushV2,
                     },
                     connectionError,
                 );

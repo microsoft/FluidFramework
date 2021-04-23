@@ -60,7 +60,11 @@ export async function fetchJoinSession(
                 );
 
                 // TODO SPO-specific telemetry
-                event.end(response.commonSpoHeaders);
+                event.end({
+                    ...response.commonSpoHeaders,
+                    // pushV2 websocket urls will contain pushf
+                    pushv2: response.content.deltaStreamSocketUrl.includes("pushf"),
+                });
 
                 if (response.content.runtimeTenantId && !response.content.tenantId) {
                     response.content.tenantId = response.content.runtimeTenantId;
