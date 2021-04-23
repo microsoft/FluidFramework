@@ -44,28 +44,29 @@ function genConfig(compatVersion: number): CompatConfig[] {
         }];
     }
 
-    const all = {
+    const allOld = {
         loader: compatVersion,
         driver: compatVersion,
         containerRuntime: compatVersion,
         dataRuntime: compatVersion,
     };
 
-    return [
-        // Future releases - split loader & driver into separate states
+    const configs: CompatConfig[] = [
         {
-            name: `compat N${compatVersion} - old loader/driver`,
+            name: `compat N${compatVersion} - old loader`,
             kind: CompatKind.Loader,
             compatVersion,
             loader: compatVersion,
+            // back-compat: remove driver in future releases
             driver: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new loader/driver`,
+            name: `compat N${compatVersion} - new loader`,
             kind: CompatKind.Loader,
             compatVersion,
-            ...all,
+            ...allOld,
             loader: undefined,
+            // back-compat: remove driver in future releases
             driver: undefined,
         },
         {
@@ -78,7 +79,7 @@ function genConfig(compatVersion: number): CompatConfig[] {
             name: `compat N${compatVersion} - new container runtime`,
             kind: CompatKind.ContainerRuntime,
             compatVersion,
-            ...all,
+            ...allOld,
             containerRuntime: undefined,
         },
         {
@@ -91,10 +92,29 @@ function genConfig(compatVersion: number): CompatConfig[] {
             name: `compat N${compatVersion} - new data runtime`,
             kind: CompatKind.LoaderAndContainerRuntime,
             compatVersion,
-            ...all,
+            ...allOld,
             dataRuntime: undefined,
         },
     ];
+
+    // back-compat: in future, make this unconditional
+    if (compatVersion === -1) {
+        configs.push({
+            name: `compat N${compatVersion} - old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
+            driver: undefined,
+        });
+    }
+
+    return configs;
 }
 
 /*
