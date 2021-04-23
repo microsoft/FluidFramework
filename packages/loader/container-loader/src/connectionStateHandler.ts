@@ -164,10 +164,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         const oldState = this._connectionState;
         this._connectionState = value;
         const quorum = this.handler.protocolHandler()?.quorum;
-        assert(quorum !== undefined, "Quorum should be defined here!");
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
-            client = quorum.getMember(this._clientId);
+            client = quorum?.getMember(this._clientId);
         }
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting,
