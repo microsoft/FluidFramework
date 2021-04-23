@@ -1,5 +1,5 @@
 # Property Inspector
-An app for inspecting documents created by propertyDDS using an efficient table-tree.
+An app for inspecting documents created by PropertyDDS using an efficient table-tree.
 
 ## Getting Started
 
