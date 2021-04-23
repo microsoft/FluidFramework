@@ -1990,7 +1990,7 @@ describe('DataBinder', function() {
       referenceModifySpy[2].mockClear();
     });
 
-    it('should handle an array of references to a property - broken in HFDM', function() {
+    it('should handle an array of references to a property - broken in the PropertyTree', function() {
       // Add the reference parent pset
       var referenceParentPSet = PropertyFactory.create(ReferenceParentTemplate.typeid, 'single');
 
@@ -2848,7 +2848,8 @@ describe('DataBinder', function() {
       var childPset1 = PropertyFactory.create(ChildTemplate.typeid, 'single');
       var childPset2 = PropertyFactory.create(ChildTemplate.typeid, 'single');
 
-      var invalidProperty = false; // we have to do this externally because HFDM would eat our exception from the spy
+      // we have to do this externally because the PropertyTree would eat our exception from the spy
+      var invalidProperty = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
       });
       var propertySpy = jest.fn(function(in_property) {
@@ -3046,7 +3047,7 @@ describe('DataBinder', function() {
       var refChangedError = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
-        // have to do it this way because HFDM swallows exceptions in callbacks :(
+        // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
         if (prop) {
           if (!PropertyFactory.instanceOf(prop, 'String', 'single')) {
             refChangedError = true;
@@ -3560,7 +3561,7 @@ describe('DataBinder', function() {
       var refChangedError = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
-        // have to do it this way because HFDM swallows exceptions in callbacks :(
+        // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
         if (prop) {
           if (!PropertyFactory.instanceOf(prop, 'String', 'single')) {
             refChangedError = true;
@@ -3661,7 +3662,7 @@ describe('DataBinder', function() {
       var refChangedError = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
-        // have to do it this way because HFDM swallows exceptions in callbacks :(
+        // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
         if (prop) {
           if (!PropertyFactory.instanceOf(prop, 'String', 'single')) {
             refChangedError = true;
@@ -4069,7 +4070,7 @@ describe('DataBinder', function() {
       var refChangedError = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
-        // have to do it this way because HFDM swallows exceptions in callbacks :(
+        // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
         if (prop) {
           if (!PropertyFactory.instanceOf(prop, 'String', 'single')) {
             refChangedError = true;
@@ -4132,7 +4133,7 @@ describe('DataBinder', function() {
       var refChangedError = false;
       var referenceChangedSpy = jest.fn(function(in_referenceChangedContext) {
         var prop = in_referenceChangedContext.getProperty();
-        // have to do it this way because HFDM swallows exceptions in callbacks :(
+        // have to do it this way because the PropertyTree swallows exceptions in callbacks :(
         if (prop) {
           if (!PropertyFactory.instanceOf(prop, 'String', 'single')) {
             refChangedError = true;

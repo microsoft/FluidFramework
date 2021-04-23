@@ -520,7 +520,7 @@ export const singlePropertyTableRow = (parentData: BaseProxifiedProperty, proper
   const parentIsConstant = !!options.parentIsConstant;
   const parentProperty = parentData.getProperty();
   let property;
-  // when we try to access an non-existing element of an array, hfdm 'get' method throws which causes app crash
+  // when we try to access an non-existing element of an array, the 'get' method throws which causes app crash
   try {
     property = (parentProperty as ContainerProperty).get(propertyId);
   } catch {
@@ -536,7 +536,7 @@ export const singlePropertyTableRow = (parentData: BaseProxifiedProperty, proper
 
   let determinedData = parentData[propertyId];
   // Show a value only if the typeid of the property is primitive
-  // Use the HFDM PropertyProxy's caret syntax to show the string representation of properties that support it.
+  // Use the PropertyProxy's caret syntax to show the string representation of properties that support it.
   const determinedValue = getPropertyValue(parentData, propertyId, currentContext, currentTypeid, followReferences);
   if (isReferenceProperty(property) && !followReferences) {
     determinedData = undefined;
@@ -597,7 +597,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   const collectionProperty = collectionPropertyProxy.getProperty() as ContainerProperty;
   let propertyProxy: BaseProxifiedProperty | undefined;
   let prop;
-  // when we try to access an non-existing element of an array, hfdm 'get' method throws which causes app crash
+  // when we try to access an non-existing element of an array, the 'get' method throws which causes app crash
   try {
     prop = (collectionProperty as ContainerProperty).get(propertyId);
   } catch {

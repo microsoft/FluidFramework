@@ -1097,7 +1097,7 @@ describe('DataBinder.registerOnPath()', function() {
       // remove below the highest reference
       nestedArray.remove(4);
       // remove from the array before the path callback -> should throw
-      // TODO: temporaily disabled because HFDM (at least 3.0.0-alpha-36) catches all exceptions
+      // TODO: temporaily disabled because the DDS catches all exceptions
       // TODO so we don't have a chance of testing that here... :(
       //        (function() { nestedArray.remove(0); }).should.throw(Error);
     });
@@ -1144,7 +1144,7 @@ describe('DataBinder.registerOnPath()', function() {
       expect(pathSpy2).toHaveBeenCalledTimes(1);
       pathSpy2.mockClear();
       // remove an element below the property that corresponds to pathSpy -> should throw
-      // TODO: temporaily disabled because HFDM (at least 3.0.0-alpha-36) catches all exceptions
+      // TODO: temporaily disabled because the DDS catches all exceptions
       // TODO so we don't have a chance of testing that here... :(
       // TODO: this does not throw anymore, to be investigated
       // (function() { workspace.root.get(['child1', 'childArray']).remove(2); }).should.throw(Error);

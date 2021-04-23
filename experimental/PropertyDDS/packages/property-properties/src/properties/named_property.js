@@ -62,31 +62,10 @@ NamedProperty.prototype.getGuid = function() {
 // THIS IS DISABLED FOR THE MOMENT, UNTIL WE BETTER UNDERSTAND HOW REFERENCES WORK IN FLUID
 /**
  * Return the URN for this named property
- * urn:adsk.hfdm${env}:hfdm.named-property:${repoGuid}/${branchGuid}:${propertyGuid}
  * @return {string} The URN
  */
 /*NamedProperty.prototype.getUrn = function() {
-  const workspace = this.getWorkspace();
-  let environment,
-      repositoryGuid,
-      branchGuid;
 
-  if (workspace) {
-    const hfdm = workspace.getHfdm();
-    if (hfdm) {
-      environment = hfdm.getEnvironment();
-    }
-    const activeRepository = workspace.getActiveRepository();
-    if (activeRepository) {
-      repositoryGuid = activeRepository.getGuid();
-    }
-    const activeBranch = workspace.getActiveBranch();
-    if (activeBranch) {
-      branchGuid = activeBranch.getGuid();
-    }
-  }
-
-  return UrnUtils.getHFDMPropertyUrn(environment, repositoryGuid, branchGuid, this.getGuid());
 };*/
 
 module.exports = NamedProperty;

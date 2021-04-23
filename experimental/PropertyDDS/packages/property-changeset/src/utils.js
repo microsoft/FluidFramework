@@ -18,7 +18,6 @@ const ArrayChangeSetIterator = require('./changeset_operations/array_changeset_i
  * @alias property-changeset.Utils
  * @class
  * @protected
- * @category HFDM
  */
 var Utils = {};
 

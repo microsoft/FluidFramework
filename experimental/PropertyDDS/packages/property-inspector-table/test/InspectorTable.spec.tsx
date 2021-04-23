@@ -878,7 +878,7 @@ describe('InspectorTable', () => {
         });
       });
 
-      // TODO: skipping maps since HFDM skd doesn't support it
+      // TODO: skipping maps since the PropertyTree doesn't support it
       const inlineEnumTests = {
         array: { args: ['array', [1]], path: ['0'], collectionKey: 0 },
         // map: {args: ['map', {test: 1}], path: ['test'], collectionKey: 'test'},

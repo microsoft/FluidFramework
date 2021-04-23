@@ -24,7 +24,7 @@ const createSetIterator = (target) => function* () {
 };
 
 /**
- * ComponentSet extends Set in such a way that a referenced HFDM {@link external:SetProperty SetProperty}
+ * ComponentSet extends Set in such a way that a referenced {@link external:SetProperty SetProperty}
  * can be modified and accessed directly.
  * @extends Set
  * @hidden
@@ -148,7 +148,7 @@ class ComponentSet extends Set {
    * @return {String} The guid of the passed {@link external:NamedProperty NamedProperty}.
    */
   _getGuid(value) {
-    // HFDM set uses the guid field of NamedProperty for equality
+    // The set property uses the guid field of NamedProperty for equality
     let guid = value.guid;
     // It might be that the user inserts a value ist not proxied
     if (!guid) {

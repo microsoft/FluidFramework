@@ -11,7 +11,7 @@
  * is. For this the volatile object must implement the triggering – as it would do
  * with EventEmitter, and the receiving end has to register with Core.Events singleton
  *
- * NOTE: The class is named "HfdmEventEmitter" and not simply "EventEmitter" because
+ * NOTE: The class is named "PropertyTreeEventEmitter" and not simply "EventEmitter" because
  * jsdoc seems to be having issue generating the documentation properly when the
  * class has a named which is already part of the NodeJS language. However the
  * documentation uses "EventEmitter" and "property-common.Events.EventEmitter" because
@@ -70,7 +70,7 @@
    *
    * @alias property-common.Events.EventEmitter
    */
-  var HfdmEventEmitter = function() {
+  var PropertyTreeEventEmitter = function() {
     this._events = this._events || {};
     this._maxListeners = this._maxListeners || undefined;
 
@@ -83,17 +83,17 @@
   };
 
   // Backwards-compat with node 0.10.x
-  HfdmEventEmitter.EventEmitter = HfdmEventEmitter;
+  PropertyTreeEventEmitter.EventEmitter = PropertyTreeEventEmitter;
 
-  HfdmEventEmitter.prototype._events = undefined;
-  HfdmEventEmitter.prototype._maxListeners = undefined;
+  PropertyTreeEventEmitter.prototype._events = undefined;
+  PropertyTreeEventEmitter.prototype._maxListeners = undefined;
 
   /**
    * By default EventEmitters will print a warning if more than 10 listeners are
    * added to it. This is a useful default which helps finding memory leaks.
    * @type {Number}
    */
-  HfdmEventEmitter.defaultMaxListeners = 10;
+  PropertyTreeEventEmitter.defaultMaxListeners = 10;
 
   /**
    * Increment the maximum number of listeners an EventEmitter instance can
@@ -101,7 +101,7 @@
    * @param  {number} n Maximum number of listeners.
    * @return {property-common.Events.EventEmitter} This object.
    */
-  HfdmEventEmitter.prototype.setMaxListeners = function(n) {
+  PropertyTreeEventEmitter.prototype.setMaxListeners = function(n) {
     if (!isNumber(n) || n < 0 || isNaN(n)) {
       throw new TypeError('n must be a positive number');
     }
@@ -121,7 +121,7 @@
    * @param  {string} type A string representing the type of event to emit.
    * @return {boolean}     Returns true if the event had listeners, false otherwise.
    */
-  HfdmEventEmitter.prototype.emit = function(type) {
+  PropertyTreeEventEmitter.prototype.emit = function(type) {
     var er, handler, len, args, i, listeners;
 
     if (!this._events) {
@@ -185,7 +185,7 @@
    *   is emitted.
    * @return {property-common.Events.EventEmitter} This object.
    */
-  HfdmEventEmitter.prototype.addListener = function(type, listener) {
+  PropertyTreeEventEmitter.prototype.addListener = function(type, listener) {
     var m;
 
     if (!isFunction(listener)) {
@@ -218,7 +218,7 @@
     // Check for listener leak
     if (isObject(this._events[type]) && !this._events[type].warned) {
       if (isUndefined(this._maxListeners)) {
-        m = HfdmEventEmitter.defaultMaxListeners;
+        m = PropertyTreeEventEmitter.defaultMaxListeners;
       } else {
         m = this._maxListeners;
       }
@@ -248,7 +248,7 @@
    * @method on
    * @see property-common.Events.EventEmitter#addListener
    */
-  HfdmEventEmitter.prototype.on = HfdmEventEmitter.prototype.addListener;
+  PropertyTreeEventEmitter.prototype.on = PropertyTreeEventEmitter.prototype.addListener;
 
   /**
    * Add a temporary listener for a given type of event. This listener will be
@@ -262,7 +262,7 @@
    *   afterward.
    * @return {property-common.Events.EventEmitter} This object.
    */
-  HfdmEventEmitter.prototype.once = function(type, listener) {
+  PropertyTreeEventEmitter.prototype.once = function(type, listener) {
     if (!isFunction(listener)) {
       throw new TypeError('listener must be a function');
     }
@@ -295,7 +295,7 @@
    *   listening for the "type" event.
    * @return {property-common.Events.EventEmitter} This object.
    */
-  HfdmEventEmitter.prototype.removeListener = function(type, listener) {
+  PropertyTreeEventEmitter.prototype.removeListener = function(type, listener) {
     var list, position, length, i;
 
     if (!isFunction(listener)) {
@@ -352,7 +352,7 @@
    * @method off
    * @see property-common.Events.EventEmitter#removeListener
    */
-  HfdmEventEmitter.prototype.off = HfdmEventEmitter.prototype.removeListener;
+  PropertyTreeEventEmitter.prototype.off = PropertyTreeEventEmitter.prototype.removeListener;
 
   /**
    * Remove all listener for a given type of event.
@@ -361,7 +361,7 @@
    *   listener was attached.
    * @return {property-common.Events.EventEmitter} This object.
    */
-  HfdmEventEmitter.prototype.removeAllListeners = function(type) {
+  PropertyTreeEventEmitter.prototype.removeAllListeners = function(type) {
     var key, listeners;
 
     if (!this._events) {
@@ -416,7 +416,7 @@
    *   want to get the list of listeners.
    * @return {Array.<function>} An array of listeners.
    */
-  HfdmEventEmitter.prototype.listeners = function(type) {
+  PropertyTreeEventEmitter.prototype.listeners = function(type) {
     var ret;
     if (!this._events || !this._events[type]) {
       ret = [];
@@ -435,7 +435,7 @@
    *   want to get the number of listeners.
    * @return {number} The number of listeners
    */
-  HfdmEventEmitter.prototype.listenerCount = function(type) {
+  PropertyTreeEventEmitter.prototype.listenerCount = function(type) {
     if (this._events) {
       var evlistener = this._events[type];
 
@@ -457,7 +457,7 @@
    *   want to get the number of listeners.
    * @return {number} The number of listeners
    */
-  HfdmEventEmitter.listenerCount = function(emitter, type) {
+  PropertyTreeEventEmitter.listenerCount = function(emitter, type) {
     return emitter.listenerCount(type);
   };
 
@@ -469,7 +469,7 @@
    *    or ( if necessary ) an Array containing all the arguments to pass along to
    *    the listener.
    */
-  HfdmEventEmitter.prototype.trigger = function( in_event, in_caller, in_argsArr ) {
+  PropertyTreeEventEmitter.prototype.trigger = function( in_event, in_caller, in_argsArr ) {
     var listeners = this.listeners(in_event);
     if (listeners.length > 0) {
 
@@ -491,7 +491,7 @@
    * @return {string} Unique key associated with the registration. This key
    * should be given to the unregister() method
    */
-  HfdmEventEmitter.prototype.register = function( in_event, in_cb ) {
+  PropertyTreeEventEmitter.prototype.register = function( in_event, in_cb ) {
     var key = generateGUID();
     this._keyToFunctionMap[key] = in_cb;
 
@@ -506,7 +506,7 @@
    * @param {string} in_key key given by .register
    * @return {boolean} true iff the callback was unregistered
    */
-  HfdmEventEmitter.prototype.unregister = function( in_event, in_key ) {
+  PropertyTreeEventEmitter.prototype.unregister = function( in_event, in_key ) {
     var callback = this._keyToFunctionMap[in_key];
 
     if (callback) {
@@ -526,22 +526,22 @@
    * @param {function} in_constructor The object we want to transform into an emitter.
    * @return {function} the constructor passed in
    */
-  HfdmEventEmitter.makeEventEmitter = function(in_constructor) {
-    in_constructor.prototype.setMaxListeners = HfdmEventEmitter.prototype.setMaxListeners;
-    in_constructor.prototype.addListener = HfdmEventEmitter.prototype.addListener;
-    in_constructor.prototype.on = HfdmEventEmitter.prototype.on;
-    in_constructor.prototype.once = HfdmEventEmitter.prototype.once;
-    in_constructor.prototype.removeListener = HfdmEventEmitter.prototype.removeListener;
-    in_constructor.prototype.off = HfdmEventEmitter.prototype.off;
-    in_constructor.prototype.removeAllListeners = HfdmEventEmitter.prototype.removeAllListeners;
-    in_constructor.prototype.listeners = HfdmEventEmitter.prototype.listeners;
-    in_constructor.prototype.emit = HfdmEventEmitter.prototype.emit;
-    in_constructor.prototype.trigger = HfdmEventEmitter.prototype.trigger;
-    in_constructor.prototype.listenerCount = HfdmEventEmitter.prototype.listenerCount;
-    in_constructor.prototype.register = HfdmEventEmitter.prototype.register;
-    in_constructor.prototype.unregister = HfdmEventEmitter.prototype.unregister;
+  PropertyTreeEventEmitter.makeEventEmitter = function(in_constructor) {
+    in_constructor.prototype.setMaxListeners = PropertyTreeEventEmitter.prototype.setMaxListeners;
+    in_constructor.prototype.addListener = PropertyTreeEventEmitter.prototype.addListener;
+    in_constructor.prototype.on = PropertyTreeEventEmitter.prototype.on;
+    in_constructor.prototype.once = PropertyTreeEventEmitter.prototype.once;
+    in_constructor.prototype.removeListener = PropertyTreeEventEmitter.prototype.removeListener;
+    in_constructor.prototype.off = PropertyTreeEventEmitter.prototype.off;
+    in_constructor.prototype.removeAllListeners = PropertyTreeEventEmitter.prototype.removeAllListeners;
+    in_constructor.prototype.listeners = PropertyTreeEventEmitter.prototype.listeners;
+    in_constructor.prototype.emit = PropertyTreeEventEmitter.prototype.emit;
+    in_constructor.prototype.trigger = PropertyTreeEventEmitter.prototype.trigger;
+    in_constructor.prototype.listenerCount = PropertyTreeEventEmitter.prototype.listenerCount;
+    in_constructor.prototype.register = PropertyTreeEventEmitter.prototype.register;
+    in_constructor.prototype.unregister = PropertyTreeEventEmitter.prototype.unregister;
     return in_constructor;
   };
-  module.exports = { Singleton: new HfdmEventEmitter(), EventEmitter: HfdmEventEmitter };
+  module.exports = { Singleton: new PropertyTreeEventEmitter(), EventEmitter: PropertyTreeEventEmitter };
 
 })();

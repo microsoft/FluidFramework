@@ -282,6 +282,7 @@
 
     describe('Commit', function() {
       /*it('should not appear in the changeset when committing a change on its sibling', function() {
+        // TODO: This test cannot be implemented in Fluid
         let cm = new HFDM();
         let workspace = cm.createWorkspace();
         let checkoutView = workspace._getCheckoutView();

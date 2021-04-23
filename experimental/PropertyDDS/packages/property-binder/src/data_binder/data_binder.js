@@ -1316,7 +1316,7 @@ class DataBinder {
           childProperty = property.get(tokenizedPath[i], RESOLVE_ALWAYS) ||
             property.get(tokenizedPath[i], RESOLVE_NEVER);
         } catch (error) {
-          // Ignore. Why does HFDM throw when you access arrays out of bounds?
+          // Ignore. Why does the PropertyTree throw when you access arrays out of bounds?
           // It doesn't for any other invalid access
         }
         if (!childProperty) {
@@ -2276,16 +2276,16 @@ class DataBinder {
 
   /**
    * In callbacks such as registerOnPath, with DataBinder or DataBindings, the callbacks are being done
-   * while processing the current HFDM change set. Currently, is is prohibited to do modifications to
-   * HFDM during one such callback.
+   * while processing the current change set. Currently, is is prohibited to do modifications to
+   * the PropertyTree during one such callback.
    *
-   * If a change to HFDM is required in a callback, clients can use the ```requestChangesetPostProcessing```
+   * If a change to the PropertyTree is required in a callback, clients can use the ```requestChangesetPostProcessing```
    * function to call the provided callback to be called after the current change set is processed.
    *
    * There is no guarantee on the order the callbacks will be called in.
    *
    * @param {function} in_callback - A post creation callback function for each data binding called
-   *   after the HFDM ChangeSet has been processed
+   *   after the ChangeSet has been processed
    * @param {Object} in_context - Optional value to be passed as
    *   the ```this``` parameter to the target function when the bound function is called
    * @public
@@ -2295,9 +2295,9 @@ class DataBinder {
   }
 
   /**
-   * Return the HFDM Workspace the DataBinder is currently attached to, or undefined if not attached.
+   * Return the Workspace the DataBinder is currently attached to, or undefined if not attached.
    *
-   * @return {Workspace|undefined} The HFDM Workspace the DataBinder is attached to.
+   * @return {Workspace|undefined} The Workspace the DataBinder is attached to.
    * @public
    */
   getWorkspace() {
@@ -2322,11 +2322,11 @@ class DataBinder {
    * // Register a generator for runtime representations for the Dog Property
    * myDataBinder.defineRepresentation('PETSTORE', 'Types:Dog-1.0.0', (property) => new DogRepresentation());
    *
-   * // Get an HFDM workspace and insert a new property
-   * const workspace = getHFDMWorkspace();
-   * myDataBinder.attachTo(workspace);
+   * // Get a ShartedProperty tree and insert a new property
+   * const propertyTree = getSharedPropertyTree();
+   * myDataBinder.attachTo(propertyTree);
    *
-   *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+   * propertyTree.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
    * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
@@ -2378,11 +2378,11 @@ class DataBinder {
    * // Register a generator for runtime representations for the Dog Property
    * myDataBinder.defineRepresentation('PETSTORE', 'Types:Dog-1.0.0', (property) => new DogRepresentation());
    *
-   * // Get an HFDM workspace and insert a new property
-   * const workspace = getHFDMWorkspace();
-   * myDataBinder.attachTo(workspace);
+   * // Get a ShartedProperty tree and insert a new property
+   * const propertyTree = getSharedPropertyTree();
+   * myDataBinder.attachTo(propertyTree);
    *
-   *workspace.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
+   * propertyTree.root.insert('Fido', PropertyFactory.create('Types:Dog-1.0.0', 'single'));
    *
    * // Request the runtime representation associated with the property
    * const fido = myDataBinder.getRepresentation(workspace.root.get('Fido'), 'PETSTORE');
@@ -2735,9 +2735,9 @@ class DataBinder {
    * another subsystem for a property P, a representation will be lazily instantiated, and therefore
    * associateRepresentation for property P will fail.
    *
-   * @param {BaseProperty} in_property - HFDM property with which we want to associate a representation.
+   * @param {BaseProperty} in_property - Property with which we want to associate a representation.
    * @param {string} in_bindingType - binding type of the representation. This allows multiple representations
-   *   to be associated with a single HFDM property.
+   *   to be associated with a single property.
    * @param {Object} in_representation - the representation to associate with this property.
    *
    * @throws If not attached to a workspace

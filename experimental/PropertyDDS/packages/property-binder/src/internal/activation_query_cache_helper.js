@@ -174,7 +174,7 @@ export class ActivationQueryCacheHelper {
     const newInheritedTemplates = getLocalOrRemoteSchema(in_typeid, this._workspace);
     let inherited = (newInheritedTemplates && newInheritedTemplates.inherits) || [];
 
-    // The inherited entry may be a simple string (hole in the HFDM template validator? LYNXDEV-8894)
+    // The inherited entry may be a simple string (hole in the template validator?)
     if (!_.isArray(inherited)) {
       inherited = [inherited];
     }

@@ -53,7 +53,6 @@
      * Get all the objects we need in this test here.
      */
     before(function() {
-      //HFDM = include('property-properties.HFDM');
       PropertyFactory = require('../..').PropertyFactory;
       ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
       _ = require('lodash');
@@ -112,9 +111,6 @@
     });
 
     beforeEach(async function() {
-      /*hfdm = new HFDM();
-      workspace = hfdm.createWorkspace();
-      await workspace.initialize();*/
       root = PropertyFactory.create('NodeProperty');
     });
 

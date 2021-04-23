@@ -756,14 +756,14 @@ describe('DataBinder', function() {
       dataBinder.attachTo(workspace);
 
       // ctor inserts into the workspace -> should throw
-      expect(hadConsoleError()).toEqual(false); // throws inside a HFDM callback so we need to check for console errors
+      expect(hadConsoleError()).toEqual(false); // throws inside a callback so we need to check for console errors
       workspace.root.insert('node', PropertyFactory.create(ParentTemplate.typeid, 'single'));
       expect(hadConsoleError()).toEqual(true);
       clearConsoleError();
 
       workspace.root.insert('node2', PropertyFactory.create(ChildTemplate.typeid, 'single'));
       // callback inserts into the workspace -> should throw
-      expect(hadConsoleError()).toEqual(false); // throws inside a HFDM callback so we need to check for console errors
+      expect(hadConsoleError()).toEqual(false); // throws inside a callback so we need to check for console errors
       workspace.root.get('node2').get('text').setValue('new text');
       expect(hadConsoleError()).toEqual(true);
       clearConsoleError();
