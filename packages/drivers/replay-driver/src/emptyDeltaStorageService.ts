@@ -1,9 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { emptyMessageStream } from "@fluidframework/driver-utils";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**
@@ -12,7 +14,12 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
-        return { messages: [], partialResult: false };
+    public fetchMessages(
+        from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>
+    {
+        return emptyMessageStream;
     }
 }

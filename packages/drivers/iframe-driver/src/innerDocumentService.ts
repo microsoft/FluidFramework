@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -69,7 +69,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: async (from: number, to: number) => this.outerProxy.deltaStorage.get(from, to),
+            fetchMessages: (...args) => this.outerProxy.deltaStorage.fetchMessages(...args),
         };
     }
 

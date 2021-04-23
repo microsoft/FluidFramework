@@ -1,24 +1,27 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, OdspErrorType, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
+    snapshotKey,
     ICacheEntry,
     IEntry,
     IFileEntry,
-    IOdspCache,
     IPersistedCache,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
+import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
+import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
+import {
+    IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
-    snapshotKey,
  } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
 
@@ -59,7 +62,7 @@ export class EpochTracker implements IPersistedFileCache {
 
     // public for UT purposes only!
     public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal) {
-        assert(this._fluidEpoch === undefined, "epoch exists");
+        assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
         this._fluidEpoch = epoch;
 
         this.logger.sendTelemetryEvent(
@@ -80,7 +83,7 @@ export class EpochTracker implements IPersistedFileCache {
             if (value === undefined || value.version !== persistedCacheValueVersion) {
                 return undefined;
             }
-            assert(value.fluidEpoch !== undefined, "all entries have to have epoch");
+            assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
             if (this._fluidEpoch === undefined) {
                 this.setEpoch(value.fluidEpoch, true, "cache");
             } else if (this._fluidEpoch !== value.fluidEpoch) {
@@ -95,7 +98,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     public async put(entry: IEntry, value: any) {
-        assert(this._fluidEpoch !== undefined, "no epoch");
+        assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
         const data: IVersionedValueWithEpoch = {
             value,
             version: persistedCacheValueVersion,

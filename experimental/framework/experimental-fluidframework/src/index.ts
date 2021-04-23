@@ -1,8 +1,9 @@
-/* eslint-disable import/export */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable import/export */
 
 export * from  "./aqueduct";
 export * from  "./coreInterfaces";

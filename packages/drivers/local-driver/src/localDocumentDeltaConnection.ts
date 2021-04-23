@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,9 +16,23 @@ import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+/**
+ * Represents a connection to a stream of delta updates
+ */
 export class LocalDocumentDeltaConnection
     extends DocumentDeltaConnection
     implements IDocumentDeltaConnection {
+    /**
+     * Create a LocalDocumentDeltaConnection
+     * Handle initial messages, contents or signals if they were in queue
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id - document ID
+     * @param token - authorization token for storage service
+     * @param client - information about the client
+     * @param webSocketServer - web socket server to create connection
+     */
     public static async create(
         tenantId: string,
         id: string,

@@ -1,8 +1,9 @@
-/* eslint-disable max-len */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -10,10 +11,12 @@ import {
     createOdspNetworkError,
     fetchIncorrectResponse,
     invalidFileNameStatusCode,
-    OdspError,
-    OdspErrorType,
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
+import {
+    OdspError,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";

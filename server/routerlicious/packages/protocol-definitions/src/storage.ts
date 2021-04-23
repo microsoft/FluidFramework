@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -101,6 +101,8 @@ export interface ISnapshotTree {
     // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
+    // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeEx extends ISnapshotTree {

@@ -1,25 +1,27 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
-import { IOdspResolvedUrl } from "../contracts";
+import {
+    IOdspResolvedUrl,
+    ICacheEntry,
+    IEntry,
+    OdspErrorType,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     EpochTracker,
     IVersionedValueWithEpoch,
     persistedCacheValueVersion,
 } from "../epochTracker";
 import {
-    ICacheEntry,
-    IEntry,
     LocalPersistentCache,
  } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+ import { getHashedDocumentId } from "../odspPublicUtils";
+ import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
 

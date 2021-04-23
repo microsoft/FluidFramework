@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -108,7 +108,7 @@ function  validatePairsExhaustively<T>(
 
 describe("generatePairwiseOptions",()=>{
     it("SimpleOptions",()=>{
-        assert.strictEqual(simpleValues.length, 10, optionsToString(...simpleValues));
+        assert.strictEqual(simpleValues.length, 8, optionsToString(...simpleValues));
         for(const option of simpleValues) {
             validateSimpleOption(option);
         }
@@ -116,7 +116,7 @@ describe("generatePairwiseOptions",()=>{
     });
 
     it("ComplexOptions",()=>{
-        assert.strictEqual(complexValues.length, 30, optionsToString(...complexValues));
+        assert.strictEqual(complexValues.length, 24, optionsToString(...complexValues));
 
         for(const option of complexValues) {
             validateComplexOption(option);

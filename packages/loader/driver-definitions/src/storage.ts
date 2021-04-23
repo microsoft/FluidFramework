@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -49,8 +49,18 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult>;
+        from: number, // inclusive
+        to: number // exclusive
+    ): Promise<IDeltasFetchResult>;
+}
+
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
+
+/**
+ * Read interface for the Queue
+ */
+ export interface IStream<T> {
+    read(): Promise<IStreamResult<T>>;
 }
 
 /**
@@ -59,8 +69,16 @@ export interface IDeltaStorageService {
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param abortSignal - signal that aborts operation
+     * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-    get(from: number, to: number): Promise<IDeltasFetchResult>;
+     fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {

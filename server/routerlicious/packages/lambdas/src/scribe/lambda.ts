@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -134,18 +134,19 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
-                const lastSequenceNumber = this.pendingMessages.peekBack()?.sequenceNumber ?? this.sequenceNumber;
+                const lastProtocolHandlerSequenceNumber =
+                    this.pendingMessages.peekBack()?.sequenceNumber ?? this.protocolHandler.sequenceNumber;
 
                 // Handles a partial checkpoint case where messages were inserted into DB but checkpointing failed.
-                if (value.operation.sequenceNumber <= lastSequenceNumber) {
+                if (value.operation.sequenceNumber <= lastProtocolHandlerSequenceNumber) {
                     continue;
                 }
 
-                // Ensure sequence numbers are monotonically increasing
-                if (value.operation.sequenceNumber !== lastSequenceNumber + 1) {
+                // Ensure protocol handler sequence numbers are monotonically increasing
+                if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
                     // unexpected sequence number. if a pending message reader is available, ask for those ops
                     if (this.pendingMessageReader !== undefined) {
-                        const from = lastSequenceNumber + 1;
+                        const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
                         for (const additionalPendingMessage of additionalPendingMessages) {
@@ -164,7 +165,10 @@ export class ScribeLambda extends SequencedLambda {
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
                 this.pendingMessages.push(value.operation);
-                this.pendingCheckpointMessages.push(value);
+
+                if (this.serviceConfiguration.scribe.enablePendingCheckpointMessages) {
+                    this.pendingCheckpointMessages.push(value);
+                }
 
                 // Update the current sequence and min sequence numbers
                 const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
@@ -186,7 +190,7 @@ export class ScribeLambda extends SequencedLambda {
                     };
                     this.processFromPending(value.operation.referenceSequenceNumber);
 
-                    // Only process the op if the protocol state advances. This elimiates the corner case where we have
+                    // Only process the op if the protocol state advances. This eliminates the corner case where we have
                     // already captured this summary and are processing this message due to a replay of the stream.
                     if (this.protocolHead < this.protocolHandler.sequenceNumber) {
                         try {

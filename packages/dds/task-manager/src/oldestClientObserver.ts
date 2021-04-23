@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -93,7 +93,7 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
             return false;
         }
 
-        assert(this.containerRuntime.clientId !== undefined, "Client id should be set if connected");
+        assert(this.containerRuntime.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
 
         const selfSequencedClient = this.quorum.getMember(this.containerRuntime.clientId);
         // When in readonly mode our clientId will not be present in the quorum.

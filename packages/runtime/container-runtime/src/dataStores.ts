@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -43,7 +43,7 @@ import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
@@ -81,6 +81,7 @@ export class DataStores implements IDisposable {
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
+        private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -512,7 +513,10 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.options.runGCInTestMode, "Data stores should be deleted only in GC test mode");
+        assert(
+            this.runtimeOptions.gcOptions?.runGCInTestMode,
+            0x1df /* "Data stores should be deleted only in GC test mode" */,
+        );
         for (const route of unusedRoutes) {
             // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];

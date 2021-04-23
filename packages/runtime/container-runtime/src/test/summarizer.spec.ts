@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,7 +13,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
@@ -24,6 +24,7 @@ describe("Runtime", () => {
                 let runCount: number;
                 let clock: sinon.SinonFakeTimers;
                 let mockLogger: MockLogger;
+                let mockDeltaManager: MockDeltaManager;
                 let summaryCollection: SummaryCollection;
                 let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
@@ -49,13 +50,12 @@ describe("Runtime", () => {
                         timestamp,
                     };
                     summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
-                    summaryCollection.handleOp(op as ISequencedDocumentMessage);
+                    mockDeltaManager.emit("op", op);
                     await flushPromises();
                 }
 
                 function emitBroadcast() {
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({
+                    mockDeltaManager.emit("op",{
                         type: MessageType.Summarize,
                         clientId: summarizerClientId,
                         referenceSequenceNumber: lastRefSeq,
@@ -65,7 +65,7 @@ describe("Runtime", () => {
                             handle: "test-broadcast-handle",
                         },
                         timestamp: Date.now(),
-                    } as ISequencedDocumentMessage);
+                    });
                 }
 
                 async function emitAck(type: MessageType = MessageType.SummaryAck) {
@@ -76,8 +76,7 @@ describe("Runtime", () => {
                         handle: "test-ack-handle",
                         summaryProposal,
                     };
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
+                    mockDeltaManager.emit("op", { contents, type });
 
                     await flushPromises(); // let summarize run
                 }
@@ -97,7 +96,11 @@ describe("Runtime", () => {
                     runCount = 0;
                     lastRefSeq = 0;
                     mockLogger = new MockLogger();
-                    summaryCollection = new SummaryCollection(0, mockLogger);
+                    mockDeltaManager = new MockDeltaManager();
+                    summaryCollection = new SummaryCollection(
+                        mockDeltaManager,
+                        mockLogger,
+                        {});
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,

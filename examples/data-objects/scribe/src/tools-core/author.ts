@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -222,11 +222,11 @@ export async function typeFile(
                     metricsArray.push(metric);
                 });
             }
-            q.drain = () => {
+            q.drain(() => {
                 const now = Date.now();
                 metrics.time = now - startTime;
                 resolve(metricsArray[0]);
-            };
+            });
         });
     }
 }

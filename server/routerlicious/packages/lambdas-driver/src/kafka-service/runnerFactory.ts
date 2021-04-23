@@ -1,10 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory, IConsumer } from "@fluidframework/server-services-core";
-import { IResources, IRunner, IRunnerFactory } from "@fluidframework/server-services-utils";
+import {
+    IPartitionLambdaFactory,
+    IConsumer,
+    IResources,
+    IRunner,
+    IRunnerFactory,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { KafkaRunner } from "./runner";
 

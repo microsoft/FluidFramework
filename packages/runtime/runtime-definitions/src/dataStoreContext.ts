@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -56,10 +56,12 @@ export enum FlushMode {
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
-
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     (event: "leader" | "notleader", listener: () => void);
 }
 
@@ -227,7 +229,12 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    (event: "leader" | "notleader" | "attaching" | "attached", listener: () => void);
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    (event: "leader" | "notleader", listener: () => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "attaching" | "attached", listener: () => void);
 }
 
 /**
@@ -260,6 +267,9 @@ export interface IFluidDataStoreContext extends
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,14 +9,12 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { connectEventName, ConnectionState } from "./container";
+import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
     protocolHandler: () => ProtocolOpHandler | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-    propagateConnectionState: () => void,
-    isContainerLoaded: () => boolean,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
 }
@@ -28,11 +26,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
 /**
  * Events emitted by the ConnectionStateHandler.
  */
- export interface IConnectionStateHandlerEvents extends IEvent {
-    /**
-     * @param opsBehind - number of ops this client is behind (if present).
-     */
-    (event: "connect", listener: (opsBehind?: number) => void);
+export interface IConnectionStateHandlerEvents extends IEvent {
+    (event: "connectionStateChanged", listener: () => void);
 }
 
 export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
@@ -156,8 +151,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        this.emit(connectEventName, opsBehind);
-
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
@@ -230,9 +223,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             }
         }
 
-        if (this.handler.isContainerLoaded()) {
-            this.handler.propagateConnectionState();
-        }
+        this.emit("connectionStateChanged");
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);

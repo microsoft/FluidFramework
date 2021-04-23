@@ -1,7 +1,5 @@
-#-------------------------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
-#-------------------------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
 
 FROM node:12.13.1
 
@@ -10,12 +8,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Configure apt and install packages
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends apt-utils 2>&1 \ 
+    && apt-get -y install --no-install-recommends apt-utils 2>&1 \
     #
     # Verify git and needed tools are installed
     && apt-get install -y git procps \
     #
-    # Remove outdated yarn from /opt and install via package 
+    # Remove outdated yarn from /opt and install via package
     # so it can be easily updated via apt-get upgrade yarn
     && rm -rf /opt/yarn-* \
     && rm -f /usr/local/bin/yarn \
@@ -32,7 +30,7 @@ RUN apt-get update \
     # zsh
     # https://jilles.me/badassify-your-terminal-and-shell/
     # https://billgrant.io/post/2019-05-05-vsremote/
-    && apt-get install -y zsh \ 
+    && apt-get install -y zsh \
         wget \
         vim \
     #

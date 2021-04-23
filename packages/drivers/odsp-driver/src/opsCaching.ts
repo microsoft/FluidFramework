@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 
 // ISequencedDocumentMessage
 export interface IMessage {
@@ -110,9 +111,10 @@ export class OpsCache {
     public async get(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
         let batchNumber = this.getBatchNumber(from + 1);
+        const start = performance.now();
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const res = await this.cache.read(batchNumber.toString());
+            const res = await this.cache.read(`${this.batchSize}_${batchNumber}`);
             if (res === undefined) {
                 break;
             }
@@ -144,6 +146,7 @@ export class OpsCache {
                 from,
                 to,
                 length: messages.length,
+                duration: performance.now() - start,
             });
         }
         return messages;
@@ -152,7 +155,7 @@ export class OpsCache {
     protected write(batchNumber: number, payload: IBatch) {
         // Errors are caught and logged by PersistedCacheWithErrorHandling that sits
         // in the adapter chain of cache adapters
-        this.cache.write(batchNumber.toString(), JSON.stringify(payload.batchData)).catch(() => {
+        this.cache.write(`${this.batchSize}_${batchNumber}`, JSON.stringify(payload.batchData)).catch(() => {
             this.totalOpsToCache = 0;
         });
     }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -51,9 +51,15 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
         });
+        it("creates retriable error on Network Error", () => {
+            const message = "Network Error";
+            const error = createR11sNetworkError(message);
+            assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
+            assert.strictEqual(error.canRetry, true);
+        });
         it("creates retriable error on anything else with retryAfter", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, undefined, 100);
+            const error = createR11sNetworkError(message, 400, 100);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as any).retryAfterSeconds, 100);
@@ -63,6 +69,9 @@ describe("ErrorUtils", () => {
             const error = createR11sNetworkError(message);
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, false);
+            const error2 = createR11sNetworkError(message, 400);
+            assert.strictEqual(error2.errorType, DriverErrorType.genericNetworkError);
+            assert.strictEqual(error2.canRetry, false);
         });
     });
     describe("throwR11sNetworkError()", () => {
@@ -121,10 +130,19 @@ describe("ErrorUtils", () => {
                 canRetry: true,
             });
         });
+        it("throws retriable error on Network Error", () => {
+            const message = "Network Error";
+            assert.throws(() => {
+                throwR11sNetworkError(message);
+            }, {
+                errorType: DriverErrorType.genericNetworkError,
+                canRetry: true,
+            });
+        });
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, undefined, 200);
+                throwR11sNetworkError(message, 400, 200);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -135,6 +153,12 @@ describe("ErrorUtils", () => {
             const message = "test error";
             assert.throws(() => {
                 throwR11sNetworkError(message);
+            }, {
+                errorType: DriverErrorType.genericNetworkError,
+                canRetry: false,
+            });
+            assert.throws(() => {
+                throwR11sNetworkError(message, 400);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: false,

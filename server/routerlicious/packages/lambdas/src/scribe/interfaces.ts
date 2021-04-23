@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -63,7 +63,7 @@ export interface IPendingMessageReader {
      * @param from Starting sequence number (inclusive)
      * @param to End sequence number (inclusive)
      */
-    readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
+     readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 /**

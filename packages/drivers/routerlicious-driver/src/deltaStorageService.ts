@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,9 +7,11 @@ import {
     IDeltaStorageService,
     IDocumentDeltaStorageService,
     IDeltasFetchResult,
+    IStream,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ITokenProvider } from "./tokens";
@@ -31,30 +33,43 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
+    fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>
+    {
+        if (cachedOnly) {
+            return emptyMessageStream;
+        }
+        return requestOps(
+            this.getCore.bind(this),
+            // Staging: starting with no concurrency, listening for feedback first.
+            // In future releases we will switch to actual concurrency
+            1, // concurrency
+            from, // inclusive
+            to, // exclusive
+            MaxBatchDeltas,
+            new TelemetryNullLogger(),
+            abortSignal,
+        );
+    }
+
+    private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
         const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
             (this.documentStorageService, this.logtailSha) : [];
 
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
             const messages = opsFromLogTail.filter((op) =>
-                op.sequenceNumber > from,
+                op.sequenceNumber >= from,
             );
             if (messages.length > 0) {
                 return { messages, partialResult: true };
             }
         }
 
-        const length = to - from - 1; // to & from are exclusive!
-        const batchLength = Math.min(MaxBatchDeltas, length); // limit number of ops we retrieve at once
-        const result = await this.storageService.get(this.tenantId, this.id, from, from + batchLength + 1);
-
-        // if we got full batch, and did not fully satisfy original request, then there is likely more...
-        // Note that it's not disallowed to return more ops than requested!
-        if (result.messages.length >= batchLength && result.messages.length !== length) {
-            result.partialResult = true;
-        }
-        return result;
+        return this.storageService.get(this.tenantId, this.id, from, to);
     }
 }
 
@@ -71,8 +86,10 @@ export class DeltaStorageService implements IDeltaStorageService {
     public async get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult> {
+        from: number, // inclusive
+        to: number, // exclusive
+        ): Promise<IDeltasFetchResult>
+    {
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId, id, this.tokenProvider, this.logger);
         const ops = await PerformanceEvent.timedExecAsync(
@@ -83,7 +100,9 @@ export class DeltaStorageService implements IDeltaStorageService {
                 to,
             },
             async (event) => {
-                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(this.url, { from, to });
+                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(
+                    this.url,
+                    { from: from - 1, to });
                 event.end({
                     count: response.length,
                 });

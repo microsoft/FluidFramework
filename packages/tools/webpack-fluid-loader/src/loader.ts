@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -62,6 +62,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
+    tinyliciousPort?: number;
 }
 
 export interface IOdspRouteOptions extends IBaseRouteOptions {

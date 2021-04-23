@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,7 +13,7 @@ import { IDiceRollerController } from "./controller";
 export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
+    div.appendChild(wrapperDiv);
 
     const diceCharDiv = document.createElement("div");
     diceCharDiv.style.fontSize = "200px";

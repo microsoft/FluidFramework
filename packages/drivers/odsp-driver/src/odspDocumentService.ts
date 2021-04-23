@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -17,7 +17,9 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+} from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -26,18 +28,21 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IOdspResolvedUrl,
+    TokenFetchOptions,
+    IEntry,
     HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions";
+import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { IEntry, IOdspCache } from "./odspCache";
-import { OdspDeltaStorageService } from "./odspDeltaStorageService";
+import { IOdspCache } from "./odspCache";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 
@@ -215,55 +220,30 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const urlProvider = async () => {
-            const websocketEndpoint = await this.joinSession();
-            return websocketEndpoint.deltaStorageUrl;
-        };
-
-        let snapshotOps = this.storageManager?.ops;
+        const snapshotOps = this.storageManager?.ops ?? [];
         const service = new OdspDeltaStorageService(
-            urlProvider,
+            this.odspResolvedUrl.endpoints.deltaStorageUrl,
             this.getStorageToken,
             this.epochTracker,
             this.logger,
         );
 
-        let missed = false;
-        return {
-            get: async (from: number, to: number) => {
-                if (snapshotOps !== undefined && snapshotOps.length !== 0) {
-                    const messages = snapshotOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
-                    snapshotOps = undefined;
-                    if (messages.length > 0 && messages[0].sequenceNumber === from + 1) {
-                        // Consider not caching these ops as they will be cached as part of snapshot cache entry
-                        this.opsReceived(messages);
-                        return { messages, partialResult: true };
-                    } else {
-                        this.logger.sendErrorEvent({
-                            eventName: "SnapshotOpsNotUsed",
-                            length: messages.length,
-                            first: messages[0].sequenceNumber,
-                            from,
-                            to,
-                        });
-                    }
-                }
+        // batch size, please see issue #5211 for data around batch sizing
+        const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+        const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
 
-                // We always write ops sequentially. Once there is a miss, stop consulting cache.
-                // This saves a bit of processing time
-                if (!missed) {
-                    const messagesFromCache = await this.opsCache?.get(from, to);
-                    if (messagesFromCache !== undefined && messagesFromCache.length !== 0) {
-                        return { messages: messagesFromCache as ISequencedDocumentMessage[], partialResult: true };
-                    }
-                    missed = true;
-                }
-
-                const result = await service.get(from, to);
-                this.opsReceived(result.messages);
-                return result;
+        return new OdspDeltaStorageWithCache(
+            snapshotOps.map((op) => op.op),
+            this.logger,
+            batchSize,
+            concurrency,
+            async (from, to) => service.get(from, to),
+            async (from, to) => {
+                const res = await this.opsCache?.get(from, to);
+                return res as ISequencedDocumentMessage[] ?? [];
             },
-        };
+            (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
+        );
     }
 
     /**

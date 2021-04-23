@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -25,7 +25,7 @@ import {
     LoaderHeader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Deferred, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -52,17 +52,9 @@ function canUseCache(request: IRequest): boolean {
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
-    // Because the loader is passed to the container during construction we need to resolve the target container
-    // after construction.
-    private readonly containerDeferred = new Deferred<Container>();
-
-    /**
-     * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
-     * to be fetched again.
-     */
     constructor(
         private readonly loader: ILoader,
-        private readonly containerUrl: () => string | undefined,
+        private readonly container: Container,
     ) {
         super();
     }
@@ -71,33 +63,34 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
-            // If no headers are set that require a reload make use of the same object
-            const container = await this.containerDeferred.promise;
-            return container;
+            if (canUseCache(request)) {
+                return this.container;
+            } else {
+                const resolvedUrl = this.container.resolvedUrl;
+                ensureFluidResolvedUrl(resolvedUrl);
+                const container = await Container.load(
+                    this.loader as Loader,
+                    {
+                        canReconnect: request.headers?.[LoaderHeader.reconnect],
+                        clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                        resolvedUrl: {...resolvedUrl},
+                        version: request.headers?.[LoaderHeader.version],
+                        loadMode: request.headers?.[LoaderHeader.loadMode],
+                    },
+                );
+                return container;
+            }
         }
 
         return this.loader.resolve(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const containerUrl = this.containerUrl();
         if (request.url.startsWith("/")) {
-            let container: IContainer;
-            if (canUseCache(request)) {
-                container = await this.containerDeferred.promise;
-            } else if (containerUrl === undefined) {
-                throw new Error("Container url is not provided");
-            } else {
-                container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
-            }
+            const container = await this.resolve(request);
             return container.request(request);
         }
-
         return this.loader.request(request);
-    }
-
-    public resolveContainer(container: Container) {
-        this.containerDeferred.resolve(container);
     }
 }
 
@@ -308,9 +301,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.rehydrateDetachedFromSnapshot(
-            this,
-            JSON.parse(snapshot));
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
@@ -460,17 +451,14 @@ export class Loader extends EventEmitter implements IHostLoader {
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,
     ): Promise<Container> {
-        const docId = decodeURI(encodedDocId);
         return Container.load(
             this,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                containerUrl: request.url,
-                docId,
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version],
-                pause: request.headers?.[LoaderHeader.pause],
+                loadMode: request.headers?.[LoaderHeader.loadMode],
             },
             pendingLocalState,
         );

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,6 +21,9 @@ export interface IDeliServerConfiguration {
 export interface IScribeServerConfiguration {
     // Enables generating service summaries
     generateServiceSummary: boolean;
+
+    // Enables including pending messages in checkpoints
+    enablePendingCheckpointMessages: boolean;
 
     // Enables clearing the checkpoint cache after a service summary is created
     clearCacheAfterServiceSummary: boolean;
@@ -79,6 +82,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     scribe: {
         generateServiceSummary: true,
+        enablePendingCheckpointMessages: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
     },

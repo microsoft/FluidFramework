@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,7 +8,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { SharedOT } from "@fluid-experimental/ot";
+import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -18,19 +18,19 @@ import { AppState } from "./state";
 
 export class Bubblebench extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-experimental/bubblebench-ot"; }
-    private maybeTree?: SharedOT = undefined;
+    private maybeTree?: SharedJson1 = undefined;
     private maybeAppState?: AppState = undefined;
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
-        const tree = this.maybeTree = SharedOT.create(this.runtime);
+        const tree = this.maybeTree = SharedJson1.create(this.runtime);
         tree.replace([], tree.get(), { clients: [] });
         this.root.set("tree", this.maybeTree.handle);
     }
 
     protected async initializingFromExisting() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.maybeTree = await this.root.get<IFluidHandle<SharedOT>>("tree")!.get();
+        this.maybeTree = await this.root.get<IFluidHandle<SharedJson1>>("tree")!.get();
     }
 
     protected async hasInitialized() {
@@ -78,6 +78,6 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
-    [SharedOT.getFactory()],
+    [SharedJson1.getFactory()],
     {},
 );

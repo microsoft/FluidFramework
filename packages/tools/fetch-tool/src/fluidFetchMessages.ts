@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import fs from "fs";
 import { assert} from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
 } from "@fluidframework/driver-definitions";
@@ -15,7 +14,6 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { requestOps } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -68,24 +66,18 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    const concurrency = 4;
-    const batch = 20000; // see data in issue #5211 on possible sizes we can use.
-
-    const queue = requestOps(
-        deltaStorage,
-        concurrency,
+    const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
         undefined, // to
-        batch,
-        new TelemetryUTLogger(),
     );
 
     while (true) {
-        const messages = await queue.pop();
-        if (messages === undefined) {
+        const result = await stream.read();
+        if (result.done) {
             break;
         }
         requests++;
+        const messages = result.value;
 
         // Empty buckets should never be returned
         assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
@@ -108,7 +100,7 @@ async function* loadAllSequencedMessages(
     }
 
     // eslint-disable-next-line max-len
-    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests, using ${concurrency} parallel requests`);
+    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
 
     if (connectToWebSocket) {
         let logMsg = "";

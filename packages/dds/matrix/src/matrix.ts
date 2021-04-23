@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -86,7 +86,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
     private cells = new SparseArray2D<T>();         // Stores cell values.
-    private annotations = new SparseArray2D<T>();   // Tracks cell annotations.
     private pending = new SparseArray2D<number>();  // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
@@ -230,34 +229,37 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
 
         this.cells.setCell(rowHandle, colHandle, value);
-        this.annotations.setCell(rowHandle, colHandle, undefined);
 
-        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        if (this.isAttached()) {
+            this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        }
     }
 
-    private sendSetCellOp(row: number, col: number, value: T, rowHandle: Handle, colHandle: Handle) {
-        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
-        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
-        if (this.isAttached()) {
-            const localSeq = this.nextLocalSeq();
+    private sendSetCellOp(
+        row: number,
+        col: number,
+        value: T,
+        rowHandle: Handle,
+        colHandle: Handle,
+        localSeq = this.nextLocalSeq(),
+    ) {
+        assert(this.isAttached(), 0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */);
 
-            const op: ISetOp<T> = {
-                type: MatrixOp.set,
-                row,
-                col,
-                value,
-            };
+        const op: ISetOp<T> = {
+            type: MatrixOp.set,
+            row,
+            col,
+            value,
+        };
 
-            const metadata: ISetOpMetadata = {
-                rowHandle,
-                colHandle,
-                localSeq,
-            };
+        const metadata: ISetOpMetadata = {
+            rowHandle,
+            colHandle,
+            localSeq,
+        };
 
-            this.submitLocalMessage(op, metadata);
-
-            this.pending.setCell(rowHandle, colHandle, localSeq);
-        }
+        this.submitLocalMessage(op, metadata);
+        this.pending.setCell(rowHandle, colHandle, localSeq);
     }
 
     private submitVectorMessage(
@@ -344,7 +346,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const colHandle = this.colHandles.getHandle(col);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -387,7 +389,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const rowHandle = this.rowHandles.getHandle(row);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -507,12 +509,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     const col = this.cols.handleToPosition(colHandle, localSeq);
 
                     if (row >= 0 && col >= 0) {
-                        this.setCellCore(
+                        this.sendSetCellOp(
                             row,
                             col,
                             setOp.value,
                             rowHandle,
                             colHandle,
+                            localSeq,
                         );
                     }
                 }
@@ -541,7 +544,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
             const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.cells = SparseArray2D.load(cellData);
-            this.annotations = new SparseArray2D();
             this.pending = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
@@ -596,7 +598,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             if (this.pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
-                                this.annotations.setCell(rowHandle, colHandle, undefined);
 
                                 for (const consumer of this.consumers.values()) {
                                     consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -631,7 +632,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
         for (const rowHandle of rowHandles) {
             this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-            this.annotations.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
             this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
         }
     };
@@ -639,7 +639,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
         for (const colHandle of colHandles) {
             this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-            this.annotations.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
             this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
         }
     };
