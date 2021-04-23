@@ -5,7 +5,6 @@
 
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
-    RetryableError,
     NonRetryableError,
     GenericNetworkError,
     createGenericNetworkError,
