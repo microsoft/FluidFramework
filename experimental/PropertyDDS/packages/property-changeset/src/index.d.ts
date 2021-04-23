@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 declare module "@fluid-experimental/property-changeset" {
 
     // The plain serialization data structure used to encode a ChangeSet.

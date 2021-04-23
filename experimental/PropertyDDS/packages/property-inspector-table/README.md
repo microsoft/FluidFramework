@@ -1,4 +1,4 @@
-#  Property Inspector Table Component
+# @fluid-experimental/property-inspector-table
 
 ## Overview
 

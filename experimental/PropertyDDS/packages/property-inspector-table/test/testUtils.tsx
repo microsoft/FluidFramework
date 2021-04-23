@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
 import { ModalRoot } from '../src/ModalRoot';
 import { ModalManager } from '../src/ModalManager';

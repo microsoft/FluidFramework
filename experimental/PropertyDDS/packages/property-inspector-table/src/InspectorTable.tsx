@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { ExpiryModal  } from './ExpiryModal';
 import { ModalConsumer } from './ModalManager';
 import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from '@fluid-experimental/property-properties';

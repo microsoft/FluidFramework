@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import Tooltip from '@material-ui/core/Tooltip';
 import * as React from 'react';
 import { IEditableValueCellProps } from './EditableValueCell';

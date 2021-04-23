@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
   import { EnumArrayProperty, EnumProperty, Int64Property, ReferenceMapProperty, SetProperty, ArrayProperty, BaseProperty, MapProperty, PropertyFactory, ReferenceArrayProperty, Uint64Property} from '@fluid-experimental/property-properties';
   import {TypeIdHelper} from '@fluid-experimental/property-changeset';
 

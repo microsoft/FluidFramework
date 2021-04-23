@@ -1,7 +1,5 @@
-#-------------------------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
-#-------------------------------------------------------------------------------------------------------------
+# Licensed under the MIT License.
 
 # Based on the javascript-node container template here:
 # https://github.com/microsoft/vscode-dev-containers/tree/master/containers/javascript-node

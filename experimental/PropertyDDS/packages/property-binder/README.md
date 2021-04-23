@@ -1,4 +1,4 @@
-# Forge Application Framework Databinder
+# @fluid-experimental/property-binder
 
 ## Overview
 Forge Application Framework Databinder provides functionality to easily bind data stored in HFDM to business logic.

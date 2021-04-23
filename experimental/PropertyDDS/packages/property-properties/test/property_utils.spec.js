@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* globals assert */
 /* eslint-disable no-unused-expressions*/
 /* eslint-disable max-nested-callbacks */

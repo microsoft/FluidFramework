@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { makeStyles, Tooltip } from '@material-ui/core';
 import * as React from 'react';
 

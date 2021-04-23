@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export { Omit };

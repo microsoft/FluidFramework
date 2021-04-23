@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SvgIcon } from './SVGIcon';
 import * as React from 'react';
 import { iconHeight, iconWidth } from './constants';

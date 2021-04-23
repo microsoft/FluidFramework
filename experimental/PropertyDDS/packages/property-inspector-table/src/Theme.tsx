@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import '@hig/fonts/build/ArtifaktElement.css';
 import { createMuiTheme } from '@material-ui/core/styles';
 import { ToggleButtonClassKey } from '@material-ui/lab/ToggleButton';

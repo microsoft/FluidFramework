@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from 'react';
 
 type showModalSignature = <T>(component: React.ComponentType<T>, props: T, closeHandler?: () => void) => void;

@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import IconButton from '@material-ui/core/IconButton';
 import Snackbar, { SnackbarProps } from '@material-ui/core/Snackbar';

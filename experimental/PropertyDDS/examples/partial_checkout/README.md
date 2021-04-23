@@ -1,4 +1,4 @@
-# AutoFluid
+# @fluid-experimental/partial-checkout
 Creates a simple colored squares board. After installing and starting (directions below) you can create start creating and moving squares going to localhost:8080. Your path variable is the unique identifier for that collaborative session.
 
 ## Getting Started
@@ -32,3 +32,9 @@ To webpack the bundle and output the result in `./dist`, you can run:
 ```bash
 npm run build
 ```
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

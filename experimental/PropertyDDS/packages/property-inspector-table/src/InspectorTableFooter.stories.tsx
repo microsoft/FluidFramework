@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { storiesOf } from '@storybook/react';
 import * as React from 'react';
 import { InspectorTableDecorator } from './InspectorTableDecorator';

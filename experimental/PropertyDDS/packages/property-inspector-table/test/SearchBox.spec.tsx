@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { mount } from 'enzyme';
 import * as React from 'react';
 import { SearchBox } from '../src/SearchBox';
