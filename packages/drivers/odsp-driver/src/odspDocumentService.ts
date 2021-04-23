@@ -340,7 +340,7 @@ export class OdspDocumentService implements IDocumentService {
         const connectWithNonAfd = async () => {
             const startTime = performance.now();
             try {
-                return await OdspDocumentDeltaConnection.create(
+                const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
                     documentId,
                     token,
@@ -351,6 +351,17 @@ export class OdspDocumentService implements IDocumentService {
                     60000,
                     this.epochTracker,
                 );
+                const duration = performance.now() - startTime;
+                // This event happens rather often, so it adds up to cost of telemetry.
+                // Given that most reconnects result in reusing socket and happen very quickly,
+                // report event only if it took longer than threshold.
+                if (duration >= 2000) {
+                    this.logger.sendPerformanceEvent({
+                        eventName: "NonAfdConnectionSuccess",
+                        duration,
+                    });
+                }
+                return connection;
             } catch (connectionError) {
                 const endTime = performance.now();
                 // Log before throwing
