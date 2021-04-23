@@ -8,7 +8,7 @@ import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/cor
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     IdentityType,
@@ -21,7 +21,7 @@ import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getOdspResolvedUrl } from "./odspUtils";
+import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { getFileLink } from "./getFileLink";
 
 /**
@@ -63,7 +63,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
-        this.logger = ChildLogger.create(logger, "OdspDriver");
+        this.logger = createOdspLogger(logger);
         if (shareLinkFetcherProps) {
             this.shareLinkFetcherProps = {
                 ...shareLinkFetcherProps,
