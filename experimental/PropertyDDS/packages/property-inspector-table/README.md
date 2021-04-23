@@ -1,12 +1,8 @@
-# HFDM Inspector Table Component
+#  Property Inspector Table Component
 
 ## Overview
 
-The HFDM Inspector Table component provides a performant and reactive view into the values stored inside an HFDM space.
-
-## Project Roles
-* Maintainer(s):
-  * [Farnsworth Squad](https://git.autodesk.com/orgs/forge-appfw/teams/farnsworthsquad)
+The Property Inspector Table component provides a performant and reactive view into the values stored inside PropertyDDS.
 
 ## Bundle sizes
 
