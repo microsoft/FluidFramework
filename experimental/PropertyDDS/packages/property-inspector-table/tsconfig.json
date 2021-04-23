@@ -1,23 +1,23 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@fluidframework/build-common/ts-common-config.json",
   "compilerOptions": {
     "jsx": "react",
-    "noUnusedLocals": true,
     "resolveJsonModule": true,
     "typeRoots": [
       "../node_modules/@types",
     ],
     "baseUrl": ".",
+    "outDir": "./dist",
     "paths": {
       "src/*": ["src/*"]
     }
   },
   "include": [
     "./src/**/*",
+    "./assets/**/*",
     "./custom.d.ts"
   ],
   "exclude": [
     "./src/**/*.stories.*"
   ]
 }
-
