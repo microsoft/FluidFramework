@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from "react";
+import ReactDOM from "react-dom";
 
 import _ from "lodash";
 import {
@@ -15,75 +15,69 @@ import {
      ModalManager,
      ModalRoot,
      fetchRegisteredTemplates,
-     handlePropertyDataCreation
-    } from '@fluid-experimental/property-inspector-table';
+     handlePropertyDataCreation,
+    } from "@fluid-experimental/property-inspector-table";
 
-// @ts-ignore
-import { TypeIdHelper } from "@fluid-experimental/property-changeset"
+import { makeStyles } from "@material-ui/styles";
+import { MuiThemeProvider } from "@material-ui/core/styles";
 
-import { makeStyles } from '@material-ui/styles';
-import { MuiThemeProvider } from '@material-ui/core/styles';
-import { theme } from './theme';
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
 
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
-
-import { FluidBinder } from '@fluid-experimental/property-binder';
-import { SharedPropertyTree } from '@fluid-experimental/property-dds';
+import { FluidBinder } from "@fluid-experimental/property-binder";
+import { SharedPropertyTree } from "@fluid-experimental/property-dds";
+import { theme } from "./theme";
 
 const useStyles = makeStyles({
     activeGraph: {
-        'flex-basis': '100%',
-        'z-index': 1,
+        "flex-basis": "100%",
+        "z-index": 1,
     },
     horizontalContainer: {
-        display: 'flex',
-        flex: '1',
+        display: "flex",
+        flex: "1",
     },
     inspectorContainer: {
-        'display': 'flex',
-        'flex-basis': '100%',
-        'padding-left': '1px',
+        "display": "flex",
+        "flex-basis": "100%",
+        "padding-left": "1px",
     },
     root: {
-        'display': 'flex',
-        'flex-direction': 'column',
-        'font-family': 'ArtifaktElement, Helvetica, Arial',
-        'height': '100%',
-        'justify-content': 'flex-start',
-        'overflow': 'hidden',
+        "display": "flex",
+        "flex-direction": "column",
+        "font-family": "ArtifaktElement, Helvetica, Arial",
+        "height": "100%",
+        "justify-content": "flex-start",
+        "overflow": "hidden",
     },
     sideNavContainer: {
-        display: 'flex',
+        display: "flex",
     },
     verticalContainer: {
-        'display': 'flex',
-        'flex-basis': '100%',
-        'flex-direction': 'column',
-        'justify-content': 'space-between',
+        "display": "flex",
+        "flex-basis": "100%",
+        "flex-direction": "column",
+        "justify-content": "space-between",
     },
     tableContainer: {
-        display: 'flex',
-    }
-}, { name: 'InspectorApp' });
+        display: "flex",
+    },
+}, { name: "InspectorApp" });
 
 export const handleDataCreationOptionGeneration = (rowData: IInspectorRow, nameOnly: boolean): IDataCreationOptions => {
-
     if (nameOnly) {
-        return { name: 'property' };
+        return { name: "property" };
     }
     const templates = fetchRegisteredTemplates();
-    return { name: 'property', options: templates };
+    return { name: "property", options: templates };
 };
 
-
-
 const tableProps: Partial<IInspectorTableProps> = {
-    columns: ['name', 'value', 'type'],
+    columns: ["name", "value", "type"],
     dataCreationHandler: handlePropertyDataCreation,
     dataCreationOptionGenerationHandler: handleDataCreationOptionGeneration,
-    expandColumnKey: 'name',
+    expandColumnKey: "name",
     width: 1000,
-    height: 600
+    height: 600,
 };
 
 export const InspectorApp = (props: any) => {
@@ -103,10 +97,8 @@ export const InspectorApp = (props: any) => {
                     </div>
                 </div>
             </ModalManager>
-        </MuiThemeProvider>)
+        </MuiThemeProvider>);
 };
-
-
 
 export function renderApp(propertyTree: SharedPropertyTree, element: HTMLElement) {
     const fluidBinder = new FluidBinder();
@@ -115,7 +107,7 @@ export function renderApp(propertyTree: SharedPropertyTree, element: HTMLElement
 
     // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
     // inspector tree-table.
-    fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
+    fluidBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
         // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
         // Note: This is what currently inspector table expect for "data" prop.
         const proxifiedDDS = PropertyProxy.proxify(propertyTree.root);
