@@ -160,10 +160,6 @@ export class StaticStorageDocumentService implements IDocumentService {
         // We have no delta stream, so make it not return forever...
         return new Promise(() => { });
     }
-
-    public getErrorTrackingService() {
-        return null;
-    }
 }
 
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {

@@ -1543,10 +1543,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
-        });
-
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);

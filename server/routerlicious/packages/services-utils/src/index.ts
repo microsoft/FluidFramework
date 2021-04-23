@@ -10,4 +10,5 @@ export * from "./dns";
 export * from "./generateNames";
 export * from "./logger";
 export * from "./port";
+export * from "./redisUtils";
 export * from "./throttlerMiddleware";

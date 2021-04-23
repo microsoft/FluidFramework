@@ -5,15 +5,25 @@
 
 import { Redis } from "ioredis";
 import * as winston from "winston";
-
+import { IRedisParameters } from "./definitions";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
  */
 export class RedisTenantCache {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "tenant";
+
     constructor(
         private readonly client: Redis,
-        private readonly expireInSeconds = 60 * 60 * 24,
-        private readonly prefix = "tenant") {
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
         client.on("error", (error) => {
             winston.error("Redis Tenant Cache Error:", error);
         });
@@ -27,14 +37,12 @@ export class RedisTenantCache {
     public async set(
         key: string,
         value: string = "",
-        expiresInSeconds: number = this.expireInSeconds): Promise<void> {
-        const result = await this.client.set(this.getKey(key), value);
+        expireAfterSeconds: number = this.expireAfterSeconds): Promise<void> {
+        const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
         if (result !== "OK")
         {
             return Promise.reject(result);
         }
-
-        await this.client.expire(this.getKey(key), expiresInSeconds);
     }
 
     public async get(key: string): Promise<string> {
