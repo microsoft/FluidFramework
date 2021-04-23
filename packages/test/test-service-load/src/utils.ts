@@ -58,6 +58,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         this.baseLogger?.send(event);
 
         event.Event_Time = Date.now();
+        event.hostName = `${pkgName}`;
         // keep track of the frequency of every log event, as we'll sort by most common on write
         Object.keys(event).forEach((k)=>this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
         if(event.category === "error") {
@@ -96,8 +97,7 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
-        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type,
-                hostName: "Stress Tests" }}),
+        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
         options,
     });
 

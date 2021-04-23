@@ -6,6 +6,7 @@
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
+import { pkgName } from "./packageVersion";
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
@@ -13,7 +14,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         if (this.testName !== undefined) {
             event.testName = this.testName;
         }
-        event.hostName = "Mocha";
+        event.hostName = `${pkgName}`;
         this.parentLogger.send(event);
     }
     async flush() {
