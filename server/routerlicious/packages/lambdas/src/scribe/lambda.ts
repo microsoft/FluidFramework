@@ -82,9 +82,7 @@ export class ScribeLambda implements IPartitionLambda {
     ) {
         this.lastOffset = scribe.logOffset;
         this.setStateFromCheckpoint(scribe);
-        // Filter and keep messages after protocol state
-        this.pendingMessages = new Deque<ISequencedDocumentMessage>(
-            messages.filter((message) => message.sequenceNumber > scribe.protocolState.sequenceNumber));
+        this.pendingMessages = new Deque<ISequencedDocumentMessage>(messages);
     }
 
     public async handler(message: IQueuedMessage) {
