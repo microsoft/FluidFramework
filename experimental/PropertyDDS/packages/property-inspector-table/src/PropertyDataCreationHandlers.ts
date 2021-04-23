@@ -48,7 +48,7 @@ export const handlePropertyDataCreationOptionGeneration =
  * @param typeid The type unique identifier, indicating which type the created property shall be.
  * @param context Will be the type of collection of values that the property contains.
  *                Possible values are "single", "array", "map" and "set".
- * @param parent The HFDM parent of the new property to create. It can be of type Array, Map, Set.
+ * @param parent The property parent of the new property to create. It can be of type Array, Map, Set.
  *               If it not any of those types (TODO: What happens then?).
  */
 const createProperty = (name: string, typeid: string, context: string, parent: any) => {
