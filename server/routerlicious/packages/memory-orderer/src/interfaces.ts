@@ -76,5 +76,5 @@ export interface ILocalOrdererSetup {
 export interface IKafkaSubscriber {
     readonly context: IContext;
 
-    process(message: IQueuedMessage): void;
+    process(message: IQueuedMessage): Promise<void> | undefined;
 }
