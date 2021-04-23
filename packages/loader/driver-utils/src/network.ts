@@ -84,17 +84,7 @@ export class RetryableError<T> extends NetworkErrorBasic<T> {
         readonly errorType: T,
         props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, errorType, false, props);
-    }
-}
-
-export class RetryableError<T> extends NetworkErrorBasic<T> {
-    constructor(
-        errorMessage: string,
-        readonly errorType: T,
-        statusCode: number | undefined,
-    ) {
-        super(errorMessage, errorType, true, statusCode);
+        super(errorMessage, errorType, true, props);
     }
 }
 
