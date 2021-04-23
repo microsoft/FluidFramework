@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-
-
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import _ from "lodash";
 import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
 
 import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
 import { IPropertyTree } from "./dataObject";
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import _ from 'lodash';
 
-
-//import { renderCheckoutView } from "./checkout_view";
+// import { renderCheckoutView } from "./checkout_view";
 import { renderApp, renderInspector } from "./view";
-
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -35,7 +31,7 @@ document.title = documentId;
 
 async function start(): Promise<void> {
     const content = document.getElementById("content") as HTMLDivElement;
-    //const paths = await renderCheckoutView(content)
+    // const paths = await renderCheckoutView(content)
 
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
@@ -46,13 +42,16 @@ async function start(): Promise<void> {
         await getFRSContainer(documentId, ContainerFactory, createNew)
         : await getTinyliciousContainer(documentId, ContainerFactory, createNew);
 
-    /*const options = {
+    /* const options = {
         paths,
         clientFiltering: true
-    };*/
+    }; */
 
     // TODO: options currently not supported
-    const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container/*, { options }*/);
+    const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(
+        container,
+        /* { options } */
+    );
 
     // Render the actual sample
     const fluidBinder = renderApp(propertyTree, content);

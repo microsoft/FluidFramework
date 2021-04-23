@@ -10,6 +10,6 @@ import { PropertyTreeInstantiationFactory } from "./dataObject";
 export const PropertyTreeContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     PropertyTreeInstantiationFactory,
     new Map([
-        ['property-tree', Promise.resolve(PropertyTreeInstantiationFactory)]
+        ["property-tree", Promise.resolve(PropertyTreeInstantiationFactory)],
     ]),
 );

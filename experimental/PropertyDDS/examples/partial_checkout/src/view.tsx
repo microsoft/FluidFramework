@@ -2,28 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from "react";
+import ReactDOM from "react-dom";
+
+import _ from "lodash";
+import { IDataCreationOptions, IInspectorRow, fetchRegisteredTemplates ,
+    InspectorTable, IInspectorTableProps, handlePropertyDataCreation, ModalManager, ModalRoot,
+} from "@fluid-experimental/property-inspector-table";
+
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
+import { FluidBinder } from "@fluid-experimental/property-binder";
+import { SquaresApp , randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
 
 import { IPropertyTree, PropertyTree } from "./dataObject";
-// @ts-ignore
-import _ from "lodash";
-import { IDataCreationOptions, IInspectorRow, fetchRegisteredTemplates } from '@fluid-experimental/property-inspector-table';
-import { randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
-// @ts-ignore
-import { PropertyFactory } from "@fluid-experimental/property-properties";
-// @ts-ignore
-import { TypeIdHelper } from "@fluid-experimental/property-changeset"
-
-import { SquaresApp } from "./demo/squaresApp";
-
-import {
-    InspectorTable, IInspectorTableProps, handlePropertyDataCreation, ModalManager, ModalRoot
-} from '@fluid-experimental/property-inspector-table';
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
-import { FluidBinder } from '@fluid-experimental/property-binder';
-
-
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
@@ -37,32 +28,30 @@ export function renderButtons(propertyTree: IPropertyTree, div: HTMLDivElement) 
     wrapperDiv.append(tableDiv);
 
     const squaresInput = document.createElement("input");
-    squaresInput.type = 'number';
-    squaresInput.defaultValue = '20';
+    squaresInput.type = "number";
+    squaresInput.defaultValue = "20";
     squaresInput.style.fontSize = "15px";
     squaresInput.style.width = "50px";
     buttons.append(squaresInput);
-
 
     const randomButton = document.createElement("button");
     randomButton.style.fontSize = "15px";
     randomButton.id = "random";
     randomButton.textContent = "Create Random Board";
     randomButton.addEventListener("click", () => {
-        randomSquaresBoardGenerator(propertyTree.pset, squaresInput.value as any)
-        squaresInput.value = '20';
+        randomSquaresBoardGenerator(propertyTree.pset, squaresInput.value as any);
+        squaresInput.value = "20";
     });
     buttons.append(randomButton);
 
     const commitButton = document.createElement("button");
-    commitButton.id  = 'commit';
+    commitButton.id  = "commit";
     commitButton.style.fontSize = "15px";
     commitButton.textContent = "Commit";
     commitButton.addEventListener("click", () => {
         propertyTree.commit();
     });
     buttons.append(commitButton);
-
 }
 
 export const renderMoveButton = function(propertyTree: PropertyTree, content: HTMLElement, guid: string) {
@@ -84,24 +73,24 @@ export const renderMoveButton = function(propertyTree: PropertyTree, content: HT
     });
 
     content.appendChild(moveBtn);
-}
+};
 
-export const handlePropertyDataCreationOptionGeneration = (rowData: IInspectorRow, nameOnly: boolean): IDataCreationOptions => {
-
+export const handlePropertyDataCreationOptionGeneration =
+    (rowData: IInspectorRow, nameOnly: boolean): IDataCreationOptions => {
     if (nameOnly) {
-        return { name: 'property' };
+        return { name: "property" };
     }
     const templates = fetchRegisteredTemplates();
-    return { name: 'property', options: templates };
+    return { name: "property", options: templates };
 };
 
 const tableProps: Partial<IInspectorTableProps> = {
-    columns: ['name', 'value', 'type'],
+    columns: ["name", "value", "type"],
     dataCreationHandler: handlePropertyDataCreation,
     dataCreationOptionGenerationHandler: handlePropertyDataCreationOptionGeneration,
-    expandColumnKey: 'name',
+    expandColumnKey: "name",
     width: 1000,
-    height: 600
+    height: 600,
 };
 
 export function renderApp(propertyTree: IPropertyTree, content: HTMLDivElement): FluidBinder {
@@ -124,10 +113,9 @@ export function renderApp(propertyTree: IPropertyTree, content: HTMLDivElement):
 }
 
 export function renderInspector(fluidBinder: FluidBinder, propertyTree: IPropertyTree) {
-
     // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
     // inspector tree-table.
-    fluidBinder.registerOnPath('/', ['insert', 'remove', 'modify'], _.debounce(() => {
+    fluidBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
         // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
         // Note: This is what currently inspector table expect for "data" prop.
         const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);
@@ -136,7 +124,6 @@ export function renderInspector(fluidBinder: FluidBinder, propertyTree: IPropert
                 <ModalRoot />
                 <InspectorTable data={proxifiedDDS} {...tableProps} />
             </ModalManager>,
-            document.getElementById('root'));
+            document.getElementById("root"));
     }, 20));
 }
-
