@@ -26,7 +26,7 @@ export class TestLambda implements IPartitionLambda {
         assert(this.documentId);
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         this.handleCalls++;
         const sequencedMessage = message.value as ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
@@ -38,6 +38,8 @@ export class TestLambda implements IPartitionLambda {
         } else {
             this.context.checkpoint(message);
         }
+
+        return undefined;
     }
 
     public close() {

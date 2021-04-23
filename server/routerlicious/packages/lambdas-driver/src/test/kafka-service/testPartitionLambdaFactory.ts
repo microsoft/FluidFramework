@@ -23,7 +23,7 @@ export class TestLambda implements IPartitionLambda {
         private readonly context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         if (this.throwHandler) {
             throw new Error("Requested failure");
         }
@@ -32,6 +32,8 @@ export class TestLambda implements IPartitionLambda {
         this.lastOffset = message.offset;
         this.factory.handleCount++;
         this.context.checkpoint(message);
+
+        return undefined;
     }
 
     public close(): void {

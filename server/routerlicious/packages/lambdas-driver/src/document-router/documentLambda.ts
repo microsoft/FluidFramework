@@ -37,15 +37,17 @@ export class DocumentLambda implements IPartitionLambda {
             documentLambdaServerConfiguration.partitionActivityCheckInterval);
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         if (!this.contextManager.setHead(message)) {
             this.context.log?.warn("Unexpected head offset. " +
                 `head offset: ${this.contextManager.getHeadOffset()}, message offset: ${message.offset}`);
-            return;
+            return undefined;
         }
 
         this.handlerCore(message);
         this.contextManager.setTail(message);
+
+        return undefined;
     }
 
     public close(closeType: LambdaCloseType) {

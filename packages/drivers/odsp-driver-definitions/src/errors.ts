@@ -42,6 +42,13 @@ export enum OdspErrorType {
     epochVersionMismatch = "epochVersionMismatch",
 
     fetchTokenError = "fetchTokenError",
+
+    // This error will be raised when client is too behind with no way to catch up.
+    // This condition will happen when user was offline for too long, resulting in old ops / blobs being deleted
+    // by storage, and thus removing an ability for client to catch up.
+    // This condition will result in any local changes being lost (i.e. only way to save state is by user
+    // copying it over manually)
+    cannotCatchUp = "cannotCatchUp",
 }
 
 /**

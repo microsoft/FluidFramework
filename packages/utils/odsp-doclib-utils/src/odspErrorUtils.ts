@@ -11,7 +11,7 @@ import {
     createGenericNetworkError,
     GenericNetworkError,
     isOnline,
-    NetworkErrorBasic,
+    RetryableError,
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
@@ -83,12 +83,15 @@ export function createOdspNetworkError(
             error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
             break;
         case 404:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, statusCode);
             break;
         case 406:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, statusCode);
+            break;
+        case 410:
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, statusCode);
             break;
         case fluidEpochMismatchError:
             error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch, statusCode);
@@ -110,13 +113,14 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, statusCode);
             break;
         case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.offlineError, statusCode);
             break;
         case fetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.fetchFailure, statusCode);
             break;
         case fetchIncorrectResponse:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false, statusCode);
+            // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
+            error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, statusCode);
             break;
         case fetchTimeoutStatusCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);

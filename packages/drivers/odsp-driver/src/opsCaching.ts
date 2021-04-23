@@ -25,6 +25,7 @@ export interface IBatch {
 export interface ICache {
   write(batchNumber: string, data: string): Promise<void>;
   read(batchNumber: string): Promise<string | undefined>;
+  remove(): void;
 }
 
 export class OpsCache {
@@ -49,6 +50,14 @@ export class OpsCache {
                 batchData : this.initializeNewBatchDataArray(),
                 dirty: false,
             });
+        }
+    }
+
+    public dispose() {
+        this.batches.clear();
+        if (this.timer !== undefined) {
+            clearTimeout(this.timer);
+            this.timer = undefined;
         }
     }
 
@@ -101,8 +110,8 @@ export class OpsCache {
             this.totalOpsToCache--;
             if (this.totalOpsToCache === 0) {
                 this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit"});
-                this.flushOps();
-                this.batches.clear();
+                this.cache.remove();
+                this.dispose();
                 break;
             }
         }
