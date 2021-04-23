@@ -27,7 +27,7 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     epochTracker: EpochTracker,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
@@ -43,30 +43,32 @@ export async function fetchJoinSession(
                 ...extraProps,
             },
             async (event) =>
-        {
-            // TODO Extract the auth header-vs-query logic out
-            const siteOrigin = getOrigin(urlParts.siteUrl);
-            let queryParams = `access_token=${token}`;
-            let headers = {};
-            if (queryParams.length > 2048) {
-                queryParams = "";
-                headers = { Authorization: `Bearer ${token}` };
-            }
+            {
+                // TODO Extract the auth header-vs-query logic out
+                const siteOrigin = getOrigin(urlParts.siteUrl);
+                let queryParams = `access_token=${token}`;
+                let headers = {};
+                if (queryParams.length > 2048) {
+                    queryParams = "";
+                    headers = { Authorization: `Bearer ${token}` };
+                }
 
-            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
-                { method, headers },
-                "joinSession",
-            );
+                const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+                    // eslint-disable-next-line max-len
+                    `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
+                    { method, headers },
+                    "joinSession",
+                );
 
-            // TODO SPO-specific telemetry
-            event.end(response.commonSpoHeaders);
+                // TODO SPO-specific telemetry
+                event.end(response.commonSpoHeaders);
 
-            if (response.content.runtimeTenantId && !response.content.tenantId) {
-                response.content.tenantId = response.content.runtimeTenantId;
-            }
+                if (response.content.runtimeTenantId && !response.content.tenantId) {
+                    response.content.tenantId = response.content.runtimeTenantId;
+                }
 
-            return response.content;
-        });
+                return response.content;
+            },
+        );
     });
 }
