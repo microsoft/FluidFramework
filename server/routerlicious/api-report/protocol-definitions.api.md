@@ -185,10 +185,6 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
     data: string;
 }
 
-// @public (undocumented)
-export interface IErrorTrackingService {
-    track(func: () => void): any;
-}
 
 // @public
 export interface IHelpMessage {
