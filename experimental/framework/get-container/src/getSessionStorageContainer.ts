@@ -34,15 +34,10 @@ export async function getSessionStorageContainer(
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnection);
     const url = `${window.location.origin}/${documentId}`;
 
-    // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
-    // The expected format of that response is an IFluidModule with a fluidExport.
-    const module = { fluidExport: containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
-
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
-        codeLoader,
+        runtimeCallback: () => containerRuntimeFactory,
     });
 
     let container: Container;
