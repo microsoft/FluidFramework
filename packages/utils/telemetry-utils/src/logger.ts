@@ -415,7 +415,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = { start: true, end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {

@@ -153,7 +153,6 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assert.strictEqual(runCount, 1);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
                         { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
@@ -167,7 +166,6 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 2);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:SummaryAck", summaryGenTag: (runCount - 1) }, // ack for previous run
-                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
                         { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
@@ -315,8 +313,6 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_start",
-                            summaryGenTag: runCount, message: "maxOps" },
                         { eventName: "Running:GenerateSummary_end",
                             summaryGenTag: runCount, message: "maxOps" },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
