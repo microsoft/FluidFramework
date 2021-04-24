@@ -64,9 +64,10 @@ export enum DriverErrorType {
     incorrectServerResponse = "incorrectServerResponse",
 
     /**
-     * Epoch version mismatch failures.
-     * This error occurs when the file is modified externally. So the version at the client receiving this error
-     * does not match the one at the server.
+     * This error occurs when the file is modified externally (not through Fluid protocol) in storage.
+     * It will occur in cases where client has some state or cache that is based on old content (identity) of a file,
+     * and storage / driver / loader detects such mismatch.
+     * When it's hit, client needs to forget all the knowlege about this file and start over.
      */
      fileOverwrittenInStorage = "fileOverwrittenInStorage",
 }
