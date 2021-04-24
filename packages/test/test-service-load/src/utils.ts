@@ -55,7 +55,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-        this.baseLogger?.send(event);
+        this.baseLogger?.send({...event, hostName: pkgName});
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
