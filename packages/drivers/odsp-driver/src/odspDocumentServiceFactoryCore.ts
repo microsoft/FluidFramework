@@ -196,12 +196,19 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     itemId: resolvedUrl.itemId,
                 }).then((tokenResponse) => {
                     const token = tokenFromResponse(tokenResponse);
-                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
+                    // This event alone generates so many events that is materially impacts cost of telemetry
+                    // Thus do not report end event when it comes back quickly.
+                    // Note that most of the hosts do not report if result is comming from cache or not,
+                    // so we can't rely on that here
+                    if (event.duration >= 32) {
+                        event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
+                    }
                     if (token === null && throwOnNullToken) {
                         throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
                     }
                     return token;
-                }));
+                }),
+                { cancel: "generic" });
         };
     }
 }
