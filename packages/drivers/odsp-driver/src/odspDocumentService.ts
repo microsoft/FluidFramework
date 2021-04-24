@@ -23,7 +23,6 @@ import {
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -301,10 +300,6 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
-    public getErrorTrackingService(): IErrorTrackingService {
-        return { track: () => null };
-    }
-
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
@@ -344,8 +339,6 @@ export class OdspDocumentService implements IDocumentService {
     ): Promise<IDocumentDeltaConnection> {
         const connectWithNonAfd = async () => {
             const startTime = performance.now();
-            // pushV2 websocket urls will contain pushf
-            const pushV2 = nonAfdUrl.includes("pushf");
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -358,12 +351,16 @@ export class OdspDocumentService implements IDocumentService {
                     60000,
                     this.epochTracker,
                 );
-                const endTime = performance.now();
-                this.logger.sendPerformanceEvent({
-                    eventName: "NonAfdConnectionSuccess",
-                    duration: endTime - startTime,
-                    pushV2,
-                });
+                const duration = performance.now() - startTime;
+                // This event happens rather often, so it adds up to cost of telemetry.
+                // Given that most reconnects result in reusing socket and happen very quickly,
+                // report event only if it took longer than threshold.
+                if (duration >= 2000) {
+                    this.logger.sendPerformanceEvent({
+                        eventName: "NonAfdConnectionSuccess",
+                        duration,
+                    });
+                }
                 return connection;
             } catch (connectionError) {
                 const endTime = performance.now();
@@ -374,7 +371,6 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "NonAfdConnectionFail",
                         canRetry,
                         duration: endTime - startTime,
-                        pushV2,
                     },
                     connectionError,
                 );

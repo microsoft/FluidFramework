@@ -10,7 +10,6 @@ import {
     IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
-    IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
     ISignalClient,
@@ -267,11 +266,6 @@ export interface IDocumentService {
      * Subscribes to the document delta stream
      */
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
-
-    /**
-     * Returns the error tracking service
-     */
-    getErrorTrackingService(): IErrorTrackingService | null;
 
     /**
      * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).

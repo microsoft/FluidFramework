@@ -4,25 +4,37 @@
  */
 
 import { ICache } from "@fluidframework/server-services-core";
+import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 /**
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    constructor(private readonly client: Redis, private readonly prefix = "page") {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "page";
+    constructor(
+        private readonly client: Redis,
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
         client.on("error", (err) => {
             winston.error("Error with Redis:", err);
         });
     }
 
     public async get(key: string): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.client.get(this.getKey(key));
     }
 
     public async set(key: string, value: string): Promise<void> {
-        const result = await this.client.set(this.getKey(key), value);
+        const result = await this.client.set(this.getKey(key), value, "EX", this.expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
         }

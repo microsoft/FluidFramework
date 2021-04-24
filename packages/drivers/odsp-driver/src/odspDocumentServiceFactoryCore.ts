@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-    ChildLogger,
+    TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -35,7 +35,7 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
 
 /**
@@ -72,15 +72,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             filename: odspResolvedUrl.fileName,
         };
 
-        const logger2 = ChildLogger.create(logger, "OdspDriver");
+        const odspLogger = createOdspLogger(logger);
+
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            logger2);
+            odspLogger);
 
         return PerformanceEvent.timedExecAsync(
-            logger2,
+            odspLogger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
@@ -88,17 +89,17 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             async (event) => {
                 odspResolvedUrl = await createNewFluidFile(
                     this.toInstrumentedOdspTokenFetcher(
-                        logger2,
+                        odspLogger,
                         odspResolvedUrl,
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
                     newFileParams,
-                    logger2,
+                    odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, logger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -128,16 +129,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, logger);
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger,
+        odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const odspLogger = ChildLogger.create(logger, "OdspDriver");
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,

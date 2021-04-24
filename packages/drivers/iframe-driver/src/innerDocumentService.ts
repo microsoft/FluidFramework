@@ -83,9 +83,4 @@ export class InnerDocumentService implements IDocumentService {
         const connection = await stream.getDetails();
         return InnerDocumentDeltaConnection.create(connection, stream);
     }
-
-    public getErrorTrackingService() {
-        throw new Error("Inner Document Service: getErrorTrackingService not implemented");
-        return null;
-    }
 }

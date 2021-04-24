@@ -311,8 +311,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: loadOptions.canReconnect,
             });
 
-        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
-            return new Promise<Container>((res, rej) => {
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "Load" },
+            async (event) => new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -340,12 +342,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                        (error) => {
-                            const err = CreateContainerError(error);
-                            onClosed(err);
-                        });
-            });
-        });
+                    (error) => {
+                        const err = CreateContainerError(error);
+                        onClosed(err);
+                    });
+            }),
+            { start: true, end: true, cancel: "generic" },
+        );
     }
 
     /**
@@ -1544,10 +1547,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
-        });
-
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
         });
 
         deltaManager.on("disconnect", (reason: string) => {
