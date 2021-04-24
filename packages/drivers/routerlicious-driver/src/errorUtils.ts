@@ -62,7 +62,7 @@ export function createR11sNetworkError(
             return new AuthorizationError(errorMessage, undefined, undefined, statusCode);
         case 404:
             return new NonRetryableError(
-                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, statusCode);
+                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
                 errorMessage, true, retryAfterSeconds, statusCode);

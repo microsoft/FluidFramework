@@ -26,6 +26,7 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
     IDocumentDeltaConnectionEvents,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -51,6 +52,7 @@ import {
     getRetryDelayFromError,
     logNetworkFailure,
     waitForConnectedState,
+    NonRetryableError,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -1213,8 +1215,9 @@ export class DeltaManager
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        const error = new DataCorruptionError(
+                        const error = new NonRetryableError(
                             "Two messages with same seq# and different payload!",
+                            DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,
                                 sequenceNumber: message.sequenceNumber,

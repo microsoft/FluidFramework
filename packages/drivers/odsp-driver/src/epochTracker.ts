@@ -14,8 +14,8 @@ import {
     IEntry,
     IFileEntry,
     IPersistedCache,
-    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
@@ -257,7 +257,7 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
-        if (error.errorType === OdspErrorType.epochVersionMismatch) {
+        if (error.errorType === DriverErrorType.fileOverwrittenInStorage) {
             try {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
@@ -268,7 +268,7 @@ export class EpochTracker implements IPersistedFileCache {
                     clientEpoch: this.fluidEpoch,
                     fetchType,
                 });
-                this.logger.sendErrorEvent({ eventName: "EpochVersionMismatch" }, epochError);
+                this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();
                 throw epochError;

@@ -10,7 +10,6 @@ import {
     IOdspResolvedUrl,
     ICacheEntry,
     IEntry,
-    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     EpochTracker,
@@ -104,7 +103,8 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
@@ -127,7 +127,8 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
@@ -220,7 +221,8 @@ describe("Tests for Epoch Tracker", () => {
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert.strictEqual(success, false, "Fetching should not succeed!!");
         assert(
