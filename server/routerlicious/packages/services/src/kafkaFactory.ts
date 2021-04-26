@@ -23,7 +23,14 @@ export function createConsumer(
         return new RdkafkaConsumer(endpoints, clientId, topic, groupId, { numberOfPartitions, replicationFactor });
     }
 
-    return new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
+    return new KafkaNodeConsumer(
+        { kafkaHost: kafkaEndPoint },
+        clientId,
+        groupId,
+        topic,
+        zookeeperEndPoint,
+        numberOfPartitions,
+        replicationFactor);
 }
 
 export function createProducer(
@@ -53,7 +60,12 @@ export function createProducer(
             }
         });
     } else {
-        producer =  new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);
+        producer =  new KafkaNodeProducer(
+            { kafkaHost: kafkaEndPoint },
+            clientId,
+            topic,
+            numberOfPartitions,
+            replicationFactor);
         producer.on("error", (error) => {
             winston.error(error);
         });
