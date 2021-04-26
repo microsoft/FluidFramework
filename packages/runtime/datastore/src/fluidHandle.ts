@@ -15,6 +15,9 @@ export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IFluidHandle> | undefined;
+    /**
+     * @deprecated - use handles instead of absolute paths
+     */
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
