@@ -4,6 +4,7 @@
 - [ODSP driver definitions](#ODSP-driver-definitions)
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
+- [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
@@ -28,6 +29,9 @@ Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in
 
 ### fileOverwrittenInStorage
 Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.epochVersionMismatch`
+
+### absolutePath use in IFluidHandle is deprecated
+Please use `get` in IFluidHandle for routing instead of storing absolute paths.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
