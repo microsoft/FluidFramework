@@ -31,7 +31,7 @@ Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in
 Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.epochVersionMismatch`
 
 ### absolutePath use in IFluidHandle is deprecated
-Please use `get` in IFluidHandle for routing instead of storing absolute paths.
+Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
