@@ -157,7 +157,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             : async (options: TokenFetchOptions) => this.toInstrumentedOdspTokenFetcher(
                 odspLogger,
                 odspResolvedUrl,
-                this.getWebsocketToken,
+                this.getWebsocketToken!,
                 false /* throwOnNullToken */,
             )(options, "GetWebsocketToken");
 

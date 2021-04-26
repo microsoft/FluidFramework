@@ -63,12 +63,12 @@ export async function fetchJoinSession(
                     headers = { Authorization: `Bearer ${token}` };
                 }
                 let body: IJoinSessionBody | undefined;
-                if (requestSocketToken || !!guestDisplayName) {
+                if (requestSocketToken || guestDisplayName) {
                     body = {};
                     if (requestSocketToken) {
                         body.requestSocketToken = true;
                     }
-                    if (!!guestDisplayName) {
+                    if (guestDisplayName) {
                         body.guestDisplayName = guestDisplayName;
                     }
                 }
@@ -77,7 +77,7 @@ export async function fetchJoinSession(
                     `${getApiRoot(siteOrigin)}/drives/${
                         urlParts.driveId
                     }/items/${urlParts.itemId}/${path}?${queryParams}`,
-                    { method, headers, body: JSON.stringify(body) },
+                    { method, headers, body: body ? JSON.stringify(body) : undefined },
                     "joinSession",
                 );
 
