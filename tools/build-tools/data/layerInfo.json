@@ -186,6 +186,7 @@
                 ],
                 "dirs": [
                     "experimental/framework/",
+                    "experimental/PropertyDDS/packages/",
                     "packages/framework/"
                 ],
                 "deps": [
@@ -199,6 +200,7 @@
                 "dirs": [
                     "examples/",
                     "experimental/examples/",
+                    "experimental/PropertyDDS/examples/",
                     "packages/agents/"
                 ],
                 "deps": [
