@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -158,13 +158,8 @@ export class DataStores implements IDisposable {
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "Duplicate data store created with existing ID",
-                {
-                    sequenceNumber: message.sequenceNumber,
-                    clientId: message.clientId,
-                    referenceSequenceNumber: message.referenceSequenceNumber,
-                },
+                extractSafePropertiesFromMessage(message),
             );
-            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId" }, error);
             throw error;
         }
 
