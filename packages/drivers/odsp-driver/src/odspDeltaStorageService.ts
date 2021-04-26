@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -14,7 +15,6 @@ import {
 } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
@@ -36,14 +36,29 @@ export class OdspDeltaStorageService {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
-            const baseUrl = await this.buildUrl(from, to);
-
+            const baseUrl = this.buildUrl(from, to);
             const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
-            const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
+            const formBoundary = uuid();
+            let postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${storageToken}\r\n`;
+            postBody += `X-HTTP-Method-Override: GET\r\n`;
 
-            const response = await this.epochTracker
-                .fetchAndParseAsJSON<IDeltaStorageGetResponse>(url, { headers }, "ops");
+            postBody += `_post: 1\r\n`;
+            postBody += `\r\n--${formBoundary}--`;
+            const headers: {[index: string]: any} = {
+                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+            };
+
+            const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
+                baseUrl,
+                {
+                    headers,
+                    body: postBody,
+                    method: "POST",
+                },
+                "ops",
+            );
             const deltaStorageResponse = response.content;
             let messages: ISequencedDocumentMessage[];
             if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
@@ -67,9 +82,9 @@ export class OdspDeltaStorageService {
         });
     }
 
-    public async buildUrl(from: number, to: number) {
+    public buildUrl(from: number, to: number) {
         const filter = encodeURIComponent(`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`);
-        const queryString = `?filter=${filter}`;
+        const queryString = `?ump=1&filter=${filter}`;
         return `${this.deltaFeedUrl}${queryString}`;
     }
 }
