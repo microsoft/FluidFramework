@@ -31,7 +31,7 @@ Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in
 Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.epochVersionMismatch`
 
 ### absolutePath use in IFluidHandle is deprecated
-Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object.
+Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
