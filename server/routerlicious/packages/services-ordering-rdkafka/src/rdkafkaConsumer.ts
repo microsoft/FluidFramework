@@ -275,45 +275,45 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		queuedMessage: IQueuedMessage,
 		retries: number = 0): Promise<void> {
 		const startTime = Date.now();
-			try {
-				if (!this.consumer) {
-					throw new Error("Invalid consumer");
-				}
+		try {
+			if (!this.consumer) {
+				throw new Error("Invalid consumer");
+			}
 
-				if (this.pendingCommits.has(partitionId)) {
-					throw new Error(`There is already a pending commit for partition ${partitionId}`);
-				}
+			if (this.pendingCommits.has(partitionId)) {
+				throw new Error(`There is already a pending commit for partition ${partitionId}`);
+			}
 
-				// this will be resolved in the "offset.commit" event
-				const deferredCommit = new Deferred<void>();
-				this.pendingCommits.set(partitionId, deferredCommit);
+			// this will be resolved in the "offset.commit" event
+			const deferredCommit = new Deferred<void>();
+			this.pendingCommits.set(partitionId, deferredCommit);
 
-				// logs are replayed from the last checkpointed offset.
-				// to avoid reprocessing the last message twice, we checkpoint at offset + 1
-				this.consumer.commit({
-					topic: this.topic,
-					partition: partitionId,
-					offset: queuedMessage.offset + 1,
-				});
+			// logs are replayed from the last checkpointed offset.
+			// to avoid reprocessing the last message twice, we checkpoint at offset + 1
+			this.consumer.commit({
+				topic: this.topic,
+				partition: partitionId,
+				offset: queuedMessage.offset + 1,
+			});
 
-				const result = await deferredCommit.promise;
-				const latency = Date.now() - startTime;
-				this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
-				return result;
-			} catch (ex) {
-				const hasPartition = this.assignedPartitions.has(partitionId);
-				const willRetry = this.consumer?.isConnected()
-									&& retries < this.consumerOptions.maxConsumerCommitRetries
-									&& hasPartition;
+			const result = await deferredCommit.promise;
+			const latency = Date.now() - startTime;
+			this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
+			return result;
+		} catch (ex) {
+			const hasPartition = this.assignedPartitions.has(partitionId);
+			const willRetry = this.consumer?.isConnected()
+				&& retries < this.consumerOptions.maxConsumerCommitRetries
+				&& hasPartition;
 
-				const latency = Date.now() - startTime;
-				this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
+			const latency = Date.now() - startTime;
+			this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
 
-				if (willRetry) {
-					return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
-				}
+			if (willRetry) {
+				return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
+			}
 
-				throw ex;
+			throw ex;
 		}
 	}
 
