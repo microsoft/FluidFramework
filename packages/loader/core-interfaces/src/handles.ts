@@ -56,6 +56,8 @@ export interface IFluidHandle<
     > extends IProvideFluidHandle {
 
     /**
+     * @deprecated - Use handles instead of absolute paths
+     *
      * The absolute path to the handle context from the root.
      */
     absolutePath: string;
