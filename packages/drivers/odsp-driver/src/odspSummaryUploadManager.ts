@@ -119,6 +119,7 @@ export class OdspSummaryUploadManager {
         const summaryTree: api.ISummaryTree = {
             type: api.SummaryType.Tree,
             tree: {},
+            unreferenced: snapshotTree.unreferenced,
         };
         for (const [key, value] of Object.entries(snapshotTree.blobs)) {
             // fullBlobPath does not start with "/"

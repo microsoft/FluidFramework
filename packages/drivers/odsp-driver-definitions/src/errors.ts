@@ -34,13 +34,6 @@ export enum OdspErrorType {
         */
     fluidNotEnabled = "fluidNotEnabled",
 
-    /**
-     * Epoch version mismatch failures.
-     * This occurs when the file is modified externally. So the version at the client receiving this error
-     * does not match the one at the server.
-     */
-    epochVersionMismatch = "epochVersionMismatch",
-
     fetchTokenError = "fetchTokenError",
 
     // This error will be raised when client is too behind with no way to catch up.

@@ -102,7 +102,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                                 throw new NonRetryableError(
                                     "Not Found",
                                     undefined,
-                                    404);
+                                    { statusCode: 404 });
                             }
                             return blob;
                         };

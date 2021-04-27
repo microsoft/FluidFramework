@@ -377,10 +377,7 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = callback(perfEvent);
-            // Event might have been cancelled or ended in the callback
-            if (perfEvent.event) {
-                perfEvent.end();
-            }
+            perfEvent.autoEnd();
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
@@ -397,16 +394,15 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = await callback(perfEvent);
-            // Event might have been cancelled or ended in the callback
-            if (perfEvent.event) {
-                perfEvent.end();
-            }
+            perfEvent.autoEnd();
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
             throw error;
         }
     }
+
+    public get duration() { return performance.now() - this.startTime; }
 
     private event?: ITelemetryGenericEvent;
     private readonly startTime = performance.now();
@@ -415,7 +411,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = { start: true, end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {
@@ -432,19 +428,28 @@ export class PerformanceEvent {
         this.reportEvent(eventNameSuffix, props);
     }
 
-    public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
-        if (this.markers.end) {
-            this.reportEvent(eventNameSuffix, props);
+    private autoEnd() {
+        // Event might have been cancelled or ended in the callback
+        if (this.event && this.markers.end) {
+            this.reportEvent("end");
         }
+        this.performanceEndMark();
+        this.event = undefined;
+    }
 
+    public end(props?: ITelemetryProperties): void {
+        this.reportEvent("end", props);
+        this.performanceEndMark();
+        this.event = undefined;
+    }
+
+    private performanceEndMark() {
         if (this.startMark && this.event) {
-            const endMark = `${this.event.eventName}-${eventNameSuffix}`;
+            const endMark = `${this.event.eventName}-end`;
             window.performance.mark(endMark);
             window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
             this.startMark = undefined;
         }
-
-        this.event = undefined;
     }
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
@@ -468,7 +473,7 @@ export class PerformanceEvent {
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
-            event.duration = performance.now() - this.startTime;
+            event.duration = this.duration;
         }
 
         this.logger.sendPerformanceEvent(event, error);
