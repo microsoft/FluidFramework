@@ -287,12 +287,6 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
     });
 }
 
-process.on("unhandledRejection", (reason, promise) => {
-    loggerP.then(async (l)=>l.sendErrorEvent({eventName: "UnhandeldPromiseRejection"}, reason))
-    .catch((e) =>{
-        console.log("Error during logging unhandled promise rejection: ", e);
-        });
-});
 main()
 .catch(
     (error) => {
