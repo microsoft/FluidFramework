@@ -22,6 +22,12 @@ parameters:
     - default
     - skip
     - force
+- name: nodeVersion
+  type: string
+  default: 12.x
+  values:
+    - 12.x
+    - 14.x
 
 trigger:
   branches:
@@ -80,9 +86,9 @@ extends:
 
     preCG:
     - task: UseNode@1
-      displayName: Use Node 12.x
+      displayName: Use Node ${{parameters.nodeVersion}}
       inputs:
-        version: 12.x
+        version: ${{parameters.nodeVersion}}
     - task: Npm@1
       displayName: npm ci
       inputs:
@@ -98,4 +104,3 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
-
