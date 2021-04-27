@@ -5,7 +5,6 @@
 
 const fs = require("fs");
 const pathLib = require("path");
-// const narray = require("negative-array");
 
 const getPackageName = (path) => {
     try {
@@ -33,8 +32,8 @@ You can run this example using the following steps:
    a. For an even faster build, you can add the package name to the build command, like this:
       \`npm run build:fast -- --nolint ${getPackageName(path)}\``;
 
-      const tinyliciousStep = `1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).`;
-      const finalStep = `1. Run \`npm run start\` from this directory (${getPackagePath(path)}) and open <http://localhost:8080> in a web browser to see the app running.`;
+    const tinyliciousStep = `1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).`;
+    const finalStep = `1. Run \`npm run start\` from this directory (${getPackagePath(path)}) and open <http://localhost:8080> in a web browser to see the app running.`;
 
     const steps = [
         preamble,
@@ -52,11 +51,11 @@ module.exports = {
         INCLUDE_ROOT(content, options) {
             console.log(`reading ${options.path}`);
             let fileContents = fs.readFileSync(options.path, "utf8");
-            if(options.start || options.end) {
+            if (options.start || options.end) {
                 options.start = options.start || 0;
-                options.end = options.end || 0;
+                options.end = options.end || undefined;
                 const split = fileContents.split(/\r?\n/);
-                fileContents = split.slice(options.start, options.end === 0 ? undefined : options.end).join("\n");
+                fileContents = split.slice(options.start, options.end).join("\n");
             }
             return fileContents;
         },
