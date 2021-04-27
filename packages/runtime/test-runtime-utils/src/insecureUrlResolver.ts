@@ -90,8 +90,9 @@ export class InsecureUrlResolver implements IUrlResolver {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
         const host = new URL(this.ordererUrl).host;
-        const relativePath = !documentRelativePath || documentRelativePath.startsWith("/")
-            ? "" : `/${documentRelativePath}`;
+        const tmpRelativePath = !documentRelativePath || documentRelativePath.startsWith("/")
+        ? documentRelativePath : `/${documentRelativePath}`;
+        const relativePath = tmpRelativePath == undefined? '': tmpRelativePath;
         const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
