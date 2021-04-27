@@ -66,7 +66,6 @@ export const SimpleFluidObjectEmbedInstantiationFactory =
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     SimpleFluidObjectEmbedInstantiationFactory,
     new Map([
-        SimpleFluidObjectEmbedInstantiationFactory.registryEntry,
-        ClickerInstantiationFactory.registryEntry,
+        SimpleFluidObjectEmbedInstantiationFactory.registryEntry,        
     ]),
 );
