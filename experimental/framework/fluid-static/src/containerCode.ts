@@ -136,10 +136,7 @@ export class RootDataObject
         throw new Error("Could not create new Fluid object because an unknown object was passed");
     }
 
-    public async getDataObject<T extends IFluidLoadable>(id: string) {
-        const handle = await this.root.wait<IFluidHandle<T>>(id);
-        return handle.get();
-    }
+
 
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
