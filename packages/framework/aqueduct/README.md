@@ -14,7 +14,7 @@ Fluid object development consists of developing the data object and the correspo
 
 ### DataObject
 
-The [DataObject][] class extends [PureDataObject](#PureDataObject) and provides the following additional functionality:
+The [DataObject][] class extends [PureDataObject](#puredataobject) and provides the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
 - Scheduled task routing that makes it easier to use the Scheduler Fluid object
@@ -89,7 +89,7 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 ### DataObjectFactory example
 
-In the below example we build a `DataObjectFactory` for the [`Clicker`](#Data-Object-Example) example above. To build a `DataObjectFactory`, we need to provide factories for the distributed data structures we are using inside of our `DataObject`. In the above example we store a handle to a `SharedCounter` in `this.root` to track our `"clicks"`. The `DataObject` comes with the `SharedDirectory` (`this.root`) already initialized, so we just need to add the factory for `SharedCounter`.
+In the below example we build a `DataObjectFactory` for the [`Clicker`](#data-object-example) example above. To build a `DataObjectFactory`, we need to provide factories for the distributed data structures we are using inside of our `DataObject`. In the above example we store a handle to a `SharedCounter` in `this.root` to track our `"clicks"`. The `DataObject` comes with the `SharedDirectory` (`this.root`) already initialized, so we just need to add the factory for `SharedCounter`.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
@@ -111,7 +111,7 @@ const myClicker = ClickerInstantiationFactory.createInstance(this.context) as Cl
 The `this.providers` object on `PureDataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
 
 1. Define the type in the generic on `PureDataObject`/`DataObject`
-2. Add the symbol to your factory (see [DataObjectFactory Example](#Data-Object-Factory-Example) below)
+2. Add the symbol to your factory (see [DataObjectFactory Example](#data-object-factory-example) below)
 
 In the below example we have an `IFluidUserInfo` interface that looks like this:
 
@@ -150,12 +150,12 @@ The Aqueduct library provides the [`ContainerRuntimeFactoryWithDataStore`](./src
 
 - Define the registry of data objects that can be created
 - Declare the default data object
-- Declare [Container Services](#Container-Service-Development)
-- Declare Container level [Request Handlers](#Container-Level-Request-Handlers)
+- Declare [Container Services](#container-service-development)
+- Declare Container level [Request Handlers](#container-level-request-handlers)
 
 ## Container object example
 
-In the below example we will write a Container that exposes the above [`Clicker`](#Data-Object-Example) using the [`Clicker Factory`](#Data-Object-Factory-Example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
+In the below example we will write a Container that exposes the above [`Clicker`](#data-object-example) using the [`Clicker Factory`](#data-object-factory-example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
 
 ```typescript
 export fluidExport = new ContainerRuntimeFactoryWithDataStore(
