@@ -58,6 +58,7 @@ export const SimpleFluidObjectEmbedInstantiationFactory =
         SimpleFluidObjectEmbed,
         [],
         {},
+        [ClickerInstantiationFactory.registryEntry]
     );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
