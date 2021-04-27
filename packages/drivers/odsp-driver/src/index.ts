@@ -13,6 +13,7 @@ export * from "./odspPublicUtils";
 export * from "./odspUrlHelper";
 export * from "./createOdspUrl";
 export * from "./checkUrl";
+export * from "./prefetchLatestSnapshot";
 
 // Factory
 export * from "./odspDocumentServiceFactoryCore";
