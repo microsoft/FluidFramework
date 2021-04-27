@@ -1,9 +1,7 @@
 {
   "packages": [
     "examples/**",
-    "experimental/dds/**",
-    "experimental/examples/**",
-    "experimental/framework/**",
+    "experimental/**",
     "packages/**"
   ],
   "version": "0.39.0"
