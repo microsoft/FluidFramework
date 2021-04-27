@@ -33,6 +33,7 @@ const nullLogger: ITelemetryBufferedLogger = {
 
 const log = console.log;
 const error = console.log;
+const warn = console.warn;
 let testLogger: TestLogger;
 export const mochaHooks = {
     beforeAll() {
@@ -45,6 +46,7 @@ export const mochaHooks = {
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
             console.error = () => { };
+            console.warn = () => { };
         }
         const context = this as any as Context;
         testLogger.setTestName(context.currentTest?.fullTitle());
@@ -52,6 +54,7 @@ export const mochaHooks = {
     afterEach() {
         console.log = log;
         console.error = error;
+        console.warn = warn;
         testLogger.setTestName(undefined);
     },
 };
