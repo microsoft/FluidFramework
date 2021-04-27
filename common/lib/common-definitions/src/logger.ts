@@ -60,6 +60,47 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 }
 
 /**
+ * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
+ * Please do not modify existing entries for backwards compatibility.
+ */
+ export enum TelemetryDataTag {
+    /** Data containing terms from code packages that may have been dynamically loaded */
+    PackageData = "PackageData",
+    /** Personal data of a variety of classifications that pertains to the user */
+    UserData = "UserData",
+}
+
+/**
+ * A property to be logged to telemetry containing both the value and the tag
+ */
+export interface ITaggedTelemetryPropertyType {
+    value: TelemetryEventPropertyType,
+    tag: TelemetryDataTag
+}
+
+/**
+ * Property bag containing a mix of value literals and wrapped values along with a tag
+ */
+export interface ITaggableTelemetryProperties {
+    [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+/**
+ * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
+ */
+export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
+    return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
+}
+
+/**
+ * An error object that supports exporting its properties to be logged to telemetry
+ */
+export interface ILoggingError extends Error {
+    /** Return all properties from this object that should be logged to telemetry */
+    getTelemetryProperties(): ITaggableTelemetryProperties;
+}
+
+/**
  * ITelemetryLogger interface contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
