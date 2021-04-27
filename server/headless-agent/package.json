@@ -46,7 +46,7 @@
     "jsonwebtoken": "^8.5.0",
     "nconf": "^0.11.0",
     "puppeteer": "^1.14.0",
-    "redis": "^2.8.0",
+    "redis": "^3.1.1",
     "request": "^2.88.2",
     "winston": "3.2.1"
   },
