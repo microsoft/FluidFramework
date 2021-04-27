@@ -772,7 +772,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                     value.sequenceNumber = undefined;
                 } else if (canCache) {
-                    this.cache.persistedCache.put(
+                    this.epochTracker.put(
                         this._snapshotCacheEntry,
                         value,
                     ).catch(() => {});
