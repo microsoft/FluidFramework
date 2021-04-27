@@ -65,7 +65,7 @@ function getFunctionSource(fun: any): string {
 	return source;
 }
 
-describe("PropertyDDS", () => {
+describe.skip("PropertyDDS", () => {
 	describe("Rebasing", () => {
 		const documentId = "localServerTest";
 		const documentLoadUrl = `fluid-test://localhost/${documentId}`;
