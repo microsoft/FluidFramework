@@ -79,7 +79,13 @@ function buildHierarchy(
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree = { id: entry.id, blobs: {}, commits: {}, trees: {} };
+            const newTree: api.ISnapshotTree = {
+                id: entry.id,
+                blobs: {},
+                commits: {},
+                trees: {},
+                unreferenced: entry.unreferenced,
+            };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {

@@ -560,6 +560,16 @@ function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
  * PLEASE take care to properly tag properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
+    private readonly __isFluidLoggingError__ = 1;
+
+    public static is(obj: any): obj is LoggingError {
+        const maybeLogger = obj as Partial<LoggingError>;
+        return maybeLogger !== null
+            && typeof maybeLogger  === "object"
+            && typeof maybeLogger.message === "string"
+            && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
+    }
+
     constructor(
         message: string,
         props?: ITaggableTelemetryProperties,

@@ -5,8 +5,7 @@
 
 import { globals } from "../jest.config";
 
-// Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
-describe("diceRoller", () => {
+describe("Property Inspector", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
@@ -19,10 +18,10 @@ describe("diceRoller", () => {
     });
 
     it("Inspector at root1 is rendered", async () => {
-        expect(await page.$eval('#root1', el => el.children.length)).toEqual(1);
+        await page.waitForSelector("#root1 > :first-child");
     });
 
     it("Inspector at root2 is rendered", async () => {
-        expect(await page.$eval('#root2', el => el.children.length)).toEqual(1);
+        await page.waitForSelector("#root2 > :first-child");
     });
 });

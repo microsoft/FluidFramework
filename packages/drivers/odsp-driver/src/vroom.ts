@@ -11,6 +11,11 @@ import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 
+interface IJoinSessionBody {
+    requestSocketToken?: boolean;
+    guestDisplayName?: string;
+}
+
 /**
  * Makes join session call on SPO to get information about the web socket for a document
  * @param driveId - The SPO drive id that this request should be made against
@@ -20,7 +25,11 @@ import { EpochTracker } from "./epochTracker";
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
  * @param getStorageToken - A function that is able to provide the access token for this request
- * @param epochTracker - fetch wrapper which incorporates epoch logic around joisSession call.
+ * @param epochTracker - fetch wrapper which incorporates epoch logic around joinSession call
+ * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
+ * which is used when establishing websocket connection with collab session backend service.
+ * @param guestDisplayName - display name used to identify guest user joining a session.
+ * This is optional and used only when collab session is being joined via invite.
  */
 export async function fetchJoinSession(
     urlParts: IOdspUrlParts,
@@ -29,6 +38,8 @@ export async function fetchJoinSession(
     logger: ITelemetryLogger,
     getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     epochTracker: EpochTracker,
+    requestSocketToken: boolean,
+    guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (options) => {
         const token = await getStorageToken(options, "JoinSession");
@@ -51,11 +62,22 @@ export async function fetchJoinSession(
                     queryParams = "";
                     headers = { Authorization: `Bearer ${token}` };
                 }
+                let body: IJoinSessionBody | undefined;
+                if (requestSocketToken || guestDisplayName) {
+                    body = {};
+                    if (requestSocketToken) {
+                        body.requestSocketToken = true;
+                    }
+                    if (guestDisplayName) {
+                        body.guestDisplayName = guestDisplayName;
+                    }
+                }
 
                 const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                    // eslint-disable-next-line max-len
-                    `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?${queryParams}`,
-                    { method, headers },
+                    `${getApiRoot(siteOrigin)}/drives/${
+                        urlParts.driveId
+                    }/items/${urlParts.itemId}/${path}?${queryParams}`,
+                    { method, headers, body: body ? JSON.stringify(body) : undefined },
                     "joinSession",
                 );
 

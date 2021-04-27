@@ -140,6 +140,8 @@ export interface ITreeEntry {
     id: string;
     path: string;
     type: "commit" | "tree" | "blob";
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ITree {
