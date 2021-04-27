@@ -50,7 +50,7 @@ import { RateLimiter } from "./rateLimiter";
 
 /* eslint-disable max-len */
 
-interface ISnapshotCacheValue {
+export interface ISnapshotCacheValue {
     snapshot: IOdspSnapshot;
     sequenceNumber: number | undefined;
 }
@@ -749,7 +749,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                 }
 
-                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = this.evalBlobsAndTrees(snapshot);
+                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = evalBlobsAndTrees(snapshot);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we cannot cache using an HTTP response header.
@@ -808,29 +808,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             throw error;
         });
-    }
-
-    private evalBlobsAndTrees(snapshot: IOdspSnapshot) {
-        let numTrees = 0;
-        let numBlobs = 0;
-        let encodedBlobsSize = 0;
-        let decodedBlobsSize = 0;
-        for (const tree of snapshot.trees) {
-            for(const treeEntry of tree.entries) {
-                if (treeEntry.type === "blob") {
-                    numBlobs++;
-                } else if (treeEntry.type === "tree") {
-                    numTrees++;
-                }
-            }
-        }
-        if (snapshot.blobs !== undefined) {
-            for (const blob of snapshot.blobs) {
-                decodedBlobsSize += blob.size;
-                encodedBlobsSize += blob.content.length;
-            }
-        }
-        return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
@@ -982,6 +959,29 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return summarySnapshotTree;
     }
+}
+
+export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+    let numTrees = 0;
+    let numBlobs = 0;
+    let encodedBlobsSize = 0;
+    let decodedBlobsSize = 0;
+    for (const tree of snapshot.trees) {
+        for(const treeEntry of tree.entries) {
+            if (treeEntry.type === "blob") {
+                numBlobs++;
+            } else if (treeEntry.type === "tree") {
+                numTrees++;
+            }
+        }
+    }
+    if (snapshot.blobs !== undefined) {
+        for (const blob of snapshot.blobs) {
+            decodedBlobsSize += blob.size;
+            encodedBlobsSize += blob.content.length;
+        }
+    }
+    return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
 /* eslint-enable max-len */
