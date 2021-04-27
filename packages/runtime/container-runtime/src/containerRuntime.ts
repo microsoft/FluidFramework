@@ -554,8 +554,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public get IContainerRuntimeDirtyable() {
         // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
+        // console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+        //    + "see BREAKING.md for more details and migration instructions");
         // Disabling noisy telemetry until customers have had some time to migrate
         // this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
         return this;
@@ -610,8 +610,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
-            console.warn("ContainerRuntime with AgentScheduler built-in is deprecated, "
-                + "see BREAKING.md for more details and migration instructions");
+            // console.warn("ContainerRuntime with AgentScheduler built-in is deprecated, "
+            // + "see BREAKING.md for more details and migration instructions");
             // Disabling noisy telemetry until customers have had some time to migrate
             // logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
         }
@@ -758,8 +758,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public get leader(): boolean {
         // The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
-        console.warn("The ContainerRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
+        // console.warn("The ContainerRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
+        //    + "see BREAKING.md for more details and migration instructions");
         // Disabling noisy telemetry until customers have had some time to migrate
         // this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
         return this._leader;
@@ -1541,8 +1541,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
         // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
+        // ("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
+        //    + "see BREAKING.md for more details and migration instructions");
         // Disabling noisy telemetry until customers have had some time to migrate
         // this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
         assert(
