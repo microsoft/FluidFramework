@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const Dotenv = require('dotenv-webpack');
 
 module.exports = env => {
     const htmlTemplate = "./src/index.html";
@@ -29,8 +28,7 @@ module.exports = env => {
         plugins: [
             new HtmlWebpackPlugin({
                 template: htmlTemplate
-            }),
-            new Dotenv()
+            })
         ],
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
