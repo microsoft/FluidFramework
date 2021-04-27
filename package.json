@@ -80,6 +80,7 @@
       "**/src/test/**/*.ts",
       "**/dist/test/**/*.js",
       "experimental/examples/**",
+      "experimental/PropertyDDS/**",
       "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
