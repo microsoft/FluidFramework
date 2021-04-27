@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const pathLib = require("path");
+// const narray = require("negative-array");
 
 const getPackageName = (path) => {
     try {
@@ -47,9 +48,16 @@ You can run this example using the following steps:
 /* markdown-magic config */
 module.exports = {
     transforms: {
-        /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) --> */
-        INCLUDE(content, options) {
-            const fileContents = fs.readFileSync(options.path, "utf8");
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=../file.js) --> */
+        INCLUDE_ROOT(content, options) {
+            console.log(`reading ${options.path}`);
+            let fileContents = fs.readFileSync(options.path, "utf8");
+            if(options.start || options.end) {
+                options.start = options.start || 0;
+                options.end = options.end || 0;
+                const split = fileContents.split(/\r?\n/);
+                fileContents = split.slice(options.start, options.end === 0 ? undefined : options.end).join("\n");
+            }
             return fileContents;
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */
