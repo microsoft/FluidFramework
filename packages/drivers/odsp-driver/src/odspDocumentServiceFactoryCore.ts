@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -15,13 +15,9 @@ import {
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
-    IOdspResolvedUrl,
     TokenFetchOptions,
     OdspResourceTokenFetchOptions,
-    isTokenFromCache,
-    tokenFromResponse,
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
@@ -37,6 +33,7 @@ import {
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
+import { toInstrumentedOdspTokenFetcher } from "./odspUtils2";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -172,46 +169,4 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.epochTracker,
         );
     }
-}
-
-export function toInstrumentedOdspTokenFetcher(
-    logger: ITelemetryLogger,
-    resolvedUrl: IOdspResolvedUrl,
-    tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
-    throwOnNullToken: boolean,
-): (options: TokenFetchOptions, name: string) => Promise<string | null> {
-    return async (options: TokenFetchOptions, name: string) => {
-        // Telemetry note: if options.refresh is true, there is a potential perf issue:
-        // Host should optimize and provide non-expired tokens on all critical paths.
-        // Exceptions: race conditions around expiration, revoked tokens, host that does not care
-        // (fluid-fetcher)
-        return PerformanceEvent.timedExecAsync(
-            logger,
-            {
-                eventName: `${name}_GetToken`,
-                attempts: options.refresh ? 2 : 1,
-                hasClaims: !!options.claims,
-                hasTenantId: !!options.tenantId,
-            },
-            async (event) => tokenFetcher({
-                ...options,
-                siteUrl: resolvedUrl.siteUrl,
-                driveId: resolvedUrl.driveId,
-                itemId: resolvedUrl.itemId,
-            }).then((tokenResponse) => {
-                const token = tokenFromResponse(tokenResponse);
-                // This event alone generates so many events that is materially impacts cost of telemetry
-                // Thus do not report end event when it comes back quickly.
-                // Note that most of the hosts do not report if result is comming from cache or not,
-                // so we can't rely on that here
-                if (event.duration >= 32) {
-                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
-                }
-                if (token === null && throwOnNullToken) {
-                    throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
-                }
-                return token;
-            }),
-            { cancel: "generic" });
-    };
 }

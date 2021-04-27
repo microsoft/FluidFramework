@@ -47,6 +47,7 @@ import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { RateLimiter } from "./rateLimiter";
+import { evalBlobsAndTrees } from "./odspUtils2";
 
 /* eslint-disable max-len */
 
@@ -965,29 +966,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         return summarySnapshotTree;
     }
-}
-
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
-    let numTrees = 0;
-    let numBlobs = 0;
-    let encodedBlobsSize = 0;
-    let decodedBlobsSize = 0;
-    for (const tree of snapshot.trees) {
-        for(const treeEntry of tree.entries) {
-            if (treeEntry.type === "blob") {
-                numBlobs++;
-            } else if (treeEntry.type === "tree") {
-                numTrees++;
-            }
-        }
-    }
-    if (snapshot.blobs !== undefined) {
-        for (const blob of snapshot.blobs) {
-            decodedBlobsSize += blob.size;
-            encodedBlobsSize += blob.content.length;
-        }
-    }
-    return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
 /* eslint-enable max-len */

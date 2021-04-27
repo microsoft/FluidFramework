@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
+import { assert } from "@fluidframework/common-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
@@ -14,12 +15,10 @@ import {
     OdspResourceTokenFetchOptions,
     snapshotKey,
     TokenFetcher,
-    TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { LocalPersistentCache } from "./odspCache";
-import { toInstrumentedOdspTokenFetcher } from "./odspDocumentServiceFactoryCore";
-import { evalBlobsAndTrees, ISnapshotCacheValue } from "./odspDocumentStorageManager";
+import { ISnapshotCacheValue } from "./odspDocumentStorageManager";
 import {
     createOdspLogger,
     fetchAndParseAsJSONHelper,
@@ -28,6 +27,7 @@ import {
     IOdspResponse,
 } from "./odspUtils";
 import { IOdspSnapshot } from "./contracts";
+import { evalBlobsAndTrees, toInstrumentedOdspTokenFetcher } from "./odspUtils2";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -76,65 +76,42 @@ export async function prefetchLatestSnapshot(
         },
     };
 
-    return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-        // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-        if (tokenFetchOptions.refresh) {
-            await fetchSnapshot(
-                snapshotUrl,
-                odspResolvedUrl,
-                snapshotOptions,
-                tokenFetchOptions,
-                storageTokenFetcher,
-                odspLogger,
-                persistedCache,
-                snapshotCacheEntry,
-            );
-        } else {
-            await PerformanceEvent.timedExecAsync(
-                odspLogger,
-                { eventName: "ObtainSnapshot" },
-                async (event: PerformanceEvent) => {
-                    const cachedSnapshot: ISnapshotCacheValue | undefined =
-                        await persistedCache.get(snapshotCacheEntry);
-                    const method = cachedSnapshot !== undefined ? "cache" : "network";
-
-                    if (cachedSnapshot === undefined) {
-                        await fetchSnapshot(
-                            snapshotUrl,
-                            odspResolvedUrl,
-                            snapshotOptions,
-                            tokenFetchOptions,
-                            storageTokenFetcher,
-                            odspLogger,
-                            persistedCache,
-                            snapshotCacheEntry,
-                        );
-                    }
-                    event.end({ method });
-                    return cachedSnapshot;
-                },
-            );
-        }
-        if (persistedCache.get(snapshotCacheEntry) !== undefined) {
-            return true;
-        }
-        return false;
-    }).catch((error) => {
-        return false;
-    });
+    return PerformanceEvent.timedExecAsync(
+        odspLogger,
+        { eventName: "PrefetchLatestSnapshot" },
+        async (event: PerformanceEvent) => {
+            let attempts = 1;
+            const success = await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                if (tokenFetchOptions.refresh) {
+                    attempts = 2;
+                }
+                const storageToken = await storageTokenFetcher(tokenFetchOptions, "PrefetchLatestSnapshot");
+                assert(storageToken !== null, "Storage token should not be null");
+                return fetchSnapshot(
+                    snapshotUrl,
+                    odspResolvedUrl,
+                    snapshotOptions,
+                    storageToken,
+                    odspLogger,
+                    persistedCache,
+                    snapshotCacheEntry,
+                );
+            });
+        event.end({ attempts });
+        return success;
+    }).catch((error) => false);
 }
 
 async function fetchSnapshot(
     snapshotUrl: string,
     odspResolvedUrl: IOdspResolvedUrl,
     snapshotOptions: ISnapshotOptions,
-    tokenFetchOptions: TokenFetchOptions,
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    storageToken: string,
     logger: TelemetryLogger,
     persistedCache: IPersistedCache,
     snapshotCacheEntry: ICacheEntry,
-): Promise<void> {
-    const storageToken = await getStorageToken(tokenFetchOptions, "TreesLatest");
+): Promise<boolean> {
+    let success = false;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
     const formBoundary = uuid();
     let postBody = `--${formBoundary}\r\n`;
@@ -166,7 +143,7 @@ async function fetchSnapshot(
     return PerformanceEvent.timedExecAsync(
         logger,
         {
-            eventName: "TreesLatest",
+            eventName: "PrefetchTreesLatest",
             ...logOptions,
         },
         async (event) => {
@@ -204,7 +181,8 @@ async function fetchSnapshot(
                 persistedCache.put(
                     snapshotCacheEntry,
                     value,
-                ).catch(() => {});
+                ).then(() => success = true)
+                .catch(() => {});
             }
 
             event.end({
@@ -223,6 +201,7 @@ async function fetchSnapshot(
                 sltelemetry: response.headers.get("x-fluid-sltelemetry"),
                 ...response.commonSpoHeaders,
             });
+            return success;
         },
     );
 }
