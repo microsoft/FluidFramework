@@ -71,7 +71,7 @@ async function main() {
     const l = await loggerP;
     process.on("unhandledRejection", (reason, promise) => {
         try{
-            l.sendErrorEvent({eventName: "UnhandeldPromiseRejection"}, reason);
+            l.sendErrorEvent({eventName: "UnhandledPromiseRejection"}, reason);
         } catch(e) {
             console.log("Error during logging unhandled promise rejection: ", e);
         }
