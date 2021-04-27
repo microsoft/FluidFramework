@@ -73,7 +73,7 @@ async function main() {
         try{
             l.sendErrorEvent({eventName: "UnhandledPromiseRejection"}, reason);
         } catch(e) {
-            console.log("Error during logging unhandled promise rejection: ", e);
+            console.error("Error during logging unhandled promise rejection: ", e);
         }
     });
     const result = await runnerProcess(
