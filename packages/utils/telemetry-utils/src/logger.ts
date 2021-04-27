@@ -564,7 +564,8 @@ export class LoggingError extends Error implements ILoggingError {
 
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
-        return typeof maybeLogger  === "object"
+        return maybeLogger !== null
+            && typeof maybeLogger  === "object"
             && typeof maybeLogger.message === "string"
             && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
     }
