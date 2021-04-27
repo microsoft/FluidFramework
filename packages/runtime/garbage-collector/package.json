@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/common-utils": "^0.30.0-0",
+    "@fluidframework/common-utils": "^0.30.0",
     "@fluidframework/runtime-definitions": "^0.39.0"
   },
   "devDependencies": {
