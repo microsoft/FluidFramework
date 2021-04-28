@@ -905,7 +905,7 @@ export class DeltaManager
             };
             const reconfiguredError: IThrottlingWarning = {
                 ...CreateContainerError(error),
-                ...throttlingWarning
+                ...throttlingWarning,
             };
             this.emit("throttled", reconfiguredError);
         }
