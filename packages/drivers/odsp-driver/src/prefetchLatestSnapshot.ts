@@ -72,6 +72,8 @@ export async function prefetchLatestSnapshot(
         async (event: PerformanceEvent) => {
             let attempts = 1;
             const success = await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                // Sometimes the token supplied by host is expired, so we attempt again by asking the host
+                // to give us a new valid token.
                 if (tokenFetchOptions.refresh) {
                     attempts = 2;
                 }
