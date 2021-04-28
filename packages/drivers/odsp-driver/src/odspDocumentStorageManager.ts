@@ -43,11 +43,10 @@ import {
 import { fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
-import { getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
+import { evalBlobsAndTrees, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { RateLimiter } from "./rateLimiter";
-import { evalBlobsAndTrees } from "./prefetchSnapshotUtils";
 
 /* eslint-disable max-len */
 
