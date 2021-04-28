@@ -60,22 +60,11 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 }
 
 /**
- * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
- * Please do not modify existing entries for backwards compatibility.
- */
- export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded */
-    PackageData = "PackageData",
-    /** Personal data of a variety of classifications that pertains to the user */
-    UserData = "UserData",
-}
-
-/**
  * A property to be logged to telemetry containing both the value and the tag
  */
 export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType,
-    tag: TelemetryDataTag
+    tag: string
 }
 
 /**
