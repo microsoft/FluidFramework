@@ -297,6 +297,7 @@ export class RunningSummarizer implements IDisposable {
     private readonly pendingAckTimer: PromiseTimer;
     private readonly heuristics: SummarizerHeuristics;
     private readonly logger: ITelemetryLogger;
+    private readonly unsetPendingAckTimerTimeoutCallback: () => void;
 
     private constructor(
         private readonly clientId: string,
@@ -309,7 +310,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
-        summaryCollection: SummaryCollection,
+        private readonly summaryCollection: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(
             baseLogger, "Running", {all:{ summaryGenTag: () => this.summarizeCount }});
@@ -342,8 +343,8 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
-        // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
-        summaryCollection.setPendingAckTimerTimeoutCallback?.(maxAckWaitTime, () => {
+        // Set up pending ack timeout by op timestamp differences for previous summaries.
+        summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
@@ -353,6 +354,11 @@ export class RunningSummarizer implements IDisposable {
                 this.pendingAckTimer.clear();
             }
         });
+        // back-compat 0.40 unsetPendingAckTimerTimeoutCallback
+        this.unsetPendingAckTimerTimeoutCallback =
+            this.summaryCollection.unsetPendingAckTimerTimeoutCallback !== undefined
+            ? (() => this.summaryCollection.unsetPendingAckTimerTimeoutCallback())
+            : (() => summaryCollection.setPendingAckTimerTimeoutCallback(undefined as any, undefined as any));
     }
 
     public dispose(): void {
@@ -439,6 +445,10 @@ export class RunningSummarizer implements IDisposable {
             this.pendingAckTimer.start(),
         ]);
         this.pendingAckTimer.clear();
+
+        // Remove pending ack wait timeout by op timestamp comparison, because
+        // it has race conditions with summaries submitted by this same client.
+        this.unsetPendingAckTimerTimeoutCallback();
 
         if (checkNotTimeout(maybeLastAck)) {
             this.heuristics.initialize({
