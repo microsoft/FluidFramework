@@ -55,7 +55,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (this.isForNodeTest) {
-            const [, documentId, relativePath] = parsedUrl.pathname.substr(1).split("/");
+            const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
+            const relativePath = tmpRelativePath === undefined ? "" : tmpRelativePath;
             return this.resolveHelper(documentId, relativePath, parsedUrl.search);
         } else if (parsedUrl.host === window.location.host) {
             const fullPath = parsedUrl.pathname.substr(1);
@@ -90,9 +91,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
         const host = new URL(this.ordererUrl).host;
-        const tmpRelativePath = !documentRelativePath || documentRelativePath.startsWith("/")
-        ? documentRelativePath : `/${documentRelativePath}`;
-        const relativePath = tmpRelativePath === undefined ? "" : tmpRelativePath;
+        const relativePath = !documentRelativePath || documentRelativePath.startsWith("/")
+            ? documentRelativePath : `/${documentRelativePath}`;
         const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
