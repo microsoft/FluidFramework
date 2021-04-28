@@ -15,6 +15,7 @@ module.exports = {
     'map': './src/map',
     'matrix': './src/matrix',
     'odspDriver': './src/odspDriver',
+    'odspPrefetchSnapshot': './src/odspPrefetchSnapshot',
     'sharedString': './src/sharedString'
   },
   mode: 'production',
