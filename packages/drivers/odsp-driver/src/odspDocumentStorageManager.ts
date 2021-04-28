@@ -43,17 +43,12 @@ import {
 import { fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
-import { evalBlobsAndTrees, getWithRetryForTokenRefresh, IOdspResponse } from "./odspUtils";
+import { evalBlobsAndTrees, getWithRetryForTokenRefresh, IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { RateLimiter } from "./rateLimiter";
 
 /* eslint-disable max-len */
-
-export interface ISnapshotCacheValue {
-    snapshot: IOdspSnapshot;
-    sequenceNumber: number | undefined;
-}
 
 /**
  * Build a tree hierarchy base on a flat tree

@@ -17,7 +17,6 @@ import {
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ISnapshotCacheValue } from "./odspDocumentStorageManager";
 import {
     createOdspLogger,
     evalBlobsAndTrees,
@@ -25,6 +24,7 @@ import {
     getOdspResolvedUrl,
     getWithRetryForTokenRefresh,
     IOdspResponse,
+    ISnapshotCacheValue,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { IOdspSnapshot } from "./contracts";
