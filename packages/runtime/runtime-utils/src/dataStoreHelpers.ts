@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { TelemetryDataTag, ITaggableTelemetryProperties, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IFluidObject,
     IFluidRouter,
@@ -16,11 +17,24 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
-interface IResponseException extends Error {
-    errorFromRequestFluidObject: true;
-    message: string;
-    code: number;
-    stack: string;
+class ResponseException extends LoggingError {
+    public errorFromRequestFluidObject: true = true;
+    public code: number;
+    constructor(message: string, response: IResponse) {
+        super(message);
+        this.code = response.status;
+        // Tag response.value as PackageData because it typically contains the request URL
+        this.addTelemetryProperties({
+            responseValue: { value: response.value, tag: TelemetryDataTag.PackageData },
+            mimeType: response.mimeType,
+        });
+        if (response.stack !== undefined) {
+            try {
+                // not clear if all browsers allow overwriting stack
+                this.stack = response.stack;
+            } catch (_) {}
+        }
+    }
 }
 
 export function getStack() {
@@ -39,7 +53,7 @@ export function exceptionToResponse(err: any): IResponse {
     const status = 500;
     // eslint-disable-next-line no-null/no-null
     if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
-        const responseErr: IResponseException = err;
+        const responseErr: ResponseException = err;
         return {
             mimeType: "text/plain",
             status: responseErr.code,
@@ -55,21 +69,8 @@ export function exceptionToResponse(err: any): IResponse {
     };
 }
 
-export function responseToException(response: IResponse, request: IRequest) {
-    const message = response.value;
-    const err = new Error(message);
-    const responseErr = err as any as IResponseException;
-    responseErr.errorFromRequestFluidObject = true;
-    responseErr.message = message;
-    responseErr.code = response.status;
-    if (response.stack !== undefined) {
-        try {
-            // not clear if all browsers allow overwriting stack
-            responseErr.stack = response.stack;
-        } catch (err2) {}
-    }
-    return err;
-}
+export const responseToException = (response: IResponse, request: IRequest) =>
+    new ResponseException("Error routing FluidObject request", response);
 
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {
