@@ -86,13 +86,6 @@ export interface ITaggableTelemetryProperties {
 }
 
 /**
- * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
- */
-export const isTaggedTelemetryPropertyValue = (x: any): x is ITaggedTelemetryPropertyType => {
-    return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
-};
-
-/**
  * An error object that supports exporting its properties to be logged to telemetry
  */
 export interface ILoggingError extends Error {
