@@ -28,6 +28,7 @@ import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjec
 
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
+    (event: "dispose", listener: () => void): void;
 }
 
 /**
@@ -106,6 +107,8 @@ export class RootDataObject
     public dispose() {
         // remove our listeners and continue disposing
         this.runtime.off("connected", this.connectedHandler);
+        // After super.dispose(), all event listeners are removed so we need to emit first.
+        this.emit("dispose");
         super.dispose();
     }
 
