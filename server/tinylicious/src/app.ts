@@ -15,7 +15,7 @@ import express, { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import { winston } from "@fluidframework/server-services-utils";
 import { create as createRoutes } from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports

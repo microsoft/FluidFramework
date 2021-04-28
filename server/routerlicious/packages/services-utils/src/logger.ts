@@ -67,3 +67,5 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         args[0] = `${name} ${args[0]}`;
     };
 }
+
+export {winston};

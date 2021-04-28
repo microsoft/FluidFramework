@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import { winston } from "@fluidframework/server-services-utils";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
