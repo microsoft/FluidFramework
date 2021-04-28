@@ -630,9 +630,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         tokenFetchOptions: TokenFetchOptions,
     ) {
         const snapshotOptions: ISnapshotOptions = driverSnapshotOptions ?? {
-            deltas: 1,
-            channels: 1,
-            blobs: 2,
             mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
             timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
@@ -672,21 +669,23 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
         const url = `${this.snapshotUrl}/trees/latest?ump=1`;
         const formBoundary = uuid();
-        let postBody = `--${formBoundary}\r\n`;
-        postBody += `Authorization: Bearer ${storageToken}\r\n`;
-        postBody += `X-HTTP-Method-Override: GET\r\n`;
+        const formParams: string[] = [];
+        formParams.push(`--${formBoundary}`);
+        formParams.push(`Authorization: Bearer ${storageToken}`);
+        formParams.push(`X-HTTP-Method-Override: GET`);
         const logOptions = {};
         Object.entries(snapshotOptions).forEach(([key, value]) => {
             if (value !== undefined) {
-                postBody += `${key}: ${value}\r\n`;
+                formParams.push(`${key}: ${value}`);
                 logOptions[`snapshotOption_${key}`] = value;
             }
         });
         if (this.redeemSharingLink) {
-            postBody += `sl: ${this.redeemSharingLink}\r\n`;
+            formParams.push(`sl: ${this.redeemSharingLink}`);
         }
-        postBody += `_post: 1\r\n`;
-        postBody += `\r\n--${formBoundary}--`;
+        formParams.push(`_post: 1`);
+        formParams.push(`\r\n--${formBoundary}--`);
+        const postBody = formParams.join("\r\n");
         const headers: {[index: string]: any} = {
             "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
         };

@@ -17,7 +17,6 @@ import {
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { LocalPersistentCache } from "./odspCache";
 import { ISnapshotCacheValue } from "./odspDocumentStorageManager";
 import {
     createOdspLogger,
@@ -50,12 +49,6 @@ export async function prefetchLatestSnapshot(
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-    const snapshotOptions: ISnapshotOptions = {
-        deltas: 1,
-        channels: 1,
-        blobs: 2,
-        ...hostSnapshotFetchOptions,
-    };
 
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
         odspLogger,
@@ -87,7 +80,7 @@ export async function prefetchLatestSnapshot(
                 return fetchSnapshot(
                     snapshotUrl,
                     odspResolvedUrl,
-                    snapshotOptions,
+                    hostSnapshotFetchOptions,
                     storageToken,
                     odspLogger,
                     persistedCache,
@@ -102,7 +95,7 @@ export async function prefetchLatestSnapshot(
 async function fetchSnapshot(
     snapshotUrl: string,
     odspResolvedUrl: IOdspResolvedUrl,
-    snapshotOptions: ISnapshotOptions,
+    snapshotOptions: ISnapshotOptions | undefined,
     storageToken: string,
     logger: TelemetryLogger,
     persistedCache: IPersistedCache,
@@ -111,21 +104,25 @@ async function fetchSnapshot(
     let success = false;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
     const formBoundary = uuid();
-    let postBody = `--${formBoundary}\r\n`;
-    postBody += `Authorization: Bearer ${storageToken}\r\n`;
-    postBody += `X-HTTP-Method-Override: GET\r\n`;
+    const formParams: string[] = [];
+    formParams.push(`--${formBoundary}`);
+    formParams.push(`Authorization: Bearer ${storageToken}`);
+    formParams.push(`X-HTTP-Method-Override: GET`);
     const logOptions = {};
-    Object.entries(snapshotOptions).forEach(([key, value]) => {
-        if (value !== undefined) {
-            postBody += `${key}: ${value}\r\n`;
-            logOptions[`snapshotOption_${key}`] = value;
-        }
-    });
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        postBody += `sl: ${odspResolvedUrl.sharingLinkToRedeem}\r\n`;
+    if (snapshotOptions !== undefined) {
+        Object.entries(snapshotOptions).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+                logOptions[`snapshotOption_${key}`] = value;
+            }
+        });
     }
-    postBody += `_post: 1\r\n`;
-    postBody += `\r\n--${formBoundary}--`;
+    if (odspResolvedUrl.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
+    }
+    formParams.push(`_post: 1`);
+    formParams.push(`\r\n--${formBoundary}--`);
+    const postBody = formParams.join("\r\n");
     const headers: {[index: string]: any} = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
@@ -133,7 +130,7 @@ async function fetchSnapshot(
     const controller: AbortController = new AbortController();
     setTimeout(
         () => controller.abort(),
-        snapshotOptions.timeout,
+        snapshotOptions?.timeout,
     );
 
     // This event measures only successful cases of getLatest call (no tokens, no retries).
@@ -161,7 +158,7 @@ async function fetchSnapshot(
             // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when
             // we cannot cache using an HTTP response header.
             const canCache = response.headers.get("disablebrowsercachingofusercontent") !== "true";
-            // There maybe no snapshot - TreesLatest would return just ops.
+            // There may be no snapshot - TreesLatest would return just ops.
             const sequenceNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
             const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
                 snapshot.ops[0].sequenceNumber - 1 :
