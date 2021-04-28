@@ -43,22 +43,19 @@ import { evalBlobsAndTrees, toInstrumentedOdspTokenFetcher } from "./odspUtils2"
 export async function prefetchLatestSnapshot(
     resolvedUrl: IResolvedUrl,
     getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-    persistedCache: IPersistedCache = new LocalPersistentCache(),
+    persistedCache: IPersistedCache,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-    let snapshotOptions: ISnapshotOptions = {
+    const snapshotOptions: ISnapshotOptions = {
         deltas: 1,
         channels: 1,
         blobs: 2,
+        ...hostSnapshotFetchOptions,
     };
-
-    if (hostSnapshotFetchOptions) {
-        snapshotOptions = {...snapshotOptions, ...hostSnapshotFetchOptions};
-    }
 
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
         odspLogger,

@@ -22,7 +22,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let encodedBlobsSize = 0;
     let decodedBlobsSize = 0;
     for (const tree of snapshot.trees) {
-        for(const treeEntry of tree.entries) {
+        for (const treeEntry of tree.entries) {
             if (treeEntry.type === "blob") {
                 numBlobs++;
             } else if (treeEntry.type === "tree") {
