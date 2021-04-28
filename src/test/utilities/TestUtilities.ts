@@ -74,8 +74,56 @@ export interface SharedTreeTestingOptions {
 	logger?: ITelemetryBaseLogger;
 }
 
+/** Left node of 'simpleTestTree' */
+export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
+
+/** Right node of 'simpleTestTree' */
+export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
+
+/** Label for the 'left' trait in 'simpleTestTree' */
+export const leftTraitLabel = 'left' as TraitLabel;
+
+/** Label for the 'right' trait in 'simpleTestTree' */
+export const rightTraitLabel = 'right' as TraitLabel;
+
+/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
+export const simpleTestTree: ChangeNode = {
+	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
+	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
+};
+
+/** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */
+export const leftTraitLocation = {
+	parent: simpleTestTree.identifier,
+	label: leftTraitLabel,
+};
+
+/** Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'. */
+export const rightTraitLocation = {
+	parent: simpleTestTree.identifier,
+	label: rightTraitLabel,
+};
+
+/** Convenient pre-made Snapshot for 'simpleTestTree'. */
+export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
+
+/** Convenient pre-made Snapshot for 'initialTree'. */
+export const initialSnapshot = Snapshot.fromTree(initialTree);
+
+/**
+ * Convenient pre-made Snapshot for 'simpleTestTree'.
+ * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
+ */
+export const simpleTreeSnapshotWithValidation = Snapshot.fromTree(simpleTestTree, true);
+
+/**
+ * Convenient pre-made Snapshot for 'initialTree'.
+ * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
+ */
+export const initialSnapshotWithValidation = Snapshot.fromTree(initialTree, true);
+
 export const testTrait: TraitLocation = {
-	parent: initialTree.identifier,
+	parent: initialSnapshot.root,
 	label: 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel,
 };
 
@@ -283,54 +331,6 @@ export function areNodesEquivalent(...nodes: NodeData[]): boolean {
 
 	return true;
 }
-
-/** Left node of 'simpleTestTree' */
-export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
-
-/** Right node of 'simpleTestTree' */
-export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
-
-/** Label for the 'left' trait in 'simpleTestTree' */
-export const leftTraitLabel = 'left' as TraitLabel;
-
-/** Label for the 'right' trait in 'simpleTestTree' */
-export const rightTraitLabel = 'right' as TraitLabel;
-
-/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
-export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
-	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-};
-
-/** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */
-export const leftTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: leftTraitLabel,
-};
-
-/** Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'. */
-export const rightTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: rightTraitLabel,
-};
-
-/** Convenient pre-made Snapshot for 'simpleTestTree'. */
-export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
-
-/** Convenient pre-made Snapshot for 'initialTree'. */
-export const initialSnapshot = Snapshot.fromTree(initialTree);
-
-/**
- * Convenient pre-made Snapshot for 'simpleTestTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
- */
-export const simpleTreeSnapshotWithValidation = Snapshot.fromTree(simpleTestTree, true);
-
-/**
- * Convenient pre-made Snapshot for 'initialTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
- */
-export const initialSnapshotWithValidation = Snapshot.fromTree(initialTree, true);
 
 /**
  * Check if two trees are equivalent, meaning they have the same descendants with the same properties.

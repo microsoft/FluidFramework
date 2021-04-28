@@ -268,7 +268,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		const editLog = new EditLog(editHistory);
 		const logViewer = new CachingLogViewer(
 			editLog,
-			initialTree,
+			Snapshot.fromTree(initialTree),
 			// TODO:#47830: Store multiple checkpoints in summary.
 			[[editLog.length, currentView]],
 			this.expensiveValidation,

@@ -7,7 +7,7 @@ import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { Snapshot, SnapshotNode, SnapshotPlace, SnapshotRange } from '../Snapshot';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditValidationResult } from '../Checkout';
-import { EditNode, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, TraitLocation, TreeNodeSequence } from '../generic';
 import { Change, StablePlace, StableRange } from './PersistedTypes';
 
 /**
@@ -18,7 +18,7 @@ import { Change, StablePlace, StableRange } from './PersistedTypes';
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[] {
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 
@@ -249,9 +249,9 @@ export function detachRange(
 }
 
 /**
- * Determine if an EditNode is a DetachedSequenceId.
+ * Determine if an BuildNode is a DetachedSequenceId.
  * @internal
  */
-export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
+export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceId {
 	return typeof node !== 'object';
 }

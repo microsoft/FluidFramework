@@ -10,7 +10,7 @@ import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
 import {
-	EditNode,
+	BuildNode,
 	ChangeNode,
 	SharedTreeOpType,
 	SharedTreeEvent,
@@ -38,6 +38,7 @@ import {
 	rightTraitLabel,
 	assertNoDelta,
 	deepCompareNodes,
+	initialSnapshot,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
 import { TestFluidHandle, TestFluidSerializer } from './utilities/TestSerializer';
@@ -99,7 +100,7 @@ describe('SharedTree', () => {
 			const childNode = makeEmptyNode();
 			const childId = 0 as DetachedSequenceId;
 			const childrenTraitLabel = 'children' as TraitLabel;
-			const parentNode: EditNode = {
+			const parentNode: BuildNode = {
 				identifier: uuidv4() as NodeId,
 				definition: 'node' as Definition,
 				traits: {
@@ -131,7 +132,7 @@ describe('SharedTree', () => {
 			const childNode = makeEmptyNode();
 			const childId = 0 as DetachedSequenceId;
 			const childrenTraitLabel = 'children' as TraitLabel;
-			const parentNode: EditNode = {
+			const parentNode: BuildNode = {
 				identifier: uuidv4() as NodeId,
 				definition: 'node' as Definition,
 				traits: {
@@ -139,7 +140,7 @@ describe('SharedTree', () => {
 				},
 			};
 			const parentId = 1 as DetachedSequenceId;
-			const parentNode2: EditNode = {
+			const parentNode2: BuildNode = {
 				identifier: uuidv4() as NodeId,
 				definition: 'node' as Definition,
 				traits: {
@@ -160,10 +161,10 @@ describe('SharedTree', () => {
 
 		it('prevents deletion of the root', () => {
 			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
-			expect(tree.currentView.hasNode(initialTree.identifier));
+			expect(tree.currentView.hasNode(initialSnapshot.root));
 			assertNoDelta(tree, () => {
 				// Try to delete the root
-				tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialTree))]));
+				tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialSnapshot.root))]));
 			});
 		});
 

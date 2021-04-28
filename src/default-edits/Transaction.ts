@@ -5,7 +5,7 @@
 
 import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { GenericTransaction, EditNode, EditResult } from '../generic';
+import { GenericTransaction, BuildNode, EditResult } from '../generic';
 import { Snapshot, SnapshotNode } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
@@ -199,22 +199,22 @@ export class Transaction extends GenericTransaction<Change> {
 	 * @returns all the top-level node IDs in `sequence` (both from nodes and from detached sequences).
 	 */
 	protected createSnapshotNodesForTree(
-		sequence: Iterable<EditNode>,
+		sequence: Iterable<BuildNode>,
 		onCreateNode: (id: NodeId, node: SnapshotNode) => boolean,
 		onInvalidDetachedId: () => void
 	): NodeId[] | undefined {
 		const topLevelIds: NodeId[] = [];
-		const unprocessed: EditNode[] = [];
-		for (const editNode of sequence) {
-			if (isDetachedSequenceId(editNode)) {
-				const detachedIds = this.getDetachedNodeIds(editNode, onInvalidDetachedId);
+		const unprocessed: BuildNode[] = [];
+		for (const buildNode of sequence) {
+			if (isDetachedSequenceId(buildNode)) {
+				const detachedIds = this.getDetachedNodeIds(buildNode, onInvalidDetachedId);
 				if (detachedIds === undefined) {
 					return undefined;
 				}
 				topLevelIds.push(...detachedIds);
 			} else {
-				unprocessed.push(editNode);
-				topLevelIds.push(editNode.identifier);
+				unprocessed.push(buildNode);
+				topLevelIds.push(buildNode.identifier);
 			}
 		}
 		while (unprocessed.length > 0) {

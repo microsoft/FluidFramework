@@ -22,7 +22,7 @@ export {
 	NodeData,
 	TreeNode,
 	ChangeNode,
-	EditNode,
+	BuildNode,
 	EditResult,
 	TraitLocation,
 	SharedTreeOpType,

@@ -11,7 +11,7 @@
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assertNotUndefined, assert } from '../Common';
 import { Side } from '../Snapshot';
-import { ChangeNode, EditBase, EditNode, Payload, TraitLocation, TreeNodeSequence } from '../generic';
+import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -85,7 +85,7 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
  */
 export interface Build {
 	readonly destination: DetachedSequenceId;
-	readonly source: TreeNodeSequence<EditNode>;
+	readonly source: TreeNodeSequence<BuildNode>;
 	readonly type: typeof ChangeType.Build;
 }
 
@@ -219,7 +219,7 @@ export enum ConstraintEffect {
  * @public
  */
 export const Change = {
-	build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId): Build => ({
+	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): Build => ({
 		destination,
 		source,
 		type: ChangeType.Build,
@@ -290,7 +290,7 @@ export const Insert = {
 	/**
 	 * @returns a Change that inserts 'nodes' into the specified location in the tree.
 	 */
-	create: (nodes: EditNode[], destination: StablePlace): Change[] => {
+	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
 		const build = Change.build(nodes, 0 as DetachedSequenceId);
 		return [build, Change.insert(build.destination, destination)];
 	},
@@ -379,11 +379,14 @@ export const StablePlace = {
 	/**
 	 * @returns The location directly before `node`.
 	 */
-	before: (node: ChangeNode): StablePlace => ({ side: Side.Before, referenceSibling: node.identifier }),
+	before: (node: NodeData | NodeId): StablePlace => ({
+		side: Side.Before,
+		referenceSibling: getNodeId(node),
+	}),
 	/**
 	 * @returns The location directly after `node`.
 	 */
-	after: (node: ChangeNode): StablePlace => ({ side: Side.After, referenceSibling: node.identifier }),
+	after: (node: NodeData | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
 	/**
 	 * @returns The location at the start of `trait`.
 	 */
@@ -418,7 +421,7 @@ export const StableRange = {
 	 * @returns a `StableRange` which contains only the provided `node`.
 	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
 	 */
-	only: (node: ChangeNode): StableRange => ({ start: StablePlace.before(node), end: StablePlace.after(node) }),
+	only: (node: NodeData | NodeId): StableRange => ({ start: StablePlace.before(node), end: StablePlace.after(node) }),
 	/**
 	 * @returns a `StableRange` which contains everything in the trait.
 	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
@@ -429,3 +432,15 @@ export const StableRange = {
 		end: StablePlace.atEndOf(trait),
 	}),
 };
+
+function isNodeData(node: NodeData | NodeId): node is NodeData {
+	return (node as NodeData).definition !== undefined && (node as NodeData).identifier !== undefined;
+}
+
+function getNodeId(node: NodeData | NodeId): NodeId {
+	if (isNodeData(node)) {
+		return node.identifier;
+	} else {
+		return node;
+	}
+}

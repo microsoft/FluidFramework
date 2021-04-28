@@ -9,10 +9,10 @@ import { EditLog } from '../EditLog';
 import { Change, Insert, StablePlace, Transaction } from '../default-edits';
 import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
-import { initialTree } from '../InitialTree';
 import { assert, noop } from '../Common';
-import { newEdit, ChangeNode, Edit, EditResult } from '../generic';
+import { newEdit, Edit, EditResult } from '../generic';
 import {
+	initialSnapshot,
 	left,
 	leftTraitLabel,
 	leftTraitLocation,
@@ -23,7 +23,8 @@ import {
 	simpleTreeSnapshot,
 } from './utilities/TestUtilities';
 
-const initialSimpleTree = { ...simpleTestTree, traits: {} };
+const simpleTreeNoTraits = { ...simpleTestTree, traits: {} };
+const simpleSnapshotNoTraits = Snapshot.fromTree(simpleTreeNoTraits);
 
 function getSimpleLog(numEdits: number = 2): EditLog<Change> {
 	const log = new EditLog<Change>();
@@ -45,8 +46,8 @@ function getSimpleLogWithLocalEdits(numSequencedEdits: number = 2): EditLog<Chan
 	return logWithLocalEdits;
 }
 
-function getSnapshotsForLog(log: EditLog<Change>, baseTree: ChangeNode): Snapshot[] {
-	const snapshots: Snapshot[] = [Snapshot.fromTree(baseTree)];
+function getSnapshotsForLog(log: EditLog<Change>, baseSnapshot: Snapshot): Snapshot[] {
+	const snapshots = [baseSnapshot];
 	for (let i = 0; i < log.length; i++) {
 		const edit = log.getEditInSessionAtIndex(i);
 		snapshots.push(new Transaction(snapshots[i]).applyChanges(edit.changes).view);
@@ -55,7 +56,7 @@ function getSnapshotsForLog(log: EditLog<Change>, baseTree: ChangeNode): Snapsho
 }
 
 function runLogViewerCorrectnessTests(
-	viewerCreator: (log: EditLog<Change>, baseTree?: ChangeNode) => LogViewer
+	viewerCreator: (log: EditLog<Change>, baseSnapshot?: Snapshot) => LogViewer
 ): Mocha.Suite {
 	return describe('LogViewer', () => {
 		const log = getSimpleLog();
@@ -63,19 +64,19 @@ function runLogViewerCorrectnessTests(
 		it('generates initialTree by default for the 0th revision', () => {
 			const viewer = viewerCreator(new EditLog());
 			const headSnapshot = viewer.getSnapshotInSession(0);
-			expect(headSnapshot.equals(Snapshot.fromTree(initialTree))).to.be.true;
+			expect(headSnapshot.equals(initialSnapshot)).to.be.true;
 		});
 
 		it('can be constructed from a non-empty EditLog', () => {
-			const viewer = viewerCreator(log, initialSimpleTree);
+			const viewer = viewerCreator(log, simpleSnapshotNoTraits);
 			const headSnapshot = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 			expect(headSnapshot.equals(simpleTreeSnapshot)).to.be.true;
 		});
 
 		it('can generate all snapshots for an EditLog', () => {
-			const viewer = viewerCreator(log, initialSimpleTree);
+			const viewer = viewerCreator(log, simpleSnapshotNoTraits);
 			const initialSnapshot = viewer.getSnapshotInSession(0);
-			expect(initialSnapshot.equals(Snapshot.fromTree(initialSimpleTree))).to.be.true;
+			expect(initialSnapshot.equals(simpleSnapshotNoTraits)).to.be.true;
 			const leftOnlySnapshot = viewer.getSnapshotInSession(1);
 			expect(
 				leftOnlySnapshot.equals(Snapshot.fromTree({ ...simpleTestTree, traits: { [leftTraitLabel]: [left] } }))
@@ -87,8 +88,8 @@ function runLogViewerCorrectnessTests(
 		it('produces correct snapshots when the log is mutated', () => {
 			const simpleLog = getSimpleLog();
 			const mutableLog = new EditLog<Change>();
-			const viewer = viewerCreator(mutableLog, initialSimpleTree);
-			const snapshotsForLog = getSnapshotsForLog(simpleLog, initialSimpleTree);
+			const viewer = viewerCreator(mutableLog, simpleSnapshotNoTraits);
+			const snapshotsForLog = getSnapshotsForLog(simpleLog, simpleSnapshotNoTraits);
 			// This test takes an empty log (A) and a log with edits in it (B), and adds the edits from B to A.
 			// After each addition, the test code will iterate from [0, length_of_A] and get a snapshot for each revision via LogViewer
 			// and assert that none of the snapshots differ from those created via pure Transaction APIs.
@@ -115,7 +116,7 @@ function runLogViewerCorrectnessTests(
 			}
 
 			function expectSnapshotsAreEqual(log: EditLog<Change>, viewer: LogViewer): void {
-				const snapshotsForLog = getSnapshotsForLog(log, initialSimpleTree);
+				const snapshotsForLog = getSnapshotsForLog(log, simpleSnapshotNoTraits);
 				const snapshotsForViewer = getSnapshotsFromViewer(viewer, log.length);
 				expect(snapshotsForLog.length).to.equal(snapshotsForViewer.length);
 				for (let i = 0; i < snapshotsForLog.length; i++) {
@@ -124,7 +125,7 @@ function runLogViewerCorrectnessTests(
 			}
 
 			const logWithLocalEdits = getSimpleLogWithLocalEdits();
-			const viewer = viewerCreator(logWithLocalEdits, initialSimpleTree);
+			const viewer = viewerCreator(logWithLocalEdits, simpleSnapshotNoTraits);
 			expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 
 			// Sequence the existing local edits and ensure viewer generates the correct snapshots
@@ -151,14 +152,14 @@ describe('CachingLogViewer', () => {
 
 	function getCachingLogViewer(
 		log: EditLog<Change>,
-		baseTree?: ChangeNode,
+		baseSnapshot?: Snapshot,
 		editCallback?: EditResultCallback,
 		logger?: ITelemetryBaseLogger,
 		knownRevisions?: [number, Snapshot][]
 	): CachingLogViewer<Change> {
 		return new CachingLogViewer(
 			log,
-			baseTree,
+			baseSnapshot,
 			knownRevisions,
 			/* expensiveValidation */ true,
 			editCallback,
@@ -172,22 +173,26 @@ describe('CachingLogViewer', () => {
 
 	it('detects non-integer revisions when setting snapshots', async () => {
 		expect(() =>
-			getCachingLogViewer(getSimpleLog(), initialSimpleTree, undefined, undefined, [[2.4, simpleTreeSnapshot]])
+			getCachingLogViewer(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
+				[2.4, simpleTreeSnapshot],
+			])
 		).to.throw('revision must be an integer');
 	});
 
 	it('detects out-of-bounds revisions when setting snapshots', async () => {
 		expect(() =>
-			getCachingLogViewer(getSimpleLog(), initialSimpleTree, undefined, undefined, [[1000, simpleTreeSnapshot]])
+			getCachingLogViewer(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
+				[1000, simpleTreeSnapshot],
+			])
 		).to.throw('revision must correspond to the result of a SequencedEdit');
 	});
 
 	it('can be created with known revisions', async () => {
 		const log = getSimpleLog();
-		const snapshots = getSnapshotsForLog(log, initialSimpleTree);
+		const snapshots = getSnapshotsForLog(log, simpleSnapshotNoTraits);
 		const viewer = getCachingLogViewer(
 			log,
-			initialSimpleTree,
+			simpleSnapshotNoTraits,
 			undefined,
 			undefined,
 			Array.from(snapshots.keys()).map((revision) => [revision, snapshots[revision]])
@@ -207,7 +212,7 @@ describe('CachingLogViewer', () => {
 	it('caches snapshots for sequenced edits', async () => {
 		const log = getSimpleLog();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
 		assert(log.length < CachingLogViewer.sequencedCacheSizeMax);
 
 		await requestAllSnapshots(viewer, log);
@@ -223,7 +228,7 @@ describe('CachingLogViewer', () => {
 	it('evicts least recently set cached snapshots for sequenced edits', async () => {
 		let editsProcessed = 0;
 		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
-		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
 		viewer.setMinimumSequenceNumber(log.length + 1); // simulate all edits being subject to eviction
 
 		await requestAllSnapshots(viewer, log);
@@ -242,7 +247,7 @@ describe('CachingLogViewer', () => {
 	it('never evicts the snapshot for the most recent sequenced edit', async () => {
 		let editsProcessed = 0;
 		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
-		const viewer = getCachingLogViewer(log, initialSimpleTree, () => editsProcessed++);
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
 
 		// Simulate all clients being caught up.
 		viewer.setMinimumSequenceNumber(log.numberOfSequencedEdits);
@@ -264,7 +269,7 @@ describe('CachingLogViewer', () => {
 	it('caches snapshots for local revisions', async () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(logWithLocalEdits, initialSimpleTree, () => editsProcessed++);
+		const viewer = getCachingLogViewer(logWithLocalEdits, simpleSnapshotNoTraits, () => editsProcessed++);
 		assert(logWithLocalEdits.length < CachingLogViewer.sequencedCacheSizeMax);
 
 		await requestAllSnapshots(viewer, logWithLocalEdits);
@@ -300,7 +305,7 @@ describe('CachingLogViewer', () => {
 	it('invalidates cached snapshots for local revisions when remote edits are received', () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(logWithLocalEdits, initialSimpleTree, () => editsProcessed++);
+		const viewer = getCachingLogViewer(logWithLocalEdits, simpleSnapshotNoTraits, () => editsProcessed++);
 
 		// Request twice, should only process edits once
 		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -322,7 +327,7 @@ describe('CachingLogViewer', () => {
 	it('uses known editing result', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -342,7 +347,7 @@ describe('CachingLogViewer', () => {
 	it('ignores known editing if for wrong before snapshot', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const edit = newEdit([]);
@@ -361,7 +366,7 @@ describe('CachingLogViewer', () => {
 	it('ignores known editing if for wrong edit', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -381,7 +386,7 @@ describe('CachingLogViewer', () => {
 	it('uses known editing result with multiple edits', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, initialSimpleTree, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const edit1 = newEdit([]);
@@ -416,7 +421,7 @@ describe('CachingLogViewer', () => {
 			const events: ITelemetryBaseEvent[] = [];
 			const viewer = new CachingLogViewer(
 				log,
-				initialSimpleTree,
+				simpleSnapshotNoTraits,
 				[],
 				/* expensiveValidation */ true,
 				undefined,
@@ -432,7 +437,7 @@ describe('CachingLogViewer', () => {
 				Insert.create(
 					[makeEmptyNode()],
 					StablePlace.atEndOf({
-						parent: initialTree.identifier,
+						parent: initialSnapshot.root,
 						label: leftTraitLabel,
 					})
 				)

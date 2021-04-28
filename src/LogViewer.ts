@@ -8,10 +8,10 @@ import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
-import { ChangeNode, Edit, EditResult, EditingResult, GenericTransaction } from './generic';
+import { Edit, EditResult, EditingResult, GenericTransaction } from './generic';
 import { EditId } from './Identifiers';
-import { initialTree } from './InitialTree';
 import { RevisionValueCache } from './RevisionValueCache';
+import { initialTree } from './InitialTree';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular snapshot is computed).
@@ -140,7 +140,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 */
 	public constructor(
 		log: EditLog<TChange>,
-		baseTree: ChangeNode = initialTree,
+		baseSnapshot: Snapshot = Snapshot.fromTree(initialTree),
 		knownRevisions: [Revision, Snapshot][] = [],
 		expensiveValidation = false,
 		processEditResult: EditResultCallback = noop,
@@ -158,11 +158,11 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				);
 			});
 		}
-		const initialSnapshot = Snapshot.fromTree(baseTree, expensiveValidation);
+
 		this.sequencedSnapshotCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			minimumSequenceNumber,
-			[...knownRevisions, [0, initialSnapshot]]
+			[...knownRevisions, [0, baseSnapshot]]
 		);
 		this.processEditResult = processEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;

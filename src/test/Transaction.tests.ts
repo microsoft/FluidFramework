@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { EditResult } from '../generic';
 import { Transaction, Change, ChangeType, ConstraintEffect, Insert, StableRange, StablePlace } from '../default-edits';
-import { initialTree } from '../InitialTree';
 import { Side } from '../Snapshot';
 import {
 	makeEmptyNode,
@@ -21,6 +20,7 @@ import {
 	rightTraitLabel,
 	simpleTreeSnapshotWithValidation,
 	initialSnapshotWithValidation,
+	initialSnapshot,
 } from './utilities/TestUtilities';
 
 describe('Transaction', () => {
@@ -83,7 +83,7 @@ describe('Transaction', () => {
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeType.Constraint,
-				parentNode: initialTree.identifier,
+				parentNode: initialSnapshot.root,
 			});
 			expect(transaction.result).equals(EditResult.Applied);
 		});
@@ -123,7 +123,7 @@ describe('Transaction', () => {
 		it('can be invalid', () => {
 			const transaction = new Transaction(initialSnapshotWithValidation);
 			transaction.applyChange({
-				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialTree.identifier
+				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialSnapshot.root
 				payload: {}, // Arbitrary payload.
 				type: ChangeType.SetValue,
 			});
@@ -134,12 +134,12 @@ describe('Transaction', () => {
 			const transaction = new Transaction(initialSnapshotWithValidation);
 			const payload = { foo: {} };
 			transaction.applyChange({
-				nodeToModify: initialTree.identifier,
+				nodeToModify: initialSnapshot.root,
 				payload, // Arbitrary payload.
 				type: ChangeType.SetValue,
 			});
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).deep.equals(payload);
+			expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).deep.equals(payload);
 		});
 
 		// 'null' is not included here since it means clear the payload in setValue.
@@ -147,37 +147,37 @@ describe('Transaction', () => {
 			it(`can set payload to ${JSON.stringify(payload)}`, () => {
 				const transaction = new Transaction(initialSnapshotWithValidation);
 				transaction.applyChange({
-					nodeToModify: initialTree.identifier,
+					nodeToModify: initialSnapshot.root,
 					payload,
 					type: ChangeType.SetValue,
 				});
 				expect(transaction.result).equals(EditResult.Applied);
-				expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).equals(payload);
+				expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).equals(payload);
 			});
 		}
 
 		it('can clear an unset payload', () => {
 			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange(Change.clearPayload(initialTree.identifier));
+			transaction.applyChange(Change.clearPayload(initialSnapshot.root));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialSnapshot.root), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialSnapshot.root), 'payload')).false;
 		});
 
 		it('can clear a set payload', () => {
 			const transaction = new Transaction(initialSnapshotWithValidation);
 			transaction.applyChange({
-				nodeToModify: initialTree.identifier,
+				nodeToModify: initialSnapshot.root,
 				payload: {},
 				type: ChangeType.SetValue,
 			});
 
 			expect(transaction.result).equals(EditResult.Applied);
-			expect(transaction.view.getSnapshotNode(initialTree.identifier).payload).not.undefined;
-			transaction.applyChange(Change.clearPayload(initialTree.identifier));
+			expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).not.undefined;
+			transaction.applyChange(Change.clearPayload(initialSnapshot.root));
 			expect(transaction.result).equals(EditResult.Applied);
-			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialTree.identifier), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialTree.identifier), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialSnapshot.root), 'payload')).false;
+			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialSnapshot.root), 'payload')).false;
 		});
 	});
 
@@ -192,7 +192,7 @@ describe('Transaction', () => {
 				Change.insert(
 					// Non-existent detached id
 					1 as DetachedSequenceId,
-					{ referenceSibling: initialTree.identifier, side: Side.After }
+					{ referenceSibling: initialSnapshot.root, side: Side.After }
 				)
 			);
 			expect(transaction.result).equals(EditResult.Malformed);
@@ -282,10 +282,10 @@ describe('Transaction', () => {
 		});
 		it("is malformed if detached node id doesn't exist", () => {
 			const transaction = new Transaction(initialSnapshotWithValidation);
-			const editNode = 0 as DetachedSequenceId;
+			const detachedSequenceId = 0 as DetachedSequenceId;
 			transaction.applyChange({
 				destination: 1 as DetachedSequenceId,
-				source: [editNode],
+				source: [detachedSequenceId],
 				type: ChangeType.Build,
 			});
 			expect(transaction.result).equals(EditResult.Malformed);

@@ -159,7 +159,7 @@ export type ChangeNode = TreeNode<ChangeNode>;
  * These optimized formats should also be used within snapshots.
  * @public
  */
-export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
+export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
 
 /**
  * The result of an attempt to apply the changes in an Edit.

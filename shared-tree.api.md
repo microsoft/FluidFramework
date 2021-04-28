@@ -35,17 +35,24 @@ export interface Build {
     // (undocumented)
     readonly destination: DetachedSequenceId;
     // (undocumented)
-    readonly source: TreeNodeSequence<EditNode>;
+    readonly source: TreeNodeSequence<BuildNode>;
     // (undocumented)
     readonly type: typeof ChangeType.Build;
 }
+
+// @public
+type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
+
+export { BuildNode }
+
+export { BuildNode as EditNode }
 
 // @public
 export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 // @public (undocumented)
 export const Change: {
-    build: (source: TreeNodeSequence<EditNode>, destination: DetachedSequenceId) => Build;
+    build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId) => Build;
     insert: (source: DetachedSequenceId, destination: StablePlace) => Insert;
     detach: (source: StableRange, destination?: DetachedSequenceId | undefined) => Detach;
     setPayload: (nodeToModify: NodeId, payload: Payload) => SetValue;
@@ -218,9 +225,6 @@ export interface EditLogSummary<TChange> {
 }
 
 // @public
-export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
-
-// @public
 export enum EditResult {
     Applied = 2,
     Invalid = 1,
@@ -324,13 +328,13 @@ export interface Insert {
 
 // @public
 export const Insert: {
-    create: (nodes: EditNode[], destination: StablePlace) => Change[];
+    create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace) => Change[];
 };
 
 // Warning: (ae-internal-missing-underscore) The name "isDetachedSequenceId" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId;
+export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceId;
 
 // @public
 export interface ISharedTreeEvents<TSharedTree> extends IErrorEvent {
@@ -419,7 +423,7 @@ export function revert(changes: readonly Change[], before: Snapshot): Change[];
 export type Revision = number;
 
 // @public
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[];
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[];
 
 // @public
 export interface SetValue {
@@ -445,11 +449,13 @@ export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 // @public
 export class SharedTreeEditor {
     constructor(tree: SharedTree);
-    delete(target: ChangeNode): EditId;
+    delete(target: NodeData): EditId;
+    delete(target: NodeId): EditId;
     delete(target: StableRange): EditId;
-    insert(node: EditNode, destination: StablePlace): EditId;
-    insert(nodes: EditNode[], destination: StablePlace): EditId;
-    move(source: ChangeNode, destination: StablePlace): EditId;
+    insert(node: BuildNode, destination: StablePlace): EditId;
+    insert(nodes: BuildNode[], destination: StablePlace): EditId;
+    move(source: NodeData, destination: StablePlace): EditId;
+    move(source: NodeId, destination: StablePlace): EditId;
     move(source: StableRange, destination: StablePlace): EditId;
     revert(edit: Edit<Change>, view: Snapshot): EditId;
     }
@@ -565,8 +571,8 @@ export interface StablePlace {
 
 // @public (undocumented)
 export const StablePlace: {
-    before: (node: ChangeNode) => StablePlace;
-    after: (node: ChangeNode) => StablePlace;
+    before: (node: NodeData | NodeId) => StablePlace;
+    after: (node: NodeData | NodeId) => StablePlace;
     atStartOf: (trait: TraitLocation) => StablePlace;
     atEndOf: (trait: TraitLocation) => StablePlace;
 };
@@ -584,7 +590,7 @@ export const StableRange: {
     from: (start: StablePlace) => {
         to: (end: StablePlace) => StableRange;
     };
-    only: (node: ChangeNode) => StableRange;
+    only: (node: NodeData | NodeId) => StableRange;
     all: (trait: TraitLocation) => StableRange;
 };
 
@@ -614,7 +620,7 @@ export type TraitNodeIndex = number & {
 
 // @public
 export class Transaction extends GenericTransaction<Change> {
-    protected createSnapshotNodesForTree(sequence: Iterable<EditNode>, onCreateNode: (id: NodeId, node: SnapshotNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
+    protected createSnapshotNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: SnapshotNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
     // (undocumented)
     protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
     // (undocumented)
