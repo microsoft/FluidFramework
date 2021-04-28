@@ -10,8 +10,6 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
-    ITaggableTelemetryProperties,
-    isTaggedTelemetryPropertyValue,
 } from "@fluidframework/common-definitions";
 
 /**
@@ -42,32 +40,4 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
     }
-}
-
-/**
- * Walk an object's enumerable properties to find those fit for telemetry.
- */
-export function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
-    const props: ITaggableTelemetryProperties = {};
-    for (const key of Object.keys(obj)) {
-        const val = obj[key];
-        switch (typeof val) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "undefined":
-                props[key] = val;
-                break;
-            default: {
-                if (isTaggedTelemetryPropertyValue(val)) {
-                    props[key] = val;
-                } else {
-                    // We don't support logging arbitrary objects
-                    props[key] = "REDACTED (arbitrary object)";
-                }
-                break;
-            }
-        }
-    }
-    return props;
 }
