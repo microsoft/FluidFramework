@@ -35,11 +35,15 @@ data:
         },
         "kafka": {
             "lib": {
-                "name": "kafka-node",
+                "name": "{{ .Values.kafka.libname }}",
                 "endpoint": "{{ .Values.kafka.url }}",
                 "producerPollIntervalMs": 10,
                 "numberOfPartitions": 32,
-                "replicationFactor": 3
+                "replicationFactor": 3,
+                "rdkafkaOptimizedRebalance": true,
+                "rdkafkaAutomaticConsume": true,
+                "rdkafkaConsumeTimeout": 5,
+                "rdkafkaMaxConsumerCommitRetries": 10
             }
         },
         "zookeeper": {

@@ -23,7 +23,6 @@ import {
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -32,10 +31,7 @@ import {
     IEntry,
     HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
-import {
-    HostStoragePolicyInternal,
-    ISocketStorageDiscovery,
-} from "./contracts";
+import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
@@ -59,7 +55,7 @@ function isAfdCacheValid(): boolean {
         const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
         if (lastAfdConnection !== null) {
             const lastAfdTimeMs = Number(lastAfdConnection);
-            // If we have used the AFD URL within a certain amount of time in the past,
+            // If we have used the AFD URL within a certain amount of time in the past
             // then we should use it again.
             if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
                 && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
@@ -106,18 +102,22 @@ export class OdspDocumentService implements IDocumentService {
     readonly policies: IDocumentServicePolicies;
 
     /**
+     * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
-     * the "VROOM" token in SPO.
-     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-     * referred to as the "Push" token in SPO.
+     * the "Vroom" token in SPO.
+     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
+     * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
+     * response payload.
      * @param logger - a logger that can capture performance and diagnostic information
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
+     * @param hostPolicy - This host constructed policy which customizes service behavior.
+     * @param epochTracker - This helper class which adds epoch to backend calls made by returned service instance.
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
         getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
-        getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
+        getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
@@ -142,25 +142,27 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
-    private readonly isOdc: boolean;
-
     private readonly hostPolicy: HostStoragePolicyInternal;
 
     private _opsCache?: OpsCache;
 
     /**
+     * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
-     * the "VROOM" token in SPO.
+     * the "Vroom" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
-     * to as the "Push" token in SPO.
+     * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
+     * response payload.
      * @param logger - a logger that can capture performance and diagnostic information
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
+     * @param hostPolicy - This host constructed policy which customizes service behavior.
+     * @param epochTracker - This helper class which adds epoch to backend calls made by this service instance.
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
-        private readonly getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
+        private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
@@ -173,12 +175,11 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
-        this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = ChildLogger.create(logger,
             undefined,
             {
                 all: {
-                    odc: this.isOdc,
+                    odc: isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin),
                 },
             });
 
@@ -254,35 +255,28 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
-            // For ODC, we do not rely on getWebsocketToken callback and just use the token from joinsession
-            const socketTokenPromise = this.isOdc ? Promise.resolve(null) : this.getWebsocketToken(options);
-            const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
+            // Presence of getWebsocketToken callback dictates whether callback is used for fetching
+            // websocket token or whether it is returned with joinSession response payload
+            const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
+            const websocketTokenPromise = requestWebsocketTokenFromJoinSession
+                ? Promise.resolve(null)
+                : this.getWebsocketToken!(options);
+            const [websocketEndpoint, websocketToken, io] =
+                await Promise.all([
+                    this.joinSession(requestWebsocketTokenFromJoinSession),
+                    websocketTokenPromise,
+                    this.socketIoClientFactory(),
+                ]);
 
-            // This check exists because of a typescript bug.
-            // Issue: https://github.com/microsoft/TypeScript/issues/33752
-            // The TS team has plans to fix this in the 3.8 release
-            if (!websocketEndpoint) {
-                throw new Error("websocket endpoint should be defined");
-            }
-
-            // This check exists because of a typescript bug.
-            // Issue: https://github.com/microsoft/TypeScript/issues/33752
-            // The TS team has plans to fix this in the 3.8 release
-            if (!io) {
-                throw new Error("websocket endpoint should be defined");
-            }
-
-            const finalSocketToken = webSocketToken ?? (websocketEndpoint.socketToken || null);
-            if (finalSocketToken === null) {
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
+            if (finalWebsocketToken === null) {
                 throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
-                    // Accounts for ODC where websocket token is returned as part of joinsession response payload
-                    finalSocketToken,
+                    finalWebsocketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
@@ -301,11 +295,7 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
-    public getErrorTrackingService(): IErrorTrackingService {
-        return { track: () => null };
-    }
-
-    private async joinSession(): Promise<ISocketStorageDiscovery> {
+    private async joinSession(requestSocketToken: boolean): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
                 this.odspResolvedUrl,
@@ -314,6 +304,8 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger,
                 this.getStorageToken,
                 this.epochTracker,
+                requestSocketToken,
+                this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
@@ -344,8 +336,6 @@ export class OdspDocumentService implements IDocumentService {
     ): Promise<IDocumentDeltaConnection> {
         const connectWithNonAfd = async () => {
             const startTime = performance.now();
-            // pushV2 websocket urls will contain pushf
-            const pushV2 = nonAfdUrl.includes("pushf");
             try {
                 const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
@@ -358,12 +348,16 @@ export class OdspDocumentService implements IDocumentService {
                     60000,
                     this.epochTracker,
                 );
-                const endTime = performance.now();
-                this.logger.sendPerformanceEvent({
-                    eventName: "NonAfdConnectionSuccess",
-                    duration: endTime - startTime,
-                    pushV2,
-                });
+                const duration = performance.now() - startTime;
+                // This event happens rather often, so it adds up to cost of telemetry.
+                // Given that most reconnects result in reusing socket and happen very quickly,
+                // report event only if it took longer than threshold.
+                if (duration >= 2000) {
+                    this.logger.sendPerformanceEvent({
+                        eventName: "NonAfdConnectionSuccess",
+                        duration,
+                    });
+                }
                 return connection;
             } catch (connectionError) {
                 const endTime = performance.now();
@@ -374,7 +368,6 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "NonAfdConnectionFail",
                         canRetry,
                         duration: endTime - startTime,
-                        pushV2,
                     },
                     connectionError,
                 );
@@ -456,8 +449,17 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    public dispose() {
-        this._opsCache?.flushOps();
+    public dispose(error?: any) {
+        // Error might indicate mismatch between client & server knowlege about file
+        // (DriverErrorType.fileOverwrittenInStorage).
+        // For exaple, file might have been overwritten in storage without generating new epoch
+        // In such case client cached info is stale and has to be removed.
+        if (error !== undefined) {
+            this.epochTracker.removeEntries().catch(() => {});
+        } else {
+            this._opsCache?.flushOps();
+        }
+        this._opsCache?.dispose();
     }
 
     protected get opsCache() {

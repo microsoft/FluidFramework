@@ -6,6 +6,7 @@
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
+import { pkgName } from "./packageVersion";
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
@@ -13,6 +14,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         if (this.testName !== undefined) {
             event.testName = this.testName;
         }
+        event.hostName = pkgName;
         this.parentLogger.send(event);
     }
     async flush() {
@@ -31,6 +33,7 @@ const nullLogger: ITelemetryBufferedLogger = {
 
 const log = console.log;
 const error = console.log;
+const warn = console.warn;
 let testLogger: TestLogger;
 export const mochaHooks = {
     beforeAll() {
@@ -43,6 +46,7 @@ export const mochaHooks = {
         if (process.env.FLUID_TEST_VERBOSE === undefined) {
             console.log = () => { };
             console.error = () => { };
+            console.warn = () => { };
         }
         const context = this as any as Context;
         testLogger.setTestName(context.currentTest?.fullTitle());
@@ -50,6 +54,7 @@ export const mochaHooks = {
     afterEach() {
         console.log = log;
         console.error = error;
+        console.warn = warn;
         testLogger.setTestName(undefined);
     },
 };
