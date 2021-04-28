@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * These utils are used for prefetching the snapshot in prefetchLatestSnapshot.ts.
+ * Don't add any other utility functions which are not used in prefetching.
+ */
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {

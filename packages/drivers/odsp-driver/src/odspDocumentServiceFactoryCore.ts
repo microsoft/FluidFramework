@@ -33,7 +33,7 @@ import {
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo, getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
-import { toInstrumentedOdspTokenFetcher } from "./odspUtils2";
+import { toInstrumentedOdspTokenFetcher } from "./prefetchSnapshotUtils";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

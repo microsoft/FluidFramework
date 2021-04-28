@@ -26,7 +26,7 @@ import {
     IOdspResponse,
 } from "./odspUtils";
 import { IOdspSnapshot } from "./contracts";
-import { evalBlobsAndTrees, toInstrumentedOdspTokenFetcher } from "./odspUtils2";
+import { evalBlobsAndTrees, toInstrumentedOdspTokenFetcher } from "./prefetchSnapshotUtils";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
