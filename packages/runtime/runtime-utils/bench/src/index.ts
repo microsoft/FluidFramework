@@ -11,7 +11,7 @@ import { consume, runSuites } from "./util";
 
 const serializer = new FluidSerializer(new MockHandleContext());
 
-// Mock fluid handle
+// Mock Fluid handle
 const handle: IFluidHandle = {
     get IFluidHandle() { return handle; },
     absolutePath: "/",
