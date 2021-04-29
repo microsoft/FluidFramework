@@ -124,7 +124,7 @@ export const TinyliciousClient = {
     init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (globalTinyliciousClient) {
             console.log(
-                `TinyliciousClient was attempted to be initialized again. Using existing instance of
+                `TinyliciousClient has already been initialized. Using existing instance of
                 TinyliciousClient instead.`,
             );
         } else {
