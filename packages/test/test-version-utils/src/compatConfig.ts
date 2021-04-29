@@ -216,7 +216,7 @@ function describeCompat(
                         config.loader,
                         {
                             type: driver,
-                            version: config?.driver,
+                            version: config.driver,
                         },
                         config.containerRuntime,
                         config.dataRuntime,
