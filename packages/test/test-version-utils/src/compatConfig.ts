@@ -51,14 +51,12 @@ function genConfig(compatVersion: number): CompatConfig[] {
         dataRuntime: compatVersion,
     };
 
-    const configs: CompatConfig[] = [
+    return [
         {
             name: `compat N${compatVersion} - old loader`,
             kind: CompatKind.Loader,
             compatVersion,
             loader: compatVersion,
-            // back-compat: remove driver in future releases
-            driver: compatVersion,
         },
         {
             name: `compat N${compatVersion} - new loader`,
@@ -66,7 +64,18 @@ function genConfig(compatVersion: number): CompatConfig[] {
             compatVersion,
             ...allOld,
             loader: undefined,
-            // back-compat: remove driver in future releases
+        },
+        {
+            name: `compat N${compatVersion} - old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
             driver: undefined,
         },
         {
@@ -96,25 +105,6 @@ function genConfig(compatVersion: number): CompatConfig[] {
             dataRuntime: undefined,
         },
     ];
-
-    // back-compat: in future, make this unconditional
-    if (compatVersion === -1) {
-        configs.push({
-            name: `compat N${compatVersion} - old driver`,
-            kind: CompatKind.Loader,
-            compatVersion,
-            driver: compatVersion,
-        },
-        {
-            name: `compat N${compatVersion} - new driver`,
-            kind: CompatKind.Loader,
-            compatVersion,
-            ...allOld,
-            driver: undefined,
-        });
-    }
-
-    return configs;
 }
 
 /*
