@@ -47,7 +47,7 @@ async function start(): Promise<void> {
             ? await TinyliciousClient.createDetachedContainer(
                 containerSchema,
             )
-            : await TinyliciousClient.createAttachedContainer(
+            : await TinyliciousClient.createContainer(
                 containerConfig,
                 containerSchema,
             )

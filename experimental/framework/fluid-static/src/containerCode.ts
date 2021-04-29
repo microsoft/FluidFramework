@@ -96,7 +96,7 @@ export class FluidContainer<C> extends EventEmitter implements IFluidContainer<C
             await this.attachToServiceCallback(config, this.container);
         } else {
             const errorString = this.attachState === AttachState.Attached ? "already attached" : "currently attaching";
-            throw Error(`Container is ${errorString}`);
+            console.warn(`Container is ${errorString}`);
         }
     }
 }

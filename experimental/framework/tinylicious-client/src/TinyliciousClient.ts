@@ -43,13 +43,13 @@ export class TinyliciousClientInstance {
 
     /**
      * Create and attach a new container based on the schema and configuration provided. The container
-     * schema is used to build the initial container and it is immediately attached based on the config
-     * parameters provided
+     * schema is used to build the initial container and it is immediately attached to the service based
+     * on the Tinylicious container config parameters provided
      * @param serviceContainerConfig - Tinylicious specific configuration for how the container's data will be stored
      * @param containerSchema - Schema holding the definitions for the DDSes and data objects that are supported by
      * this container
      */
-    public async createAttachedContainer(
+    public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
     ): Promise<FluidContainer<TinyliciousContainerConfig>> {
@@ -60,7 +60,7 @@ export class TinyliciousClientInstance {
 
     /**
      * Create a deteached container based on only the schema, no config is required. The container schema is used to
-     * build  the initial container and it is returned with no persistence yet on the service. Note that the data
+     * build the initial container and it is returned with no persistence yet on the service. Note that the data
      * will not be saved in the detached state. You can choose to attach the container later in the application's
      * lifetime using the FluidContainer's attachToService call and provide the container configuration at that time.
      * @param containerSchema - Schema holding the definitions for the DDSes and data objects that are supported by
@@ -159,7 +159,7 @@ export const TinyliciousClient = {
             serviceConnectionConfig,
         );
     },
-    async createAttachedContainer(
+    async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer<TinyliciousContainerConfig>> {
@@ -168,7 +168,7 @@ export const TinyliciousClient = {
                 "TinyliciousClient has not been properly initialized before attempting to create a container",
             );
         }
-        return globalTinyliciousClient.createAttachedContainer(
+        return globalTinyliciousClient.createContainer(
             serviceConfig,
             objectConfig,
         );
