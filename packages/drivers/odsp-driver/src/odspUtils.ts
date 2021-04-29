@@ -229,28 +229,28 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
             },
         });
 
-        export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
-            let numTrees = 0;
-            let numBlobs = 0;
-            let encodedBlobsSize = 0;
-            let decodedBlobsSize = 0;
-            for (const tree of snapshot.trees) {
-                for (const treeEntry of tree.entries) {
-                    if (treeEntry.type === "blob") {
-                        numBlobs++;
-                    } else if (treeEntry.type === "tree") {
-                        numTrees++;
-                    }
-                }
+export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+    let numTrees = 0;
+    let numBlobs = 0;
+    let encodedBlobsSize = 0;
+    let decodedBlobsSize = 0;
+    for (const tree of snapshot.trees) {
+        for (const treeEntry of tree.entries) {
+            if (treeEntry.type === "blob") {
+                numBlobs++;
+            } else if (treeEntry.type === "tree") {
+                numTrees++;
             }
-            if (snapshot.blobs !== undefined) {
-                for (const blob of snapshot.blobs) {
-                    decodedBlobsSize += blob.size;
-                    encodedBlobsSize += blob.content.length;
-                }
-            }
-            return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
         }
+    }
+    if (snapshot.blobs !== undefined) {
+        for (const blob of snapshot.blobs) {
+            decodedBlobsSize += blob.size;
+            encodedBlobsSize += blob.content.length;
+        }
+    }
+    return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
+}
 
 export function toInstrumentedOdspTokenFetcher(
     logger: ITelemetryLogger,
