@@ -123,13 +123,15 @@ let globalTinyliciousClient: TinyliciousClientInstance | undefined;
 export const TinyliciousClient = {
     init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (globalTinyliciousClient) {
-            throw new Error(
-                "TinyliciousClient cannot be initialized more than once",
+            console.log(
+                `TinyliciousClient was attempted to be initialized again. Using existing instance of
+                TinyliciousClient instead.`,
+            );
+        } else {
+            globalTinyliciousClient = new TinyliciousClientInstance(
+                serviceConnectionConfig,
             );
         }
-        globalTinyliciousClient = new TinyliciousClientInstance(
-            serviceConnectionConfig,
-        );
     },
     async createContainer(
         serviceConfig: TinyliciousContainerConfig,
