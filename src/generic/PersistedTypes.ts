@@ -187,8 +187,12 @@ export enum EditResult {
  * Types of ops handled by SharedTree.
  */
 export enum SharedTreeOpType {
+	/** An op that includes edit information. */
 	Edit,
+	/** Includes a Fluid handle that corresponds to an edit chunk. */
 	Handle,
+	/** An op that does not affect the tree's state. */
+	NoOp,
 }
 
 /**
@@ -213,5 +217,5 @@ export interface SharedTreeHandleOp extends SharedTreeOp {
 	/** The serialized handle to an uploaded edit chunk. */
 	editHandle: string;
 	/** The index of the first edit in the chunk that corresponds to the handle. */
-	chunkKey: number;
+	startRevision: number;
 }

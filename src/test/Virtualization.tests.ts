@@ -3,13 +3,12 @@
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditHandle, editsPerChunk } from '../EditLog';
-import { SharedTreeSummary, Edit, EditWithoutId, newEdit } from '../generic';
+import { Edit, EditWithoutId, newEdit, fullHistorySummarizer_0_1_0 } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
-// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
-describe.skip('SharedTree history virtualization', () => {
+describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider<unknown>;
 
@@ -45,9 +44,9 @@ describe.skip('SharedTree history virtualization', () => {
 	it('can upload edit chunks and load chunks from handles', async () => {
 		const expectedEdits: Edit<Change>[] = await processNewEditChunks();
 
-		const summary = sharedTree.saveSummary();
+		const summary = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 
-		const { editHistory } = summary as SharedTreeSummary<Change>;
+		const { editHistory } = summary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
 		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
@@ -68,7 +67,7 @@ describe.skip('SharedTree history virtualization', () => {
 		// Wait for the op to to be submitted and processed across the containers.
 		await testObjectProvider.opProcessingController.process();
 
-		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
 
@@ -91,7 +90,7 @@ describe.skip('SharedTree history virtualization', () => {
 		// Wait for the ops to to be submitted and processed across the containers.
 		await testObjectProvider.opProcessingController.process();
 
-		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(2);
 		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
@@ -99,16 +98,16 @@ describe.skip('SharedTree history virtualization', () => {
 		expect((editChunks[1].chunk as EditWithoutId<Change>[]).length).to.equal(10);
 	});
 
-	it('correctly saves handles and their corresponding keys to the summary', async () => {
+	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
 		await processNewEditChunks(4);
 
-		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(4);
 
-		// Make sure each key is correct and each chunk in the summary is a handle
-		editChunks.forEach(({ key, chunk }, index) => {
-			expect(key).to.equal(index * editsPerChunk);
+		// Make sure each starting revision is correct and each chunk in the summary is a handle
+		editChunks.forEach(({ startRevision, chunk }, index) => {
+			expect(startRevision).to.equal(index * editsPerChunk);
 			expect(typeof (chunk as EditHandle).get).to.equal('function');
 		});
 	});
@@ -124,16 +123,22 @@ describe.skip('SharedTree history virtualization', () => {
 		});
 
 		// All shared trees should have no edits or chunks
-		expect((sharedTree.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
-		expect((sharedTree2.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
-		expect((sharedTree3.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
+		expect(
+			fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView).editHistory?.editChunks.length
+		).to.equal(0);
+		expect(
+			fullHistorySummarizer_0_1_0(sharedTree2.edits, sharedTree2.currentView).editHistory?.editChunks.length
+		).to.equal(0);
+		expect(
+			fullHistorySummarizer_0_1_0(sharedTree3.edits, sharedTree3.currentView).editHistory?.editChunks.length
+		).to.equal(0);
 
 		await processNewEditChunks();
 
 		// All shared trees should have the new handle
-		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary<Change>;
-		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary<Change>;
-		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary<Change>;
+		const sharedTreeSummary = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
+		const sharedTree2Summary = fullHistorySummarizer_0_1_0(sharedTree2.edits, sharedTree2.currentView);
+		const sharedTree3Summary = fullHistorySummarizer_0_1_0(sharedTree3.edits, sharedTree3.currentView);
 		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
 		const sharedTree2Chunk = assertNotUndefined(sharedTree2Summary.editHistory).editChunks[0].chunk;
 		const sharedTree3Chunk = assertNotUndefined(sharedTree3Summary.editHistory).editChunks[0].chunk;

@@ -85,6 +85,7 @@ export {
 	GenericTransaction,
 	EditingResult,
 	ValidEditingResult,
+	SharedTreeSummarizer,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 } from './generic';

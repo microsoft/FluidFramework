@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from '@fluidframework/common-utils';
+import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import {
@@ -12,7 +12,7 @@ import {
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from '../Common';
@@ -22,8 +22,15 @@ import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { CachingLogViewer, LogViewer } from '../LogViewer';
 import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
-import { serialize, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
-import { Edit, SharedTreeOpType, SharedTreeEditOp, SharedTreeHandleOp, EditWithoutId } from './PersistedTypes';
+import {
+	Edit,
+	SharedTreeOpType,
+	SharedTreeEditOp,
+	SharedTreeHandleOp,
+	EditWithoutId,
+	SharedTreeOp,
+} from './PersistedTypes';
+import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { GenericTransaction } from './GenericTransaction';
 import { newEdit } from './GenericEditUtilities';
 
@@ -112,6 +119,9 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	public readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
 
+	/** Indicates if the client is the oldest member of the quorum. */
+	private currentIsOldest: boolean;
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
@@ -131,11 +141,72 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		this.expensiveValidation = expensiveValidation;
 		this.transactionFactory = transactionFactory;
 
+		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
+		// which SharedTree does not have access to.
+		// TODO:#55900: Get rid of copy-pasted OldestClientObserver code
+		const quorum = this.runtime.getQuorum();
+		this.currentIsOldest = this.computeIsOldest();
+		quorum.on('addMember', this.updateOldest);
+		quorum.on('removeMember', this.updateOldest);
+		runtime.on('connected', this.updateOldest);
+		runtime.on('disconnected', this.updateOldest);
+
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary);
 
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
+	}
+
+	/**
+	 * Re-computes currentIsOldest and emits an event if it has changed.
+	 * TODO:#55900: Get rid of copy-pasted OldestClientObserver code
+	 */
+	private readonly updateOldest = () => {
+		const oldest = this.computeIsOldest();
+		if (this.currentIsOldest !== oldest) {
+			this.currentIsOldest = oldest;
+			if (oldest) {
+				this.emit('becameOldest');
+			} else {
+				this.emit('lostOldest');
+			}
+		}
+	};
+
+	/**
+	 * Computes the oldest client in the quorum, true by default if the container is detached and false by default if the client isn't connected.
+	 * TODO:#55900: Get rid of copy-pasted OldestClientObserver code
+	 */
+	private computeIsOldest(): boolean {
+		// If the container is detached, we are the only ones that know about it and are the oldest by default.
+		if (this.runtime.attachState === AttachState.Detached) {
+			return true;
+		}
+
+		// If we're not connected we can't be the oldest connected client.
+		if (!this.runtime.connected) {
+			return false;
+		}
+
+		assert(this.runtime.clientId !== undefined, 'Client id should be set if connected.');
+
+		const quorum = this.runtime.getQuorum();
+		const selfSequencedClient = quorum.getMember(this.runtime.clientId);
+		// When in readonly mode our clientId will not be present in the quorum.
+		if (selfSequencedClient === undefined) {
+			return false;
+		}
+
+		const members = quorum.getMembers();
+		for (const sequencedClient of members.values()) {
+			if (sequencedClient.sequenceNumber < selfSequencedClient.sequenceNumber) {
+				return false;
+			}
+		}
+
+		// No member of the quorum was older
+		return true;
 	}
 
 	/**
@@ -172,18 +243,25 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	}
 
 	/**
-	 * Uploads the edit chunk and sends the chunk key along with the resulting handle as an op.
+	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
-	private async uploadEditChunk(edits: EditWithoutId<TChange>[], chunkKey: number): Promise<void> {
-		// TODO:#49901: Enable writing of edit chunk blobs to summary
-		// if (this.summarizeHistory) {
-		// 	const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-		// 	this.submitLocalMessage({
-		// 		editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-		// 		chunkKey,
-		// 		type: SharedTreeOpType.Handle,
-		// 	});
-		// }
+	private async uploadEditChunk(edits: EditWithoutId<TChange>[], startRevision: number): Promise<void> {
+		try {
+			const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+			this.submitLocalMessage({
+				editHandle: serializeHandles(editHandle, this.serializer, this.handle),
+				startRevision,
+				type: SharedTreeOpType.Handle,
+			});
+		} catch (error) {
+			// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
+			this.logger.sendErrorEvent(
+				{
+					eventName: 'EditChunkUploadFailure',
+				},
+				error
+			);
+		}
 	}
 
 	/**
@@ -197,7 +275,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 					path: snapshotFileName,
 					type: TreeEntry[TreeEntry.Blob],
 					value: {
-						contents: this.saveSerializedSummary(serializer),
+						contents: this.saveSerializedSummary({ serializer }),
 						encoding: 'utf-8',
 					},
 				},
@@ -210,11 +288,20 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * Saves this SharedTree into a serialized summary.
 	 *
-	 * @param serializer - Optional serializer to use. If not passed in, SharedTree's serializer is used.
+	 * @param options - Optional serializer and summarizer to use. If not passed in, SharedTree's serializer and summarizer are used.
 	 * @internal
 	 */
-	public saveSerializedSummary(serializer?: IFluidSerializer): string {
-		return serialize(this.saveSummary(), serializer || this.serializer, this.handle);
+	public saveSerializedSummary(options?: {
+		serializer?: IFluidSerializer;
+		summarizer?: SharedTreeSummarizer<TChange>;
+	}): string {
+		const { serializer, summarizer } = options || {};
+
+		return serialize(
+			summarizer ? summarizer(this.editLog, this.currentView) : this.saveSummary(),
+			serializer || this.serializer,
+			this.handle
+		);
 	}
 
 	/**
@@ -253,6 +340,32 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(summary);
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
+
+		if (this.runtime.connected) {
+			const noChunksReadyForUpload = this.editLog.getEditChunksReadyForUpload()[Symbol.iterator]().next().done;
+			if (noChunksReadyForUpload === undefined || !noChunksReadyForUpload) {
+				// A client does not become a member of the quorum until it is within the collaboration window.
+				//
+				// The collaboration window is the range from the minimum sequence number enforced by the server and head.
+				// When a client sends an op, they include the last sequence number the client has processed. We call this the reference
+				// sequence number.
+				//
+				// If there are no members in the quorum, we send a no op op in order to have this client added as a member to the quorum.
+				// This is required so we can ensure only the oldest client will upload blobs during summary load.
+				if (this.runtime.getQuorum().getMembers().size === 0) {
+					const noop: SharedTreeOp = {
+						type: SharedTreeOpType.NoOp,
+					};
+
+					this.submitLocalMessage(noop);
+				} else if (this.currentIsOldest) {
+					void this.uploadCatchUpBlobs();
+				}
+			}
+
+			// If this client becomes the oldest, it should take care of uploading catch up blobs.
+			this.on('becameOldest', () => void this.uploadCatchUpBlobs());
+		}
 	}
 
 	private createEditLogFromSummary(
@@ -278,14 +391,16 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			0
 		);
 
-		// Upload any full blobs that have yet to be uploaded
-		// When multiple clients connect and load summaries with non-uploaded chunks, they will all initiate uploads
-		// but there will only be one winner per chunk.
-		for (const [key, chunk] of editLog.getEditChunksReadyForUpload()) {
-			this.uploadEditChunk(chunk, key).catch((error: unknown) => this.emit('error', error));
-		}
-
 		return { editLog, cachingLogViewer: logViewer };
+	}
+
+	/**
+	 * Upload any full chunks that have yet to be uploaded.
+	 */
+	private async uploadCatchUpBlobs(): Promise<void> {
+		for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
+			await this.uploadEditChunk(chunk, startRevision);
+		}
 	}
 
 	/**
@@ -338,8 +453,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
 		const { type } = message.contents;
 		if (type === SharedTreeOpType.Handle) {
-			const { editHandle, chunkKey } = message.contents as SharedTreeHandleOp;
-			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), chunkKey);
+			const { editHandle, startRevision } = message.contents as SharedTreeHandleOp;
+			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
 		} else if (type === SharedTreeOpType.Edit) {
 			const semiSerializedEdit = message.contents.edit;
 			// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
@@ -371,7 +486,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
 
-		// If the id of the supplied edit matches a nonlocal edit already present in the log, this would normally be indicative of an error.
+		// If the id of the supplied edit matches a non-local edit already present in the log, this would normally be indicative of an error.
 		// However, the @fluidframework packages prior to 0.37.x have a bug which can cause data corruption by sequencing duplicate edits--
 		// see discussion on the following github issue: https://github.com/microsoft/FluidFramework/issues/4399
 		// To work around this issue, we currently tolerate duplicate ops in loaded documents.
@@ -393,10 +508,10 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
 			const lastPair = this.editLog.getLastEditChunk();
 			if (lastPair !== undefined) {
-				const [key, chunk] = lastPair;
+				const [startRevision, chunk] = lastPair;
 				const edits = assertNotUndefined(chunk.edits);
 				if (edits.length === editsPerChunk) {
-					this.uploadEditChunk(edits, key).catch((error: unknown) => this.emit('error', error));
+					void this.uploadEditChunk(edits, startRevision);
 				}
 			}
 		}

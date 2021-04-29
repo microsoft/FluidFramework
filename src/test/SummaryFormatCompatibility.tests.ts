@@ -18,7 +18,6 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 	newEdit,
-	serialize,
 } from '../generic';
 import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
@@ -127,34 +126,28 @@ describe('Summary', () => {
 		});
 
 		for (const { version, summarizer } of supportedSummarizers) {
-			if (version !== '0.1.0') {
-				it(`format version ${version} can be written for ${summaryType} summary type`, async () => {
-					// Load the first summary file (the one with the oldest version)
-					const serializedSummary = fs.readFileSync(summaryFilePath(files.sort()[0]), 'utf8');
-					const summary = deserialize(serializedSummary, testSerializer);
-					assert.typeOf(summary, 'object');
-					expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+			it(`format version ${version} can be written for ${summaryType} summary type`, async () => {
+				// Load the first summary file (the one with the oldest version)
+				const serializedSummary = fs.readFileSync(summaryFilePath(files.sort()[0]), 'utf8');
+				const summary = deserialize(serializedSummary, testSerializer);
+				assert.typeOf(summary, 'object');
 
-					// Wait for the ops to to be submitted and processed across the containers.
-					await testObjectProvider.opProcessingController.process();
+				// Wait for the ops to to be submitted and processed across the containers.
+				await testObjectProvider.opProcessingController.process();
+				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
-					// Write a new summary with the specified version
-					const newSummary = serialize(
-						summarizer(expectedTree.edits, expectedTree.currentView),
-						testSerializer,
-						expectedTree.handle
-					);
+				await testObjectProvider.opProcessingController.process();
 
-					// Check the newly written summary is equivalent to its corresponding test summary file
-					const fileName = `${summaryType}-${version}`;
-					// Re-stringify the the JSON file to remove escaped characters
-					const expectedSummary = JSON.stringify(
-						JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
-					);
+				// Write a new summary with the specified version
+				const newSummary = expectedTree.saveSerializedSummary({ summarizer });
 
-					expect(newSummary).to.equal(expectedSummary);
-				});
-			}
+				// Check the newly written summary is equivalent to its corresponding test summary file
+				const fileName = `${summaryType}-${version}`;
+				// Re-stringify the the JSON file to remove escaped characters
+				const expectedSummary = JSON.stringify(JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8')));
+
+				expect(newSummary).to.equal(expectedSummary);
+			});
 		}
 	}
 

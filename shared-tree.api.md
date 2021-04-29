@@ -218,7 +218,7 @@ export type EditingResult<TChange> = {
 // @internal
 export interface EditLogSummary<TChange> {
     readonly editChunks: readonly {
-        key: number;
+        startRevision: number;
         chunk: EditChunkOrHandle<TChange>;
     }[];
     readonly editIds: readonly EditId[];
@@ -272,7 +272,10 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // (undocumented)
     protected registerCore(): void;
     // @internal
-    saveSerializedSummary(serializer?: IFluidSerializer): string;
+    saveSerializedSummary(options?: {
+        serializer?: IFluidSerializer;
+        summarizer?: SharedTreeSummarizer<TChange>;
+    }): string;
     // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
@@ -480,6 +483,11 @@ export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     get type(): string;
 }
+
+// Warning: (ae-internal-missing-underscore) The name "SharedTreeSummarizer" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type SharedTreeSummarizer<TChange> = (editLog: OrderedEditSet<TChange>, currentView: Snapshot) => SharedTreeSummaryBase;
 
 // @public
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {

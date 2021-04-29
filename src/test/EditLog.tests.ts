@@ -18,7 +18,7 @@ describe('EditLog', () => {
 	const { id: id1, editWithoutId: editWithoutId1 } = separateEditAndId(edit1);
 
 	it('can be constructed from sequenced edits', () => {
-		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -37,7 +37,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of sequenced edits', () => {
-		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -47,7 +47,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get the index from an edit id of a local edit', () => {
-		const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0] }];
 		const editIds = [id0];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -59,14 +59,14 @@ describe('EditLog', () => {
 
 	describe('tryGetIndexOfId', () => {
 		it('can get the index from an existing edit', () => {
-			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editChunks = [{ startRevision: 0, chunk: [editWithoutId0] }];
 			const editIds = [id0];
 			const log = new EditLog({ editChunks, editIds });
 			expect(log.tryGetIndexOfId(id0)).to.equal(0);
 		});
 
 		it('returns undefined when queried with a nonexistent edit', () => {
-			const editChunks = [{ key: 0, chunk: [editWithoutId0] }];
+			const editChunks = [{ startRevision: 0, chunk: [editWithoutId0] }];
 			const editIds = ['f9379af1-6f1a-4f71-8f8c-859359621404' as EditId];
 			const log = new EditLog({ editChunks, editIds });
 			expect(log.tryGetIndexOfId('aa203fc3-bc28-437d-b01c-f9398dc859ef' as EditId)).to.equal(undefined);
@@ -74,7 +74,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get an edit from an index', async () => {
-		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -84,7 +84,7 @@ describe('EditLog', () => {
 	});
 
 	it('can get an edit from an edit id', async () => {
-		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0, editWithoutId1] }];
 		const editIds = [id0, id1];
 
 		const log = new EditLog({ editChunks, editIds });
@@ -203,8 +203,8 @@ describe('EditLog', () => {
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
-		const editChunks = [{ key: 0, chunk: [editWithoutId0, editWithoutId1] }];
-		const editChunksCopy = [{ key: 0, chunk: [editWithoutId0Copy, editWithoutId1Copy] }];
+		const editChunks = [{ startRevision: 0, chunk: [editWithoutId0, editWithoutId1] }];
+		const editChunksCopy = [{ startRevision: 0, chunk: [editWithoutId0Copy, editWithoutId1Copy] }];
 		const editIds = [id0, id1];
 
 		const log0 = new EditLog({ editChunks, editIds });
@@ -212,12 +212,18 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog<Change>({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
+		const log2 = new EditLog<Change>({
+			editChunks: [{ startRevision: 0, chunk: [editWithoutId0] }],
+			editIds: [id0],
+		});
 		log2.addLocalEdit(edit1Copy);
 
 		expect(log0.equals(log2)).to.be.true;
 
-		const differentLog = new EditLog({ editChunks: [{ key: 0, chunk: [editWithoutId0] }], editIds: [id0] });
+		const differentLog = new EditLog({
+			editChunks: [{ startRevision: 0, chunk: [editWithoutId0] }],
+			editIds: [id0],
+		});
 
 		expect(log0.equals(differentLog)).to.be.false;
 	});
@@ -263,13 +269,13 @@ describe('EditLog', () => {
 			};
 		});
 
-		let chunkKey = 0;
+		let startRevision = 0;
 		const handlesWithKeys = handles.map((chunk) => {
 			const handle = {
-				key: chunkKey,
+				startRevision,
 				chunk,
 			};
-			chunkKey = chunkKey + 5;
+			startRevision = startRevision + 5;
 			return handle;
 		});
 

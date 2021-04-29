@@ -5,8 +5,9 @@
 
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ErrorString } from './Common';
-import { EditLog } from './EditLog';
-import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';
+import { EditLog, separateEditAndId } from './EditLog';
+import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary, EditWithoutId } from './generic';
+import { EditId } from './Identifiers';
 
 /** The summary format version that is read by SharedTree. */
 export const readFormatVersion = '0.1.0';
@@ -83,10 +84,19 @@ export function convertSummaryToReadFormat<TChange>(
 		const { currentTree, sequencedEdits } = summary as SharedTreeSummary_0_0_2<TChange>;
 
 		if (sequencedEdits !== undefined) {
-			const temporaryLog = new EditLog<TChange>();
+			const editsWithoutId: EditWithoutId<TChange>[] = [];
+			const editIds: EditId[] = [];
 
 			sequencedEdits.forEach((edit) => {
-				temporaryLog.addSequencedEdit(edit);
+				const { id, editWithoutId } = separateEditAndId(edit);
+				editsWithoutId.push(editWithoutId);
+				editIds.push(id);
+			});
+
+			// This saves all of the edits in the summary as part of the first chunk.
+			const temporaryLog = new EditLog<TChange>({
+				editChunks: editsWithoutId.length > 0 ? [{ startRevision: 0, chunk: editsWithoutId }] : [],
+				editIds,
 			});
 
 			return {
