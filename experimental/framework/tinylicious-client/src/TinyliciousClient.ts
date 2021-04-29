@@ -59,10 +59,10 @@ export class TinyliciousClientInstance {
     }
 
     /**
-     * Create a deteached container based on only the schema, no config is required. The container schema is used to build 
-     * the initial container and it is returned with no persistence yet on the service. Note that the data will not be saved
-     * in the detached state. You can choose to attach the container later in the application's lifetime using the
-     * FluidContainer's attachToService call and provide the container configuration at that time.
+     * Create a deteached container based on only the schema, no config is required. The container schema is used to
+     * build  the initial container and it is returned with no persistence yet on the service. Note that the data
+     * will not be saved in the detached state. You can choose to attach the container later in the application's
+     * lifetime using the FluidContainer's attachToService call and provide the container configuration at that time.
      * @param containerSchema - Schema holding the definitions for the DDSes and data objects that are supported by
      * this container
      */
@@ -82,8 +82,8 @@ export class TinyliciousClientInstance {
 
     /**
      * Get an existing container based on the schema and configuration provided. The container configuration is used to
-     * navigate to the data backing the container on the service, whereas the container schema will be used to prepare the
-     * runtime to load that data into the appropriate DDSes and data objects in the container.
+     * navigate to the data backing the container on the service, whereas the container schema will be used to prepare
+     * the runtime to load that data into the appropriate DDSes and data objects in the container.
      * @param serviceContainerConfig - Tinylicious specific configuration for how the container's data will be stored
      * @param containerSchema - Schema holding the definitions for the DDSes and data objects that are supported by
      * this container

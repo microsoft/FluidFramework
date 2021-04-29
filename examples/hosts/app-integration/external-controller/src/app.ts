@@ -43,7 +43,7 @@ const containerConfig: TinyliciousContainerConfig = { id: containerId };
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
-        ? isDetached !== undefined /** Check to see if */
+        ? isDetached !== undefined /** Check to see if container should be created in detached state */
             ? await TinyliciousClient.createDetachedContainer(
                 containerSchema,
             )
