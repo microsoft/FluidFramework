@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import {
     BaseContainerRuntimeFactory,
     DataObject,
@@ -10,10 +11,10 @@ import {
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
@@ -31,10 +32,10 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
- * FluidContainer defines the interface that the developer will use to interact with Fluid.
+ * IFluidContainer defines the interface that the developer will use to interact with Fluid.
  */
-export interface FluidContainer
-    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer
+    extends Pick<Container, "audience" | "clientId" | "attachState">, IEventProvider<IFluidContainerEvents> {
     /**
      * The initialObjects defined in the container config
      */
@@ -46,6 +47,57 @@ export interface FluidContainer
      * The returned object needs to be stored via handle by the caller.
      */
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+
+    /**
+     * If the container is created in a detached state, this will connect it to the service. This allows the 
+     * data in the container to be permanently persisted instead of being in-memory. This will throw
+     * an error if the container is already attached when this is called.
+     */
+    attachToService: () => Promise<void>;
+}
+
+export class FluidContainer extends EventEmitter implements IFluidContainer {
+    private readonly connectedHandler = (id: string) => this.emit("connected", id);
+
+    constructor(
+        private readonly rootDataObject: RootDataObject,
+        private readonly container: Container,
+        private readonly attachRequest: IRequest)
+    {
+        super();
+        this.rootDataObject.on("connected", this.connectedHandler);
+    }
+
+    public get initialObjects(): LoadableObjectRecord {
+        return this.rootDataObject.initialObjects;
+    }
+
+    public get audience(): IAudience {
+        return this.rootDataObject.audience;
+    }
+
+    public get clientId() {
+        return this.rootDataObject.clientId;
+    }
+
+    public get attachState(): AttachState {
+        return this.rootDataObject.attachState;
+    }
+
+    public async create<T extends IFluidLoadable>(
+        objectClass: LoadableObjectClass<T>,
+    ): Promise<T> {
+        return this.rootDataObject.create<T>(objectClass);
+    }
+
+    public async attachToService(): Promise<void> {
+        if (this.attachState === AttachState.Detached) {
+            await this.container.attach(this.attachRequest);
+        } else {
+            const errorString = this.attachState === AttachState.Attached ? "already attached" : "currently attaching";
+            throw Error(`Container is ${errorString}`);
+        }
+    }
 }
 
 interface RootDataObjectProps {
@@ -57,8 +109,7 @@ interface RootDataObjectProps {
  */
 export class RootDataObject
     // eslint-disable-next-line @typescript-eslint/ban-types
-    extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
-    implements FluidContainer {
+    extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents> {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
@@ -115,6 +166,10 @@ export class RootDataObject
 
     public get clientId() {
         return this.context.clientId;
+    }
+
+    public get attachState(): AttachState {
+        return this.context.attachState;
     }
 
     public get initialObjects(): LoadableObjectRecord {

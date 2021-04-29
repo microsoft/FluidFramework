@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { AttachState } from "@fluidframework/container-definitions";
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { FluidContainer } from "@fluid-experimental/fluid-static";
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
@@ -19,6 +21,9 @@ if (location.hash.length === 0) {
 const containerId = location.hash.substring(1);
 document.title = containerId;
 
+const urlParams = new URLSearchParams(window.location.search);
+const isDetached = urlParams.get("detached");
+
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
@@ -34,18 +39,38 @@ export const containerSchema = {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId }, containerSchema);
+        ? isDetached !== undefined
+            ? await TinyliciousClient.createDetachedContainer(
+                { id: containerId },
+                containerSchema,
+            )
+            : await TinyliciousClient.createAttachedContainer(
+                { id: containerId },
+                containerSchema,
+            )
+        : await TinyliciousClient.getContainer(
+            { id: containerId },
+            containerSchema,
+        );
+
+    // We prepare our view to render the contents of the container
+    const contentDiv = document.getElementById("content") as HTMLDivElement;
+    contentDiv.style.textAlign = "center";
+
+    // If the container is created in a detached state, we display a button that will attach it to the service.
+    if (fluidContainer.attachState === AttachState.Detached) {
+        renderAttachButton(fluidContainer, contentDiv);
+    }
 
     // We now get the DataObject from the container
-    const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;
+    const keyValueDataObject = fluidContainer.initialObjects
+        .kvp as KeyValueDataObject;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(keyValueDataObject);
     await diceRollerController.initialize(createNew);
 
-    // We render a view which uses the controller.
-    const contentDiv = document.getElementById("content") as HTMLDivElement;
+    // We render our DiceRollerController
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
     renderDiceRoller(diceRollerController, div1);
@@ -61,6 +86,32 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div2);
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
+}
+
+function renderAttachButton(
+    fluidContainer: FluidContainer,
+    contentDiv: HTMLDivElement,
+): void {
+    const attachButton = document.createElement("button");
+    attachButton.style.fontSize = "30px";
+    attachButton.style.margin = "20px";
+    attachButton.textContent = "Attach to Service";
+    attachButton.addEventListener("click", () => {
+        // Once the container is attached, the button will be disabled as there is no further action to take
+        fluidContainer.attachToService().then(() => {
+            if (fluidContainer.attachState === AttachState.Attached) {
+                attachButton.disabled = true;
+                attachButton.textContent = "Successfully Attached";
+            } else {
+                // If attach succeeds, we should never reach this state as the fluidContainer's attachState will
+                // also be updated
+                throw Error("Attach state failed to updated");
+            }
+        }).catch((e: Error) => {
+            console.error(`Failed to attach container due to error ${e.message}`);
+        });
+    });
+    contentDiv.appendChild(attachButton);
 }
 
 start().catch((error) => console.error(error));
