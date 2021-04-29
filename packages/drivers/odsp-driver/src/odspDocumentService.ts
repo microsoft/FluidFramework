@@ -266,7 +266,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param io - websocket library
      * @param client - information about the client
      * @param webSocketUrl - websocket URL
-     * @param webSocketUrl - alternate websocket URL
      */
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
