@@ -1,5 +1,20 @@
 # Change Log
 
+## 0.96.1
+
+* fix: Reduce frequency of edit chunk upload to prevent SPO throttling
+  * Associated pull request: [29935](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29935)
+  * Commit: [c406e2f4bac256d13f8007a9aad42961170b19f9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c406e2f4bac256d13f8007a9aad42961170b19f9)
+* refactor: BREAKING CHANGE: cleanup EditNode
+  * Associated pull request: [30040](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30040)
+  * Commit: [fb4ac3170caa9093f5d52b98fd12f972baf9ee70](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fb4ac3170caa9093f5d52b98fd12f972baf9ee70)
+* fix: BREAKING CHANGE: Expose factory for creating SharedTrees that do not preserve history in summary
+  * Associated pull request: [29909](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29909)
+  * Commit: [1e146f0f01ffc79af01164a9466cd9c1953d716b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1e146f0f01ffc79af01164a9466cd9c1953d716b)
+* docs: remove invalid @sealed on abstract class
+  * Associated pull request: [29904](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29904)
+  * Commit: [887c249e7defbebd9622c8906eb96d23818ecb6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/887c249e7defbebd9622c8906eb96d23818ecb6d)
+
 ## 0.90.0
 
 * refactor: BREAKING CHANGE: move benchmarking code into its own package
