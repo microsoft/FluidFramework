@@ -307,7 +307,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				&& hasPartition;
 
 			const latency = Date.now() - startTime;
-			this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry);
+			this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry, ex);
 
 			if (willRetry) {
 				return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);

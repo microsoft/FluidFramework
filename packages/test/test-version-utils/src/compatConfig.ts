@@ -15,6 +15,7 @@ import { ensurePackageInstalled } from "./testApi";
 enum CompatKind {
     None = "None",
     Loader = "Loader",
+    Driver = "Driver",
     ContainerRuntime = "ContainerRuntime",
     DataRuntime = "DataRuntime",
     LoaderAndContainerRuntime = "LoaderAndContainerRuntime",
@@ -29,6 +30,7 @@ interface CompatConfig {
     kind: CompatKind,
     compatVersion: number | string,
     loader?: string | number,
+    driver?: string | number,
     containerRuntime?: string | number,
     dataRuntime?: string | number,
 }
@@ -42,32 +44,65 @@ function genConfig(compatVersion: number): CompatConfig[] {
         }];
     }
 
+    const allOld = {
+        loader: compatVersion,
+        driver: compatVersion,
+        containerRuntime: compatVersion,
+        dataRuntime: compatVersion,
+    };
+
     return [
         {
-            name: `compat N${compatVersion} - old loader + new runtime`,
+            name: `compat N${compatVersion} - old loader`,
             kind: CompatKind.Loader,
             compatVersion,
             loader: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new loader + old runtime`,
+            name: `compat N${compatVersion} - new loader`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
+            loader: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
+            driver: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old container runtime`,
             kind: CompatKind.ContainerRuntime,
             compatVersion,
             containerRuntime: compatVersion,
-            dataRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new container runtime + old data runtime`,
+            name: `compat N${compatVersion} - new container runtime`,
+            kind: CompatKind.ContainerRuntime,
+            compatVersion,
+            ...allOld,
+            containerRuntime: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old data runtime`,
             kind: CompatKind.DataRuntime,
             compatVersion,
             dataRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - old container runtime + new data runtime`,
+            name: `compat N${compatVersion} - new data runtime`,
             kind: CompatKind.LoaderAndContainerRuntime,
             compatVersion,
-            loader: compatVersion,
-            containerRuntime: compatVersion,
+            ...allOld,
+            dataRuntime: undefined,
         },
     ];
 }
@@ -178,13 +213,13 @@ function describeCompat(
                 let resetAfterEach: boolean;
                 before(async () => {
                     provider = await getVersionedTestObjectProvider(
-                        config?.loader,
+                        config.loader,
                         {
                             type: driver,
-                            version: config?.loader,
+                            version: config.driver,
                         },
-                        config?.containerRuntime,
-                        config?.dataRuntime,
+                        config.containerRuntime,
+                        config.dataRuntime,
                     );
                 });
                 tests((reset: boolean = true) => {
