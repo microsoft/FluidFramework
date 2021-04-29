@@ -46,13 +46,11 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         { headerName: "sprequestguid", logName: "sprequestguid" },
         { headerName: "request-id", logName: "requestId" },
         { headerName: "client-request-id", logName: "clientRequestId" },
-        { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
         { headerName: "X-Fluid-Retries", logName: "serverRetries" },
     ];
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
         contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
-        isAfd: headers["x-msedge-ref"] !== undefined,
     };
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);

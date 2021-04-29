@@ -21,7 +21,6 @@ import {
     TokenFetchOptions,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
-import { debug } from "./debug";
 import { fetch } from "./fetch";
 import { RateLimiter } from "./rateLimiter";
 import { pkgVersion } from "./packageVersion";
@@ -177,22 +176,6 @@ export async function fetchAndParseAsJSONHelper<T>(
         return res;
     } catch (e) {
         throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, content);
-    }
-}
-
-/**
- * Tests if localStorage is usable.
- * Should we move this outside to a library?
- */
-export function isLocalStorageAvailable(): boolean {
-    const localStorageTestKey = "LocalStorageTestKey";
-    try {
-        localStorage.setItem(localStorageTestKey, "v");
-        localStorage.removeItem(localStorageTestKey);
-        return true;
-    } catch (e) {
-        debug(`LocalStorage not available due to ${e}`);
-        return false;
     }
 }
 
