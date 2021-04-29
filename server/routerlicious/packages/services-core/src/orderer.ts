@@ -60,7 +60,7 @@ export interface IOrdererConnection {
     /**
      * Sends the client leave op for this connection
      */
-    disconnect(): Promise<void>;
+    disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
 }
 
 export interface IOrderer {

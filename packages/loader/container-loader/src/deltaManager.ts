@@ -896,12 +896,18 @@ export class DeltaManager
         this.throttlingIdSet.add(id);
         if (delaySeconds > 0 && (timeNow + delaySeconds > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delaySeconds;
-            const throttlingError: IThrottlingWarning = {
+
+            // Add 'throttling' properties to an error with safely extracted properties:
+            const throttlingWarning: IThrottlingWarning = {
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delaySeconds,
             };
-            this.emit("throttled", throttlingError);
+            const reconfiguredError: IThrottlingWarning = {
+                ...CreateContainerError(error),
+                ...throttlingWarning,
+            };
+            this.emit("throttled", reconfiguredError);
         }
     }
 
