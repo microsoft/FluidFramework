@@ -16,7 +16,8 @@ export class CombinedLambda implements IPartitionLambda {
 	/**
 	 * Processes an incoming message
 	 */
-	public async handler(message: IQueuedMessage) {
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	public handler(message: IQueuedMessage) {
 		const promises: Promise<void>[] = [];
 
 		for (const lambda of this.lambdas) {
@@ -27,7 +28,7 @@ export class CombinedLambda implements IPartitionLambda {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return promises ? Promise.all(promises) as any : undefined;
+		return promises.length > 0 ? Promise.all(promises) as any : undefined;
 	}
 
 	/**

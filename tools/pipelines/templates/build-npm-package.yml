@@ -101,7 +101,7 @@ stages:
         displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          testCoverage: false #${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup

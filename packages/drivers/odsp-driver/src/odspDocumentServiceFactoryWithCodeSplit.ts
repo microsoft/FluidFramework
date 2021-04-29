@@ -17,7 +17,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit
     implements IDocumentServiceFactory {
     constructor(
         getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-        getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+        getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
     ) {

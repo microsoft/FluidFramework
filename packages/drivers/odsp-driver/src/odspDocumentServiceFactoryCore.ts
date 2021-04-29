@@ -108,17 +108,18 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     }
 
     /**
-   * @param getStorageToken - function that can provide the storage token for a given site. This is
-   * is also referred to as the "VROOM" token in SPO.
-   * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-   * referred to as the "Push" token in SPO.
-   * @param storageFetchWrapper - if not provided FetchWrapper will be used
-   * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param persistedCache - PersistedCache provided by host for use in this session.
-   */
+     * @param getStorageToken - function that can provide the storage token for a given site. This is
+     * is also referred to as the "Vroom" token in SPO.
+     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
+     * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
+     * response payload.
+     * @param storageFetchWrapper - if not provided FetchWrapper will be used
+     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+     * @param persistedCache - PersistedCache provided by host for use in this session.
+     */
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-        private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+        private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
@@ -151,17 +152,19 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             true /* throwOnNullToken */,
         );
 
-        const webSocketTokenFetcher = this.toInstrumentedOdspTokenFetcher(
-            odspLogger,
-            odspResolvedUrl,
-            this.getWebsocketToken,
-            false /* throwOnNullToken */,
-        );
+        const webSocketTokenFetcher = this.getWebsocketToken === undefined
+            ? undefined
+            : async (options: TokenFetchOptions) => this.toInstrumentedOdspTokenFetcher(
+                odspLogger,
+                odspResolvedUrl,
+                this.getWebsocketToken!,
+                false /* throwOnNullToken */,
+            )(options, "GetWebsocketToken");
 
         return OdspDocumentService.create(
             resolvedUrl,
             storageTokenFetcher,
-            async (options: TokenFetchOptions) => webSocketTokenFetcher(options, "GetWebsocketToken"),
+            webSocketTokenFetcher,
             odspLogger,
             this.getSocketIOClient,
             cacheAndTracker.cache,
@@ -196,12 +199,19 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     itemId: resolvedUrl.itemId,
                 }).then((tokenResponse) => {
                     const token = tokenFromResponse(tokenResponse);
-                    event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null ? true : false });
+                    // This event alone generates so many events that is materially impacts cost of telemetry
+                    // Thus do not report end event when it comes back quickly.
+                    // Note that most of the hosts do not report if result is comming from cache or not,
+                    // so we can't rely on that here
+                    if (event.duration >= 32) {
+                        event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
+                    }
                     if (token === null && throwOnNullToken) {
                         throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
                     }
                     return token;
-                }));
+                }),
+                { cancel: "generic" });
         };
     }
 }

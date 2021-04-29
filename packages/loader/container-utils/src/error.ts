@@ -23,7 +23,7 @@ function messageFromError(error: any): string {
 }
 
 const isValidLoggingError = (error: any): error is LoggingError => {
-    return typeof error?.errorType === "string" && error instanceof LoggingError;
+    return typeof error?.errorType === "string" &&  LoggingError.is(error);
 };
 
 const isRegularObject = (value: any): boolean => {
