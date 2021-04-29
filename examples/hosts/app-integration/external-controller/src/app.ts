@@ -5,7 +5,7 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
 import { FluidContainer } from "@fluid-experimental/fluid-static";
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient, { TinyliciousContainerConfig } from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluidframework/map";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
@@ -21,6 +21,8 @@ if (location.hash.length === 0) {
 const containerId = location.hash.substring(1);
 document.title = containerId;
 
+// Parses the url to see if "detached" was passed as a query param to create the container in
+// a detached state
 const urlParams = new URLSearchParams(window.location.search);
 const isDetached = urlParams.get("detached");
 
@@ -36,20 +38,21 @@ export const containerSchema = {
     },
 };
 
+const containerConfig: TinyliciousContainerConfig = { id: containerId };
+
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
-        ? isDetached !== undefined
+        ? isDetached !== undefined /** Check to see if */
             ? await TinyliciousClient.createDetachedContainer(
-                { id: containerId },
                 containerSchema,
             )
             : await TinyliciousClient.createAttachedContainer(
-                { id: containerId },
+                containerConfig,
                 containerSchema,
             )
         : await TinyliciousClient.getContainer(
-            { id: containerId },
+            containerConfig,
             containerSchema,
         );
 
@@ -89,7 +92,7 @@ async function start(): Promise<void> {
 }
 
 function renderAttachButton(
-    fluidContainer: FluidContainer,
+    fluidContainer: FluidContainer<TinyliciousContainerConfig>,
     contentDiv: HTMLDivElement,
 ): void {
     const attachButton = document.createElement("button");
@@ -98,7 +101,7 @@ function renderAttachButton(
     attachButton.textContent = "Attach to Service";
     attachButton.addEventListener("click", () => {
         // Once the container is attached, the button will be disabled as there is no further action to take
-        fluidContainer.attachToService().then(() => {
+        fluidContainer.attachToService(containerConfig).then(() => {
             if (fluidContainer.attachState === AttachState.Attached) {
                 attachButton.disabled = true;
                 attachButton.textContent = "Successfully Attached";

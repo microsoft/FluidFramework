@@ -14,7 +14,7 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
@@ -34,7 +34,7 @@ export interface IFluidContainerEvents extends IEvent {
 /**
  * IFluidContainer defines the interface that the developer will use to interact with Fluid.
  */
-export interface IFluidContainer
+export interface IFluidContainer<C>
     extends Pick<Container, "audience" | "clientId" | "attachState">, IEventProvider<IFluidContainerEvents> {
     /**
      * The initialObjects defined in the container config
@@ -49,20 +49,20 @@ export interface IFluidContainer
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
 
     /**
-     * If the container is created in a detached state, this will connect it to the service. This allows the 
+     * If the container is created in a detached state, this will connect it to the service. This allows the
      * data in the container to be permanently persisted instead of being in-memory. This will throw
      * an error if the container is already attached when this is called.
      */
-    attachToService: () => Promise<void>;
+    attachToService: (config: C) => Promise<void>;
 }
 
-export class FluidContainer extends EventEmitter implements IFluidContainer {
+export class FluidContainer<C> extends EventEmitter implements IFluidContainer<C> {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
 
     constructor(
         private readonly rootDataObject: RootDataObject,
         private readonly container: Container,
-        private readonly attachRequest: IRequest)
+        private readonly attachToServiceCallback: (config: C, container: Container) => Promise<void>)
     {
         super();
         this.rootDataObject.on("connected", this.connectedHandler);
@@ -90,9 +90,9 @@ export class FluidContainer extends EventEmitter implements IFluidContainer {
         return this.rootDataObject.create<T>(objectClass);
     }
 
-    public async attachToService(): Promise<void> {
+    public async attachToService(config: C): Promise<void> {
         if (this.attachState === AttachState.Detached) {
-            await this.container.attach(this.attachRequest);
+            await this.attachToServiceCallback(config, this.container);
         } else {
             const errorString = this.attachState === AttachState.Attached ? "already attached" : "currently attaching";
             throw Error(`Container is ${errorString}`);
