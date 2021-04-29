@@ -17,7 +17,6 @@ Fluid object development consists of developing the data object and the correspo
 The [DataObject][] class extends [PureDataObject](#puredataobject) and provides the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
-- Scheduled task routing that makes it easier to use the Scheduler Fluid object
 - Blob storage implementation that makes it easier to store and retrieve blobs.
 
 **Note:** Most developers will want to use the `DataObject` as their base class to extend.
@@ -33,7 +32,7 @@ The [DataObject][] class extends [PureDataObject](#puredataobject) and provides 
   - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
 - Helper functions for creating and getting other data objects in the same container.
 
-**Note:** You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use dDistributed data structures you should use Container Services to manage your object.
+**Note:** You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use distributed data structures you should use Container Services to manage your object.
 
 ### DataObject example
 
@@ -158,7 +157,7 @@ The Aqueduct library provides the [`ContainerRuntimeFactoryWithDefaultDataStore`
 In the below example we will write a Container that exposes the above [`Clicker`](#data-object-example) using the [`Clicker Factory`](#data-object-factory-example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
 
 ```typescript
-export fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
+export fluidExport = new ContainerRuntimeFactoryWithDataStore(
   ClickerInstantiationFactory.type, // Default data object type
   ClickerInstantiationFactory.registryEntry, // Fluid object registry
   [], // Provider Entries
