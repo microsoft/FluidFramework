@@ -38,7 +38,7 @@ The [DataObject][] class extends [PureDataObject](#puredataobject) and provides 
   - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
 - Helper functions for creating and getting other data objects in the same container.
 
-**Note:** You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use dDistributed data structures you should use Container Services to manage your object.
+**Note:** You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use distributed data structures you should use Container Services to manage your object.
 
 ### DataObject example
 
