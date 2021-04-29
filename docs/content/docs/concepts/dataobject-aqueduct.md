@@ -167,7 +167,7 @@ The Aqueduct library provides the [`ContainerRuntimeFactoryWithDefaultDataStore`
 In the below example we will write a Container that exposes the above [`Clicker`](#data-object-example) using the [`Clicker Factory`](#data-object-factory-example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
 
 ```typescript
-export fluidExport = new ContainerRuntimeFactoryWithDataStore(
+export fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
   ClickerInstantiationFactory.type, // Default data object type
   ClickerInstantiationFactory.registryEntry, // Fluid object registry
   [], // Provider Entries
