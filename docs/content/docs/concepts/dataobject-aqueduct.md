@@ -23,7 +23,6 @@ Fluid object development consists of developing the data object and the correspo
 The [DataObject][] class extends [PureDataObject](#puredataobject) and provides the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
-- Scheduled task routing that makes it easier to use the Scheduler Fluid object
 - Blob storage implementation that makes it easier to store and retrieve blobs.
 
 **Note:** Most developers will want to use the `DataObject` as their base class to extend.
