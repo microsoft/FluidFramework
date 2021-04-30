@@ -10,7 +10,7 @@ import {
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluidframework/test-pairwise-generator";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
