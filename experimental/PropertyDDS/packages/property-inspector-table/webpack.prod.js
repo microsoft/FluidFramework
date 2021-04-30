@@ -184,7 +184,7 @@ module.exports = (env) => CommonWebpackLibTSConfig({
       'react': 'react',
       "@fluid-experimental/property-binder": "@fluid-experimental/property-binder",
       '@fluid-experimental/property-changeset': '@fluid-experimental/property-changeset',
-      '@fluid-experimental/property-dd‚s':'@fluid-experimental/property-dds',
+      '@fluid-experimental/property-dds':'@fluid-experimental/property-dds',
       '@fluid-experimental/property-properties': '@fluid-experimental/property-properties',
       '@fluid-experimental/property-proxy': '@fluid-experimental/property-proxy',
     }
