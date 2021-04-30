@@ -17,9 +17,11 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
+/** An error class modeling the exceptions arising from failed Fluid Object request routing */
 class ResponseException extends LoggingError {
     public errorFromRequestFluidObject: true = true;
     public code: number;
+
     constructor(message: string, response: IResponse, url: string) {
         super(message);
         this.code = response.status;
@@ -36,6 +38,8 @@ class ResponseException extends LoggingError {
             } catch (_) {}
         }
     }
+
+    public static is = (err: any): err is ResponseException => err?.errorFromRequestFluidObject === true;
 }
 
 export function getStack() {
@@ -51,26 +55,23 @@ export function getStack() {
 }
 
 export function exceptionToResponse(err: any): IResponse {
-    const status = 500;
-    // eslint-disable-next-line no-null/no-null
-    if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
-        const responseErr: ResponseException = err;
+    if (ResponseException.is(err)) {
         return {
             mimeType: "text/plain",
-            status: responseErr.code,
-            value: responseErr.message,
-            stack: responseErr.stack ?? getStack(),
+            status: err.code,
+            value: err.message,
+            stack: err.stack ?? getStack(),
         };
     }
     return {
         mimeType: "text/plain",
-        status,
+        status: 500,
         value: `${err}`,
         stack: getStack(),
     };
 }
 
-export const responseToException = (response: IResponse, request: IRequest) =>
+export const responseToException = (response: IResponse, request: IRequest): Error =>
     new ResponseException("Error routing FluidObject request", response, request.url);
 
 export async function requestFluidObject<T = IFluidObject>(
