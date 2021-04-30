@@ -7,7 +7,7 @@ import { IPartitionConfig, IPartitionLambdaFactory, LambdaCloseType } from "@flu
 import { TestContext } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import nconf from "nconf";
-import { createDocumentRouter } from "../kafka-service/documentRouter";
+import { createDocumentRouter } from "../../utils/documentRouter";
 
 describe("document-router", () => {
     describe("Plugin", () => {

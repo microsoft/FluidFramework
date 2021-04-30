@@ -4,6 +4,7 @@
  */
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
@@ -13,8 +14,6 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-// eslint-disable-next-line import/no-internal-modules
-import { createDocumentRouter } from "../kafka-service/documentRouter";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     // Access config values

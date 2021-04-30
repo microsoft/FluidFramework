@@ -17,10 +17,9 @@
     "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "beast": "npm test -- --beast --grep beastTest",
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "copier": "node dist/copier/index.js",
     "copier:debug": "node --inspect=0.0.0.0:5858 dist/copier/index.js",
@@ -35,31 +34,9 @@
     "lint:fix": "npm run eslint:fix",
     "scriptorium": "node dist/scriptorium/index.js",
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
-    "test": "mocha --recursive dist/test --unhandled-rejections=strict",
-    "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.30.0-0",
@@ -106,7 +83,6 @@
     "@types/ioredis": "^4.22.0",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.0",
-    "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.0",
     "@types/node": "^12.19.0",
@@ -128,9 +104,7 @@
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
     "html-loader": "^0.5.5",
-    "mocha": "^8.1.1",
     "node-sass": "^4.9.3",
-    "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "sass-loader": "^7.1.0",
