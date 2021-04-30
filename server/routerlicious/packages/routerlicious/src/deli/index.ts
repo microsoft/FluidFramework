@@ -4,7 +4,7 @@
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";

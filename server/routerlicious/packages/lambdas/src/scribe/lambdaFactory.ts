@@ -11,6 +11,7 @@ import {
     IContext,
     IDocument,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IProducer,
     IScribe,
@@ -19,7 +20,6 @@ import {
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
@@ -53,9 +53,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         super();
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const tenantId: string = config.get("tenantId");
-        const documentId: string = config.get("documentId");
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
+        const { tenantId, documentId } = config;
 
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
@@ -111,14 +110,14 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         // Filter and keep ops after protocol state
         const opsSinceLastSummary = opMessages
-        .filter((message) => message.sequenceNumber > lastCheckpoint.protocolState.sequenceNumber);
+            .filter((message) => message.sequenceNumber > lastCheckpoint.protocolState.sequenceNumber);
 
         let expectedSequenceNumber = lastCheckpoint.protocolState.sequenceNumber + 1;
         for (const message of opsSinceLastSummary) {
             if (message.sequenceNumber !== expectedSequenceNumber) {
                 throw new Error(`Invalid message sequence from checkpoint/summary.`
-                + `Current message @${message.sequenceNumber}.`
-                + `Expected message @${expectedSequenceNumber}`);
+                    + `Current message @${message.sequenceNumber}.`
+                    + `Expected message @${expectedSequenceNumber}`);
             }
             ++expectedSequenceNumber;
         }
