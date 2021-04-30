@@ -20,12 +20,13 @@ import {
 class ResponseException extends LoggingError {
     public errorFromRequestFluidObject: true = true;
     public code: number;
-    constructor(message: string, response: IResponse) {
+    constructor(message: string, response: IResponse, url: string) {
         super(message);
         this.code = response.status;
-        // Tag response.value as PackageData because it typically contains the request URL
         this.addTelemetryProperties({
-            responseValue: { value: response.value, tag: TelemetryDataTag.PackageData },
+            // Tag requestRoute as PackageData because it would contain DataStore/DDS ids
+            requestRoute: { value: url.split("?")[0], tag: TelemetryDataTag.PackageData },
+            responseValue: response.value,
             mimeType: response.mimeType,
         });
         if (response.stack !== undefined) {
@@ -70,7 +71,7 @@ export function exceptionToResponse(err: any): IResponse {
 }
 
 export const responseToException = (response: IResponse, request: IRequest) =>
-    new ResponseException("Error routing FluidObject request", response);
+    new ResponseException("Error routing FluidObject request", response, request.url);
 
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T> {

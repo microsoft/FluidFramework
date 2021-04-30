@@ -93,6 +93,8 @@ export interface IFluidDataStoreRuntime extends
     /**
      * Creates a new channel of the given type.
      * @param id - ID of the channel to be created.  A unique ID will be generated if left undefined.
+     * Note that this value will be logged via ITelemetryBaseLogger with the tag "PackageData"
+     * so please avoid using any user content or personally identifiable info for this value.
      * @param type - Type of the channel.
      */
     createChannel(id: string | undefined, type: string): IChannel;
