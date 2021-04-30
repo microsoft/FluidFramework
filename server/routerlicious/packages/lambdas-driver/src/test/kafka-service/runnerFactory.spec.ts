@@ -5,7 +5,6 @@
 
 import { TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { Provider } from "nconf";
 import { KafkaRunnerFactory } from "../../kafka-service/runnerFactory";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
@@ -19,14 +18,12 @@ describe("kafka-service", () => {
 
         describe(".create", () => {
             it("Should be able to create a runner", async () => {
-                const config = (new Provider({})).defaults({}).use("memory");
                 const testKafka = new TestKafka();
                 const lambdaFactory = new TestPartitionLambdaFactory();
                 const consumer = testKafka.createConsumer();
 
                 const runner = testFactory.create(
                     {
-                        config,
                         consumer,
                         dispose: () => Promise.resolve(),
                         lambdaFactory,

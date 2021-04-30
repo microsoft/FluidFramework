@@ -4,7 +4,6 @@
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
@@ -12,6 +11,8 @@ import { EventHubProducer } from "@fluidframework/server-services-ordering-event
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
+// eslint-disable-next-line import/no-internal-modules
+import { createDocumentRouter } from "../../kafka-service/documentRouter";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;

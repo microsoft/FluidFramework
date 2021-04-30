@@ -4,7 +4,6 @@
  */
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
@@ -14,6 +13,8 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
+// eslint-disable-next-line import/no-internal-modules
+import { createDocumentRouter } from "../kafka-service/documentRouter";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     // Access config values
@@ -58,7 +59,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     if (mongoExpireAfterSeconds > 0) {
         if (createCosmosDBIndexes) {
-            await scribeDeltas.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+            await scribeDeltas.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
         } else {
             await scribeDeltas.createTTLIndex(
                 {

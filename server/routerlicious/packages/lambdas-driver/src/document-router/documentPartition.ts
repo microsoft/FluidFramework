@@ -5,14 +5,15 @@
 
 import {
     IContextErrorData,
+    IPartitionConfig,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IQueuedMessage,
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import * as _ from "lodash";
-import { Provider } from "nconf";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
@@ -25,18 +26,18 @@ export class DocumentPartition {
 
     constructor(
         factory: IPartitionLambdaFactory,
-        config: Provider,
+        config: IPartitionConfig,
         private readonly tenantId: string,
         private readonly documentId: string,
         public readonly context: DocumentContext,
         private readonly activityTimeout: number) {
         this.updateActivityTime();
 
-        // Default to the git tenant if not specified
-        const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.tenantId = tenantId;
-        clonedConfig.documentId = documentId;
-        const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
+        const documentConfig: IPartitionLambdaConfig = {
+            leaderEpoch: config.leaderEpoch,
+            tenantId,
+            documentId,
+        };
 
         this.q = queue(
             (message: IQueuedMessage, callback) => {

@@ -8,9 +8,9 @@ import {
     IContext,
     IPublisher,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";
 
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -23,7 +23,7 @@ export class BroadcasterLambdaFactory extends EventEmitter implements IPartition
         });
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         return new BroadcasterLambda(this.publisher, context);
     }
 

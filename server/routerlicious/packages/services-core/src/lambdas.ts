@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { safelyParseJSON } from "@fluidframework/common-utils";
-import nconf from "nconf";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
@@ -70,11 +69,11 @@ export interface IPartitionLambda {
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory extends EventEmitter {
+export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartitionLambdaConfig> extends EventEmitter {
     /**
      * Constructs a new lambda
      */
-    create(config: nconf.Provider, context: IContext, updateActivityTime?: () => void): Promise<IPartitionLambda>;
+    create(config: T, context: IContext, updateActivityTime?: () => void): Promise<IPartitionLambda>;
 
     /**
      * Disposes of the lambda factory
@@ -83,14 +82,18 @@ export interface IPartitionLambdaFactory extends EventEmitter {
 }
 
 /**
- * Lambda plugin definition
+ * Partition config
  */
-export interface IPlugin {
-    /**
-     * Creates and returns a new lambda factory. Config is provided should the factory need to load any resources
-     * prior to being fully constructed.
-     */
-    create(config: nconf.Provider): Promise<IPartitionLambdaFactory>;
+export interface IPartitionConfig {
+    leaderEpoch: number;
+}
+
+/**
+ * Lambda config
+ */
+export interface IPartitionLambdaConfig extends IPartitionConfig {
+    tenantId: string;
+    documentId: string;
 }
 
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
