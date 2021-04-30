@@ -648,6 +648,12 @@ export class DeltaManager
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
+                    if (origError?.errorType === DriverErrorType.sessionForbidden) {
+                        connection = new NoDeltaStream();
+                        requestedMode = "read";
+                        break;
+                    }
+
                     const error = CreateContainerError(origError);
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug

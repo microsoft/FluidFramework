@@ -70,6 +70,8 @@ export enum DriverErrorType {
      * When it's hit, client needs to forget all the knowlege about this file and start over.
      */
      fileOverwrittenInStorage = "fileOverwrittenInStorage",
+
+     sessionForbidden = "sessionForbidden",
 }
 
 /**

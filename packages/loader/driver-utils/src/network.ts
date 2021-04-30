@@ -43,6 +43,15 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
+export class SessionForbiddenError extends LoggingError implements IDriverErrorBase {
+    readonly errorType = DriverErrorType.sessionForbidden;
+    readonly canRetry = false;
+
+    constructor(errorMessage: string) {
+        super(errorMessage, { statusCode: 400 });
+    }
+}
+
 export class AuthorizationError extends LoggingError implements IAuthorizationError {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
