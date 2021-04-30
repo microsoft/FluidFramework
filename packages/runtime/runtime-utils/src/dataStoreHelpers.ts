@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { TelemetryDataTag, ITaggableTelemetryProperties, LoggingError } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IFluidObject,
     IFluidRouter,
