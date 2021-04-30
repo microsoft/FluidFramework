@@ -5,6 +5,7 @@
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
 - [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
+- [ITelemetryBaseLogger now has a supportsTags property (not breaking)](#itelemetrybaselogger-now-has-a-supportstags-property-not-breaking)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
@@ -32,6 +33,9 @@ Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.
 
 ### absolutePath use in IFluidHandle is deprecated
 Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
+
+### ITelemetryBaseLogger now has a supportsTags property (not breaking)
+As part of moving telemetry tagging code to `common-definitions`, tagging support has been added to `ITelemetryBaseLogger` in the form of an optional boolean `supportsTags?: true` (additionally, tags are now just strings and `ITelemetryProperties` also accepts tagged properties). Currently, there is no further work necessary on any implementing code's part - old hosts will simply pass through this property undefined while our implemented logger in `telemetry-utils` handles tags in a different manner. But eventually this property will become required, so updating accordingly ASAP is encouraged.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
