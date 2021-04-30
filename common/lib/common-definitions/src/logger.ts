@@ -11,8 +11,17 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // General best practice is to explicitly log the fields you care about from objects
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
+/**
+ * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
+ * to mark pieces of information that should be organized or handled differently by loggers in various first or third
+ * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+ */
+export interface ITaggedTelemetryPropertyType {
+    value: TelemetryEventPropertyType,
+    tag: string
+}
 export interface ITelemetryProperties {
-    [index: string]: TelemetryEventPropertyType;
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
 /**
@@ -31,6 +40,13 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
+    /**
+     * An optional boolean which indicates to the logger that tags (i.e. `ITaggedTelemetryPropertyType` objects) are
+     * in use. Eventually this will be a required property, but this is a stopgap that allows older hosts to
+     * continue to pass through telemetry without trouble (this property will simply show up undefined), while
+     * our current logger impl in `telmetry-utils` handles tags in a separate manner.
+     */
+    supportsTags?: true;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -60,26 +76,11 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 }
 
 /**
- * A property to be logged to telemetry containing both the value and the tag
- */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: string
-}
-
-/**
- * Property bag containing a mix of value literals and wrapped values along with a tag
- */
-export interface ITaggableTelemetryProperties {
-    [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-}
-
-/**
  * An error object that supports exporting its properties to be logged to telemetry
  */
 export interface ILoggingError extends Error {
     /** Return all properties from this object that should be logged to telemetry */
-    getTelemetryProperties(): ITaggableTelemetryProperties;
+    getTelemetryProperties(): ITelemetryProperties;
 }
 
 /**
