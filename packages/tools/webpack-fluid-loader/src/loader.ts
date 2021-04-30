@@ -15,7 +15,7 @@ import {
     isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { LocalPersistentCache, prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -31,6 +31,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { OdspPersistentCache } from "./odspPersistantCache";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -226,7 +227,7 @@ export async function start(
     };
 
     let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-    const odspPersistantCache = new LocalPersistentCache();
+    const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
     let loader1 = await createWebLoader(

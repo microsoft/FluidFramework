@@ -17,9 +17,6 @@ export * from "./checkUrl";
 // prefetch latest snapshot before container load
 export * from "./prefetchLatestSnapshot";
 
-// Default implementations of odsp cache.
-export * from "./odspCache";
-
 // Factory
 export * from "./odspDocumentServiceFactoryCore";
 export * from "./odspDocumentServiceFactory";
