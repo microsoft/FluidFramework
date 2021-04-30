@@ -27,7 +27,7 @@ import {
     ISnapshotCacheValue,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { IOdspSnapshot } from "./contracts";
+import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -131,10 +131,12 @@ async function fetchSnapshot(
     };
 
     const controller: AbortController = new AbortController();
-    setTimeout(
-        () => controller.abort(),
-        snapshotOptions?.timeout,
-    );
+    if (snapshotOptions?.timeout !== undefined) {
+        setTimeout(
+            () => controller.abort(),
+            snapshotOptions.timeout,
+        );
+    }
 
     // This event measures only successful cases of getLatest call (no tokens, no retries).
     return PerformanceEvent.timedExecAsync(
@@ -149,12 +151,14 @@ async function fetchSnapshot(
                 {
                     body: postBody,
                     headers,
-                    signal: controller?.signal,
+                    signal: controller.signal,
                     method: "POST",
                 },
             );
             const snapshot: IOdspSnapshot = response.content;
             const spReqDuration = response.headers.get("sprequestduration");
+            const fluidEpoch = response.headers.get("x-fluid-epoch");
+            assert(fluidEpoch !== undefined, "Epoch  should be present in response");
 
             const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
@@ -175,9 +179,14 @@ async function fetchSnapshot(
                 logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                 value.sequenceNumber = undefined;
             } else if (canCache) {
-                persistedCache.put(
-                    snapshotCacheEntry,
+                const valueWithEpoch: IVersionedValueWithEpoch = {
                     value,
+                    fluidEpoch,
+                    version: 2,
+                };
+                await persistedCache.put(
+                    snapshotCacheEntry,
+                    valueWithEpoch,
                 ).then(() => success = true)
                 .catch(() => {});
             }
