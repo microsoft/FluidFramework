@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/test-pairwise-generator",
+  "name": "@fluidframework/test-pairwise-generator",
   "version": "0.39.0",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
