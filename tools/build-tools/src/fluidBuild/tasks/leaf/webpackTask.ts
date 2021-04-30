@@ -58,10 +58,17 @@ export class WebpackTask extends LeafWithDoneFileTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
+        console.log(this.package.name);
+        console.log(`${this.command}: ${JSON.stringify(this.node.dependentPackages.map(p => p.pkg.name))}`);
         for (const child of this.node.dependentPackages) {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "npm run build:esnext")) {
                 this.logVerboseDependency(child, "build:esnext");
+                if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
+                    this.logVerboseDependency(child, "build:copy");
+                }
+            } else if (this.addChildTask(dependentTasks, child, "npm run build")) {
+                this.logVerboseDependency(child, "build");
                 if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
                     this.logVerboseDependency(child, "build:copy");
                 }
