@@ -73,7 +73,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     this.request<T>(config, statusCode)
                         .then(resolve)
                         .catch(reject);
-                }, axiosError.response!.data.retryAfter));
+                }, axiosError.response!.data.retryAfter * 1000));
             }
 
             // Allow anything else to be handled upstream
