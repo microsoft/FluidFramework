@@ -52,7 +52,6 @@
   },
   "dependencies": {
     "@fluid-experimental/task-manager": "^0.38.5",
-    "@fluid-internal/test-pairwise-generator": "^0.38.5",
     "@fluidframework/aqueduct": "^0.38.5",
     "@fluidframework/common-definitions": "^0.19.1",
     "@fluidframework/common-utils": "^0.29.0",
@@ -69,6 +68,7 @@
     "@fluidframework/telemetry-utils": "^0.38.5",
     "@fluidframework/test-driver-definitions": "^0.38.5",
     "@fluidframework/test-drivers": "^0.38.5",
+    "@fluidframework/test-pairwise-generator": "^0.38.5",
     "@fluidframework/test-utils": "^0.38.5",
     "@fluidframework/tool-utils": "^0.38.5",
     "commander": "^5.1.0",
