@@ -51,20 +51,20 @@ Dependencies between packages in various layers of the system are enforced via a
 [docs/PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
-
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and
-[Node.js](https://nodejs.org/).
-
-Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
-[MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different
-versions of Node.js side-by-side.
-
-Clone a copy of the repo and change to the repo root directory:
+Ensure [Git](https://git-scm.com/downloads) is installed, then clone a copy of the git repo and change to the repo root directory:
 
 ```shell
 git clone https://github.com/microsoft/FluidFramework.git
 cd FluidFramework
 ```
+
+In order to build the Fluid Framework you will need to install the currently supported version of [Node.js](https://nodejs.org/).
+
+The recommended way to do this is to use NVM ([Windows](https://github.com/coreybutler/nvm-windows#readme) | [MacOS/Linux](https://github.com/nvm-sh/nvm#about)) and run 'nvm install' from the repo root:
+```shell
+nvm install
+```
+If choosing to install Node.js without NVM, install the [latest release](https://nodejs.org/en/download/releases/) of the version specified in the [.nvmrc file](https://raw.githubusercontent.com/microsoft/FluidFramework/main/.nvmrc).
 
 Run the following to build the client packages:
 
