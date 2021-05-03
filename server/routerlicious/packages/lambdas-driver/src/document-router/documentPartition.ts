@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     IContextErrorData,
     IPartitionConfig,
@@ -134,6 +135,14 @@ export class DocumentPartition {
      */
     private markAsCorrupt(message: IQueuedMessage, error: any) {
         this.corrupt = true;
+        this.context.log?.error(
+            `Marking document as corrupted due to error: ${inspect(error)}`,
+            {
+                messageMetaData: {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                },
+            });
         this.context.error(error, { restart: false, tenantId: this.tenantId, documentId: this.documentId });
         this.context.checkpoint(message);
     }
