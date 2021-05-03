@@ -58,7 +58,7 @@ git clone https://github.com/microsoft/FluidFramework.git
 cd FluidFramework
 ```
 
-In order to build the Fluid Framework you will need to install the currently supported version of [Node.js](https://nodejs.org/).
+In order to build the Fluid Framework you will need to install Fluid's currently supported version of [Node.js](https://nodejs.org/).
 
 The recommended way to do this is to use NVM ([Windows](https://github.com/coreybutler/nvm-windows#readme) | [MacOS/Linux](https://github.com/nvm-sh/nvm#about)) and run 'nvm install' from the repo root:
 ```shell
