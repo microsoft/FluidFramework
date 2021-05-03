@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/shared-object-base";
-export const pkgVersion = "0.39.0";
+export const pkgVersion = "0.39.1";
