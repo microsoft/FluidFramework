@@ -45,12 +45,19 @@ export class KafkaRunner implements IRunner {
 
         this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
+            const metadata = {
+                messageMetaData: {
+                    documentId: errorData?.documentId,
+                    tenantId: errorData?.tenantId,
+                },
+            };
+
             if (errorData && !errorData.restart) {
-                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
-                logger?.error(inspect(error));
+                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.", metadata);
+                logger?.error(inspect(error), metadata);
             } else {
-                logger?.error("KakfaRunner encountered an error that will trigger a restart.");
-                logger?.error(inspect(error));
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.", metadata);
+                logger?.error(inspect(error), metadata);
                 deferred.reject(error);
             }
         });

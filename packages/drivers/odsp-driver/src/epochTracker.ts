@@ -24,21 +24,12 @@ import {
     IPersistedFileCache,
  } from "./odspCache";
 import { RateLimiter } from "./rateLimiter";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
 
 export type FetchTypeInternal = FetchType | "cache";
-
-// exported only of test purposes
-export interface IVersionedValueWithEpoch {
-    value: any;
-    fluidEpoch: string,
-    version: 2,
-}
-
-// exported only of test purposes
-export const persistedCacheValueVersion = 2;
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
