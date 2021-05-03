@@ -11,28 +11,15 @@ export class OdspPersistentCache implements IPersistedCache {
     public constructor() {}
 
     async get(entry: ICacheEntry): Promise<any> {
-        const key = this.keyFromEntry(entry);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.cache.get(key);
+        return this.cache.get(this.keyFromEntry(entry));
     }
 
     async put(entry: ICacheEntry, value: any) {
-        const key = this.keyFromEntry(entry);
-        this.cache.set(key, value);
+        this.cache.set(this.keyFromEntry(entry), value);
     }
 
-    async removeEntries(file: IFileEntry): Promise<void> {
-        Array.from(this.cache)
-        .filter(([cachekey]) => {
-            const docIdFromKey = cachekey.split("_");
-            if (docIdFromKey[0] === file.docId) {
-                return true;
-            }
-        })
-        .map(([cachekey]) => {
-            this.cache.delete(cachekey);
-        });
-    }
+    async removeEntries(file: IFileEntry): Promise<void> {}
 
     private keyFromEntry(entry: ICacheEntry): string {
         return `${entry.file.docId}_${entry.type}_${entry.key}`;
