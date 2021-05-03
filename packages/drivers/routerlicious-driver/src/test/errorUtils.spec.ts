@@ -34,10 +34,10 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on 429 with retry-after", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 429, 5);
+            const error = createR11sNetworkError(message, 429, 5000);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
-            assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
+            assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5000);
         });
         it("creates retriable error on 429 without retry-after", () => {
             const message = "test error";
@@ -59,10 +59,10 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on anything else with retryAfter", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 400, 100);
+            const error = createR11sNetworkError(message, 400, 100000);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
-            assert.strictEqual((error as any).retryAfterSeconds, 100);
+            assert.strictEqual((error as any).retryAfterSeconds, 100000);
         });
         it("creates non-retriable error on anything else", () => {
             const message = "test error";
@@ -105,11 +105,11 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 with retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 429, 5);
+                throwR11sNetworkError(message, 429, 5000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 5,
+                retryAfterSeconds: 5000,
             });
         });
         it("throws retriable error on 429 without retry-after", () => {
@@ -142,11 +142,11 @@ describe("ErrorUtils", () => {
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 400, 200);
+                throwR11sNetworkError(message, 400, 200000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 200,
+                retryAfterSeconds: 200000,
             });
         });
         it("throws non-retriable error on anything else", () => {
@@ -206,12 +206,12 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 429,
                 message,
-                retryAfter: 5,
+                retryAfter: 5000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
-            assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
+            assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5000);
             assert.strictEqual((error as any).statusCode, 429);
         });
         it("creates retriable error on 429 without retry-after", () => {
@@ -237,12 +237,12 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 400,
                 message,
-                retryAfter: 300,
+                retryAfter: 300000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
-            assert.strictEqual((error as any).retryAfterSeconds, 300);
+            assert.strictEqual((error as any).retryAfterSeconds, 300000);
             assert.strictEqual((error as any).statusCode, 400);
         });
     });

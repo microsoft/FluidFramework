@@ -63,8 +63,8 @@ import { DeltaQueue } from "./deltaQueue";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-const MaxReconnectDelaySeconds = 8;
-const InitialReconnectDelaySeconds = 1;
+const MaxReconnectDelaySeconds = 8000;
+const InitialReconnectDelaySeconds = 1000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -675,7 +675,7 @@ export class DeltaManager
                     if (retryDelayFromError !== undefined) {
                         this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
                     }
-                    await waitForConnectedState(delay * 1000);
+                    await waitForConnectedState(delay);
                 }
             }
 
@@ -1147,7 +1147,7 @@ export class DeltaManager
             const delay = getRetryDelayFromError(error);
             if (delay !== undefined) {
                 this.emitDelayInfo(this.deltaStreamDelayId, delay, error);
-                await waitForConnectedState(delay * 1000);
+                await waitForConnectedState(delay);
             }
 
             this.triggerConnect({ reason: "reconnect", mode: requestedMode, fetchOpsFromStorage: false });

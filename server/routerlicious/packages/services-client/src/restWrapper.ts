@@ -138,7 +138,7 @@ export class BasicRestWrapper extends RestWrapper {
                             this.request<T>(options, statusCode)
                                 .then(resolve)
                                 .catch(reject);
-                        }, error.response.data.retryAfter * 1000);
+                        }, error.response.data.retryAfter);
                     } else if (error?.response?.status === 401 && canRetry && this.refreshOnAuthError()) {
                         const retryConfig = { ...requestConfig };
                         retryConfig.headers = this.generateHeaders(

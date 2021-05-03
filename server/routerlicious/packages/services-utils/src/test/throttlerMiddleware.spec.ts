@@ -54,7 +54,7 @@ describe("Throttler Middleware", () => {
             const response = await supertest
                 .get(endpoint)
                 .expect(429);
-            assert.strictEqual(response.body.retryAfter, 1);
+            assert.strictEqual(response.body.retryAfter, 1000);
             assert.strictEqual(response.body.message, "throttled");
         });
 
@@ -73,13 +73,13 @@ describe("Throttler Middleware", () => {
             const response1 = await supertest
                 .get(`${endpoint}/1`)
                 .expect(429);
-            assert.strictEqual(response1.body.retryAfter, 1);
+            assert.strictEqual(response1.body.retryAfter, 1000);
             assert.strictEqual(response1.body.message, "throttled");
 
             const response2 = await supertest
                 .get(`${endpoint}/2`)
                 .expect(429);
-            assert.strictEqual(response2.body.retryAfter, 1);
+            assert.strictEqual(response2.body.retryAfter, 1000);
             assert.strictEqual(response2.body.message, "throttled");
         });
 
@@ -98,13 +98,13 @@ describe("Throttler Middleware", () => {
             const response1 = await supertest
                 .get(`${endpoint}/1`)
                 .expect(429);
-            assert.strictEqual(response1.body.retryAfter, 1);
+            assert.strictEqual(response1.body.retryAfter, 1000);
             assert.strictEqual(response1.body.message, "throttled");
 
             const response2 = await supertest
                 .get(`${endpoint}/2`)
                 .expect(429);
-            assert.strictEqual(response2.body.retryAfter, 1);
+            assert.strictEqual(response2.body.retryAfter, 1000);
             assert.strictEqual(response2.body.message, "throttled");
         });
 
@@ -122,13 +122,13 @@ describe("Throttler Middleware", () => {
             const response1 = await supertest
                 .get(`${endpoint}/1`)
                 .expect(429);
-            assert.strictEqual(response1.body.retryAfter, 1);
+            assert.strictEqual(response1.body.retryAfter, 1000);
             assert.strictEqual(response1.body.message, "throttled");
 
             const response2 = await supertest
                 .get(`${endpoint}/2`)
                 .expect(429);
-            assert.strictEqual(response2.body.retryAfter, 1);
+            assert.strictEqual(response2.body.retryAfter, 1000);
             assert.strictEqual(response2.body.message, "throttled");
         });
     });

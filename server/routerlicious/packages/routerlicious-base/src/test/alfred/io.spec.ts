@@ -216,7 +216,7 @@ describe("Routerlicious", () => {
                             }) as INackContent;
                         assert.strictEqual(failedConnectMessage.code, 429);
                         assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
-                        assert.strictEqual(failedConnectMessage.retryAfter, 1);
+                        assert.strictEqual(failedConnectMessage.retryAfter, 1000);
 
                         // A separate tenant should not be throttled
                         await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
@@ -295,7 +295,7 @@ describe("Routerlicious", () => {
                         const nackContent = nackMessages[0]?.content as INackContent;
                         assert.strictEqual(nackContent.code, 429);
                         assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
-                        assert.strictEqual(nackContent.retryAfter, 1);
+                        assert.strictEqual(nackContent.retryAfter, 1000);
                     });
                 });
             });

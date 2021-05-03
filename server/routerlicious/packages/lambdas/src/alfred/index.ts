@@ -275,7 +275,7 @@ export function configureWebSocketServices(
                 return Promise.reject({
                     code: 429,
                     message: "Too Many Clients Connected to Document",
-                    retryAfter: 5 * 60,
+                    retryAfter: 5 * 60000,
                 });
             }
 

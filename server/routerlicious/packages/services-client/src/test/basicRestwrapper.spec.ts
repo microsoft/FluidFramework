@@ -109,7 +109,7 @@ describe("BasicRestWrapper", () => {
 
                     const response: AxiosResponse = {
                         config: options,
-                        data: {retryAfter: -1, message: "throttled"},
+                        data: {retryAfter: -1000, message: "throttled"},
                         headers: {},
                         request: options.responseType,
                         status: 429,
@@ -139,7 +139,7 @@ describe("BasicRestWrapper", () => {
         // in order to validate the successful request.
         axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter
                 .onAny()
-                .replyOnce(429, {retryAfter: 1, message: "throttled"})
+                .replyOnce(429, {retryAfter: 1000, message: "throttled"})
                 .onAny()
                 .reply(200, "A successful request after being throttled.");
     });

@@ -55,7 +55,7 @@ export async function getFileLink(
     const valueGenerator = async function() {
         let result: string | undefined;
         let success = false;
-        let retryAfter = 1;
+        let retryAfter = 1000;
         do {
             try {
                 result = await getFileLinkCore(getToken, odspUrlParts, identityType, logger);

@@ -10,8 +10,8 @@ import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driv
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
-const MaxFetchDelaySeconds = 10;
-const MissingFetchDelaySeconds = 0.1;
+const MaxFetchDelaySeconds = 10000;
+const MissingFetchDelaySeconds = 100;
 
 /**
  * Helper class to organize parallel fetching of data

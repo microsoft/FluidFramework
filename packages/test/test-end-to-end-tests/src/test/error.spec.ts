@@ -223,7 +223,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const networkError = createOdspNetworkError(
             "Test Message",
             400 /* statusCode */,
-            100 /* retryAfterSeconds */);
+            100000 /* retryAfterSeconds */);
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.genericNetworkError, "Error should be a generic");
         assert.equal((networkError as any).retryAfterSeconds, undefined, "retryAfterSeconds should not be set");
@@ -233,10 +233,10 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const networkError = createOdspNetworkError(
             "Test Message",
             429,
-            100 /* retryAfterSeconds */) as IThrottlingWarning;
+            100000 /* retryAfterSeconds */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.throttlingError, "Error should be a throttlingError");
-        assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
+        assert.equal(networkError.retryAfterSeconds, 100000, "retryAfterSeconds should be preserved");
     });
 
     it("WriteError Test", async () => {
