@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// @ts-ignore
 export * as InspectorTableIcons from '../assets/icons/SVGStoreIcons';
 
 export * from './InspectorTable';
