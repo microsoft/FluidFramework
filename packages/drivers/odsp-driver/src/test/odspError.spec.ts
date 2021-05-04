@@ -117,7 +117,7 @@ describe("Odsp Error", () => {
             assert.fail("networkError should be a throttlingError");
         } else {
             assert.equal(networkError.message, "socket.io: 429: testMessage");
-            assert.equal(networkError.retryAfterSeconds, 10000);
+            assert.equal(networkError.retryAfterMs, 10000);
         }
     });
 

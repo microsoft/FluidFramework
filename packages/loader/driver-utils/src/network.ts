@@ -97,7 +97,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
 
     constructor(
         errorMessage: string,
-        readonly retryAfterSeconds: number,
+        readonly retryAfterMs: number,
         statusCode?: number,
     ) {
         super(errorMessage, { statusCode });

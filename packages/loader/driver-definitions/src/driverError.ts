@@ -84,7 +84,7 @@ export interface IDriverErrorBase {
 
 export interface IThrottlingWarning extends IDriverErrorBase {
     readonly errorType: DriverErrorType.throttlingError;
-    readonly retryAfterSeconds: number;
+    readonly retryAfterMs: number;
 }
 
 export interface IGenericNetworkError extends IDriverErrorBase {

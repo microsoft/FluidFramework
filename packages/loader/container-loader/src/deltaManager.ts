@@ -63,8 +63,8 @@ import { DeltaQueue } from "./deltaQueue";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-const MaxReconnectDelaySeconds = 8000;
-const InitialReconnectDelaySeconds = 1000;
+const MaxReconnectDelayInMs = 8000;
+const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
@@ -633,7 +633,7 @@ export class DeltaManager
         // The promise returned from connectCore will settle with a resolved connection or reject with error
         const connectCore = async () => {
             let connection: IDocumentDeltaConnection | undefined;
-            let delay = InitialReconnectDelaySeconds;
+            let delay = InitialReconnectDelayInMs;
             let connectRepeatCount = 0;
             const connectStartTime = performance.now();
 
@@ -670,7 +670,7 @@ export class DeltaManager
                     }
 
                     const retryDelayFromError = getRetryDelayFromError(origError);
-                    delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelaySeconds);
+                    delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelayInMs);
 
                     if (retryDelayFromError !== undefined) {
                         this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
