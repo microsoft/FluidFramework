@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/test-utils";
 import { Container, DeltaManager, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { SessionForbiddenError } from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -151,13 +151,13 @@ describe("No Delta Stream", () => {
         assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");
     });
 
-    it("loads in storage-only mode on SessionForbiddenError thrown from connectToDeltaStream()", async () => {
+    it("loads in storage-only mode on error thrown from connectToDeltaStream()", async () => {
         const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         const createDocServ = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
         documentServiceFactory.createDocumentService = async (...args) => {
             return createDocServ(...args).then((docService) => {
                 docService.connectToDeltaStream = () => {
-                    throw new SessionForbiddenError("asdf");
+                    throw new DeltaStreamConnectionForbiddenError("asdf");
                 };
                 return docService;
             });

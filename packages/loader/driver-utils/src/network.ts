@@ -43,8 +43,8 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
-export class SessionForbiddenError extends LoggingError implements IDriverErrorBase {
-    readonly errorType = DriverErrorType.sessionForbidden;
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase {
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     readonly canRetry = false;
 
     constructor(errorMessage: string) {

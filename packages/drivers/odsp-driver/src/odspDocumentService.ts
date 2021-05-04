@@ -17,7 +17,7 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { SessionForbiddenError } from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -207,16 +207,17 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
-                if (
-                    e?.error?.code === "sessionForbiddenOnPreservedFiles" ||
-                    e?.error?.code === "sessionForbiddenOnModerationEnabledLibrary" ||
-                    e?.error?.code === "sessionForbiddenOnRequireCheckout"
-                ) {
-                    // This document can only be opened in storage-only mode. DeltaManager will recognize this error
-                    // and load without a delta stream connection.
-                    throw new SessionForbiddenError(e?.error?.code);
-                } else {
-                    throw e;
+                const code = e?.error?.code;
+                switch (code) {
+                    case "sessionForbiddenOnPreservedFiles":
+                    case "sessionForbiddenOnModerationEnabledLibrary":
+                    case "sessionForbiddenOnRequireCheckout":
+                        // This document can only be opened in storage-only mode. DeltaManager will recognize this error
+                        // and load without a delta stream connection.
+                        this.policies.storageOnly = true;
+                        throw new DeltaStreamConnectionForbiddenError(code);
+                    default:
+                        throw e;
                 }
             });
             const [websocketEndpoint, websocketToken, io] =

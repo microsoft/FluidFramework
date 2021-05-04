@@ -648,7 +648,8 @@ export class DeltaManager
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
-                    if (origError?.errorType === DriverErrorType.sessionForbidden) {
+                    if (typeof origError === "object" && origError !== null &&
+                        origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden) {
                         connection = new NoDeltaStream();
                         requestedMode = "read";
                         break;

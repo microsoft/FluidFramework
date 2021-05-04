@@ -71,7 +71,10 @@ export enum DriverErrorType {
      */
      fileOverwrittenInStorage = "fileOverwrittenInStorage",
 
-     sessionForbidden = "sessionForbidden",
+     /**
+      * The document is read-only and delta stream connection is forbidden.
+      */
+     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
 }
 
 /**
