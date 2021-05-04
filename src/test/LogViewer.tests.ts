@@ -11,8 +11,7 @@ import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { assert, noop } from '../Common';
-import { newEdit } from '../GenericEditUtilities';
-import { ChangeNode, Edit, EditResult } from '../PersistedTypes';
+import { newEdit, ChangeNode, Edit, EditResult } from '../generic';
 import {
 	left,
 	leftTraitLabel,

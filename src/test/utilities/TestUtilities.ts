@@ -23,19 +23,19 @@ import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { compareArrays, fail } from '../../Common';
-import {
-	GenericSharedTree,
-	ChangeNode,
-	NodeData,
-	TraitLocation,
-	newEdit,
-	fullHistorySummarizer,
-	SharedTreeSummarizer,
-} from '../..';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait } from '../../default-edits';
 import { comparePayloads } from '../../SnapshotUtilities';
+import {
+	ChangeNode,
+	fullHistorySummarizer,
+	GenericSharedTree,
+	newEdit,
+	NodeData,
+	SharedTreeSummarizer,
+	TraitLocation,
+} from '../../generic';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

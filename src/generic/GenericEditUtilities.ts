@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { EditId } from './Identifiers';
+import { EditId } from '../Identifiers';
 import { Edit, TraitLocation } from './PersistedTypes';
 
 /**

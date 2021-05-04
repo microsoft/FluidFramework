@@ -9,8 +9,7 @@ import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLo
 import { Change } from '../default-edits';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { newEdit } from '../GenericEditUtilities';
-import { Edit, EditWithoutId } from '../PersistedTypes';
+import { newEdit, Edit, EditWithoutId } from '../generic';
 
 describe('EditLog', () => {
 	const edit0 = newEdit([]);

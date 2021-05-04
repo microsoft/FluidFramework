@@ -22,7 +22,7 @@ The order of the edits is:
 
 ## Tree Abstraction
 
-The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/PersistedTypes.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
+The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/generic/PersistedTypes.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
 
 ### Definition
 
@@ -125,7 +125,7 @@ SharedTree is in active, but still relatively early development. As such, it is 
 
 Implementation-wise:
 
--   Document format may change only in major releases, and SharedTree is committed to backwards compatibility (support for older documents). For more information on this commitment, see the notes in [PersistedTypes.ts](./src/PersistedTypes.ts).
+-   Document format may change only in major releases, and SharedTree is committed to backwards compatibility (support for older documents). For more information on this commitment, see the notes in [PersistedTypes.ts](./src/generic/PersistedTypes.ts).
 -   APIs are not yet stable, and those beyond what's needed for the MVP (ex: history editing and inspection) are not provided yet. Core APIs are not likely to significantly change.
 -   Performance is generally reasonable. However, this assessment was made using integration-style performance tests of consuming applications. Though it's on the road-map, there are currently no rigorous performance tests which are isolated to SharedTree.
 
@@ -137,7 +137,7 @@ Design wise:
 
 # Edits
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\generic\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
 
 Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.

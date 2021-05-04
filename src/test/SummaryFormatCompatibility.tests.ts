@@ -17,8 +17,8 @@ import {
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
-} from '../Summary';
-import { newEdit } from '../GenericEditUtilities';
+	newEdit,
+} from '../generic';
 import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 

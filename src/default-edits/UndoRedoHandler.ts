@@ -6,7 +6,7 @@
 import { IRevertible, UndoRedoStackManager } from '@fluidframework/undo-redo';
 import { assertNotUndefined } from '../Common';
 import { EditId } from '../Identifiers';
-import { EditCommittedEventArguments, SharedTreeEvent } from '../GenericSharedTree';
+import { EditCommittedEventArguments, SharedTreeEvent } from '../generic';
 import { SharedTree } from './SharedTree';
 
 /**

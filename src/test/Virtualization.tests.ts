@@ -3,9 +3,7 @@
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditHandle, editsPerChunk } from '../EditLog';
-import { fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../Summary';
-import { Edit, EditWithoutId } from '../PersistedTypes';
-import { newEdit } from '../GenericEditUtilities';
+import { fullHistorySummarizer_0_1_0, SharedTreeSummary, Edit, EditWithoutId, newEdit } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';

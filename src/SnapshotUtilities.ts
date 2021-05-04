@@ -6,7 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { compareArrays, copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, Payload, TraitMap } from './PersistedTypes';
+import { ChangeNode, Payload, TraitMap } from './generic';
 import { Snapshot, SnapshotNode } from './Snapshot';
 
 /**

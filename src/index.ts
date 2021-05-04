@@ -36,6 +36,7 @@ export {
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
+export { comparePayloads } from './SnapshotUtilities';
 export {
 	SharedTree,
 	SharedTreeEditor,
@@ -68,9 +69,8 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
-} from './GenericSharedTree';
-export {
 	Edit,
+	newEdit,
 	EditWithoutId,
 	EditBase,
 	TraitMap,
@@ -82,8 +82,11 @@ export {
 	EditNode,
 	EditResult,
 	TraitLocation,
-} from './PersistedTypes';
-export { newEdit } from './GenericEditUtilities';
-export { comparePayloads } from './SnapshotUtilities';
-export { GenericTransaction, EditingResult, ValidEditingResult } from './GenericTransaction';
-export { SharedTreeSummary, SharedTreeSummaryBase, SharedTreeSummarizer, fullHistorySummarizer } from './Summary';
+	GenericTransaction,
+	EditingResult,
+	ValidEditingResult,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummarizer,
+	fullHistorySummarizer,
+} from './generic';

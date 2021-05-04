@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { EditResult } from '../PersistedTypes';
+import { EditResult } from '../generic';
 import { Transaction, Change, ChangeType, ConstraintEffect, Insert, StableRange, StablePlace } from '../default-edits';
 import { initialTree } from '../InitialTree';
 import { Side } from '../Snapshot';

@@ -6,8 +6,7 @@
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ErrorString } from './Common';
 import { EditLog } from './EditLog';
-import { ChangeNode, Edit } from './PersistedTypes';
-import { SharedTreeSummaryBase, SharedTreeSummary } from './Summary';
+import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';
 
 /** The summary format version that is read by SharedTree. */
 export const readFormatVersion = '0.1.0';

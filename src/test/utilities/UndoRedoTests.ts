@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { noop } from '../../Common';
 import { Change, SharedTree, StablePlace, StableRange } from '../../default-edits';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { ChangeNode, TraitLocation } from '../../PersistedTypes';
+import { ChangeNode, TraitLocation } from '../../generic';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deepCompareNodes, makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 

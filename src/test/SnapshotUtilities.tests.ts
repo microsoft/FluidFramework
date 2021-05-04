@@ -7,7 +7,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { Payload } from '../PersistedTypes';
+import { Payload } from '../generic';
 import { comparePayloads } from '../SnapshotUtilities';
 
 describe('SnapshotUtilities', () => {

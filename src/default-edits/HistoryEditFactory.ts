@@ -6,7 +6,7 @@
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
 import { Snapshot, Side } from '../Snapshot';
-import { EditNode, TreeNode } from '../PersistedTypes';
+import { EditNode, TreeNode } from '../generic';
 import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { rangeFromStableRange } from './EditUtilities';

@@ -11,7 +11,7 @@
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assertNotUndefined, assert } from '../Common';
 import { Side } from '../Snapshot';
-import { ChangeNode, EditBase, EditNode, Payload, TraitLocation, TreeNodeSequence } from '../PersistedTypes';
+import { ChangeNode, EditBase, EditNode, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.

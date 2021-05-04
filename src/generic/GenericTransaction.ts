@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from './Common';
-import { Snapshot } from './Snapshot';
+import { assert, fail } from '../Common';
+import { Snapshot } from '../Snapshot';
 import { EditResult } from './PersistedTypes';
 
 /**

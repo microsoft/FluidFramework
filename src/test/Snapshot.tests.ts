@@ -8,7 +8,7 @@ import { NodeId, TraitLabel } from '../Identifiers';
 import { Side, Snapshot } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { detachRange, insertIntoTrait, StablePlace, StableRange, validateStableRange } from '../default-edits';
-import { ChangeNode } from '../PersistedTypes';
+import { ChangeNode } from '../generic';
 import {
 	simpleTreeSnapshotWithValidation,
 	left,

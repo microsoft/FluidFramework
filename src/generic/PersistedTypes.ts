@@ -9,7 +9,7 @@
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from './Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.

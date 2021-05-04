@@ -5,8 +5,7 @@
 
 import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { GenericTransaction } from '../GenericTransaction';
-import { EditNode, EditResult } from '../PersistedTypes';
+import { GenericTransaction, EditNode, EditResult } from '../generic';
 import { Snapshot, SnapshotNode } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
