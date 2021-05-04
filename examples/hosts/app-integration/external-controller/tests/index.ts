@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { SharedMap } from "fluid-framework";
+import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 
@@ -46,10 +46,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     // Get the Default Object from the Container
     const fluidContainer = (await container.request({ url: "/" })).value;
     // We now get the DataObject from the container
-    const map1 = fluidContainer.initialObjects.map1 as SharedMap;
+    const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
 
     // Our controller manipulates the data object (model).
-    const diceRollerController = new DiceRollerController(map1);
+    const diceRollerController = new DiceRollerController(sharedMap1);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.
