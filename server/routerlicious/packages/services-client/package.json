@@ -58,7 +58,7 @@
     "@types/node": "^12.19.0",
     "axios": "^0.21.1",
     "debug": "^4.1.1",
-    "jsrsasign": "^10.0.2",
+    "jsrsasign": "^10.2.0",
     "jwt-decode": "^3.0.0",
     "sillyname": "0.1.0",
     "uuid": "^8.3.1"
