@@ -236,7 +236,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             100000 /* retryAfterMs */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.throttlingError, "Error should be a throttlingError");
-        assert.equal(networkError.retryAfterMs, 100000, "retryAfterSeconds should be preserved");
+        assert.equal(networkError.retryAfterMs, 100000, "retryAfterMs should be preserved");
     });
 
     it("WriteError Test", async () => {
