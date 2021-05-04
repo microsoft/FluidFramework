@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import InspectorTableIcons from '../assets/icons/SVGStoreIcons';
-export { InspectorTableIcons };
+// @ts-ignore
+export * as InspectorTableIcons from '../assets/icons/SVGStoreIcons';
 
 export * from './InspectorTable';
 export * from './InspectorTableTypes';
