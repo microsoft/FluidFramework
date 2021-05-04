@@ -251,6 +251,11 @@ export class SummaryCollection {
         this.pendingAckTimerTimeoutCallback = timeoutCallback;
     }
 
+    public unsetPendingAckTimerTimeoutCallback() {
+        this.maxAckWaitTime = undefined;
+        this.pendingAckTimerTimeoutCallback = undefined;
+    }
+
     /**
      * Returns a promise that resolves once all pending summary ops
      * have been acked or nacked.
