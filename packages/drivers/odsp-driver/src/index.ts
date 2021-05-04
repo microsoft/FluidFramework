@@ -14,6 +14,9 @@ export * from "./odspUrlHelper";
 export * from "./createOdspUrl";
 export * from "./checkUrl";
 
+// prefetch latest snapshot before container load
+export * from "./prefetchLatestSnapshot";
+
 // Factory
 export * from "./odspDocumentServiceFactoryCore";
 export * from "./odspDocumentServiceFactory";

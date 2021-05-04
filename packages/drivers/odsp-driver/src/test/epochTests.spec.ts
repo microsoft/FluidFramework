@@ -11,16 +11,11 @@ import {
     ICacheEntry,
     IEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import {
-    EpochTracker,
-    IVersionedValueWithEpoch,
-    persistedCacheValueVersion,
-} from "../epochTracker";
-import {
-    LocalPersistentCache,
- } from "../odspCache";
- import { getHashedDocumentId } from "../odspPublicUtils";
- import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+import { EpochTracker } from "../epochTracker";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
 

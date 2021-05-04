@@ -6,7 +6,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import {
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
@@ -54,7 +54,12 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
                 return prefetchedBlobP;
             }
             const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
-            this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
+            this.prefetchCache.set(blobId, prefetchedBlobPFromStorage.catch((error) => {
+                if (canRetryOnError(error)) {
+                    this.prefetchCache.delete(blobId);
+                }
+                throw error;
+            }));
             return prefetchedBlobPFromStorage;
         }
         return this.internalStorageService.readBlob(blobId);

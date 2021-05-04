@@ -7,7 +7,7 @@
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -17,9 +17,6 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
-import {
-    canRetryOnError,
-} from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -36,64 +33,11 @@ import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable, getOdspResolvedUrl } from "./odspUtils";
+import { getWithRetryForTokenRefresh, getOdspResolvedUrl } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
-
-const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
-const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
-
-const localStorageAvailable = isLocalStorageAvailable();
-
-/**
- * Helper to check the timestamp in localStorage (if available) indicating whether the cache is still valid.
- */
-function isAfdCacheValid(): boolean {
-    if (localStorageAvailable) {
-        const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
-        if (lastAfdConnection !== null) {
-            const lastAfdTimeMs = Number(lastAfdConnection);
-            // If we have used the AFD URL within a certain amount of time in the past
-            // then we should use it again.
-            if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
-                && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
-                return true;
-            } else {
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
- * Clear the AfdCache
- */
-function clearAfdCache() {
-    if (localStorageAvailable) {
-        localStorage.removeItem(lastAfdConnectionTimeMsKey);
-    }
-}
-
-/**
- * Safely tries to write to local storage
- * Returns false if writing to localStorage fails. True otherwise
- *
- * @param key - localStorage key
- * @returns whether or not the write succeeded
- */
-function writeLocalStorage(key: string, value: string) {
-    try {
-        localStorage.setItem(key, value);
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
@@ -279,8 +223,7 @@ export class OdspDocumentService implements IDocumentService {
                     finalWebsocketToken,
                     io,
                     client,
-                    websocketEndpoint.deltaStreamSocketUrl,
-                    websocketEndpoint.deltaStreamSocketUrl2);
+                    websocketEndpoint.deltaStreamSocketUrl);
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
@@ -322,8 +265,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
-     * @param nonAfdUrl - websocket URL
-     * @param afdUrl - alternate websocket URL
+     * @param webSocketUrl - websocket URL
      */
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
@@ -331,122 +273,31 @@ export class OdspDocumentService implements IDocumentService {
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        nonAfdUrl: string,
-        afdUrl?: string,
+        webSocketUrl: string,
     ): Promise<IDocumentDeltaConnection> {
-        const connectWithNonAfd = async () => {
-            const startTime = performance.now();
-            try {
-                const connection = await OdspDocumentDeltaConnection.create(
-                    tenantId,
-                    documentId,
-                    token,
-                    io,
-                    client,
-                    nonAfdUrl,
-                    this.logger,
-                    60000,
-                    this.epochTracker,
-                );
-                const duration = performance.now() - startTime;
-                // This event happens rather often, so it adds up to cost of telemetry.
-                // Given that most reconnects result in reusing socket and happen very quickly,
-                // report event only if it took longer than threshold.
-                if (duration >= 2000) {
-                    this.logger.sendPerformanceEvent({
-                        eventName: "NonAfdConnectionSuccess",
-                        duration,
-                    });
-                }
-                return connection;
-            } catch (connectionError) {
-                const endTime = performance.now();
-                // Log before throwing
-                const canRetry = canRetryOnError(connectionError);
-                this.logger.sendPerformanceEvent(
-                    {
-                        eventName: "NonAfdConnectionFail",
-                        canRetry,
-                        duration: endTime - startTime,
-                    },
-                    connectionError,
-                );
-                throw connectionError;
-            }
-        };
-
-        const connectWithAfd = async () => {
-            assert(afdUrl !== undefined, 0x0a3 /* "Tried to connect with AFD but no AFD url provided" */);
-
-            const startTime = performance.now();
-            try {
-                const connection = await OdspDocumentDeltaConnection.create(
-                    tenantId,
-                    documentId,
-                    token,
-                    io,
-                    client,
-                    afdUrl,
-                    this.logger,
-                    60000,
-                    this.epochTracker,
-                );
-                const endTime = performance.now();
-                // Set the successful connection attempt in the cache so we can skip the non-AFD failure the next time
-                // we try to connect and immediately try AFD instead.
-                writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
-                this.logger.sendPerformanceEvent({
-                    eventName: "AfdConnectionSuccess",
-                    duration: endTime - startTime,
-                });
-                return connection;
-            } catch (connectionError) {
-                const endTime = performance.now();
-                // Clear cache since it failed
-                clearAfdCache();
-                // Log before throwing
-                const canRetry = canRetryOnError(connectionError);
-                this.logger.sendPerformanceEvent(
-                    {
-                        eventName: "AfdConnectionFail",
-                        canRetry,
-                        duration: endTime - startTime,
-                    },
-                    connectionError,
-                );
-                throw connectionError;
-            }
-        };
-
-        const afdCacheValid = isAfdCacheValid();
-
-        // First use the AFD URL if we've logged a successful AFD connection in the cache - its presence in the cache
-        // means the non-AFD url has failed in the past, in which case we would prefer to skip doing another
-        // attempt->fail on the non-AFD.
-        if (afdCacheValid && afdUrl !== undefined) {
-            try {
-                const connection = await connectWithAfd();
-                return connection;
-            } catch (connectionError) {
-                // Fall back to non-AFD if possible
-                if (canRetryOnError(connectionError)) {
-                    return connectWithNonAfd();
-                }
-                throw connectionError;
-            }
+        const startTime = performance.now();
+        const connection = await OdspDocumentDeltaConnection.create(
+            tenantId,
+            documentId,
+            token,
+            io,
+            client,
+            webSocketUrl,
+            this.logger,
+            60000,
+            this.epochTracker,
+        );
+        const duration = performance.now() - startTime;
+        // This event happens rather often, so it adds up to cost of telemetry.
+        // Given that most reconnects result in reusing socket and happen very quickly,
+        // report event only if it took longer than threshold.
+        if (duration >= 2000) {
+            this.logger.sendPerformanceEvent({
+                eventName: "ConnectionSuccess",
+                duration,
+            });
         }
-
-        // If we don't have a successful AFD connection in the cache, prefer connecting with non-AFD.
-        try {
-            const connection = await connectWithNonAfd();
-            return connection;
-        } catch (connectionError) {
-            // Fall back to AFD if possible
-            if (canRetryOnError(connectionError) && afdUrl !== undefined) {
-                return connectWithAfd();
-            }
-            throw connectionError;
-        }
+        return connection;
     }
 
     public dispose(error?: any) {

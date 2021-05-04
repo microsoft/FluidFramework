@@ -6,7 +6,6 @@
 import { IContextErrorData } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { Provider } from "nconf";
 import { PartitionManager } from "../../kafka-service/partitionManager";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
@@ -19,11 +18,10 @@ describe("kafka-service", () => {
         let kafkaMessageFactory: KafkaMessageFactory;
 
         beforeEach(() => {
-            const config = (new Provider({})).defaults({}).use("memory");
             testKafka = new TestKafka();
             testFactory = new TestPartitionLambdaFactory();
             testConsumer = testKafka.createConsumer();
-            testManager = new PartitionManager(testFactory, testConsumer, config);
+            testManager = new PartitionManager(testFactory, testConsumer);
             kafkaMessageFactory = new KafkaMessageFactory();
         });
 
