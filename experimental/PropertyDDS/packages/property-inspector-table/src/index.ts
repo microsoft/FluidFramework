@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * as InspectorTableIcons from '../assets/icons/SVGStoreIcons';
-
 export * from './InspectorTable';
 export * from './InspectorTableTypes';
 export * from './PropertyDataCreationHandlers';
