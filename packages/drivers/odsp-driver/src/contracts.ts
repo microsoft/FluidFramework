@@ -157,7 +157,7 @@ export type IOdspSnapshotTreeEntry =
     | IOdspSnapshotTreeEntryCommit
     | IOdspSnapshotTreeEntryBlob;
 
-export interface IOdspSnapshotTree {
+export interface IOdspSnapshotCommit {
     entries: IOdspSnapshotTreeEntry[];
     id: string;
     sequenceNumber: number;
@@ -177,7 +177,7 @@ export interface IOdspSnapshotBlob {
 
 export interface IOdspSnapshot {
     id: string;
-    trees: IOdspSnapshotTree[];
+    trees: IOdspSnapshotCommit[];
     blobs?: IOdspSnapshotBlob[];
     ops?: ISequencedDeltaOpMessage[];
 }

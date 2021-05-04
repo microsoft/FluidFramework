@@ -37,7 +37,7 @@ import {
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
     HostStoragePolicyInternal,
-    IOdspSnapshotTree,
+    IOdspSnapshotCommit,
     IOdspSnapshotBlob,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
@@ -58,7 +58,7 @@ import { RateLimiter } from "./rateLimiter";
  * @returns the hierarchical tree
  */
 function buildHierarchy(
-    flatTree: IOdspSnapshotTree,
+    flatTree: IOdspSnapshotCommit,
     blobsShaToPathCache: Map<string, string> = new Map<string, string>()): api.ISnapshotTree {
     const lookup: { [path: string]: api.ISnapshotTree } = {};
     const root: api.ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
@@ -222,7 +222,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         minBlobSize: 2048,
     };
 
-    private readonly treesCache: Map<string, IOdspSnapshotTree> = new Map();
+    private readonly commitCache: Map<string, IOdspSnapshotCommit> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -425,7 +425,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             id = version.id;
         }
 
-        const tree = await this.readTree(id);
+        const tree = await this.readCommit(id);
         if (!tree) {
             return null;
         }
@@ -555,7 +555,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 // id should be undefined in case of just ops in snapshot.
                 let id: string | undefined;
                 if (trees) {
-                    this.initTreesCache(trees);
+                    this.initCommitCache(trees);
                     // versionId is the id of the first tree
                     if (trees.length > 0) {
                         id = trees[0].id;
@@ -828,9 +828,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not implemented yet");
     }
 
-    private initTreesCache(trees: IOdspSnapshotTree[]) {
+    private initCommitCache(trees: IOdspSnapshotCommit[]) {
         trees.forEach((tree) => {
-            this.treesCache.set(tree.id, tree);
+            this.commitCache.set(tree.id, tree);
         });
     }
 
@@ -856,21 +856,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async readTree(id: string): Promise<IOdspSnapshotTree | null> {
+    private async readCommit(id: string): Promise<IOdspSnapshotCommit | null> {
         if (!this.snapshotUrl) {
             return null;
         }
-        let tree = this.treesCache.get(id);
+        let tree = this.commitCache.get(id);
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "ReadTree");
+                const storageToken = await this.getStorageToken(options, "ReadCommit");
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, this.epochTracker);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 let treeId = "";
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
-                        this.initTreesCache(odspSnapshot.trees);
+                        this.initCommitCache(odspSnapshot.trees);
                         if (odspSnapshot.trees.length > 0) {
                             treeId = odspSnapshot.trees[0].id;
                         }
@@ -881,7 +881,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
                 // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
                 // will be the actual id of tree to be fetched.
-                return this.treesCache.get(id) ?? this.treesCache.get(treeId);
+                return this.commitCache.get(id) ?? this.commitCache.get(treeId);
             });
         }
 
@@ -901,13 +901,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
         // Load the app and protocol trees and return them
         let hierarchicalProtocolTree: api.ISnapshotTree;
-        let appTree: IOdspSnapshotTree | null;
+        let appTree: IOdspSnapshotCommit | null;
 
         if (typeof (protocolTreeOrId) === "string") {
             // Backwards compat for older summaries
             const trees = await Promise.all([
-                this.readTree(protocolTreeOrId),
-                this.readTree(appTreeId),
+                this.readCommit(protocolTreeOrId),
+                this.readCommit(appTreeId),
             ]);
 
             const protocolTree = trees[0];
@@ -919,7 +919,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             hierarchicalProtocolTree = buildHierarchy(protocolTree);
         } else {
-            appTree = await this.readTree(appTreeId);
+            appTree = await this.readCommit(appTreeId);
 
             hierarchicalProtocolTree = protocolTreeOrId;
         }
