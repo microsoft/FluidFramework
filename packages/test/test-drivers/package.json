@@ -50,7 +50,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-internal/test-pairwise-generator": "^0.40.0",
     "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/driver-definitions": "^0.40.0",
@@ -63,6 +62,7 @@
     "@fluidframework/routerlicious-driver": "^0.40.0",
     "@fluidframework/server-local-server": "^0.1024.0-0",
     "@fluidframework/test-driver-definitions": "^0.40.0",
+    "@fluidframework/test-pairwise-generator": "^0.40.0",
     "@fluidframework/test-runtime-utils": "^0.40.0",
     "@fluidframework/tinylicious-driver": "^0.40.0",
     "@fluidframework/tool-utils": "^0.40.0",

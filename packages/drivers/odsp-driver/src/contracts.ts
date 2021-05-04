@@ -22,14 +22,9 @@ export interface ISocketStorageDiscovery {
     deltaStorageUrl: string;
 
     /**
-     * The non-AFD URL
+     * PUSH URL
      */
     deltaStreamSocketUrl: string;
-
-    /**
-     * The AFD URL for PushChannel
-     */
-    deltaStreamSocketUrl2?: string;
 
     /**
      * The access token for PushChannel. Optionally returned, depending on implementation.
