@@ -7,13 +7,13 @@ import {
     extractBoxcar,
     IContext,
     IQueuedMessage,
+    IPartitionConfig,
     IPartitionLambda,
     IPartitionLambdaFactory,
     LambdaCloseType,
     IContextErrorData,
     IDocumentLambdaServerConfiguration,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
@@ -25,7 +25,7 @@ export class DocumentLambda implements IPartitionLambda {
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
-        private readonly config: Provider,
+        private readonly config: IPartitionConfig,
         private readonly context: IContext,
         private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration) {
         this.contextManager = new DocumentContextManager(context);

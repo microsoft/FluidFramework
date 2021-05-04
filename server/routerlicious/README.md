@@ -285,9 +285,6 @@ await prague.api.load(id, { encrypted: false, token });
 ```
 Passing an invalid token will fail the load call.
 
-## Verdaccio and the Chaincode CDN
-Coming Soon...
-
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
