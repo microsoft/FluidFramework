@@ -186,7 +186,7 @@ export class EpochTracker implements IPersistedFileCache {
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
-                async () => fetchArray(request.url, request.fetchOptions, this.rateLimiter),
+                async () => fetchArray(request.url, request.fetchOptions),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
