@@ -37,8 +37,8 @@ import {
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
     HostStoragePolicyInternal,
-    ITree,
-    IBlob,
+    IOdspSnapshotTree,
+    IOdspSnapshotBlob,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -58,7 +58,7 @@ import { RateLimiter } from "./rateLimiter";
  * @returns the hierarchical tree
  */
 function buildHierarchy(
-    flatTree: ITree,
+    flatTree: IOdspSnapshotTree,
     blobsShaToPathCache: Map<string, string> = new Map<string, string>()): api.ISnapshotTree {
     const lookup: { [path: string]: api.ISnapshotTree } = {};
     const root: api.ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
@@ -75,7 +75,6 @@ function buildHierarchy(
         // Add in either the blob or tree
         if (entry.type === "tree") {
             const newTree: api.ISnapshotTree = {
-                id: entry.id,
                 blobs: {},
                 commits: {},
                 trees: {},
@@ -111,7 +110,7 @@ class BlobCache {
     // too many calls to setTimeout/clearTimeout.
     private deferBlobCacheClear: boolean = false;
 
-    private readonly _blobCache: Map<string, IBlob | ArrayBuffer> = new Map();
+    private readonly _blobCache: Map<string, IOdspSnapshotBlob | ArrayBuffer> = new Map();
 
     // Tracks all blob IDs evicted from cache
     private readonly blobsEvicted: Set<string> = new Set();
@@ -133,7 +132,7 @@ class BlobCache {
         return this._blobCache;
     }
 
-    public addBlobs(blobs: IBlob[]) {
+    public addBlobs(blobs: IOdspSnapshotBlob[]) {
         blobs.forEach((blob) => {
             assert(blob.encoding === "base64" || blob.encoding === undefined,
                 0x0a4 /* `Unexpected blob encoding type: '${blob.encoding}'` */);
@@ -186,7 +185,7 @@ class BlobCache {
         return { blobContent, evicted };
     }
 
-    public setBlob(blobId: string, blob: IBlob | ArrayBuffer) {
+    public setBlob(blobId: string, blob: IOdspSnapshotBlob | ArrayBuffer) {
         // This API is called as result of cache miss and reading blob from storage.
         // Runtime never reads same blob twice.
         // The only reason we may get read request for same blob is blob de-duping in summaries.
@@ -223,7 +222,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         minBlobSize: 2048,
     };
 
-    private readonly treesCache: Map<string, ITree> = new Map();
+    private readonly treesCache: Map<string, IOdspSnapshotTree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -332,7 +331,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    private async readBlobCore(blobId: string): Promise<IBlob | ArrayBuffer> {
+    private async readBlobCore(blobId: string): Promise<IOdspSnapshotBlob | ArrayBuffer> {
         const { blobContent, evicted } = this.blobCache.getBlob(blobId);
         let blob = blobContent;
 
@@ -392,7 +391,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         documentAttributes.branch = this.documentId;
         const content = JSON.stringify(documentAttributes);
 
-        const blobPatched: IBlob = {
+        const blobPatched: IOdspSnapshotBlob = {
             id: blobId,
             content,
             size: content.length,
@@ -829,13 +828,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not implemented yet");
     }
 
-    private initTreesCache(trees: ITree[]) {
+    private initTreesCache(trees: IOdspSnapshotTree[]) {
         trees.forEach((tree) => {
             this.treesCache.set(tree.id, tree);
         });
     }
 
-    private initBlobsCache(blobs: IBlob[]) {
+    private initBlobsCache(blobs: IOdspSnapshotBlob[]) {
         this.blobCache.addBlobs(blobs);
     }
 
@@ -857,7 +856,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async readTree(id: string): Promise<ITree | null> {
+    private async readTree(id: string): Promise<IOdspSnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
@@ -902,7 +901,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
         // Load the app and protocol trees and return them
         let hierarchicalProtocolTree: api.ISnapshotTree;
-        let appTree: ITree | null;
+        let appTree: IOdspSnapshotTree | null;
 
         if (typeof (protocolTreeOrId) === "string") {
             // Backwards compat for older summaries

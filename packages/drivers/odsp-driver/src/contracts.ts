@@ -80,67 +80,85 @@ export interface IDocumentStorageVersion {
     id: string;
 }
 
-export enum SnapshotType {
-    Container = "container",
-    Channel = "channel",
-}
+/**
+ *
+ * Data structures that form ODSP Summary
+ *
+ */
 
 export interface IOdspSummaryPayload {
-    type: SnapshotType;
+    type: "container" | "channel";
     message: string;
     sequenceNumber: number;
-    entries: SnapshotTreeEntry[];
+    entries: OdspSummaryTreeEntry[];
 }
 
-export interface ISnapshotResponse {
+export interface IWriteSummaryResponse {
     id: string;
 }
 
-export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEntry;
+export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | ISummaryTreeHandleEntry;
 
-export interface ISnapshotTreeBaseEntry {
+export interface IOdspSummaryTreeBaseEntry {
     path: string;
     type: "blob" | "tree" | "commit";
 }
 
-export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
-    value: SnapshotTreeValue;
+export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
+    value: OdspSummaryTreeValue;
     // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
     unreferenced?: true;
 }
 
-export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
+export interface ISummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
     id: string;
 }
 
-export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
+export type OdspSummaryTreeValue = IOdspSummaryTree | IOdspSummaryBlob;
 
-export interface ISnapshotTree {
+export interface IOdspSummaryTree {
     type: "tree";
-    entries?: SnapshotTreeEntry[];
+    entries?: OdspSummaryTreeEntry[];
 }
 
-export interface ISnapshotBlob {
+export interface IOdspSummaryBlob {
     type: "blob";
     content: string;
     encoding: "base64" | "utf-8";
 }
 
-export interface ISnapshotCommit {
-    type: "commit";
-    content: string;
-}
+/**
+ *
+ * Data structures that form ODSP Snapshot
+ *
+ */
 
-export interface ITreeEntry {
-    id: string;
+export interface IOdspSnapshotTreeEntryTree {
     path: string;
-    type: "commit" | "tree" | "blob";
+    type: "tree";
     // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
     unreferenced?: true;
 }
 
-export interface ITree {
-    entries: ITreeEntry[];
+export interface IOdspSnapshotTreeEntryCommit {
+    id: string;
+    path: string;
+    type: "commit";
+}
+
+export interface IOdspSnapshotTreeEntryBlob {
+    id: string;
+    path: string;
+    type: "blob";
+}
+
+export type IOdspSnapshotTreeEntry =
+    | IOdspSnapshotTreeEntryTree
+    | IOdspSnapshotTreeEntryCommit
+    | IOdspSnapshotTreeEntryBlob;
+
+export interface IOdspSnapshotTree {
+    entries: IOdspSnapshotTreeEntry[];
     id: string;
     sequenceNumber: number;
 }
@@ -148,7 +166,7 @@ export interface ITree {
 /**
  * Blob content, represents blobs in downloaded snapshot.
  */
-export interface IBlob {
+export interface IOdspSnapshotBlob {
     content: string;
     // SPO only uses "base64" today for download.
     // We are adding undefined too, as temp way to roundtrip strings unchanged.
@@ -159,8 +177,8 @@ export interface IBlob {
 
 export interface IOdspSnapshot {
     id: string;
-    trees: ITree[];
-    blobs?: IBlob[];
+    trees: IOdspSnapshotTree[];
+    blobs?: IOdspSnapshotBlob[];
     ops?: ISequencedDeltaOpMessage[];
 }
 
