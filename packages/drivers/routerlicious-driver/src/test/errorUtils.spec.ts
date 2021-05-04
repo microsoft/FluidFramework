@@ -109,7 +109,7 @@ describe("ErrorUtils", () => {
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 5000,
+                retryAfterMs: 5000,
             });
         });
         it("throws retriable error on 429 without retry-after", () => {
@@ -146,7 +146,7 @@ describe("ErrorUtils", () => {
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 200000,
+                retryAfterMs: 200000,
             });
         });
         it("throws non-retriable error on anything else", () => {
@@ -206,7 +206,7 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 429,
                 message,
-                retryAfter: 5000,
+                retryAfterMs: 5000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
@@ -237,7 +237,7 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 400,
                 message,
-                retryAfter: 300000,
+                retryAfterMs: 300000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
