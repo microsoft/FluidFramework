@@ -233,7 +233,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const networkError = createOdspNetworkError(
             "Test Message",
             429,
-            100000 /* retryAfterSeconds */) as IThrottlingWarning;
+            100000 /* retryAfterMs */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.throttlingError, "Error should be a throttlingError");
         assert.equal(networkError.retryAfterMs, 100000, "retryAfterSeconds should be preserved");
