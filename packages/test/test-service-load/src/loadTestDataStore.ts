@@ -63,6 +63,37 @@ class LoadTestDataStoreModel {
         }
     }
 
+    /**
+     * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
+     * common to both the clients. Each client adds a reference to this data store when it becomes a writer
+     * and removes the reference before it transtions to a reader.
+     * So, at any point in time, the data store can have 0, 1 or 2 references.
+     */
+    private static async getGCDataStore(
+        config: IRunConfig,
+        root: ISharedDirectory,
+        containerRuntime: IContainerRuntimeBase,
+    ): Promise<LoadTestDataStore> {
+        const halfClients = Math.floor(config.testConfig.numClients / 2);
+        const gcDataStoreIdKey = `gc_dataStore_${config.runId % halfClients}`;
+        let gcDataStore: LoadTestDataStore | undefined;
+        if (!root.has(gcDataStoreIdKey)) {
+            // The data store for this pair doesn't exist, create it and store its url.
+            gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
+            root.set(gcDataStoreIdKey, gcDataStore.id);
+        }
+        // If we did not create the data store above, load it by getting its url.
+        if (gcDataStore === undefined) {
+            const gcDataStoreId = root.get(gcDataStoreIdKey);
+            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+                throw new Error("GC data store not available");
+            }
+            gcDataStore = response.value as LoadTestDataStore;
+        }
+        return gcDataStore;
+    }
+
     public static async createRunnerInstance(
         config: IRunConfig,
         reset: boolean,
@@ -70,6 +101,8 @@ class LoadTestDataStoreModel {
         runtime: IFluidDataStoreRuntime,
         containerRuntime: IContainerRuntimeBase,
     ) {
+        await LoadTestDataStoreModel.waitForCatchup(runtime);
+
         if(!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
         }
@@ -79,11 +112,8 @@ class LoadTestDataStoreModel {
         }
 
         if(!runDir.has(counterKey)) {
-            await LoadTestDataStoreModel.waitForCatchup(runtime);
-            if(!runDir.has(counterKey)) {
-                runDir.set(counterKey, SharedCounter.create(runtime).handle);
-                runDir.set(startTimeKey,Date.now());
-            }
+            runDir.set(counterKey, SharedCounter.create(runtime).handle);
+            runDir.set(startTimeKey,Date.now());
         }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
         const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
@@ -95,30 +125,7 @@ class LoadTestDataStoreModel {
             throw new Error("taskmanger not available");
         }
 
-        // GC testing - We create a data store for each client pair. The url of the data store is stored in a key
-        // commong to both the clients. Each client adds a reference to this data store when it becomes a writer
-        // and removes the reference before it transtions to a reader.
-        // So, at any point in time, the data store can have 0, 1 or 2 references.
-        const halfClients = Math.floor(config.testConfig.numClients / 2);
-        const gcDataStoreUrlKey = `gc_dataStore_${config.runId % halfClients}`;
-        let gcDataStore: LoadTestDataStore | undefined;
-        if (!root.has(gcDataStoreUrlKey)) {
-            await LoadTestDataStoreModel.waitForCatchup(runtime);
-            if (!root.has(gcDataStoreUrlKey)) {
-                // The data store for this pair doesn't exist, create it and store its url.
-                gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
-                root.set(gcDataStoreUrlKey, gcDataStore.handle.absolutePath);
-            }
-        }
-        // If we did not create the data store above, load it by getting its url.
-        if (gcDataStore === undefined) {
-            const url = root.get(gcDataStoreUrlKey);
-            const response = await containerRuntime.request({ url });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error("GC data store not available");
-            }
-            gcDataStore = response.value as LoadTestDataStore;
-        }
+        const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
 
         const dataModel =  new LoadTestDataStoreModel(
             root,
@@ -237,16 +244,17 @@ class LoadTestDataStoreModel {
                 }
                 await this.taskManager.lockTask(this.taskId);
                 this.taskStartTime = Date.now();
+
+                // We just became the writer. Add a reference to the GC data store.
+                if (!this.runDir.has(gcDataStoreKey)) {
+                    this.runDir.set(gcDataStoreKey, this.gcDataStoreHandle);
+                }
             }catch(e) {
                 if(this.runtime.disposed || !this.runtime.connected) {
                     return;
                 }
                 throw e;
             }
-        }
-        // We are becoming the writer. Add a reference to the GC data store.
-        if (!this.runDir.has(gcDataStoreKey)) {
-            this.runDir.set(gcDataStoreKey, this.gcDataStoreHandle);
         }
     }
 
