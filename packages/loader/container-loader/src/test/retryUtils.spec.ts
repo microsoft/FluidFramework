@@ -44,7 +44,7 @@ describe("Retry Util Tests", () => {
             if (retryTimes > 0) {
                 retryTimes -= 1;
                 const error = new Error("Throw error");
-                (error as any).retryAfterSeconds = 10000;
+                (error as any).retryAfterMs = 10000;
                 (error as any).canRetry = true;
                 throw error;
             }
@@ -67,7 +67,7 @@ describe("Retry Util Tests", () => {
                 retryTimes -= 1;
                 const error = new Error("Throttle Error");
                 (error as any).errorType = DriverErrorType.throttlingError;
-                (error as any).retryAfterSeconds = 400000;
+                (error as any).retryAfterMs = 400000;
                 (error as any).canRetry = true;
                 throw error;
             }

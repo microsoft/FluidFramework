@@ -55,7 +55,7 @@ export interface IOdspSocketError {
      * Optional Retry-After time in seconds
      * The client should wait this many seconds before retrying its request
      */
-    retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 /**

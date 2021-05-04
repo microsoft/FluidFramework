@@ -117,7 +117,7 @@ export async function runWithRetry<T>(
 ): Promise<T> {
     let result: T | undefined;
     let success = false;
-    let retryAfterSeconds = 1000; // has to be positive!
+    let retryAfterMs = 1000; // has to be positive!
     let numRetries = 0;
     const startTime = performance.now();
     let lastError: any;
@@ -152,12 +152,12 @@ export async function runWithRetry<T>(
             lastError = err;
             // If the error is throttling error, then wait for the specified time before retrying.
             // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            retryAfterSeconds = getRetryDelayFromError(err) ?? Math.min(retryAfterSeconds * 2, 8000);
+            retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
             if (id === undefined) {
                 id = uuid();
             }
-            deltaManager.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
-            await delay(retryAfterSeconds);
+            deltaManager.emitDelayInfo(id, retryAfterMs, CreateContainerError(err));
+            await delay(retryAfterMs);
         }
     } while (!success);
     if (numRetries > 0) {

@@ -15,7 +15,7 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError, handle
     return createOdspNetworkError(
         message,
         socketError.code,
-        socketError.retryAfter,
+        socketError.retryAfterMs,
         // TODO: When long lived token is supported for websocket then IOdspSocketError need to support
         // passing "claims" value that is used to fetch new token
         undefined /* claims */);

@@ -110,7 +110,7 @@ describe("Odsp Error", () => {
         const socketError: IOdspSocketError = {
             message: "testMessage",
             code: 429,
-            retryAfter: 10000,
+            retryAfterMs: 10000,
         };
         const networkError = errorObjectFromSocketError(socketError, "429");
         if (networkError.errorType !== DriverErrorType.throttlingError) {

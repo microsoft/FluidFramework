@@ -302,7 +302,7 @@ export interface INackContent {
      * Optional Retry-After time in seconds
      * If specified, the client should wait this many seconds before retrying
      */
-    retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 /**
