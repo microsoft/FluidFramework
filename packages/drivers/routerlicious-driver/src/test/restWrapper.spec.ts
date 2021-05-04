@@ -40,7 +40,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         throttledAt = Date.now();
     };
     const replyWithThrottling = () => {
-        const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt);
+        const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
         const throttled = retryAfterSeconds > 0;
         if (throttled) {
             return [429, { retryAfter: retryAfterSeconds }];
