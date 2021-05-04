@@ -13,6 +13,7 @@ import {
     IDocument,
     ILogger,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IProducer,
     IServiceConfiguration,
@@ -22,7 +23,6 @@ import {
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
-import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
@@ -41,6 +41,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         sequenceNumber: 0,
         term: 1,
         lastSentMSN: 0,
+        nackMessages: undefined,
     };
 };
 
@@ -55,10 +56,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         super();
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const documentId = config.get("documentId");
-        const tenantId = config.get("tenantId");
-        const leaderEpoch = config.get("leaderEpoch") as number;
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
+        const { documentId, tenantId, leaderEpoch } = config;
 
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;

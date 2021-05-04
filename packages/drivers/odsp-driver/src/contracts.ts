@@ -180,3 +180,11 @@ export interface ICreateFileResponse {
     itemUrl: string;
     sequenceNumber: number;
 }
+
+export interface IVersionedValueWithEpoch {
+    value: any;
+    fluidEpoch: string,
+    version: 2,
+}
+
+export const persistedCacheValueVersion = 2;

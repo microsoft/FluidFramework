@@ -9,9 +9,8 @@
   "main": "dist/index.js",
   "types": "index.d.ts",
   "files": [
-    "dist/lib/",
-    "index.d.ts",
-    "index.js"
+    "dist",
+    "index.d.ts"
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
