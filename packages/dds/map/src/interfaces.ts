@@ -322,6 +322,7 @@ export interface ISerializedValue {
  * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
  * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
  * it just describes an operation to be applied to an already-in-memory value.
+ * @alpha
  */
 export interface IValueTypeOperationValue {
     /**
