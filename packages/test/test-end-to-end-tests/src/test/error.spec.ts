@@ -223,7 +223,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const networkError = createOdspNetworkError(
             "Test Message",
             400 /* statusCode */,
-            100000 /* retryAfterSeconds */);
+            100000 /* retryAfterMs */);
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, DriverErrorType.genericNetworkError, "Error should be a generic");
         assert.equal((networkError as any).retryAfterSeconds, undefined, "retryAfterSeconds should not be set");
