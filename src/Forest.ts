@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from '@taylorsw04/sorted-btree';
+import BTree from 'sorted-btree';
 import { fail, assert } from './Common';
 
 /**
@@ -334,7 +334,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 				return true;
 			}
 			if (
-				this.nodes.diff(
+				this.nodes.diffAgainst(
 					forest.nodes,
 					ForestI.anyDifference,
 					ForestI.anyDifference,
@@ -359,7 +359,7 @@ class ForestI<ID, T, TParentData> implements Forest<ID, T, TParentData> {
 			const changed: ID[] = [];
 			const removed: ID[] = [];
 			const added: ID[] = [];
-			this.nodes.diff(
+			this.nodes.diffAgainst(
 				forest.nodes,
 				(id) => {
 					removed.push(id);

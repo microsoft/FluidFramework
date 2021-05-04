@@ -42,10 +42,10 @@
 		"@fluidframework/shared-object-base": "^0.36.1",
 		"@fluidframework/telemetry-utils": "^0.36.1",
 		"@fluidframework/undo-redo": "^0.36.1",
-		"@taylorsw04/sorted-btree": "1.4.1-optimizedDiff",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.0",
 		"lru-cache": "^6.0.0",
+		"sorted-btree": "^1.5.0",
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {

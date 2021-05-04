@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from '@taylorsw04/sorted-btree';
+import BTree from 'sorted-btree';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './generic';
