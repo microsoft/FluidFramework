@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/experimental-fluidframework",
+  "name": "fluid-framework",
   "version": "0.40.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
@@ -25,16 +25,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-experimental/data-objects": "^0.40.0",
     "@fluidframework/aqueduct": "^0.40.0",
-    "@fluidframework/core-interfaces": "^0.40.0",
-    "@fluidframework/datastore-definitions": "^0.40.0",
     "@fluidframework/map": "^0.40.0",
     "@fluidframework/merge-tree": "^0.40.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0-0",
-    "@fluidframework/sequence": "^0.40.0",
-    "@fluidframework/shared-object-base": "^0.40.0",
-    "@fluidframework/view-interfaces": "^0.40.0"
+    "@fluidframework/sequence": "^0.40.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDirectoryValueChanged } from "@fluidframework/map";
+import { IDirectoryValueChanged } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

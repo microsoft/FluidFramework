@@ -5,10 +5,9 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
+import { SharedMap } from "fluid-framework";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { SharedMap } from "@fluidframework/map";
 
 import { DiceRollerController } from "../src/controller";
 import { renderDiceRoller } from "../src/view";
@@ -26,8 +25,8 @@ export const containerConfig = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
-        kvp: KeyValueDataObject,
-        map: SharedMap,
+        map1: SharedMap,
+        map2: SharedMap,
     },
 };
 
@@ -47,10 +46,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     // Get the Default Object from the Container
     const fluidContainer = (await container.request({ url: "/" })).value;
     // We now get the DataObject from the container
-    const keyValueDataObject = fluidContainer.initialObjects.kvp as KeyValueDataObject;
+    const map1 = fluidContainer.initialObjects.map1 as SharedMap;
 
     // Our controller manipulates the data object (model).
-    const diceRollerController = new DiceRollerController(keyValueDataObject);
+    const diceRollerController = new DiceRollerController(map1);
     await diceRollerController.initialize(createNew);
 
     // We render a view which uses the controller.
@@ -59,10 +58,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     renderDiceRoller(diceRollerController, div1);
 
     // We now get the DataObject from the container
-    const sharedMap = fluidContainer.initialObjects.map as SharedMap;
+    const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
 
     // Our controller manipulates the data object (model).
-    const diceRollerController2 = new DiceRollerController(sharedMap);
+    const diceRollerController2 = new DiceRollerController(sharedMap2);
     await diceRollerController2.initialize(createNew);
 
     const div2 = document.createElement("div");
