@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import assert from "assert";
 import express from "express";
 import * as sinon from "sinon";
@@ -10,24 +11,22 @@ import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
 import * as historianApp from "../app";
-import { TestTenantService } from "../test-utils/testTenantService";
-import { TestCache } from "../test-utils/testCache";
 import { RestGitService } from "../services";
-import { AsyncLocalStorage } from "async_hooks";
+import { TestTenantService, TestCache } from "./utils";
 
 const limit = 10;
 const sha = "testSha";
 const tenantId = "testTenantId";
-const url = "http://test-historian.com";
+const testUrl = "http://test-historian.com";
 const defaultCache = new TestCache();
 const defaultProvider = new nconf.Provider({}).defaults({
     auth: {
         maxTokenLifetimeSec: 1000000,
-        enableTokenExpiration: true
+        enableTokenExpiration: true,
     },
     logger: {
         morganFormat: "dev",
-    }
+    },
 });
 const defaultTenantService = new TestTenantService();
 
@@ -35,13 +34,16 @@ const defaultTenantService = new TestTenantService();
  * A helper method that will first send (limit) number of requests and assert they are not throttled,
  * and then send another request which exceeds the throttling limit to assert the throttling response is received.
  */
-const sendRequestsTillThrottledWithAssertion = async (superTest: request.SuperTest<request.Test>, url: string, method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
+const sendRequestsTillThrottledWithAssertion = async (
+    superTest: request.SuperTest<request.Test>,
+    url: string,
+    method: "get" | "post" | "patch" | "delete" = "get"): Promise<void> => {
     for (let i = 0; i < limit; i++) {
         // we're not interested in making the requests succeed with 200s, so just assert that not 429
         await superTest[method](url).expect((res) => {
             assert.notStrictEqual(res.status, 429);
         });
-    };
+    }
     await superTest[method](url).expect(429);
 };
 
@@ -57,13 +59,13 @@ describe("routes", () => {
                 getBlobStub = sinon.stub(RestGitService.prototype, "getBlob").returns(Promise.resolve({
                     content: "testContent",
                     encoding: "testEncoding",
-                    url: url,
-                    sha: sha,
-                    size: 1
+                    url: testUrl,
+                    sha,
+                    size: 1,
                 }));
                 createBlobStub = sinon.stub(RestGitService.prototype, "createBlob").returns(Promise.resolve({
-                    url: url,
-                    sha: sha
+                    url: testUrl,
+                    sha,
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -73,7 +75,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -108,34 +110,34 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getCommitStub = sinon.stub(RestGitService.prototype, "getCommit").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     author: { name: "test", email: "test@domain.com", date: "time" },
                     committer: { name: "test", email: "test@domain.com", date: "time" },
                     message: "testMessage",
-                    tree: { url: url, sha: sha },
-                    parents: [{ url: url, sha: sha }]
+                    tree: { url: testUrl, sha },
+                    parents: [{ url: testUrl, sha }],
                 }));
                 getCommitsStub = sinon.stub(RestGitService.prototype, "getCommits").returns(Promise.resolve([{
-                    url: url,
-                    sha: sha,
+                    url: testUrl,
+                    sha,
                     commit: {
-                        url: url,
+                        url: testUrl,
                         author: { name: "test", email: "test@domain.com", date: "time" },
                         committer: { name: "test", email: "test@domain.com", date: "time" },
                         message: "testMessage",
-                        tree: { url: url, sha: sha },
+                        tree: { url: testUrl, sha },
                     },
-                    parents: []
+                    parents: [],
                 }]));
                 createCommitStub = sinon.stub(RestGitService.prototype, "createCommit").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     author: { name: "test", email: "test@domain.com", date: "time" },
                     committer: { name: "test", email: "test@domain.com", date: "time" },
                     message: "testMessage",
-                    tree: { url: url, sha: sha },
-                    parents: [{ url: url, sha: sha }]
+                    tree: { url: testUrl, sha },
+                    parents: [{ url: testUrl, sha }],
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -145,7 +147,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -184,39 +186,39 @@ describe("routes", () => {
             beforeEach(() => {
                 getRefStub = sinon.stub(RestGitService.prototype, "getRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 getRefsStub = sinon.stub(RestGitService.prototype, "getRefs").returns(Promise.resolve([{
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }]));
                 createRefStub = sinon.stub(RestGitService.prototype, "createRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 updateRefStub = sinon.stub(RestGitService.prototype, "updateRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 deleteRefStub = sinon.stub(RestGitService.prototype, "deleteRef").returns(Promise.resolve());
 
@@ -227,7 +229,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -238,7 +240,7 @@ describe("routes", () => {
                 createRefStub.restore();
                 updateRefStub.restore();
                 deleteRefStub.restore();
-            })
+            });
 
             describe("/git/refs", () => {
                 it("/:ignored?/:tenantId/git/refs", async () => {
@@ -268,27 +270,27 @@ describe("routes", () => {
             beforeEach(() => {
                 getTagStub = sinon.stub(RestGitService.prototype, "getTag").returns(Promise.resolve({
                     tag: "testTag",
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     message: "testMessage",
                     tagger: { name: "test", email: "test@domain.com", date: "now" },
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 createTagStub = sinon.stub(RestGitService.prototype, "createTag").returns(Promise.resolve({
                     tag: "testTag",
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     message: "testMessage",
                     tagger: { name: "test", email: "test@domain.com", date: "now" },
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -298,7 +300,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -326,14 +328,14 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getTreeStub = sinon.stub(RestGitService.prototype, "getTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
                 createTreeStub = sinon.stub(RestGitService.prototype, "createTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -343,7 +345,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -370,9 +372,9 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getContentStub = sinon.stub(RestGitService.prototype, "getContent").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -382,7 +384,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -406,13 +408,13 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getHeaderStub = sinon.stub(RestGitService.prototype, "getHeader").returns(Promise.resolve({
-                    tree: { sha: sha, url: url, tree: [] },
-                    blobs: []
+                    tree: { sha, url: testUrl, tree: [] },
+                    blobs: [],
                 }));
                 getTreeStub = sinon.stub(RestGitService.prototype, "getFullTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(limit);
@@ -422,7 +424,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -451,7 +453,10 @@ describe("routes", () => {
         let app: express.Application;
         let superTest: request.SuperTest<request.Test>;
 
-        const assertCorrelationId = async (url: string, method: "get" | "post" | "put" | "patch" | "delete" = "get"): Promise<void> => {
+        const assertCorrelationId = async (
+            url: string,
+            method: "get" | "post" | "put" | "patch" | "delete" = "get",
+        ): Promise<void> => {
             await superTest[method](url)
                 .set(correlationIdHeaderName, testCorrelationId)
                 .then((res) => {
@@ -467,13 +472,13 @@ describe("routes", () => {
                 getBlobStub = sinon.stub(RestGitService.prototype, "getBlob").returns(Promise.resolve({
                     content: "testContent",
                     encoding: "testEncoding",
-                    url: url,
-                    sha: sha,
-                    size: 1
+                    url: testUrl,
+                    sha,
+                    size: 1,
                 }));
                 createBlobStub = sinon.stub(RestGitService.prototype, "createBlob").returns(Promise.resolve({
-                    url: url,
-                    sha: sha
+                    url: testUrl,
+                    sha,
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -483,7 +488,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -516,34 +521,34 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getCommitStub = sinon.stub(RestGitService.prototype, "getCommit").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     author: { name: "test", email: "test@domain.com", date: "time" },
                     committer: { name: "test", email: "test@domain.com", date: "time" },
                     message: "testMessage",
-                    tree: { url: url, sha: sha },
-                    parents: [{ url: url, sha: sha }]
+                    tree: { url: testUrl, sha },
+                    parents: [{ url: testUrl, sha }],
                 }));
                 getCommitsStub = sinon.stub(RestGitService.prototype, "getCommits").returns(Promise.resolve([{
-                    url: url,
-                    sha: sha,
+                    url: testUrl,
+                    sha,
                     commit: {
-                        url: url,
+                        url: testUrl,
                         author: { name: "test", email: "test@domain.com", date: "time" },
                         committer: { name: "test", email: "test@domain.com", date: "time" },
                         message: "testMessage",
-                        tree: { url: url, sha: sha },
+                        tree: { url: testUrl, sha },
                     },
-                    parents: []
+                    parents: [],
                 }]));
                 createCommitStub = sinon.stub(RestGitService.prototype, "createCommit").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     author: { name: "test", email: "test@domain.com", date: "time" },
                     committer: { name: "test", email: "test@domain.com", date: "time" },
                     message: "testMessage",
-                    tree: { url: url, sha: sha },
-                    parents: [{ url: url, sha: sha }]
+                    tree: { url: testUrl, sha },
+                    parents: [{ url: testUrl, sha }],
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -553,7 +558,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -590,39 +595,39 @@ describe("routes", () => {
             beforeEach(() => {
                 getRefStub = sinon.stub(RestGitService.prototype, "getRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 getRefsStub = sinon.stub(RestGitService.prototype, "getRefs").returns(Promise.resolve([{
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }]));
                 createRefStub = sinon.stub(RestGitService.prototype, "createRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 updateRefStub = sinon.stub(RestGitService.prototype, "updateRef").returns(Promise.resolve({
                     ref: "testRef",
-                    url: url,
+                    url: testUrl,
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 deleteRefStub = sinon.stub(RestGitService.prototype, "deleteRef").returns(Promise.resolve());
 
@@ -633,7 +638,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -644,7 +649,7 @@ describe("routes", () => {
                 createRefStub.restore();
                 updateRefStub.restore();
                 deleteRefStub.restore();
-            })
+            });
 
             describe("/git/refs", () => {
                 it("/:ignored?/:tenantId/git/refs", async () => {
@@ -672,27 +677,27 @@ describe("routes", () => {
             beforeEach(() => {
                 getTagStub = sinon.stub(RestGitService.prototype, "getTag").returns(Promise.resolve({
                     tag: "testTag",
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     message: "testMessage",
                     tagger: { name: "test", email: "test@domain.com", date: "now" },
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
                 createTagStub = sinon.stub(RestGitService.prototype, "createTag").returns(Promise.resolve({
                     tag: "testTag",
-                    sha: sha,
-                    url: url,
+                    sha,
+                    url: testUrl,
                     message: "testMessage",
                     tagger: { name: "test", email: "test@domain.com", date: "now" },
                     object: {
                         type: "testType",
-                        sha: sha,
-                        url: url
-                    }
+                        sha,
+                        url: testUrl,
+                    },
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -702,7 +707,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -728,14 +733,14 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getTreeStub = sinon.stub(RestGitService.prototype, "getTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
                 createTreeStub = sinon.stub(RestGitService.prototype, "createTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -745,7 +750,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -770,9 +775,9 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getContentStub = sinon.stub(RestGitService.prototype, "getContent").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -782,7 +787,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });
@@ -804,13 +809,13 @@ describe("routes", () => {
 
             beforeEach(() => {
                 getHeaderStub = sinon.stub(RestGitService.prototype, "getHeader").returns(Promise.resolve({
-                    tree: { sha: sha, url: url, tree: [] },
-                    blobs: []
+                    tree: { sha, url: testUrl, tree: [] },
+                    blobs: [],
                 }));
                 getTreeStub = sinon.stub(RestGitService.prototype, "getFullTree").returns(Promise.resolve({
-                    sha: sha,
-                    url: url,
-                    tree: []
+                    sha,
+                    url: testUrl,
+                    tree: [],
                 }));
 
                 const throttler = new TestThrottler(maxThrottlerLimit);
@@ -820,7 +825,7 @@ describe("routes", () => {
                     defaultTenantService,
                     defaultCache,
                     throttler,
-                    asyncLocalStorage
+                    asyncLocalStorage,
                 );
                 superTest = request(app);
             });

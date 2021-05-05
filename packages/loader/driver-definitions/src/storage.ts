@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,6 @@ import {
     IClientConfiguration,
     ICreateBlobResponse,
     IDocumentMessage,
-    IErrorTrackingService,
     INack,
     ISequencedDocumentMessage,
     ISignalClient,
@@ -49,8 +48,18 @@ export interface IDeltaStorageService {
     get(
         tenantId: string,
         id: string,
-        from: number,
-        to: number): Promise<IDeltasFetchResult>;
+        from: number, // inclusive
+        to: number // exclusive
+    ): Promise<IDeltasFetchResult>;
+}
+
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
+
+/**
+ * Read interface for the Queue
+ */
+ export interface IStream<T> {
+    read(): Promise<IStreamResult<T>>;
 }
 
 /**
@@ -59,8 +68,16 @@ export interface IDeltaStorageService {
 export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the exclusive sequence number range
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param abortSignal - signal that aborts operation
+     * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-    get(from: number, to: number): Promise<IDeltasFetchResult>;
+     fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]>;
 }
 
 export interface IDocumentStorageServicePolicies {
@@ -251,17 +268,16 @@ export interface IDocumentService {
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
-     * Returns the error tracking service
-     */
-    getErrorTrackingService(): IErrorTrackingService | null;
-
-    /**
      * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
      * Useful for storage to commit any pending state if any (including any local caching).
      * Please note that it does not remove the need for caller to close all active delta connections,
      * as storage may not be tracking such objects.
+     * @param error - tells if container (and storage) are closed due to critical error.
+     * Error might be due to disconnect between client & server knowlege about file, like file being overwritten
+     * in storage, but client having stale local cache.
+     * If driver implements any kind of local caching, such caches needs to be cleared on on critical errors.
      */
-    dispose(): void;
+    dispose(error?: any): void;
 }
 
 export interface IDocumentServiceFactory {

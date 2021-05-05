@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -27,6 +27,7 @@ describe("LocalKafka", () => {
                 const parsed = JSON.parse(message.value);
                 assert.strictEqual(parsed.sequenceNumber, sequenceNumber + 1);
                 sequenceNumber++;
+                return undefined;
             }
         });
 
@@ -54,6 +55,7 @@ describe("LocalKafka", () => {
                 const parsed = JSON.parse(message.value);
                 assert.strictEqual(parsed.sequenceNumber, sequenceNumber1 + 1);
                 sequenceNumber1++;
+                return undefined;
             }
         });
 
@@ -64,6 +66,7 @@ describe("LocalKafka", () => {
                 const parsed = JSON.parse(message.value);
                 assert.strictEqual(parsed.sequenceNumber, sequenceNumber2 + 1);
                 sequenceNumber2++;
+                return undefined;
             }
         });
 

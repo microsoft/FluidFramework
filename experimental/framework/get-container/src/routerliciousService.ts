@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -39,13 +39,14 @@ class SimpleUrlResolver implements IUrlResolver {
                 scopes: ["doc:read", "doc:write", "summary:write"],
             },
             this.config.key);
-        const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${request.url}`;
+        const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
-                deltaStorageUrl: `${this.config.orderer}/deltas/${this.config.tenantId}/${request.url}`,
+                deltaStorageUrl: `${this.config.orderer}/deltas/${this.config.tenantId}/${containerId}`,
                 ordererUrl: `${this.config.orderer}`,
                 storageUrl: `${this.config.storage}/repos/${this.config.tenantId}`,
             },
+            id: containerId,
             tokens: { jwt: token },
             type: "fluid",
             url: documentUrl,

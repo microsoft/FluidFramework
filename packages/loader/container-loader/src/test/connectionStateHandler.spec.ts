@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -72,8 +72,6 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler = new ConnectionStateHandler(
             {
                 logConnectionStateChangeTelemetry: () => undefined,
-                propagateConnectionState:() => undefined,
-                isContainerLoaded: () => true,
                 maxClientLeaveWaitTime: expectedTimeout,
                 protocolHandler: () => protocolHandler,
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
@@ -115,10 +113,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -146,10 +142,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -183,10 +177,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -231,10 +223,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -285,10 +275,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -337,10 +325,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -384,7 +370,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 3 should move to connected state");
     });
 
-    it("Client 3 should not wait for client 2(which got disconnected without sending any ops) to leave " +
+    it("Client 3 should wait for client 2(which got disconnected without sending any ops) to leave " +
         "when client 2 already waited on client 1", async () =>
     {
         client.mode = "write";
@@ -394,10 +380,8 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
-        // Mock as though the client sent some ops.
         shouldClientJoinWrite = true;
         client.mode = "write";
-        connectionStateHandler.clientSentOps(client.mode);
         // Disconnect the client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -416,7 +400,7 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should move to connected state");
 
-        // Client 2 leaves without sending any ops. So dirty state should be false
+        // Client 2 leaves without sending any ops.
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client 2 should be in disconnected state");
@@ -428,6 +412,11 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 3 should still be in connecting state");
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
         connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Client 3 should still be in connecting state");
+
+        // Client 2 leaves.
+        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Timeout should not raise any error as timer should be cleared

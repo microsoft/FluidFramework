@@ -1,17 +1,34 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { SharedTreeEvent } from '../SharedTree';
-import { Change, ChangeType, EditNode, Delete, Insert, ChangeNode, StablePlace, StableRange } from '../PersistedTypes';
-import { deepCompareNodes, newEdit } from '../EditUtilities';
-import { noHistorySummarizer, serialize } from '../Summary';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
+import {
+	EditNode,
+	ChangeNode,
+	SharedTreeOpType,
+	SharedTreeEvent,
+	fullHistorySummarizer,
+	serialize,
+	newEdit,
+} from '../generic';
+import {
+	Change,
+	ChangeType,
+	Delete,
+	Insert,
+	StablePlace,
+	StableRange,
+	noHistorySummarizer,
+	SharedTree,
+} from '../default-edits';
+import { editsPerChunk } from '../EditLog';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { TreeNodeHandle } from '../TreeNodeHandle';
@@ -29,10 +46,29 @@ import {
 	areNodesEquivalent,
 	rightTraitLabel,
 	assertNoDelta,
+	deepCompareNodes,
 } from './utilities/TestUtilities';
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests';
+import { TestFluidHandle, TestFluidSerializer } from './utilities/TestSerializer';
+
+const revert = (tree: SharedTree, editId: EditId) => {
+	const editIndex = tree.edits.getIndexOfId(editId);
+	return tree.editor.revert(
+		tree.edits.getEditInSessionAtIndex(editIndex),
+		tree.logViewer.getSnapshotInSession(editIndex)
+	);
+};
+
+// Options for the undo/redo test suite. The undo and redo functions are the same.
+const undoRedoOptions = {
+	title: 'Revert',
+	undo: revert,
+	redo: revert,
+};
 
 describe('SharedTree', () => {
+	const testSerializer = new TestFluidSerializer();
+
 	describe('SharedTree before initialization', () => {
 		it('can create a new SharedTree', () => {
 			const { tree } = setUpTestSharedTree();
@@ -232,7 +268,7 @@ describe('SharedTree', () => {
 			});
 		});
 
-		runSharedTreeUndoRedoTestSuite({ localMode: true });
+		runSharedTreeUndoRedoTestSuite({ localMode: true, ...undoRedoOptions });
 	});
 
 	describe('SharedTree in connected state with a remote SharedTree', () => {
@@ -422,25 +458,40 @@ describe('SharedTree', () => {
 			expect(tree.edits.getIdAtIndex(1)).to.equal(edit.id);
 		});
 
-		runSharedTreeUndoRedoTestSuite({ localMode: false });
+		runSharedTreeUndoRedoTestSuite({ localMode: false, ...undoRedoOptions });
+
+		// This is a regression test for documents corrupted by the following github issue:
+		// https://github.com/microsoft/FluidFramework/issues/4399
+		it('tolerates duplicate edits in trailing operations', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const remoteRuntime = containerRuntimeFactory.createContainerRuntime(new MockFluidDataStoreRuntime());
+			const defaultEdits = tree.edits.length;
+			const edit = newEdit([]);
+			for (let submissions = 0; submissions < 2; submissions++) {
+				remoteRuntime.submit({ type: SharedTreeOpType.Edit, edit }, /* localOpMetadata */ undefined);
+			}
+			containerRuntimeFactory.processAllMessages();
+			expect(tree.edits.length).to.equal(defaultEdits + 1);
+		});
 	});
 
 	describe('SharedTree summarizing', () => {
 		const treeOptions = { initialTree: simpleTestTree, localMode: false };
 		const newNode = makeEmptyNode();
+		const testHandle = new TestFluidHandle();
 
 		it('returns false when given bad json input', () => {
-			assert.typeOf(deserialize(''), 'string');
-			assert.typeOf(deserialize('~ malformed JSON ~'), 'string');
-			assert.typeOf(deserialize('{ unrecognizedKey: 42 }'), 'string');
+			assert.typeOf(deserialize('', testSerializer), 'string');
+			assert.typeOf(deserialize('~ malformed JSON ~', testSerializer), 'string');
+			assert.typeOf(deserialize('{ unrecognizedKey: 42 }', testSerializer), 'string');
 		});
 
 		it('correctly handles snapshots of default trees', () => {
 			const { tree: uninitializedTree } = setUpTestSharedTree();
 
 			// Serialize the state of one uninitialized tree into a second tree
-			const serialized = serialize(uninitializedTree.saveSummary());
-			const parsedTree = deserialize(serialized) as SharedTreeSummary_0_0_2;
+			const serialized = serialize(uninitializedTree.saveSummary(), testSerializer, testHandle);
+			const parsedTree = deserialize(serialized, testSerializer) as SharedTreeSummary_0_0_2<unknown>;
 			expect(parsedTree.sequencedEdits).deep.equal([]);
 			expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
 		});
@@ -458,9 +509,9 @@ describe('SharedTree', () => {
 					containerRuntimeFactory.processAllMessages();
 				}
 
-				const serialized = serialize(tree.saveSummary());
+				const serialized = serialize(tree.saveSummary(), testSerializer, testHandle);
 				const treeContent = JSON.parse(serialized);
-				const parsedTree = treeContent as SharedTreeSummary_0_0_2;
+				const parsedTree = treeContent as SharedTreeSummary_0_0_2<Change>;
 
 				expect(parsedTree.currentTree).to.not.be.undefined;
 				const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTrait.label]);
@@ -509,6 +560,26 @@ describe('SharedTree', () => {
 			expect(tree.equals(secondTree)).to.be.true;
 		});
 
+		it('asserts when loading a summary with duplicated edits', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree: secondTree } = setUpTestSharedTree();
+
+			tree.editor.insert(newNode, StablePlace.before(left));
+			containerRuntimeFactory.processAllMessages();
+			tree.summarizer = fullHistorySummarizer;
+			const summary = tree.saveSummary() as ReturnType<typeof fullHistorySummarizer>;
+			const sequencedEdits = assertNotUndefined(summary.sequencedEdits).slice();
+			sequencedEdits.push(sequencedEdits[0]);
+			const corruptedSummary = {
+				...summary,
+				sequencedEdits,
+			};
+			expect(() => secondTree.loadSummary(corruptedSummary))
+				.to.throw(Error)
+				.that.has.property('message')
+				.which.matches(/Duplicate/);
+		});
+
 		it('can be used without history preservation', async () => {
 			const { tree } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
@@ -529,6 +600,36 @@ describe('SharedTree', () => {
 			// It will contain a single entry setting the tree to equal the head revision.
 			expect(tree.edits.length).to.equal(1);
 			expect(await tree.edits.tryGetEdit(editID)).to.be.undefined;
+		});
+
+		// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
+		it.skip('does not swallow errors in asynchronous blob uploading', async () => {
+			const errorMessage = 'Simulated exception in uploadBlob';
+			const { tree, componentRuntime, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			componentRuntime.uploadBlob = async () => {
+				throw new Error(errorMessage);
+			};
+
+			let treeErrorEventWasInvoked = false;
+			tree.on('error', (error: unknown) => {
+				treeErrorEventWasInvoked = true;
+				expect(error).to.have.property('message').which.equals(errorMessage);
+			});
+
+			// Generate enough edits to cause a chunk upload.
+			for (let i = 0; i < editsPerChunk / 2 + 1; i++) {
+				const insertee = makeEmptyNode();
+				tree.editor.insert(insertee, StablePlace.before(left));
+				tree.editor.delete(StableRange.only(insertee));
+			}
+
+			containerRuntimeFactory.processAllMessages();
+			tree.saveSummary();
+
+			// Just waiting for the ChunksEmitted event here isn't sufficient, as the SharedTree error
+			// will propagate in a separate promise chain.
+			await new Promise((resolve) => setTimeout(resolve, 0));
+			expect(treeErrorEventWasInvoked).to.equal(true, 'SharedTree error was never raised');
 		});
 	});
 
@@ -612,13 +713,13 @@ describe('SharedTree', () => {
 			const nodeA: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				payload: { base64: 'pardesio' },
+				payload: 'test1',
 				traits: {},
 			};
 			const nodeB: ChangeNode = {
 				identifier: rootId,
 				definition: 'node' as Definition,
-				payload: { base64: 'hortonio' },
+				payload: 'test2',
 				traits: {},
 			};
 

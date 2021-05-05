@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -62,8 +62,12 @@ export function getQuorumTreeEntries(
     return entries;
 }
 
-export function mergeAppAndProtocolTree(appSummaryTree: ITree, protocolTree: ITree): ICreateTreeEntry[] {
-    const newTreeEntries = appSummaryTree.tree.map((value) => {
+export function mergeAppAndProtocolTree(
+    appSummaryTree: ITree,
+    protocolTree: ITree): ICreateTreeEntry[] {
+    const newTreeEntries = appSummaryTree.tree
+    .filter((value) => !isInvalidPath(value.path))
+    .map((value) => {
         const createTreeEntry: ICreateTreeEntry = {
             mode: value.mode,
             path: value.path,
@@ -107,3 +111,8 @@ export function generateServiceProtocolEntries(deli: string, scribe: string): IT
     );
     return serviceProtocolEntries;
 }
+
+const isInvalidPath = (path: string) => (
+    path === ".protocol" ||
+    path === ".logTail" ||
+    path === ".serviceProtocol");

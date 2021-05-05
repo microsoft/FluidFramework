@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -44,6 +44,7 @@ export interface ILocalDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
     testDbFactory: ITestDbFactory;
+    close(): Promise<void>;
     hasPendingWork(): Promise<boolean>;
     connectWebSocket(
         tenantId: string,
@@ -124,6 +125,11 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         public testDbFactory: ITestDbFactory,
         public documentStorage: IDocumentStorage,
         private readonly logger: ILogger) { }
+
+    public async close() {
+        await this.webSocketServer.close();
+        await this.ordererManager.close();
+    }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.

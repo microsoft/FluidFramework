@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,16 +7,14 @@ import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "../contracts";
 import {
-    EpochTrackerWithRedemption,
-} from "../epochTracker";
-import {
+    IOdspResolvedUrl,
     IEntry,
-    LocalPersistentCache,
     snapshotKey,
-} from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
+} from "@fluidframework/odsp-driver-definitions";
+import { EpochTrackerWithRedemption } from "../epochTracker";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {
@@ -39,7 +37,7 @@ class DeferralWithCallback extends Deferred<void> {
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "fileId";
+    const itemId = "itemId";
     let epochTracker: EpochTrackerWithRedemption;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     let epochCallback: DeferralWithCallback;

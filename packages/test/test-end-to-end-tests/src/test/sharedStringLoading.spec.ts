@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,7 +21,7 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { NetworkErrorBasic, readAndParse } from "@fluidframework/driver-utils";
+import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -99,11 +99,10 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             const blobObj = await readAndParse<any>(realStorage, id);
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
-                                throw new NetworkErrorBasic(
+                                throw new NonRetryableError(
                                     "Not Found",
                                     undefined,
-                                    false,
-                                    404);
+                                    { statusCode: 404 });
                             }
                             return blob;
                         };

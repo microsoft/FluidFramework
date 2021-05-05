@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,10 +16,19 @@ export class CombinedLambda implements IPartitionLambda {
 	/**
 	 * Processes an incoming message
 	 */
-	public handler(message: IQueuedMessage): void {
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	public handler(message: IQueuedMessage) {
+		const promises: Promise<void>[] = [];
+
 		for (const lambda of this.lambdas) {
-			lambda.handler(message);
+			const optionalPromise = lambda.handler(message);
+			if (optionalPromise !== undefined) {
+				promises.push(optionalPromise);
+			}
 		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return promises.length > 0 ? Promise.all(promises) as any : undefined;
 	}
 
 	/**

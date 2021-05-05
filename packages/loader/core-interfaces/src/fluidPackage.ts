@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -90,7 +90,7 @@ export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
 }
 
-export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidPackage> =>{
+export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> =>{
     const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
     return typeof maybeCodeDetails === "object"
         && (typeof maybeCodeDetails?.package === "string" || isFluidPackage(maybeCodeDetails?.package))

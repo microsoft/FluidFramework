@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { AsyncLocalStorage } from "async_hooks";
 import { IThrottler } from "@fluidframework/server-services-core";
-import * as bodyParser from "body-parser";
+import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
 import express from "express";
@@ -17,6 +17,7 @@ import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
+import { getTenantIdFromRequest } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -34,12 +35,29 @@ export function create(
     // Express app configuration
     const app: express.Express = express();
 
-    // TODO we probably want to switch morgan to use the common format in prod
-    app.use(morgan(config.get("logger:morganFormat"), { stream }));
+    const loggerFormat = config.get("logger:morganFormat");
+    if (loggerFormat === "json") {
+        app.use(morgan((tokens, req, res) => {
+            const messageMetaData = {
+                method: tokens.method(req, res),
+                url: tokens.url(req, res),
+                status: tokens.status(req, res),
+                contentLength: tokens.res(req, res, "content-length"),
+                responseTime: tokens["response-time"](req, res),
+                tenantId: getTenantIdFromRequest(req.params),
+                serviceName: "historian",
+                eventName: "http_requests",
+             };
+             winston.info("request log generated", { messageMetaData });
+             return undefined;
+        }, { stream }));
+    } else {
+        app.use(morgan(loggerFormat, { stream }));
+    }
 
     const requestSize = config.get("requestSizeLimit");
-    app.use(bodyParser.json({ limit: requestSize }));
-    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(json({ limit: requestSize }));
+    app.use(urlencoded({ limit: requestSize, extended: false }));
 
     app.use(compression());
     app.use(cors());

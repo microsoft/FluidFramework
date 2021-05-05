@@ -1,18 +1,25 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as services from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import {
+    MongoManager,
+    ISecretManager,
+    IResources,
+    IResourcesFactory,
+    IRunner,
+    IRunnerFactory,
+} from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
-export class RiddlerResources implements utils.IResources {
+export class RiddlerResources implements IResources {
     constructor(
         public readonly tenantsCollectionName: string,
         public readonly mongoManager: MongoManager,
@@ -30,7 +37,7 @@ export class RiddlerResources implements utils.IResources {
     }
 }
 
-export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerResources> {
+export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -78,8 +85,8 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
     }
 }
 
-export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResources> {
-    public async create(resources: RiddlerResources): Promise<utils.IRunner> {
+export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
+    public async create(resources: RiddlerResources): Promise<IRunner> {
         return new RiddlerRunner(
             resources.tenantsCollectionName,
             resources.port,

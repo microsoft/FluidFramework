@@ -42,7 +42,6 @@ For development, you'll also need to give docker access to your drive (Shared Dr
 ### Common Issues
 * Port already allocated
   * This can happen if you have a process already running on a port the docker-compose file expects to have available
-  * This may be Tinylicious, which also expects to run on 3000
 * Drive Share Failure
   * An intermittent failure most frequent on Windows, best solved by reinstalling
 * Not Enough RAM

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -120,6 +120,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 deltaStorageUrl,
                 ordererUrl,
             },
+            id: documentId,
             tokens: { jwt: token },
             type: "fluid",
             url: fluidUrl,

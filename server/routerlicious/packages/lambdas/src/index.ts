@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,5 +10,4 @@ export * from "./deli";
 export * from "./foreman";
 export * from "./scribe";
 export * from "./scriptorium";
-export * from "./sequencedLambda";
 export * from "./utils";

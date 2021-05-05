@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -20,7 +20,7 @@ describe("getFileLink", () => {
 
     it("should return web url for Consumer user", async () => {
         const result = await mockFetchOk(
-            async () => getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId1", "Consumer", logger),
+            async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId1"}, "Consumer", logger),
             fileItemResponse,
         );
         assert.strictEqual(result, fileItemResponse.webUrl, "File link for Consumer user should match webUrl");
@@ -28,14 +28,14 @@ describe("getFileLink", () => {
 
     it("should return undefined for Consumer user if file web url is missing", async () => {
         const result = await mockFetchOk(
-            async () => getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId2", "Consumer", logger),
+            async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId2"}, "Consumer", logger),
         );
         assert.strictEqual(result, undefined, "File link should be undefined");
     });
 
     it("should return undefined for Consumer user if file item is not found", async () => {
         const result = await mockFetchSingle(async () => {
-                return getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId3", "Consumer", logger);
+                return getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId3"}, "Consumer", logger);
             },
             notFound,
         );
@@ -44,7 +44,7 @@ describe("getFileLink", () => {
 
     it("should return share link with existing access for Enterprise user", async () => {
         const result = await mockFetchMultiple(
-            async () => getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId4", "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId4"}, "Enterprise", logger),
             [
                 async () => okResponse({}, fileItemResponse),
                 async () => okResponse({}, { d: { directUrl: "sharelink" } }),
@@ -56,14 +56,14 @@ describe("getFileLink", () => {
 
     it("should return undefined for Enterprise user if file web dav url is missing", async () => {
         const result = await mockFetchOk(
-            async () => getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId5", "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId5"}, "Enterprise", logger),
         );
         assert.strictEqual(result, undefined, "File link should be undefined");
     });
 
     it("should return undefined for Enterprise user if file item is not found", async () => {
         const result = await mockFetchSingle(async () => {
-            return getFileLink(storageTokenFetcher, siteUrl, driveId, "itemId6", "Enterprise", logger);
+            return getFileLink(storageTokenFetcher, {siteUrl, driveId, itemId: "itemId6"}, "Enterprise", logger);
             },
             notFound);
         assert.strictEqual(result, undefined, "File link should be undefined");

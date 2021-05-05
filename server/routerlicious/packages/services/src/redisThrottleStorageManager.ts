@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,6 +7,7 @@ import {
     IThrottleStorageManager,
     IThrottlingMetrics,
 } from "@fluidframework/server-services-core";
+import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 
@@ -14,11 +15,20 @@ import * as winston from "winston";
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
  */
 export class RedisThrottleStorageManager implements IThrottleStorageManager {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "throttle";
+
     constructor(
         private readonly client: Redis,
-        private readonly expireAfterSeconds = 60 * 60 * 24,
-        private readonly prefix = "throttle",
-    ) {
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
         client.on("error", (error) => {
             winston.error("Throttle Manager Redis Error:", error);
         });
@@ -30,12 +40,11 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     ): Promise<void> {
         const key = this.getKey(id);
 
-        const result = await this.client.hmset(key, throttlingMetric as { [key: string]: any });
-        if (result !== "OK") {
-            return Promise.reject(result);
-        }
-
-        await this.client.expire(key, this.expireAfterSeconds);
+        return executeRedisMultiWithHmsetExpire(
+            this.client,
+            key,
+            throttlingMetric as { [key: string]: any },
+            this.expireAfterSeconds);
     }
 
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {

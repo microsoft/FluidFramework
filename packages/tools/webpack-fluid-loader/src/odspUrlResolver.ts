@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -29,21 +29,22 @@ export class OdspUrlResolver implements IUrlResolver {
 
         const fullPath = url.pathname.substr(1);
         const documentId = fullPath.split("/")[0];
-        const documentRelativePath = fullPath.slice(documentId.length + 1);
+        const dataStorePath = fullPath.slice(documentId.length + 1);
         const filePath = this.formFilePath(documentId);
 
-        const { drive, item } = await getDriveItemByRootFileName(
+        const { driveId, itemId } = await getDriveItemByRootFileName(
             this.server,
             "",
             filePath,
             this.authRequestInfo,
             true);
 
-        const odspUrl = createOdspUrl(
-            `https://${this.server}`,
-            drive,
-            item,
-            documentRelativePath);
+        const odspUrl = createOdspUrl({
+            siteUrl:`https://${this.server}`,
+            driveId,
+            itemId,
+            dataStorePath,
+        });
 
         return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
@@ -66,6 +67,6 @@ export class OdspUrlResolver implements IUrlResolver {
             this.authRequestInfo,
             false);
         return this.driverUrlResolver.createCreateNewRequest(
-            `https://${this.server}`, driveItem.drive, filePath, `${fileName}.fluid`);
+            `https://${this.server}`, driveItem.driveId, filePath, `${fileName}.fluid`);
     }
 }

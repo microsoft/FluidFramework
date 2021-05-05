@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl } from "../contracts";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
 import { EpochTracker } from "../epochTracker";
@@ -28,14 +28,13 @@ describe("DeltaStorageService", () => {
     it("Should build the correct sharepoint delta url with auth", async () => {
         const logger = new TelemetryUTLogger();
         const deltaStorageService = new OdspDeltaStorageService(
-            async () => testDeltaStorageUrl,
-            undefined,
+            testDeltaStorageUrl,
             async (_refresh) => "?access_token=123",
             createUtEpochTracker(fileEntry, logger),
             logger);
-        const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
+        const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
         // eslint-disable-next-line max-len
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
+        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
@@ -79,8 +78,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
-                undefined,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);
@@ -136,8 +134,7 @@ describe("DeltaStorageService", () => {
         before(() => {
             const logger = new TelemetryUTLogger();
             deltaStorageService = new OdspDeltaStorageService(
-                async () => testDeltaStorageUrl,
-                undefined,
+                testDeltaStorageUrl,
                 async (_refresh) => "",
                 createUtEpochTracker(fileEntry, logger),
                 logger);

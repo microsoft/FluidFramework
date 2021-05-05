@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -26,6 +26,7 @@ describe("Routerlicious", () => {
                     sequenceNumber,
                     term: 1,
                     lastSentMSN: 0,
+                    nackMessages: undefined,
                     queuedMessage: {
                         offset: logOffset,
                         partition: 1,

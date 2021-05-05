@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
@@ -285,23 +285,16 @@ export class ParallelRequests<T> {
 }
 
 /**
- * Read interface for the Queue
- */
-export interface IReadPipe<T> {
-    pop(): Promise<T | undefined>;
-}
-
-/**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
  */
-export class Queue<T> implements IReadPipe<T> {
-    private readonly queue: Promise<T | undefined>[] = [];
-    private deferred: Deferred<T | undefined> | undefined;
+export class Queue<T> implements IStream<T> {
+    private readonly queue: Promise<IStreamResult<T>>[] = [];
+    private deferred: Deferred<IStreamResult<T>> | undefined;
     private done = false;
 
     public pushValue(value: T) {
-        this.pushCore(Promise.resolve(value));
+        this.pushCore(Promise.resolve({ done: false, value }));
     }
 
     public pushError(error: any) {
@@ -310,11 +303,11 @@ export class Queue<T> implements IReadPipe<T> {
     }
 
     public pushDone() {
-        this.pushCore(Promise.resolve(undefined));
+        this.pushCore(Promise.resolve({ done: true }));
         this.done = true;
     }
 
-    protected pushCore(value: Promise<T | undefined>) {
+    protected pushCore(value: Promise<IStreamResult<T>>) {
         assert(!this.done, 0x112 /* "cannot push onto queue if done" */);
         if (this.deferred) {
             assert(this.queue.length === 0, 0x113 /* "deferred queue should be empty" */);
@@ -325,14 +318,14 @@ export class Queue<T> implements IReadPipe<T> {
         }
     }
 
-    public async pop(): Promise<T | undefined> {
+    public async read(): Promise<IStreamResult<T>> {
         assert(this.deferred === undefined, 0x114 /* "cannot pop if deferred" */);
-        const el = this.queue.shift();
-        if (el !== undefined) {
-            return el;
+        const value = this.queue.shift();
+        if (value !== undefined) {
+            return value;
         }
         assert(!this.done, 0x115 /* "queue should not be done during pop" */);
-        this.deferred = new Deferred<T>();
+        this.deferred = new Deferred<IStreamResult<T>>();
         return this.deferred.promise;
     }
 }
@@ -348,7 +341,7 @@ export class Queue<T> implements IReadPipe<T> {
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-    deltaStorage: IDocumentDeltaStorageService,
+    get: (from: number, to: number) => Promise<IDeltasFetchResult>,
     request: number,
     from: number,
     to: number,
@@ -374,9 +367,7 @@ async function getSingleOpBatch(
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
             canRetry = true;
-            // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
-            // right is exclusive for both
-            const deltasP = deltaStorage.get(from - 1, to);
+            const deltasP = get(from, to);
 
             const { messages, partialResult } = await deltasP;
             deltas.push(...messages);
@@ -467,14 +458,14 @@ async function getSingleOpBatch(
 }
 
 export function requestOps(
-    deltaStorage: IDocumentDeltaStorageService,
+    get: (from: number, to: number) => Promise<IDeltasFetchResult>,
     concurrency: number,
     from: number,
     to: number | undefined,
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-): IReadPipe<ISequencedDocumentMessage[]> {
+): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
     let deltasRetrievedTotal = 0;
@@ -493,7 +484,7 @@ export function requestOps(
         logger,
         async (request: number, _from: number, _to: number, strongTo: boolean) => {
             requests++;
-            return getSingleOpBatch(deltaStorage, request, _from, _to, telemetryEvent, strongTo, signal);
+            return getSingleOpBatch(get, request, _from, _to, telemetryEvent, strongTo, signal);
         },
         (deltas: ISequencedDocumentMessage[]) => {
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
@@ -520,4 +511,35 @@ export function requestOps(
         });
 
     return queue;
+}
+
+export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
+    read: async () => { return { done: true };},
+};
+
+export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
+    IStream<ISequencedDocumentMessage[]>
+{
+    let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
+    return {
+        read: async () => {
+            if (messages === undefined) {
+                return { done: true };
+            }
+            const value = await messages;
+            messages = undefined;
+            return value.length === 0 ? { done: true } : { done: false, value };
+        },
+    };
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T> {
+    return {
+        read: async () => {
+            const value = await stream.read();
+            handler(value);
+            return value;
+        },
+    };
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,10 +24,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
         beforeEach(async () => {
             const container = await provider.makeTestContainer();
-            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
-            // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId)
-                .then((agentScheduler) => agentScheduler.IAgentScheduler);
+            scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId);
 
             const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
@@ -106,10 +103,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
         beforeEach(async () => {
             // Create a new Container for the first document.
             container1 = await provider.makeTestContainer();
-            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
-            // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId)
-                .then((agentScheduler) => agentScheduler.IAgentScheduler);
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
             const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
@@ -123,10 +117,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             }
             // Load existing Container for the second document.
             container2 = await provider.loadTestContainer();
-            // Back-compat: querying for IAgentScheduler since this request would return an ITaskManager prior to 0.36.
-            // Remove the query in 0.38 when back compat is no longer a concern.
-            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId)
-                .then((agentScheduler) => agentScheduler.IAgentScheduler);
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
             const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
             // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick

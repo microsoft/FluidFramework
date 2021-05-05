@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IRequest,
@@ -29,6 +29,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -134,6 +135,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.clientId;
     }
 
+    public get clientDetails(): IClientDetails {
+        return this._containerRuntime.clientDetails;
+    }
+
+    public get logger(): ITelemetryLogger {
+        return this._containerRuntime.logger;
+    }
+
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -142,12 +151,24 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.connected;
     }
 
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     public get leader(): boolean {
+        // The FluidDataStoreContext.leader property and "leader"/"notleader" events are deprecated 0.38
+        console.warn("The FluidDataStoreContext.leader property and \"leader\"/\"notleader\" events are deprecated, "
+            + "see BREAKING.md for more details and migration instructions");
+        // Disabling noisy telemetry until customers have had some time to migrate
+        // this.logger.sendErrorEvent({ eventName: "UsedDataStoreContextLeaderProperty" });
         return this._containerRuntime.leader;
     }
 
     public get loader(): ILoader {
         return this._containerRuntime.loader;
+    }
+
+    public get IFluidHandleContext() {
+        return this._containerRuntime.IFluidHandleContext;
     }
 
     public get containerRuntime(): IContainerRuntime {
@@ -243,7 +264,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this._containerRuntime.logger.sendErrorEvent(
+                this.logger.sendErrorEvent(
                     { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
                     error);
             });

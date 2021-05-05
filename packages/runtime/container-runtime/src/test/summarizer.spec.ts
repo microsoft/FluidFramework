@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,130 +13,140 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("RunningSummarizer", () => {
-            describe("Summary Schedule", () => {
-                let runCount: number;
-                let clock: sinon.SinonFakeTimers;
-                let mockLogger: MockLogger;
-                let summaryCollection: SummaryCollection;
-                let summarizer: RunningSummarizer;
-                const summarizerClientId = "test";
-                const onBehalfOfClientId = "behalf";
-                let lastRefSeq = 0;
-                let lastClientSeq = -1000; // negative/decrement for test
-                let lastSummarySeq = 0; // negative/decrement for test
-                const summaryConfig: ISummaryConfiguration = {
-                    idleTime: 5000, // 5 sec (idle)
-                    maxTime: 5000 * 12, // 1 min (active)
-                    maxOps: 1000, // 1k ops (active)
-                    maxAckWaitTime: 120000, // 2 min
+            let runCount: number;
+            let clock: sinon.SinonFakeTimers;
+            let mockLogger: MockLogger;
+            let mockDeltaManager: MockDeltaManager;
+            let summaryCollection: SummaryCollection;
+            let summarizer: RunningSummarizer;
+            const summarizerClientId = "test";
+            const onBehalfOfClientId = "behalf";
+            let lastRefSeq = 0;
+            let lastClientSeq = -1000; // negative/decrement for test
+            let lastSummarySeq = 0; // negative/decrement for test
+            const summaryConfig: ISummaryConfiguration = {
+                idleTime: 5000, // 5 sec (idle)
+                maxTime: 5000 * 12, // 1 min (active)
+                maxOps: 1000, // 1k ops (active)
+                maxAckWaitTime: 120000, // 2 min
+            };
+            let shouldDeferGenerateSummary: boolean = false;
+            let deferGenerateSummary: Deferred<void>;
+
+            const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+
+            async function emitNextOp(increment: number = 1, timestamp: number = Date.now()) {
+                lastRefSeq += increment;
+                const op: Partial<ISequencedDocumentMessage> = {
+                    sequenceNumber: lastRefSeq,
+                    timestamp,
                 };
-                let shouldDeferGenerateSummary: boolean = false;
-                let deferGenerateSummary: Deferred<void>;
+                summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
+                mockDeltaManager.emit("op", op);
+                await flushPromises();
+            }
 
-                const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
-
-                async function emitNextOp(increment: number = 1, timestamp: number = Date.now()) {
-                    lastRefSeq += increment;
-                    const op: Partial<ISequencedDocumentMessage> = {
-                        sequenceNumber: lastRefSeq,
-                        timestamp,
-                    };
-                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
-                    summaryCollection.handleOp(op as ISequencedDocumentMessage);
-                    await flushPromises();
-                }
-
-                function emitBroadcast() {
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({
-                        type: MessageType.Summarize,
-                        clientId: summarizerClientId,
-                        referenceSequenceNumber: lastRefSeq,
-                        clientSequenceNumber: --lastClientSeq,
-                        sequenceNumber: --lastSummarySeq,
-                        contents: {
-                            handle: "test-broadcast-handle",
-                        },
-                        timestamp: Date.now(),
-                    } as ISequencedDocumentMessage);
-                }
-
-                async function emitAck(type: MessageType = MessageType.SummaryAck) {
-                    const summaryProposal: ISummaryProposal = {
-                        summarySequenceNumber: lastSummarySeq,
-                    };
-                    const contents: ISummaryAck = {
-                        handle: "test-ack-handle",
-                        summaryProposal,
-                    };
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
-
-                    await flushPromises(); // let summarize run
-                }
-
-                async function tickAndFlushPromises(ms: number) {
-                    clock.tick(ms);
-                    await flushPromises();
-                }
-
-                before(() => {
-                    clock = sinon.useFakeTimers();
+            function emitBroadcast(timestamp = Date.now()) {
+                mockDeltaManager.emit("op",{
+                    type: MessageType.Summarize,
+                    clientId: summarizerClientId,
+                    referenceSequenceNumber: lastRefSeq,
+                    clientSequenceNumber: --lastClientSeq,
+                    sequenceNumber: --lastSummarySeq,
+                    contents: {
+                        handle: "test-broadcast-handle",
+                    },
+                    timestamp,
                 });
+            }
 
+            async function emitAck(type: MessageType = MessageType.SummaryAck) {
+                const summaryProposal: ISummaryProposal = {
+                    summarySequenceNumber: lastSummarySeq,
+                };
+                const contents: ISummaryAck = {
+                    handle: "test-ack-handle",
+                    summaryProposal,
+                };
+                mockDeltaManager.emit("op", { contents, type });
+
+                await flushPromises(); // let summarize run
+            }
+
+            async function tickAndFlushPromises(ms: number) {
+                clock.tick(ms);
+                await flushPromises();
+            }
+
+            const startRunningSummarizer = async (): Promise<void> => {
+                summarizer = await RunningSummarizer.start(
+                    summarizerClientId,
+                    onBehalfOfClientId,
+                    mockLogger,
+                    summaryCollection.createWatcher(summarizerClientId),
+                    summaryConfig,
+                    { generateSummary: async () => {
+                        runCount++;
+
+                        // immediate broadcast
+                        emitBroadcast();
+
+                        if (shouldDeferGenerateSummary) {
+                            deferGenerateSummary = new Deferred<void>();
+                            await deferGenerateSummary.promise;
+                        }
+                        return {
+                            referenceSequenceNumber: lastRefSeq,
+                            submitted: true,
+                            summaryStats: {
+                                treeNodeCount: 0,
+                                blobNodeCount: 0,
+                                handleNodeCount: 0,
+                                totalBlobSize: 0,
+                            },
+                            handle: "test-handle",
+                            clientSequenceNumber: lastClientSeq,
+                        };
+                    } },
+                    0,
+                    { refSequenceNumber: 0, summaryTime: Date.now() },
+                    false,
+                    () => { },
+                    summaryCollection,
+                );
+            };
+
+            before(() => {
+                clock = sinon.useFakeTimers();
+            });
+
+            after(() => {
+                clock.restore();
+            });
+
+            beforeEach(async () => {
+                shouldDeferGenerateSummary = false;
+                clock.reset();
+                runCount = 0;
+                lastRefSeq = 0;
+                mockLogger = new MockLogger();
+                mockDeltaManager = new MockDeltaManager();
+                summaryCollection = new SummaryCollection(
+                    mockDeltaManager,
+                    mockLogger,
+                    {});
+            });
+
+            describe("Summary Schedule", () => {
                 beforeEach(async () => {
-                    shouldDeferGenerateSummary = false;
-                    clock.reset();
-                    runCount = 0;
-                    lastRefSeq = 0;
-                    mockLogger = new MockLogger();
-                    summaryCollection = new SummaryCollection(0, mockLogger);
-                    summarizer = await RunningSummarizer.start(
-                        summarizerClientId,
-                        onBehalfOfClientId,
-                        mockLogger,
-                        summaryCollection.createWatcher(summarizerClientId),
-                        summaryConfig,
-                        { generateSummary: async () => {
-                            runCount++;
-
-                            // immediate broadcast
-                            emitBroadcast();
-
-                            if (shouldDeferGenerateSummary) {
-                                deferGenerateSummary = new Deferred<void>();
-                                await deferGenerateSummary.promise;
-                            }
-                            return {
-                                referenceSequenceNumber: lastRefSeq,
-                                submitted: true,
-                                summaryStats: {
-                                    treeNodeCount: 0,
-                                    blobNodeCount: 0,
-                                    handleNodeCount: 0,
-                                    totalBlobSize: 0,
-                                },
-                                handle: "test-handle",
-                                clientSequenceNumber: lastClientSeq,
-                            };
-                        } },
-                        0,
-                        { refSequenceNumber: 0, summaryTime: Date.now() },
-                        false,
-                        () => { },
-                        summaryCollection,
-                    );
-                });
-
-                after(() => {
-                    clock.restore();
+                    await startRunningSummarizer();
                 });
 
                 it("Should summarize after configured number of ops when not pending", async () => {
@@ -150,7 +160,6 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assert.strictEqual(runCount, 1);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
                         { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
@@ -164,7 +173,6 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 2);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:SummaryAck", summaryGenTag: (runCount - 1) }, // ack for previous run
-                        { eventName: "Running:GenerateSummary_start", summaryGenTag: runCount },
                         { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
@@ -285,35 +293,38 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 2);
                     deferGenerateSummary.resolve();
                 });
+            });
 
-                it("Should summarize immediately if summary ack is missing", async () => {
+            describe("Summary Start", () => {
+                it("Should summarize immediately if summary ack is missing at startup", async () => {
                     assert.strictEqual(runCount, 0);
                     // Simulate as summary op was in opstream.
-                    emitBroadcast();
-                    // Start the timer so that it can be turned off due to timeout by op.
-                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                    summarizer["pendingAckTimer"].start();
+                    const summaryTimestamp = Date.now();
+                    emitBroadcast(summaryTimestamp);
 
-                    await emitNextOp(1);
-                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                    assert.strictEqual(summarizer["pendingAckTimer"].hasTimer, true,
-                        "Timer should be running as timestamp is within maxAckWaitTime");
+                    let startStatus: "starting" | "started" | "failed" = "starting";
+                    startRunningSummarizer().then(() => startStatus = "started", () => startStatus = "failed");
+                    await flushPromises();
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since outstanding summary op");
+
+                    // Still should be waiting
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime - 1);
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since timestamp is within maxAckWaitTime");
 
                     // Emit next op after maxAckWaitTime
-                    await emitNextOp(1, Date.now() + summaryConfig.maxAckWaitTime + 1000);
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:MissingSummaryAckFoundByOps" },
                     ]), "unexpected log sequence 1");
 
-                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                    assert.strictEqual(summarizer["pendingAckTimer"].hasTimer, false,
-                        "Timer should be off by the above op");
+                    assert.strictEqual(startStatus, "started",
+                        "RunningSummarizer should be started from the above op");
 
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 1);
+                    assert.strictEqual(runCount, 1, "Should run summarizer once");
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_start",
-                            summaryGenTag: runCount, message: "maxOps" },
                         { eventName: "Running:GenerateSummary_end",
                             summaryGenTag: runCount, message: "maxOps" },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },

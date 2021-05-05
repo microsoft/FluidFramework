@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,7 +24,7 @@ import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
 
-export async function getDeltas(
+async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,

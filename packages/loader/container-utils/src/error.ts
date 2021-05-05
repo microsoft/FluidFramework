@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -23,7 +23,7 @@ function messageFromError(error: any): string {
 }
 
 const isValidLoggingError = (error: any): error is LoggingError => {
-    return typeof error?.errorType === "string" && error instanceof LoggingError;
+    return typeof error?.errorType === "string" &&  LoggingError.is(error);
 };
 
 const isRegularObject = (value: any): boolean => {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -18,6 +18,7 @@ import {
 	SharedTreeEvent,
 	Checkout,
 	CheckoutEvent,
+	Change,
 } from '../index';
 import {
 	left,
@@ -35,33 +36,43 @@ import {
  */
 export function checkoutTests(
 	suiteName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout>
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change>>
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true }
-	): Promise<{ checkout: Checkout; tree: SharedTree }> {
+	): Promise<{ checkout: Checkout<Change>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
 
 	/**
-	 * Counts the number of times invalidation occurs while performing `action`.
+	 * Counts the number of times ViewChange occurs while performing `action`.
+	 * Checks arguments to ViewChange are correct as well.
 	 * @param action Action to perform
 	 * @param options Options object used to construct the initial SharedTree
 	 */
-	async function countInvalidations(
-		action: (checkout: Checkout) => void,
+	async function countViewChange(
+		action: (checkout: Checkout<Change>, data: { changeCount: number }) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout } = await setUpTestCheckout(options);
-
-		let invalidations = 0;
-		checkout.on(CheckoutEvent.ViewChange, () => {
-			invalidations++;
+		let lastView = checkout.currentView;
+		const data = { changeCount: 0 };
+		checkout.on(CheckoutEvent.ViewChange, (before, after) => {
+			expect(after).equals(checkout.currentView);
+			expect(before).equals(lastView);
+			lastView = after;
+			data.changeCount++;
+		});
+		// Prevent errors from errors (like failed expects) from being hidden.
+		const errors: Error[] = [];
+		checkout.on('error', (error) => {
+			errors.push(error);
 		});
 
-		action(checkout);
-		return invalidations;
+		await action(checkout, data);
+		expect(errors).deep.equal([]);
+		return data.changeCount;
 	}
 
 	return describe(suiteName, () => {
@@ -158,6 +169,23 @@ export function checkoutTests(
 			expect(() => checkout.getEditStatus()).throws();
 		});
 
+		it('Surfaces error events to SharedTree', async () => {
+			const { checkout, tree } = await setUpTestCheckout();
+			const message = 'Simulated unexpected error in ViewChange event handler';
+			checkout.on(CheckoutEvent.ViewChange, () => {
+				throw Error(message);
+			});
+			let treeErrorHandlerWasCalled = false;
+			tree.on('error', (error) => {
+				treeErrorHandlerWasCalled = true;
+				expect(error).to.have.property('message').that.equals(message);
+			});
+
+			// This could alternatively actually cause a ViewChange via application of an edit.
+			checkout.emit(CheckoutEvent.ViewChange, checkout.currentView, checkout.currentView);
+			expect(treeErrorHandlerWasCalled).equals(true);
+		});
+
 		it('exposes the current edit status in the face of valid edits', async () => {
 			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
 
@@ -234,7 +262,7 @@ export function checkoutTests(
 		});
 
 		it('does not invalidate in response to an empty edit', async () => {
-			const invalidations = await countInvalidations((checkout) => {
+			const invalidations = await countViewChange((checkout) => {
 				checkout.openEdit();
 				checkout.closeEdit();
 			});
@@ -245,12 +273,13 @@ export function checkoutTests(
 			const { checkout, tree } = await setUpTestCheckout();
 			checkout.openEdit();
 			const editId = checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			expect(tree.edits.length).equals(1);
 			expect(tree.edits.tryGetEdit(editId)).is.not.undefined;
 		});
 
 		it('will emit invalidation messages in response to changes', async () => {
-			const invalidations = await countInvalidations(
+			const invalidations = await countViewChange(
 				(checkout) => {
 					checkout.applyEdit(Delete.create(StableRange.only(left)));
 				},
@@ -259,29 +288,60 @@ export function checkoutTests(
 			expect(invalidations).equals(1);
 		});
 
+		it('will emit invalidation messages in response to payload change', async () => {
+			const invalidations = await countViewChange(
+				(checkout) => {
+					checkout.applyEdit(Change.setPayload(left.identifier, 5));
+				},
+				{ initialTree: simpleTestTree }
+			);
+			expect(invalidations).equals(1);
+		});
+
 		it('emits a change event for each batch of changes in a local edit', async () => {
+			const changes = await countViewChange(
+				async (checkout, data) => {
+					checkout.on(CheckoutEvent.ViewChange, () => {
+						const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
+						const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
+
+						if (data.changeCount === 1) {
+							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+							expect(rightTrait.length).to.equal(1); // ...but "right" child is not
+						} else if (data.changeCount === 2) {
+							expect(leftTrait.length).to.equal(0); // "left" child is deleted...
+							expect(rightTrait.length).to.equal(0); // ...and so is "right" child
+						}
+					});
+
+					checkout.openEdit();
+					expect(data.changeCount).equals(0);
+					checkout.applyChanges(Delete.create(StableRange.only(left)));
+					expect(data.changeCount).equals(1);
+					checkout.applyChanges(Delete.create(StableRange.only(right)));
+					expect(data.changeCount).equals(2);
+					checkout.closeEdit();
+					await checkout.waitForPendingUpdates();
+				},
+				{ initialTree: simpleTestTree }
+			);
+
+			// Checkout's use of LogViewer.setKnownEditingResult should enable CachingLogViewer
+			// to return the exact same SnapShot object, allowing checkout to so skip an extra change event from closeEdit.
+			expect(changes).equals(2);
+		});
+
+		it('emits ViewChange events for edits directly on tree', async () => {
 			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
 			let changeCount = 0;
 			checkout.on(CheckoutEvent.ViewChange, () => {
-				const leftTrait = checkout.currentView.getTrait(leftTraitLocation);
-				const rightTrait = checkout.currentView.getTrait(rightTraitLocation);
-
-				if (changeCount === 0) {
-					expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-					expect(rightTrait.length).to.equal(1); // ...but "right" child is not
-				} else if (changeCount === 1) {
-					expect(leftTrait.length).to.equal(0); // "left" child is deleted...
-					expect(rightTrait.length).to.equal(0); // ...and so is "right" child
-				}
-
 				changeCount += 1;
 			});
-
-			checkout.openEdit();
-			checkout.applyChanges(Delete.create(StableRange.only(left)));
-			checkout.applyChanges(Delete.create(StableRange.only(right)));
-			checkout.closeEdit();
-			expect(changeCount).equals(2);
+			expect(changeCount).equals(0);
+			checkout.tree.applyEdit(Delete.create(StableRange.only(left)));
+			// Wait for edit to be included in checkout.
+			await checkout.waitForPendingUpdates();
+			expect(changeCount).equals(1);
 		});
 
 		const treeOptions = { initialTree: simpleTestTree, localMode: false };
@@ -289,6 +349,30 @@ export function checkoutTests(
 			id: 'secondTestSharedTree',
 			localMode: false,
 		};
+
+		it('emits ViewChange events for remote edits', async () => {
+			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ ...treeOptions });
+
+			const { tree: secondTree } = setUpTestSharedTree({
+				containerRuntimeFactory,
+				...secondTreeOptions,
+			});
+
+			containerRuntimeFactory.processAllMessages();
+			const checkout = await checkoutFactory(tree);
+
+			let changeCount = 0;
+			checkout.on(CheckoutEvent.ViewChange, () => {
+				changeCount += 1;
+			});
+
+			secondTree.applyEdit(Delete.create(StableRange.only(left)));
+			expect(changeCount).equals(0);
+			containerRuntimeFactory.processAllMessages();
+			// Wait for edit to be included in checkout.
+			await checkout.waitForPendingUpdates();
+			expect(changeCount).equals(1);
+		});
 
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
@@ -316,6 +400,8 @@ export function checkoutTests(
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.closeEdit();
 			secondCheckout.closeEdit();
+			await checkout.waitForPendingUpdates();
+			await secondCheckout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 			expect(tree.equals(secondTree)).to.be.true;
 			await checkout.waitForPendingUpdates();
@@ -340,6 +426,7 @@ export function checkoutTests(
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
 			// modifications should be reflected in the current view.
@@ -368,6 +455,7 @@ export function checkoutTests(
 			expect(rightTrait.length).equals(0);
 
 			checkout.closeEdit();
+			await checkout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 
 			expect(tree.equals(secondTree)).to.be.true;
@@ -389,6 +477,7 @@ export function checkoutTests(
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
 			secondCheckout.applyEdit(Delete.create(StableRange.only(right)));
+			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();
 			await checkout.waitForPendingUpdates();
