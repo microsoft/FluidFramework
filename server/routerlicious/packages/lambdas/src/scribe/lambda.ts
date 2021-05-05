@@ -323,7 +323,7 @@ export class ScribeLambda implements IPartitionLambda {
                     this.serviceConfiguration.scribe.nackMessages.maxOps === this.sequenceNumber - this.protocolHead) {
                     // this op brings us over the limit
                     // tell deli to start nacking non-system ops and ops that are submitted by non-summarizers
-                    await this.sendNackMessagesMessage({
+                    await this.sendNackMessage({
                         content: this.serviceConfiguration.scribe.nackMessages.nackContent,
                         allowSystemMessages: true,
                         allowedScopes: [ScopeType.SummaryWrite],
@@ -446,7 +446,7 @@ export class ScribeLambda implements IPartitionLambda {
             this.serviceConfiguration.scribe.nackMessages.maxOps >= (this.sequenceNumber - this.protocolHead)) {
             // we were over the limit, so we must have been nacking messages
             // tell deli to stop
-            await this.sendNackMessagesMessage(undefined);
+            await this.sendNackMessage(undefined);
         }
 
         this.protocolHead = protocolHead;
@@ -501,7 +501,7 @@ export class ScribeLambda implements IPartitionLambda {
         return this.sendToDeli(operation);
     }
 
-    private async sendNackMessagesMessage(contents: INackMessagesControlMessageContents | undefined) {
+    private async sendNackMessage(contents: INackMessagesControlMessageContents | undefined) {
         const controlMessage: IControlMessage = {
             type: ControlMessageType.NackMessages,
             contents,
