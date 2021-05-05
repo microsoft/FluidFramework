@@ -5,11 +5,11 @@ FROM node:12.20.1-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
+    python \
+    make \
+    git \
+    curl \
+    g++
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -36,7 +36,6 @@ COPY packages/routerlicious-base/package*.json packages/routerlicious-base/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
-COPY packages/services-ordering-eventhub/package*.json packages/services-ordering-eventhub/
 COPY packages/services-ordering-kafkanode/package*.json packages/services-ordering-kafkanode/
 COPY packages/services-ordering-rdkafka/package*.json packages/services-ordering-rdkafka/
 COPY packages/services-ordering-zookeeper/package*.json packages/services-ordering-zookeeper/
