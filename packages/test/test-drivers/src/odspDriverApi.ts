@@ -20,7 +20,7 @@ import {
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
- } from "@fluid-internal/test-pairwise-generator";
+ } from "@fluidframework/test-pairwise-generator";
 import { pkgVersion } from "./packageVersion";
 
 export const OdspDriverApi = {

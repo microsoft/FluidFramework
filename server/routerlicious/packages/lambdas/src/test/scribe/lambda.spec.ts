@@ -10,7 +10,6 @@ import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenant
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
-import nconf from "nconf";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -82,9 +81,7 @@ describe("Routerlicious", () => {
                     DefaultServiceConfiguration);
 
                 testContext = new TestContext();
-                const config = (new nconf.Provider({})).defaults({ documentId: testDocumentId, tenantId: testTenantId })
-                    .use("memory");
-                lambda = await factory.create(config, testContext) as ScribeLambda;
+                lambda = await factory.create({ documentId: testDocumentId, tenantId: testTenantId, leaderEpoch: 0 }, testContext) as ScribeLambda;
                 messageFactory.createSequencedOperation();// mock join op.
             });
 

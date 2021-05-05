@@ -83,7 +83,6 @@
     "@types/ioredis": "^4.22.0",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.0",
-    "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.0",
     "@types/node": "^12.19.0",
