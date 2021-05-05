@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.90.1
+
+_Version update only._
+
 ## 0.90.0
 
 * refactor: BREAKING CHANGE: move benchmarking code into its own package
