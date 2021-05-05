@@ -117,46 +117,51 @@ export class TinyliciousClientInstance {
 }
 
 /**
- * Singular global instance that lets the developer define all Container interactions with the Tinylicious service
+ * TinyliciousClient static class with singular global instance that lets the developer define
+ * all Container interactions with the Tinylicious service
  */
-let globalTinyliciousClient: TinyliciousClientInstance | undefined;
-export const TinyliciousClient = {
-    init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
-        if (globalTinyliciousClient) {
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class TinyliciousClient {
+    private static globalInstance: TinyliciousClientInstance | undefined;
+
+    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
+        if (TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient cannot be initialized more than once",
             );
         }
-        globalTinyliciousClient = new TinyliciousClientInstance(
+        TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,
         );
-    },
-    async createContainer(
+    }
+
+    static async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
-        if (!globalTinyliciousClient) {
+        if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to create a container",
             );
         }
-        return globalTinyliciousClient.createContainer(
+        return TinyliciousClient.globalInstance.createContainer(
             serviceConfig,
             objectConfig,
         );
-    },
-    async getContainer(
+    }
+
+    static async getContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
-        if (!globalTinyliciousClient) {
+        if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to get a container",
             );
         }
-        return globalTinyliciousClient.getContainer(
+        return TinyliciousClient.globalInstance.getContainer(
             serviceConfig,
             objectConfig,
         );
-    },
-};
+    }
+}
