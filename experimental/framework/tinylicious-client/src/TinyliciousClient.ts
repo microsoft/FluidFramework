@@ -122,14 +122,15 @@ export class TinyliciousClientInstance {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TinyliciousClient {
-    private static globalTinyliciousClient: TinyliciousClientInstance | undefined;
+    private static globalInstance: TinyliciousClientInstance | undefined;
+
     static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
-        if (this.globalTinyliciousClient) {
+        if (TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient cannot be initialized more than once",
             );
         }
-        this.globalTinyliciousClient = new TinyliciousClientInstance(
+        TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,
         );
     }
@@ -138,12 +139,12 @@ export class TinyliciousClient {
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
-        if (!this.globalTinyliciousClient) {
+        if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to create a container",
             );
         }
-        return this.globalTinyliciousClient.createContainer(
+        return TinyliciousClient.globalInstance.createContainer(
             serviceConfig,
             objectConfig,
         );
@@ -153,12 +154,12 @@ export class TinyliciousClient {
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
     ): Promise<FluidContainer> {
-        if (!this.globalTinyliciousClient) {
+        if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to get a container",
             );
         }
-        return this.globalTinyliciousClient.getContainer(
+        return TinyliciousClient.globalInstance.getContainer(
             serviceConfig,
             objectConfig,
         );
