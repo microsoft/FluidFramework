@@ -6,7 +6,7 @@ This package is marked as experimental and currently under development. The API 
 
 ## Using tinylicious-client
 
-The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
+The tinylicious-client package has a default `TinyliciousClient` static class that allows you to interact with Fluid.
 
 ```javascript
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";

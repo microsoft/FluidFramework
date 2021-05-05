@@ -3,5 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { TinyliciousClient, TinyliciousClientInstance } from "./TinyliciousClient";
+import { TinyliciousClient } from "./TinyliciousClient";
+
 export * from "./interfaces";
+// eslint-disable-next-line import/no-default-export
+export default TinyliciousClient;
