@@ -35,7 +35,11 @@ export interface IFluidContainerEvents extends IEvent {
  * FluidContainer defines the interface that the developer will use to interact with Fluid.
  */
 export interface FluidContainer
-    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
+    extends Pick<Container,
+    "audience" |
+    "clientId" |
+    "attachState"
+    >, IEventProvider<IFluidContainerEvents> {
     /**
      * The initialObjects defined in the container config
      */
@@ -128,6 +132,14 @@ export class RootDataObject
             throw new Error("Initial Objects were not correctly initialized");
         }
         return this._initialObjects;
+    }
+
+    public get attachState() {
+        return this.context.attachState;
+    }
+
+    public get disposed() {
+        return super.disposed;
     }
 
     public async create<T extends IFluidLoadable>(
