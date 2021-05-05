@@ -14,12 +14,11 @@ import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspSummaryPayload,
-    ISnapshotResponse,
-    ISnapshotTree,
-    ISnapshotTreeBaseEntry,
-    SnapshotTreeEntry,
-    SnapshotTreeValue,
-    SnapshotType,
+    IWriteSummaryResponse,
+    IOdspSummaryTree,
+    IOdspSummaryTreeBaseEntry,
+    OdspSummaryTreeEntry,
+    OdspSummaryTreeValue,
 } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -83,7 +82,7 @@ export class OdspSummaryUploadManager {
         parentHandle: string | undefined,
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
-    ): Promise<ISnapshotResponse> {
+    ): Promise<IWriteSummaryResponse> {
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             // Clone as we change the blob contents.
@@ -95,7 +94,7 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            type: SnapshotType.Channel,
+            type: "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -117,7 +116,7 @@ export class OdspSummaryUploadManager {
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await this.epochTracker.fetchAndParseAsJSON<ISnapshotResponse>(
+                    const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
                         url,
                         {
                             body: postBody,
@@ -146,9 +145,9 @@ export class OdspSummaryUploadManager {
         path: string = "",
         markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
     ) {
-        const snapshotTree: ISnapshotTree = {
+        const snapshotTree: IOdspSummaryTree = {
             type: "tree",
-            entries: [] as SnapshotTreeEntry[],
+            entries: [] as OdspSummaryTreeEntry[],
         };
 
         let blobs = 0;
@@ -157,7 +156,7 @@ export class OdspSummaryUploadManager {
             const summaryObject = tree.tree[key];
 
             let id: string | undefined;
-            let value: SnapshotTreeValue | undefined;
+            let value: OdspSummaryTreeValue | undefined;
 
             // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
             // property is not present, the tree entry is considered referenced. If the property is present and is
@@ -214,12 +213,12 @@ export class OdspSummaryUploadManager {
                 }
             }
 
-            const baseEntry: ISnapshotTreeBaseEntry = {
+            const baseEntry: IOdspSummaryTreeBaseEntry = {
                 path: encodeURIComponent(key),
                 type: getGitType(summaryObject),
             };
 
-            let entry: SnapshotTreeEntry;
+            let entry: OdspSummaryTreeEntry;
 
             if (value) {
                 assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);
