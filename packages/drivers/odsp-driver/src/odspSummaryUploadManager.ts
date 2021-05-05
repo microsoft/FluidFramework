@@ -190,8 +190,6 @@ export class OdspSummaryUploadManager {
                             encoding: "base64",
                         };
                     }
-
-                    (summaryObject as any).content = undefined;
                     blobs++;
                     break;
                 }
