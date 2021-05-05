@@ -118,8 +118,6 @@ class BlobCache {
     // Initial time-out to purge data from cache
     // If this time out is very small, then we purge blobs from cache too soon and that results in a lot of
     // requests to storage, which brings down perf and may trip protection limits causing 429s
-    // Also we need to ensure that buildCachesForDedup() is called with full cache for summarizer client to build
-    // its SHA cache for blobs (currently that happens as result of requesting snapshot tree)
     private blobCacheTimeoutDuration = 2 * 60 * 1000;
 
     // SPO does not keep old snapshots around for long, so we are running chances of not
@@ -286,7 +284,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             key: "",
         };
 
-        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker, this.hostPolicy);
+        this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
     }
 
     public get repositoryUrl(): string {
@@ -463,10 +461,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const appTree = hierarchicalTree.trees[".app"];
             const protocolTree = hierarchicalTree.trees[".protocol"];
             finalTree = this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
-        }
-
-        if (this.hostPolicy.summarizerClient && this.hostPolicy.blobDeduping) {
-            await this.odspSummaryUploadManager.buildCachesForDedup(finalTree, this.blobCache.value);
         }
         return finalTree;
     }
