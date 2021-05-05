@@ -97,7 +97,7 @@ export interface IWriteSummaryResponse {
     id: string;
 }
 
-export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | ISummaryTreeHandleEntry;
+export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | IOdspSummaryTreeHandleEntry;
 
 export interface IOdspSummaryTreeBaseEntry {
     path: string;
@@ -110,7 +110,7 @@ export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
     unreferenced?: true;
 }
 
-export interface ISummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
+export interface IOdspSummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
     id: string;
 }
 
