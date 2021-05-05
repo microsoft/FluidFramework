@@ -69,6 +69,7 @@ export interface IMapValueTypeOperation {
 
     /**
      * Value of the operation, specific to the value type.
+     * @alpha
      */
     value: IValueTypeOperationValue;
 }
