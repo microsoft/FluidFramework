@@ -1,3 +1,9 @@
+## 0.40 Breaking changes
+- [Additions to `ILoader` interface](#additions-to-iloader-interface)
+
+### Additions to `ILoader` interface
+A new required property `handlesExternalRequests` is added to the `ILoader` interface.  This indicates if a loader implementation is able to handle requests external to that loader.
+
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)
 - [LoaderHeader.pause](#LoaderHeader.pause)
