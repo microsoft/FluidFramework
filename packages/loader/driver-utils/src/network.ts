@@ -126,4 +126,4 @@ export function createGenericNetworkError(
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds * 1000;
