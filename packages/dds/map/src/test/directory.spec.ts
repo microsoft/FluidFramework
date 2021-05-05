@@ -373,7 +373,7 @@ describe("Directory", () => {
                 const header = summaryTree.tree.header as ISummaryBlob;
                 assert(header !== undefined, "header not present in summary");
                 assert.strictEqual(header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
-                assert(header.content.length <= 250, "header's length is incorrect");
+                assert(header.content.length <= 200, "header's length is incorrect");
 
                 const directory2 = new SharedDirectory("test", dataStoreRuntime, DirectoryFactory.Attributes);
                 const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
