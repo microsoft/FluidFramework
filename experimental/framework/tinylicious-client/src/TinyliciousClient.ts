@@ -126,8 +126,9 @@ export class TinyliciousClient {
 
     static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (TinyliciousClient.globalInstance) {
-            throw new Error(
-                "TinyliciousClient cannot be initialized more than once",
+            console.log(
+                `TinyliciousClient has already been initialized. Using existing instance of
+                TinyliciousClient instead.`,
             );
         }
         TinyliciousClient.globalInstance = new TinyliciousClientInstance(
