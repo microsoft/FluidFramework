@@ -15,6 +15,10 @@
   * Associated pull request: [29904](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29904)
   * Commit: [887c249e7defbebd9622c8906eb96d23818ecb6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/887c249e7defbebd9622c8906eb96d23818ecb6d)
 
+## 0.90.1
+
+_Version update only._
+
 ## 0.90.0
 
 * refactor: BREAKING CHANGE: move benchmarking code into its own package
