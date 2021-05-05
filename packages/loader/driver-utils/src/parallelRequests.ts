@@ -10,8 +10,8 @@ import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driv
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
-const MaxFetchDelaySeconds = 10;
-const MissingFetchDelaySeconds = 0.1;
+const MaxFetchDelayInMs = 10000;
+const MissingFetchDelayInMs = 100;
 
 /**
  * Helper class to organize parallel fetching of data
@@ -361,7 +361,7 @@ async function getSingleOpBatch(
 
     while (signal?.aborted !== true) {
         retry++;
-        let delay = Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
+        let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
         let canRetry = false;
 
         try {
