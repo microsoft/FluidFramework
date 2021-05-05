@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.96.2
+
+* Merge remote-tracking branch 'origin/releases/2021.04.4' into user/crmacomb/releaseupdate4.5
+  * Commit: [5b3afe17772c76d3222c9966f015b1566c7e467c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5b3afe17772c76d3222c9966f015b1566c7e467c)
+
 ## 0.96.1
 
 * fix: Reduce frequency of edit chunk upload to prevent SPO throttling
