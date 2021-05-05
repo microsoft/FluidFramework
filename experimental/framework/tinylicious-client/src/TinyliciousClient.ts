@@ -122,7 +122,7 @@ export class TinyliciousClientInstance {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TinyliciousClient {
-    static globalTinyliciousClient: TinyliciousClientInstance | undefined;
+    private static globalTinyliciousClient: TinyliciousClientInstance | undefined;
     static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (this.globalTinyliciousClient) {
             throw new Error(
