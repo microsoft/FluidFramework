@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -50,15 +49,16 @@ function canUseCache(request: IRequest): boolean {
     return request.headers[LoaderHeader.cache] !== false;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader implements ILoader {
     constructor(
-        private readonly loader: ILoader,
         private readonly container: Container,
+        private readonly loader: ILoader | undefined,
     ) {
-        super();
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
+
+    public get handlesExternalRequests(): boolean { return this.loader !== undefined; }
 
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
@@ -81,6 +81,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             }
         }
 
+        if (this.loader === undefined) {
+            throw new Error("Cannot resolve external containers");
+        }
         return this.loader.resolve(request);
     }
 
@@ -88,6 +91,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         if (request.url.startsWith("/")) {
             const container = await this.resolve(request);
             return container.request(request);
+        }
+
+        if (this.loader === undefined) {
+            return {
+                status: 400,
+                value:"Cannot request external containers",
+                mimeType:"plain/text",
+            };
         }
         return this.loader.request(request);
     }
@@ -204,7 +215,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -234,10 +245,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     constructor(loaderProps: ILoaderProps) {
-        super();
-
         const scope = { ...loaderProps.scope };
-        if (loaderProps.options?.provideScopeLoader === true) {
+        if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
 
@@ -254,6 +263,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
+
+    public get handlesExternalRequests(): boolean { return true; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
@@ -343,8 +354,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             }
         }
 
-        // parseUrl's id is expected to be of format "tenantId/docId"
-        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
@@ -357,7 +366,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -366,7 +374,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
-                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -424,7 +431,6 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
-        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,

@@ -186,6 +186,11 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
  */
 export interface ILoader extends IFluidRouter {
     /**
+     * If the loader can resolve external requests
+     */
+    readonly handlesExternalRequests: boolean;
+
+    /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
      *
@@ -229,8 +234,8 @@ export type ILoaderOptions = {
      * Provide the current Loader through the scope object when creating Containers.  It is added
      * as the `ILoader` property, and will overwrite an existing property of the same name on the
      * scope.  Useful for when the host wants to provide the current Loader's functionality to
-     * individual Data Stores.
-     * Defaults to false.
+     * individual Data Stores, which is typically expected when creating with a Loader.
+     * Defaults to true.
      */
     provideScopeLoader?: boolean;
 

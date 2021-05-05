@@ -277,7 +277,7 @@ export interface IFluidDataStoreContext extends
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     readonly loader: ILoader;
