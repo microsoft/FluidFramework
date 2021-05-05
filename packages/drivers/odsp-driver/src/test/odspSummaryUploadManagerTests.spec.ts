@@ -15,7 +15,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { IDedupCaches, OdspSummaryUploadManager } from "../odspSummaryUploadManager";
-import { IBlob } from "../contracts";
+import { IOdspSnapshotBlob } from "../contracts";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
@@ -38,7 +38,7 @@ describe("Odsp Summary Upload Manager Tests", () => {
     });
 
     it("Should populate caches properly", async () => {
-        const blobCache = new Map<string, IBlob>();
+        const blobCache = new Map<string, IOdspSnapshotBlob>();
 
         blobCache.set("blob1", { content: "blob1", id: "blob1", size: 5, encoding: undefined });
         blobCache.set("blob2", { content: "blob2", id: "blob2", size: 5, encoding: undefined });

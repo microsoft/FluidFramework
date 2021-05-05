@@ -14,14 +14,13 @@ import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     HostStoragePolicyInternal,
-    IBlob,
+    IOdspSnapshotBlob,
     IOdspSummaryPayload,
-    ISnapshotResponse,
-    ISnapshotTree,
-    ISnapshotTreeBaseEntry,
-    SnapshotTreeEntry,
-    SnapshotTreeValue,
-    SnapshotType,
+    IWriteSummaryResponse,
+    IOdspSummaryTree,
+    IOdspSummaryTreeBaseEntry,
+    OdspSummaryTreeEntry,
+    OdspSummaryTreeValue,
 } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -98,7 +97,7 @@ export class OdspSummaryUploadManager {
      * Builts the caches which will be used for blob deduping.
      * @param snapshotTree - snapshot tree from which the dedup caches are built.
      */
-    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, blobCache: Map<string, IBlob | ArrayBuffer>) {
+    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, blobCache: Map<string, IOdspSnapshotBlob | ArrayBuffer>) {
         const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
         await this.buildCachesForDedupCore(prefixedSnapshotTree, blobCache);
         this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
@@ -111,7 +110,7 @@ export class OdspSummaryUploadManager {
      */
     private async buildCachesForDedupCore(
         snapshotTree: api.ISnapshotTree,
-        blobCache: Map<string, IBlob | ArrayBuffer>,
+        blobCache: Map<string, IOdspSnapshotBlob | ArrayBuffer>,
         path: string = ""): Promise<api.ISummaryTree>
     {
         assert(Object.keys(snapshotTree.commits).length === 0, 0x0a9 /* "There should not be commit tree entries in snapshot" */);
@@ -202,7 +201,7 @@ export class OdspSummaryUploadManager {
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<{
-            result: ISnapshotResponse,
+            result: IWriteSummaryResponse,
             blobTreeDedupCachesLatest: IDedupCaches,
     }> {
         // This cache is associated with mapping sha to path for currently generated summary.
@@ -234,7 +233,7 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            type: SnapshotType.Channel,
+            type: "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -257,7 +256,7 @@ export class OdspSummaryUploadManager {
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await this.epochTracker.fetchAndParseAsJSON<ISnapshotResponse>(
+                    const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
                         url,
                         {
                             body: postBody,
@@ -309,9 +308,9 @@ export class OdspSummaryUploadManager {
         markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
     ) {
         const blobDedupingEnabled = this.hostPolicy.blobDeduping ?? false;
-        const snapshotTree: ISnapshotTree = {
+        const snapshotTree: IOdspSummaryTree = {
             type: "tree",
-            entries: [] as SnapshotTreeEntry[],
+            entries: [] as OdspSummaryTreeEntry[],
         };
 
         let reusedBlobs = 0;
@@ -322,7 +321,7 @@ export class OdspSummaryUploadManager {
             const summaryObject = tree.tree[key];
 
             let id: string | undefined;
-            let value: SnapshotTreeValue | undefined;
+            let value: OdspSummaryTreeValue | undefined;
 
             // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
             // property is not present, the tree entry is considered referenced. If the property is present and is
@@ -446,12 +445,12 @@ export class OdspSummaryUploadManager {
                 }
             }
 
-            const baseEntry: ISnapshotTreeBaseEntry = {
+            const baseEntry: IOdspSummaryTreeBaseEntry = {
                 path: encodeURIComponent(key),
                 type: getGitType(summaryObject),
             };
 
-            let entry: SnapshotTreeEntry;
+            let entry: OdspSummaryTreeEntry;
 
             if (value) {
                 assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);
