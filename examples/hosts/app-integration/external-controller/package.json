@@ -33,7 +33,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "fluid-framework": "^0.40.0",
+    "@fluid-experimental/fluid-framework": "^0.40.0",
     "@fluid-experimental/tinylicious-client": "^0.40.0",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
