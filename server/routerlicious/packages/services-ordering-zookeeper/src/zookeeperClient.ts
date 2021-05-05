@@ -36,7 +36,7 @@ export class ZookeeperClient implements IZookeeperClient {
             timeout: 30000,
         });
         this.client.once("connect", () => {
-            this.client.once("disconnect", () => {
+            this.client.once("close", () => {
                 this.close();
                 this.connect();
             });
