@@ -14,7 +14,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const merge = require('webpack-merge');
 const _ = require('underscore');
 
-const baseConfig = require('./webpack.appfw.base.js');
+const baseConfig = require('./webpack.base.js');
 
 
 const getCommandLineArgs = function () {
@@ -150,7 +150,7 @@ const CommonWebpackLibTSConfig = function (args) {
   const libConfig = merge(baseConfig.BaseConfig, commonLibConfig, tsLibConfig, params.merge);
 
   const isFile = fs.statSync(params.dir).isFile();
-  const entryFile = path.resolve(params.dir, isFile ? '' : './index.' + params.fileType);
+  const entryFile = path.resolve(params.dir, isFile ? '' : './webpack.index.' + params.fileType);
   let devEntry = {};
   devEntry[params.name] = entryFile;
   let prodEntry = {};
