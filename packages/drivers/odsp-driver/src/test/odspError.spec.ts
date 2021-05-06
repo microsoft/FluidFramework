@@ -191,13 +191,14 @@ describe("Odsp Error", () => {
     it("Authorization error with insufficient claims first-class properties", async () => {
         try {
             throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-        } catch (error) {
-            assert.equal(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
+        } catch (e) {
+            const error = e as OdspError & Error;
+            assert(error.errorType === DriverErrorType.authorizationError, "errorType should be authorizationError");
             assert.notEqual(error.message.indexOf("TestMessage"), -1,
                 "message should contain original message");
             assert.equal(error.canRetry, false, "canRetry should be false");
             assert.equal(
-                error.claims,
+                error.claims?.value,
                 "{\"access_token\":{\"nbf\":{\"essential\":true, \"value\":\"1597959090\"}}}",
                 "claims should be extracted from response",
             );
