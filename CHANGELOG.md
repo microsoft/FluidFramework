@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.96.2
+
+* Merge remote-tracking branch 'origin/releases/2021.04.4' into user/crmacomb/releaseupdate4.5
+  * Commit: [5b3afe17772c76d3222c9966f015b1566c7e467c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5b3afe17772c76d3222c9966f015b1566c7e467c)
+
 ## 0.96.1
 
 * fix: Reduce frequency of edit chunk upload to prevent SPO throttling
@@ -14,6 +19,10 @@
 * docs: remove invalid @sealed on abstract class
   * Associated pull request: [29904](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29904)
   * Commit: [887c249e7defbebd9622c8906eb96d23818ecb6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/887c249e7defbebd9622c8906eb96d23818ecb6d)
+
+## 0.90.1
+
+_Version update only._
 
 ## 0.90.0
 
