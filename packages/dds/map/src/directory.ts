@@ -974,17 +974,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
-        let subDir: IDirectory | undefined = this._subdirectories.get(subdirName);
-        // If the subdirectory already exists, return without submitting a useless op
-        if (subDir !== undefined) {
-            return subDir;
-        }
-
         // Create the sub directory locally first.
         this.createSubDirectoryCore(subdirName, true, null);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        subDir = this._subdirectories.get(subdirName)!;
+        const subDir: IDirectory = this._subdirectories.get(subdirName)!;
 
         // If we are not attached, don't submit the op.
         if (!this.directory.isAttached()) {
