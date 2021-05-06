@@ -40,7 +40,7 @@ export async function prefetchLatestSnapshot(
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
 ): Promise<boolean> {
-    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot", { all: { "prefetch": true }}));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
@@ -76,7 +76,6 @@ export async function prefetchLatestSnapshot(
                     tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
-                    false,
                     undefined,
                     snapshotCacheEntry,
                     persistedCache,

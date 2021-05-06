@@ -69,7 +69,6 @@ export async function fetchLatestSnapshotCore(
     tokenFetchOptions: TokenFetchOptions,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    summarizerClient: boolean = false,
     epochTracker: EpochTracker | undefined,
     snapshotCacheEntry: IEntry,
     persistedCache: IPersistedCache,
@@ -106,7 +105,7 @@ export async function fetchLatestSnapshotCore(
     };
 
     let controller: AbortController | undefined;
-    if (summarizerClient !== true && snapshotOptions?.timeout !== undefined) {
+    if (snapshotOptions?.timeout !== undefined) {
         controller = new AbortController();
         setTimeout(
             () => controller!.abort(),
@@ -262,9 +261,9 @@ export async function fetchLatestSnapshotCore(
     ).catch((error) => {
         // Issue #5895:
         // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-        // will run in circles calling getSnapshotTree, which would result in this class going getVersions / individual
-        // blob download path. This path is very slow, and will not work with delay-loaded data stores
-        // and ODSP storage deleting old snapshots and blobs.
+        // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
+        // going getVersions / individual blob download path. This path is very slow, and will not work with
+        // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
         if (typeof error === "object" && error !== null) {
             error.canRetry = false;
         }

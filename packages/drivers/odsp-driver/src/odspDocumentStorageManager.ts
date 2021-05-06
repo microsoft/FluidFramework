@@ -624,9 +624,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
         };
 
-        // No limit on size of snapshot, as otherwise we fail all clients to summarize
+        // No limit on size of snapshot or time to fetch, as otherwise we fail all clients to summarize
         if (this.hostPolicy.summarizerClient) {
             snapshotOptions.mds = undefined;
+            snapshotOptions.timeout = undefined;
         }
 
         try {
@@ -636,7 +637,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 tokenFetchOptions,
                 snapshotOptions,
                 this.logger,
-                this.hostPolicy.summarizerClient,
                 this.epochTracker,
                 this._snapshotCacheEntry,
                 this.cache.persistedCache);
@@ -660,7 +660,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     tokenFetchOptions,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
-                    this.hostPolicy.summarizerClient,
                     this.epochTracker,
                     this._snapshotCacheEntry,
                     this.cache.persistedCache);
