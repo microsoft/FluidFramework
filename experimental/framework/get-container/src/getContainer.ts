@@ -23,13 +23,10 @@ export async function getContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const module = { fluidExport: containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
-
     const loader = new Loader({
         urlResolver: getContainerService.urlResolver,
         documentServiceFactory: getContainerService.documentServiceFactory,
-        codeLoader,
+        runtimeCallback: () => containerRuntimeFactory,
     });
 
     let container: Container;

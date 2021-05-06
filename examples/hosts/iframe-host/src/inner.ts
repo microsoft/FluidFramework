@@ -53,13 +53,10 @@ async function loadContainer(
     const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
     const urlResolver = await InnerUrlResolver.create(innerPort);
 
-    const module = { fluidExport: TodoContainer };
-    const codeLoader = { load: async () => module };
-
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
-        codeLoader,
+        runtimeCallback: () => TodoContainer,
     });
 
     let container: Container;

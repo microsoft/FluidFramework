@@ -24,6 +24,7 @@ import {
     AttachState,
     IFluidModule,
     ILoaderOptions,
+    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -50,8 +51,9 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeLoader | undefined,
         codeDetails: IFluidCodeDetails,
+        runtimeFactory: IRuntimeFactory | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -65,11 +67,16 @@ export class ContainerContext implements IContainerContext {
         updateDirtyContainerState: (dirty: boolean) => void,
         pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
+        if ((codeLoader === undefined) === (runtimeFactory === undefined)) {
+            throw new Error("code loader xor runtime factory is required");
+        }
+
         const context = new ContainerContext(
             container,
             scope,
             codeLoader,
             codeDetails,
+            runtimeFactory,
             baseSnapshot,
             attributes,
             deltaManager,
@@ -157,19 +164,19 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
-
-        return fluidModule;
-    });
+    private readonly fluidExportP: Promise<IFluidModule["fluidExport"]>;
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
+        private readonly codeLoader: ICodeLoader | undefined,
         public readonly codeDetails: IFluidCodeDetails,
+        /**
+         * Code loader (& details) may be used to load the runtime, or an IRuntimeFactory
+         * can be provided directly.  Only one should be provided, but the runtime factory
+         * will take precedent if both are present.
+         */
+        runtimeFactory: IRuntimeFactory | undefined,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -182,8 +189,21 @@ export class ContainerContext implements IContainerContext {
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
         public readonly pendingLocalState?: unknown,
-
     ) {
+        this.fluidExportP = runtimeFactory
+            ? Promise.resolve(runtimeFactory)
+            : new LazyPromise(async () => {
+                if (codeLoader === undefined) {
+                    throw new Error("no code provided");
+                }
+
+                const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+                    async () => codeLoader.load(codeDetails),
+                );
+
+                return fluidModule.fluidExport;
+            });
+
         this.logger = container.subLogger;
         this.attachListener();
     }
@@ -260,12 +280,12 @@ export class ContainerContext implements IContainerContext {
         const comparers: IFluidCodeDetailsComparer[] = [];
 
         const maybeCompareCodeLoader = this.codeLoader;
-        if (maybeCompareCodeLoader.IFluidCodeDetailsComparer !== undefined) {
+        if (maybeCompareCodeLoader?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
-        if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
+        const maybeCompareExport = await this.fluidExportP;
+        if (maybeCompareExport.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
 
@@ -288,7 +308,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async load() {
-        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
+        const maybeFactory = (await this.fluidExportP).IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
