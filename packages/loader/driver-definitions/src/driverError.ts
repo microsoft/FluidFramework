@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -62,6 +62,14 @@ export enum DriverErrorType {
      * Unexpected response from server. Either JSON is malformed, or some required properties are missing
      */
     incorrectServerResponse = "incorrectServerResponse",
+
+    /**
+     * This error occurs when the file is modified externally (not through Fluid protocol) in storage.
+     * It will occur in cases where client has some state or cache that is based on old content (identity) of a file,
+     * and storage / driver / loader detects such mismatch.
+     * When it's hit, client needs to forget all the knowlege about this file and start over.
+     */
+     fileOverwrittenInStorage = "fileOverwrittenInStorage",
 }
 
 /**
@@ -97,13 +105,13 @@ export interface IAuthorizationError extends IDriverErrorBase {
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
     DriverErrorType.genericError
-    | DriverErrorType.authorizationError
     | DriverErrorType.fileNotFoundOrAccessDeniedError
     | DriverErrorType.offlineError
     | DriverErrorType.unsupportedClientProtocolVersion
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
-    | DriverErrorType.incorrectServerResponse;
+    | DriverErrorType.incorrectServerResponse
+    | DriverErrorType.fileOverwrittenInStorage;
     readonly statusCode?: number;
 }
 

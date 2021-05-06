@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -74,16 +74,7 @@ export class CheckpointContext {
         if (checkpoint.clear) {
             updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
         } else {
-            const deliCheckpoint: IDeliState = {
-                branchMap: checkpoint.branchMap,
-                clients: checkpoint.clients,
-                durableSequenceNumber: checkpoint.durableSequenceNumber,
-                logOffset: checkpoint.logOffset,
-                sequenceNumber: checkpoint.sequenceNumber,
-                epoch: checkpoint.epoch,
-                term: checkpoint.term,
-                lastSentMSN: checkpoint.lastSentMSN,
-            };
+            const deliCheckpoint: IDeliState = { ...checkpoint };
 
             updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
         }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -35,7 +35,7 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
-export interface ContainerConfig {
+export interface ContainerSchema {
     /**
      * Name of the container being defined.
      *

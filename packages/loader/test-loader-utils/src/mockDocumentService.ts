@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     IClient,
-    IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -54,8 +53,5 @@ export class MockDocumentService implements IDocumentService {
         return this.deltaConnectionFactory !== undefined
             ? this.deltaConnectionFactory()
             : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
-    }
-    public getErrorTrackingService(): IErrorTrackingService {
-        throw new Error("Method not implemented.");
     }
 }

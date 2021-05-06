@@ -18,7 +18,7 @@ and load the container code bundle dynamically.
 ## Container
 
 The container is your application's entry point to the Fluid Framework. It runs your container code and is
-the object through which you'll retrieve your data objects.
+the object through which you'll retrieve your Fluid objects.
 
 ## Container code
 

@@ -1,19 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-// Contracts.
+// Constants
 export * from "./constants";
-export * from "./contracts"; // Needs to be split into public and private pieces
-export * from "./tokenFetch";
+
+export * from "./contractsPublic";
 
 // public utils
 export * from "./odspPublicUtils";
 export * from "./odspUrlHelper";
 export * from "./createOdspUrl";
 export * from "./checkUrl";
-export * from "./odspCache"; // need to break API vs. implementations
+
+// prefetch latest snapshot before container load
+export * from "./prefetchLatestSnapshot";
 
 // Factory
 export * from "./odspDocumentServiceFactoryCore";

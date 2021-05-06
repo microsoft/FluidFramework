@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,6 @@ import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenant
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
-import nconf from "nconf";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -32,26 +31,26 @@ describe("Routerlicious", () => {
             let kafkaMessageFactory: KafkaMessageFactory;
             let lambda: ScribeLambda;
             let testGitManager: GitManager;
-            let tree : ITree; 
+            let tree: ITree;
 
             function sendOps(num: number): void {
                 for (let i = 0; i < num; i++) {
                     const message = messageFactory.createSequencedOperation();
-                    lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+                    lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
                 }
             }
 
             async function sendSummarize(referenceSequenceNumber: number): Promise<void> {
                 const summaryMessage = messageFactory.createSummarize(referenceSequenceNumber, tree.sha);
-                lambda.handlerCore(kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId));
+                lambda.handler(kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId));
 
                 await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
-                                    
+
                 const ackMessage = messageFactory.createSummaryAck(tree.sha);
-                lambda.handlerCore(kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId));
+                lambda.handler(kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId));
             }
 
-            beforeEach(async() => {
+            beforeEach(async () => {
                 messageFactory = new MessageFactory(testDocumentId, testClientId, testTenantId);
                 kafkaMessageFactory = new KafkaMessageFactory();
 
@@ -59,7 +58,7 @@ describe("Routerlicious", () => {
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
                 testMongoManager = new MongoManager(dbFactory);
                 const database = await testMongoManager.getDatabase();
-                testDocumentCollection = database.collection("documents");                
+                testDocumentCollection = database.collection("documents");
                 testMessageCollection = new TestCollection([]);
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
@@ -82,9 +81,7 @@ describe("Routerlicious", () => {
                     DefaultServiceConfiguration);
 
                 testContext = new TestContext();
-                const config = (new nconf.Provider({})).defaults({ documentId: testDocumentId, tenantId: testTenantId })
-                    .use("memory");
-                lambda = await factory.create(config, testContext) as ScribeLambda;
+                lambda = await factory.create({ documentId: testDocumentId, tenantId: testTenantId, leaderEpoch: 0 }, testContext) as ScribeLambda;
                 messageFactory.createSequencedOperation();// mock join op.
             });
 
@@ -94,7 +91,7 @@ describe("Routerlicious", () => {
                     sendOps(numMessages);
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
-                    assert.equal(numMessages , testMessageCollection.collection.length);
+                    assert.equal(numMessages, testMessageCollection.collection.length);
                 });
 
                 it("Summarize Ops should clean up the previous ops store in mongodb", async () => {
@@ -102,7 +99,7 @@ describe("Routerlicious", () => {
                     sendOps(numMessages);
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
-                    
+
                     sendSummarize(numMessages);
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
@@ -115,17 +112,17 @@ describe("Routerlicious", () => {
                     sendOps(numMessages);
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
-                    
+
                     sendSummarize(numMessages);
-                    
+
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
                     sendOps(numMessages);
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
-                
+
                     const message = messageFactory.createNoClient();
-                    lambda.handlerCore(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+                    lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
 
                     await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 

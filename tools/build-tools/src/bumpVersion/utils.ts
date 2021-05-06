@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { execAsync } from "../common/utils";
+import * as path from "path";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -239,7 +240,7 @@ export class GitRepo {
 export async function runPolicyCheckWithFix(gitRepo: GitRepo){
     console.log("Running Policy Check with Resolution(fix)");
     await exec(
-        `node ${__dirname}\\..\\repoPolicyCheck\\repoPolicyCheck.js -r -q`,
+        `node ${path.join(__dirname, '..', 'repoPolicyCheck', 'repoPolicyCheck.js')} -r -q`,
         gitRepo.resolvedRoot,
         "policy-check:fix failed");
 

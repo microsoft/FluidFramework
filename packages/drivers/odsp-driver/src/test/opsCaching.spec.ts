@@ -1,9 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IStream } from "@fluidframework/driver-definitions";
+import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 
 export type MyDataInput = IMessage & { data: string; };
@@ -35,7 +38,14 @@ class MockCache implements ICache {
         return JSON.stringify(content);
     }
 
-    public readonly data: { [key: string]: any; } = {};
+    public remove() {
+        // Do not reset this.writeCount such that we can test that writes happened, but later on data was cleared
+        this.writeCount++;
+        this.opsWritten++;
+        this.data = {};
+    }
+
+    public data: { [key: string]: any; } = {};
 }
 
 async function validate(
@@ -90,8 +100,7 @@ async function runTestNoTimer(
     initialSeq: number,
     mockData: MyDataInput[],
     expected: { [key: number]: (MyDataInput | undefined)[]},
-    initialWritesExpected: number,
-    totalWritesExpected: number)
+    initialWritesExpected: number)
 {
     const mockCache = new MockCache();
 
@@ -101,7 +110,7 @@ async function runTestNoTimer(
         mockCache,
         batchSize,
         -1, // timerGranularity
-        5000, // totalOpsToCache
+        10, // totalOpsToCache
     );
 
     cache.addOps(mockData);
@@ -141,7 +150,7 @@ export async function runTestWithTimer(
         mockCache,
         batchSize,
         1, // timerGranularity
-        5000, // totalOpsToCache
+        10, // totalOpsToCache
     );
 
     cache.addOps(mockData);
@@ -163,11 +172,11 @@ export async function runTest(
     initialWritesExpected: number,
     totalWritesExpected: number)
 {
-    await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
+    await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected);
     await runTestWithTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
 }
 
-describe("OpsCache write", () => {
+describe("OpsCache", () => {
     const mockData1: MyDataInput[] = [
         { sequenceNumber: 105, data: "105" },
         { sequenceNumber: 110, data: "110" },
@@ -243,5 +252,176 @@ describe("OpsCache write", () => {
             },
             2,
             2);
+    });
+
+    it("Too many ops", async () => {
+        await runTest(
+            5,
+            100,
+            [
+                { sequenceNumber: 105, data: "105" },
+                { sequenceNumber: 106, data: "106" },
+                { sequenceNumber: 107, data: "107" },
+                { sequenceNumber: 108, data: "108" },
+                { sequenceNumber: 109, data: "109" },
+                { sequenceNumber: 110, data: "110" },
+                { sequenceNumber: 111, data: "111" },
+                { sequenceNumber: 112, data: "112" },
+                { sequenceNumber: 113, data: "113" },
+                { sequenceNumber: 114, data: "114" },
+                { sequenceNumber: 115, data: "115" },
+            ],
+            {},
+            3,
+            3);
+    });
+});
+
+describe("OdspDeltaStorageWithCache", () => {
+    async function readAll(stream: IStream<ISequencedDocumentMessage[]>) {
+        const ops: ISequencedDocumentMessage[] = [];
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const result = await stream.read();
+            if (result.done) { break; }
+            ops.push(...result.value);
+        }
+        return ops;
+    }
+
+    function createOps(fromArg: number, length: number) {
+        const ops: ISequencedDocumentMessage[] = [];
+        let from = fromArg;
+        const to = from + length;
+        while (from < to) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ops.push({ sequenceNumber: from } as ISequencedDocumentMessage);
+            from++;
+        }
+        return ops;
+    }
+
+    function filterOps(ops: ISequencedDocumentMessage[], from: number, to: number) {
+        return ops.filter((op) => op.sequenceNumber >= from && op.sequenceNumber < to);
+    }
+
+    function validateOps(ops: ISequencedDocumentMessage[], from: number, to: number) {
+        if (to < from) {
+            assert(ops.length === 0);
+        } else {
+            assert(ops.length === to - from);
+            assert(ops.length === 0 || ops[0].sequenceNumber === from);
+            assert(ops.length === 0 || ops[ops.length - 1].sequenceNumber === to - 1);
+        }
+    }
+
+    async function testStorage(
+        fromTotal: number,
+        toTotal: number | undefined,
+        cacheOnly: boolean,
+        opsFromSnapshot: number,
+        opsFromCache: number,
+        opsFromStorage: number,
+        concurrency = 1,
+        batchSize = 100,
+    ) {
+        const snapshotOps = createOps(fromTotal, opsFromSnapshot);
+        const cachedOps = createOps(fromTotal + opsFromSnapshot, opsFromCache);
+        const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
+
+        let totalOps = opsFromSnapshot + opsFromCache + (cacheOnly ? 0 : opsFromStorage);
+        const actualTo = toTotal === undefined ? fromTotal + totalOps : toTotal;
+        assert(actualTo <= fromTotal + totalOps); // code will deadlock if that's not the case
+        const askingOps = actualTo - fromTotal;
+        totalOps = Math.min(totalOps, askingOps);
+
+        let opsToCache: ISequencedDocumentMessage[] = [];
+
+        const storage = new OdspDeltaStorageWithCache(
+            snapshotOps,
+            new TelemetryUTLogger(),
+            batchSize,
+            concurrency,
+            // getFromStorage
+            async (from: number, to: number) => {
+                return {messages: filterOps(storageOps, from, to), partialResult: false};
+            },
+            // getCached
+            async (from: number, to: number) => filterOps(cachedOps, from, to),
+            // opsReceived
+            (ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
+        );
+
+        const stream = storage.fetchMessages(
+            fromTotal,
+            toTotal,
+            undefined, // abortSignal
+            cacheOnly,
+        );
+
+        const opsAll = await readAll(stream);
+
+        validateOps(opsAll, fromTotal, fromTotal + totalOps);
+        if (cacheOnly) {
+            assert(opsToCache.length === 0);
+        } else {
+            opsToCache = opsToCache.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            validateOps(opsToCache, fromTotal + opsFromSnapshot + opsFromCache, fromTotal + totalOps);
+        }
+    }
+
+    it("basic permutations", async () => {
+        await testStorage(105, undefined, false, 0, 0, 0);
+        await testStorage(105, undefined, false, 110, 0, 0);
+        await testStorage(105, undefined, false, 110, 245, 0);
+        await testStorage(105, undefined, false, 110, 245, 1000);
+        await testStorage(105, undefined, false, 110, 9001, 8002);
+
+        await testStorage(105, undefined, false, 0, 245, 0);
+        await testStorage(105, undefined, false, 0, 9000, 0);
+        await testStorage(105, undefined, false, 0, 245, 150);
+
+        await testStorage(105, undefined, false, 110, 0, 150);
+        await testStorage(105, undefined, false, 0, 0, 150);
+    });
+
+    it("cached", async () => {
+        await testStorage(105, undefined, true, 0, 0, 0);
+        await testStorage(105, undefined, true, 110, 0, 0);
+        await testStorage(105, undefined, true, 110, 245, 0);
+        await testStorage(105, undefined, true, 1001, 8001, 0);
+        await testStorage(105, undefined, true, 110, 245, 1000);
+
+        await testStorage(105, undefined, true, 0, 245, 0);
+        await testStorage(105, undefined, true, 0, 245, 150);
+
+        await testStorage(105, undefined, true, 110, 0, 150);
+        await testStorage(105, undefined, true, 0, 0, 150);
+    });
+
+    it("fixed to", async () => {
+        await testStorage(105, 105 + 110, false, 110, 0, 0);
+        await testStorage(105, 105 + 110 + 245, false, 110, 245, 0);
+        await testStorage(105, 105 + 110 + 245 + 500, false, 110, 245, 1000);
+
+        await testStorage(105, 105 + 245 + 150, false, 0, 245, 150);
+
+        await testStorage(105, 105 + 110 + 150, false, 110, 0, 150);
+        await testStorage(105, 105 + 140, false, 0, 0, 150);
+    });
+
+    it("concurency", async () => {
+        await testStorage(105, undefined, false, 0, 0, 0, 2);
+        await testStorage(105, undefined, false, 110, 0, 0, 2);
+        await testStorage(105, undefined, false, 110, 245, 0, 2);
+        await testStorage(105, undefined, false, 110, 245, 1000, 2);
+        await testStorage(105, undefined, false, 110, 9001, 8002, 2);
+
+        await testStorage(105, undefined, false, 0, 245, 0, 2);
+        await testStorage(105, undefined, false, 0, 9000, 0, 2);
+        await testStorage(105, undefined, false, 0, 245, 150, 2);
+
+        await testStorage(105, undefined, false, 110, 0, 150, 2);
+        await testStorage(105, undefined, false, 0, 0, 150, 2);
     });
 });

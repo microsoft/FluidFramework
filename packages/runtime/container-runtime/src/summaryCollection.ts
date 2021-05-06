@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -249,6 +249,11 @@ export class SummaryCollection {
     public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
         this.maxAckWaitTime = maxAckWaitTime;
         this.pendingAckTimerTimeoutCallback = timeoutCallback;
+    }
+
+    public unsetPendingAckTimerTimeoutCallback() {
+        this.maxAckWaitTime = undefined;
+        this.pendingAckTimerTimeoutCallback = undefined;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -89,8 +89,8 @@ export class MockDeltaConnection implements IDeltaConnection {
         this.handler?.process(message, local, localOpMetadata);
     }
 
-    public reSubmit(content: any, localOpMetadata: unknown) {
-        this.handler?.reSubmit(content, localOpMetadata);
+    public resubmit(content: any, localOpMetadata: unknown) {
+        this.handler?.resubmit(content, localOpMetadata);
     }
 }
 
@@ -558,7 +558,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public raiseContainerWarning(warning: ContainerWarning): void { }
 
-    public reSubmit(content: any, localOpMetadata: unknown) {
+    public resubmit(content: any, localOpMetadata: unknown) {
         return;
     }
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,19 +8,20 @@ import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/cor
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
-import { IOdspResolvedUrl, OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contracts";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
-import { createOdspUrl } from "./createOdspUrl";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getOdspResolvedUrl } from "./odspUtils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
+    IOdspResolvedUrl,
     IdentityType,
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
-} from "./tokenFetch";
+} from "@fluidframework/odsp-driver-definitions";
+import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
+import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
+import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import { createOdspUrl } from "./createOdspUrl";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { getFileLink } from "./getFileLink";
 
 /**
@@ -62,7 +63,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
     ) {
-        this.logger = ChildLogger.create(logger, "OdspDriver");
+        this.logger = createOdspLogger(logger);
         if (shareLinkFetcherProps) {
             this.shareLinkFetcherProps = {
                 ...shareLinkFetcherProps,

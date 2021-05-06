@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspSnapshot, ISnapshotOptions } from "./contracts";
+import { ISnapshotOptions }  from "@fluidframework/odsp-driver-definitions";
+import { IOdspSnapshot } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";

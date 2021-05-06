@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
@@ -534,13 +534,11 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function streamObserver<T>(stream: IStream<T>, handler: (value: T) => void): IStream<T> {
+export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T> {
     return {
         read: async () => {
             const value = await stream.read();
-            if (value.done === false) {
-                handler(value.value);
-            }
+            handler(value);
             return value;
         },
     };

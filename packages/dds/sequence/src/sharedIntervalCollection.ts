@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -166,7 +166,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 

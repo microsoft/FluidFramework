@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -17,7 +17,6 @@ import {
 import {
     IClient,
     ISummaryTree,
-    IErrorTrackingService,
     IDocumentMessage,
     INack,
     NackErrorType,
@@ -64,8 +63,8 @@ export class FaultInjectionDocumentService implements IDocumentService {
         return this._currentDeltaStream;
     }
 
-    public dispose() {
-        this.internal.dispose();
+    public dispose(error?: any) {
+        this.internal.dispose(error);
     }
 
     async connectToStorage(): Promise<IDocumentStorageService> {
@@ -83,13 +82,6 @@ export class FaultInjectionDocumentService implements IDocumentService {
         const internal = await this.internal.connectToDeltaStream(client);
         this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
         return this._currentDeltaStream;
-    }
-
-    /**
-     * Returns the error tracking service
-     */
-    getErrorTrackingService(): IErrorTrackingService | null {
-        return this.internal.getErrorTrackingService();
     }
 }
 

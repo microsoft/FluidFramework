@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
-    NetworkErrorBasic,
+    NonRetryableError,
     GenericNetworkError,
     createGenericNetworkError,
     AuthorizationError,
@@ -61,8 +61,8 @@ export function createR11sNetworkError(
         case 403:
             return new AuthorizationError(errorMessage, undefined, undefined, statusCode);
         case 404:
-            return new NetworkErrorBasic(
-                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+            return new NonRetryableError(
+                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
                 errorMessage, true, retryAfterSeconds, statusCode);

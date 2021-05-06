@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -55,7 +55,8 @@ export class InsecureUrlResolver implements IUrlResolver {
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (this.isForNodeTest) {
-            const [, documentId, relativePath] = parsedUrl.pathname.substr(1).split("/");
+            const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
+            const relativePath = tmpRelativePath === undefined ? "" : tmpRelativePath;
             return this.resolveHelper(documentId, relativePath, parsedUrl.search);
         } else if (parsedUrl.host === window.location.host) {
             const fullPath = parsedUrl.pathname.substr(1);

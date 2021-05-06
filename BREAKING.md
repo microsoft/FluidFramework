@@ -1,6 +1,10 @@
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)
 - [LoaderHeader.pause](#LoaderHeader.pause)
+- [ODSP driver definitions](#ODSP-driver-definitions)
+- [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
+- [fileOverwrittenInStorage](#fileOverwrittenInStorage)
+- [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
 - [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
 
 ### connect event removed from Container
@@ -15,6 +19,20 @@ use
 ```typescript
 [LoaderHeader.loadMode]: { deltaConnection: "none" }
 ```
+
+### ODSP driver definitions
+A lot of definitions have been moved from @fluidframework/odsp-driver to @fluidframework/odsp-driver-definitions. This change is required in preparation for driver to be dynamically loaded by host.
+This new package contains all the dependencies of ODSP driver factory (like HostStoragePolicy, IPersistedCache, TokenFetcher) as well as outputs (OdspErrorType).
+@fluidframework/odsp-driver will continue to have defintions for non-factory functionality (like URI resolver, helper functionality to deal with sharing links, URI parsing, etc.)
+
+### ITelemetryLogger Remove redundant methods
+Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused. These methods were deprecated in 0.36.
+
+### fileOverwrittenInStorage
+Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.epochVersionMismatch`
+
+### absolutePath use in IFluidHandle is deprecated
+Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
 
 ### AgentScheduler removed by default
 In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
@@ -204,7 +222,6 @@ The option will be turned off by default in an upcoming release before being tur
 
 ### Removed containerUrl from IContainerLoadOptions and IContainerConfig
 Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
->>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

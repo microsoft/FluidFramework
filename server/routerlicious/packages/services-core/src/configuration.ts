@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IClientConfiguration } from "@fluidframework/protocol-definitions";
+import { IClientConfiguration, INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
 
 // Deli lambda configuration
 export interface IDeliServerConfiguration {
@@ -30,6 +30,21 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
+
+    // Controls if ops should be nacked if a summarizer hasn't been made for a while
+    nackMessages: IScribeNackMessagesServerConfiguration;
+}
+
+export interface IScribeNackMessagesServerConfiguration {
+    // Enables nacking non-system & non-summarizer client message if
+    // the op count since the last summary exceeds this limit
+    enable: boolean;
+
+    // Amount of ops since the last summary before starting to nack
+    maxOps: number;
+
+    // The contents of the nack to send after the limit is hit
+    nackContent: INackContent;
 }
 
 // Document lambda configuration
@@ -85,6 +100,16 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enablePendingCheckpointMessages: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
+        nackMessages: {
+            enable: false,
+            maxOps: 5000,
+            nackContent: {
+                code: 429,
+                type: NackErrorType.ThrottlingError,
+                retryAfter: 10,
+                message: "Submit a summary before inserting additional operations",
+            },
+        },
     },
     documentLambda: {
         partitionActivityTimeout: 10 * 60 * 1000,

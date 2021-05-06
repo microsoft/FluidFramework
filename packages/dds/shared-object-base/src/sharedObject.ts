@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,7 +21,7 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import { ChildLogger, EventEmitterWithErrorHandling, logIfFalse } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -366,7 +366,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         this.submitLocalMessage(content, localOpMetadata);
     }
 
@@ -398,6 +398,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * @deprecated - Use logger to log errors
      * Report ignorable errors in code logic or data integrity to the logger.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.
@@ -405,7 +406,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param message - Actual message to log; ideally should be unique message to identify call site
      */
     protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
-        this.logger.debugAssert(condition, event);
+        logIfFalse(condition, this.logger, event);
     }
 
     private attachDeltaHandler() {
@@ -423,8 +424,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             setConnectionState: (connected: boolean) => {
                 this.setConnectionState(connected);
             },
-            reSubmit: (content: any, localOpMetadata: unknown) => {
-                this.reSubmit(content, localOpMetadata);
+            resubmit: (content: any, localOpMetadata: unknown) => {
+                this.resubmit(content, localOpMetadata);
             },
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
@@ -482,8 +483,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, localOpMetadata: unknown) {
-        this.reSubmitCore(content, localOpMetadata);
+    private resubmit(content: any, localOpMetadata: unknown) {
+        this.resubmitCore(content, localOpMetadata);
     }
 
     protected abstract applyStashedOp(content: any): unknown;

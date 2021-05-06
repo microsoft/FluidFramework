@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -112,6 +112,7 @@ export class DocumentStorage implements IDocumentStorage {
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
+            nackMessages: undefined,
         };
 
         const scribe: IScribe = {
@@ -278,11 +279,11 @@ export class DocumentStorage implements IDocumentStorage {
             // TODO: Make the rest endpoint handle this case.
             const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
             const ops = JSON.parse(
-                            Buffer.from(
-                                opsContent.content,
-                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
-                            ).toString(),
-                        ) as ISequencedDocumentMessage[];
+                Buffer.from(
+                    opsContent.content,
+                    Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+                ).toString(),
+            ) as ISequencedDocumentMessage[];
             const dbOps = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,

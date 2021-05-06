@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -39,7 +39,7 @@ describe("LocalDeltaConnectionServer", () => {
 
         const claims: ITokenClaims = {
             documentId: "document",
-            scopes:  [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             tenantId: "tenant",
             user,
             iat: now,
@@ -48,8 +48,8 @@ describe("LocalDeltaConnectionServer", () => {
         };
 
         const utf8Key = { utf8: "key" };
-         // eslint-disable-next-line no-null/no-null
-        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+        // eslint-disable-next-line no-null/no-null
+        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 
         return deltaConnectionServer.connectWebSocket(
             "tenant",
@@ -108,6 +108,10 @@ describe("LocalDeltaConnectionServer", () => {
 
     beforeEach(() => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    afterEach(async () => {
+        await deltaConnectionServer.close();
     });
 
     it("can connect to web socket and join client", async () => {

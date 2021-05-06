@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,6 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -40,7 +39,7 @@ describeNoCompat("Garbage Collection", (getTestObjectProvider) => {
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
             summaryOptions: { generateSummaries: false },
-            gcOptions: { gcAllowed: true },
+            gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent },
         };
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
             dataObjectFactory,
@@ -56,12 +55,7 @@ describeNoCompat("Garbage Collection", (getTestObjectProvider) => {
         let containerRuntime: ContainerRuntime;
         let defaultDataStore: TestDataObject;
 
-        async function createContainer(): Promise<IContainer> {
-            // If deleteUnreferencedContent is true, set the `runGCInTestMode` loader option which will instruct GC to
-            // run in test mode.
-            const loaderOptions = deleteUnreferencedContent ? { runGCInTestMode: true } : undefined;
-            return provider.createContainer(runtimeFactory, loaderOptions);
-        }
+        const createContainer = async () => provider.createContainer(runtimeFactory);
 
         /**
          * Validates that the summary trees of children have the given reference state.

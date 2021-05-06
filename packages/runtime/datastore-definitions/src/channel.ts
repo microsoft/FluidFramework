@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -70,7 +70,7 @@ export interface IDeltaHandler {
      * @param message - The original message that was submitted.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    reSubmit(message: any, localOpMetadata: unknown): void;
+    resubmit(message: any, localOpMetadata: unknown): void;
 
     applyStashedOp(message: any): unknown;
 }

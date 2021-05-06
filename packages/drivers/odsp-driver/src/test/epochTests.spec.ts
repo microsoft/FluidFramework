@@ -1,25 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
-import { IOdspResolvedUrl } from "../contracts";
 import {
-    EpochTracker,
-    IVersionedValueWithEpoch,
-    persistedCacheValueVersion,
-} from "../epochTracker";
-import {
+    IOdspResolvedUrl,
     ICacheEntry,
     IEntry,
-    LocalPersistentCache,
- } from "../odspCache";
- import { getHashedDocumentId } from "../odspPublicUtils";
- import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+} from "@fluidframework/odsp-driver-definitions";
+import { EpochTracker } from "../epochTracker";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
 
@@ -102,7 +98,8 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
@@ -125,7 +122,8 @@ describe("Tests for Epoch Tracker", () => {
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
@@ -218,7 +216,8 @@ describe("Tests for Epoch Tracker", () => {
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert.strictEqual(success, false, "Fetching should not succeed!!");
         assert(

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -46,6 +46,8 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         // Inbound Kafka configuration
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+        const replicationFactor = config.get("kafka:lib:replicationFactor");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -61,6 +63,8 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
             groupId,
             receiveTopic,
             zookeeperEndpoint,
+            numberOfPartitions,
+            replicationFactor,
         );
 
         return new KafkaResources(

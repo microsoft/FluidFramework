@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -78,7 +78,7 @@ describe("RedisThrottleStorageManager", () => {
 
     it("Expires outdated values", async () => {
         const ttlInSeconds = 10;
-        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
+        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, { expireAfterSeconds: ttlInSeconds });
 
         const id = "test-id";
         const originalThrottlingMetric: IThrottlingMetrics = {
@@ -103,7 +103,7 @@ describe("RedisThrottleStorageManager", () => {
 
     it("Updates expiration on overwrite, then expires outdated values", async () => {
         const ttlInSeconds = 10;
-        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
+        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, { expireAfterSeconds: ttlInSeconds });
 
         const id = "test-id";
         const originalThrottlingMetric: IThrottlingMetrics = {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -56,6 +56,8 @@ export interface IFluidHandle<
     > extends IProvideFluidHandle {
 
     /**
+     * @deprecated - Do not use handle's path for routing. Use `get` to get the underlying object.
+     *
      * The absolute path to the handle context from the root.
      */
     absolutePath: string;

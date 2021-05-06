@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-import { IDirectoryValueChanged } from "@fluidframework/map";
+import { IDirectoryValueChanged } from "@fluid-experimental/fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

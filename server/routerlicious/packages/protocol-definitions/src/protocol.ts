@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -180,6 +180,11 @@ export interface ISignalMessage {
     content: any;
 }
 
+export interface IUploadedSummaryDetails {
+    // Indicates whether the uploaded summary contains ".protocol" tree
+    includesProtocolTree?: boolean;
+}
+
 export interface ISummaryContent {
     // Handle reference to the summary data
     handle: string;
@@ -192,6 +197,9 @@ export interface ISummaryContent {
 
     // Handle to the current latest summary stored by the service
     head: string;
+
+    // Details of the uploaded summary
+    details?: IUploadedSummaryDetails;
 
     // TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
     // This could be encoded in the summary itself as well but then would require the client to download it to check

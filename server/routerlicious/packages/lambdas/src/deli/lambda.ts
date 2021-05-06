@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -38,8 +38,8 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
+    INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
-    INackFutureMessagesControlMessageContents,
 } from "@fluidframework/server-services-core";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -104,8 +104,8 @@ export class DeliLambda implements IPartitionLambda {
     // @ts-ignore
     private canClose = false;
 
-    // when set, all messages will be nacked based on the provided info
-    private nackFutureMessages: INackFutureMessagesControlMessageContents | undefined;
+    // when set, messages will be nacked based on the provided info
+    private nackMessages: INackMessagesControlMessageContents | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -138,19 +138,20 @@ export class DeliLambda implements IPartitionLambda {
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
+        this.logOffset = lastCheckpoint.logOffset;
+        this.nackMessages = lastCheckpoint.nackMessages;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
-        this.logOffset = lastCheckpoint.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
     }
 
-    public handler(rawMessage: IQueuedMessage): void {
+    public handler(rawMessage: IQueuedMessage) {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
             this.context.checkpoint(rawMessage);
-            return;
+            return undefined;
         }
 
         this.logOffset = rawMessage.offset;
@@ -245,14 +246,38 @@ export class DeliLambda implements IPartitionLambda {
         const message = rawMessage as IRawOperationMessage;
         const dataContent = this.extractDataContent(message);
 
-        // Check if we should nack all messages
-        if (this.nackFutureMessages) {
-            return this.createNackMessage(
-                message,
-                this.nackFutureMessages.code,
-                this.nackFutureMessages.type,
-                this.nackFutureMessages.message,
-                this.nackFutureMessages.retryAfter);
+        // Check if we should nack this message
+        const nackMessages = this.nackMessages;
+        if (nackMessages) {
+            let shouldNack = true;
+
+            if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
+                // this is a system message. don't nack it
+                shouldNack = false;
+            } else if (nackMessages.allowedScopes) {
+                const clientId = message.clientId;
+                if (clientId) {
+                    const client = this.clientSeqManager.get(clientId);
+                    if (client) {
+                        for (const scope of nackMessages.allowedScopes) {
+                            if (client.scopes.includes(scope)) {
+                                // this client has an allowed scope. don't nack it
+                                shouldNack = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (shouldNack) {
+                return this.createNackMessage(
+                    message,
+                    nackMessages.content.code,
+                    nackMessages.content.type,
+                    nackMessages.content.message,
+                    nackMessages.content.retryAfter);
+            }
         }
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
@@ -447,8 +472,8 @@ export class DeliLambda implements IPartitionLambda {
                     break;
                 }
 
-                case ControlMessageType.NackFutureMessages: {
-                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesControlMessageContents;
+                case ControlMessageType.NackMessages: {
+                    this.nackMessages = controlMessage.contents;
                     break;
                 }
 
@@ -719,6 +744,7 @@ export class DeliLambda implements IPartitionLambda {
             sequenceNumber: this.sequenceNumber,
             term: this.term,
             lastSentMSN: this.lastSentMSN,
+            nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
         };
     }
 

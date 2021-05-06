@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -26,6 +26,7 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
     IDocumentDeltaConnectionEvents,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -51,6 +52,7 @@ import {
     getRetryDelayFromError,
     logNetworkFailure,
     waitForConnectedState,
+    NonRetryableError,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -606,7 +608,10 @@ export class DeltaManager
         // But for view-only connection, we have no such signal, and with no traffic
         // on the wire, we might be always behind.
         // See comment at the end of setupNewSuccessfulConnection()
-        this.logger.debugAssert(this.handler !== undefined || !fetchOpsFromStorage); // can't fetch if no baseline
+        logIfFalse(
+            this.handler !== undefined || !fetchOpsFromStorage,
+            this.logger,
+            "CantFetchWithoutBaseline"); // can't fetch if no baseline
         if (fetchOpsFromStorage && this.handler !== undefined) {
             this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
         }
@@ -891,12 +896,18 @@ export class DeltaManager
         this.throttlingIdSet.add(id);
         if (delaySeconds > 0 && (timeNow + delaySeconds > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delaySeconds;
-            const throttlingError: IThrottlingWarning = {
+
+            // Add 'throttling' properties to an error with safely extracted properties:
+            const throttlingWarning: IThrottlingWarning = {
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delaySeconds,
             };
-            this.emit("throttled", throttlingError);
+            const reconfiguredError: IThrottlingWarning = {
+                ...CreateContainerError(error),
+                ...throttlingWarning,
+            };
+            this.emit("throttled", reconfiguredError);
         }
     }
 
@@ -1210,8 +1221,9 @@ export class DeltaManager
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        const error = new DataCorruptionError(
+                        const error = new NonRetryableError(
                             "Two messages with same seq# and different payload!",
+                            DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,
                                 sequenceNumber: message.sequenceNumber,

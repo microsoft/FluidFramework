@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,16 +8,19 @@ import {
     createOdspCreateContainerRequest,
     createOdspUrl,
     OdspDriverUrlResolver,
+} from "@fluidframework/odsp-driver";
+import {
     HostStoragePolicy,
     ISnapshotOptions,
     IOpsCachingPolicy,
-} from "@fluidframework/odsp-driver";
+    ICollabSessionOptions,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
- } from "@fluid-internal/test-pairwise-generator";
+ } from "@fluidframework/test-pairwise-generator";
 import { pkgVersion } from "./packageVersion";
 
 export const OdspDriverApi = {
@@ -25,7 +28,7 @@ export const OdspDriverApi = {
     OdspDocumentServiceFactory,
     OdspDriverUrlResolver,
     createOdspCreateContainerRequest,
-    createOdspUrl,                          // REVIEW: does this need to be back compat?
+    createOdspUrl, // REVIEW: does this need to be back compat?
 };
 
 export type OdspDriverApiType = typeof OdspDriverApi;
@@ -44,14 +47,18 @@ const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
     totalOpsToCache: numberCases,
 };
 
+const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
+    unauthenticatedUserDisplayName: [undefined],
+};
+
 export const generateOdspHostStoragePolicy = (seed: number)=> {
     const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
-        blobDeduping: booleanCases,
         concurrentSnapshotFetch: booleanCases,
         opsBatchSize: numberCases,
         concurrentOpsBatches: numberCases,
         snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
         opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
+        sessionOptions: [undefined, ...generatePairwiseOptions(odspSessionOptions, seed)],
     };
     return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

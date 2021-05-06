@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -151,6 +151,20 @@ export enum ConnectionState {
     Connected,
 }
 
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        0x1e0 /* "Protocol and App summary trees should be present" */);
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return snapshotTree;
+};
+
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -297,15 +311,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: loadOptions.canReconnect,
             });
 
-        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
-            return new Promise<Container>((res, rej) => {
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "Load" },
+            async (event) => new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
                 // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
                 assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    "pending state requires immidiate connection!");
+                    0x1e1 /* "pending state requires immidiate connection!" */);
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
@@ -326,12 +342,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                        (error) => {
-                            const err = CreateContainerError(error);
-                            onClosed(err);
-                        });
-            });
-        });
+                    (error) => {
+                        const err = CreateContainerError(error);
+                        onClosed(err);
+                    });
+            }),
+            { start: true, end: true, cancel: "generic" },
+        );
     }
 
     /**
@@ -354,12 +371,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
-        snapshot: ISnapshotTree,
+        snapshot: string,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {});
-        await container.rehydrateDetachedFromSnapshot(snapshot);
+        const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
 
@@ -696,7 +714,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
-        this.service?.dispose();
+        // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about
+        // file, like file being overwritten in storage, but client having stale local cache.
+        // Driver need to ensure all caches are cleared on critical errors
+        this.service?.dispose(error);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -748,8 +769,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
-        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
-        return JSON.stringify(snapshotTree);
+        const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+        return JSON.stringify(combinedSummary);
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -1256,7 +1277,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
     }
 
-    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
+        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
@@ -1525,10 +1547,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
-        });
-
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
         });
 
         deltaManager.on("disconnect", (reason: string) => {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -60,7 +60,7 @@ export interface IOrdererConnection {
     /**
      * Sends the client leave op for this connection
      */
-    disconnect(): Promise<void>;
+    disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
 }
 
 export interface IOrderer {

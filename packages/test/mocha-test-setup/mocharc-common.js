@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,8 +14,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
-        `@fluidframework/mocha-test-setup`, // General mocha setup e.g. suppresses console.log
-        ...(additionalRequiredModules ? additionalRequiredModules : [])
+        ...(additionalRequiredModules ? additionalRequiredModules : []),
+        // General mocha setup e.g. suppresses console.log
+        // Moved to last in required modules, so that aria logger will be ready to access in mochaHooks.ts
+        `@fluidframework/mocha-test-setup`,
     ];
 
     // mocha install node_modules directory might not be the same as the module required because of hoisting
@@ -32,7 +34,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
 
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
         // Inject implementation of getTestLogger
-        requiredModulePaths.push(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
     }
 
     const config = {

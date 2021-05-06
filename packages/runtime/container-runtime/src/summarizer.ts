@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -309,7 +309,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
-        summaryCollection: SummaryCollection,
+        private readonly summaryCollection: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(
             baseLogger, "Running", {all:{ summaryGenTag: () => this.summarizeCount }});
@@ -342,8 +342,8 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
-        // back-compat 0.34 noSetPendingAckTimerTimeoutCallback
-        summaryCollection.setPendingAckTimerTimeoutCallback?.(maxAckWaitTime, () => {
+        // Set up pending ack timeout by op timestamp differences for previous summaries.
+        summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
@@ -439,6 +439,10 @@ export class RunningSummarizer implements IDisposable {
             this.pendingAckTimer.start(),
         ]);
         this.pendingAckTimer.clear();
+
+        // Remove pending ack wait timeout by op timestamp comparison, because
+        // it has race conditions with summaries submitted by this same client.
+        this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (checkNotTimeout(maybeLastAck)) {
             this.heuristics.initialize({

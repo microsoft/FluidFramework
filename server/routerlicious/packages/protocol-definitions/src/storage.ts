@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -89,10 +89,11 @@ export enum TreeEntry {
 
 export interface ITree {
     entries: ITreeEntry[];
-
     // Unique ID representing all entries in the tree. Can be used to optimize snapshotting in the case
     // it is known that the ITree has already been created and stored
     id?: string;
+    // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTree {
@@ -101,6 +102,8 @@ export interface ISnapshotTree {
     // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
+    // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
+    unreferenced?: true;
 }
 
 export interface ISnapshotTreeEx extends ISnapshotTree {

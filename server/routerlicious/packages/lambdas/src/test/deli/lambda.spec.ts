@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -25,7 +25,6 @@ import {
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import * as _ from "lodash";
-import nconf from "nconf";
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -98,9 +97,7 @@ describe("Routerlicious", () => {
                     DefaultServiceConfiguration);
 
                 testContext = new TestContext();
-                const config = (new nconf.Provider({})).defaults({ documentId: testId, tenantId: testTenantId })
-                    .use("memory");
-                lambda = await factory.create(config, testContext);
+                lambda = await factory.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
             });
 
             afterEach(async () => {

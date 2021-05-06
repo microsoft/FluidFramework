@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -117,7 +117,7 @@ export async function runWithRetry<T>(
 ): Promise<T> {
     let result: T | undefined;
     let success = false;
-    let retryAfter = 1; // has to be positive!
+    let retryAfterSeconds = 1; // has to be positive!
     let numRetries = 0;
     const startTime = performance.now();
     let lastError: any;
@@ -152,12 +152,12 @@ export async function runWithRetry<T>(
             lastError = err;
             // If the error is throttling error, then wait for the specified time before retrying.
             // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
+            retryAfterSeconds = getRetryDelayFromError(err) ?? Math.min(retryAfterSeconds * 2, 8);
             if (id === undefined) {
                 id = uuid();
             }
-            deltaManager.emitDelayInfo(id, retryAfter, CreateContainerError(err));
-            await delay(retryAfter);
+            deltaManager.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
+            await delay(retryAfterSeconds * 1000);
         }
     } while (!success);
     if (numRetries > 0) {

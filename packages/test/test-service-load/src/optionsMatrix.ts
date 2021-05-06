@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,7 @@ import {
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluidframework/test-pairwise-generator";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
