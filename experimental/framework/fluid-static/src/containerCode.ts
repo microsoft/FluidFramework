@@ -38,7 +38,9 @@ export interface FluidContainer
     extends Pick<Container,
     "audience" |
     "clientId" |
-    "attachState"
+    "close" |
+    "closed" |
+    "connected"
     >, IEventProvider<IFluidContainerEvents> {
     /**
      * The initialObjects defined in the container config
@@ -68,6 +70,7 @@ export class RootDataObject
     private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
+    private _container: Container | undefined = undefined;
 
     private get initialObjectsDir() {
         const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -119,6 +122,24 @@ export class RootDataObject
         super.dispose();
     }
 
+    public setContainer(container: Container) {
+        this._container = container;
+    }
+
+    public close() {
+        if (this._container) {
+            this._container.close();
+        }
+    }
+
+    public get closed() {
+        return this._container ? this._container.closed : false;
+    }
+
+    public get connected() {
+        return this._container ? this._container.connected : false;
+    }
+
     public get audience(): IAudience {
         return this.context.getAudience();
     }
@@ -132,14 +153,6 @@ export class RootDataObject
             throw new Error("Initial Objects were not correctly initialized");
         }
         return this._initialObjects;
-    }
-
-    public get attachState() {
-        return this.context.attachState;
-    }
-
-    public get disposed() {
-        return super.disposed;
     }
 
     public async create<T extends IFluidLoadable>(
