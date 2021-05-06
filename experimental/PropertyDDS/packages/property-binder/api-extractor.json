@@ -1,4 +1,71 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-  "extends": "@fluidframework/build-common/api-extractor-common.json"
+    "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+    "extends": "@fluidframework/build-common/api-extractor-common.json",
+    "messages": {
+        "tsdocMessageReporting": {
+            "tsdoc-undefined-tag":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-malformed-inline-tag":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-param-tag-with-invalid-type":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-escape-right-brace":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-param-tag-with-invalid-name":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-malformed-html-name":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-escape-greater-than":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-inline-tag-missing-braces":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-code-fence-opening-indent":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-param-tag-missing-hyphen":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-param-tag-with-invalid-optional-name":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-reference-missing-dot":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "tsdoc-tag-should-not-have-braces":{
+                "logLevel": "none",
+                "addToApiReportFile": false
+            }
+
+        },
+        "extractorMessageReporting": {
+            "ae-forgotten-export": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "ae-unresolved-link": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            }
+        }
+    }
 }

@@ -22,6 +22,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "doc": "cross-var appfw-typedoc $npm_package_name",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
     "gen:tscdef": "tsc -p tsconfig.json --outDir dist -d",
