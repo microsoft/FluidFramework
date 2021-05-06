@@ -47,6 +47,8 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
+    private protocolState: IScribeProtocolState | undefined;
+
     constructor(
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
@@ -67,10 +69,13 @@ export class ProtocolOpHandler {
     }
 
     public close() {
+        this.protocolState = undefined;
         this.quorum.close();
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        this.protocolState = undefined;
+
         let immediateNoOp = false;
 
         switch (message.type) {
@@ -124,14 +129,20 @@ export class ProtocolOpHandler {
     }
 
     public getProtocolState(): IScribeProtocolState {
-        const quorumSnapshot = this.quorum.snapshot();
+        if (!this.protocolState) {
+            const quorumSnapshot = this.quorum.snapshot();
 
-        return {
-            members: quorumSnapshot.members,
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            proposals: quorumSnapshot.proposals,
-            sequenceNumber: this.sequenceNumber,
-            values: quorumSnapshot.values,
-        };
+            const protocolState = {
+                members: quorumSnapshot.members,
+                minimumSequenceNumber: this.minimumSequenceNumber,
+                proposals: quorumSnapshot.proposals,
+                sequenceNumber: this.sequenceNumber,
+                values: quorumSnapshot.values,
+            };
+
+            this.protocolState = protocolState;
+        }
+
+        return this.protocolState;
     }
 }
