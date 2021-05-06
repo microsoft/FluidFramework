@@ -42,7 +42,10 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly claims: string | undefined;
+    readonly claims: {
+        tag: string;
+        value: string | undefined;
+    };
     // (undocumented)
     readonly errorType = DriverErrorType.authorizationError;
     // (undocumented)
@@ -112,7 +115,7 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, statusCode?: number): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, statusCode?: number): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;

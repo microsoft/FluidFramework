@@ -63,7 +63,10 @@ export interface DriverPreCheckInfo {
 // @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
-    readonly claims?: string;
+    readonly claims?: {
+        tag: string;
+        value: string | undefined;
+    };
     // (undocumented)
     readonly errorType: DriverErrorType.authorizationError;
     // (undocumented)
