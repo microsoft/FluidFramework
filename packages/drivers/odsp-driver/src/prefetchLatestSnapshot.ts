@@ -50,15 +50,6 @@ export async function prefetchLatestSnapshot(
         true /* throwOnNullToken */,
     );
 
-    const snapshotCacheEntry: ICacheEntry = {
-        type: snapshotKey,
-        key: "",
-        file: {
-            resolvedUrl: odspResolvedUrl,
-            docId: odspResolvedUrl.hashedDocumentId,
-        },
-    };
-
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
@@ -77,7 +68,6 @@ export async function prefetchLatestSnapshot(
                     hostSnapshotFetchOptions,
                     odspLogger,
                     undefined,
-                    snapshotCacheEntry,
                     persistedCache,
                 );
                 let cached = false;

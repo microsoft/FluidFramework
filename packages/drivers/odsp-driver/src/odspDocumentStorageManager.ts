@@ -638,7 +638,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 snapshotOptions,
                 this.logger,
                 this.epochTracker,
-                this._snapshotCacheEntry,
                 this.cache.persistedCache);
             return odspSnapshot;
         } catch (error) {
@@ -661,7 +660,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     snapshotOptionsWithoutBlobs,
                     this.logger,
                     this.epochTracker,
-                    this._snapshotCacheEntry,
                     this.cache.persistedCache);
                 return odspSnapshot;
             }

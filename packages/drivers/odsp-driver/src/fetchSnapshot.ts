@@ -70,7 +70,6 @@ export async function fetchLatestSnapshotCore(
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     epochTracker: EpochTracker | undefined,
-    snapshotCacheEntry: IEntry,
     persistedCache: IPersistedCache,
 ): Promise<{
     odspSnapshot: ISnapshotCacheValue,
@@ -204,32 +203,28 @@ export async function fetchLatestSnapshotCore(
                 logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                 value.sequenceNumber = undefined;
             } else if (canCache) {
-                if (epochTracker !== undefined) {
-                    cacheP = epochTracker.put(
-                        snapshotCacheEntry,
-                        value,
-                    ).catch(() => {});
-                } else {
-                    const fluidEpoch = response.headers.get("x-fluid-epoch");
-                    assert(fluidEpoch !== undefined, "Epoch  should be present in response");
-                    const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value,
-                        fluidEpoch,
-                        version: 2,
-                    };
-                    const cacheEntry: ICacheEntry = {
-                        type: snapshotKey,
-                        key: "",
-                        file: {
-                            resolvedUrl: odspResolvedUrl,
-                            docId: odspResolvedUrl.hashedDocumentId,
-                        },
-                    };
-                    cacheP = persistedCache.put(
-                        cacheEntry,
-                        valueWithEpoch,
-                    ).catch(() => {});
-                }
+                const fluidEpoch = response.headers.get("x-fluid-epoch");
+                assert(fluidEpoch !== undefined, "Epoch  should be present in response");
+                const valueWithEpoch: IVersionedValueWithEpoch = {
+                    value,
+                    fluidEpoch,
+                    version: 2,
+                };
+                const cacheEntry: ICacheEntry = {
+                    type: snapshotKey,
+                    key: "",
+                    file: {
+                        resolvedUrl: odspResolvedUrl,
+                        docId: odspResolvedUrl.hashedDocumentId,
+                    },
+                };
+                cacheP = persistedCache.put(
+                    cacheEntry,
+                    valueWithEpoch,
+                ).catch((error) => {
+                    logger.sendErrorEvent({ eventName: "cachePutError", type: snapshotKey }, error);
+                    throw error;
+                });
             }
             event.end({
                 trees: numTrees,
