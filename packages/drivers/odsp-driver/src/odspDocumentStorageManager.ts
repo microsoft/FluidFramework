@@ -630,6 +630,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotOptions.timeout = undefined;
         }
 
+        const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+            return this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
+                url,
+                fetchOptions,
+                "treesLatest",
+                true,
+            );
+        };
+
         try {
             const { odspSnapshot } = await fetchLatestSnapshotCore(
                 this.odspResolvedUrl,
@@ -637,7 +646,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 tokenFetchOptions,
                 snapshotOptions,
                 this.logger,
-                this.epochTracker,
+                snapshotUploader,
                 this.cache.persistedCache);
             return odspSnapshot;
         } catch (error) {
@@ -659,7 +668,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     tokenFetchOptions,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
-                    this.epochTracker,
+                    snapshotUploader,
                     this.cache.persistedCache);
                 return odspSnapshot;
             }

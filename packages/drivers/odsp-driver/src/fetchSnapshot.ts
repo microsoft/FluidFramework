@@ -10,7 +10,6 @@ import { assert } from "@fluidframework/common-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     ICacheEntry,
-    IEntry,
     IOdspResolvedUrl,
     IPersistedCache,
     ISnapshotOptions,
@@ -21,7 +20,7 @@ import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchAndParseAsJSONHelper, IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
+import { IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -69,7 +68,7 @@ export async function fetchLatestSnapshotCore(
     tokenFetchOptions: TokenFetchOptions,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    epochTracker: EpochTracker | undefined,
+    snapshotUploader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     persistedCache: IPersistedCache,
 ): Promise<{
     odspSnapshot: ISnapshotCacheValue,
@@ -121,30 +120,15 @@ export async function fetchLatestSnapshotCore(
         },
         async (event) => {
             const startTime = performance.now();
-            let response: IOdspResponse<IOdspSnapshot>;
-            if (epochTracker !== undefined) {
-                response = await epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
-                    url,
-                    {
-                        body: postBody,
-                        headers,
-                        signal: controller?.signal,
-                        method: "POST",
-                    },
-                    "treesLatest",
-                    true,
-                );
-            } else {
-                response = await fetchAndParseAsJSONHelper<IOdspSnapshot>(
-                    url,
-                    {
-                        body: postBody,
-                        headers,
-                        signal: controller?.signal,
-                        method: "POST",
-                    },
-                );
-            }
+            const response: IOdspResponse<IOdspSnapshot> = await snapshotUploader(
+                url,
+                {
+                    body: postBody,
+                    headers,
+                    signal: controller?.signal,
+                    method: "POST",
+                },
+            );
             const endTime = performance.now();
             const overallTime = endTime - startTime;
             const snapshot: IOdspSnapshot = response.content;

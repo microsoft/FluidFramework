@@ -6,21 +6,21 @@
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
-    ICacheEntry,
     IPersistedCache,
     ISnapshotOptions,
     OdspResourceTokenFetchOptions,
-    snapshotKey,
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     createOdspLogger,
+    fetchAndParseAsJSONHelper,
     getOdspResolvedUrl,
     getWithRetryForTokenRefresh,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { fetchLatestSnapshotCore } from "./fetchSnapshot";
+import { IOdspSnapshot } from "./contracts";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -50,6 +50,13 @@ export async function prefetchLatestSnapshot(
         true /* throwOnNullToken */,
     );
 
+    const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+        return fetchAndParseAsJSONHelper<IOdspSnapshot>(
+            url,
+            fetchOptions,
+        );
+    };
+
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
@@ -67,7 +74,7 @@ export async function prefetchLatestSnapshot(
                     tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
-                    undefined,
+                    snapshotUploader,
                     persistedCache,
                 );
                 let cached = false;
