@@ -17,7 +17,6 @@ import {
     TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
-import { EpochTracker } from "./epochTracker";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
@@ -37,7 +36,7 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
-    epochTracker: EpochTracker,
+    snapshotUploader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -58,7 +57,7 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(url, { headers }, "snapshotTree"),
+        async () => snapshotUploader(url, { headers }),
     );
 }
 

@@ -731,8 +731,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadTree");
-
-                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, this.epochTracker);
+                const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+                    return this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
+                        url,
+                        fetchOptions,
+                        "snapshotTree",
+                    );
+                };
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotUploader);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 let treeId = "";
                 if (odspSnapshot) {
