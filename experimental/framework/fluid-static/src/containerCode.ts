@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { strict as assert } from "assert";
 import {
     BaseContainerRuntimeFactory,
     DataObject,
@@ -127,17 +127,18 @@ export class RootDataObject
     }
 
     public close() {
-        if (this._container) {
-            this._container.close();
-        }
+        assert(this._container !== undefined, "The container has not been set by the client");
+        this._container.close();
     }
 
     public get closed() {
-        return this._container ? this._container.closed : false;
+        assert(this._container !== undefined, "The container has not been set by the client");
+        return this._container.closed;
     }
 
     public get connected() {
-        return this._container ? this._container.connected : false;
+        assert(this._container !== undefined, "The container has not been set by the client");
+        return this._container.connected;
     }
 
     public get audience(): IAudience {
