@@ -36,7 +36,7 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
-    snapshotUploader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -57,7 +57,7 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => snapshotUploader(url, { headers }),
+        async () => snapshotDownloader(url, { headers }),
     );
 }
 
@@ -67,7 +67,7 @@ export async function fetchLatestSnapshotCore(
     tokenFetchOptions: TokenFetchOptions,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotUploader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     persistedCache: IPersistedCache,
 ): Promise<{
     odspSnapshot: ISnapshotCacheValue,
@@ -119,7 +119,7 @@ export async function fetchLatestSnapshotCore(
         },
         async (event) => {
             const startTime = performance.now();
-            const response: IOdspResponse<IOdspSnapshot> = await snapshotUploader(
+            const response: IOdspResponse<IOdspSnapshot> = await snapshotDownloader(
                 url,
                 {
                     body: postBody,

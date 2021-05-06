@@ -623,7 +623,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotOptions.timeout = undefined;
         }
 
-        const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+        const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
             return this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
                 url,
                 fetchOptions,
@@ -639,7 +639,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 tokenFetchOptions,
                 snapshotOptions,
                 this.logger,
-                snapshotUploader,
+                snapshotDownloader,
                 this.cache.persistedCache);
             return odspSnapshot;
         } catch (error) {
@@ -661,7 +661,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     tokenFetchOptions,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
-                    snapshotUploader,
+                    snapshotDownloader,
                     this.cache.persistedCache);
                 return odspSnapshot;
             }
@@ -724,14 +724,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+                const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
                     return this.epochTracker.fetchAndParseAsJSON<IOdspSnapshot>(
                         url,
                         fetchOptions,
                         "snapshotTree",
                     );
                 };
-                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotUploader);
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 let treeId = "";
                 if (odspSnapshot) {

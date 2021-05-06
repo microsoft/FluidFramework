@@ -50,7 +50,7 @@ export async function prefetchLatestSnapshot(
         true /* throwOnNullToken */,
     );
 
-    const snapshotUploader = async (url: string, fetchOptions: {[index: string]: any}) => {
+    const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
         return fetchAndParseAsJSONHelper<IOdspSnapshot>(
             url,
             fetchOptions,
@@ -74,7 +74,7 @@ export async function prefetchLatestSnapshot(
                     tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
-                    snapshotUploader,
+                    snapshotDownloader,
                     persistedCache,
                 );
                 let cached = false;
