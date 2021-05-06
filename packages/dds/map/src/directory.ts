@@ -649,9 +649,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.resubmitCore}
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
