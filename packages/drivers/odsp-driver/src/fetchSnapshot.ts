@@ -79,7 +79,7 @@ export async function fetchLatestSnapshotCore(
 }> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const storageToken = await storageTokenFetcher(tokenFetchOptions, "PrefetchLatestSnapshot");
+    const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
     assert(storageToken !== null, "Storage token should not be null");
     const formBoundary = uuid();
     const formParams: string[] = [];
