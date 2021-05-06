@@ -27,7 +27,6 @@ import {
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
-import { RateLimiter } from "./rateLimiter";
 import { pkgVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
 
@@ -144,11 +143,8 @@ export async function fetchHelper(
 export async function fetchArray(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-    rateLimiter: RateLimiter,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-    const { content, headers, commonSpoHeaders, duration } = await rateLimiter.schedule(
-        async () => fetchHelper(requestInfo, requestInit),
-    );
+    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
 
     const arrayBuffer = await content.arrayBuffer();
     commonSpoHeaders.bodySize = arrayBuffer.byteLength;
