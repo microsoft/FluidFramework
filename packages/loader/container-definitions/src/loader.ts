@@ -186,11 +186,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
  */
 export interface ILoader extends IFluidRouter {
     /**
-     * If the loader can resolve external requests
-     */
-    readonly handlesExternalRequests: boolean;
-
-    /**
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
      *

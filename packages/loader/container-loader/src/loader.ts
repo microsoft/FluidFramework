@@ -58,8 +58,6 @@ export class RelativeLoader implements ILoader {
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
-    public get handlesExternalRequests(): boolean { return this.loader !== undefined; }
-
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
             if (canUseCache(request)) {
@@ -95,9 +93,9 @@ export class RelativeLoader implements ILoader {
 
         if (this.loader === undefined) {
             return {
-                status: 400,
-                value:"Cannot request external containers",
-                mimeType:"plain/text",
+                status: 404,
+                value: "Cannot request external containers",
+                mimeType: "plain/text",
             };
         }
         return this.loader.request(request);
@@ -263,8 +261,6 @@ export class Loader implements IHostLoader {
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
-
-    public get handlesExternalRequests(): boolean { return true; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
