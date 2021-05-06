@@ -50,7 +50,6 @@ export class WebWorkerLoader implements IHostLoader, IFluidRunnable, IFluidRoute
 
     public get IFluidRouter() { return this; }
     public get IFluidRunnable() { return this; }
-    public get handlesExternalRequests() { return true; }
 
     public async request(request: IRequest): Promise<IResponse> {
         const response = await this.proxy.request(request);
