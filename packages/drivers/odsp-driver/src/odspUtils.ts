@@ -61,7 +61,7 @@ function headersToMap(headers: Headers) {
  * simply propagate to caller
  */
 export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptions) => Promise<T>) {
-    return get({ refresh: false }).catch(async (e: OdspError) => {
+    return get({ refresh: false }).catch(async (e: OdspError & Error) => {
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
