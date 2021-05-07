@@ -24,8 +24,6 @@ import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
     TokenFetchOptions,
-    IEntry,
-    snapshotKey,
     ISnapshotOptions,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
@@ -627,11 +625,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
-            this.cache.persistedCache.put(
+            return this.cache.persistedCache.put(
                 createCacheSnapshotKey(this.odspResolvedUrl),
                 // Epoch tracker will add the epoch to the value. So just send value to cache.
                 valueWithEpoch.value,
-            )
+            );
         };
         try {
             const odspSnapshot = await fetchLatestSnapshotCore(

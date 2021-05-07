@@ -62,7 +62,8 @@ export async function prefetchLatestSnapshot(
         cacheP = persistedCache.put(
             createCacheSnapshotKey(odspResolvedUrl),
             valueWithEpoch,
-        )
+        );
+        return cacheP;
     };
     return PerformanceEvent.timedExecAsync(
         odspLogger,
