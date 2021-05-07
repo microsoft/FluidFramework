@@ -67,13 +67,13 @@ export interface IQuorumUpdateMsnResult {
     // immediate no-op is required
     immediateNoOp?: boolean;
 
-    // the msn changed
+    // quorum msn changed
     msn?: boolean;
 
-    // proposals cahnged
+    // quorum proposals changed
     proposals?: boolean;
 
-    // values cahnged
+    // quorum values changed
     values?: boolean;
 }
 
@@ -301,7 +301,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
      * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
      * that the proposal was accepted, then it becomes a committed consensus value.
-     * Returns A IQuorumChanges object if something changed
+     * Returns a IQuorumUpdateMsnResult object with a list of changes, or undefined if nothing changed.
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): IQuorumUpdateMsnResult | undefined {
         const value = message.minimumSequenceNumber;
