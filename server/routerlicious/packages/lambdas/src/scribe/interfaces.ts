@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorumSnapshot, IScribeProtocolState } from "@fluidframework/protocol-base";
 import {
     ISummaryAck,
     ISummaryNack,
