@@ -4,5 +4,9 @@
   "apiReport": {
     "enabled": true,
     "reportFolder": "<projectFolder>/../../api-report/"
+  },
+  "docModel": {
+    "enabled": true,
+    "apiJsonFilePath": "<projectFolder>/../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
   }
 }
