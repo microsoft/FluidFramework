@@ -112,10 +112,19 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, statusCode?: number): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, statusCode?: number): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
+
+// @public (undocumented)
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase {
+    constructor(errorMessage: string);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+}
 
 // @public (undocumented)
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
