@@ -59,6 +59,7 @@ import {
     ReadFluidDataStoreAttributes,
     getAttributesFormatVersion,
 } from "./summaryFormat";
+import { gcTestModeKey, getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -508,10 +509,8 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(
-            this.runtimeOptions.gcOptions?.runGCInTestMode,
-            0x1df /* "Data stores should be deleted only in GC test mode" */,
-        );
+        const gcTestMode = getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode;
+        assert(gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];

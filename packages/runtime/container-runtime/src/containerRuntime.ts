@@ -131,6 +131,7 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { gcTestModeKey, getLocalStorageFeatureGate, runGCKey } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -266,34 +267,6 @@ export interface IContainerRuntimeOptions {
 
 interface IRuntimeMessageMetadata {
     batch?: boolean;
-}
-
-// Local storage key to turn GC on / off.
-const runGCKey = "FluidRunGC";
-// Local storage key to turn GC test mode on / off.
-const gcTestModeKey = "FluidGCTestMode";
-
-/**
- * Helper to check if the given feature key is set in local storage.
- * @returns the following:
- * - true, if the key is set and the value is "1".
- * - false, if the key is set and the value is "0".
- * - undefined, if local storage is not available or the key is not set.
- */
-function getLocalStorageFeatureGate(key: string): boolean | undefined {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            const itemValue = localStorage.getItem(key);
-            if  (itemValue === "1") {
-                return true;
-            }
-            if (itemValue === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return undefined;
 }
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
