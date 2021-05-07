@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -36,4 +37,31 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
 
     // Use the diceRolled event to trigger the rerender whenever the value changes.
     diceRoller.on("diceRolled", updateDiceChar);
+}
+
+/**
+ * Render an IDiceRollerController into a given div as a text character, with a button to roll it.
+ * @param diceRoller - The dice roller to be rendered
+ * @param div - The div to render into
+ */
+export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivElement) {
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.style.textAlign = "center";
+    wrapperDiv.style.margin = "10px";
+    div.appendChild(wrapperDiv);
+
+    const audienceDiv = document.createElement("div");
+    audienceDiv.style.fontSize = "20px";
+
+    const setAudienceMemberIds = () => {
+        const members = audience.getMembers();
+        const memberIds = members.map((member) => member.userDetails.id);
+        audienceDiv.textContent = `Users: ${memberIds.join(", ")}`;
+    };
+
+    setAudienceMemberIds();
+
+    audience.on("membersChanged", setAudienceMemberIds);
+
+    wrapperDiv.appendChild(audienceDiv);
 }

@@ -5,7 +5,7 @@
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DiceRollerController } from "./controller";
-import { renderDiceRoller } from "./view";
+import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
 TinyliciousClient.init();
@@ -32,7 +32,7 @@ export const containerSchema = {
 
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
-    const fluidContainer = createNew
+    const [fluidContainer, containerServices] = createNew
         ? await TinyliciousClient.createContainer({ id: containerId }, containerSchema)
         : await TinyliciousClient.getContainer({ id: containerId }, containerSchema);
 
@@ -48,6 +48,7 @@ async function start(): Promise<void> {
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
     renderDiceRoller(diceRollerController, div1);
+    renderAudience(containerServices.audience, div1);
 
     // We now get the SharedMap from the container
     const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
@@ -60,6 +61,7 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div2);
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
+    renderAudience(containerServices.audience, div2);
 }
 
 start().catch((error) => console.error(error));
