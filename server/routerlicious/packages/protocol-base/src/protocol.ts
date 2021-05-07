@@ -99,7 +99,7 @@ export class ProtocolOpHandler {
                 };
                 this.quorum.addMember(join.clientId, member);
 
-                // quorum members is changing
+                // members are changing
                 this.cachedProtocolState.members = undefined;
 
                 break;
@@ -109,7 +109,7 @@ export class ProtocolOpHandler {
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
                 this.quorum.removeMember(clientId);
 
-                // quorum members is changing
+                // members are changing
                 this.cachedProtocolState.members = undefined;
 
                 break;
@@ -159,12 +159,12 @@ export class ProtocolOpHandler {
             }
 
             if (updateMsnResult.proposals) {
-                // clear the proposals cache
+                // proposals are changing
                 this.cachedProtocolState.proposals = undefined;
             }
 
             if (updateMsnResult.values) {
-                // clear the values cache
+                // values are changing
                 this.cachedProtocolState.values = undefined;
             }
         }
