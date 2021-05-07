@@ -35,7 +35,7 @@ Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.
 Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
 
 ### ITelemetryProperties may be tagged for privacy purposes
-Telemetry properties on logs *can (but are not yet required to)* now be tagged and can thus have shape (e.g. `{ value: foo, tag: someString }`) instead of being some primitive value. This is **not** a breaking change in 0.39, but users are strongly encouraged to add support for tags (see [this note](./common/lib/common-definitions/UPCOMING.md) for more details).
+Telemetry properties on logs *can (but are **not** yet required to)* now be tagged and can thus have shape (e.g. `{ value: foo, tag: someString }`) instead of being some primitive value. This is **not** a breaking change in 0.39, but users are strongly encouraged to add support for tags (see [this note](./common/lib/common-definitions/UPCOMING.md) for more details).
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
