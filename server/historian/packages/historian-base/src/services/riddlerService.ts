@@ -23,6 +23,7 @@ export class RiddlerService implements ITenantService {
             endpoint,
             undefined,
             undefined,
+            undefined,
             {
                 "Accept": "application/json",
                 "Content-Type": "application/json",

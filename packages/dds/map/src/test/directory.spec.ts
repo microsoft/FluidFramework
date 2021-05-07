@@ -1172,6 +1172,16 @@ describe("Directory", () => {
                 }
                 assert.ok(expectedDirectories2.size === 0);
             });
+
+            it("Only creates a subdirectory once", () => {
+                const fooDirectory = directory1.createSubDirectory("foo");
+                fooDirectory.set("testKey", "testValue");
+                const fooDirectory2 = directory1.createSubDirectory("foo");
+                fooDirectory2.set("testKey2", "testValue2");
+                assert.strictEqual(fooDirectory, fooDirectory2, "Created two separate subdirectories");
+                assert.strictEqual(fooDirectory.get("testKey2"), "testValue2", "Value 2 not present");
+                assert.strictEqual(fooDirectory2.get("testKey"), "testValue", "Value 1 not present");
+            });
         });
     });
 
