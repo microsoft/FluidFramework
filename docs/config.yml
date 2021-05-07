@@ -53,6 +53,9 @@ menu:
   - identifier: "recipes"
     name: "Recipes"
     weight: -200
+  - identifier: "property"
+    name: "Property"
+    weight: -150
   - identifier: "faq"
     name: "FAQ"
     url: "/start/faq/"
