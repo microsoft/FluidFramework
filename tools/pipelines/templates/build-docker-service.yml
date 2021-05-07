@@ -293,7 +293,7 @@ stages:
           displayName: npm run build:docs
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs:ci'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
 
         - task: PublishBuildArtifacts@1
           displayName: 'Docs: Publish Artifact'
