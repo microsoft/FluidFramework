@@ -2,7 +2,7 @@
 - [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
 
 ### ITelemetryProperties may be tagged for privacy purposes
-Telemetry properties on logs *can (but are **not** yet required to)* now be tagged and can thus have shape (e.g. `{ value: foo, tag: someString }`) instead of being some primitive value. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [this note](./UPCOMING.md) for more details).
+Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
 
 
 ## 0.39 Breaking changes

@@ -1,9 +1,9 @@
 # Upcoming Breaking Changes
 
-Below is a list of some upcoming changes for users to be aware of and to plan for, but not ones that are slated for the next release.
+Below is a list of some upcoming breaking changes for users to be aware of and to plan for, but not ones that are slated for the next release.
 
 ### ITelemetryProperties may be tagged for privacy purposes (0.41+)
-As of the 0.40, telemetry properties on logs now may be tagged, meaning the property value may have the shape
+As of the 0.40 release, telemetry properties on logs now may be tagged, meaning the property value may have the shape
 `{ value: foo, tag: someString }` instead of merely a primitive value. Unwrapped/untagged values are still supported.
 See the updated type definition of `ITelemetryProperties` in @fluidframework/common-definitions v 0.21.
 `ITelemetryBaseLogger.send` should be updated to handle these tagged values.
