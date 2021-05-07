@@ -35,15 +35,7 @@ Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.
 Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
 
 ### ITelemetryProperties may be tagged for privacy purposes
-Telemetry properties on logs now may be tagged, meaning the property value may have the shape
-`{ value: foo, tag: someString }` instead of merely a primitive value. Unwrapped/untagged values are still supported.
-See the updated type definition of `ITelemetryProperties` in @fluidframework/common-definitions v 0.21.
-`ITelemetryBaseLogger.send` should be updated to handle these tagged values.
-See [this code](https://github.com/microsoft/FluidFramework/blob/main/packages/utils/telemetry-utils/src/logger.ts#L79-L107)
-for an example of how to handle known tags, and update `supportsTags` to `true` when the logger properly handles tags.
-Until then, in `ITelemetryBaseLogger.send` you may safely cast `event: ITelemetryProperties` to
-`{ [index: string]: TelemetryEventPropertyType; }` and continue handling as-is,
-since the FluidFramework will continue to handle tagged values itself unless `supportsTags` is `true`.
+Telemetry properties on logs *can (but are not yet required to)* now be tagged and can thus have shape (e.g. `{ value: foo, tag: someString }`) instead of being some primitive value. This is **not** a breaking change in 0.39, but users are strongly encouraged to add support for tags (see [this note](./common/lib/common-definitions/UPCOMING.md) for more details).
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
