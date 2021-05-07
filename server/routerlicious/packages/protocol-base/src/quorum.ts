@@ -63,6 +63,20 @@ export interface IQuorumSnapshot {
     values: [string, ICommittedProposal][];
 }
 
+export interface IQuorumUpdateMsnResult {
+    // immediate no-op is required
+    immediateNoOp?: boolean;
+
+    // the msn changed
+    msn?: boolean;
+
+    // proposals cahnged
+    proposals?: boolean;
+
+    // values cahnged
+    values?: boolean;
+}
+
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
@@ -111,20 +125,46 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         this.removeAllListeners();
     }
 
+    /**
+     * Snapshots the entire quorum
+     * @returns a deep cloned quorum snapshot
+     */
     public snapshot(): IQuorumSnapshot {
+        return {
+            members: this.snapshotMembers(),
+            proposals: this.snapshotProposals(),
+            values: this.snapshotValues(),
+        };
+    }
+
+    /**
+     * Snapshots quorum members
+     * @returns a deep cloned array of members
+     */
+    public snapshotMembers(): IQuorumSnapshot["members"] {
+        return cloneDeep(Array.from(this.members));
+    }
+
+    /**
+     * Snapshots quorum proposals
+     * @returns a deep cloned array of proposals
+     */
+    public snapshotProposals(): IQuorumSnapshot["proposals"] {
         const serializedProposals = Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
                 Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]]);
 
-        const snapshot = {
-            members: [...this.members],
-            proposals: serializedProposals,
-            values: [...this.values],
-        };
+        return cloneDeep(serializedProposals);
+    }
 
-        return cloneDeep(snapshot);
+    /**
+     * Snapshots quorum values
+     * @returns a deep cloned array of values
+     */
+    public snapshotValues(): IQuorumSnapshot["values"] {
+        return cloneDeep(Array.from(this.values));
     }
 
     /**
@@ -261,9 +301,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
      * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
      * that the proposal was accepted, then it becomes a committed consensus value.
-     * Returns true if immediate no-op is required.
+     * Returns A IQuorumChanges object if something changed
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): IQuorumUpdateMsnResult | undefined {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
             if (value < this.minimumSequenceNumber) {
@@ -274,12 +314,16 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 });
             }
             if (value <= this.minimumSequenceNumber) {
-                return false;
+                return undefined;
             }
         }
 
+        const result: IQuorumUpdateMsnResult = {
+            // msn is being updated
+            msn: true,
+        };
+
         this.minimumSequenceNumber = value;
-        let immediateNoOp = false;
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
 
@@ -317,13 +361,16 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 // a new proposal was made before it made it to the committed phase? For now we just will never
                 // emit this message
 
+                // values is being updated
+                result.values = true;
                 this.values.set(committedProposal.key, committedProposal);
+
                 this.pendingCommit.set(committedProposal.key, committedProposal);
 
                 // Send no-op on approval to expedite commit
                 // accept means that all clients have seen the proposal and nobody has rejected it
                 // commit means that all clients have seen that the proposal was accepted by everyone
-                immediateNoOp = true;
+                result.immediateNoOp = true;
 
                 this.emit(
                     "approveProposal",
@@ -340,6 +387,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                     Array.from(proposal.rejections));
             }
 
+            // proposals are being updated
+            result.proposals = true;
             this.proposals.delete(proposal.sequenceNumber);
         }
 
@@ -363,7 +412,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 });
         }
 
-        return immediateNoOp;
+        return result;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

@@ -24,6 +24,11 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
+interface ICachedScribeProtocolState extends Partial<IScribeProtocolState> {
+    sequenceNumber: number;
+    minimumSequenceNumber: number;
+}
+
 export function isSystemMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
         case MessageType.ClientJoin:
@@ -47,7 +52,12 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
-    private protocolState: IScribeProtocolState | undefined;
+
+    /**
+     * Cached protocol state
+     * Parts of it will be updated/cleared depending on the message being processed
+     */
+    private cachedProtocolState: ICachedScribeProtocolState;
 
     constructor(
         public minimumSequenceNumber: number,
@@ -66,16 +76,17 @@ export class ProtocolOpHandler {
             values,
             sendProposal,
             sendReject);
+        this.cachedProtocolState = {
+            sequenceNumber,
+            minimumSequenceNumber,
+        };
     }
 
     public close() {
-        this.protocolState = undefined;
         this.quorum.close();
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        this.protocolState = undefined;
-
         let immediateNoOp = false;
 
         switch (message.type) {
@@ -88,12 +99,19 @@ export class ProtocolOpHandler {
                 };
                 this.quorum.addMember(join.clientId, member);
 
+                // quorum members is changing
+                this.cachedProtocolState.members = undefined;
+
                 break;
 
             case MessageType.ClientLeave:
                 const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
                 this.quorum.removeMember(clientId);
+
+                // quorum members is changing
+                this.cachedProtocolState.members = undefined;
+
                 break;
 
             case MessageType.Propose:
@@ -107,11 +125,19 @@ export class ProtocolOpHandler {
 
                 // On a quorum proposal, immediately send a response to expedite the approval.
                 immediateNoOp = true;
+
+                // proposals are changing
+                this.cachedProtocolState.proposals = undefined;
+
                 break;
 
             case MessageType.Reject:
                 const sequenceNumber = message.contents as number;
                 this.quorum.rejectProposal(message.clientId, sequenceNumber);
+
+                // proposals are changing
+                this.cachedProtocolState.proposals = undefined;
+
                 break;
 
             default:
@@ -121,28 +147,49 @@ export class ProtocolOpHandler {
         this.minimumSequenceNumber = message.minimumSequenceNumber;
         this.sequenceNumber = message.sequenceNumber;
 
+        this.cachedProtocolState.minimumSequenceNumber = this.minimumSequenceNumber;
+        this.cachedProtocolState.sequenceNumber = this.sequenceNumber;
+
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
+        const updateMsnResult = this.quorum.updateMinimumSequenceNumber(message);
+        if (updateMsnResult) {
+            if (updateMsnResult.immediateNoOp) {
+                immediateNoOp = true;
+            }
+
+            if (updateMsnResult.proposals) {
+                // clear the proposals cache
+                this.cachedProtocolState.proposals = undefined;
+            }
+
+            if (updateMsnResult.values) {
+                // clear the values cache
+                this.cachedProtocolState.values = undefined;
+            }
+        }
 
         return { immediateNoOp };
     }
 
+    /**
+     * Gets the scribe protocol state
+     */
     public getProtocolState(): IScribeProtocolState {
-        if (!this.protocolState) {
-            const quorumSnapshot = this.quorum.snapshot();
+        const protocolState = this.cachedProtocolState;
 
-            const protocolState = {
-                members: quorumSnapshot.members,
-                minimumSequenceNumber: this.minimumSequenceNumber,
-                proposals: quorumSnapshot.proposals,
-                sequenceNumber: this.sequenceNumber,
-                values: quorumSnapshot.values,
-            };
+        protocolState.members ??= this.quorum.snapshotMembers();
+        protocolState.proposals ??= this.quorum.snapshotProposals();
+        protocolState.values ??= this.quorum.snapshotValues();
 
-            this.protocolState = protocolState;
-        }
-
-        return this.protocolState;
+        // return a new object every time
+        // this ensures future state changes will not affect outside callers
+        return {
+            sequenceNumber: this.sequenceNumber,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            members: protocolState.members,
+            proposals: protocolState.proposals,
+            values: protocolState.values,
+        };
     }
 }
