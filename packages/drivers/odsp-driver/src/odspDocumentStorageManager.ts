@@ -629,6 +629,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
             this.cache.persistedCache.put(
                 createCacheSnapshotKey(this.odspResolvedUrl),
+                // Epoch tracker will add the epoch to the value. So just send value to cache.
                 valueWithEpoch.value,
             )
         };
