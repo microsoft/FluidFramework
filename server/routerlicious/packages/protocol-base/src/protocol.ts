@@ -55,7 +55,9 @@ export class ProtocolOpHandler {
 
     /**
      * Cached protocol state
-     * Parts of it will be updated/cleared depending on the message being processed
+     * The quorum consists of 3 properties: members, values, and proposals.
+     * Depending on the op being processed, some or none of those properties may change.
+     * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
     private cachedProtocolState: ICachedScribeProtocolState;
 
