@@ -12,10 +12,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "bench": "ts-node bench/src/index.ts",
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs:ci": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -60,8 +61,8 @@
     "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/datastore-definitions": "^0.40.0",
     "@fluidframework/garbage-collector": "^0.40.0",
-    "@fluidframework/protocol-base": "^0.1024.0-0",
-    "@fluidframework/protocol-definitions": "^0.1024.0-0",
+    "@fluidframework/protocol-base": "^0.1025.0-0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-0",
     "@fluidframework/runtime-definitions": "^0.40.0",
     "assert": "^2.0.0"
   },

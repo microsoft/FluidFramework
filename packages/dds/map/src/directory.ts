@@ -29,8 +29,6 @@ import {
     ISerializableValue,
     ISerializedValue,
     ISharedDirectory,
-    IValueOpEmitter,
-    IValueTypeOperationValue,
     ISharedDirectoryEvents,
     IValueChanged,
 } from "./interfaces";
@@ -38,7 +36,6 @@ import {
     ILocalValue,
     LocalValueMaker,
     makeSerializable,
-    ValueTypeLocalValue,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
@@ -73,31 +70,6 @@ interface IDirectoryMessageHandler {
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
     submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
-}
-
-/**
- * Describes an operation specific to a value type.
- */
-interface IDirectoryValueTypeOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "act";
-
-    /**
-     * Directory key being modified.
-     */
-    key: string;
-
-    /**
-     * Absolute path of the directory where the modified key is located.
-     */
-    path: string;
-
-    /**
-     * Value of the operation, specific to the value type.
-     */
-    value: IValueTypeOperationValue;
 }
 
 /**
@@ -148,7 +120,7 @@ interface IDirectoryDeleteOperation {
 /**
  * An operation on a specific key within a directory
  */
-type IDirectoryKeyOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
+type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
@@ -612,36 +584,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Create an emitter for a value type to emit ops from the given key and path.
-     * @param key - The key of the directory that the value type will be stored on
-     * @param absolutePath - The absolute path of the subdirectory storing the value type
-     * @returns A value op emitter for the given key and path
-     * @internal
-     */
-    public makeDirectoryValueOpEmitter(
-        key: string,
-        absolutePath: string,
-    ): IValueOpEmitter {
-        const emit = (opName: string, previousValue: any, params: any) => {
-            const op: IDirectoryValueTypeOperation = {
-                key,
-                path: absolutePath,
-                type: "act",
-                value: {
-                    opName,
-                    value: params,
-                },
-            };
-
-            // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
-            const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
-            this.emit("valueChanged", event, true, null, this);
-        };
-        return { emit };
-    }
-
-    /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect() {
@@ -649,9 +591,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.resubmitCore}
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
@@ -772,14 +714,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         absolutePath: string,
         serializable: ISerializableValue,
     ): ILocalValue {
-        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            return this.localValueMaker.fromSerializable(serializable);
-        } else {
-            return this.localValueMaker.fromSerializableValueType(
-                serializable,
-                this.makeDirectoryValueOpEmitter(key, absolutePath),
-            );
-        }
+        assert(
+            serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared],
+            "Unexpected serializable type",
+        );
+        return this.localValueMaker.fromSerializable(serializable);
     }
 
     /**
@@ -876,39 +815,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
-                },
-            },
-        );
-
-        // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
-        // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
-        // stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
-        // watching for manipulations of that item.
-        this.messageHandlers.set(
-            "act",
-            {
-                process: (op: IDirectoryValueTypeOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    // Subdir might not exist if we deleted it
-                    if (!subdir) {
-                        return;
-                    }
-
-                    const localValue = subdir.getLocalValue<ValueTypeLocalValue>(op.key);
-                    // Local value might not exist if we deleted it
-                    if (!localValue) {
-                        return;
-                    }
-
-                    const handler = localValue.getOpHandler(op.value.opName);
-                    const previousValue = localValue.value;
-                    const translatedValue = this.serializer.parse(JSON.stringify(op.value.value));
-                    handler.process(previousValue, translatedValue, local, message);
-                    const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
-                    this.emit("valueChanged", event, local, message, this);
-                },
-                submit: (op, localOpMetadata: unknown) => {
-                    this.submitDirectoryMessage(op, localOpMetadata);
                 },
             },
         );

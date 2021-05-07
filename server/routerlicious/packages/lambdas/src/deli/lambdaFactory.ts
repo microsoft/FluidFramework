@@ -41,6 +41,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         sequenceNumber: 0,
         term: 1,
         lastSentMSN: 0,
+        nackMessages: undefined,
     };
 };
 

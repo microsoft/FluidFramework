@@ -1,4 +1,4 @@
-# @fluid-experimental/experimental-fluidframework
+# @fluid-experimental/fluid-framework
 
 The main entry point into all of Fluid Framework public packages
 

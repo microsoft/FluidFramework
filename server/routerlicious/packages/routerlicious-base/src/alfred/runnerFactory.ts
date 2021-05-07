@@ -11,7 +11,6 @@ import {
     NodeManager,
     ReservationManager,
 } from "@fluidframework/server-memory-orderer";
-import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -45,7 +44,6 @@ export class OrdererManager implements core.IOrdererManager {
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
         private readonly kafkaFactory: KafkaOrdererFactory,
-        private readonly eventHubFactory: KafkaOrdererFactory,
     ) {
     }
 
@@ -62,8 +60,6 @@ export class OrdererManager implements core.IOrdererManager {
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
-            case "eventHub":
-                return this.eventHubFactory.create(tenantId, documentId);
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
@@ -290,21 +286,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
-        let eventHubOrdererFactory: KafkaOrdererFactory = null;
-        if (config.get("eventHub")) {
-            const eventHubProducer = new EventHubProducer(config.get("eventHub:endpoint"), topic);
-            eventHubOrdererFactory = new KafkaOrdererFactory(
-                eventHubProducer,
-                maxSendMessageSize,
-                core.DefaultServiceConfiguration);
-        }
-
         const orderManager = new OrdererManager(
             serverUrl,
             tenantManager,
             localOrderManager,
-            kafkaOrdererFactory,
-            eventHubOrdererFactory);
+            kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];

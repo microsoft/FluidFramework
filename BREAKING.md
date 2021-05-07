@@ -1,9 +1,15 @@
 ## 0.40 Breaking changes
+
+- [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
 - [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
+
+### AgentScheduler removed by default
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
-
 
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)
@@ -224,7 +230,6 @@ The option will be turned off by default in an upcoming release before being tur
 
 ### Removed containerUrl from IContainerLoadOptions and IContainerConfig
 Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
->>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

@@ -15,6 +15,7 @@
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs:ci": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -57,7 +58,7 @@
     "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/datastore-definitions": "^0.40.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0-0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-0",
     "@fluidframework/shared-object-base": "^0.40.0",
     "assert": "^2.0.0",
     "debug": "^4.1.1"
