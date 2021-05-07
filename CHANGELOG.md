@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.100.1
+
+* build: Update dependencies
+  * Associated pull request: [30242](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30242)
+  * Commit: [9a599da14d1f08bb09e13c227853f4e0b0ebcdeb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9a599da14d1f08bb09e13c227853f4e0b0ebcdeb)
+* Merge remote-tracking branch 'origin/releases/2021.04.5' into user/crmacomb/merge4.5
+  * Commit: [aae47b3403a00b15f7995e236e18ead756591dfe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/aae47b3403a00b15f7995e236e18ead756591dfe)
+* chore: Remove dependency on custom b-tree package
+  * Associated pull request: [30187](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30187)
+  * Commit: [f48c2d155eb25fe27752eee77ced379e4e34644c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f48c2d155eb25fe27752eee77ced379e4e34644c)
+* merge: `releases/2021.04.5` into `master`
+  * Associated pull request: [30117](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30117)
+  * Commit: [0adc48540669cac605f054023fab717935609eb6](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0adc48540669cac605f054023fab717935609eb6)
+
 ## 0.96.2
 
 * Merge remote-tracking branch 'origin/releases/2021.04.4' into user/crmacomb/releaseupdate4.5
