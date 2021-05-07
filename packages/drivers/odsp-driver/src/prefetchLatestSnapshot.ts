@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
+    createCacheSnapshotKey,
     createOdspLogger,
     fetchAndParseAsJSONHelper,
     getOdspResolvedUrl,
@@ -20,7 +21,7 @@ import {
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { fetchLatestSnapshotCore } from "./fetchSnapshot";
-import { IOdspSnapshot } from "./contracts";
+import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -56,7 +57,13 @@ export async function prefetchLatestSnapshot(
             fetchOptions,
         );
     };
-
+    let cacheP: Promise<void> | undefined;
+    const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+        cacheP = persistedCache.put(
+            createCacheSnapshotKey(odspResolvedUrl),
+            valueWithEpoch,
+        )
+    };
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
@@ -68,14 +75,14 @@ export async function prefetchLatestSnapshot(
                 if (tokenFetchOptions.refresh) {
                     attempts = 2;
                 }
-                const { cacheP } = await fetchLatestSnapshotCore(
+                await fetchLatestSnapshotCore(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
                     snapshotDownloader,
-                    persistedCache,
+                    putInCache,
                 );
                 let cached = false;
                 await cacheP?.then(() => cached = true);

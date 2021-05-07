@@ -9,9 +9,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    ICacheEntry,
     IOdspResolvedUrl,
-    IPersistedCache,
     ISnapshotOptions,
     snapshotKey,
     TokenFetchOptions,
@@ -68,11 +66,8 @@ export async function fetchLatestSnapshotCore(
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
-    persistedCache: IPersistedCache,
-): Promise<{
-    odspSnapshot: ISnapshotCacheValue,
-    cacheP?: Promise<void>,
-}> {
+    putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+): Promise<ISnapshotCacheValue> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
     const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
@@ -180,7 +175,6 @@ export async function fetchLatestSnapshotCore(
                 undefined;
 
             const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-            let cacheP: Promise<void> | undefined;
             if (!Number.isInteger(sequenceNumber)
                 || seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber) {
                 logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
@@ -193,18 +187,7 @@ export async function fetchLatestSnapshotCore(
                     fluidEpoch,
                     version: 2,
                 };
-                const cacheEntry: ICacheEntry = {
-                    type: snapshotKey,
-                    key: "",
-                    file: {
-                        resolvedUrl: odspResolvedUrl,
-                        docId: odspResolvedUrl.hashedDocumentId,
-                    },
-                };
-                cacheP = persistedCache.put(
-                    cacheEntry,
-                    valueWithEpoch,
-                ).catch((error) => {
+                putInCache(valueWithEpoch).catch((error) => {
                     logger.sendErrorEvent({ eventName: "cachePutError", type: snapshotKey }, error);
                     throw error;
                 });
@@ -234,7 +217,7 @@ export async function fetchLatestSnapshotCore(
                 sltelemetry: response.headers.get("x-fluid-sltelemetry"),
                 ...response.commonSpoHeaders,
             });
-            return { odspSnapshot: value, cacheP };
+            return value;
         },
     ).catch((error) => {
         // Issue #5895:

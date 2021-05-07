@@ -36,11 +36,12 @@ import {
     HostStoragePolicyInternal,
     IOdspSnapshotCommit,
     IOdspSnapshotBlob,
+    IVersionedValueWithEpoch,
 } from "./contracts";
 import { fetchLatestSnapshotCore, fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
-import { getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
+import { createCacheSnapshotKey, getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { RateLimiter } from "./rateLimiter";
@@ -225,7 +226,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
     private firstVersionCall = true;
-    private readonly _snapshotCacheEntry: IEntry;
     private _snapshotSequenceNumber: number | undefined;
 
     private readonly documentId: string;
@@ -273,12 +273,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
-
-        this._snapshotCacheEntry = {
-            type: snapshotKey,
-            key: "",
-        };
-
         this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
     }
 
@@ -506,7 +500,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         this.logger,
                         { eventName: "ObtainSnapshot" },
                         async (event: PerformanceEvent) => {
-                            const cachedSnapshotP: Promise<ISnapshotCacheValue | undefined> = this.epochTracker.get(this._snapshotCacheEntry);
+                            const cachedSnapshotP: Promise<ISnapshotCacheValue | undefined> =
+                                this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -631,16 +626,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 true,
             );
         };
-
+        const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+            this.cache.persistedCache.put(
+                createCacheSnapshotKey(this.odspResolvedUrl),
+                valueWithEpoch.value,
+            )
+        };
         try {
-            const { odspSnapshot } = await fetchLatestSnapshotCore(
+            const odspSnapshot = await fetchLatestSnapshotCore(
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 tokenFetchOptions,
                 snapshotOptions,
                 this.logger,
                 snapshotDownloader,
-                this.cache.persistedCache);
+                putInCache);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -655,14 +655,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     errorType,
                 });
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
-                const { odspSnapshot } = await fetchLatestSnapshotCore(
+                const odspSnapshot = await fetchLatestSnapshotCore(
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     tokenFetchOptions,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
                     snapshotDownloader,
-                    this.cache.persistedCache);
+                    putInCache);
                 return odspSnapshot;
             }
             throw error;
