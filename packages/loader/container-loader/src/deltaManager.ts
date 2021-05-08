@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -171,7 +171,7 @@ export class DeltaManager
     private readonly defaultReconnectionMode: ConnectionMode;
 
     private pending: ISequencedDocumentMessage[] = [];
-    private fetching = false;
+    private fetchReason: string | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -189,6 +189,7 @@ export class DeltaManager
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    private prevEnqueueMessagesReason: string | undefined;
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
     // The sequence number we initially loaded from
@@ -220,6 +221,8 @@ export class DeltaManager
     private connectFirstConnection = true;
     private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
+
+    private connectionStateProps: Record<string, string | number> = {};
 
     // True if current connection has checkpoint information
     // I.e. we know how far behind the client was at the time of establishing connection
@@ -806,7 +809,7 @@ export class DeltaManager
     }
 
     private async getDeltas(
-        from: number, // exclusive
+        from: number, // inclusive
         to: number | undefined, // exclusive
         callback: (messages: ISequencedDocumentMessage[]) => void,
         cacheOnly: boolean)
@@ -820,10 +823,41 @@ export class DeltaManager
             this.deltaStorage = await docService.connectToDeltaStorage();
         }
 
+        let controller = this.closeAbortController;
+        let listenerToClear: ((op: ISequencedDocumentMessage) => void) | undefined;
+
+        if (to !== undefined) {
+            controller = new AbortController();
+
+            assert(this.closeAbortController.signal.onabort === null, "reentrancy");
+            this.closeAbortController.signal.onabort = () => controller.abort();
+
+            const listener = (op: ISequencedDocumentMessage) => {
+                // Be prepared for the case where webSocket would receive the ops that we are trying to fill through
+                // storage. Ideally it should never happen (i.e. ops on socket are always ordered, and thus once we
+                // detected gap, this gap can't be filled in later on through websocket).
+                // And in practice that does look like the case. The place where this code gets hit is if we lost
+                // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
+                if (op.sequenceNumber >= to) {
+                    this.logger.sendPerformanceEvent({
+                        reason: this.fetchReason,
+                        eventName: "ExtraStorageCall",
+                        from,
+                        to,
+                        ...this.connectionStateProps,
+                    });
+                    controller.abort();
+                    this._inbound.off("push", listener);
+                }
+            };
+            this._inbound.on("push", listener);
+            listenerToClear = listener;
+        }
+
         const stream = this.deltaStorage.fetchMessages(
             from, // inclusive
             to, // exclusive
-            this.closeAbortController.signal,
+            controller.signal,
             cacheOnly);
 
         // eslint-disable-next-line no-constant-condition
@@ -832,11 +866,12 @@ export class DeltaManager
             if (result.done) {
                 break;
             }
-            PerformanceEvent.timedExec(
-                this.logger,
-                { eventName: "GetDeltas_OpProcessing", count: result.value.length},
-                () => callback(result.value),
-                { end: true, cancel: "error" });
+            callback(result.value);
+        }
+
+        this.closeAbortController.signal.onabort = null;
+        if (listenerToClear !== undefined) {
+            this._inbound.off("push", listenerToClear);
         }
     }
 
@@ -1021,6 +1056,12 @@ export class DeltaManager
 
         const initialMessages = connection.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
+        this.connectionStateProps = {
+            connectionLastQueuedSequenceNumber : this.lastQueuedSequenceNumber,
+            connectionLastObservedSeqNumber: this.lastObservedSeqNumber,
+            clientId: connection.clientId,
+            mode: connection.mode,
+        };
         this._hasCheckpointSequenceNumber = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
@@ -1033,9 +1074,10 @@ export class DeltaManager
         // Update knowledge of how far we are behind, before raising "connect" event
         // This is duplication of what enqueueMessages() does, but we have to raise event before we get there,
         // so duplicating update logic here as well.
+        const last = initialMessages.length > 0 ? initialMessages[initialMessages.length - 1].sequenceNumber : -1;
         if (initialMessages.length > 0) {
             this._hasCheckpointSequenceNumber = true;
-            this.updateLatestKnownOpSeqNumber(initialMessages[initialMessages.length - 1].sequenceNumber);
+            this.updateLatestKnownOpSeqNumber(last);
         }
 
         // Notify of the connection
@@ -1044,12 +1086,11 @@ export class DeltaManager
         this.emit(
             "connect",
             DeltaManager.detailsFromConnection(connection),
-            this._hasCheckpointSequenceNumber ? this.lastKnownSeqNumber - this.lastSequenceNumber : undefined);
+            this._hasCheckpointSequenceNumber ? this.lastObservedSeqNumber - this.lastSequenceNumber : undefined);
 
         this.enqueueMessages(
             initialMessages,
-            this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
-            true /* allowDuplicates */);
+            this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
         if (connection.initialSignals !== undefined) {
             for (const signal of connection.initialSignals) {
@@ -1071,6 +1112,9 @@ export class DeltaManager
             } else if (connection.mode !== "write") {
                 this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
             }
+        } else {
+            this.connectionStateProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
+            this.connectionStateProps.connectionInitialOpsTo = last + 1;
         }
 
         this.connectFirstConnection = false;
@@ -1110,6 +1154,7 @@ export class DeltaManager
         this.emit("disconnect", reason);
 
         connection.close();
+        this.connectionStateProps = {};
 
         return true;
     }
@@ -1171,7 +1216,7 @@ export class DeltaManager
     private enqueueMessages(
         messages: ISequencedDocumentMessage[],
         reason: string,
-        allowDuplicates = false,
+        allowGaps = false,
     ): void {
         if (this.handler === undefined) {
             // We did not setup handler yet.
@@ -1189,31 +1234,32 @@ export class DeltaManager
         // It's responsibility of
         // - attachOpHandler()
         // - fetchMissingDeltas() after it's done with querying storage
-        assert(this.pending.length === 0 || this.fetching, "Pending ops");
+        assert(this.pending.length === 0 || this.fetchReason !== undefined, "Pending ops");
 
         if (messages.length === 0) {
             return;
         }
 
+        const from = messages[0].sequenceNumber;
+        const last = messages[messages.length - 1].sequenceNumber;
+
         // Report stats about missing and duplicate ops
         // This helps better understand why we fetch ops from storage, and thus may delay
         // getting current / sending ops
-        const last = messages[messages.length - 1].sequenceNumber;
         // It's possible that this batch is already too late - do not bother
         if (last > this.lastQueuedSequenceNumber) {
-            const first = messages[0].sequenceNumber;
-            let prev = first - 1;
-            const messageGap = prev - this.lastQueuedSequenceNumber;
+            let prev = from - 1;
+            const initialGap = prev - this.lastQueuedSequenceNumber;
             let firstMissing: number | undefined;
             let duplicate = 0;
-            let missing = 0;
+            let gap = 0;
 
-            // Count all missing and duplicates
+            // Count all gaps and duplicates
             for (const message of messages) {
                 if (message.sequenceNumber === prev) {
                     duplicate++;
                 } else if (message.sequenceNumber !== prev + 1) {
-                    missing++;
+                    gap++;
                     if (firstMissing === undefined) {
                         firstMissing = prev + 1;
                     }
@@ -1221,21 +1267,35 @@ export class DeltaManager
                 prev = message.sequenceNumber;
             }
 
+            let eventName: string | undefined;
+
+            // Report if we found some issues
+            if (duplicate !== 0 || gap !== 0 && !allowGaps || initialGap > 0 && this.fetchReason === undefined) {
+                eventName = "enqueueMessages";
+            // Also report if we are fetching ops, and same range comes in, thus making this fetch obsolete.
+            } else if (this.fetchReason !== undefined && this.fetchReason !== reason &&
+                    (from <= this.lastQueuedSequenceNumber + 1 && last > this.lastQueuedSequenceNumber)) {
+                eventName = "enqueueMessagesExtraFetch";
+            }
+
             // Report if there is something to report
             // Do not report when pending fetch is in progress, as such reporting will not
             // correctly take into account pending ops.
-            if (duplicate !== 0 && allowDuplicates || missing !== 0 || messageGap > 0 && !this.fetching) {
+            if (eventName !== undefined) {
                 this.logger.sendPerformanceEvent({
-                    eventName: "enqueueMessages",
+                    eventName,
                     reason,
+                    previousReason: this.prevEnqueueMessagesReason,
+                    from,
+                    to: last + 1, // exclusive, being consistent with the other telemetry / APIs
                     length: messages.length,
-                    fetchingOps: this.fetching,
-                    duplicate,
-                    missing,
-                    messageGap,
-                    first,
-                    last,
+                    fetchReason: this.fetchReason,
+                    duplicate: duplicate > 0 ? duplicate : undefined,
+                    initialGap: initialGap !== 0 ? initialGap : undefined,
+                    gap: gap > 0 ? gap : undefined,
                     firstMissing,
+                    dmInitialSeqNumber: this.initialSequenceNumber,
+                    ...this.connectionStateProps,
                 });
             }
         }
@@ -1277,6 +1337,8 @@ export class DeltaManager
                 this._inbound.push(message);
             }
         }
+
+        this.prevEnqueueMessagesReason = reason;
     }
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
@@ -1380,7 +1442,7 @@ export class DeltaManager
         to?: number)
     {
         // Exit out early if we're already fetching deltas
-        if (this.fetching) {
+        if (this.fetchReason !== undefined) {
             return;
         }
 
@@ -1405,14 +1467,15 @@ export class DeltaManager
                 from--;
             }
 
-            this.fetching = true;
+            const fetchReason = `${reason}_fetch`;
+            this.fetchReason = fetchReason;
 
             await this.getDeltas(
                 from,
                 to,
                 (messages) => {
                     this.refreshDelayInfo(this.deltaStorageDelayId);
-                    this.enqueueMessages(messages, reason);
+                    this.enqueueMessages(messages, fetchReason);
                 },
                 cacheOnly);
         } catch (error) {
@@ -1420,7 +1483,8 @@ export class DeltaManager
             this.close(CreateContainerError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
-            this.fetching = false;
+            this.fetchReason = undefined;
+            this.processPendingOps(reason);
         }
     }
 
@@ -1431,7 +1495,9 @@ export class DeltaManager
         if (this.handler !== undefined) {
             const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.pending = [];
-            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowDuplicates */);
+            // Given that we do not track where these ops came from any more, it's not very
+            // actionably to report gaps in this range.
+            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
         }
     }
 

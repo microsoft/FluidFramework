@@ -74,6 +74,8 @@ export class OdspDeltaStorageService {
                 duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,
+                from,
+                to,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
