@@ -147,10 +147,10 @@ export const Delete: {
 };
 
 // @public
-export interface Delta<ID> {
-    readonly added: readonly ID[];
-    readonly changed: readonly ID[];
-    readonly removed: readonly ID[];
+export interface Delta<NodeId> {
+    readonly added: readonly NodeId[];
+    readonly changed: readonly NodeId[];
+    readonly removed: readonly NodeId[];
 }
 
 // @public
@@ -514,9 +514,15 @@ export enum Side {
 export class Snapshot {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<SnapshotNode>;
+    addNodes(sequence: Iterable<SnapshotNode>): Snapshot;
     assertConsistent(): void;
+    attachRange(nodesToAttach: readonly NodeId[], place: SnapshotPlace): Snapshot;
     deleteNodes(nodes: Iterable<NodeId>): Snapshot;
     delta(snapshot: Snapshot): Delta<NodeId>;
+    detachRange(rangeToDetach: SnapshotRange): {
+        snapshot: Snapshot;
+        detached: readonly NodeId[];
+    };
     equals(snapshot: Snapshot): boolean;
     // (undocumented)
     findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;
@@ -536,13 +542,9 @@ export class Snapshot {
     getTraitLocation(node: NodeId): TraitLocation;
     // (undocumented)
     hasNode(id: NodeId): boolean;
-    insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot;
-    replace(id: NodeId, node: SnapshotNode, childrenAdded?: [NodeId, {
-        label: TraitLabel;
-    }][], childrenRemoved?: NodeId[]): Snapshot;
-    replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot;
     // (undocumented)
     readonly root: NodeId;
+    setNodeValue(nodeId: NodeId, value: Payload): Snapshot;
     get size(): number;
     }
 

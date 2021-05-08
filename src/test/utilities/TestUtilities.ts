@@ -22,11 +22,10 @@ import {
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { compareArrays, fail } from '../../Common';
+import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait } from '../../default-edits';
-import { comparePayloads } from '../../SnapshotUtilities';
 import { ChangeNode, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
 
 /** Objects returned by setUpTestSharedTree */

@@ -94,7 +94,7 @@ export class Transaction extends GenericTransaction<Change> {
 			return EditResult.Invalid;
 		}
 
-		const view = this.view.insertSnapshotNodes(map);
+		const view = this.view.addNodes(map.values());
 		this._view = view;
 		this.detached.set(change.destination, assertNotUndefined(newIds));
 		return EditResult.Applied;
@@ -175,20 +175,7 @@ export class Transaction extends GenericTransaction<Change> {
 			return EditResult.Invalid;
 		}
 
-		const node = this.view.getSnapshotNode(change.nodeToModify);
-		const { payload } = change;
-		const newNode = { ...node };
-		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface defn.)
-		// eslint-disable-next-line no-null/no-null
-		if (payload === null) {
-			delete newNode.payload;
-		} else {
-			// TODO: detect payloads that are not Fluid Serializable here.
-			// The consistency of editing does not actually depend on payloads being well formed,
-			// but its better to detect bugs producing bad payloads here than let them pass.
-			newNode.payload = payload;
-		}
-		this._view = this.view.replaceNodeData(change.nodeToModify, newNode);
+		this._view = this.view.setNodeValue(change.nodeToModify, change.payload);
 		return EditResult.Applied;
 	}
 

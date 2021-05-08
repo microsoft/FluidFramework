@@ -87,9 +87,7 @@ describe('Snapshot', () => {
 		});
 		it('can insert a node', () => {
 			const newNode = makeEmptyNode();
-			let snapshot = startingSnapshot.insertSnapshotNodes([
-				[newNode.identifier, { ...newNode, traits: new Map() }],
-			]);
+			let snapshot = startingSnapshot.addNodes([{ ...newNode, traits: new Map() }]);
 			expect(snapshot.size).to.equal(4);
 			expect(snapshot.hasNode(newNode.identifier)).to.be.true;
 			expect(snapshot.getParentSnapshotNode(newNode.identifier)).to.be.undefined;

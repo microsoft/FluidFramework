@@ -19,7 +19,7 @@
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
+export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
@@ -35,7 +35,6 @@ export {
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
-export { comparePayloads } from './SnapshotUtilities';
 export {
 	SharedTree,
 	SharedTreeEditor,
