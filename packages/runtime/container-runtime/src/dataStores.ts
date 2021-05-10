@@ -43,7 +43,7 @@ import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, IContainerRuntimeOptions } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
@@ -59,7 +59,6 @@ import {
     ReadFluidDataStoreAttributes,
     getAttributesFormatVersion,
 } from "./summaryFormat";
-import { gcTestModeKey, getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -82,7 +81,6 @@ export class DataStores implements IDisposable {
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
-        private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -509,8 +507,7 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        const gcTestMode = getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode;
-        assert(gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
+        assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];

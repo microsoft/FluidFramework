@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Local storage key to turn GC on / off.
-export const runGCKey = "FluidRunGC";
-// Local storage key to turn GC test mode on / off.
-export const gcTestModeKey = "FluidGCTestMode";
-
 /**
  * Helper to check if the given feature key is set in local storage.
  * @returns the following:
