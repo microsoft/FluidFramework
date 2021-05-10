@@ -187,10 +187,7 @@ export async function fetchLatestSnapshotCore(
                     fluidEpoch,
                     version: 2,
                 };
-                putInCache(valueWithEpoch).catch((error) => {
-                    logger.sendErrorEvent({ eventName: "cachePutError", type: snapshotKey }, error);
-                    throw error;
-                });
+                putInCache(valueWithEpoch);
             }
             event.end({
                 trees: numTrees,
