@@ -11,7 +11,6 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
-    snapshotKey,
     TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
@@ -187,6 +186,7 @@ export async function fetchLatestSnapshotCore(
                     fluidEpoch,
                     version: 2,
                 };
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 putInCache(valueWithEpoch);
             }
             event.end({
