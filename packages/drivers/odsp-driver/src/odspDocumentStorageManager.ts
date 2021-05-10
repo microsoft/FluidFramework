@@ -500,8 +500,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
-            this.firstVersionCall = false;
-
             return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
                 if (tokenFetchOptions.refresh) {
                     // This is the most critical code path for boot.
@@ -553,6 +551,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             return cachedSnapshot;
                         });
                 }
+
+                // Successful call, redirect future calls to getVersion only!
+                this.firstVersionCall = false;
 
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot.snapshot;
                 this._snapshotSequenceNumber = cachedSnapshot.sequenceNumber;
