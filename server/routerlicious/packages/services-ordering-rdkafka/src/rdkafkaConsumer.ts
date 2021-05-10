@@ -56,6 +56,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		};
 	}
 
+	/**
+	 * Returns true if the consumer is connected
+	 */
+	public isConnected() {
+		return this.consumer?.isConnected() ? true : false;
+	}
+
 	protected connect() {
 		if (this.closed) {
 			return;

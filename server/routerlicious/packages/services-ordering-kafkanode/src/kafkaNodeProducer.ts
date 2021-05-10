@@ -38,6 +38,10 @@ export class KafkaNodeProducer implements IProducer {
         this.connect();
     }
 
+    public isConnected() {
+        return this.connected;
+    }
+
     /**
      * Sends the provided message to Kafka
      */
