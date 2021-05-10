@@ -131,13 +131,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                         opsFromSnapshot = messages.length;
                         return { messages, partialResult: true };
                     }
-                    this.logger.sendErrorEvent({
-                        eventName: "SnapshotOpsNotUsed",
-                        length: this.snapshotOps.length,
-                        first: this.snapshotOps[0].sequenceNumber,
-                        from,
-                        to,
-                    });
                     this.snapshotOps = undefined;
                 }
 

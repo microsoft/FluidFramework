@@ -854,24 +854,26 @@ export class DeltaManager
             listenerToClear = listener;
         }
 
-        const stream = this.deltaStorage.fetchMessages(
-            from, // inclusive
-            to, // exclusive
-            controller.signal,
-            cacheOnly);
+        try {
+            const stream = this.deltaStorage.fetchMessages(
+                from, // inclusive
+                to, // exclusive
+                controller.signal,
+                cacheOnly);
 
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const result = await stream.read();
-            if (result.done) {
-                break;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const result = await stream.read();
+                if (result.done) {
+                    break;
+                }
+                callback(result.value);
             }
-            callback(result.value);
-        }
-
-        this.closeAbortController.signal.onabort = null;
-        if (listenerToClear !== undefined) {
-            this._inbound.off("push", listenerToClear);
+        } finally {
+            this.closeAbortController.signal.onabort = null;
+            if (listenerToClear !== undefined) {
+                this._inbound.off("push", listenerToClear);
+            }
         }
     }
 
