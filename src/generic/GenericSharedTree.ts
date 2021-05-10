@@ -65,6 +65,17 @@ export enum SharedTreeEvent {
 }
 
 /**
+ * An event emitted by a `SharedTree` for diagnostic purposes.
+ * See {@link ISharedTreeEvents} for event argument information.
+ */
+export enum SharedTreeDiagnosticEvent {
+	/**
+	 * A single catch up blob has been uploaded.
+	 */
+	CatchUpBlobUploaded = 'uploadedCatchUpBlob',
+}
+
+/**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
  * @public
  */
@@ -400,6 +411,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	private async uploadCatchUpBlobs(): Promise<void> {
 		for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
 			await this.uploadEditChunk(chunk, startRevision);
+			this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
 		}
 	}
 

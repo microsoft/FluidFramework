@@ -5,21 +5,19 @@
 
 import * as fs from 'fs';
 import { resolve, join } from 'path';
-import { v5 as uuidv5 } from 'uuid';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { fail } from '../Common';
-import { SharedTree, Change, StablePlace } from '../default-edits';
-import { DetachedSequenceId, EditId, NodeId } from '../Identifiers';
+import { SharedTree } from '../default-edits';
+import { EditId } from '../Identifiers';
 import { deserialize } from '../SummaryBackCompatibility';
 import {
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
-	newEdit,
 } from '../generic';
-import { left, makeEmptyNode, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
+import { createStableEdits, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
@@ -40,7 +38,6 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
 ];
 
 describe('Summary', () => {
-	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 	const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 	const testSerializer = new TestFluidSerializer();
@@ -158,21 +155,9 @@ describe('Summary', () => {
 		});
 
 		it('can be read and written with small history', async () => {
-			const numberOfEdits = 10;
-			// First edit is an insert
-			const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
-			const node = makeEmptyNode(nodeId);
-			const firstEdit = newEdit([
-				Change.build([node], 0 as DetachedSequenceId),
-				Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
-			]);
-			expectedTree.processLocalEdit({ ...firstEdit, id: uuidv5('test', uuidNamespace) as EditId });
-
-			// Every subsequent edit is a set payload
-			for (let i = 1; i < numberOfEdits; i++) {
-				const edit = newEdit([Change.setPayload(nodeId, i)]);
-				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
-			}
+			createStableEdits(11).forEach((edit) => {
+				expectedTree.processLocalEdit(edit);
+			});
 
 			// Wait for the ops to to be submitted and processed across the containers.
 			await testObjectProvider.opProcessingController.process();
@@ -189,22 +174,10 @@ describe('Summary', () => {
 		});
 
 		it('can be read and written with large history', async () => {
-			// Arbitrarily large number of edits
-			const numberOfEdits = 250;
-			// First edit is an insert
-			const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
-			const node = makeEmptyNode(nodeId);
-			const firstEdit = newEdit([
-				Change.build([node], 0 as DetachedSequenceId),
-				Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
-			]);
-			expectedTree.processLocalEdit({ ...firstEdit, id: uuidv5('test', uuidNamespace) as EditId });
-
-			// Every subsequent edit is a set payload
-			for (let i = 1; i < numberOfEdits; i++) {
-				const edit = newEdit([Change.setPayload(nodeId, i)]);
-				expectedTree.processLocalEdit({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
-			}
+			// Process an arbitrarily large number of stable edits
+			createStableEdits(251).forEach((edit) => {
+				expectedTree.processLocalEdit(edit);
+			});
 
 			// Wait for the ops to to be submitted and processed across the containers.
 			await testObjectProvider.opProcessingController.process();

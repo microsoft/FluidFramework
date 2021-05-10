@@ -1,4 +1,7 @@
-// Copyright (C) Microsoft Corporation. All rights reserved.
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
@@ -6,11 +9,21 @@ import { EditHandle, editsPerChunk } from '../EditLog';
 import { Edit, EditWithoutId, newEdit, fullHistorySummarizer_0_1_0 } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
-import { makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
+import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
+import { initialTree } from '../InitialTree';
+import { SharedTreeDiagnosticEvent } from '../generic/GenericSharedTree';
+import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider<unknown>;
+
+	// Create a summary used to test catchup blobbing
+	const summaryToCatchUp: SharedTreeSummary_0_0_2<Change> = {
+		currentTree: initialTree,
+		version: '0.0.2',
+		sequencedEdits: createStableEdits(250),
+	};
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
@@ -58,6 +71,64 @@ describe('SharedTree history virtualization', () => {
 
 		// Ensure chunked edit can be retrieved
 		expect((await sharedTree2.edits.getEditAtIndex(2)).id).to.equal(expectedEdits[2].id);
+	});
+
+	it('can upload catchup blobs', async () => {
+		let catchUpBlobsUploaded = 0;
+		sharedTree.on(SharedTreeDiagnosticEvent.CatchUpBlobUploaded, () => {
+			catchUpBlobsUploaded++;
+		});
+
+		// Wait for the op to to be submitted and processed across the containers.
+		await testObjectProvider.opProcessingController.process();
+
+		sharedTree.loadSummary(summaryToCatchUp);
+
+		await testObjectProvider.opProcessingController.process();
+		expect(catchUpBlobsUploaded).to.equal(1);
+
+		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
+		const { editChunks } = assertNotUndefined(editHistory);
+		expect(editChunks.length).to.equal(1);
+		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
+	});
+
+	it('only uploads catchup blobs from one client', async () => {
+		// Create more connected trees
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
+			testObjectProvider,
+			summarizeHistory: true,
+		});
+		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
+			testObjectProvider,
+			summarizeHistory: true,
+		});
+
+		let catchUpBlobsUploaded = 0;
+		sharedTree.on(SharedTreeDiagnosticEvent.CatchUpBlobUploaded, () => {
+			catchUpBlobsUploaded++;
+		});
+		sharedTree2.on(SharedTreeDiagnosticEvent.CatchUpBlobUploaded, () => {
+			catchUpBlobsUploaded++;
+		});
+		sharedTree3.on(SharedTreeDiagnosticEvent.CatchUpBlobUploaded, () => {
+			catchUpBlobsUploaded++;
+		});
+
+		// Wait for processing again in case there are more no ops
+		await testObjectProvider.opProcessingController.process();
+
+		// Try to load summaries on all the trees
+		sharedTree.loadSummary(summaryToCatchUp);
+		sharedTree2.loadSummary(summaryToCatchUp);
+		sharedTree3.loadSummary(summaryToCatchUp);
+
+		await testObjectProvider.opProcessingController.process();
+		expect(catchUpBlobsUploaded).to.equal(1);
+
+		// Make sure the trees are still the same
+		expect(sharedTree.equals(sharedTree2)).to.be.true;
+		expect(sharedTree.equals(sharedTree3)).to.be.true;
 	});
 
 	it("doesn't upload incomplete chunks", async () => {

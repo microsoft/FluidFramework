@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -21,12 +21,12 @@ import {
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
-import { SharedTree, Change, setTrait } from '../../default-edits';
-import { ChangeNode, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
+import { SharedTree, Change, setTrait, StablePlace } from '../../default-edits';
+import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -275,6 +275,34 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
 		identifier,
 		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 	};
+}
+
+/**
+ * Creates a list of edits with stable IDs that can be processed by a SharedTree.
+ * @param numberOfEdits - the number of edits to create
+ * @returns the list of created edits
+ */
+export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
+	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
+
+	// First edit is an insert
+	const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
+	const node = makeEmptyNode(nodeId);
+	const firstEdit = newEdit([
+		Change.build([node], 0 as DetachedSequenceId),
+		Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
+	]);
+
+	const edits: Edit<Change>[] = [];
+	edits.push({ ...firstEdit, id: uuidv5('test', uuidNamespace) as EditId });
+
+	// Every subsequent edit is a set payload
+	for (let i = 1; i < numberOfEdits - 1; i++) {
+		const edit = newEdit([Change.setPayload(nodeId, i)]);
+		edits.push({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
+	}
+
+	return edits;
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
