@@ -58,7 +58,6 @@ async function start(): Promise<void> {
 
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
-
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
 }
