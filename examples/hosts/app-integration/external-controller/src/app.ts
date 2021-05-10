@@ -58,6 +58,26 @@ async function start(): Promise<void> {
 
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
+
+    const handleClick = () => {
+        fluidContainer.close();
+      };
+      const button = document.createElement("button");
+      button.addEventListener("click", handleClick);
+      button.textContent = "Disconnect";
+
+      const handleClick2 = () => {
+        console.log("connected", fluidContainer.connected);
+        console.log("closed", fluidContainer.closed);
+      };
+
+      const button2 = document.createElement("button");
+      button2.addEventListener("click", handleClick2);
+      button2.textContent = "Test";
+
+      contentDiv.appendChild(button);
+      contentDiv.appendChild(button2);
+
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
 }
