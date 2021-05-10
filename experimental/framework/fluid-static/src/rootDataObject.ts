@@ -2,20 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import {
     BaseContainerRuntimeFactory,
     DataObject,
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IEvent } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-
 import {
     ContainerSchema,
     DataObjectClass,
@@ -26,51 +22,23 @@ import {
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
-export interface IFluidContainerEvents extends IEvent {
+interface RootDataObjectProps {
+    initialObjects: LoadableObjectClassRecord;
+}
+interface IRootDataObjectEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
     (event: "dispose" | "disconnected", listener: () => void): void;
 }
 
 /**
- * FluidContainer defines the interface that the developer will use to interact with Fluid.
- */
-export interface FluidContainer
-    extends Pick<Container,
-    "audience" |
-    "clientId" |
-    "close" |
-    "closed" |
-    "connected"
-    >, IEventProvider<IFluidContainerEvents> {
-    /**
-     * The initialObjects defined in the container config
-     */
-    readonly initialObjects: LoadableObjectRecord;
-
-    /**
-     * Creates a new instance of the provided LoadableObjectClass.
-     *
-     * The returned object needs to be stored via handle by the caller.
-     */
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-}
-
-interface RootDataObjectProps {
-    initialObjects: LoadableObjectClassRecord;
-}
-
-/**
  * The RootDataObject is the implementation of the FluidContainer.
  */
-export class RootDataObject
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
-    implements FluidContainer {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class RootDataObject extends DataObject<{}, RootDataObjectProps, IRootDataObjectEvents> {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
     private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
-    private _container: Container | undefined = undefined;
 
     private get initialObjectsDir() {
         const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -122,33 +90,6 @@ export class RootDataObject
         super.dispose();
     }
 
-    public setContainer(container: Container) {
-        this._container = container;
-    }
-
-    public close() {
-        assert(this._container !== undefined, "The container has not been set by the client");
-        this._container.close();
-    }
-
-    public get closed() {
-        assert(this._container !== undefined, "The container has not been set by the client");
-        return this._container.closed;
-    }
-
-    public get connected() {
-        assert(this._container !== undefined, "The container has not been set by the client");
-        return this._container.connected;
-    }
-
-    public get audience(): IAudience {
-        return this.context.getAudience();
-    }
-
-    public get clientId() {
-        return this.context.clientId;
-    }
-
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
             throw new Error("Initial Objects were not correctly initialized");
@@ -164,23 +105,17 @@ export class RootDataObject
         } else if (isSharedObjectClass(objectClass)) {
             return this.createSharedObject<T>(objectClass);
         }
-
         throw new Error("Could not create new Fluid object because an unknown object was passed");
     }
 
-    public async getDataObject<T extends IFluidLoadable>(id: string) {
-        const handle = await this.root.wait<IFluidHandle<T>>(id);
-        return handle.get();
-    }
-
-    private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
+    public async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const router = await this.context.containerRuntime.createDataStore(packagePath);
         return requestFluidObject<T>(router, "/");
     }
 
-    private createSharedObject<T extends IFluidLoadable>(
+    public createSharedObject<T extends IFluidLoadable>(
         sharedObjectClass: SharedObjectClass<T>,
     ): T {
         const factory = sharedObjectClass.getFactory();

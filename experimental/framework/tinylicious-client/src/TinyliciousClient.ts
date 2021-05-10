@@ -8,6 +8,7 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    RootDataObject
 } from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
@@ -53,7 +54,10 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             true,
         );
-        return this.getRootDataObject(container);
+
+        const rootDataObject = await this.getRootDataObject(container);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return new FluidContainer(container, rootDataObject);
     }
 
     public async getContainer(
@@ -68,15 +72,17 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             false,
         );
-        return this.getRootDataObject(container);
+
+        const rootDataObject = await this.getRootDataObject(container);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return new FluidContainer(container, rootDataObject);
     }
 
     private async getRootDataObject(
         container: Container,
-    ): Promise<FluidContainer> {
+    ): Promise<RootDataObject> {
         const rootDataObject = (await container.request({ url: "/" })).value;
-        rootDataObject.setContainer(container);
-        return rootDataObject as FluidContainer;
+        return rootDataObject as RootDataObject;
     }
 
     private async getContainerCore(
