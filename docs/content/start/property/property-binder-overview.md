@@ -122,7 +122,7 @@ material color property is described as a string:
     ]
   };
 ```
-We populate our *Workspace* with a Scene, containing a single mesh. We set the starting color of the Material to red:
+We populate our *Property DDS* with a Scene, containing a single mesh. We set the starting color of the Material to red:
 
 ```javascript
 
@@ -150,8 +150,8 @@ In the ``initialize()`` function, the class defines a callback to be notified if
 (which happens on Material creation), or modified. Whenever the underlying Property DDS data is modified, ``changeColor`` is
 called and the data binding will update the `THREE.MeshPhongMaterial`.
 
-The constructor is fetching the representation of the material using |getRepresentation()|. By default,
-|getRepresentation()| returns the representation that has the same binding type as the instance of the *Property Binding*,
+The constructor is fetching the representation of the material using [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}). By default,
+[getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) returns the representation that has the same binding type as the instance of the *Property Binding*,
 which in this example is ‘VIEW’.
 
 ```javascript
@@ -171,10 +171,12 @@ which in this example is ‘VIEW’.
   MaterialPropertyBinding.initialize();
 ```
 
-Finally, the application registers this Property Binding with the [Property Binder]({{< ref "docs/apis/property-binder" >}}) by using |defineProperty Binding()|, and then
+
+
+Finally, the application registers this Property Binding with the [Property Binder]({{< ref "docs/apis/property-binder" >}}) by using [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}}), and then
 activates it. By activating it, the [Property Binder]({{< ref "docs/apis/property-binder" >}}) will look for any ``Sample:Material-1.0.0`` Properties in the
 Property DDS, and instantiate the data bindings. The runtime representations will be instantiated on demand
-when the |getRepresentation()| call is made.
+when the [getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) call is made.
 
 ```javascript
 
@@ -185,7 +187,7 @@ Although we are defining the *Property Binding* and then immediately activating 
 component providing the functionality (such as graphics rendering) would define the runtime representations and
 data bindings, while the application using the component would activate the bindings.
 
-## Other Resources:
+## Other Resources
  * [PropertyBinder API]({{< ref "docs/apis/property-binder" >}})
  * [PropertyBinder Binding Definition and Activation]({{< ref "property-binder-binding-definition.md" >}})
  * [PropertyBinder Callbacks]({{< ref "property-binder-callbacks.md" >}})
