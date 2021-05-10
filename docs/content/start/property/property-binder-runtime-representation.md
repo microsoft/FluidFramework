@@ -66,15 +66,15 @@ THREE.PerspectiveCamera being updated by the CameraPropertyBinding.
 
 ## Defining and Creating Runtime Representations
 
-The *PropertyBinder* provides functionality for managing the definition,
+The *DataBinder* provides functionality for managing the definition,
 creation and fetching of runtime representations associated with HFDM
 properties.
 
 Typically, a component will register one or more runtime representations
-for a given *Property* with the *PropertyBinder*, to provide functionality to users
-of the component. Users of the runtime representation can use the *PropertyBinder*
+for a given *Property* with the *DataBinder*, to provide functionality to users
+of the component. Users of the runtime representation can use the *DataBinder*
 to fetch the instance of a runtime representation for a given *Property*, and
-the *PropertyBinder* will create it if it doesn't already exist. The *PropertyBinder*
+the *DataBinder* will create it if it doesn't already exist. The *DataBinder*
 will also take care to destroy the runtime representations when the
 associated *Property* is destroyed. In the case of the example above, both
 the CameraModel and THREE.PerspectiveCamera runtime representations will be
@@ -100,7 +100,7 @@ representation using the appropriate bindingType.
 
 **TypeId**
 
-The typeId provided tells the *PropertyBinder* what *Property* type the runtime
+The typeId provided tells the *DataBinder* what *Property* type the runtime
 representation will be built for. Inheritance is supported, see Type
 Inheritance below.
 
@@ -134,9 +134,9 @@ runtime representations would be moved to the initializer function.
 
 **Destroyer function**
 
-The destroyer function is an optional function that the *PropertyBinder* will use
+The destroyer function is an optional function that the *DataBinder* will use
 when the associated *Property* is removed from the *HFDM Workspace*. If present,
-the *PropertyBinder* will call this function, and internally forget the instance
+the *DataBinder* will call this function, and internally forget the instance
 of the runtime representation. This gives the definer of the runtime
 representation a chance to clean up any related data structures. Note,
 however, that there is no guarantee that the runtime representation isn’t
@@ -175,9 +175,9 @@ Object3DModel may be defined to handle all *Property DDS* properties of type
 Object3D-1.0.0, but then a specialization Mesh3DModel may be needed for schema
 Mesh3D-1.0.0, that inherits from Object3D-1.0.0.
 
-The *PropertyBinder* supports this; simply register multiple runtime representations
+The *DataBinder* supports this; simply register multiple runtime representations
 for a given bindingType, but with the different *Property* types. When
-getRuntimeModel is called for a *Property*, the *PropertyBinder* will create the most
+getRuntimeModel is called for a *Property*, the *DataBinder* will create the most
 specialized runtime representation for the given *Property* type and binding
 type.
 
@@ -206,12 +206,12 @@ argument for [defineRepresentation()]({{< ref "docs/apis/property-binder/databin
      'VIEW', 'Object3D-1.0.0', () => new Object3DView(),  {stateless: true}
    );
 ```
-A Stateless Representation differs from a 'standard' one in that it's not stored by *PropertyBinder*, it is always
-recreated on demand when it is requested via |dataBinding.getRepresentation()| or |dataBinder.getRepresentation()|.
+A Stateless Representation differs from a 'standard' one in that it's not stored by *DataBinder*, it is always
+recreated on demand when it is requested via |[dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
 A Stateless Representation may specify an Initializer function similarly to 'standard' Representations in
 order to break up cycles in the initialization of Runtime Representations. However, the Destroyer function will be
 ignored - since this Representation can not contain any state, there should be no need for a cleanup; in
-addition, the *PropertyBinder* is not tracking the object so cannot even call the function at the appropriate time.
+addition, the *DataBinder* is not tracking the object so cannot even call the function at the appropriate time.
 Note that it is possible for multiple instances of the stateless runtime representation to exist, so applications
 that define Stateless Representations must take this into account. For example it doesn't make sense to cache or
 compare such representations as they're always recreated on the fly.
