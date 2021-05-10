@@ -50,6 +50,7 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    canRetryOnError,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -838,6 +839,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (!this.closed) {
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
+        } catch(error) {
+            if (!canRetryOnError(error)) {
+                this.logger.sendErrorEvent({ eventName: "AttachFail", attachState: this._attachState }, error);
+                this.close(error);
+            }
+            throw error;
         } finally {
             this.attachInProgress = false;
         }
