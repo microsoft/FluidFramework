@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     IPersistedCache,
@@ -85,9 +86,9 @@ export async function prefetchLatestSnapshot(
                     snapshotDownloader,
                     putInCache,
                 );
-                let cached = false;
-                await cacheP?.then(() => cached = true);
-                return cached;
+                assert(cacheP !== undefined, "caching was not performed!");
+                await cacheP;
+                return true;
             });
         event.end({ attempts });
         return success;
