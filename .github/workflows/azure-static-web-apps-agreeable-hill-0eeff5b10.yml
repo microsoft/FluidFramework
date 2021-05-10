@@ -17,7 +17,10 @@ on:
 jobs:
   build_and_deploy_job:
     name: Azure Static Web App
-    if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: |
+      ((github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed')) &&
+      github.repository == 'microsoft/FluidFramework'
     runs-on: ubuntu-latest
 
     steps:

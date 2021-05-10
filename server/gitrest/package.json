@@ -21,9 +21,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1017.1",
-    "@fluidframework/server-services-client": "^0.1017.1",
-    "@fluidframework/server-services-utils": "^0.1017.1",
+    "@fluidframework/gitresources": "^0.1025.0-0",
+    "@fluidframework/server-services-client": "^0.1025.0-0",
+    "@fluidframework/server-services-utils": "^0.1025.0-0",
     "axios": "^0.21.1",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
@@ -39,7 +39,7 @@
     "winston": "^2.4.4"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.19.2",
+    "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/async": "^3.2.6",
     "@types/cors": "^2.8.4",

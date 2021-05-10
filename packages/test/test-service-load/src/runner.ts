@@ -68,6 +68,14 @@ async function main() {
     // will get its own set of randoms
     randEng.seedWithArray([seed, runId]);
 
+    const l = await loggerP;
+    process.on("unhandledRejection", (reason, promise) => {
+        try{
+            l.sendErrorEvent({eventName: "UnhandledPromiseRejection"}, reason);
+        } catch(e) {
+            console.error("Error during logging unhandled promise rejection: ", e);
+        }
+    });
     const result = await runnerProcess(
         driver,
         {

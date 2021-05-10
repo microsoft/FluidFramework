@@ -8,6 +8,16 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../utils";
 
+const _setTimeout = global.setTimeout;
+const fastSetTimeout: any =
+    (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) => _setTimeout(callback, ms / 1000.0, ...args);
+async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
+    global.setTimeout = fastSetTimeout;
+    return callback().finally(()=>{
+        global.setTimeout = _setTimeout;
+    });
+}
+
 describe("Retry Util Tests", () => {
     const deltaManager = {
         refreshDelayInfo: () => {},
@@ -22,7 +32,7 @@ describe("Retry Util Tests", () => {
             retryTimes -= 1;
             return true;
         };
-        success = await runWithRetry(api, "test", deltaManager, logger);
+        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
         assert.strictEqual(success, true, "Retry shoul succeed ultimately");
     });
@@ -40,7 +50,7 @@ describe("Retry Util Tests", () => {
             }
             return true;
         };
-        success = await runWithRetry(api, "test", deltaManager, logger);
+        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
         assert.strictEqual(success, true, "Retry shoul succeed ultimately");
     });
@@ -63,7 +73,7 @@ describe("Retry Util Tests", () => {
             }
             return true;
         };
-        success = await runWithRetry(api, "test", deltaManager, logger);
+        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
         assert.strictEqual(timerFinished, true, "Timer should be destroyed");
         assert.strictEqual(retryTimes, 0, "Should retry once");
         assert.strictEqual(success, true, "Retry shoul succeed ultimately");
@@ -82,7 +92,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithRetry(api, "test", deltaManager, logger);
+            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should retry");
         assert.strictEqual(success, true, "Should succeed as retry should be successful");
@@ -101,7 +111,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithRetry(api, "test", deltaManager, logger);
+            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -120,7 +130,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithRetry(api, "test", deltaManager, logger);
+            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -140,7 +150,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithRetry(
+            success = await runWithFastSetTimeout(async ()=> runWithRetry(
                 api,
                 "test",
                 deltaManager,
@@ -148,7 +158,7 @@ describe("Retry Util Tests", () => {
                 () => {
                     return { retry: false, error: "disposed"};
                 },
-            );
+            ));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");

@@ -20,18 +20,18 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     /**
      * The absolute path to the handle context from the root.
      */
-    absolutePath: string;
+    readonly absolutePath: string;
 
     /**
      * The parent IFluidHandleContext that has provided a route path to this IFluidHandleContext or undefined
      * at the root.
      */
-    routeContext?: IFluidHandleContext;
+    readonly routeContext?: IFluidHandleContext;
 
     /**
      * Flag indicating whether or not the entity has services attached.
      */
-    isAttached: boolean;
+    readonly isAttached: boolean;
 
     /**
      * Runs through the graph and attach the bounded handles.
@@ -56,14 +56,16 @@ export interface IFluidHandle<
     > extends IProvideFluidHandle {
 
     /**
+     * @deprecated - Do not use handle's path for routing. Use `get` to get the underlying object.
+     *
      * The absolute path to the handle context from the root.
      */
-    absolutePath: string;
+    readonly absolutePath: string;
 
     /**
      * Flag indicating whether or not the entity has services attached.
      */
-    isAttached: boolean;
+    readonly isAttached: boolean;
 
     /**
      * Runs through the graph and attach the bounded handles.

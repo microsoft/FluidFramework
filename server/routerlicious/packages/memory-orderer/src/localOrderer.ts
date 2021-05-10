@@ -63,6 +63,7 @@ const DefaultDeli: IDeliState = {
     sequenceNumber: 0,
     term: 1,
     lastSentMSN: 0,
+    nackMessages: undefined,
 };
 
 class LocalSocketPublisher implements IPublisher {

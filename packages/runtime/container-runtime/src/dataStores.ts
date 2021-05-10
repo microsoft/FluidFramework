@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -43,7 +43,7 @@ import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import { GCDataBuilder, getChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemotedFluidDataStoreContext,
@@ -81,6 +81,7 @@ export class DataStores implements IDisposable {
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
         baseLogger: ITelemetryBaseLogger,
+        private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -157,13 +158,8 @@ export class DataStores implements IDisposable {
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "Duplicate data store created with existing ID",
-                {
-                    sequenceNumber: message.sequenceNumber,
-                    clientId: message.clientId,
-                    referenceSequenceNumber: message.referenceSequenceNumber,
-                },
+                extractSafePropertiesFromMessage(message),
             );
-            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId" }, error);
             throw error;
         }
 
@@ -275,7 +271,7 @@ export class DataStores implements IDisposable {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
-        context.reSubmit(envelope.contents, localOpMetadata);
+        context.resubmit(envelope.contents, localOpMetadata);
     }
 
     public async applyStashedOp(content: any): Promise<unknown> {
@@ -512,7 +508,10 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.options.runGCInTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
+        assert(
+            this.runtimeOptions.gcOptions?.runGCInTestMode,
+            0x1df /* "Data stores should be deleted only in GC test mode" */,
+        );
         for (const route of unusedRoutes) {
             // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];

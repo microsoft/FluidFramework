@@ -40,12 +40,4 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
     }
-    public logGenericError(eventName: string, error: any) {
-    }
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-    }
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-    }
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-    }
 }

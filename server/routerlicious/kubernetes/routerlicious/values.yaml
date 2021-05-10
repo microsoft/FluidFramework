@@ -93,6 +93,7 @@ kafka:
     rawdeltas: rawdeltas
     deltas: deltas
   url: kafka_url:port
+  libname: rdkafka
 
 ingress:
   class: nginx-prod

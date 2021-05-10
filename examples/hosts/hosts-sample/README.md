@@ -274,7 +274,6 @@ And that's all that's needed to create or load Fluid documents. It's intended to
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
 Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/main/tools/generator-fluid/README.md.
-You can then publish this package to Verdaccio and load it inside of your new loader!
 
 When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
 to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can

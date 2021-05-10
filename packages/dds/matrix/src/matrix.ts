@@ -230,32 +230,36 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
         this.cells.setCell(rowHandle, colHandle, value);
 
-        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        if (this.isAttached()) {
+            this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        }
     }
 
-    private sendSetCellOp(row: number, col: number, value: T, rowHandle: Handle, colHandle: Handle) {
-        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
-        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
-        if (this.isAttached()) {
-            const localSeq = this.nextLocalSeq();
+    private sendSetCellOp(
+        row: number,
+        col: number,
+        value: T,
+        rowHandle: Handle,
+        colHandle: Handle,
+        localSeq = this.nextLocalSeq(),
+    ) {
+        assert(this.isAttached(), 0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */);
 
-            const op: ISetOp<T> = {
-                type: MatrixOp.set,
-                row,
-                col,
-                value,
-            };
+        const op: ISetOp<T> = {
+            type: MatrixOp.set,
+            row,
+            col,
+            value,
+        };
 
-            const metadata: ISetOpMetadata = {
-                rowHandle,
-                colHandle,
-                localSeq,
-            };
+        const metadata: ISetOpMetadata = {
+            rowHandle,
+            colHandle,
+            localSeq,
+        };
 
-            this.submitLocalMessage(op, metadata);
-
-            this.pending.setCell(rowHandle, colHandle, localSeq);
-        }
+        this.submitLocalMessage(op, metadata);
+        this.pending.setCell(rowHandle, colHandle, localSeq);
     }
 
     private submitVectorMessage(
@@ -342,7 +346,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const colHandle = this.colHandles.getHandle(col);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -385,7 +389,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const rowHandle = this.rowHandles.getHandle(row);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -479,7 +483,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         switch (content.target) {
             case SnapshotPath.cols:
                 this.submitColMessage(this.cols.regeneratePendingOp(
@@ -511,6 +515,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             setOp.value,
                             rowHandle,
                             colHandle,
+                            localSeq,
                         );
                     }
                 }

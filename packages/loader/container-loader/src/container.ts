@@ -311,8 +311,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: loadOptions.canReconnect,
             });
 
-        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
-            return new Promise<Container>((res, rej) => {
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "Load" },
+            async (event) => new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -340,12 +342,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                        (error) => {
-                            const err = CreateContainerError(error);
-                            onClosed(err);
-                        });
-            });
-        });
+                    (error) => {
+                        const err = CreateContainerError(error);
+                        onClosed(err);
+                    });
+            }),
+            { start: true, end: true, cancel: "generic" },
+        );
     }
 
     /**
@@ -711,7 +714,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
-        this.service?.dispose();
+        // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about
+        // file, like file being overwritten in storage, but client having stale local cache.
+        // Driver need to ensure all caches are cleared on critical errors
+        this.service?.dispose(error);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -1543,10 +1549,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
-        });
-
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);
@@ -1791,7 +1793,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, this);
+        const loader = new RelativeLoader(this, this.loader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,

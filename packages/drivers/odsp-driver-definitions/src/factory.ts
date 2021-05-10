@@ -50,6 +50,14 @@ export interface IOpsCachingPolicy {
     totalOpsToCache?: number;
 }
 
+export interface ICollabSessionOptions {
+    /**
+     * Value indicating the display name for session that admits unauthenticated user.
+     * This name will be used in attribution associated with edits made by such user.
+     */
+     unauthenticatedUserDisplayName?: string;
+}
+
 export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 
@@ -64,8 +72,6 @@ export interface HostStoragePolicy {
      */
     concurrentSnapshotFetch?: boolean;
 
-    blobDeduping?: boolean;
-
     // Options overwriting default ops fetching from storage.
     opsBatchSize?: number;
     concurrentOpsBatches?: number;
@@ -74,4 +80,9 @@ export interface HostStoragePolicy {
      * Policy controlling ops caching (leveraging IPersistedCache passed to driver factory)
      */
     opsCaching?: IOpsCachingPolicy;
+
+    /**
+     * Policy controlling how collaboration session is established
+     */
+    sessionOptions?: ICollabSessionOptions;
 }

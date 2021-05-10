@@ -20,8 +20,6 @@ export interface IWebSocket {
 
     emit(event: string, ...args);
 
-    broadcastToRoom(roomId: string, event: string, ...args: any[]);
-
     emitToRoom(roomId: string, event: string, ...args: any[]);
 
     disconnect(close?: boolean): void;
