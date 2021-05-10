@@ -106,7 +106,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         // Create and setup a summary collection that will be used to track and wait for summaries.
-        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger(), {});
+        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
     });
 
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
