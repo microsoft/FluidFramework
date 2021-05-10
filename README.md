@@ -1,6 +1,6 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
+The Fluid Framework is a JavaScript library for building distributed, real-time collaborative web
 applications.
 
 ## Getting started using the Fluid Framework
