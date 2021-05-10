@@ -1,0 +1,19 @@
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "module": "esnext",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "composite": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

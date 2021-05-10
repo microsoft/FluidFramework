@@ -278,13 +278,13 @@ export class TenantManager {
     }
 
     /**
-     * Flags the given tenant as disabled
+     * Deletes the given tenant
      */
-    public async disableTenant(tenantId: string): Promise<void> {
+    public async deleteTenant(tenantId: string): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        await collection.update({ _id: tenantId }, { disabled: true }, null);
+        await collection.deleteOne({ _id: tenantId });
     }
 
     private encryptAccessInfo(accessInfo: any): string {

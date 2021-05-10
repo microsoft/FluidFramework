@@ -411,7 +411,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
     // queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
-    protected reSubmitCore() { }
+    protected resubmitCore() { }
 
     /**
      * Process a task manager operation

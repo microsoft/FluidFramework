@@ -1,0 +1,18 @@
+#!/usr/bin/env groovy
+properties ([
+  buildDiscarder(logRotator(artifactDaysToKeepStr: '21', artifactNumToKeepStr: '30', daysToKeepStr: '21', numToKeepStr: '30')),
+  parameters([
+    //------------- CUSTOM PARAMS -------------
+    // none
+    //------------- DEFAULT PARAMS -------------
+    stringParam(name: 'CONTRIBUTOR_EMAIL', defaultValue: '', description: 'This is the email of whoever started the whole chain of builds.'),
+    booleanParam(name: 'I_AM_A_DEPENDENT', defaultValue: false, description: 'This indicates if the build is a dependent build. If false, then we are in a first build.')
+  ])
+])
+
+// To load a different branch of the ci-common repository to test new groovy code
+// append '@branchName' to the library name. i.e. use @Library('lynx@branchName')
+@Library('PSL@master') _
+@Library('lynx')
+import RunEverything
+RunEverything()

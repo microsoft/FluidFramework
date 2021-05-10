@@ -153,7 +153,8 @@
                 "dev": true,
                 "packages": [
                     "@fluid-experimental/get-container",
-                    "@fluid-experimental/fluid-static"
+                    "@fluid-experimental/fluid-static",
+                    "@fluid-experimental/tinylicious-client"
                 ],
                 "deps": [
                     "Loader",
@@ -180,11 +181,12 @@
             "Framework": {
                 "packages": [
                     "@fluid-internal/client-api",
-                    "@fluid-experimental/experimental-fluidframework",
+                    "@fluid-experimental/fluid-framework",
                     "@fluid-experimental/data-objects"
                 ],
                 "dirs": [
                     "experimental/framework/",
+                    "experimental/PropertyDDS/packages/",
                     "packages/framework/"
                 ],
                 "deps": [
@@ -198,6 +200,7 @@
                 "dirs": [
                     "examples/",
                     "experimental/examples/",
+                    "experimental/PropertyDDS/examples/",
                     "packages/agents/"
                 ],
                 "deps": [

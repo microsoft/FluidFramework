@@ -54,7 +54,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     public IFluidHandleContext: IFluidHandleContext;
 
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     public loader: ILoader;

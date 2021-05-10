@@ -240,6 +240,9 @@ These DDSes are used for storing sequential data. They are all optimistic.
 [DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
 [DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
 [Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 [SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
 [SharedCounter]: {{< relref "SharedCounter" >}}
 [SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
@@ -249,7 +252,6 @@ These DDSes are used for storing sequential data. They are all optimistic.
 [SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
 [SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
 

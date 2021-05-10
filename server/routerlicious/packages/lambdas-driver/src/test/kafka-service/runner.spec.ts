@@ -5,7 +5,6 @@
 
 import { DebugLogger, TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { Provider } from "nconf";
 import { KafkaRunner } from "../../kafka-service/runner";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
@@ -18,12 +17,11 @@ describe("kafka-service", () => {
         let testProducer: TestProducer;
 
         beforeEach(() => {
-            const config = (new Provider({})).defaults({}).use("memory");
             testKafka = new TestKafka();
             testFactory = new TestPartitionLambdaFactory();
             testConsumer = testKafka.createConsumer();
             testProducer = testKafka.createProducer();
-            testRunner = new KafkaRunner(testFactory, testConsumer, config);
+            testRunner = new KafkaRunner(testFactory, testConsumer);
         });
 
         describe(".start", () => {

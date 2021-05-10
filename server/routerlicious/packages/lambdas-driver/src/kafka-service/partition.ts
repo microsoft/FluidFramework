@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
     IConsumer,
     IQueuedMessage,
+    IPartitionConfig,
     IPartitionLambda,
     IPartitionLambdaFactory,
     ILogger,
@@ -15,7 +16,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import * as _ from "lodash";
-import { Provider } from "nconf";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -34,16 +34,13 @@ export class Partition extends EventEmitter {
     constructor(
         private readonly id: number,
         leaderEpoch: number,
-        factory: IPartitionLambdaFactory,
+        factory: IPartitionLambdaFactory<IPartitionConfig>,
         consumer: IConsumer,
-        config: Provider,
         private readonly logger?: ILogger) {
         super();
 
         // Should we pass epoch with the context?
-        const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.leaderEpoch = leaderEpoch;
-        const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
+        const partitionConfig: IPartitionConfig = { leaderEpoch };
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager, this.logger);
@@ -56,7 +53,14 @@ export class Partition extends EventEmitter {
             (message: IQueuedMessage, callback) => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.lambda!.handler(message);
+                    const optionalPromise = this.lambda!.handler(message);
+                    if (optionalPromise) {
+                        optionalPromise
+                            .then(callback as any)
+                            .catch(callback);
+                        return;
+                    }
+
                     callback();
                 } catch (error) {
                     callback(error);

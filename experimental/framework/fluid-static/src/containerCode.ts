@@ -17,7 +17,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
-    ContainerConfig,
+    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     LoadableObjectClassRecord,
@@ -28,6 +28,7 @@ import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjec
 
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
+    (event: "dispose" | "disconnected", listener: () => void): void;
 }
 
 /**
@@ -60,6 +61,7 @@ export class RootDataObject
     extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
     implements FluidContainer {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
+    private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -89,6 +91,7 @@ export class RootDataObject
 
     protected async hasInitialized() {
         this.runtime.on("connected", this.connectedHandler);
+        this.runtime.on("disconnected", this.disconnectedHandler);
 
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
@@ -106,6 +109,9 @@ export class RootDataObject
     public dispose() {
         // remove our listeners and continue disposing
         this.runtime.off("connected", this.connectedHandler);
+        this.runtime.off("disconnected", this.disconnectedHandler);
+        // After super.dispose(), all event listeners are removed so we need to emit first.
+        this.emit("dispose");
         super.dispose();
     }
 
@@ -167,8 +173,8 @@ const rootDataStoreId = "rootDOId";
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory
     private readonly initialObjects: LoadableObjectClassRecord;
-    constructor(config: ContainerConfig) {
-        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(config);
+    constructor(schema: ContainerSchema) {
+        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
             // eslint-disable-next-line @typescript-eslint/ban-types
             new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
@@ -180,7 +186,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
             );
         super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
-        this.initialObjects = config.initialObjects;
+        this.initialObjects = schema.initialObjects;
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {

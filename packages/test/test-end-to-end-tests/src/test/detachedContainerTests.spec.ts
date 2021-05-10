@@ -646,7 +646,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
-    });
+    }).timeout(5000);
 
     it("Directly attach container through service factory, should resolve to same container", async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
