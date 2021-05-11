@@ -19,6 +19,7 @@ import {
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
@@ -44,6 +45,7 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
+        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -52,6 +54,7 @@ export class TinyliciousClientInstance {
             serviceContainerConfig.id,
             runtimeFactory,
             true,
+            iTelemetryBaseLogger,
         );
         return this.getRootDataObject(container);
     }
@@ -59,6 +62,7 @@ export class TinyliciousClientInstance {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
+        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -67,6 +71,7 @@ export class TinyliciousClientInstance {
             serviceContainerConfig.id,
             runtimeFactory,
             false,
+            iTelemetryBaseLogger,
         );
         return this.getRootDataObject(container);
     }
@@ -82,6 +87,7 @@ export class TinyliciousClientInstance {
         containerId: string,
         containerRuntimeFactory: IRuntimeFactory,
         createNew: boolean,
+        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<Container> {
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
@@ -90,6 +96,7 @@ export class TinyliciousClientInstance {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
+            logger: iTelemetryBaseLogger,
         });
 
         let container: Container;
@@ -139,6 +146,7 @@ export class TinyliciousClient {
     static async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
+        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
@@ -148,12 +156,14 @@ export class TinyliciousClient {
         return TinyliciousClient.globalInstance.createContainer(
             serviceConfig,
             objectConfig,
+            iTelemetryBaseLogger,
         );
     }
 
     static async getContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
+        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
@@ -163,6 +173,7 @@ export class TinyliciousClient {
         return TinyliciousClient.globalInstance.getContainer(
             serviceConfig,
             objectConfig,
+            iTelemetryBaseLogger,
         );
     }
 }
