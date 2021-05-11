@@ -62,6 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -279,10 +280,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-            this.realizeCore().catch((error) => {
-                this.channelDeferred?.reject(error);
-            });
-        }
+            this.realizeCore()
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                .catch((error)=>{throw CreateProcessingError(error, undefined);})
+                .catch((error) => {
+                    this.channelDeferred?.reject(error);
+                });
+            }
         return this.channelDeferred.promise;
     }
 
