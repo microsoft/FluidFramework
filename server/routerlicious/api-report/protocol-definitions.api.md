@@ -185,11 +185,6 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
     data: string;
 }
 
-// @public (undocumented)
-export interface IErrorTrackingService {
-    track(func: () => void): any;
-}
-
 // @public
 export interface IHelpMessage {
     // (undocumented)
@@ -387,6 +382,8 @@ export interface ISnapshotTree {
     trees: {
         [path: string]: ISnapshotTree;
     };
+    // (undocumented)
+    unreferenced?: true;
 }
 
 // @public (undocumented)
@@ -455,6 +452,8 @@ export interface ISummaryConfiguration {
 
 // @public (undocumented)
 export interface ISummaryContent {
+    // (undocumented)
+    details?: IUploadedSummaryDetails;
     // (undocumented)
     handle: string;
     // (undocumented)
@@ -553,6 +552,8 @@ export interface ITree {
     entries: ITreeEntry[];
     // (undocumented)
     id?: string;
+    // (undocumented)
+    unreferenced?: true;
 }
 
 // @public
@@ -572,6 +573,12 @@ export type ITreeEntry = {
     type: TreeEntry.Attachment;
     value: IAttachment;
 });
+
+// @public (undocumented)
+export interface IUploadedSummaryDetails {
+    // (undocumented)
+    includesProtocolTree?: boolean;
+}
 
 // @public
 export interface IUser {
