@@ -4,4 +4,5 @@
  */
 
 export * from "./fluidContainer";
+export * from "./rootDataObject";
 export * from "./types";
