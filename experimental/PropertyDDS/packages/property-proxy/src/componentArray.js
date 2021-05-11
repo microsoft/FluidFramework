@@ -181,7 +181,7 @@ class ComponentArray extends Array {
       return this.property.getLength();
     }
 
-    Utilities.wrapWithPushPopModifiedEventScope(this.property, () => {
+    Utilities.wrapWithPushPopNotificationDelayScope(this.property, () => {
       elementsToAdd.forEach((el) => {
         this.property.push(Utilities.prepareElementForInsertion(this.property, el));
       });
@@ -267,7 +267,7 @@ class ComponentArray extends Array {
     const itemsToAdd = items || [];
     if (itemsToAdd.length > 0) {
       const preparedElements = prepareElementsForInsertion(this.property, itemsToAdd);
-      Utilities.wrapWithPushPopModifiedEventScope(
+      Utilities.wrapWithPushPopNotificationDelayScope(
         this.property, () => this.property.insertRange(startValue, preparedElements),
       );
     }
@@ -298,7 +298,9 @@ class ComponentArray extends Array {
       return this.property.getLength();
     }
     const preparedElements = prepareElementsForInsertion(this.property, elementsToAdd);
-    Utilities.wrapWithPushPopModifiedEventScope(this.property, () => this.property.insertRange(0, preparedElements));
+    Utilities.wrapWithPushPopNotificationDelayScope(
+      this.property, () => this.property.insertRange(0, preparedElements)
+    );
     return this.property.getLength();
   }
 }
