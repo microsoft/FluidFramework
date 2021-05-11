@@ -6,6 +6,10 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+    LoadableObjectClass,
+} from "./types";
 import { RootDataObject } from "./rootDataObject";
 
 export class FluidContainer
@@ -24,6 +28,11 @@ export class FluidContainer
             container.on("connected", (id: string) =>  this.emit("connected", id));
     }
 
+    static async create(container: Container) {
+        const rootDataObject = (await container.request({ url: "/" })).value;
+        return new FluidContainer(container, rootDataObject);
+    }
+
     private get container(): Container {
         assert(this._container !== undefined, "container undefined");
         return this._container;
@@ -32,6 +41,10 @@ export class FluidContainer
     private get rootDataObject(): RootDataObject {
         assert(this._rootDataObject !== undefined, "defaultObject undefined");
         return this._rootDataObject;
+    }
+
+    public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
+        return this.rootDataObject.create(objectClass);
     }
 
     public close() {
