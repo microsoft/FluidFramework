@@ -792,7 +792,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // deleted as soon as GC runs.
     public get gcTestMode(): boolean {
         return getLocalStorageFeatureGate(gcTestModeKey)
-            ?? this.runtimeOptions.gcOptions?.runGCInTestMode !== undefined;
+            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
     }
 
     private constructor(
