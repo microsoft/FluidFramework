@@ -33,7 +33,7 @@ function setLength(target, length) {
     property.clear();
   } else if (currentLength > newLength) {
     // Shorten the array
-    Utilities.wrapWithPushPopModifiedEventScope(property,
+    Utilities.wrapWithPushPopNotificationDelayScope(property,
       () => property.removeRange(newLength, currentLength - newLength));
   } else if (currentLength < newLength) {
     // Fill the array with empty but valid values (instead of 'undefined')
@@ -45,7 +45,7 @@ function setLength(target, length) {
         itemProps.push(PropertyFactory.create(property.getTypeid()));
       }
     }
-    Utilities.wrapWithPushPopModifiedEventScope(property, () => {
+    Utilities.wrapWithPushPopNotificationDelayScope(property, () => {
       property.insertRange(currentLength, itemProps);
     });
   }
