@@ -106,6 +106,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
+            nackMessages: undefined,
         };
 
         const scribe: IScribe = {

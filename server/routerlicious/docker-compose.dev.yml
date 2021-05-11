@@ -3,21 +3,28 @@ services:
     alfred:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     deli:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     scriptorium:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     copier:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     scribe:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     foreman:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper
     riddler:
         volumes:
             - .:/usr/src/server
+            - /usr/src/server/node_modules/zookeeper

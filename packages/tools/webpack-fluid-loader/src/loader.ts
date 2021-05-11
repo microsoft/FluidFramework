@@ -184,9 +184,6 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: {
-            provideScopeLoader: true,
-        },
     });
 }
 
