@@ -5,21 +5,21 @@
 import { BaseProperty } from '@fluid-experimental/property-properties';
 
 /**
- * @hidden
+ * @internal
  */
 const RESOLVE_NO_LEAFS = {
   referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS
 };
 
 /**
- * @hidden
+ * @internal
  */
 const RESOLVE_ALWAYS = {
   referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.ALWAYS
 };
 
 /**
- * @hidden
+ * @internal
  */
 const RESOLVE_NEVER = {
   referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER

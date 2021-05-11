@@ -12,7 +12,7 @@ import { DataBinding } from '../data_binder/data_binding';
  *
  * @alias StatelessDataBindingWrapper
  * @private
- * @hidden
+ * @internal
  */
 class StatelessDataBindingWrapper extends DataBinding {
   /**

@@ -32,18 +32,18 @@ import { IRegisterOnPathOptions } from './IRegisterOnPathOptions'; /* eslint-dis
 import { ActivationQueryCacheHelper } from '../internal/activation_query_cache_helper';
 
 /**
- * @hidden
+ * @internal
  */
 const _INTERNAL_DATA_BINDINGTYPE = '__DataBinderInternal';
 
 /**
- * @hidden
+ * @internal
  */
 const _BUILDING_FLAG = 'BUILDING';
 
 /**
  * Global counter to uniquely identify instances of the databinder.
- * @hidden
+ * @internal
  */
 let _dataBinderId = 0;
 
@@ -54,7 +54,7 @@ let _dataBinderId = 0;
  * If the path is empty, this is assumed to mean 'no path', and no slash is added.
  *
  * @private
- * @hidden
+ * @internal
  *
  * @param {string} in_path - the string path to convert. Empty implies no path.
  * @return {string} the normalized, cleaned path
@@ -87,7 +87,7 @@ const _normalizePath = function(in_path) {
  *
  * @return {string} the appropriate starting path
  *
- * @hidden
+ * @internal
  */
 const _getStartPath = function(in_exactPath, in_includePrefix) {
   let startPath;
@@ -108,7 +108,7 @@ const _getStartPath = function(in_exactPath, in_includePrefix) {
  * @param {TraversalContext} in_context - The current traversal context
  * @param {Object} in_data - the data to push on the context (assumed to be an Object)
  *
- * @hidden
+ * @internal
  */
 const _pushUserData = function(in_context, in_data) {
   in_data.__oldUserData = in_context.getUserData();
@@ -122,7 +122,7 @@ const _pushUserData = function(in_context, in_data) {
  * @param {TraversalContext} in_context - The current traversal context
  * @param {Object} in_data - the data to push on the context (assumed to be an Object)
  *
- * @hidden
+ * @internal
  */
 const _popUserData = function(in_context) {
   const currentUserData = in_context.getUserData();
@@ -159,34 +159,44 @@ class DataBinder {
    * @param {Workspace} [in_workspace] - The Workspace to bind to.
    */
   constructor(in_workspace) {
-
+    /** @internal */
     this._dataBinderId = _dataBinderId++;
 
+    /** @internal */
     this._registry = new DataBindingRegistry(); // Registry for the DataBinding construction
+    /** @internal */
     this._onModifiedRegistrationKey = null; // key for registering the workspace 'modify' event
+    /** @internal */
     this._workspace = null;
+    /** @internal */
     this._postProcessingCallbackQueue = [];
-
+    /** @internal */
     this._dataBindingTree = new DataBindingTree();
+    /** @internal */
     this._removedDataBindings = new Map(); // map of DataBindings that are removed during a ChangeSet traversal
-
+    /** @internal */
     this._activationScope = 0; // Track the bracketing level of pushRegistrationScope/popRegistrationScope
-
+    /** @internal */
     this._definitionsByBindingType = new Map(); // Map from a given binding type to an array of definitions
+    /** @internal */
     this._activationHandlesByBindingType = new Map(); // Map from a given binding type to activation handles
+    /** @internal */
     this._delayedActivationHandles = new Set(); // activation handles not yet applied
-
+    /** @internal */
     this._representationGenerators = new Map(); // Generators for runtime representations
+    /** @internal */
     this._representationHandlesByBindingType = new Map();
+    /** @internal */
     this._buildingStatelessRepresentations = new Map();  // Currently building stateless representations
-
+    /** @internal */
     this._activeTraversal = false; // true when we're in a traversal
-
+    /** @internal */
     this._visitationIndex = 0; // Used to avoid callbacks being called back multiple times
-
+    /** @internal */
     this._currentChangeSetId = 0; // Used to ensure things happen only once per changeset. Always increasing.
-
+    /** @internal */
     this._dataBindingCreatedCounter = 0; // Debug counter for tests
+    /** @internal */
     this._dataBindingRemovedCounter = 0; // Debug counter for tests
 
     // We register a DataBinding at the root of the entire hierarchy to hold all absolute path callbacks
@@ -196,6 +206,9 @@ class DataBinder {
      */
     const AbsolutePathDataBinding = class extends DataBinding { }
 
+    /**
+     * @internal
+     */
     this._AbsolutePathDataBinding = AbsolutePathDataBinding;
 
     this.register(_INTERNAL_DATA_BINDINGTYPE, 'NodeProperty', AbsolutePathDataBinding, {
@@ -226,8 +239,7 @@ class DataBinder {
    * @return {DataBinderHandle} A handle that can be used to unregister this data binding
    *
    * @deprecated in favor of {@link DataBinder.registerStateless}
-   * @public
-   * @hidden
+   * @internal
    */
   registerSingleton(in_bindingType, in_typeID, in_singletonConstructor, in_options = {}) {
     console.warn('registerSingleton is deprecated. Please use registerStateless');
@@ -378,7 +390,7 @@ class DataBinder {
    * @param {Object} in_definition - the definition of the databinding to unregister
    *
    * @private
-   * @hidden
+   * @internal
    */
   _unregisterBindingDefinition(in_handle, in_definition) {
     const byBindingType = this._definitionsByBindingType.get(in_definition.bindingType);
@@ -477,7 +489,7 @@ class DataBinder {
    * @param {Object} in_activationRule - the binding rule associated with the handle - how it was activated
    *
    * @private
-   * @hidden
+   * @internal
    */
   _deactivateBinding(in_handle, in_activationRule) {
     // Check first in the delayed list (never really activated)
@@ -542,8 +554,7 @@ class DataBinder {
    * Delay the registration of bindings until the popRegistrationScope.
    *
    * @deprecated please use {@link DataBinder.pushBindingActivationScope} instead.
-   * @public
-   * @hidden
+   * @internal
    */
   pushRegistrationScope() {
     console.warn('pushRegistrationScope deprecated. Please use pushBindingActivationScope instead');
@@ -555,8 +566,7 @@ class DataBinder {
    * binding activations will be done, and all the corresponding bindings will be created.
    *
    * @deprecated Please use {@link DataBinder.popBindingActivationScope} instead.
-   * @public
-   * @hidden
+   * @internal
    */
   popRegistrationScope() {
     console.warn('pushRegistrationScope deprecated. Please use popRegistrationScope instead');
@@ -569,7 +579,7 @@ class DataBinder {
    * attached.
    *
    * @private
-   * @hidden
+   * @internal
    */
   _checkDelayedBindings() {
     const dataBinder = this;
@@ -618,7 +628,7 @@ class DataBinder {
    *
    * @param {function()} in_bindingConstructor - the constructor to modify
    * @private
-   * @hidden
+   * @internal
    */
   _markDataBindingAsRegistered(in_bindingConstructor) {
     if (in_bindingConstructor.prototype.hasOwnProperty('__numDataBinders')) {
@@ -636,7 +646,7 @@ class DataBinder {
    * @param {function()} in_dataBindingConstructor - the constructor to modify
    *
    * @private
-   * @hidden
+   * @internal
    */
   _unmarkDataBindingAsRegistered(in_dataBindingConstructor) {
     const hasCount = in_dataBindingConstructor.prototype.hasOwnProperty('__numDataBinders');
@@ -662,7 +672,7 @@ class DataBinder {
    * @return {TraversalContext} a fake traversal context
    *
    * @private
-   * @hidden
+   * @internal
    */
   _createFakeTraversalContext(in_property, in_traversalPath, in_absTokenizedPath, in_dataBindingTreeNode) {
     var fakeContext = new Utils.TraversalContext();
@@ -696,7 +706,7 @@ class DataBinder {
    * @return {Boolean} true if the rule applies to this property type
    *
    * @private
-   * @hidden
+   * @internal
    */
   _activationAppliesToTypeId(in_activationSplitType, in_propertySplitType, in_definitionSplitType) {
     if (in_activationSplitType === undefined) {
@@ -755,7 +765,7 @@ class DataBinder {
    * @param {Array.<Object>} in_activationRules - the activation rules to apply
    * @param {Array.<DataBinding>} io_instantiatedBindings - the accumulated bindings created
    *
-   * @hidden
+   * @internal
    */
   _fastCreateRetroactive(in_rootPropertyElement, in_activationRules, io_instantiatedBindings) {
     const activationHelper = new ActivationQueryCacheHelper(in_activationRules, this);
@@ -814,7 +824,7 @@ class DataBinder {
    * @param {Array.<Object>} in_activationRules - the activation rules to apply
    * @param {Array.<DataBinding>} io_instantiatedBindings - the accumulated bindings created
    *
-   * @hidden
+   * @internal
    */
   _generalCreateRetroactive(in_rootPropertyElement, in_activationRules, io_instantiatedBindings) {
     // General case traverser.
@@ -930,7 +940,7 @@ class DataBinder {
    * @param {Array.<Object>} in_activationRules - The array of rules to apply bindings for
    *
    * @private
-   * @hidden
+   * @internal
    */
   _createBindingsRetroactively(in_activationRules) {
     const instantiated = [];
@@ -993,7 +1003,7 @@ class DataBinder {
    * @param {Object} in_activationRule - The description of the activation
    *
    * @private
-   * @hidden
+   * @internal
    */
   _unbindActiveBindings(in_activationRule) {
     const dataBinder = this;
@@ -1090,7 +1100,7 @@ class DataBinder {
    * @param {string} in_bindingType - name of the bindingType
    * @return {Array.<DataBinding>} the found items
    * @private
-   * @hidden
+   * @internal
    */
   _getDataBindingsByType(in_bindingType) {
     var dataBindings = [];
@@ -1118,7 +1128,7 @@ class DataBinder {
    *     callback and its registration
    * @return {DataBinderHandle} A handle that can be used to unregister the callback
    * @private
-   * @hidden
+   * @internal
    */
   _registerOnSimplePath(in_absolutePath, in_operations, in_callback, in_options = {}) {
     if (in_options.replaceExisting !== undefined) {
@@ -1170,7 +1180,7 @@ class DataBinder {
    * @param {DataBinderHandle} in_handle - The handle returned by registerOnPath
    * @param {Object} in_registrationInfo - the information describing the registerOnPath, to unregister with.
    * @private
-   * @hidden
+   * @internal
    */
   _unregisterOnSimplePath(in_handle, in_registrationInfo) {
     const dataBindingNode = this._dataBindingTree.getNode(in_registrationInfo.path);
@@ -1276,7 +1286,7 @@ class DataBinder {
    *   callback and its registration
    * @return {DataBinderHandle} A handle that can be used to unregister the callback.
    * @private
-   * @hidden
+   * @internal
    */
   _internalRegisterOnPath(in_absolutePath, in_operations, in_callback, in_options = {}) {
     if (in_options.replaceExisting !== undefined) {
@@ -1380,7 +1390,10 @@ class DataBinder {
    *
    * This will be removed in favour of a lazy mechanism in the future.
    *
-   * @hidden
+   * @internal
+   * @ignore
+   * @private
+   * @internal
    */
   _buildDataBindingTree() {
     const _recursiveStep_bindingtree = (in_property, in_id, in_parentNode) => {
@@ -1460,7 +1473,7 @@ class DataBinder {
    * @param {string} in_bindingType - the binding type to deactivate.
    *
    * @private
-   * @hidden
+   * @internal
    */
   _deactivateDataBindings(in_bindingType = undefined) {
     this.pushBindingActivationScope();
@@ -1493,7 +1506,7 @@ class DataBinder {
    *   will be removed.
    *
    * @private
-   * @hidden
+   * @internal
    */
   _undefineDataBindings(in_bindingType) {
 
@@ -1558,8 +1571,7 @@ class DataBinder {
    * @param {boolean} in_undefine - if true (the default), undefine all bindings for this binding type
    *    {@link DataBinder.defineDataBinding} or {@link DataBinder.register}
    *
-   * @public
-   * @hidden
+   * @internal
    */
   unregisterAllDataBinders(
     in_bindingType = undefined, in_deactivate = true, in_undefine = true
@@ -1590,7 +1602,7 @@ class DataBinder {
    *
    * @return {DataBinding|undefined} the instantiated binding, unless it already exists
    * @private
-   * @hidden
+   * @internal
    */
   _createBindingFromDefinition(in_context, in_path, in_definition, in_activationInfo) {
     var property = in_context.getUserData().property;
@@ -1644,7 +1656,7 @@ class DataBinder {
    * @param {TraversalContext}   in_context - The traversal context
    * @param {string}             in_path - Path of the property to create the data bindings for
    * @private
-   * @hidden
+   * @internal
    */
   _createAllBindingsAtPath(in_context, in_path) {
     var property = in_context.getUserData().property;
@@ -1713,7 +1725,7 @@ class DataBinder {
    * @param {TraversalContext} in_context - Traversal context
    *
    * @private
-   * @hidden
+   * @internal
    */
   _postCreateDataBinding(in_context) {
     var createdBindings = in_context.getUserData().createdBindings;
@@ -1745,7 +1757,7 @@ class DataBinder {
    * @param {ModificationContext}  in_modificationContext - The modification context
    *
    * @private
-   * @hidden
+   * @internal
   */
   _callPathCallbacks(in_context, in_modificationContext) {
     const value = in_context.getUserData().dataBindingTreeNode.getValue();
@@ -1780,7 +1792,7 @@ class DataBinder {
    * @param {string}  in_path - path leading to the parent node
    *
    * @private
-   * @hidden
+   * @internal
    */
   _removeDataBindings(in_parentNode, in_index, in_path) {
     var subTree = in_parentNode.getChild(in_index);
@@ -1905,7 +1917,7 @@ class DataBinder {
    * @param {TraversalContext}     in_context  - the traversal context
    * @param {bool}                            in_post         - true if called post-order
    * @private
-   * @hidden
+   * @internal
    */
   _handleModify(in_context, in_post) {
     var node = in_context.getUserData().dataBindingTreeNode;
@@ -1952,7 +1964,7 @@ class DataBinder {
    * @param {string|Array.<string>} in_tokenizedPathSegments - the tokenized path segments from the last existing
    *                                                           DataBindingTree node
    * @private
-   * @hidden
+   * @internal
    */
   _handleRemove(in_context, in_post, in_tokenizedPathSegments) {
     if (!in_post) {
@@ -1980,7 +1992,7 @@ class DataBinder {
    *                                                                 existing DataBindingTree node
    * @param {string}                      in_propertyContext       - Context of the object to insert
    * @private
-   * @hidden
+   * @internal
    */
   _handleInsert(in_context, in_post,
     in_tokenizedPathSegments, in_propertyContext) {
@@ -2012,7 +2024,7 @@ class DataBinder {
    * @param {TraversalContext} in_context               - the traversal context
    * @param {bool}             in_post                  - true if called post-order
    * @private
-   * @hidden
+   * @internal
    */
   _handleChange(in_context, in_post) {
     // console.log('---> callback in <---, post:', in_post);
@@ -2047,7 +2059,7 @@ class DataBinder {
    *
    * @param {TraversalContext} in_context - Traversal context
    * @private
-   * @hidden
+   * @internal
    */
   _preTraversalCallBack(in_context) {
     var opType = in_context.getOperationType();
@@ -2104,7 +2116,7 @@ class DataBinder {
    *
    * @param {TraversalContext} in_context - Traversal context
    * @private
-   * @hidden
+   * @internal
    */
   _postTraversalCallBack(in_context) {
     this.dataBinder._handleChange(in_context, true);
@@ -2117,7 +2129,7 @@ class DataBinder {
    *
    * @param {external:SerializedChangeSet}     in_changeSet  - The ChangeSet to process
    * @private
-   * @hidden
+   * @internal
    */
   _traverseChangeSet(in_changeSet) {
     var notifications = {
@@ -2155,7 +2167,7 @@ class DataBinder {
    * processing.
    *
    * @private
-   * @hidden
+   * @internal
    *
    * @param {ChangeSet} in_changeSet - ChangeSet describing the modification.
    * @throws Will throw an error if a traversal is already active.
@@ -2196,7 +2208,7 @@ class DataBinder {
    * Do any requests that were queued up for post-changeset processing
    *
    * @private
-   * @hidden
+   * @internal
    */
   _postChangesetProcessing() {
     // We swap the queue out in case other things get added during the callback
@@ -2254,7 +2266,7 @@ class DataBinder {
    * type) which may be undefined if no suitable data binding is present at the given path.
    * @package
    * @private
-   * @hidden
+   * @internal
    */
   _resolveRemovedDataBindingByType(in_path, in_bindingType) {
     if (!in_path || !in_bindingType) {
@@ -2354,8 +2366,7 @@ class DataBinder {
    * @throws If there is already runtime representation associated with the provided bindingType/typeID.
    *
    * @deprecated in favor of {@link DataBinder.defineRepresentation}
-   * @public
-   * @hidden
+   * @internal
    */
   registerRuntimeModel(bindingType, typeID, generator, options = {}) {
     console.warn('registerRuntimeModel is deprecated. Please use defineRepresentation');
@@ -2454,7 +2465,7 @@ class DataBinder {
    * @param {Object} in_representationInfo - the runtime representation information
    *
    * @private
-   * @hidden
+   * @internal
    */
   _undefineRepresentation(in_handle, in_representationInfo) {
     const rules = this._representationGenerators.get(in_representationInfo.bindingType);
@@ -2510,7 +2521,7 @@ class DataBinder {
    * Recursively destroy all the runtime representations currently instantiated
    *
    * @private
-   * @hidden
+   * @internal
    */
   _recursivelyDestroyAllRepresentations() {
     if (this._workspace) {
@@ -2532,7 +2543,7 @@ class DataBinder {
    * @param {DataBindingTree} in_node - the node we want to clear the representations from
    *
    * @private
-   * @hidden
+   * @internal
    */
   _destroyAllRepresentationsAtNode(in_node) {
     const value = in_node.getValue();
@@ -2562,8 +2573,7 @@ class DataBinder {
    * @throws If not connected to a workspace
    * @throws If the property is not in the workspace the DataBinder is attached to.
    *
-   * @public
-   * @hidden
+   * @internal
    */
   getRuntimeModel(property, bindingType) {
     console.warn('Deprectated, please use getRepresentation instead');
@@ -2646,7 +2656,7 @@ class DataBinder {
    * @return {Object|undefined} the initialized runtime representation, or undefined if there is none registered
    *
    * @private
-   * @hidden
+   * @internal
    */
   _getRepresentationAtPathInternal(path, property, bindingType) {
 
@@ -2702,7 +2712,7 @@ class DataBinder {
    * @return {DataBindingTree} the created node, guaranteed to also have a value
    *
    * @private
-   * @hidden
+   * @internal
    */
   _instantiateNodeAndValueForProperty(in_property, in_tokenizedPath) {
     let dataBindingTreeNode = this._dataBindingTree.getNodeForTokenizedPath(in_tokenizedPath);
@@ -2790,7 +2800,7 @@ class DataBinder {
    * @return {Object|undefined} The runtime data representation information
    *
    * @private
-   * @hidden
+   * @internal
    */
   _getAppropriateRepresentationInfo(in_property, in_bindingType) {
     const dataBinder = this;
@@ -2816,7 +2826,7 @@ class DataBinder {
    * @param {Object} in_representationInfo - the information about creating/destroying this runtime representation
    *
    * @private
-   * @hidden
+   * @internal
    */
   _destroyRepresentation(in_representation, in_representationInfo) {
     if (in_representationInfo.destroyerCallback) {
@@ -2838,7 +2848,7 @@ class DataBinder {
    * @return {Object} The created runtime representation
    *
    * @private
-   * @hidden
+   * @internal
    */
   _instantiateRepresentation(in_tokenizedPath, in_property, in_representationInfo, in_key) {
     // To detect cycles, we tag the runtime representation with _BUILDING_FLAG
@@ -2904,9 +2914,9 @@ class DataBinder {
    * will cause any runtime representations that were generated to have their destroyer callbacks called.
    * Note; this will also invalidate any handles returned from {@link DataBinder.defineRepresentation}.
    *
-   * @deprecated
+   * @deprecated use undefineAllRepresentations instead
    * @param {string} bindingType - the binding type to unregister
-   * @hidden
+   * @internal
    */
   unregisterAllRuntimeModels(bindingType) {
     console.warn('unregisterAllRuntimeModels deprecated in favor of undefineAllRepresentations');
@@ -2941,7 +2951,7 @@ class DataBinder {
    * @return {Number} A unique changeset id, greater than or equal to zero.
    *
    * @private
-   * @hidden
+   * @internal
    */
   getCurrentChangeSetId() {
     return this._currentChangeSetId;
@@ -2960,7 +2970,7 @@ class DataBinder {
   /**
    * Reset internal debug counters (used for testing)
    * @private
-   * @hidden
+   * @internal
    */
   _resetDebugCounters() {
     this._dataBindingCreatedCounter = 0;

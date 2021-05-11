@@ -1,6 +1,25 @@
 {
     "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
     "extends": "@fluidframework/build-common/api-extractor-common.json",
+    "compiler": {
+        "overrideTsconfig": {
+
+                "extends": "@fluidframework/build-common/ts-common-config.json",
+              "exclude": [
+                "node_modules",
+                "test/**/*.js"
+              ],
+                "compilerOptions": {
+                    "stripInternal": true,
+                    "allowJs": true,
+                    "outDir": "./dist_doc",
+                    "rootDir": "./src"
+                },
+                "include": ["src/**/*"]
+            }
+
+
+    },
     "messages": {
         "tsdocMessageReporting": {
             "tsdoc-undefined-tag":{
@@ -63,6 +82,10 @@
                 "addToApiReportFile": false
             },
             "ae-unresolved-link": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "ae-internal-missing-underscore": {
                 "logLevel": "none",
                 "addToApiReportFile": false
             }

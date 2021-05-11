@@ -17,7 +17,7 @@ import { PathHelper, TypeIdHelper } from '@fluid-experimental/property-changeset
  *
  * @param {BaseProperty} in_property -
  * @param {string|undefined} in_childToken -
- * @hidden
+ * @internal
  */
 class PropertyElement {
   constructor(in_property, in_childToken = undefined) {

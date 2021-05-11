@@ -7,7 +7,7 @@ menuPosition: 5
 The goal of the *Property Binder* runtime representation mechanism is to provide
 a way of associating one or more alternate representations of a model to
 a *Property*, other than the bare-bones model represented by the *Property DDS*
-*BaseProperty*. The *ProeprtyBinder* provides a central place for fetching
+*BaseProperty*. The *PropertyBinder* provides a central place for fetching
 these alternate representations, and helps manage their lifetime.
 
 Runtime representations may be *Property DDS*-independent classes, perhaps even
@@ -67,7 +67,7 @@ THREE.PerspectiveCamera being updated by the CameraPropertyBinding.
 ## Defining and Creating Runtime Representations
 
 The *DataBinder* provides functionality for managing the definition,
-creation and fetching of runtime representations associated with HFDM
+creation and fetching of runtime representations associated with Property DDS
 properties.
 
 Typically, a component will register one or more runtime representations
@@ -135,7 +135,7 @@ runtime representations would be moved to the initializer function.
 **Destroyer function**
 
 The destroyer function is an optional function that the *DataBinder* will use
-when the associated *Property* is removed from the *HFDM Workspace*. If present,
+when the associated *Property* is removed from the *Property DDS*. If present,
 the *DataBinder* will call this function, and internally forget the instance
 of the runtime representation. This gives the definer of the runtime
 representation a chance to clean up any related data structures. Note,
@@ -145,7 +145,7 @@ This is the responsibility of the hosting application to maintain.
 
 ### Creation and Fetching
 
-Once a runtime representation has been defined for a given *HFDM* type, it can
+Once a runtime representation has been defined for a given *Property* type, it can
 be fetched using the [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) function.
 
 
@@ -161,7 +161,7 @@ until the *Property* is destroyed. Note that it is no longer possible to fetch
 the runtime representation once its associated *Property* is removed. This includes
 calling either property binding's [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) convenience function or
 [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) in onPreRemove and onRemove data binding callbacks since when these callbacks
-are called *Property DDS* has already removed the associated *Property* from the Workspace.
+are called *Property DDS* has already removed the associated *Property* from the Property DDS.
 
 When using [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}), you provide the *Property* for which you want the
 runtime representation for, and the bindingType, to get the appropriate
@@ -207,7 +207,7 @@ argument for [defineRepresentation()]({{< ref "docs/apis/property-binder/databin
    );
 ```
 A Stateless Representation differs from a 'standard' one in that it's not stored by *DataBinder*, it is always
-recreated on demand when it is requested via |[dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
+recreated on demand when it is requested via [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
 A Stateless Representation may specify an Initializer function similarly to 'standard' Representations in
 order to break up cycles in the initialization of Runtime Representations. However, the Destroyer function will be
 ignored - since this Representation can not contain any state, there should be no need for a cleanup; in

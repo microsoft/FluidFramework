@@ -25,11 +25,12 @@ class RemovalContext extends BaseContext {
    *
    * @constructor
    * @hideconstructor
-   * @hidden
+   * @internal
    * @package
    */
   constructor(in_subTree, in_baseDataBinding, in_path, in_simulated = false) {
     super('remove', '', in_path, in_baseDataBinding, undefined, in_simulated);
+    /** @internal */
     this._subTree = in_subTree;
   }
 
@@ -54,7 +55,7 @@ class RemovalContext extends BaseContext {
    *
    * @return {RemovalContext} the cloned context
    * @package
-   * @hidden
+   * @internal
    */
   _clone() {
     return new RemovalContext(

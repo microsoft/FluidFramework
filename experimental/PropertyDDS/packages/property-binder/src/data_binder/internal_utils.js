@@ -21,7 +21,7 @@ import { RESOLVE_NEVER, RESOLVE_ALWAYS } from '../internal/constants';
  * @return {string} the escaped string
  *
  * @package
- * @hidden
+ * @internal
  */
 const escapeTokenizedStringForMap = function(in_string) {
   if (in_string[0] === '_' && in_string[1] === '_') {
@@ -39,7 +39,7 @@ const escapeTokenizedStringForMap = function(in_string) {
  *
  * @alias LYNX.AppFramework._Internal.Utils.escapeTokenizedPathForMap
  * @package
- * @hidden
+ * @internal
  */
 const escapeTokenizedPathForMap = function(in_path) {
   if (_.isArray(in_path)) {
@@ -56,7 +56,7 @@ const escapeTokenizedPathForMap = function(in_path) {
  * @return {string} the unescaped string
  *
  * @package
- * @hidden
+ * @internal
  */
 const unescapeTokenizedStringForMap = function(in_string) {
   if (in_string[0] === '_' &&
@@ -80,7 +80,7 @@ const unescapeTokenizedStringForMap = function(in_string) {
  * @param {string|undefined} in_path1 - The first path
  * @param {string|undefined} in_path2 - The second path
  * @private
- * @hidden
+ * @internal
  *
  * @return {string} The concatenated path
  */
@@ -111,7 +111,7 @@ const joinPaths = function(in_path1, in_path2) {
  * @param {Object}  in_invokeContext - The parameters block of the invoke
  * @param {Boolean} in_bindToReference - Indicates if the handlers is bound to a reference
  * @private
- * @hidden
+ * @internal
  *
  * @return {Bool} True if the handler should be called, false otherwise
  */
@@ -135,7 +135,7 @@ const shouldHandlerBeCalled = function(in_invokeContext, in_bindToReference) {
  *
  * @param {Object} io_referencePropertyTableNode - the ReferencePropertyTableNode object to initialize
  * @private
- * @hidden
+ * @internal
  */
 const initializeReferencePropertyTableNode = function(io_referencePropertyTableNode) {
   io_referencePropertyTableNode.__registeredData = _.defaults(io_referencePropertyTableNode.__registeredData || {}, {
@@ -145,7 +145,7 @@ const initializeReferencePropertyTableNode = function(io_referencePropertyTableN
 };
 
 /**
- * @hidden
+ * @internal
  */
 const validOperations = [
   'insert', 'modify', 'remove',
@@ -156,7 +156,7 @@ const validOperations = [
 /**
  * @param {string} operation - Operation name to validate
  * @private
- * @hidden
+ * @internal
  */
 const assertOperation = function(operation) {
   console.assert(_.includes(validOperations, operation),
@@ -175,7 +175,7 @@ const assertOperation = function(operation) {
  *   are in in_changesetKeys
  * @param {Boolean} [in_bindToReference] - are we bound to the reference, or the referenced object?
  * @private
- * @hidden
+ * @internal
  */
 const _callCorrespondingHandlers = function(
   in_invokeContext,
@@ -227,7 +227,7 @@ const _callCorrespondingHandlers = function(
  * @return {Array.<Number>} the generated indices
  *
  * @private
- * @hidden
+ * @internal
  */
 const _generateIndices = function(in_arrayIterator) {
   return in_arrayIterator.operation[1].map(function(value, index) {
@@ -242,7 +242,7 @@ const _generateIndices = function(in_arrayIterator) {
  * @param {*} in_handlers - the handlers to consider for the array elements
  *
  * @private
- * @hidden
+ * @internal
  */
 const _invokeArrayCallbacks = function(in_invokeContext, in_handlers) {
   var arrayIterator = new ArrayChangeSetIterator(in_invokeContext.traversalContext.getNestedChangeSet());
@@ -280,7 +280,7 @@ const _invokeArrayCallbacks = function(in_invokeContext, in_handlers) {
  *   for a specific operation
  *
  * @private
- * @hidden
+ * @internal
  */
 const _iterateChangesetTypeids = function(in_invokeContext, in_currentOperationType, in_opHandlers) {
   const traversalContext = in_invokeContext.traversalContext;
@@ -306,7 +306,7 @@ const _iterateChangesetTypeids = function(in_invokeContext, in_currentOperationT
  * @param {*} in_handlers - the handlers to consider for the array elements
  *
  * @private
- * @hidden
+ * @internal
  */
 const _invokeNodePropertyCallbacks = function(in_invokeContext, in_handlers) {
   const nestedChangeSet = in_invokeContext.traversalContext.getNestedChangeSet();
@@ -345,7 +345,7 @@ const _invokeNodePropertyCallbacks = function(in_invokeContext, in_handlers) {
  * @param {Boolean} in_bindToReference - are we bound to the reference, or to the referenced object?
  *
  * @private
- * @hidden
+ * @internal
  */
 const _invokePropertyCallbacks = function(in_invokeContext, in_operationHandlers, in_bindToReference) {
   var operationType = in_invokeContext.traversalContext.getOperationType();
@@ -389,7 +389,7 @@ const _invokePropertyCallbacks = function(in_invokeContext, in_operationHandlers
  * @param {Boolean} in_isReference - is something a reference
  *
  * @package
- * @hidden
+ * @internal
  */
 const invokeCallbacks = function(
   in_dataBinding,
@@ -473,7 +473,7 @@ const isSubPath = function(a, b) {
  * @param {Array.<String>} in_paths - the array of paths to minimize
  *
  * @return {Array.<String>} the minimal set of roots
- * @hidden
+ * @internal
  */
 const minimalRootPaths = function(in_paths) {
   const pathRoots = [];
@@ -514,7 +514,7 @@ const minimalRootPaths = function(in_paths) {
  *    function inputs in_property: BaseProperty, in_path: string, in_tokenizedPath: Array.<string>,
  *        in_treeNode: DataBindingTree
  *    function should return a boolean saying whether to continue recursing
- * @hidden
+ * @internal
  */
 const recursivelyVisitHierarchy = function(
   in_rootPropertyElement,
@@ -569,7 +569,7 @@ const recursivelyVisitHierarchy = function(
  * @param {BaseProperty} in_property - property to query
  *
  * @return {Boolean} true if it is a collection of primitive types.
- * @hidden
+ * @internal
  */
 const isPrimitiveCollection = function(in_property) {
   const context = in_property.getContext();
@@ -612,7 +612,7 @@ const forEachProperty = function(in_rootProperty, in_callback) {
  * @param {Constructor} in_dataBindingConstructor - the constructor to unregister on
  *
  * @private
- * @hidden
+ * @internal
  */
 const unregisterAllOnPathListeners = function(in_dataBindingConstructor) {
   // Note, superclasses or derived classes may still have bindings!
@@ -647,7 +647,7 @@ const getLocalOrRemoteSchema = (in_typeid, in_workspace) => {
  * @return {Boolean} traversal succeeded without being aborted
  *
  * @private
- * @hidden
+ * @internal
  */
 const visitTypeHierarchy = function(in_typeID, in_callback, workspace) {
   let continueTraversal = in_callback(in_typeID);
@@ -690,7 +690,7 @@ const visitTypeHierarchy = function(in_typeID, in_callback, workspace) {
  * @return {function()} the wrapped callback
  *
  * @private
- * @hidden
+ * @internal
  */
 const makeCallbackOncePerChangeSet = function(in_callback) {
   // When the callback is called, the 'this' pointer will be the DataBinding
@@ -721,7 +721,7 @@ const makeCallbackOncePerChangeSet = function(in_callback) {
  * @return {function} the deferred function
  *
  * @private
- * @hidden
+ * @internal
  */
 const deferCallback = function(in_callback) {
   return function() {
@@ -753,7 +753,7 @@ const deferCallback = function(in_callback) {
  * since the data_binder.js is using DataBinding and this file is a base class (and the function
  * needs to work with the constructor prototype, not an instance)
  *
- * @hidden
+ * @internal
  */
 const isDataBindingRegistered = function(in_bindingConstructor) {
   return in_bindingConstructor.prototype.hasOwnProperty('__numDataBinders') &&
@@ -766,7 +766,7 @@ const isDataBindingRegistered = function(in_bindingConstructor) {
  * class along the prototype chain of in_dataBindingConstructor, skipping classes where it is not defined.
  *
  * @private
- * @hidden
+ * @internal
  *
  * @param {Object} in_dataBindingConstructor - the constructor to extend
  */
@@ -791,7 +791,7 @@ const installForEachPrototypeMember = function(in_dataBindingConstructor) {
  * with in_default if it does not.
  *
  * @private
- * @hidden
+ * @internal
  *
  * @param {DataBinding} in_dataBindingConstructor - constructor object for the data binding class
  * @param {string} in_propertyName - inherit/create this property in the prototype
@@ -812,7 +812,7 @@ const getOrCreateMemberOnPrototype = function(in_dataBindingConstructor, in_prop
  * Get the handler list (or create one) for the given operation, on the given path.
  *
  * @private
- * @hidden
+ * @internal
  *
  * @param {Object} in_dataBindingConstructor - the constructor from which to get the handler list
  * @param {string} in_escapedPath - the path to look on
@@ -840,7 +840,7 @@ const _getHandlerList = function(in_dataBindingConstructor, in_escapedPath, in_m
  * @param {DataBinding} in_dataBindingConstructor -
  *     constructor object for the data binding class
  * @package
- * @hidden
+ * @internal
  */
 const _cleanupPathListeners = function(in_dataBindingConstructor) {
   delete in_dataBindingConstructor.prototype._allPathHandles;
@@ -855,7 +855,7 @@ const _cleanupPathListeners = function(in_dataBindingConstructor) {
  * @param {*} in_operation -
  *
  * @private
- * @hidden
+ * @internal
  */
 const _unregisterOperation = function(in_handle, in_details, in_operation) {
   for (let i = 0; i < in_details.paths.length; ++i) {
@@ -872,7 +872,7 @@ const _unregisterOperation = function(in_handle, in_details, in_operation) {
 
 /**
  * @private
- * @hidden
+ * @internal
  *
  * @param {*} in_handle -
  * @param {*} in_details -
@@ -893,7 +893,7 @@ const _unregisterPathHandle = function(in_handle, in_details) {
  * @return {Number} the unique id
  *
  * @private
- * @hidden
+ * @internal
  */
 const _generateRegistrationId = (function() {
   // Global counter for uniquely marking registrations.
@@ -907,7 +907,7 @@ const _generateRegistrationId = (function() {
  * Create a handle representing a registered path
  *
  * @private
- * @hidden
+ * @internal
  *
  * @param {Object} in_constructor - the constructor for which we want to have a handle
  * @param {Array.<string>} in_escapedPaths - the paths we are registering for
@@ -954,7 +954,7 @@ const createHandle = function(in_constructor, in_escapedPaths, in_operations, in
  * @param {BaseContext} in_context - the context
  * @return {boolean} - true iff the context has a valid Property associated with it.
  * @private
- * @hidden
+ * @internal
  */
 const _hasValidPropertyFromContext = function(in_context) {
   return (in_context instanceof ModificationContext && in_context.getOperationType() !== 'remove');
@@ -968,7 +968,7 @@ const _hasValidPropertyFromContext = function(in_context) {
  * @param {Boolean} in_requireProperty - If true, the callback will only be called with an existing property
  * @param {ModificationContext} in_modificationContext - The modification context
  * @private
- * @hidden
+ * @internal
  */
 const invokeWithProperty = function(in_callback, in_requireProperty, in_modificationContext) {
   if (_hasValidPropertyFromContext(in_modificationContext)) {
@@ -988,7 +988,7 @@ const invokeWithProperty = function(in_callback, in_requireProperty, in_modifica
  * @param {string|Number} in_key       - Key of the property in the collection being modified
  * @param {ModificationContext} in_modificationContext - The modification context
  * @private
- * @hidden
+ * @internal
  */
 const invokeWithCollectionProperty = function(in_callback, in_requireProperty, in_key, in_modificationContext) {
   if (_hasValidPropertyFromContext(in_modificationContext)) {
@@ -1004,7 +1004,7 @@ const invokeWithCollectionProperty = function(in_callback, in_requireProperty, i
  * @param {Array} in_callbackArgs The registered callback arguments.
  * @return {function} A function that calls the callback registration on a given DataBinding prototype.
  * @private
- * @hidden
+ * @internal
  */
 const createRegistrationFunction = function(in_registrationType, in_callbackArgs) {
   const path = in_callbackArgs[0];

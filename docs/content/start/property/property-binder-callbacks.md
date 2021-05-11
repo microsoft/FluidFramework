@@ -31,15 +31,16 @@ minimal DataBinding class that shows the just-mentioned requirements in code:
 This small example *DataBinding* implementation instantiates a "renderer" object in  the constructor which
 is responsible for displaying the point (that is associated with the *Property*) in the HTML page. The *DataBinding*
 is essentially a wrapper around this renderer object which represents the business logic that does not need to know
-anything about *Properties* or *HFDM*. This pattern is quite common both when adding *HFDM* support to existing
+anything about *Properties* or *Property DDS*. This pattern is quite common both when adding *Fluid Property DDS* support to existing
 applications and when developing new applications and helps to keep the business logic independent of the
-details of dealing with *HFDM* and *Properties*.
+details of dealing with *Fluid Property DDS* and *Properties*.
+
 
 All *DataBindings* have access to the *DataBinder* instance that created them and are able to call its methods. For
-example, a *DataBinding* may call |requestChangesetPostProcessing()| in order to delay some of their processing
+example, a *DataBinding* may call [requestChangesetPostProcessing()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-requestchangesetpostprocessing-Method" >}}) in order to delay some of their processing
 (more details later). Or, the *DataBinding*
 may also access a different *DataBinding* with a known path (or one that exists at a known *Property*): calling
-the |resolve()| method of *DataBinder* will return the *DataBindings* present at the given absolute path/*Property*
+the [resolve()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-resolve-Method" >}}) method of *DataBinder* will return the *DataBindings* present at the given absolute path/*Property*
 (may optionally be filtered by *BindingType*). This is not recommended, however, since the lifetime of the
 *DataBindings* is not predictable - they may have been already been removed or haven't been instantiated yet if
 they are in a different subtree in the *Property* hierarchy. For accessing alternative views of the *Property DDS* data,
@@ -50,7 +51,7 @@ it is recommended to use [DataBinder Runtime Representations]({{< ref "property-
 One important limitation of any *DataBinding* callback is that **modifying** *Properties* (including insert/remove
 operations) in the *Property DDS* is forbidden. If any callbacks wish to modify *Properties* in the *Property DDS*, they
 can schedule a callback to be called after the processing of the current *ChangeSet* is finished: these callbacks
-may be scheduled by calling |requestChangesetPostProcessing()| and supplying the callback as an argument. They may
+may be scheduled by calling [requestChangesetPostProcessing()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-requestchangesetpostprocessing-Method" >}}) and supplying the callback as an argument. They may
 freely modify any *Properties* in the callback.
 
 
@@ -79,8 +80,8 @@ You can override the ``onModify()`` to be called back for any modifications in t
 associated with the *DataBinding*. The method is called by *DataBinder* whenever the associated *Property* subtree
 is modified, postorder during the *ChangeSet* traversal. Similarly, the ``onPreModify()`` callback will
 be called preorder when the associated *Property* is modified. For both callbacks, the *Property* object stored in
-the binding (as well as all other *Properties* in the *Property DDS*) will already have been updated by *HFDM* to the
-new value when these callbacks are called. Both callbacks will have a single argument which is a |ModificationContext|.
+the binding (as well as all other *Properties* in the *Property DDS*) will already have been updated by *Fluid* to the
+new value when these callbacks are called. Both callbacks will have a single argument which is a `ModificationContext`.
 
 Let's look at how the ``onModify()`` function might look in our example ``PointDataBinding``:
 
@@ -107,8 +108,8 @@ that are in the subtree of the current *Property* and the ``onRemove()`` callbac
 all *DataBindings* that are in the subtree of the current *Property* have been processed (including calling their
 ``onPreRemove()`` and ``onRemove()`` callbacks). These callbacks are mainly used for cleaning up, for example to inform the
 wrapped object that implements our business logic that it’s no longer part of the model. Note that when these callbacks
-(including ``onPreRemove()``) are called the associated *Property* has already been removed by *HFDM* so
-|getProperty()| will return undefined.
+(including ``onPreRemove()``) are called the associated *Property* has already been removed by *Property DDS* so
+[getProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getproperty-Method" >}}) will return undefined.
 
 This is how such a callback could look in our example:
 
@@ -128,7 +129,7 @@ This will be discussed in detail in the next section.
 ## ModificationContext and RemovalContext
 
 While the *DataBinding*’s constructor as well as the ``onPostCreate()``, ``onPreModify()`` and ``onModify()``
-callbacks all get a |ModificationContext| object as argument (in the case of the constructor it’s part of the
+callbacks all get a `ModificationContext` object as argument (in the case of the constructor it’s part of the
 parameter object it gets, i.e. ``in_param.modificationContext``) the ``onPreRemove()`` and ``onRemove()``
 callbacks get a `RemovalContext` as argument.
 
@@ -159,7 +160,7 @@ instance.
 
 The schema for the Object3D is as follows:
 
-```
+```javascript
 const Object3DSchema = {
   typeid: 'autodesk.samples:object3D-1.0.0',
   properties: [
@@ -218,10 +219,9 @@ not to an instance in a static function. In other words, these registrations wil
 
 Also note that this static function must be called by the application's
 initialization code during startup to register these relative path callbacks; it won't be called automatically.
-(If using Decorators, such static initialization functions are no longer required. See [Decorators]({{< ref "property-binder-decorators.md" >}}) for
+(If using Decorators, such static initialization functions are no longer required. See [Decorators]({{< ref "#decorators-advanced" >}}) for
 more details.) Relative-path callbacks may be registered by one of the following functions (all provided by the
 ``DataBinding`` class):
-
 
 
 
@@ -270,37 +270,38 @@ for. The valid event types are as follows:
   *Property* at the specified relative path is a reference *Property*. By default the standard
   ``insert`` / ``modify`` / ``remove`` events refer to the *Property* that is being *referenced*. However, an
   application may wish to listen to changes to the reference itself. These events will fire if the
-  reference *Property* itself is inserted into the Workspace (at the relative path specified), modified (i.e. it
+  reference *Property* itself is inserted into the Property DDS (at the relative path specified), modified (i.e. it
   references something else) or removed, respectively.
 
 The third argument is the callback itself. Usually this will be a method of the current *DataBinding* class, but
 it may be any function (except for arrow functions which are not supported). When the callback is called the
 *DataBinder* will set ``this`` to the *DataBinding* instance.
 
+
 The fourth argument is an optional ``options`` argument. Currently only one option is supported: ``isDeferred`` which
 is a boolean value defaulting to ``false``. If this option is set to ``true``, the callback will be executed after
 the processing of the current *ChangeSet* is finished and may freely modify *Properties* in the *Property DDS*. Of
-course relative path callbacks may also use |requestChangesetPostProcessing()| of the *DataBinder* class.
+course relative path callbacks may also use [requestChangesetPostProcessing()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-requestchangesetpostprocessing-Method" >}}) of the *DataBinder* class.
 
-The callbacks registered using this function either receive a single |ModificationContext| or |RemovalContext| argument
+The callbacks registered using this function either receive a single `ModificationContext` or `RemovalContext` argument
 when the registered event is one of the non-collection events (i.e.  one of ``insert`` / ``modify`` / ``remove`` /
 ``referenceInsert`` / ``referenceModify`` / ``referenceRemove``), or two arguments when the registered event is
 one of ``collectionInsert`` / ``collectionModify`` / ``collectionRemove``. In this case the first argument will be
-a key, and the second argument will be a |ModificationContext| (or |RemovalContext|) object. The key passed as the
+a key, and the second argument will be a `ModificationContext` (or `RemovalContext`) object. The key passed as the
 first argument is the key to the element in the collection that was changed, so it is always a non-negative
 number for Arrays and a unique identifier for Maps and Sets.
 
-registerOnProperty
-^^^^^^^^^^^^^^^^^^
+### registerOnProperty
+
 
 This function is a convenience function which gives callbacks the *Property* associated with the relative path instead
-of the |ModificationContext| given by [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}).
+of the `ModificationContext` given by [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}).
 
 An example for calling the [registerOnProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronproperty-Method" >}}) function with all possible options may look like this:
 
-.. code-block:: javascript
-
+```javascript
   this.registerOnProperty('path', ['insert', 'modify'], this.callback, {isDeferred: true, requireProperty: true});
+```
 
 The first three arguments have the same meaning as for [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}), except that the relative path supplied
 in the first argument must be a single string (it can't be an array of paths). The fourth argument is an optional
@@ -319,32 +320,30 @@ and the ``requireProperty`` option hasn't been set). The key passed as the first
 in the collection that was changed, so it is always a non-negative number for Arrays and a unique identifier
 for Maps and Sets.
 
-registerOnValues
-^^^^^^^^^^^^^^^^
+### registerOnValues
 
 Similarly to [registerOnProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronproperty-Method" >}}), this function is a convenience function which gives callbacks the value of the
-*Property* associated with the relative path instead of the |ModificationContext| given by [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}).
+*Property* associated with the relative path instead of the `ModificationContext` given by [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}).
 
-.. code-block:: javascript
-
+```javascript
   this.registerOnProperty('path', ['insert', 'modify'], this.callback, {isDeferred: true, requireProperty: true});
+```
 
 Here all arguments have the same meaning as for [registerOnProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronproperty-Method" >}}).
 
 The callbacks registered using this function will always receive a single argument. If the *Property* associated with
-the relative path is a primitive (i.e. builtin) *HFDM* *Property*, it will be the value of that *Property* as a
+the relative path is a primitive (i.e. builtin) *Property DDS* *Property*, it will be the value of that *Property* as a
 JavaScript builtin type. If the *Property* associated with the relative path is not a primitive *Property* (e.g. a
 user defined complex *Schema*), it will be a JSON serialization of that *Property* and its sub-properties' values
-as returned by the *HFDM* *Property* ``getValues``.
+as returned by the *Property DDS* *Property* ``getValues``.
 
-References
-----------
+## References
 
 It is important to note some important facts about binding to references:
 
 * When using 'insert'/'modify'/'remove' on a path that ends at a reference, the reference is dereferenced,
   and the target property (if it exists) is what will be tracked.
-* If you are interested in the changes to the actual reference, e.g. when it is inserted into HFDM, modified, or removed,
+* If you are interested in the changes to the actual reference, e.g. when it is inserted into Property DDS, modified, or removed,
   use the 'referenceInsert'/'referenceModify'/'referenceRemove' events.
 * If the path for the callback includes a reference (including ending on a reference), you will receive 'insert'/'remove'
   notifications when the reference changes. For example, consider being registered on a path 'a.ref.text' for inserts
@@ -354,14 +353,12 @@ It is important to note some important facts about binding to references:
   * If 'ref' is pointed to a property 'B' (with a child 'text'), you will receive a 'remove' for A.text and an 'insert' for B.text.
   * If 'ref' is then pointed to something invalid, you will receive a 'remove' for B.text.
 
-Callback ordering (advanced)
-----------------------------
+## Callback ordering (advanced)
 
 With different type callbacks it is not always straightforward in which order they will be fired with respect to each
 other as well as to the traversal itself. In the following we will discuss the exact order for the various operations.
 
-Insert
-^^^^^^
+### Insert
 
 For each *Property* whose insertion causes one or more associated *DataBindings* to be instantiated, the callbacks
 will be called in the following order:
@@ -376,8 +373,7 @@ will be called in the following order:
    *Property*, the order in which their relative path callbacks are called is not defined. All relative path callbacks
    may assume however, that the finalizing method (``onPostCreate``) for their binding has been called.
 
-Modify
-^^^^^^
+### Modify
 
 For each modified *Property* that has one or more associated *DataBindings*, the callbacks will be called in the
 following order:
@@ -394,8 +390,7 @@ following order:
    *Property*, the order in which their relative path callbacks are called is not defined. All relative path callbacks
    may assume however, that the finalizing callback (``onModify``) for their binding has been called.
 
-Remove
-^^^^^^
+### Remove
 
 For each removed *Property* that has one or more associated *DataBindings*, the callbacks will be called in the
 following order:
@@ -424,19 +419,17 @@ The callback execution order above may be disturbed by the following two conditi
 If any *Property* in the *Property DDS* has more than one child, the order in which they are traversed is not defined.
 
 
-Absolute path callbacks
------------------------
-
+## Absolute path callbacks
 
 So far we have discussed how to define various callbacks that would be called for every instance of a *Property* of a
 certain *TypeId* in a *Property DDS*. However, an application may wish to hear about changes to one specific *Property*,
 rather than about changes to *any* *Property* of the same *TypeId*. This is possible using absolute path
-callbacks, which can be registered with |dataBinder.registerOnPath()|. An example for calling the
-|dataBinder.registerOnPath()| function with all possible options may look like this:
+callbacks, which can be registered with [dataBinder.registerOnPath()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-registeronpath-Method" >}}). An example for calling the
+[dataBinder.registerOnPath()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-registeronpath-Method" >}}) function with all possible options may look like this:
 
-.. code-block:: javascript
-
+```javascript
   dataBinder.registerOnPath('/myProperty.color.green', ['insert', 'modify'], myCallback, {isDeferred: true});
+```
 
 The arguments expected by this function have the same meaning as for [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}}), except the first one. The
 first argument must be a string, and it represents an *absolute path* inside the *Property DDS*: this is the exact path
@@ -449,11 +442,10 @@ Note that just like with any callbacks that have been discussed so far, **modify
 (including insert/remove operations) is also forbidden in absolute path callbacks. If any absolute path callbacks
 wish to modify *Properties* in the *Property DDS*, they can signal that they wish to be executed after the processing of
 the current *ChangeSet* is finished via setting the ``isDeferred`` option in the fourth callback or via registering
-a callback with  |requestChangesetPostProcessing()|.
+a callback with  [requestChangesetPostProcessing()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-requestchangesetpostprocessing-Method" >}}).
 
 
-Decorators (advanced)
----------------------
+## Decorators (advanced)
 
 
 The standard pattern for registering relative path callbacks is to use a static ``initialize`` function and register
@@ -468,24 +460,54 @@ being decorated).
 Here is how the ``Object3D`` class from the previous sections may look using decorators:
 
 The schema for the Object3D is as follows:
-
-.. literalinclude:: /categories/data/forge-appfw-databinder/test/data_binder/data_binding.spec.js
-   :language: javascript
-   :start-after: SnippetStart{DataBinder.Object3DBinding.Schema}
-   :end-before: SnippetEnd{DataBinder.Object3DBinding.Schema}
+```javascript
+const Object3DSchema = {
+  typeid: 'autodesk.samples:object3D-1.0.0',
+  properties: [
+    { id: 'pos', typeid: 'autodesk.samples:vector3D-1.0.0' },
+    { id: 'scale', typeid: 'autodesk.samples:vector3D-1.0.0' },
+    { id: 'name', typeid: 'String' }
+  ]
+};
+```
 
 And we define the data binding as follows:
 
-.. literalinclude:: /categories/data/forge-appfw-databinder/test/data_binder/data_binding.spec.js
-   :language: typescript
-   :start-after: SnippetStart{DataBinder.Object3DBinding.Decorator}
-   :end-before: SnippetEnd{DataBinder.Object3DBinding.Decorator}
+```javascript
+class Object3DDataBinding extends DataBinding {
+      constructor(in_params) {
+        super(in_params);
 
+        this._object = new THREE.Object3D();
+      }
 
-For more examples and information please see the :ref:`DataBindings tutorial on Decorators <Decorators>`.
+      // Callback called when the 'pos' sub-property is changed. The DataBinder produces a
+      // deep copy of the current values of the property and provides them to the callback
+      @onValuesChanged('pos', ['insert', 'modify'])
+      changePosition(values) {
+        this._object.position.set(values.x, values.y, values.z);
+      }
 
-Limitations (advanced)
-----------------------
+      // Callback called when the 'pos' sub-property is changed. The DataBinder provides the
+      // property that was modified. We manually extract the values.
+      @onPropertyChanged('scale', ['insert', 'modify'])
+      changeScale(property) {
+        this._object.scale.set(
+          property.get('x').value,
+          property.get('y').value,
+          property.get('z').value
+        );
+      }
+
+      // The most general callback variant which gives us a modification context.
+      @onPathChanged('name', ['insert', 'modify'])
+      changeName(modificationContext) {
+        this._object.name = modificationContext.getProperty().value;
+      }
+    }
+```
+
+## Limitations (advanced)
 
 1. Reference integrity is not guaranteed: if the *Property* tree structure changes in a way that would change or
 invalidate the path to the referenced *Property*, *DataBinder* will not detect this. For example, if a reference
@@ -497,37 +519,35 @@ a non-existing) *Property*.
 needs to be solved outside *DataBinder*.
 
 3. *Modify* type callbacks will not have access to the old value of the modified *Properties*. Likewise, *remove* type
-callbacks will not have access to the removed *Properties*. This is mostly a *HFDM* limitation, by the time
+callbacks will not have access to the removed *Properties*. This is mostly a *Property DDS* limitation, by the time
 *DataBinder* processes the changes to the *Property DDS* the *Properties* are already updated (removed) and the
 *ChangeSet* does not contain this information.
 
 4. It is not possible to bind *DataBindings* or References to entries in primitive type collections (i.e. it is not
 possible to bind to an entry in an ``Int32`` Map or Array). It’s possible to bind to the entire collection though and
 ``collectionInsert`` / ``collectionModify`` / ``collectionRemove`` events will work as expected. This is mostly an
-*HFDM* limitation as primitive type collections don't contain actual *Properties*. However, *HFDM* allows References to
+*Propertsy DDS* limitation as primitive type collections don't contain actual *Properties*. However, *Property DDS* allows References to
 point to entries in a collection of References (e.g. elements in a ``ReferenceArrayProperty`` or in a
 ``ReferenceMapProperty``), but *DataBinder* does not support this yet.
 
 5. ``collectionRemove`` listeners will not be called if the subtree containing the collection is removed above
 the collection itself. This is again mainly a limitation due to the *ChangeSet* format.
 
-..
-
-
-.. [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}})              replace:: :forge-appfw-databinder-api:`defineDataBinding() <classes/databinder/#definedatabinding>`
-.. |activateDataBinding()|            replace:: :forge-appfw-databinder-api:`activateDataBinding() <classes/databinder/#activatedatabinding>`
-.. |getUserData()|                    replace:: :forge-appfw-databinder-api:`getUserData() <classes/databinding/#getuserdata>`
-.. |attachTo()|                       replace:: :forge-appfw-databinder-api:`attachTo() <classes/databinder/#attachto>`
-.. |detach()|                         replace:: :forge-appfw-databinder-api:`detach() <classes/databinder/#detach>`
-.. |unregisterDataBindings()|         replace:: :forge-appfw-databinder-api:`unregisterDataBindings() <classes/databinder/#unregisterdatabindings>`
-.. |getDataBinder()|                  replace:: :forge-appfw-databinder-api:`getDataBinder() <classes/databinding/#getdatabinder>`
-.. |getDataBindingType()|             replace:: :forge-appfw-databinder-api:`getDataBindingType() <classes/databinding/#getdatabindingtype>`
-.. |getProperty()|                    replace:: :forge-appfw-databinder-api:`getProperty() <classes/databinding/#getproperty>`
-.. |resolve()|                        replace:: :forge-appfw-databinder-api:`resolve() <classes/databinder/#resolve>`
-.. |requestChangesetPostProcessing()| replace:: :forge-appfw-databinder-api:`requestChangesetPostProcessing() <classes/databinder/#requestchangesetpostprocessing>`
-.. |ModificationContext|              replace:: :forge-appfw-databinder-api:`ModificationContext <classes/modificationcontext/>`
-.. |RemovalContext|                   replace:: :forge-appfw-databinder-api:`RemovalContext <classes/removalcontext/>`
-.. [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}})                 replace:: :forge-appfw-databinder-api:`registerOnPath() <classes/databinding/#registeronpath>`
-.. [registerOnProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronproperty-Method" >}})             replace:: :forge-appfw-databinder-api:`registerOnProperty() <classes/databinding/#registeronproperty>`
-.. [registerOnValues()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronvalues-Method" >}})               replace:: :forge-appfw-databinder-api:`registerOnValues() <classes/databinding/#registeronvalues>`
-.. |dataBinder.registerOnPath()|      replace:: :forge-appfw-databinder-api:`dataBinder.registerOnPath() <classes/databinder/#registeronpath>`
+## Other Resources
+* [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}})
+* [activateDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-activatedatabinding-Method" >}})
+* [getUserData()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getuserdata-Method" >}})
+* [attachTo()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-attachto-Method" >}})
+* [detach()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-detach-Method" >}})
+* [unregisterDataBindings()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-unregisterdatabindings-Method" >}})
+* [getDataBinder()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getdatabinder-Method" >}})
+* [getDataBindingType()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getdatabindingtype-Method" >}})
+* [getProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getproperty-Method" >}})
+* [resolve()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-resolve-Method" >}})
+* [requestChangesetPostProcessing()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-requestchangesetpostprocessing-Method" >}})
+* `ModificationContext`
+* `RemovalContext`
+* [registerOnPath()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronpath-Method" >}})
+* [registerOnProperty()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronproperty-Method" >}})
+* [registerOnValues()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-registeronvalues-Method" >}})
+* [dataBinder.registerOnPath()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-registeronpath-Method" >}})
