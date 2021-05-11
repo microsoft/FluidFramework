@@ -280,11 +280,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-            this.realizeCore()
-                .catch((error) => {
+            this.realizeCore().catch((error) => {
                     this.channelDeferred?.reject(CreateProcessingError(error, undefined));
-                });
-            }
+            });
+        }
         return this.channelDeferred.promise;
     }
 
