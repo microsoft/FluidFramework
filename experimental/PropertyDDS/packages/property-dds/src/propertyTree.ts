@@ -71,19 +71,13 @@ export interface SharedPropertyTreeOptions {
 }
 
 /**
- * Silly DDS example that models a six sided die.
+ * Property DDS
  *
- * Unlike the typical 'Dice Roller' example where clients clobber each other's last roll in a
- * SharedMap, this 'SharedDie' DDS works by advancing an internal PRNG each time it sees a 'roll'
- * operation.
- *
- * Because all clients are using the same PRNG starting in the same state, they arrive at
- * consensus by simply applying the same number of rolls.  (A fun addition would be logging
- * who received which roll, which would need to change as clients learn how races are resolved
- * in the total order)
+ * This DDS handles interacting with properties it handles rebasing
+ * current local changes onto collaborator change and provides an interface to generate diffs
+ * so called ChangeSets that describe the changes made to the properties inside the Properts DDS
  */
 export class SharedPropertyTree extends SharedObject {
-	// Initial state of the PRNG.  Must not be zero.  (See `advance()` below for details.)
 	tipView: SerializedChangeSet = {};
 	remoteTipView: SerializedChangeSet = {};
 	localChanges: IPropertyTreeMessage[] = [];
