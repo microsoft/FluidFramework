@@ -218,7 +218,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
 
     public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
-        return this.emit(event, ...args);
+        return super.emit(event, ...args);
     }
 
     public get opsSinceLastAck() {

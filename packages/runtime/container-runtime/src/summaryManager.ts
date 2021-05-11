@@ -6,16 +6,11 @@
 import { EventEmitter } from "events";
 import {
     IDisposable,
-    IEvent,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
-    Heap,
-    IComparer,
-    IHeapNode,
     IPromiseTimerResult,
     PromiseTimer,
-    TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
@@ -23,81 +18,19 @@ import {
     IContainerContext,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import { SummaryCollection } from "./summaryCollection";
+import { OrderedClients, summarizerClientType, Throttler } from "./summaryManagerUtils";
 
-export const summarizerClientType = "summarizer";
+const defaultInitialDelayMs = 5000;
+const opsToBypassInitialDelay = 4000;
 
-interface ITrackedClient {
-    clientId: string;
-    sequenceNumber: number;
-    isSummarizer: boolean;
-}
-
-class ClientComparer implements IComparer<ITrackedClient> {
-    public readonly min: ITrackedClient = {
-        clientId: "",
-        sequenceNumber: -1,
-        isSummarizer: false,
-    };
-
-    public compare(a: ITrackedClient, b: ITrackedClient): number {
-        return a.sequenceNumber - b.sequenceNumber;
-    }
-}
-
-interface IQuorumHeapEvents extends IEvent {
-    (event: "heapChange", listener: () => void);
-}
-
-class QuorumHeap extends TypedEventEmitter<IQuorumHeapEvents> {
-    private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
-    private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
-    private summarizerCount = 0;
-
-    constructor(quorum: IQuorum) {
-        super();
-        const members = quorum.getMembers();
-        for (const [clientId, client] of members) {
-            this.addClient(clientId, client);
-        }
-
-        quorum.on("addMember", this.addClient);
-        quorum.on("removeMember", this.removeClient);
-    }
-
-    private readonly addClient = (clientId: string, client: ISequencedClient) => {
-        // Have to undefined-check client.details for backwards compatibility
-        const isSummarizer = client.client.details?.type === summarizerClientType;
-        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
-        this.heapMembers.set(clientId, heapNode);
-        if (isSummarizer) {
-            this.summarizerCount++;
-        }
-        this.emit("heapChange");
-    };
-
-    private readonly removeClient = (clientId: string) => {
-        const member = this.heapMembers.get(clientId);
-        if (member) {
-            this.heap.remove(member);
-            this.heapMembers.delete(clientId);
-            if (member.value.isSummarizer) {
-                this.summarizerCount--;
-            }
-            this.emit("heapChange");
-        }
-    };
-
-    public getFirstClientId(): string | undefined {
-        return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
-    }
-
-    public getSummarizerCount(): number {
-        return this.summarizerCount;
-    }
-}
+const defaultThrottleDelayWindowMs = 60 * 1000;
+const defaultThrottleMaxDelayMs = 30 * 1000;
+// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
+const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 enum SummaryManagerState {
     Off = 0,
@@ -107,61 +40,17 @@ enum SummaryManagerState {
     Disabled = -1,
 }
 
-const defaultInitialDelayMs = 5000;
-const opsToBypassInitialDelay = 4000;
-
-// Please note that all reasons  in this list are not errors,
+// Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
-type ShouldSummarizeState = {
-    shouldSummarize: true;
-    shouldStart: boolean;
-} | {
-    shouldSummarize: false;
-    stopReason: StopReason;
-};
-
-const defaultThrottleDelayWindowMs = 60 * 1000;
-const defaultThrottleMaxDelayMs = 30 * 1000;
-// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
-
-/**
- * Used to give increasing delay times for throttling a single functionality.
- * Delay is based on previous attempts within specified time window, ignoring actual delay time.
- */
-class Throttler {
-    private startTimes: number[] = [];
-    constructor(
-        private readonly delayWindowMs,
-        private readonly maxDelayMs,
-        private readonly delayFunction,
-    ) { }
-
-    public get attempts() {
-        return this.startTimes.length;
-    }
-
-    public getDelay() {
-        const now = Date.now();
-        this.startTimes = this.startTimes.filter((t) => now - t < this.delayWindowMs);
-        const delayMs = Math.min(this.delayFunction(this.startTimes.length), this.maxDelayMs);
-        this.startTimes.push(now);
-        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
-        if (delayMs === this.maxDelayMs) {
-            // we hit max delay so adding more won't affect anything
-            // shift off oldest time to stop this array from growing forever
-            this.startTimes.shift();
-        }
-
-        return delayMs;
-    }
-}
+type ShouldSummarizeState =
+    | { shouldSummarize: true; shouldStart: boolean; }
+    | { shouldSummarize: false; stopReason: StopReason; };
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly quorumHeap: QuorumHeap;
+    private readonly orderedClients: OrderedClients;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
@@ -188,6 +77,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     constructor(
         private readonly context: IContainerContext,
+        public readonly summaryCollection: SummaryCollection, // TODO: make private
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,
@@ -204,14 +94,18 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.setClientId(context.clientId);
         }
 
-        context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+        // Track ops until first (write) connect
+        const opsUntilFirstConnectHandler = (clientId: string, details: ISequencedClient) => {
             if (this.opsUntilFirstConnect === -1 && clientId === this.clientId) {
+                context.quorum.off("addMember", opsUntilFirstConnectHandler);
                 this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
             }
-        });
+        };
+        context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        this.quorumHeap = new QuorumHeap(context.quorum);
-        this.quorumHeap.on("heapChange", () => { this.refreshSummarizer(); });
+        this.orderedClients = new OrderedClients(context.quorum);
+        this.orderedClients.on("summarizerChange", () => { this.refreshSummarizer(); });
+        this.orderedClients.on("currentChange", () => { this.refreshSummarizer(); });
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
@@ -259,7 +153,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
-        } else if (this.quorumHeap.getSummarizerCount() > 0) {
+        } else if (this.orderedClients.getSummarizerCount() > 0) {
             // Need to wait for any other existing summarizer clients to close,
             // because they can live longer than their parent container.
             return { shouldSummarize: true, shouldStart: false };
@@ -270,7 +164,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private refreshSummarizer() {
         // Compute summarizer
-        const newSummarizerClientId = this.quorumHeap.getFirstClientId();
+        const newSummarizerClientId = this.orderedClients.getCurrentClientId();
         if (newSummarizerClientId !== this.summarizerClientId) {
             this.summarizerClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
