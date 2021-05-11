@@ -165,10 +165,12 @@ export class SharedPropertyTree extends SharedObject {
 		return this._root as NodeProperty;
 	}
 
-	public commit() {
+	public commit(submitEmptyChange = false) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-		this.applyChangeSet(changes);
-		this.root.cleanDirty();
+        if (submitEmptyChange || !_.isEmpty(changes)) {
+            this.applyChangeSet(changes);
+            this.root.cleanDirty();
+        }
 	}
 
 	private applyChangeSet(changeSet: SerializedChangeSet) {
