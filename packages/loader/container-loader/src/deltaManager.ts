@@ -954,7 +954,7 @@ export class DeltaManager
         const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
         const sequence = messages[0].sequenceNumber;
         const last = messages[messages.length - 1].sequenceNumber;
-        if (this.lastSequenceFromSocket !== undefined && sequence !== this.lastSequenceFromSocket + 1) {
+        if (this.lastSequenceFromSocket !== undefined && sequence > this.lastSequenceFromSocket + 1) {
             this.logger.sendErrorEvent({
                 eventName: "UnorderedSocketOps",
                 sequence,
@@ -963,7 +963,10 @@ export class DeltaManager
                 last,
             });
         }
-        this.lastSequenceFromSocket = last;
+
+        if (this.lastSequenceFromSocket === undefined || last > this.lastSequenceFromSocket) {
+            this.lastSequenceFromSocket = last;
+        }
         this.enqueueMessages(messages, "opHandler");
     };
 
