@@ -877,6 +877,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
+            (id: string) => this.summarizerNode.deleteChild(id),
             this._logger);
 
         this.blobManager = new BlobManager(

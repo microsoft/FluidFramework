@@ -353,6 +353,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
+     * Deletes the child node with the given id.
+     */
+    public deleteChild(id: string): void {
+        this.children.delete(id);
+    }
+
+    /**
      * Override the getChild method to return an instance of SummarizerNodeWithGC.
      */
     public getChild(id: string): ISummarizerNodeWithGC | undefined {

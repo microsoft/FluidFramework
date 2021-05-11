@@ -80,6 +80,7 @@ export class DataStores implements IDisposable {
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
+        private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -509,9 +510,11 @@ export class DataStores implements IDisposable {
     public deleteUnusedRoutes(unusedRoutes: string[]) {
         assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
-            // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];
+            // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
+            // Delete the summarizer node of the unused data stores.
+            this.deleteChildSummarizerNodeFn(dataStoreId);
         }
     }
 
