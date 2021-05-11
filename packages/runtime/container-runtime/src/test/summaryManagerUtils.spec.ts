@@ -63,7 +63,9 @@ describe("Summary Manager Utils", () => {
             assert.strictEqual(
                 orderedClients.getTotalCount(), totalCount, `${prefix}Invalid total count`);
             assert.strictEqual(
-                orderedClients.getCurrentClientId(), currentClientId, `${prefix}Invalid initial current client id`);
+                orderedClients.getCurrentClient()?.clientId,
+                currentClientId,
+                `${prefix}Invalid initial current client id`);
         }
         function assertEvents(expectedCurrentChangeCount: number, expectedSummarizerChangeCount: number) {
             assert.strictEqual(

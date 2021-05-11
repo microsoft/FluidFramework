@@ -18,11 +18,11 @@ import {
     IContainerContext,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
-import { OrderedClients, summarizerClientType, Throttler } from "./summaryManagerUtils";
+import { ITrackedClient, OrderedClients, summarizerClientType, Throttler } from "./summaryManagerUtils";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
@@ -53,7 +53,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly orderedClients: OrderedClients;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
-    private summarizerClientId?: string;
+    private electedClientId?: string;
     private clientId?: string;
     private latestClientId?: string;
     private connected = false;
@@ -68,16 +68,21 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private opsUntilFirstConnect = -1;
 
     public get summarizer() {
-        return this.summarizerClientId;
+        return this.electedClientId;
     }
 
     public get disposed() {
         return this._disposed;
     }
 
+    /** Used to calculate number of ops since last summary ack for the current elected client */
+    private lastSummaryAckSeqForClient = 0;
+    private hasSummarizersInQuorum: boolean;
+    private hasLoggedTelemetry = false;
+
     constructor(
         private readonly context: IContainerContext,
-        public readonly summaryCollection: SummaryCollection, // TODO: make private
+        private readonly summaryCollection: SummaryCollection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,
@@ -103,9 +108,41 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
+        this.summaryCollection.on("default", (op) => {
+            const opsSinceLastAckForClient = op.sequenceNumber - this.lastSummaryAckSeqForClient;
+            if (opsSinceLastAckForClient > 3000 && !this.hasLoggedTelemetry && this.electedClientId !== undefined) {
+                // Limit telemetry to only next client?
+                this.logger.sendErrorEvent({
+                    eventName: "ElectedClientNotSummarizing",
+                    thisClientId: this.clientId,
+                    electedClientId: this.electedClientId,
+                    sequenceNumber: op.sequenceNumber,
+                    lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
+                });
+
+                // In future we will change the elected client.
+                // this.orderedClients.incrementCurrentClient();
+            }
+        });
+        this.summaryCollection.on(MessageType.SummaryAck, (op) => {
+            this.hasLoggedTelemetry = false;
+            this.lastSummaryAckSeqForClient = op.sequenceNumber;
+        });
+
         this.orderedClients = new OrderedClients(context.quorum);
-        this.orderedClients.on("summarizerChange", () => { this.refreshSummarizer(); });
-        this.orderedClients.on("currentChange", () => { this.refreshSummarizer(); });
+        this.orderedClients.on("summarizerChange", (summarizerCount) => {
+            const prev = this.hasSummarizersInQuorum;
+            this.hasSummarizersInQuorum = summarizerCount > 0;
+            if (prev !== this.hasSummarizersInQuorum) {
+                this.refreshSummarizer();
+            }
+        });
+        this.orderedClients.on("currentChange", (client: ITrackedClient) => {
+            this.hasLoggedTelemetry = false;
+            this.lastSummaryAckSeqForClient = client.sequenceNumber; // set to join seq
+            this.refreshSummarizer();
+        });
+        this.hasSummarizersInQuorum = this.orderedClients.getSummarizerCount() > 0;
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
@@ -164,9 +201,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private refreshSummarizer() {
         // Compute summarizer
-        const newSummarizerClientId = this.orderedClients.getCurrentClientId();
-        if (newSummarizerClientId !== this.summarizerClientId) {
-            this.summarizerClientId = newSummarizerClientId;
+        const newSummarizerClientId = this.orderedClients.getCurrentClient()?.clientId;
+        if (newSummarizerClientId !== this.electedClientId) {
+            this.electedClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
         }
 

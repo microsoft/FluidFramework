@@ -9,27 +9,27 @@ import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions"
 
 export const summarizerClientType = "summarizer";
 
-interface ISequencedComparable {
+export interface ITrackedClient {
+    readonly clientId: string;
     readonly sequenceNumber: number;
 }
 
-interface ILinkedClient extends ISequencedComparable {
-    readonly clientId: string;
+interface ILinkedClient extends ITrackedClient {
     prevClient: ILinkedClient | undefined;
     nextClient: ILinkedClient | undefined;
 }
 
-interface ITrackedClient extends ILinkedClient {
+interface IFullClient extends ILinkedClient {
     readonly isSummarizer: boolean;
 }
 
 interface IOrderedClientsEvents extends IEvent {
-    (event: "currentChange", listener: (currentClientId: string | undefined) => void);
+    (event: "currentChange", listener: (client: ITrackedClient | undefined) => void);
     (event: "summarizerChange", listener: (summarizerCount: number) => void);
 }
 
 export class OrderedClients extends TypedEventEmitter<IOrderedClientsEvents> {
-    private readonly clientMap = new Map<string, ITrackedClient>();
+    private readonly clientMap = new Map<string, IFullClient>();
     private readonly rootClient: ILinkedClient = {
         sequenceNumber: -1,
         clientId: "",
@@ -57,7 +57,7 @@ export class OrderedClients extends TypedEventEmitter<IOrderedClientsEvents> {
     private readonly addClient = (clientId: string, client: ISequencedClient) => {
         // Have to undefined-check client.details for backwards compatibility
         const isSummarizer = client.client.details?.type === summarizerClientType;
-        const newClient: ITrackedClient = {
+        const newClient: IFullClient = {
             clientId,
             sequenceNumber: client.sequenceNumber,
             isSummarizer,
@@ -93,7 +93,7 @@ export class OrderedClients extends TypedEventEmitter<IOrderedClientsEvents> {
 
         if (this.currentClient === undefined && newClient.nextClient === undefined) {
             this.currentClient = newClient;
-            this.emit("currentChange", this.getCurrentClientId());
+            this.emit("currentChange", this.getCurrentClient());
         }
         this.nonSummarizerCount++;
     };
@@ -118,21 +118,21 @@ export class OrderedClients extends TypedEventEmitter<IOrderedClientsEvents> {
 
             if (removeClient === this.currentClient) {
                 this.currentClient = this.currentClient.nextClient;
-                this.emit("currentChange", this.getCurrentClientId());
+                this.emit("currentChange", this.getCurrentClient());
             }
             this.nonSummarizerCount--;
         }
     };
 
-    public getCurrentClientId(): string | undefined {
-        return this.currentClient?.clientId;
+    public getCurrentClient(): ITrackedClient | undefined {
+        return this.currentClient;
     }
 
     public resetCurrentClient(): void {
         const prevId = this.currentClient?.clientId;
         this.currentClient = this.rootClient.nextClient;
         if (prevId !== this.currentClient?.clientId) {
-            this.emit("currentChange", this.currentClient?.clientId);
+            this.emit("currentChange", this.getCurrentClient());
         }
     }
 
@@ -140,7 +140,7 @@ export class OrderedClients extends TypedEventEmitter<IOrderedClientsEvents> {
         const prevId = this.currentClient?.clientId;
         this.currentClient = this.currentClient?.nextClient;
         if (prevId !== this.currentClient?.clientId) {
-            this.emit("currentChange", this.currentClient?.clientId);
+            this.emit("currentChange", this.getCurrentClient());
         }
     }
 
