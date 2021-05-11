@@ -313,11 +313,11 @@ stages:
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
           - task: Npm@1
-            displayName: npm run build:docs:ci
+            displayName: npm run ci:build:docs
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run build:docs:ci'
+              customCommand: 'run ci:build:docs'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - _api-extractor-temp
