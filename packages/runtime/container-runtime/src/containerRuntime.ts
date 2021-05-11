@@ -131,6 +131,7 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -272,29 +273,6 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
-
-/**
- * Helper to check if the given feature key is set in local storage.
- * @returns the following:
- * - true, if the key is set and the value is "1".
- * - false, if the key is set and the value is "0".
- * - undefined, if local storage is not available or the key is not set.
- */
-function getLocalStorageFeatureGate(key: string): boolean | undefined {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            const itemValue = localStorage.getItem(key);
-            if  (itemValue === "1") {
-                return true;
-            }
-            if (itemValue === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return undefined;
-}
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -804,6 +782,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
+    // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
+    // deleted as soon as GC runs.
+    public get gcTestMode(): boolean {
+        return getLocalStorageFeatureGate(gcTestModeKey)
+            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -886,8 +871,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
-            this._logger,
-            this.runtimeOptions);
+            (id: string) => this.summarizerNode.deleteChild(id),
+            this._logger);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1640,9 +1625,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
                 // involving access to deleted data.
-                const gcTestMode =
-                    getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode;
-                if (gcTestMode) {
+                if (this.gcTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
