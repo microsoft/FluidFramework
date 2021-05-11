@@ -182,7 +182,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             batchSize,
             concurrency,
-            async (from, to) => service.get(from, to),
+            async (from, to, telemetryProps) => service.get(from, to, telemetryProps),
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];

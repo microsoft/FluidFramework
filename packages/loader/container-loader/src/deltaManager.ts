@@ -70,7 +70,7 @@ const DefaultChunkSize = 16 * 1024;
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
-    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, nackContent.code);
+    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, { statusCode: nackContent.code });
 }
 
 function createReconnectError(prefix: string, err: any) {
@@ -188,6 +188,8 @@ export class DeltaManager
     private lastProcessedSequenceNumber: number = 0;
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
+
+    private lastSequenceFromSocket: number | undefined;
 
     private prevEnqueueMessagesReason: string | undefined;
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -950,6 +952,18 @@ export class DeltaManager
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
         const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
+        const sequence = messages[0].sequenceNumber;
+        const last = messages[messages.length - 1].sequenceNumber;
+        if (this.lastSequenceFromSocket !== undefined && sequence !== this.lastSequenceFromSocket + 1) {
+            this.logger.sendErrorEvent({
+                eventName: "UnorderedSocketOps",
+                sequence,
+                prevSequence: this.lastSequenceFromSocket,
+                length: messages.length,
+                last,
+            });
+        }
+        this.lastSequenceFromSocket = last;
         this.enqueueMessages(messages, "opHandler");
     };
 
@@ -1048,6 +1062,8 @@ export class DeltaManager
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this._outbound.resume();
+
+        this.lastSequenceFromSocket = undefined;
 
         connection.on("op", this.opHandler);
         connection.on("signal", this.signalHandler);
@@ -1340,7 +1356,10 @@ export class DeltaManager
             }
         }
 
-        this.prevEnqueueMessagesReason = reason;
+        // When / if we report a gap in ops in the future, we want telemetry to correctly reflect source
+        // of prior ops. But if we have some out of order ops (this.pending), then reporting current reason
+        // becomes not accurate, as the gap existed before current batch, so we should just report "unknown".
+        this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
     }
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
