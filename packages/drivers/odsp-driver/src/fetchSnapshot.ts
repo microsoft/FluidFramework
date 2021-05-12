@@ -227,17 +227,17 @@ export async function fetchLatestSnapshotCore(
                 });
                 return value;
             },
-        ).catch((error) => {
-            // Issue #5895:
-            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-            // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-            // going getVersions / individual blob download path. This path is very slow, and will not work with
-            // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-            if (typeof error === "object" && error !== null) {
-                error.canRetry = false;
-            }
-            throw error;
-        });
+        );
+    }).catch((error) => {
+        // Issue #5895:
+        // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
+        // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
+        // going getVersions / individual blob download path. This path is very slow, and will not work with
+        // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
+        if (typeof error === "object" && error !== null) {
+            error.canRetry = false;
+        }
+        throw error;
     });
 }
 
