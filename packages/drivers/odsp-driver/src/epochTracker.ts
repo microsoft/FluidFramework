@@ -402,7 +402,7 @@ export function createOdspCacheAndTracker(
     fileEntry: IFileEntry,
     logger: ITelemetryLogger): ICacheAndTracker
 {
-    const epochTracker = new EpochTracker(persistedCacheArg, fileEntry, logger);
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
     return {
         cache: {
             ...nonpersistentCache,
