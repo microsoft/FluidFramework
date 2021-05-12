@@ -15,6 +15,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -249,6 +250,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
+    protected applyStashedOp(): void;
+    // (undocumented)
     get currentView(): Snapshot;
     // (undocumented)
     get edits(): OrderedEditSet<TChange>;
@@ -340,7 +343,7 @@ export const Insert: {
 export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceId;
 
 // @public
-export interface ISharedTreeEvents<TSharedTree> extends IErrorEvent {
+export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
     // (undocumented)
     (event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>): any;
 }

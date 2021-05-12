@@ -43,7 +43,7 @@ describe('Summary', () => {
 	const testSerializer = new TestFluidSerializer();
 
 	let expectedTree: SharedTree;
-	let testObjectProvider: TestObjectProvider<unknown>;
+	let testObjectProvider: TestObjectProvider;
 
 	const testSummaryFiles = fs.readdirSync(pathBase);
 
@@ -130,10 +130,10 @@ describe('Summary', () => {
 				assert.typeOf(summary, 'object');
 
 				// Wait for the ops to to be submitted and processed across the containers.
-				await testObjectProvider.opProcessingController.process();
+				await testObjectProvider.ensureSynchronized();
 				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
-				await testObjectProvider.opProcessingController.process();
+				await testObjectProvider.ensureSynchronized();
 
 				// Write a new summary with the specified version
 				const newSummary = expectedTree.saveSerializedSummary({ summarizer });
@@ -160,7 +160,7 @@ describe('Summary', () => {
 			});
 
 			// Wait for the ops to to be submitted and processed across the containers.
-			await testObjectProvider.opProcessingController.process();
+			await testObjectProvider.ensureSynchronized();
 
 			validateSummaryRead('small-history-0.0.2');
 			validateSummaryWrite(fullHistorySummarizer);
@@ -180,7 +180,7 @@ describe('Summary', () => {
 			});
 
 			// Wait for the ops to to be submitted and processed across the containers.
-			await testObjectProvider.opProcessingController.process();
+			await testObjectProvider.ensureSynchronized();
 
 			validateSummaryRead('large-history-0.1.0');
 			validateSummaryWrite(fullHistorySummarizer_0_1_0);

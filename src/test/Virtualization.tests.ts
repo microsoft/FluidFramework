@@ -16,7 +16,7 @@ import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTr
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
-	let testObjectProvider: TestObjectProvider<unknown>;
+	let testObjectProvider: TestObjectProvider;
 
 	// Create a summary used to test catchup blobbing
 	const summaryToCatchUp: SharedTreeSummary_0_0_2<Change> = {
@@ -49,7 +49,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 
 		return expectedEdits;
 	};
@@ -80,11 +80,11 @@ describe('SharedTree history virtualization', () => {
 		});
 
 		// Wait for the op to to be submitted and processed across the containers.
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 
 		sharedTree.loadSummary(summaryToCatchUp);
 
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 		expect(catchUpBlobsUploaded).to.equal(1);
 
 		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
@@ -116,14 +116,16 @@ describe('SharedTree history virtualization', () => {
 		});
 
 		// Wait for processing again in case there are more no ops
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 
 		// Try to load summaries on all the trees
 		sharedTree.loadSummary(summaryToCatchUp);
 		sharedTree2.loadSummary(summaryToCatchUp);
 		sharedTree3.loadSummary(summaryToCatchUp);
 
-		await testObjectProvider.opProcessingController.process();
+		// `ensureSynchronized` does not guarantee blob upload
+		await new Promise((resolve) => setImmediate(resolve));
+		await testObjectProvider.ensureSynchronized();
 		expect(catchUpBlobsUploaded).to.equal(1);
 
 		// Make sure the trees are still the same
@@ -136,7 +138,7 @@ describe('SharedTree history virtualization', () => {
 		sharedTree.processLocalEdit(edit);
 
 		// Wait for the op to to be submitted and processed across the containers.
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 
 		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -159,7 +161,7 @@ describe('SharedTree history virtualization', () => {
 		}
 
 		// Wait for the ops to to be submitted and processed across the containers.
-		await testObjectProvider.opProcessingController.process();
+		await testObjectProvider.ensureSynchronized();
 
 		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);

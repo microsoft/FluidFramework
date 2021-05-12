@@ -179,7 +179,7 @@ const TestDataStoreType = '@fluid-example/test-dataStore';
 /** Objects returned by setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree> {
 	/** The testObjectProvider created if one was not set in the options. */
-	testObjectProvider: TestObjectProvider<unknown>;
+	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
 	tree: TSharedTree;
 }
@@ -195,7 +195,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/** Node to initialize the SharedTree with. */
 	initialTree?: ChangeNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
-	testObjectProvider?: TestObjectProvider<unknown>;
+	testObjectProvider?: TestObjectProvider;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -221,10 +221,11 @@ export async function setUpLocalServerTestSharedTree(
 	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory(summarizeHistory)]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
-			initialSummarizerDelayMs: 0,
+			addGlobalAgentSchedulerAndLeaderElection: false,
+			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 
-	let provider: TestObjectProvider<unknown>;
+	let provider: TestObjectProvider;
 	let container: Container;
 
 	if (testObjectProvider !== undefined) {

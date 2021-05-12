@@ -12,10 +12,10 @@ import {
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
-import { IErrorEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ChildLogger, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail, SharedTreeTelemetryProperties } from '../Common';
+import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { assert, assertNotUndefined, fail } from '../Common';
 import { editsPerChunk, EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
@@ -91,7 +91,7 @@ export interface EditCommittedEventArguments<TSharedTree> {
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
  */
-export interface ISharedTreeEvents<TSharedTree> extends IErrorEvent {
+export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>);
 }
 
@@ -100,7 +100,7 @@ export interface ISharedTreeEvents<TSharedTree> extends IErrorEvent {
  */
 export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArguments<TSharedTree>) => void;
 
-const sharedTreeTelemetryProperties: SharedTreeTelemetryProperties = { isSharedTreeEvent: true };
+const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
 /**
  * A distributed tree.
@@ -560,5 +560,9 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	public getRuntime(): IFluidDataStoreRuntime {
 		return this.runtime;
+	}
+
+	protected applyStashedOp() {
+		throw new Error('not implemented');
 	}
 }
