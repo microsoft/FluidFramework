@@ -32,7 +32,7 @@ export class TinyliciousClientInstance {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig) {
+    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, iTelemetryBaseLogger?: ITelemetryBaseLogger) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             serviceConnectionConfig?.port,
@@ -45,7 +45,6 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -54,7 +53,7 @@ export class TinyliciousClientInstance {
             serviceContainerConfig.id,
             runtimeFactory,
             true,
-            iTelemetryBaseLogger,
+            serviceContainerConfig.logger,
         );
         return this.getRootDataObject(container);
     }
@@ -62,7 +61,6 @@ export class TinyliciousClientInstance {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -71,7 +69,7 @@ export class TinyliciousClientInstance {
             serviceContainerConfig.id,
             runtimeFactory,
             false,
-            iTelemetryBaseLogger,
+            serviceContainerConfig.logger,
         );
         return this.getRootDataObject(container);
     }
@@ -131,7 +129,7 @@ export class TinyliciousClientInstance {
 export class TinyliciousClient {
     private static globalInstance: TinyliciousClientInstance | undefined;
 
-    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
+    static init(iTelemetryBaseLogger?: ITelemetryBaseLogger, serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (TinyliciousClient.globalInstance) {
             console.log(
                 `TinyliciousClient has already been initialized. Using existing instance of
@@ -140,13 +138,13 @@ export class TinyliciousClient {
         }
         TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,
+            iTelemetryBaseLogger,
         );
     }
 
     static async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
@@ -156,14 +154,12 @@ export class TinyliciousClient {
         return TinyliciousClient.globalInstance.createContainer(
             serviceConfig,
             objectConfig,
-            iTelemetryBaseLogger,
         );
     }
 
     static async getContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<FluidContainer> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
@@ -173,7 +169,6 @@ export class TinyliciousClient {
         return TinyliciousClient.globalInstance.getContainer(
             serviceConfig,
             objectConfig,
-            iTelemetryBaseLogger,
         );
     }
 }

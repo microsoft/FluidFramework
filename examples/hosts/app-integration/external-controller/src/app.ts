@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DiceRollerController } from "./controller";
 import { renderDiceRoller } from "./view";
@@ -17,6 +18,19 @@ if (location.hash.length === 0) {
 }
 const containerId = location.hash.substring(1);
 document.title = containerId;
+
+// Define a custom ITelemetry Logger
+class CustomLogger implements ITelemetryBaseLogger {
+    constructor() {}
+    send(event: ITelemetryBaseEvent) {
+        console.log("Testing custom telemetry implementation works...");
+        console.log(event.category);
+        console.log(event.eventName);
+    }
+}
+// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious contianer
+// and hook to the Telemetry system
+const customLogger: CustomLogger = new CustomLogger();
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -33,8 +47,8 @@ export const containerSchema = {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId }, containerSchema);
+        ? await TinyliciousClient.createContainer({ id: containerId, logger: customLogger }, containerSchema)
+        : await TinyliciousClient.getContainer({ id: containerId, logger: customLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
