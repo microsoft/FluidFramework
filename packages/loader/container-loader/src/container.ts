@@ -841,7 +841,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         } catch(error) {
             if (!canRetryOnError(error)) {
-                this.logger.sendErrorEvent({ eventName: "AttachFail", attachState: this._attachState }, error);
                 this.close(error);
             }
             throw error;
