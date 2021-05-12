@@ -5,7 +5,7 @@
 
 import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { GenericTransaction, BuildNode, EditResult } from '../generic';
+import { GenericTransaction, BuildNode, EditStatus } from '../generic';
 import { Snapshot, SnapshotNode } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
@@ -37,12 +37,12 @@ export class Transaction extends GenericTransaction<Change> {
 		return new Transaction(snapshot);
 	}
 
-	protected validateOnClose(): EditResult {
+	protected validateOnClose(): EditStatus {
 		// Making the policy choice that storing a detached sequences in an edit but not using it is an error.
-		return this.detached.size !== 0 ? EditResult.Malformed : EditResult.Applied;
+		return this.detached.size !== 0 ? EditStatus.Malformed : EditStatus.Applied;
 	}
 
-	protected dispatchChange(change: Change): EditResult {
+	protected dispatchChange(change: Change): EditStatus {
 		switch (change.type) {
 			case ChangeType.Build:
 				return this.applyBuild(change);
@@ -59,9 +59,9 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 	}
 
-	private applyBuild(change: Build): EditResult {
+	private applyBuild(change: Build): EditStatus {
 		if (this.detached.has(change.destination)) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 
 		let idAlreadyPresent = false;
@@ -88,38 +88,38 @@ export class Transaction extends GenericTransaction<Change> {
 		);
 
 		if (detachedSequenceNotFound || duplicateIdInBuild) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 		if (idAlreadyPresent) {
-			return EditResult.Invalid;
+			return EditStatus.Invalid;
 		}
 
 		const view = this.view.addNodes(map.values());
 		this._view = view;
 		this.detached.set(change.destination, assertNotUndefined(newIds));
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyInsert(change: Insert): EditResult {
+	private applyInsert(change: Insert): EditStatus {
 		const source = this.detached.get(change.source);
 		if (source === undefined) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 
 		const destinationChangeResult = validateStablePlace(this.view, change.destination);
 		if (destinationChangeResult !== EditValidationResult.Valid) {
-			return destinationChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
+			return destinationChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
 		}
 
 		this.detached.delete(change.source);
 		this._view = insertIntoTrait(this.view, source, change.destination);
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyDetach(change: Detach): EditResult {
+	private applyDetach(change: Detach): EditStatus {
 		const sourceChangeResult = validateStableRange(this.view, change.source);
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
+			return sourceChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
 		}
 
 		const result = detachRange(this.view, change.source);
@@ -129,7 +129,7 @@ export class Transaction extends GenericTransaction<Change> {
 		// Store or dispose detached
 		if (change.destination !== undefined) {
 			if (this.detached.has(change.destination)) {
-				return EditResult.Malformed;
+				return EditStatus.Malformed;
 			}
 			this.detached.set(change.destination, detached);
 		} else {
@@ -137,18 +137,18 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 
 		this._view = modifiedView;
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyConstraint(change: Constraint): EditResult {
+	private applyConstraint(change: Constraint): EditStatus {
 		// TODO: Implement identityHash and contentHash
 		assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 		assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
 		const sourceChangeResult = validateStableRange(this.view, change.toConstrain);
-		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditResult.Applied : EditResult.Invalid;
+		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditStatus.Applied : EditStatus.Invalid;
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditResult.Malformed;
+			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditStatus.Malformed;
 		}
 
 		const { start, end } = rangeFromStableRange(this.view, change.toConstrain);
@@ -167,16 +167,16 @@ export class Transaction extends GenericTransaction<Change> {
 			return onViolation;
 		}
 
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applySetValue(change: SetValue): EditResult {
+	private applySetValue(change: SetValue): EditStatus {
 		if (!this.view.hasNode(change.nodeToModify)) {
-			return EditResult.Invalid;
+			return EditStatus.Invalid;
 		}
 
 		this._view = this.view.setNodeValue(change.nodeToModify, change.payload);
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
 	/**

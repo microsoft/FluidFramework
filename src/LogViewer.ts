@@ -8,7 +8,7 @@ import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog } from './EditLog';
 import { Snapshot } from './Snapshot';
-import { Edit, EditResult, EditingResult, GenericTransaction } from './generic';
+import { Edit, EditStatus, EditingResult, GenericTransaction } from './generic';
 import { EditId } from './Identifiers';
 import { RevisionValueCache } from './RevisionValueCache';
 import { initialTree } from './InitialTree';
@@ -32,7 +32,7 @@ import { initialTree } from './InitialTree';
  * skipping the first evaluation of an edit in a particular context due to setKnownEditingResult is still considered applying.
  * To use this call back to track when the actual computational work of applying edits is done, only count cases when `wasCached` is false.
  */
-export type EditResultCallback = (editResult: EditResult, editId: EditId, wasCached: boolean) => void;
+export type EditStatusCallback = (editResult: EditStatus, editId: EditId, wasCached: boolean) => void;
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -99,7 +99,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * This will have been called at least once for any edit if a revision after than edit has been requested.
 	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
 	 */
-	private readonly processEditResult: EditResultCallback;
+	private readonly processEditStatus: EditStatusCallback;
 
 	/**
 	 * Iff true, additional correctness assertions will be run during LogViewer operations.
@@ -135,7 +135,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * @param knownRevisions - a set of [sequencedRevision, snapshot] pairs that are known (have been precomputed) at construction time.
 	 * These revisions are guaranteed to never be evicted from the cache.
 	 * @param expensiveValidation - Iff true, additional correctness assertions will be run during LogViewer operations.
-	 * @param processEditResult - called after applying an edit.
+	 * @param processEditStatus - called after applying an edit.
 	 * @param logger - used to log telemetry
 	 */
 	public constructor(
@@ -143,7 +143,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		baseSnapshot: Snapshot = Snapshot.fromTree(initialTree),
 		knownRevisions: [Revision, Snapshot][] = [],
 		expensiveValidation = false,
-		processEditResult: EditResultCallback = noop,
+		processEditStatus: EditStatusCallback = noop,
 		logger: ITelemetryBaseLogger,
 		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
 		minimumSequenceNumber = 0
@@ -164,7 +164,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			minimumSequenceNumber,
 			[...knownRevisions, [0, baseSnapshot]]
 		);
-		this.processEditResult = processEditResult ?? noop;
+		this.processEditStatus = processEditStatus ?? noop;
 		this.expensiveValidation = expensiveValidation;
 		this.logger = logger;
 		this.transactionFactory = transactionFactory;
@@ -300,7 +300,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 
 		const revision = editIndex + 1;
 		let nextSnapshot: Snapshot;
-		if (editingResult.result === EditResult.Applied) {
+		if (editingResult.status === EditStatus.Applied) {
 			nextSnapshot = editingResult.after;
 		} else {
 			nextSnapshot = prevSnapshot;
@@ -320,7 +320,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			this.localSnapshotCache.push({ snapshot: nextSnapshot, result: editingResult });
 		}
 
-		this.processEditResult(editingResult.result, this.log.getIdAtIndex(editIndex), cached);
+		this.processEditStatus(editingResult.status, this.log.getIdAtIndex(editIndex), cached);
 		return nextSnapshot;
 	}
 
@@ -333,11 +333,11 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		// in the event that it was invalid or malformed.
 		if (this.unappliedSelfEdits.length > 0) {
 			if (edit.id === this.unappliedSelfEdits.peekFront()) {
-				if (result.result !== EditResult.Applied) {
+				if (result.status !== EditStatus.Applied) {
 					this.logger.send({
 						category: 'generic',
 						eventName:
-							result.result === EditResult.Malformed
+							result.status === EditStatus.Malformed
 								? 'MalformedSharedTreeEdit'
 								: 'InvalidSharedTreeEdit',
 					});

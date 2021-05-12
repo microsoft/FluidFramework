@@ -79,7 +79,7 @@ export {
 	BuildNode,
 	/** @deprecated Expires 05-2021. Use `BuildNode`. */
 	BuildNode as EditNode,
-	EditResult,
+	EditStatus,
 	TraitLocation,
 	GenericTransaction,
 	EditingResult,

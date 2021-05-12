@@ -96,7 +96,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
         before: Snapshot;
     };
     // (undocumented)
-    getEditStatus(): EditResult;
+    getEditStatus(): EditStatus;
     protected handleNewEdit(id: EditId, result: ValidEditingResult<TChange>): void;
     // @internal (undocumented)
     hasOpenEdit(): boolean;
@@ -208,7 +208,7 @@ export type EditId = UuidString & {
 
 // @public
 export type EditingResult<TChange> = {
-    readonly result: EditResult.Invalid | EditResult.Malformed;
+    readonly status: EditStatus.Invalid | EditStatus.Malformed;
     readonly changes: readonly TChange[];
     readonly before: Snapshot;
 } | ValidEditingResult<TChange>;
@@ -225,7 +225,7 @@ export interface EditLogSummary<TChange> {
 }
 
 // @public
-export enum EditResult {
+export enum EditStatus {
     Applied = 2,
     Invalid = 1,
     Malformed = 0
@@ -298,13 +298,13 @@ export abstract class GenericTransaction<TChange> {
     // (undocumented)
     close(): EditingResult<TChange>;
     // (undocumented)
-    protected abstract dispatchChange(change: TChange): EditResult;
+    protected abstract dispatchChange(change: TChange): EditStatus;
     // (undocumented)
     protected isOpen: boolean;
-    get result(): EditResult;
+    get status(): EditStatus;
     // (undocumented)
-    protected _result: EditResult;
-    protected abstract validateOnClose(): EditResult;
+    protected _status: EditStatus;
+    protected abstract validateOnClose(): EditStatus;
     get view(): Snapshot;
     // (undocumented)
     protected _view: Snapshot;
@@ -634,11 +634,11 @@ export class Transaction extends GenericTransaction<Change> {
     // (undocumented)
     protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
     // (undocumented)
-    protected dispatchChange(change: Change): EditResult;
+    protected dispatchChange(change: Change): EditStatus;
     // (undocumented)
     static factory(snapshot: Snapshot): Transaction;
     // (undocumented)
-    protected validateOnClose(): EditResult;
+    protected validateOnClose(): EditStatus;
 }
 
 // @public
@@ -687,7 +687,7 @@ export interface ValidEditingResult<TChange> {
     // (undocumented)
     readonly changes: readonly TChange[];
     // (undocumented)
-    readonly result: EditResult.Applied;
+    readonly status: EditStatus.Applied;
 }
 
 

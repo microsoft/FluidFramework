@@ -23,7 +23,7 @@ export {
 	TreeNode,
 	ChangeNode,
 	BuildNode,
-	EditResult,
+	EditStatus,
 	TraitLocation,
 	SharedTreeOpType,
 } from './PersistedTypes';

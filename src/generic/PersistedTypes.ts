@@ -162,10 +162,10 @@ export type ChangeNode = TreeNode<ChangeNode>;
 export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
 
 /**
- * The result of an attempt to apply the changes in an Edit.
+ * The status code of an attempt to apply the changes in an Edit.
  * @public
  */
-export enum EditResult {
+export enum EditStatus {
 	/**
 	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
 	 * or contained a sequence of changes that could not possibly be applied sequentially without error

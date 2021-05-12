@@ -5,7 +5,7 @@
 
 import { assert, fail } from '../Common';
 import { Snapshot } from '../Snapshot';
-import { EditResult } from './PersistedTypes';
+import { EditStatus } from './PersistedTypes';
 
 /**
  * Result of applying a transaction.
@@ -13,7 +13,7 @@ import { EditResult } from './PersistedTypes';
  */
 export type EditingResult<TChange> =
 	| {
-			readonly result: EditResult.Invalid | EditResult.Malformed;
+			readonly status: EditStatus.Invalid | EditStatus.Malformed;
 			readonly changes: readonly TChange[];
 			readonly before: Snapshot;
 	  }
@@ -24,7 +24,7 @@ export type EditingResult<TChange> =
  * @public
  */
 export interface ValidEditingResult<TChange> {
-	readonly result: EditResult.Applied;
+	readonly status: EditStatus.Applied;
 	readonly changes: readonly TChange[];
 	readonly before: Snapshot;
 	readonly after: Snapshot;
@@ -46,7 +46,7 @@ export interface ValidEditingResult<TChange> {
 export abstract class GenericTransaction<TChange> {
 	protected readonly before: Snapshot;
 	protected _view: Snapshot;
-	protected _result: EditResult = EditResult.Applied;
+	protected _status: EditStatus = EditStatus.Applied;
 	protected readonly changes: TChange[] = [];
 	protected isOpen = true;
 
@@ -64,28 +64,28 @@ export abstract class GenericTransaction<TChange> {
 		return this._view;
 	}
 
-	/** The result of the most recent attempted change */
-	public get result(): EditResult {
-		return this._result;
+	/** The status code of the most recent attempted change */
+	public get status(): EditStatus {
+		return this._status;
 	}
 
-	/** @returns the final `EditResult` and `Snapshot` after all changes are applied. */
+	/** @returns the final `EditStatus` and `Snapshot` after all changes are applied. */
 	public close(): EditingResult<TChange> {
 		assert(this.isOpen, 'transaction has already been closed');
 		this.isOpen = false;
-		if (this.result === EditResult.Applied) {
-			this._result = this.validateOnClose();
+		if (this.status === EditStatus.Applied) {
+			this._status = this.validateOnClose();
 		}
-		if (this.result === EditResult.Applied) {
+		if (this.status === EditStatus.Applied) {
 			return {
-				result: EditResult.Applied,
+				status: EditStatus.Applied,
 				before: this.before,
 				after: this._view,
 				changes: this.changes,
 			};
 		}
 		return {
-			result: this.result,
+			status: this.status,
 			changes: this.changes,
 			before: this.before,
 		};
@@ -95,7 +95,7 @@ export abstract class GenericTransaction<TChange> {
 	 * Override to provide additional transaction validation when the transaction is closed.
 	 * Only invoked when a transaction is otherwise valid.
 	 */
-	protected abstract validateOnClose(): EditResult;
+	protected abstract validateOnClose(): EditStatus;
 
 	/**
 	 * A helper to apply a sequence of changes. Changes will be applied one after the other. If a change fails to apply,
@@ -105,7 +105,7 @@ export abstract class GenericTransaction<TChange> {
 	 */
 	public applyChanges(changes: Iterable<TChange>): this {
 		for (const change of changes) {
-			if (this.applyChange(change).result !== EditResult.Applied) {
+			if (this.applyChange(change).status !== EditStatus.Applied) {
 				return this;
 			}
 		}
@@ -121,14 +121,14 @@ export abstract class GenericTransaction<TChange> {
 	 */
 	public applyChange(change: TChange): this {
 		assert(this.isOpen, 'Editor must be open to apply changes.');
-		if (this.result !== EditResult.Applied) {
+		if (this.status !== EditStatus.Applied) {
 			fail('Cannot apply change to an edit unless all previous changes have applied');
 		}
 
 		this.changes.push(change);
-		this._result = this.dispatchChange(change);
+		this._status = this.dispatchChange(change);
 		return this;
 	}
 
-	protected abstract dispatchChange(change: TChange): EditResult;
+	protected abstract dispatchChange(change: TChange): EditStatus;
 }

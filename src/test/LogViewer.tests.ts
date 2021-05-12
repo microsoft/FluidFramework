@@ -7,10 +7,10 @@ import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { EditLog } from '../EditLog';
 import { Change, Insert, StablePlace, Transaction } from '../default-edits';
-import { CachingLogViewer, EditResultCallback, LogViewer } from '../LogViewer';
+import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
 import { assert, noop } from '../Common';
-import { newEdit, Edit, EditResult } from '../generic';
+import { newEdit, Edit, EditStatus } from '../generic';
 import {
 	initialSnapshot,
 	left,
@@ -153,7 +153,7 @@ describe('CachingLogViewer', () => {
 	function getCachingLogViewer(
 		log: EditLog<Change>,
 		baseSnapshot?: Snapshot,
-		editCallback?: EditResultCallback,
+		editCallback?: EditStatusCallback,
 		logger?: ITelemetryBaseLogger,
 		knownRevisions?: [number, Snapshot][]
 	): CachingLogViewer<Change> {
@@ -334,7 +334,7 @@ describe('CachingLogViewer', () => {
 		const edit = newEdit([]);
 		log.addLocalEdit(edit);
 		viewer.setKnownEditingResult(edit, {
-			result: EditResult.Applied,
+			status: EditStatus.Applied,
 			changes: edit.changes,
 			before,
 			after: arbitrarySnapshot,
@@ -353,7 +353,7 @@ describe('CachingLogViewer', () => {
 		const edit = newEdit([]);
 		log.addLocalEdit(edit);
 		viewer.setKnownEditingResult(edit, {
-			result: EditResult.Applied,
+			status: EditStatus.Applied,
 			changes: edit.changes,
 			before: arbitrarySnapshot,
 			after: arbitrarySnapshot,
@@ -373,7 +373,7 @@ describe('CachingLogViewer', () => {
 		const edit = newEdit([]);
 		log.addLocalEdit(edit);
 		viewer.setKnownEditingResult(newEdit([]), {
-			result: EditResult.Applied,
+			status: EditStatus.Applied,
 			changes: edit.changes,
 			before,
 			after: arbitrarySnapshot,
@@ -398,7 +398,7 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).deep.equal([false]);
 		log.addLocalEdit(edit2);
 		viewer.setKnownEditingResult(edit2, {
-			result: EditResult.Applied,
+			status: EditStatus.Applied,
 			changes: edit2.changes,
 			before,
 			after: arbitrarySnapshot,
