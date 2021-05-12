@@ -394,7 +394,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			editLog,
 			Snapshot.fromTree(initialTree),
 			// TODO:#47830: Store multiple checkpoints in summary.
-			[[editLog.length, currentView]],
+			[[editLog.length, { snapshot: currentView }]],
 			this.expensiveValidation,
 			undefined,
 			this.logger,

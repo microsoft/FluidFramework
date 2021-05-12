@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { EditLog } from '../EditLog';
-import { Change, Insert, StablePlace, Transaction } from '../default-edits';
+import { Change, ConstraintEffect, Insert, StablePlace, StableRange, Transaction } from '../default-edits';
 import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
 import { assert, noop } from '../Common';
@@ -150,7 +150,7 @@ describe('CachingLogViewer', () => {
 		return { send: callback ?? noop };
 	}
 
-	function getCachingLogViewer(
+	function getCachingLogViewerAssumeAppliedEdits(
 		log: EditLog<Change>,
 		baseSnapshot?: Snapshot,
 		editCallback?: EditStatusCallback,
@@ -160,7 +160,7 @@ describe('CachingLogViewer', () => {
 		return new CachingLogViewer(
 			log,
 			baseSnapshot,
-			knownRevisions,
+			knownRevisions?.map((pair) => [pair[0], { snapshot: pair[1], result: EditStatus.Applied }]),
 			/* expensiveValidation */ true,
 			editCallback,
 			logger ?? getMockLogger(),
@@ -169,11 +169,11 @@ describe('CachingLogViewer', () => {
 		);
 	}
 
-	runLogViewerCorrectnessTests(getCachingLogViewer);
+	runLogViewerCorrectnessTests(getCachingLogViewerAssumeAppliedEdits);
 
 	it('detects non-integer revisions when setting snapshots', async () => {
 		expect(() =>
-			getCachingLogViewer(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
+			getCachingLogViewerAssumeAppliedEdits(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
 				[2.4, simpleTreeSnapshot],
 			])
 		).to.throw('revision must be an integer');
@@ -181,7 +181,7 @@ describe('CachingLogViewer', () => {
 
 	it('detects out-of-bounds revisions when setting snapshots', async () => {
 		expect(() =>
-			getCachingLogViewer(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
+			getCachingLogViewerAssumeAppliedEdits(getSimpleLog(), simpleSnapshotNoTraits, undefined, undefined, [
 				[1000, simpleTreeSnapshot],
 			])
 		).to.throw('revision must correspond to the result of a SequencedEdit');
@@ -190,7 +190,7 @@ describe('CachingLogViewer', () => {
 	it('can be created with known revisions', async () => {
 		const log = getSimpleLog();
 		const snapshots = getSnapshotsForLog(log, simpleSnapshotNoTraits);
-		const viewer = getCachingLogViewer(
+		const viewer = getCachingLogViewerAssumeAppliedEdits(
 			log,
 			simpleSnapshotNoTraits,
 			undefined,
@@ -212,7 +212,7 @@ describe('CachingLogViewer', () => {
 	it('caches snapshots for sequenced edits', async () => {
 		const log = getSimpleLog();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, () => editsProcessed++);
 		assert(log.length < CachingLogViewer.sequencedCacheSizeMax);
 
 		await requestAllSnapshots(viewer, log);
@@ -225,10 +225,34 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).to.equal(log.length);
 	});
 
+	it('caches edit results for sequenced edits', async () => {
+		const log = getSimpleLog(2);
+		// Add an invalid edit
+		log.addSequencedEdit(
+			newEdit([Change.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0)])
+		);
+		let editsProcessed = 0;
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, () => editsProcessed++);
+		assert(log.length < CachingLogViewer.sequencedCacheSizeMax);
+
+		await requestAllSnapshots(viewer, log);
+		expect(editsProcessed).to.equal(log.length);
+
+		expect((await viewer.getEditResult(0)).status).equals(undefined);
+		expect((await viewer.getEditResult(1)).status).equals(EditStatus.Applied);
+		expect((await viewer.getEditResult(2)).status).equals(EditStatus.Applied);
+		expect((await viewer.getEditResult(3)).status).equals(EditStatus.Invalid);
+
+		expect(viewer.getEditResultInSession(0).status).equals(undefined);
+		expect(viewer.getEditResultInSession(1).status).equals(EditStatus.Applied);
+		expect(viewer.getEditResultInSession(2).status).equals(EditStatus.Applied);
+		expect(viewer.getEditResultInSession(3).status).equals(EditStatus.Invalid);
+	});
+
 	it('evicts least recently set cached snapshots for sequenced edits', async () => {
 		let editsProcessed = 0;
 		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, () => editsProcessed++);
 		viewer.setMinimumSequenceNumber(log.length + 1); // simulate all edits being subject to eviction
 
 		await requestAllSnapshots(viewer, log);
@@ -247,7 +271,7 @@ describe('CachingLogViewer', () => {
 	it('never evicts the snapshot for the most recent sequenced edit', async () => {
 		let editsProcessed = 0;
 		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, () => editsProcessed++);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, () => editsProcessed++);
 
 		// Simulate all clients being caught up.
 		viewer.setMinimumSequenceNumber(log.numberOfSequencedEdits);
@@ -269,7 +293,11 @@ describe('CachingLogViewer', () => {
 	it('caches snapshots for local revisions', async () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(logWithLocalEdits, simpleSnapshotNoTraits, () => editsProcessed++);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(
+			logWithLocalEdits,
+			simpleSnapshotNoTraits,
+			() => editsProcessed++
+		);
 		assert(logWithLocalEdits.length < CachingLogViewer.sequencedCacheSizeMax);
 
 		await requestAllSnapshots(viewer, logWithLocalEdits);
@@ -305,7 +333,11 @@ describe('CachingLogViewer', () => {
 	it('invalidates cached snapshots for local revisions when remote edits are received', () => {
 		const logWithLocalEdits = getSimpleLogWithLocalEdits();
 		let editsProcessed = 0;
-		const viewer = getCachingLogViewer(logWithLocalEdits, simpleSnapshotNoTraits, () => editsProcessed++);
+		const viewer = getCachingLogViewerAssumeAppliedEdits(
+			logWithLocalEdits,
+			simpleSnapshotNoTraits,
+			() => editsProcessed++
+		);
 
 		// Request twice, should only process edits once
 		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -327,7 +359,7 @@ describe('CachingLogViewer', () => {
 	it('uses known editing result', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -347,7 +379,7 @@ describe('CachingLogViewer', () => {
 	it('ignores known editing if for wrong before snapshot', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const edit = newEdit([]);
@@ -366,7 +398,7 @@ describe('CachingLogViewer', () => {
 	it('ignores known editing if for wrong edit', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const before = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
@@ -386,7 +418,7 @@ describe('CachingLogViewer', () => {
 	it('uses known editing result with multiple edits', () => {
 		const log = new EditLog<Change>();
 		const editsProcessed: boolean[] = [];
-		const viewer = getCachingLogViewer(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, (_, _2, wasCached) =>
 			editsProcessed.push(wasCached)
 		);
 		const edit1 = newEdit([]);
