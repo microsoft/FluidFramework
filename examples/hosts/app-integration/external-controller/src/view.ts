@@ -53,7 +53,7 @@ export function renderAudience(audience: IAudience, div: HTMLDivElement) {
     const audienceDiv = document.createElement("div");
     audienceDiv.style.fontSize = "20px";
 
-    const setAudienceMemberIds = () => {
+    const onAudienceChange = () => {
         const members = audience.getMembers();
         const memberNames: string[] = [];
         members.forEach((member) => {
@@ -64,10 +64,10 @@ export function renderAudience(audience: IAudience, div: HTMLDivElement) {
         audienceDiv.textContent = `Users: ${memberNames.join(", ")}`;
     };
 
-    setAudienceMemberIds();
+    onAudienceChange();
 
-    audience.on("addMember", setAudienceMemberIds);
-    audience.on("removeMember", setAudienceMemberIds);
+    audience.on("addMember", onAudienceChange);
+    audience.on("removeMember", onAudienceChange);
 
     wrapperDiv.appendChild(audienceDiv);
 }
