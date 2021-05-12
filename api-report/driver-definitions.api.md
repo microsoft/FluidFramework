@@ -31,6 +31,7 @@ export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthoriza
 // @public
 export enum DriverErrorType {
     authorizationError = "authorizationError",
+    deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
@@ -142,7 +143,7 @@ export interface IDocumentServiceFactory {
 
 // @public (undocumented)
 export interface IDocumentServicePolicies {
-    readonly storageOnly?: boolean;
+    storageOnly?: boolean;
 }
 
 // @public

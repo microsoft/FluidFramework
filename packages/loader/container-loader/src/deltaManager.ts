@@ -651,6 +651,13 @@ export class DeltaManager
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
+                    if (typeof origError === "object" && origError !== null &&
+                        origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden) {
+                        connection = new NoDeltaStream();
+                        requestedMode = "read";
+                        break;
+                    }
+
                     const error = CreateContainerError(origError);
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug

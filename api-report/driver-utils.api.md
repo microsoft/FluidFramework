@@ -118,6 +118,15 @@ export function createGenericNetworkError(errorMessage: string, canRetry: boolea
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
 
 // @public (undocumented)
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase {
+    constructor(errorMessage: string);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+}
+
+// @public (undocumented)
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
     constructor(internalStorageService: IDocumentStorageService);
     // (undocumented)
