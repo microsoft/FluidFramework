@@ -189,8 +189,6 @@ export class DeltaManager
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
-    private lastSequenceFromSocket: number | undefined;
-
     private prevEnqueueMessagesReason: string | undefined;
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
@@ -952,21 +950,6 @@ export class DeltaManager
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
         const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
-        const sequence = messages[0].sequenceNumber;
-        const last = messages[messages.length - 1].sequenceNumber;
-        if (this.lastSequenceFromSocket !== undefined && sequence > this.lastSequenceFromSocket + 1) {
-            this.logger.sendErrorEvent({
-                eventName: "UnorderedSocketOps",
-                sequence,
-                prevSequence: this.lastSequenceFromSocket,
-                length: messages.length,
-                last,
-            });
-        }
-
-        if (this.lastSequenceFromSocket === undefined || last > this.lastSequenceFromSocket) {
-            this.lastSequenceFromSocket = last;
-        }
         this.enqueueMessages(messages, "opHandler");
     };
 
@@ -1065,8 +1048,6 @@ export class DeltaManager
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this._outbound.resume();
-
-        this.lastSequenceFromSocket = undefined;
 
         connection.on("op", this.opHandler);
         connection.on("signal", this.signalHandler);
