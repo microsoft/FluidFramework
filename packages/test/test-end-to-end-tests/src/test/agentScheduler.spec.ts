@@ -87,13 +87,6 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             await scheduler.pick("task1", async () => { });
             assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
         });
-
-        it("Single client must be the leader", async () => {
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
-            await scheduler.pick("task1", async () => { });
-            await scheduler.release("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
-        });
     });
 
     describe("Multiple clients", () => {
