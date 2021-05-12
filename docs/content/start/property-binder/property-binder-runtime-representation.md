@@ -1,13 +1,13 @@
 ---
-title: Property Binder Runtime Representation
+title: Property DataBinder Runtime Representation
 menuPosition: 5
 ---
 
 
-The goal of the *Property Binder* runtime representation mechanism is to provide
+The goal of the *DataBinder* runtime representation mechanism is to provide
 a way of associating one or more alternate representations of a model to
 a *Property*, other than the bare-bones model represented by the *Property DDS*
-*BaseProperty*. The *PropertyBinder* provides a central place for fetching
+*BaseProperty*. The *DataBinder* provides a central place for fetching
 these alternate representations, and helps manage their lifetime.
 
 Runtime representations may be *Property DDS*-independent classes, perhaps even
@@ -23,12 +23,12 @@ the *Property DDS* data. For example:
 * a Vector runtime representation may have a .normalize() function that
   sets the correct length
 
-## Runtime Representation and Property Binding Relationship
+## Runtime Representation and DataBinding Relationship
 
 
-Property bindings are intended to map values from the *Property DDS* to runtime
+DataBindings are intended to map values from the *Property DDS* to runtime
 representations, while the runtime representation represents an alternate
-view of the *Property*. The property binding and the runtime representations can
+view of the *Property*. The DataBinding and the runtime representations can
 work together to manage the state in the application.
 
 For example, consider a Camera object that is represented using a THREE.js
@@ -42,7 +42,7 @@ appropriate rotation.
 
 The pieces can be viewed as follows:
 
-![Property Binder Overview](/images/property_binder_representations.png)
+![Property DataBinder Overview](/images/property_binder_representations.png)
 
 The relationships, described by the arrows, are as follows:
 
@@ -53,7 +53,7 @@ The relationships, described by the arrows, are as follows:
   scene
 * The CameraModel object provides the lookAt function which directly reads
   and writes the *Property*
-* The CameraPropertyBinding maps values in the *Property* to the
+* The CameraDataBinding maps values in the *Property* to the
   THREE.PerspectiveCamera
 
 The *Property DDS*, the THREE.PerspectiveCamera and the CameraModel are all
@@ -62,7 +62,7 @@ different runtime representations representing the underlying *Property* data.
 Any external changes to the camera automatically update the THREE
 representation. In addition, any changes using the CameraModel will be
 transmitted to the remote repository, but will also lead to the
-THREE.PerspectiveCamera being updated by the CameraPropertyBinding.
+THREE.PerspectiveCamera being updated by the CameraDataBinding.
 
 ## Defining and Creating Runtime Representations
 
@@ -146,7 +146,7 @@ This is the responsibility of the hosting application to maintain.
 ### Creation and Fetching
 
 Once a runtime representation has been defined for a given *Property* type, it can
-be fetched using the [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) function.
+be fetched using the [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) function.
 
 
 
@@ -159,11 +159,11 @@ there are interdependencies between runtime representations.
 Once they are created, the instance of the runtime representation is preserved
 until the *Property* is destroyed. Note that it is no longer possible to fetch
 the runtime representation once its associated *Property* is removed. This includes
-calling either property binding's [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) convenience function or
-[propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) in onPreRemove and onRemove data binding callbacks since when these callbacks
+calling either data binding's [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) convenience function or
+[dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) in onPreRemove and onRemove data binding callbacks since when these callbacks
 are called *Property DDS* has already removed the associated *Property* from the Property DDS.
 
-When using [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}), you provide the *Property* for which you want the
+When using [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}), you provide the *Property* for which you want the
 runtime representation for, and the bindingType, to get the appropriate
 representation.
 
@@ -184,10 +184,10 @@ type.
 For example:
 
 ```javascript
-   propertyBinder.defineRepresentation(
+   dataBinder.defineRepresentation(
      'MODEL', 'Object3D-1.0.0', () => new Object3DModel()
    );
-   propertyBinder.defineRepresentation(
+   dataBinder.defineRepresentation(
      'MODEL', 'Mesh3D-1.0.0', () => new Mesh3DModel()
    );
 ```
@@ -202,12 +202,12 @@ A Runtime Representation may be marked 'stateless' using the ``stateless: true``
 argument for [defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}), for example:
 
 ```javascript
-   datapropertyBinder.defineRepresentation(
+   datadataBinder.defineRepresentation(
      'VIEW', 'Object3D-1.0.0', () => new Object3DView(),  {stateless: true}
    );
 ```
 A Stateless Representation differs from a 'standard' one in that it's not stored by *DataBinder*, it is always
-recreated on demand when it is requested via [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
+recreated on demand when it is requested via [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
 A Stateless Representation may specify an Initializer function similarly to 'standard' Representations in
 order to break up cycles in the initialization of Runtime Representations. However, the Destroyer function will be
 ignored - since this Representation can not contain any state, there should be no need for a cleanup; in
@@ -218,7 +218,7 @@ compare such representations as they're always recreated on the fly.
 
 
 ## Other Resources^
-* [propertyBinder.defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}})
-* [propertyBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}})
+* [dataBinder.defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}})
+* [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}})
 * [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}})
 

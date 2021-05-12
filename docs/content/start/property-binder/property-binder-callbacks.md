@@ -1,5 +1,5 @@
 ---
-title: Property Binding Callbacks
+title: Property DataBinding Callbacks
 menuPosition: 4
 ---
 
@@ -58,7 +58,7 @@ freely modify any *Properties* in the callback.
 ## Constructor and onPostCreate()
 
 As mentioned above, *DataBinder* constructs the *DataBinding* objects via calling their constructor (which is supplied
-to [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}}) as mentioned in [PropertyBinder Binding Definition and Activation]({{< ref "property-binder-binding-definition.md" >}}). A *DataBinding* constructor is expected
+to [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}}) as mentioned in [Property DataBinder Binding Definition and Activation]({{< ref "property-binder-binding-definition.md" >}}). A *DataBinding* constructor is expected
 to take one parameter object argument, which must be passed to the super class *DataBinding*. Most of these parameters
 should be considered private, with the exception of the modificationContext, of type `ModificationContext`, which provides
 additional information about the *ChangeSet* that triggered the creation of this *DataBinding*.

@@ -1,8 +1,8 @@
 ---
 title: "How to use property dds"
 draft: false
-area: property
+area: property-dds
 cascade:
-    area: property
+    area: property-dds
     draft: false
 ---

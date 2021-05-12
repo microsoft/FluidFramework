@@ -1,5 +1,5 @@
 ---
-title: Defining and activating PropertyBindings
+title: Defining and activating Property DataBindings
 menuPosition: 3
 ---
 
@@ -191,16 +191,16 @@ in the *Property DDS* at the path ``/foo`` and the following two activations, it
 the *DataBinding* instance will get:
 
 ```javascript
-  myPropertyBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myUserDataObj});
-  myPropertyBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myOtherUserDataObj});
+  myDataBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myUserDataObj});
+  myDataBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myOtherUserDataObj});
 ```
 The following will work as expected (assuming suitable *Properties* at paths ``/foo`` and ``/bar`` in the *Property DDS*),
 the *DataBinding* instance at ``/foo`` will get ``myUserDataFoo`` while the *DataBinding*
 instance at ``/bar`` will get ``myUserDataBar``:
 
 ```javascript
-  myPropertyBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myUserDataFoo});
-  myPropertyBinder.activateDataBinding('VIEW', undefined, {exactPath: '/bar', userData: myUserDataBar});
+  myDataBinder.activateDataBinding('VIEW', undefined, {exactPath: '/foo', userData: myUserDataFoo});
+  myDataBinder.activateDataBinding('VIEW', undefined, {exactPath: '/bar', userData: myUserDataBar});
 ```
 
 Note that when a call to [activateDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-activatedatabinding-Method" >}}) causes multiple *DataBinding* instances to be instantiated
