@@ -4,42 +4,51 @@
  */
 
 import { strict as assert } from "assert";
-import { IAgentScheduler } from "@fluidframework/agent-scheduler";
-import { IContainer } from "@fluidframework/container-definitions";
-import { agentSchedulerId } from "@fluidframework/container-runtime";
+import { AgentSchedulerFactory, IAgentScheduler } from "@fluidframework/agent-scheduler";
+import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise, defaultTimeoutDurationMs } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import {
+    ITestObjectProvider,
+    TestContainerRuntimeFactory,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
+
+const runtimeFactory: IProvideRuntimeFactory = {
+    IRuntimeFactory: new TestContainerRuntimeFactory(AgentSchedulerFactory.type, new AgentSchedulerFactory()),
+};
 
 describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
-    let leaderTimeout = defaultTimeoutDurationMs;
     let provider: ITestObjectProvider;
+
+    const createContainer = async (): Promise<IContainer> =>
+        provider.createContainer(runtimeFactory);
+
+    const loadContainer = async (): Promise<IContainer> =>
+        provider.loadContainer(runtimeFactory);
+
     beforeEach(() => {
         provider = getTestObjectProvider();
-        leaderTimeout = provider.driver.type === "odsp" ? 5000 : defaultTimeoutDurationMs;
     });
     const leader = "leader";
     describe("Single client", () => {
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            const container = await provider.makeTestContainer({
-                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
-            });
-            scheduler = await requestFluidObject<IAgentScheduler>(container, agentSchedulerId);
+            const container = await createContainer();
+            scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
 
-            const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+            // const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
-            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
-            // tasks. Sending an op will switch it to "write" mode.
-            dataObject._root.set("tempKey", "tempValue");
+            // // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // // tasks. Sending an op will switch it to "write" mode.
+            // dataObject._root.set("tempKey", "tempValue");
 
-            if (!dataObject._context.leader) {
-                // Wait until we are the leader before we proceed.
-                await timeoutPromise((res) => dataObject._context.on("leader", res), {
-                    durationMs: leaderTimeout,
-                });
-            }
+            // if (!dataObject._context.leader) {
+            //     // Wait until we are the leader before we proceed.
+            //     await timeoutPromise((res) => dataObject._context.on("leader", res), {
+            //         durationMs: leaderTimeout,
+            //     });
+            // }
         });
 
         it("No tasks initially", async () => {
@@ -104,31 +113,30 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
         beforeEach(async () => {
             // Create a new Container for the first document.
-            container1 = await provider.makeTestContainer({
-                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
-            });
-            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, agentSchedulerId);
-            const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
+            container1 = await createContainer();
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
 
-            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
-            // tasks. Sending an op will switch it to "write" mode.
-            dataObject1._root.set("tempKey1", "tempValue1");
-            if (!dataObject1._context.leader) {
-                // Wait until we are the leader before we proceed.
-                await timeoutPromise((res) => dataObject1._context.on("leader", res), {
-                    durationMs: leaderTimeout,
-                });
-            }
+            // const dataObject1 = await requestFluidObject<ITestDataObject>(container1, "default");
+
+            // // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // // tasks. Sending an op will switch it to "write" mode.
+            // dataObject1._root.set("tempKey1", "tempValue1");
+            // if (!dataObject1._context.leader) {
+            //     // Wait until we are the leader before we proceed.
+            //     await timeoutPromise((res) => dataObject1._context.on("leader", res), {
+            //         durationMs: leaderTimeout,
+            //     });
+            // }
+
             // Load existing Container for the second document.
-            container2 = await provider.loadTestContainer({
-                runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
-            });
-            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, agentSchedulerId);
-            const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
+            container2 = await loadContainer();
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
 
-            // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
-            // tasks. Sending an op will switch it to "write" mode.
-            dataObject2._root.set("tempKey2", "tempValue2");
+            // const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
+
+            // // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
+            // // tasks. Sending an op will switch it to "write" mode.
+            // dataObject2._root.set("tempKey2", "tempValue2");
             await provider.ensureSynchronized();
         });
 
