@@ -1056,6 +1056,10 @@ export class DeltaManager
         connection.on("error", this.errorHandler);
         connection.on("pong", this.pongHandler);
 
+        // Initial messages are always sorted. However, due to early op handler installed by drivers and appending those
+        // ops to initialMessages, resulting set is no longer sorted, which would result in client hitting storage to
+        // fill in gap. We will recover by cancelling this request once we process remaining ops, but it's a waste that
+        // we could avoid
         const initialMessages = connection.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         this.connectionStateProps = {
