@@ -85,6 +85,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         private readonly summaryCollection: SummaryCollection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
+        private readonly maxOpsSinceLastSummary: number,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -110,7 +111,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         this.summaryCollection.on("default", (op) => {
             const opsSinceLastAckForClient = op.sequenceNumber - this.lastSummaryAckSeqForClient;
-            if (opsSinceLastAckForClient > 3000 && !this.hasLoggedTelemetry && this.electedClientId !== undefined) {
+            if (
+                opsSinceLastAckForClient > this.maxOpsSinceLastSummary
+                && !this.hasLoggedTelemetry
+                && this.electedClientId !== undefined
+            ) {
                 // Limit telemetry to only next client?
                 this.logger.sendErrorEvent({
                     eventName: "ElectedClientNotSummarizing",

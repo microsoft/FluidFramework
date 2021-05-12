@@ -192,8 +192,8 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
-type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
-type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
+export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener);
 }

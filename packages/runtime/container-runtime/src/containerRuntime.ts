@@ -914,8 +914,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
         const defaultAction = () => {
-            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
             if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
@@ -950,6 +950,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryCollection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
+            maxOpsSinceLastSummary,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
