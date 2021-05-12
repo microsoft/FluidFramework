@@ -18,7 +18,6 @@ import {
     createOdspLogger,
     fetchAndParseAsJSONHelper,
     getOdspResolvedUrl,
-    getWithRetryForTokenRefresh,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { fetchLatestSnapshotCore } from "./fetchSnapshot";
@@ -69,28 +68,17 @@ export async function prefetchLatestSnapshot(
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
-        async (event: PerformanceEvent) => {
-            let attempts = 1;
-            const success = await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                // Sometimes the token supplied by host is expired, so we attempt again by asking the host
-                // to give us a new valid token.
-                if (tokenFetchOptions.refresh) {
-                    attempts = 2;
-                }
-                await fetchLatestSnapshotCore(
+        async () => {
+            await fetchLatestSnapshotCore(
                     odspResolvedUrl,
                     storageTokenFetcher,
-                    tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,
                 );
-                assert(cacheP !== undefined, "caching was not performed!");
-                await cacheP;
-                return true;
-            });
-        event.end({ attempts });
-        return success;
+            assert(cacheP !== undefined, "caching was not performed!");
+            await cacheP;
+            return true;
     }).catch((error) => false);
 }
