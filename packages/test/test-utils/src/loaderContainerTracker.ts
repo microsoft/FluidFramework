@@ -8,6 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
+import { timeoutPromise } from "./timeoutUtils";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
@@ -187,7 +188,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
+                await Promise.all(dirtyContainers.map(
+                    async (c) => timeoutPromise(
+                        (res) => c.once("saved", ()=>res()),
+                        {errorMsg:`Container did not save before timeout`})));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again

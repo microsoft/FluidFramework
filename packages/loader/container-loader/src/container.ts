@@ -100,6 +100,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1305,7 +1306,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        return this._deltaManager.connectToStorage();
+        const storage = await this._deltaManager.connectToStorage();
+        return new ProtocolTreeStorageService(storage, ()=>this.captureProtocolSummary());
     }
 
     private async getDocumentAttributes(

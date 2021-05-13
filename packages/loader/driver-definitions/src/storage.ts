@@ -86,6 +86,11 @@ export interface IDocumentStorageServicePolicies {
     // If this policy is provided, it tells runtime on ideal size for blobs
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
+
+    /**
+     * @deprecated - only needed to stage rollout. will be removed.
+     */
+    readonly supportsSummaryUploadWithProtocolTree?: true
 }
 
 /**
@@ -315,4 +320,9 @@ export interface ISummaryContext {
     readonly ackHandle: string | undefined;
 
     readonly referenceSequenceNumber: number;
+
+    /**
+     * @deprecated - only needed to stage rollout. will be removed.
+     */
+    readonly includeProtocolTree?: boolean;
 }

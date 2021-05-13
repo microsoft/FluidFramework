@@ -343,7 +343,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         }
 
         describe("Automatic batches via orderSequentially", () => {
-            it("should clean document dirty state after a batch with single message is sent", async () => {
+            it.only("should clean document dirty state after a batch with single message is sent", async () => {
                 // Send a batch with a single message.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
                     dataObject1map1.set("key1", "value1");

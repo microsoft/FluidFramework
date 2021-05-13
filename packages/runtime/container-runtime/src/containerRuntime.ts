@@ -1696,17 +1696,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
             );
             const lastAck = this.summaryCollection.latestAck;
+
+            const includeProtocolTree =
+                this.storage?.policies?.supportsSummaryUploadWithProtocolTree === true;
+
             const summaryContext: ISummaryContext =
                 lastAck === undefined
                 ? {
                     proposalHandle: undefined,
                     ackHandle: this.context.getLoadedFromVersion()?.id,
                     referenceSequenceNumber: summaryRefSeqNum,
+                    includeProtocolTree,
                 }
                 : {
                     proposalHandle: lastAck.summaryOp.contents.handle,
                     ackHandle: lastAck.summaryAck.contents.handle,
                     referenceSequenceNumber: summaryRefSeqNum,
+                    includeProtocolTree,
                 };
 
             const handle = await this.storage.uploadSummaryWithContext(
@@ -1730,6 +1736,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 head: parent!,
                 message,
                 parents: parent ? [parent] : [],
+                details: includeProtocolTree
+                ? {includesProtocolTree: true}
+                : undefined,
+
             };
             const uploadData: IUploadedSummaryData = {
                 handle,

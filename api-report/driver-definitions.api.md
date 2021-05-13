@@ -166,6 +166,8 @@ export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     // (undocumented)
     readonly minBlobSize?: number;
+    // (undocumented)
+    readonly uploadsSummaryWithProtocolTree?: true;
 }
 
 // @public
