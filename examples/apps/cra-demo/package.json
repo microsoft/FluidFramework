@@ -32,6 +32,8 @@
     "@fluid-experimental/data-objects": "^0.40.0",
     "@fluid-experimental/fluid-static": "^0.40.0",
     "@fluid-experimental/get-container": "^0.40.0",
+    "@fluid-experimental/tinylicious-client": "^0.40.0",
+    "@fluidframework/map": "^0.40.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

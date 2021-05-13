@@ -4,9 +4,8 @@
  */
 
 import React from "react";
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import Fluid from "@fluid-experimental/fluid-static";
-import { TinyliciousService } from "@fluid-experimental/get-container";
+import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import { SharedMap } from "@fluidframework/map";
 
 const getContainerId = (): { containerId: string; isNew: boolean } => {
     let isNew = false;
@@ -18,54 +17,55 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
     return { containerId, isNew };
 };
 
-const service = new TinyliciousService();
-Fluid.init(service);
-
-const dataObjectId = "dateTracker";
+TinyliciousClient.init({ port: 7070 });
 
 const containerConfig = {
-    dataObjects: [KeyValueDataObject],
-    initialDataObjects: { [dataObjectId]: KeyValueDataObject }
+    name: "simple-container",
+    initialObjects: {
+        map: SharedMap,
+    },
 };
 
 function App() {
-
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+    const [map, setMap] = React.useState<SharedMap>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
     React.useEffect(() => {
-        if (!dataObject) {
+        if (!map) {
             const { containerId, isNew } = getContainerId();
 
             const load = async () => {
                 const fluidContainer = isNew
-                    ? await Fluid.createContainer(containerId, containerConfig)
-                    : await Fluid.getContainer(containerId, containerConfig);
+                    ? await TinyliciousClient.createContainer({ id: containerId }, containerConfig)
+                    : await TinyliciousClient.getContainer({ id: containerId }, containerConfig);
 
-                const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
+                const sharedMap = fluidContainer.initialObjects.map as SharedMap;
 
-                setDataObject(keyValueDataObject);
-            }
+                setMap(sharedMap);
+            };
 
-            load();
+            void load();
+            return () => {};
         } else {
-            const updateData = () => setData(dataObject.query());
+            const updateData = () => setData(Object.fromEntries(map.entries()));
             updateData();
-            dataObject.on("changed", updateData);
-            return () => { dataObject.off("change", updateData) }
+            map.on("valueChanged", updateData);
+            return () => { map.off("valueChanged", updateData); };
         }
-    }, [dataObject]);
+    }, [map]);
 
-    if (!dataObject) return <div />;
+    if (!map) {
+        return <div />;
+    }
 
     return (
         <div className="App">
-            <button onClick={() => dataObject.set("time", Date.now().toString())}>
+            <button onClick={() => map.set("time", Date.now().toString())}>
                 click
             </button>
             <span>{data["time"]}</span>
         </div>
-    )
+    );
 }
 
 export default App;
