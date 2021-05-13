@@ -1697,6 +1697,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             const lastAck = this.summaryCollection.latestAck;
 
+            // check if the driver supports uploading the protocol tree
+            // this is for backcompat and rollout, as we still need to update
+            // all drivers to support this, and then those drivers will need to
+            // rollout which will be slower than the runtime rollout. So right now,
+            // most drivers will not support this.
             const includeProtocolTree =
                 this.storage?.policies?.supportsSummaryUploadWithProtocolTree === true;
 
@@ -1715,6 +1720,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     includeProtocolTree,
                 };
 
+            // if includeProtocolTree is on the summary context
+            // then the underlying storage will add the protocol tree
+            // to the summary
             const handle = await this.storage.uploadSummaryWithContext(
                 summarizeResult.summary,
                 summaryContext);
@@ -1736,6 +1744,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 head: parent!,
                 message,
                 parents: parent ? [parent] : [],
+                // finally, if we included the protocol tree, the server needs to know
+                // so tag the op. once all summaries include the protocol tree, we will
+                // not longer need this either.
                 details: includeProtocolTree
                 ? { includesProtocolTree: true }
                 : undefined,
