@@ -54,7 +54,7 @@ export class TinyliciousClientInstance {
             true,
         );
 
-        return FluidContainer.create(container);
+        return FluidContainer.load(container);
     }
 
     public async getContainer(
@@ -70,7 +70,7 @@ export class TinyliciousClientInstance {
             false,
         );
 
-        return FluidContainer.create(container);
+        return FluidContainer.load(container);
     }
 
     private async getContainerCore(

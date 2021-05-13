@@ -10,32 +10,34 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { LoadableObjectClass } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
-
-
 interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
 }
 
-export class FluidContainer
-    extends TypedEventEmitter<IFluidContainerEvents>
-    implements
-        Pick<Container, "audience" | "clientId" | "close" | "closed" | "connected" >,
-        Pick<RootDataObject, "initialObjects"> {
+interface IFluidContainer {
+    audience: Container["audience"];
+    clientId: Container["clientId"];
+    close: Container["close"];
+    closed: Container["closed"];
+    connected: Container["connected"];
+    initialObjects: RootDataObject["initialObjects"];
+}
+
+export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly _container: Container;
     private readonly _rootDataObject: RootDataObject;
 
     public constructor(
-        private readonly container: Container,
-        private readonly rootDataObject: RootDataObject,
+        readonly container: Container,
+        readonly rootDataObject: RootDataObject,
     ) {
             super();
             this._container = container;
             this._rootDataObject = rootDataObject;
-
             container.on("connected", (id: string) =>  this.emit("connected", id));
     }
 
-    static async load(container: Container) {
+    static async load(container: Container): Promise<FluidContainer> {
         const rootDataObject = (await container.request({ url: "/" })).value;
         return new FluidContainer(container, rootDataObject);
     }
