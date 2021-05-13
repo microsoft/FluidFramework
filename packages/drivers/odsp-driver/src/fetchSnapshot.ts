@@ -6,7 +6,7 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -64,19 +64,27 @@ export async function fetchSnapshot(
     );
 }
 
-export async function redeemSharingLink(
+async function redeemSharingLink(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    logger: ITelemetryLogger,
 ) {
-    await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-        assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
-        const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
-        const shareId = encodeShareUrl(odspResolvedUrl.sharingLinkToRedeem);
-        assert(shareId !== undefined, "ShareId should be present for share link");
-        const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${shareId}`;
-        const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
-        headers.prefer = "redeemSharingLink";
-        return fetchAndParseAsJSONHelper(url, { headers });
+    return PerformanceEvent.timedExecAsync(
+        logger,
+        {
+            eventName: "RedeemShareLink",
+        },
+        async () => {
+            await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
+                const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                assert(encodedShareUrl !== undefined, "ShareId should be present for share link");
+                const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+                const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
+                headers.prefer = "redeemSharingLink";
+                return fetchAndParseAsJSONHelper(url, { headers });
+            });
     });
 }
 
@@ -88,9 +96,8 @@ export async function fetchSnapshotWithRedeem(
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 ): Promise<ISnapshotCacheValue> {
-    let odspSnapshot: ISnapshotCacheValue;
     try {
-        odspSnapshot = await fetchLatestSnapshotCore(
+        const odspSnapshot = await fetchLatestSnapshotCore(
             odspResolvedUrl,
             storageTokenFetcher,
             snapshotOptions,
@@ -98,14 +105,15 @@ export async function fetchSnapshotWithRedeem(
             snapshotDownloader,
             putInCache,
         );
+        return odspSnapshot;
     } catch(error) {
         if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
-            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher);
             logger.sendErrorEvent({
-                eventName: "TreeLatest_SecondCall",
+                eventName: "RedeemFallback",
                 errorType: error.errorType,
             });
-            odspSnapshot = await fetchLatestSnapshotCore(
+            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+            const odspSnapshot = await fetchLatestSnapshotCore(
                 odspResolvedUrl,
                 storageTokenFetcher,
                 snapshotOptions,
@@ -114,11 +122,10 @@ export async function fetchSnapshotWithRedeem(
                 putInCache,
                 false,
             );
-        } else {
-            throw error;
+            return odspSnapshot;
         }
+        throw error;
     }
-    return odspSnapshot;
 }
 
 export async function fetchLatestSnapshotCore(
@@ -338,7 +345,7 @@ export function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, erro
     return false;
 }
 
-function encodeShareUrl(url: string): string | undefined {
+function getEncodedShareUrl(url: string): string | undefined {
     if (!url) {
       return undefined;
     }
@@ -347,42 +354,11 @@ function encodeShareUrl(url: string): string | undefined {
      * Encode the url to accepted format by Sharepoint
      * https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/shares_get
      */
-    let encodedUrl = b64EncodeUnicode(url);
-    if (!encodedUrl) {
-      return undefined;
-    }
-
+    let encodedUrl = fromUtf8ToBase64(encodeURI(url));
     encodedUrl = encodedUrl
       .replace(/=+$/g, "")
       .replace(/\//g, "_")
       .replace(/\+/g, "-");
     encodedUrl = "u!".concat(encodedUrl);
-
     return encodedUrl;
-}
-
-function b64EncodeUnicode(str: string): string | undefined {
-    if (!str || typeof str !== "string") {
-      return undefined;
-    }
-
-    // first we use encodeURIComponent to get percent-encoded UTF-8,
-    // then we convert the percent encodings into raw bytes which
-    // can be fed into btoa.
-    // Latin characters like # which are also special characters are not encoded.
-    // Hence we manually encode them with encodeHash method - This is a requirement from Vroom APIs
-    return btoa(
-        encodeHash(
-            encodeURIComponent(str).replace(
-                /%([\dA-F]{2})/g,
-                function toSolidBytes(_: unknown, p1) {
-                    return String.fromCharCode(parseInt(p1, 16));
-                },
-            ),
-        ),
-    );
-}
-
-function encodeHash(str: string): string {
-    return str.replace(/#/g, "%23");
 }
