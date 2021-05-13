@@ -40,6 +40,9 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       this.emit("membersChanged", this.getMembers());
     });
 
+    // Update the last edited information anytime the root object emits an op by a member
+    // of the current audience. This in turn emits a "lastEditedChanged" event so that
+    // any listeners can update their state to reflect the changes
     rootDataObject.on("op", (message: ISequencedDocumentMessage) => {
       this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
       const member = this.getMemberByClientId(
@@ -50,19 +53,8 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       }
     });
 
-    const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
-    if (lastEditDetails !== undefined) {
-      const timestamp = new Date(lastEditDetails.timestamp);
-      this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
-      const userId = lastEditDetails.user.id;
-      const member: TinyliciousMember = {
-        userId,
-        userName: (lastEditDetails.user as any).name,
-        connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
-      };
-      this.emit("lastEditedChanged", { member, timestamp });
-    }
-
+    // Fetch the last edit information that was stored prior to the current client joining
+    // the session
     const lastEditedMemberResults = this.getLastEdited();
     if (lastEditedMemberResults !== undefined) {
       this.emit("lastEditedChanged", lastEditedMemberResults);
@@ -155,18 +147,16 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
   }
 
   private getMemberByClientId(clientId: string): TinyliciousMember | undefined {
-    // Fetch the full details from the runtime of the client that made this edit or return undefined
-    // if the client is not yet connected
+    // Fetch the user ID assoicated with this client ID from the runtime
     const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {
       return undefined;
     }
-    // With the last edited times updated, we will now return the user object that includes
-    // the updated last modified timestamp in its list of connected clients
+    // Return the member object with any other clients associated for this user
     const allMembers = this.getMembers();
     const lastEditedMember = allMembers.get(internalAudienceMember?.user.id);
     if (lastEditedMember === undefined) {
-      throw Error("Last change was made by a member who is not part of the current member list");
+      throw Error(`Attempted to fetch client ${clientId} that is not part of the current member list`);
     }
     return lastEditedMember;
   }
