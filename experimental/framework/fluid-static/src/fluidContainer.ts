@@ -32,7 +32,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
             container.on("disconnected", () =>  this.emit("disconnected"));
     }
 
-    static async load(container: Container): Promise<FluidContainer> {
+    public static async load(container: Container): Promise<FluidContainer> {
         const rootDataObject = (await container.request({ url: "/" })).value;
         return new FluidContainer(container, rootDataObject);
     }
