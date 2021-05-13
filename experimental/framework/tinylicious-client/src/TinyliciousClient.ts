@@ -19,7 +19,6 @@ import {
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
@@ -50,10 +49,9 @@ export class TinyliciousClientInstance {
             containerSchema,
         );
         const container = await this.getContainerCore(
-            serviceContainerConfig.id,
+            serviceContainerConfig,
             runtimeFactory,
             true,
-            serviceContainerConfig.logger,
         );
         return this.getRootDataObject(container);
     }
@@ -66,10 +64,9 @@ export class TinyliciousClientInstance {
             containerSchema,
         );
         const container = await this.getContainerCore(
-            serviceContainerConfig.id,
+            serviceContainerConfig,
             runtimeFactory,
             false,
-            serviceContainerConfig.logger,
         );
         return this.getRootDataObject(container);
     }
@@ -82,10 +79,9 @@ export class TinyliciousClientInstance {
     }
 
     private async getContainerCore(
-        containerId: string,
+        tinyliciousContainerConfig: TinyliciousContainerConfig,
         containerRuntimeFactory: IRuntimeFactory,
         createNew: boolean,
-        iTelemetryBaseLogger? : ITelemetryBaseLogger,
     ): Promise<Container> {
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
@@ -94,7 +90,7 @@ export class TinyliciousClientInstance {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: iTelemetryBaseLogger,
+            logger: tinyliciousContainerConfig.logger,
         });
 
         let container: Container;
@@ -107,10 +103,10 @@ export class TinyliciousClientInstance {
                 package: "no-dynamic-package",
                 config: {},
             });
-            await container.attach({ url: containerId });
+            await container.attach({ url: tinyliciousContainerConfig.id });
         } else {
             // Request must be appropriate and parseable by resolver.
-            container = await loader.resolve({ url: containerId });
+            container = await loader.resolve({ url: tinyliciousContainerConfig.id });
             // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
             // new container here, where we expect this to be loading an existing container.
             if (container.existing === undefined) {
