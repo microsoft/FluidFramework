@@ -40,14 +40,14 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
 }
 
 /**
- * Render an IDiceRollerController into a given div as a text character, with a button to roll it.
- * @param diceRoller - The dice roller to be rendered
+ * Render the user names of the members currently active in the session into the provided div
+ * @param audience - Object that provides the list of current members and listeners for when the list changes
  * @param div - The div to render into
  */
 export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
-    wrapperDiv.style.margin = "10px";
+    wrapperDiv.style.margin = "70px";
     div.appendChild(wrapperDiv);
 
     const audienceDiv = document.createElement("div");

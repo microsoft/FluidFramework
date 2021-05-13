@@ -40,11 +40,11 @@ export const IFluidHandle: keyof IProvideFluidHandle;
 // @public
 export interface IFluidHandle<T = IFluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
-    absolutePath: string;
+    readonly absolutePath: string;
     attachGraph(): void;
     bind(handle: IFluidHandle): void;
     get(): Promise<T>;
-    isAttached: boolean;
+    readonly isAttached: boolean;
 }
 
 // @public (undocumented)
@@ -52,12 +52,12 @@ export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
 // @public
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
-    absolutePath: string;
+    readonly absolutePath: string;
     attachGraph(): void;
-    isAttached: boolean;
+    readonly isAttached: boolean;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    routeContext?: IFluidHandleContext;
+    readonly routeContext?: IFluidHandleContext;
 }
 
 // @public (undocumented)

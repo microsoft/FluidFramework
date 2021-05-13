@@ -52,6 +52,13 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	}
 
 	/**
+	 * Returns true if the producer is connected
+	 */
+	public isConnected() {
+		return this.connected;
+	}
+
+	/**
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
 	protected connect() {

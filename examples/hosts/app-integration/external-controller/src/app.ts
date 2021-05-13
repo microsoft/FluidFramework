@@ -48,7 +48,6 @@ async function start(): Promise<void> {
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
     renderDiceRoller(diceRollerController, div1);
-    renderAudience(containerServices.audience, div1);
 
     // We now get the SharedMap from the container
     const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
@@ -61,7 +60,9 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div2);
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
-    renderAudience(containerServices.audience, div2);
+
+    // Render the audience information for the members currently in the session
+    renderAudience(containerServices.audience, contentDiv);
 }
 
 start().catch((error) => console.error(error));

@@ -2089,8 +2089,7 @@ describe('DataBinder', function() {
       tearDownDataBinder();
     });
 
-    // TODO: fix previously working test
-    it.skip('should notify entry with special characters in the key', function() {
+    it('should notify entry with special characters in the key', function() {
       dataBinder = new DataBinder();
 
       // Only register the ChildDataBinding
@@ -3365,16 +3364,14 @@ describe('DataBinder', function() {
       return myRoot;
     };
 
-    // TODO: fix previously working test
-    it.skip('should not destroy DataBinding tree nodes too early - entire tree', function() {
+    it('should not destroy DataBinding tree nodes too early - entire tree', function() {
       const myRoot = dataBindingTreeRefSetup();
 
       // This removes everything at once -- issue LYNXDEV-5729
       workspace.root.remove(myRoot);
     });
 
-    // TODO: fix previously working test
-    it.skip('should not destroy DataBinding tree nodes too early - partially used tree', function() {
+    it('should not destroy DataBinding tree nodes too early - partially used tree', function() {
       const myRoot = dataBindingTreeRefSetup();
 
       // remove two elements in different parts. Interally, one subtree will be removed while
@@ -4243,8 +4240,7 @@ describe('DataBinder', function() {
       expect(anotherChildDataBindingWithUserData.getUserData()).toEqual(myUserData);
     });
 
-    // TODO: fix previously working test
-    it.skip('should correctly bind to collections', function() {
+    it('should correctly bind to collections', function() {
       dataBinder.attachTo(workspace);
       var arrayProperty;
       var primitiveArrayProperty;

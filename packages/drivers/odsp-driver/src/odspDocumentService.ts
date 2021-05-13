@@ -17,6 +17,7 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -182,7 +183,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             batchSize,
             concurrency,
-            async (from, to) => service.get(from, to),
+            async (from, to, telemetryProps) => service.get(from, to, telemetryProps),
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];
@@ -205,9 +206,23 @@ export class OdspDocumentService implements IDocumentService {
             const websocketTokenPromise = requestWebsocketTokenFromJoinSession
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
+                const code = e?.response ? JSON.parse(e?.response)?.error?.code : undefined;
+                switch (code) {
+                    case "sessionForbiddenOnPreservedFiles":
+                    case "sessionForbiddenOnModerationEnabledLibrary":
+                    case "sessionForbiddenOnRequireCheckout":
+                        // This document can only be opened in storage-only mode. DeltaManager will recognize this error
+                        // and load without a delta stream connection.
+                        this.policies.storageOnly = true;
+                        throw new DeltaStreamConnectionForbiddenError(code);
+                    default:
+                        throw e;
+                }
+            });
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
-                    this.joinSession(requestWebsocketTokenFromJoinSession),
+                    joinSessionPromise,
                     websocketTokenPromise,
                     this.socketIoClientFactory(),
                 ]);

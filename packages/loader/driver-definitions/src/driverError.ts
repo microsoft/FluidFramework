@@ -70,6 +70,11 @@ export enum DriverErrorType {
      * When it's hit, client needs to forget all the knowlege about this file and start over.
      */
      fileOverwrittenInStorage = "fileOverwrittenInStorage",
+
+     /**
+      * The document is read-only and delta stream connection is forbidden.
+      */
+     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
 }
 
 /**

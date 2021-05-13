@@ -82,7 +82,7 @@ class ComponentSet extends Set {
    * @inheritdoc
    */
   clear() {
-    Utilities.wrapWithPushPopModifiedEventScope(this.property, () => {
+    Utilities.wrapWithPushPopNotificationDelayScope(this.property, () => {
       this.property.clear();
     });
   }

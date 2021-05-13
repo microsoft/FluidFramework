@@ -44,10 +44,6 @@ class SocketIoSocket implements core.IWebSocket {
         this.socket.nsp.to(roomId).emit(event, ...args);
     }
 
-    public async broadcastToRoom(roomId: string, event: string, ...args: any) {
-        this.socket.to(roomId).broadcast.emit(event, ...args);
-    }
-
     public disconnect(close?: boolean) {
         this.socket.disconnect(close);
     }

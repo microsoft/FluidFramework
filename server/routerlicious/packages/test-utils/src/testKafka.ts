@@ -23,6 +23,10 @@ export class TestConsumer implements core.IConsumer {
         this.failOnCommit = value;
     }
 
+    public isConnected() {
+        return true;
+    }
+
     public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(partitionId === 0);
@@ -45,6 +49,11 @@ export class TestConsumer implements core.IConsumer {
 
     public on(event: string, listener: (...args: any[]) => void): this {
         this.emitter.on(event, listener as (...args: any[]) => void);
+        return this;
+    }
+
+    public once(event: string, listener: (...args: any[]) => void): this {
+        this.emitter.once(event, listener as (...args: any[]) => void);
         return this;
     }
 
@@ -97,6 +106,10 @@ export class TestProducer implements core.IProducer {
     constructor(private readonly kafka: TestKafka) {
     }
 
+    public isConnected() {
+        return true;
+    }
+
     // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/promise-function-async
     public send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
@@ -110,11 +123,11 @@ export class TestProducer implements core.IProducer {
         return Promise.resolve();
     }
 
-    public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         return this;
     }
 
-    public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+    public once(event: string, listener: (...args: any[]) => void): this {
         return this;
     }
 }
