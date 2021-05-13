@@ -17,7 +17,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
-    DriverErrorType,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";

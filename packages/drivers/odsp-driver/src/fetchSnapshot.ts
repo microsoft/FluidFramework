@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -114,14 +117,15 @@ export async function fetchSnapshotWithRedeem(
                     errorType: error.errorType,
                 });
                 await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+                const odspResolvedUrlWithoutShareLink = cloneDeep(odspResolvedUrl);
+                odspResolvedUrlWithoutShareLink.sharingLinkToRedeem = undefined;
                 const odspSnapshot = await fetchLatestSnapshotCore(
-                    odspResolvedUrl,
+                    odspResolvedUrlWithoutShareLink,
                     storageTokenFetcher,
                     snapshotOptions,
                     logger,
                     snapshotDownloader,
                     putInCache,
-                    false,
                 );
                 return odspSnapshot;
             }
@@ -135,6 +139,7 @@ export async function fetchSnapshotWithRedeem(
             || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
             await removeEntries();
         }
+        throw error;
     }
 }
 
@@ -145,7 +150,6 @@ export async function fetchLatestSnapshotCore(
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-    redeemShareLinkIfPresent: boolean = true,
 ): Promise<ISnapshotCacheValue> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
@@ -175,7 +179,7 @@ export async function fetchLatestSnapshotCore(
                 }
             });
         }
-        if (odspResolvedUrl.sharingLinkToRedeem && redeemShareLinkIfPresent) {
+        if (odspResolvedUrl.sharingLinkToRedeem) {
             formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
         }
         formParams.push(`_post: 1`);
