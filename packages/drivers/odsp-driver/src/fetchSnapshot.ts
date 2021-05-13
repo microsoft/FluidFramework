@@ -7,6 +7,7 @@ import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
@@ -16,7 +17,12 @@ import {
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh, IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
+import {
+    fetchAndParseAsJSONHelper,
+    getWithRetryForTokenRefresh,
+    IOdspResponse,
+    ISnapshotCacheValue,
+} from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -58,6 +64,59 @@ export async function fetchSnapshot(
     );
 }
 
+export async function redeemSharingLink(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+) {
+    await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+        assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
+        const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+        const shareId = encodeShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+        assert(shareId !== undefined, "ShareId should be present for share link");
+        const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${shareId}`;
+        const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
+        headers["prefer"] = "redeemSharingLink";
+        return fetchAndParseAsJSONHelper(url, { headers });
+    });
+}
+
+export async function fetchSnapshotWithRedeem(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    snapshotOptions: ISnapshotOptions | undefined,
+    logger: ITelemetryLogger,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
+    putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+): Promise<ISnapshotCacheValue> {
+    let odspSnapshot: ISnapshotCacheValue;
+    try {
+        odspSnapshot = await fetchLatestSnapshotCore(
+            odspResolvedUrl,
+            storageTokenFetcher,
+            snapshotOptions,
+            logger,
+            snapshotDownloader,
+            putInCache,
+        );
+    } catch(error) {
+        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher);
+            odspSnapshot = await fetchLatestSnapshotCore(
+                odspResolvedUrl,
+                storageTokenFetcher,
+                snapshotOptions,
+                logger,
+                snapshotDownloader,
+                putInCache,
+                false,
+            );
+        } else {
+            throw error;
+        }
+    }
+    return odspSnapshot;
+}
+
 export async function fetchLatestSnapshotCore(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
@@ -65,6 +124,7 @@ export async function fetchLatestSnapshotCore(
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+    redeemShareLinkIfPresent: boolean = true,
 ): Promise<ISnapshotCacheValue> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
@@ -94,7 +154,7 @@ export async function fetchLatestSnapshotCore(
                 }
             });
         }
-        if (odspResolvedUrl.sharingLinkToRedeem) {
+        if (odspResolvedUrl.sharingLinkToRedeem && redeemShareLinkIfPresent) {
             formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
         }
         formParams.push(`_post: 1`);
@@ -262,4 +322,63 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
         }
     }
     return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
+}
+
+export function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
+    const errorType = error.errorType;
+    if (odspResolvedUrl.sharingLinkToRedeem !== undefined
+        && (errorType === DriverErrorType.authorizationError
+        || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
+        return true;
+    }
+    return false;
+}
+
+function encodeShareUrl(url: string): string | undefined {
+    if (!url) {
+      return undefined;
+    }
+
+    /**
+     * Encode the url to accepted format by Sharepoint
+     * https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/shares_get
+     */
+    let encodedUrl = b64EncodeUnicode(url);
+    if (!encodedUrl) {
+      return undefined;
+    }
+
+    encodedUrl = encodedUrl
+      .replace(/=+$/g, "")
+      .replace(/\//g, "_")
+      .replace(/\+/g, "-");
+    encodedUrl = "u!".concat(encodedUrl);
+
+    return encodedUrl;
+}
+
+function b64EncodeUnicode(str: string): string | undefined {
+    if (!str || typeof str !== "string") {
+      return undefined;
+    }
+
+    // first we use encodeURIComponent to get percent-encoded UTF-8,
+    // then we convert the percent encodings into raw bytes which
+    // can be fed into btoa.
+    // Latin characters like # which are also special characters are not encoded.
+    // Hence we manually encode them with encodeHash method - This is a requirement from Vroom APIs
+    return btoa(
+        encodeHash(
+            encodeURIComponent(str).replace(
+                /%([\dA-F]{2})/g,
+                function toSolidBytes(_: unknown, p1) {
+                    return String.fromCharCode(parseInt(p1, 16));
+                },
+            ),
+        ),
+    );
+}
+
+function encodeHash(str: string): string {
+    return str.replace(/#/g, "%23");
 }

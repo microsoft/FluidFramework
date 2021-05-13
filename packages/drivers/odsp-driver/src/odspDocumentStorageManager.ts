@@ -36,7 +36,7 @@ import {
     IOdspSnapshotBlob,
     IVersionedValueWithEpoch,
 } from "./contracts";
-import { fetchLatestSnapshotCore, fetchSnapshot } from "./fetchSnapshot";
+import { fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
@@ -604,7 +604,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
         };
         try {
-            const odspSnapshot = await fetchLatestSnapshotCore(
+            const odspSnapshot = await fetchSnapshotWithRedeem(
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 snapshotOptions,
@@ -625,7 +625,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     errorType,
                 });
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
-                const odspSnapshot = await fetchLatestSnapshotCore(
+                const odspSnapshot = await fetchSnapshotWithRedeem(
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     snapshotOptionsWithoutBlobs,

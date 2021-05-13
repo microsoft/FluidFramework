@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     IPersistedCache,
     ISnapshotOptions,
@@ -20,7 +20,7 @@ import {
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { fetchLatestSnapshotCore } from "./fetchSnapshot";
+import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -57,10 +57,11 @@ export async function prefetchLatestSnapshot(
             fetchOptions,
         );
     };
+    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
     const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
         cacheP = persistedCache.put(
-            createCacheSnapshotKey(odspResolvedUrl),
+            snapshotKey,
             valueWithEpoch,
         );
         return cacheP;
@@ -69,7 +70,7 @@ export async function prefetchLatestSnapshot(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
         async () => {
-            await fetchLatestSnapshotCore(
+            await fetchSnapshotWithRedeem(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     hostSnapshotFetchOptions,
@@ -80,5 +81,13 @@ export async function prefetchLatestSnapshot(
             assert(cacheP !== undefined, "caching was not performed!");
             await cacheP;
             return true;
-    }).catch((error) => false);
+    }).catch(async (error) => {
+        const errorType = error.errorType;
+        // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have
+        // permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching snapshot from cache in the future.
+        if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+            await persistedCache.removeEntries(snapshotKey.file);
+        }
+        return false;
+    });
 }
