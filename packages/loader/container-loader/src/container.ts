@@ -1307,7 +1307,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
         const storage = await this._deltaManager.connectToStorage();
-        return new ProtocolTreeStorageService(storage, ()=>this.captureProtocolSummary());
+        return new ProtocolTreeStorageService(storage, () => this.captureProtocolSummary());
     }
 
     private async getDocumentAttributes(

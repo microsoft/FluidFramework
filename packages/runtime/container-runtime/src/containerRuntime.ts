@@ -1737,7 +1737,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 message,
                 parents: parent ? [parent] : [],
                 details: includeProtocolTree
-                ? {includesProtocolTree: true}
+                ? { includesProtocolTree: true }
                 : undefined,
 
             };
