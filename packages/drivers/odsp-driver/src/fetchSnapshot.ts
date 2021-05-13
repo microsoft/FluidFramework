@@ -75,7 +75,7 @@ export async function redeemSharingLink(
         assert(shareId !== undefined, "ShareId should be present for share link");
         const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${shareId}`;
         const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
-        headers["prefer"] = "redeemSharingLink";
+        headers.prefer = "redeemSharingLink";
         return fetchAndParseAsJSONHelper(url, { headers });
     });
 }
