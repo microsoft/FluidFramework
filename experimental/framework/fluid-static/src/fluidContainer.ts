@@ -11,6 +11,7 @@ import { RootDataObject } from "./rootDataObject";
 
 interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
+    (event: "dispose" | "disconnected", listener: () => void): void;
 }
 
 interface IFluidContainer {
@@ -27,6 +28,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     ) {
             super();
             container.on("connected", (id: string) =>  this.emit("connected", id));
+            container.on("dispose", () =>  this.emit("dispose"));
+            container.on("disconnected", () =>  this.emit("disconnected"));
     }
 
     static async load(container: Container): Promise<FluidContainer> {

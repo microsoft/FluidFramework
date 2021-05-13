@@ -8,7 +8,6 @@ import {
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -25,18 +24,9 @@ import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjec
 interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
-interface IRootDataObjectEvents extends IEvent {
-    (event: "connected", listener: (clientId: string) => void): void;
-    (event: "dispose" | "disconnected", listener: () => void): void;
-}
 
-/**
- * The RootDataObject is the implementation of the FluidContainer.
- */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export class RootDataObject extends DataObject<{}, RootDataObjectProps, IRootDataObjectEvents> {
-    private readonly connectedHandler = (id: string) => this.emit("connected", id);
-    private readonly disconnectedHandler = () => this.emit("disconnected");
+export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -65,9 +55,6 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps, IRootDat
     }
 
     protected async hasInitialized() {
-        this.runtime.on("connected", this.connectedHandler);
-        this.runtime.on("disconnected", this.disconnectedHandler);
-
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
@@ -79,15 +66,6 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps, IRootDat
         }
 
         await Promise.all(loadInitialObjectsP);
-    }
-
-    public dispose() {
-        // remove our listeners and continue disposing
-        this.runtime.off("connected", this.connectedHandler);
-        this.runtime.off("disconnected", this.disconnectedHandler);
-        // After super.dispose(), all event listeners are removed so we need to emit first.
-        this.emit("dispose");
-        super.dispose();
     }
 
     public get initialObjects(): LoadableObjectRecord {
