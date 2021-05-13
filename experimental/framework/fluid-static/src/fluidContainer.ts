@@ -21,16 +21,11 @@ interface IFluidContainer {
 }
 
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    private readonly _container: Container;
-    private readonly _rootDataObject: RootDataObject;
-
     public constructor(
-        readonly container: Container,
-        readonly rootDataObject: RootDataObject,
+        private readonly container: Container,
+        private readonly rootDataObject: RootDataObject,
     ) {
             super();
-            this._container = container;
-            this._rootDataObject = rootDataObject;
             container.on("connected", (id: string) =>  this.emit("connected", id));
     }
 
@@ -40,22 +35,22 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-        return this._rootDataObject.create(objectClass);
+        return this.rootDataObject.create(objectClass);
     }
 
     public close() {
-        this._container.close();
+        this.container.close();
     }
 
     public get closed() {
-        return this._container.closed;
+        return this.container.closed;
     }
 
     public get connected() {
-        return this._container.connected;
+        return this.container.connected;
     }
 
     public get initialObjects() {
-        return this._rootDataObject.initialObjects;
+        return this.rootDataObject.initialObjects;
     }
 }
