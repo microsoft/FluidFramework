@@ -604,7 +604,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         };
         const removeEntries = async () => {
             await this.cache.persistedCache.removeEntries();
-        }
+        };
         try {
             const odspSnapshot = await fetchSnapshotWithRedeem(
                 this.odspResolvedUrl,

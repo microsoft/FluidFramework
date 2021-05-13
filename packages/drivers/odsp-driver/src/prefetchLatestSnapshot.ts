@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { DriverErrorType, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
     IPersistedCache,
     ISnapshotOptions,
@@ -68,7 +68,7 @@ export async function prefetchLatestSnapshot(
     };
     const removeEntries = async () => {
         await persistedCache.removeEntries(snapshotKey.file);
-    }
+    };
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
