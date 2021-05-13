@@ -23,11 +23,11 @@ document.title = containerId;
 class CustomLogger implements ITelemetryBaseLogger {
     constructor() {}
     send(event: ITelemetryBaseEvent) {
-        console.log("Testing custom telemetry implementation works...");
-        console.log("obj array: " + JSON.stringify(event));
+        console.log("Custom telemetry object array: " + JSON.stringify(event));
     }
 }
-// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious contianer
+
+// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 // and hook to the Telemetry system
 const customLogger: CustomLogger = new CustomLogger();
 
