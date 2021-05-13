@@ -42,11 +42,7 @@ export interface Build {
 }
 
 // @public
-type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
-
-export { BuildNode }
-
-export { BuildNode as EditNode }
+export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
 
 // @public
 export type Change = Insert | Detach | Build | SetValue | Constraint;

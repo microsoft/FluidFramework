@@ -77,8 +77,6 @@ export {
 	TreeNode,
 	ChangeNode,
 	BuildNode,
-	/** @deprecated Expires 05-2021. Use `BuildNode`. */
-	BuildNode as EditNode,
 	EditStatus,
 	TraitLocation,
 	GenericTransaction,
