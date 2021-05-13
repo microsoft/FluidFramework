@@ -1234,6 +1234,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
+        // Safety net: static version of Container.load() should have got this message through "closed" handler.
+        // But if that did not happen for some reason, fail load for sure.
+        // Otherwise we can get into situations where container is closed and does not try to connect to ordering
+        // service, but caller does not know that (callers do expect container to be not closed on successful path
+        // and listen only on "closed" event)
+        if (this.closed) {
+            throw new Error("Container was closed while load()");
+        }
+
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
