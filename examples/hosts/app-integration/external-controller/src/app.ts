@@ -24,8 +24,7 @@ class CustomLogger implements ITelemetryBaseLogger {
     constructor() {}
     send(event: ITelemetryBaseEvent) {
         console.log("Testing custom telemetry implementation works...");
-        console.log(event.category);
-        console.log(event.eventName);
+        console.log("obj array: " + JSON.stringify(event));
     }
 }
 // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious contianer
