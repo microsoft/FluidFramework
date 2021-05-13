@@ -27,7 +27,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType, ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { MessageType, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -189,54 +189,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
             "Value for summarize should be same!!");
-    });
-
-    it("ReAttach detached container on failed attach", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const oldFunc = provider.documentServiceFactory.createContainer;
-        provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
-        let failedOnce = false;
-        try {
-            await container.attach(request);
-        } catch (e) {
-            failedOnce = true;
-            provider.documentServiceFactory.createContainer = oldFunc;
-        }
-        assert.strictEqual(failedOnce, true, "Attach call should fail");
-        assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
-        const response = await container.request({ url: "/" });
-        const dataStore = response.value as ITestFluidObject;
-
-        // Create a sub data store of type TestFluidObject.
-        const dataStore1 = await createFluidObject(dataStore.context, "default");
-        const defP = new Deferred<void>();
-        container.on("op", (op: ISequencedDocumentMessage) => {
-            if (op.contents?.type === DataStoreMessageType.Attach) {
-                assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
-                    "There should be an attach op for created data store");
-                defP.resolve();
-            }
-        });
-        dataStore1.channel.bindToContext();
-
-        await container.attach(request);
-        assert.strictEqual(container.attachState, AttachState.Attached, "Container should now be attached");
-        await defP.promise;
-
-        // Now load the container from another loader.
-        const loader2 = provider.makeTestLoader(testContainerConfig);
-        // Create a new request url from the resolvedUrl of the first container.
-        assert(container.resolvedUrl);
-        const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-        const container2 = await loader2.resolve({ url: requestUrl2 });
-
-        // Get the sub data store and assert that it is attached.
-        const response2 = await container2.request({ url: `/${dataStore1.context.id}` });
-        const dataStore2 = response2.value as ITestFluidObject;
-        assert(dataStore2, "Data store created in failed attach mode should exist");
-        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached, "Data store 1 should be attached");
-        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached, "Data store 2 should be attached");
     });
 
     it("Fire ops during container attach for shared string", async () => {
@@ -647,6 +599,22 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
+
+    it("Container should be closed on failed attach with non retryable error", async () => {
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const oldFunc = provider.documentServiceFactory.createContainer;
+        provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        let failedOnce = false;
+        try {
+            await container.attach(request);
+        } catch (e) {
+            failedOnce = true;
+            provider.documentServiceFactory.createContainer = oldFunc;
+        }
+        assert.strictEqual(failedOnce, true, "Attach call should fail");
+        assert.strictEqual(container.closed, true, "Container should be closed");
+    });
 
     it("Directly attach container through service factory, should resolve to same container", async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
