@@ -9,11 +9,17 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IConnectedClient, ITinyliciousAudience, TinyliciousMember } from "./interfaces";
+import { IConnectedClient, ILastEditedResult, ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends EventEmitter implements ITinyliciousAudience {
   private readonly audience: IAudience;
+
+  // Data object that holds the last edited state and is used to load the data prior to the
+  // current client joining the session
   private readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
+
+  // Maintains a map of the last edited times keyed by client ID after the current client
+  // joined the session
   private readonly lastEditedTimesByClient = new Map<string, Date>();
 
   constructor(private readonly container: Container, rootDataObject: RootDataObject) {
@@ -36,11 +42,11 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
 
     rootDataObject.on("op", (message: ISequencedDocumentMessage) => {
       this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
-      const lastEditedMember = this.getMemberByClientId(
+      const member = this.getMemberByClientId(
         message.clientId,
       );
-      if (lastEditedMember !== undefined) {
-        this.emit("lastEditedMemberChanged", lastEditedMember, new Date(message.timestamp));
+      if (member !== undefined) {
+        this.emit("lastEditedChanged", { member, timestamp :new Date(message.timestamp) });
       }
     });
 
@@ -49,16 +55,16 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       const timestamp = new Date(lastEditDetails.timestamp);
       this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
       const userId = lastEditDetails.user.id;
-      const lastEditedMember: TinyliciousMember = {
+      const member: TinyliciousMember = {
         userId,
         connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
       };
-      this.emit("lastEditedMemberChanged", lastEditedMember, timestamp);
+      this.emit("lastEditedChanged", { member, timestamp });
     }
 
     const lastEditedMemberResults = this.getLastEditedMember();
     if (lastEditedMemberResults !== undefined) {
-      this.emit("lastEditedMemberChanged", lastEditedMemberResults);
+      this.emit("lastEditedChanged", lastEditedMemberResults);
     }
   }
 
@@ -81,7 +87,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
               timeLastActive: this.lastEditedTimesByClient.get(clientId),
             });
             existingValue.connectedClients.sort((a, b) =>
-              (a.timeLastActive?.getMilliseconds() ?? 0) - (b.timeLastActive?.getMilliseconds() ?? 0));
+              (b.timeLastActive?.getMilliseconds() ?? 0) - (a.timeLastActive?.getMilliseconds() ?? 0));
           }
         } else {
           users.set(userId, {
@@ -131,17 +137,17 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
   /**
    * @inheritdoc
    */
-  public getLastEditedMember(): [TinyliciousMember, Date] | undefined {
+  public getLastEditedMember(): ILastEditedResult<TinyliciousMember> | undefined {
     const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
     if (lastEditDetails !== undefined) {
       const timestamp = new Date(lastEditDetails.timestamp);
       this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
       const userId = lastEditDetails.user.id;
-      const lastEditedMember: TinyliciousMember = {
+      const member: TinyliciousMember = {
         userId,
         connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
       };
-      return [lastEditedMember, timestamp];
+      return { member, timestamp };
     }
   }
 

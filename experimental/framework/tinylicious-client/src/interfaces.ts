@@ -38,18 +38,18 @@ export interface IServiceAudience<M extends IMember> {
     /**
      * Returns the member who made the last edit along with the edit's timestamp
      */
-    getLastEditedMember(): [M, Date] | undefined;
+    getLastEditedMember(): ILastEditedResult<M> | undefined;
 
     /**
      * Collection of event listeners that trigger if the members in the Fluid session change and if a member makes an
      * edit which updates when the last change was made
      */
     on(event: "membersChanged", listener: (members: M[]) => void): this;
-    on(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
+    on(event: "lastEditedChanged", listener: (result: ILastEditedResult<M>) => void): this;
     off(event: "membersChanged", listener: (members: M[]) => void): this;
-    off(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
+    off(event: "lastEditedChanged", listener: (result: ILastEditedResult<M>) => void): this;
     once(event: "membersChanged", listener: (members: M[]) => void): this;
-    once(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
+    once(event: "lastEditedChanged", listener: (result: ILastEditedResult<M>) => void): this;
 }
 
 /**
@@ -65,7 +65,7 @@ export interface IConnectedClient {
 }
 
 /**
- * Base interace to be implemented to fetch each service's member. The user ID is unique for each individual
+ * Base interface to be implemented to fetch each service's member. The user ID is unique for each individual
  * user that is connecting to the session. However, one user may be connecting through multiple clients and
  * the information for each is provided within connectedClients. The list of clients here is sorted based on
  * descending order from who made the most recent edit. This interface can be extended by each service
@@ -74,6 +74,15 @@ export interface IConnectedClient {
 export interface IMember {
     userId: string;
     connectedClients: IConnectedClient[];
+}
+
+/**
+ * Interfaces that holds the result returned when the last member to make an edit is requested or returned by
+ * the "lastEditedChanged" event is fired when any member makes a new edit
+ */
+export interface ILastEditedResult<M extends IMember> {
+    member: M;
+    timestamp: Date;
 }
 
 /**

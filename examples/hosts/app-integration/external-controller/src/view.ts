@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITinyliciousAudience, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
+import { ILastEditedResult, ITinyliciousAudience, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -70,9 +70,9 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
         `;
     };
 
-    const onLastEditedChanged = (member: TinyliciousMember, timestamp: Date) => {
+    const onLastEditedChanged = (result: ILastEditedResult<TinyliciousMember>) => {
         lastEditedDiv.textContent = `
-            Last Edited By: ${member.userId} at ${timestamp.toLocaleString()}
+            Last Edited By: ${result.member.userId} at ${result.timestamp.toLocaleString()}
         `;
     };
 
@@ -80,11 +80,11 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
 
     const getLastEditedResults = audience.getLastEditedMember();
     if (getLastEditedResults !== undefined) {
-        onLastEditedChanged(getLastEditedResults[0], getLastEditedResults[1]);
+        onLastEditedChanged(getLastEditedResults);
     }
 
     audience.on("membersChanged", onAudienceChanged);
-    audience.on("lastEditedMemberChanged", onLastEditedChanged);
+    audience.on("lastEditedChanged", onLastEditedChanged);
 
     wrapperDiv.appendChild(audienceDiv);
     wrapperDiv.appendChild(lastEditedDiv);
