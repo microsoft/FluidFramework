@@ -7,16 +7,19 @@ import { EventEmitter } from "events";
 import { RootDataObject } from "@fluid-experimental/fluid-static";
 import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IConnectedClient, ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends EventEmitter implements ITinyliciousAudience {
   private readonly audience: IAudience;
+  private readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
   private readonly lastEditedTimesByClient = new Map<string, Date>();
 
   constructor(private readonly container: Container, rootDataObject: RootDataObject) {
     super();
     this.audience = container.audience;
+    this.lastEditedTracker = rootDataObject.IFluidLastEditedTracker;
 
     // Consolidating both the addition/removal of members
     this.audience.on("addMember", () => {
@@ -31,12 +34,32 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       this.emit("membersChanged", this.getMembers());
     });
 
-    rootDataObject.on("op", (message) => {
-      const lastEditedMember = this.getLastEditedMember(message);
+    rootDataObject.on("op", (message: ISequencedDocumentMessage) => {
+      this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
+      const lastEditedMember = this.getMemberByClientId(
+        message.clientId,
+      );
       if (lastEditedMember !== undefined) {
-        this.emit("lastEditedMemberChanged", lastEditedMember);
+        this.emit("lastEditedMemberChanged", lastEditedMember, new Date(message.timestamp));
       }
     });
+
+    const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
+    if (lastEditDetails !== undefined) {
+      const timestamp = new Date(lastEditDetails.timestamp);
+      this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
+      const userId = lastEditDetails.user.id;
+      const lastEditedMember: TinyliciousMember = {
+        userId,
+        connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
+      };
+      this.emit("lastEditedMemberChanged", lastEditedMember, timestamp);
+    }
+
+    const lastEditedMemberResults = this.getLastEditedMember();
+    if (lastEditedMemberResults !== undefined) {
+      this.emit("lastEditedMemberChanged", lastEditedMemberResults);
+    }
   }
 
   /**
@@ -102,38 +125,40 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
     if (clientId === undefined) {
       return undefined;
     }
-    const userId = this.audience.getMember(clientId)?.user.id;
-    if (userId === undefined) {
-      return undefined;
-    }
-    const allMembers = this.getMembers();
-    const currentMember = allMembers.get(userId);
-    if (currentMember === undefined) {
-      throw Error(`Failed to find user ${userId} in current audience roster`);
-    }
-    return currentMember;
+    return this.getMemberByClientId(clientId);
   }
 
-  private getLastEditedMember(message: ISequencedDocumentMessage): TinyliciousMember | undefined {
+  /**
+   * @inheritdoc
+   */
+  public getLastEditedMember(): [TinyliciousMember, Date] | undefined {
+    const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
+    if (lastEditDetails !== undefined) {
+      const timestamp = new Date(lastEditDetails.timestamp);
+      this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
+      const userId = lastEditDetails.user.id;
+      const lastEditedMember: TinyliciousMember = {
+        userId,
+        connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
+      };
+      return [lastEditedMember, timestamp];
+    }
+  }
+
+  private getMemberByClientId(clientId: string): TinyliciousMember | undefined {
     // Fetch the full details from the runtime of the client that made this edit or return undefined
     // if the client is not yet connected
-    const internalAudienceMember = this.audience.getMember(message.clientId);
+    const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {
       return undefined;
     }
-    const isInteractiveOp = internalAudienceMember.details.capabilities.interactive;
-    // If it is an interactive client, we will update the last edited time for that client
-    if (isInteractiveOp !== undefined && isInteractiveOp) {
-      this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
-
-      // With the last edited times updated, we will now return the user object that includes
-      // the updated last modified timestamp in its list of connected clients
-      const allMembers = this.getMembers();
-      const lastEditedMember = allMembers.get(internalAudienceMember?.user.id);
-      if (lastEditedMember === undefined) {
-        throw Error("Last change was made by a member who is not part of the current member list");
-      }
-      return lastEditedMember;
+    // With the last edited times updated, we will now return the user object that includes
+    // the updated last modified timestamp in its list of connected clients
+    const allMembers = this.getMembers();
+    const lastEditedMember = allMembers.get(internalAudienceMember?.user.id);
+    if (lastEditedMember === undefined) {
+      throw Error("Last change was made by a member who is not part of the current member list");
     }
+    return lastEditedMember;
   }
 }

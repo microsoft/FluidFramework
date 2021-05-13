@@ -36,15 +36,20 @@ export interface IServiceAudience<M extends IMember> {
     getCurrentClient(): IConnectedClient | undefined;
 
     /**
+     * Returns the member who made the last edit along with the edit's timestamp
+     */
+    getLastEditedMember(): [M, Date] | undefined;
+
+    /**
      * Collection of event listeners that trigger if the members in the Fluid session change and if a member makes an
      * edit which updates when the last change was made
      */
     on(event: "membersChanged", listener: (members: M[]) => void): this;
-    on(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
+    on(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
     off(event: "membersChanged", listener: (members: M[]) => void): this;
-    off(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
+    off(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
     once(event: "membersChanged", listener: (members: M[]) => void): this;
-    once(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
+    once(event: "lastEditedMemberChanged", listener: (member: M, timestamp: Date) => void): this;
 }
 
 /**

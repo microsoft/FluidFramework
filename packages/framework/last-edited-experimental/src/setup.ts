@@ -29,6 +29,7 @@ function getLastEditDetailsFromMessage(
         const lastEditDetails: ILastEditDetails = {
             user,
             timestamp: message.timestamp,
+            clientId: message.clientId,
         };
         return lastEditDetails;
     }

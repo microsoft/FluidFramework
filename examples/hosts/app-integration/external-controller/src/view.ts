@@ -64,19 +64,24 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
                 memberIds.push(member.userId);
             }
         });
-        audienceDiv.textContent = `
-            Current User: ${currentMember?.userId} \n
+        audienceDiv.innerHTML = `
+            Current User: ${currentMember?.userId} <br />
             Other Users: ${memberIds.join(", ")}
         `;
     };
 
-    const onLastEditedChanged = (member: TinyliciousMember) => {
+    const onLastEditedChanged = (member: TinyliciousMember, timestamp: Date) => {
         lastEditedDiv.textContent = `
-            Last Edited By: ${member.userId} at ${member.connectedClients[0].timeLastActive?.toLocaleString()}
+            Last Edited By: ${member.userId} at ${timestamp.toLocaleString()}
         `;
     };
 
     onAudienceChanged();
+
+    const getLastEditedResults = audience.getLastEditedMember();
+    if (getLastEditedResults !== undefined) {
+        onLastEditedChanged(getLastEditedResults[0], getLastEditedResults[1]);
+    }
 
     audience.on("membersChanged", onAudienceChanged);
     audience.on("lastEditedMemberChanged", onLastEditedChanged);
