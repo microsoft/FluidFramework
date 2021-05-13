@@ -92,7 +92,7 @@ class UnknownChannel implements IChannel {
             },
             setConnectionState: (connected: boolean) => {
             },
-            resubmit: (content: any, localOpMetadata: unknown) => {
+            reSubmit: (content: any, localOpMetadata: unknown) => {
             },
             applyStashedOp: (content: any) => {
             },

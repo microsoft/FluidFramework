@@ -478,7 +478,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected resubmitCore(content: any, localOpMetadata: unknown) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
@@ -675,7 +675,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 while (this.loadedDeferredOutgoingOps.length > 0) {
                     const opData = this.loadedDeferredOutgoingOps.shift();
-                    this.resubmitCore(opData[0], opData[1]);
+                    this.reSubmitCore(opData[0], opData[1]);
                 }
             }
         }
