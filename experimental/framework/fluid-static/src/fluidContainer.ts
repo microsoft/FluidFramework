@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -15,8 +14,6 @@ interface IFluidContainerEvents extends IEvent {
 }
 
 interface IFluidContainer {
-    audience: Container["audience"];
-    clientId: Container["clientId"];
     close: Container["close"];
     closed: Container["closed"];
     connected: Container["connected"];
@@ -50,10 +47,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         this._container.close();
     }
 
-    public get initialObjects() {
-        return this._rootDataObject.initialObjects;
-    }
-
     public get closed() {
         return this._container.closed;
     }
@@ -62,11 +55,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         return this._container.connected;
     }
 
-    public get audience(): IAudience {
-        return this._container.audience;
-    }
-
-    public get clientId() {
-        return this._container.clientId;
+    public get initialObjects() {
+        return this._rootDataObject.initialObjects;
     }
 }
