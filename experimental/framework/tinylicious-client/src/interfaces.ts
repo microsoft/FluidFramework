@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionMode } from "@fluidframework/protocol-definitions";
-
 export interface TinyliciousContainerConfig {
     id: string;
 }
@@ -60,7 +58,7 @@ export interface IServiceAudience<M extends IMember> {
  */
 export interface IConnectedClient {
     clientId: string;
-    connectionMode: ConnectionMode;
+    connectionMode: "write" | "read";
     timeLastActive?: Date;
 }
 
