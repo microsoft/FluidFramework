@@ -62,7 +62,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       this.emit("lastEditedChanged", { member, timestamp });
     }
 
-    const lastEditedMemberResults = this.getLastEditedMember();
+    const lastEditedMemberResults = this.getLastEdited();
     if (lastEditedMemberResults !== undefined) {
       this.emit("lastEditedChanged", lastEditedMemberResults);
     }
@@ -137,7 +137,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
   /**
    * @inheritdoc
    */
-  public getLastEditedMember(): ILastEditedResult<TinyliciousMember> | undefined {
+  public getLastEdited(): ILastEditedResult<TinyliciousMember> | undefined {
     const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
     if (lastEditDetails !== undefined) {
       const timestamp = new Date(lastEditDetails.timestamp);
