@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IDocumentStorageService,
     ISummaryContext,
@@ -33,12 +32,7 @@ export class ProtocolTreeStorageService implements IDocumentStorageService {
     downloadSummary = this.internalStorageService.downloadSummary.bind(this.internalStorageService);
 
     async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        if(context.includeProtocolTree === true) {
-            assert(
-                this.internalStorageService.policies?.supportsSummaryUploadWithProtocolTree === true,
-                "Internal driver does not support summary upload with protocol tree");
-            summary.tree[".protocol"] = this.generateProtocolTree();
-        }
+        summary.tree[".protocol"] = this.generateProtocolTree();
         return this.internalStorageService.uploadSummaryWithContext(
             summary,
             context,

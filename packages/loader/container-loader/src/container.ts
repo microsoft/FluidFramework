@@ -81,6 +81,7 @@ import {
     ISummaryTree,
     IPendingProposal,
     SummaryType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -1684,8 +1685,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         switch (outboundMessageType) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
-            case MessageType.Summarize:
                 break;
+            case MessageType.Summarize: {
+                // todo this is only needed for staging so the server
+                // know when the protocol tree is included
+                // this can be removed once all clients send
+                // protocol tree by default
+                const summary = contents as ISummaryContent;
+                if(summary.details === undefined) {
+                    summary.details = {};
+                }
+                summary.details.includesProtocolTree = true;
+                break;
+            }
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
                 return -1;
@@ -1802,12 +1814,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this, this.loader);
+        const appSnapshot = snapshot !== undefined && ".app" in snapshot.trees
+            ? snapshot.trees[".app"]
+            : snapshot;
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
             codeDetails,
-            snapshot,
+            appSnapshot,
             attributes,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
