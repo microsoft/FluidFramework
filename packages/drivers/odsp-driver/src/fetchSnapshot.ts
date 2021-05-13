@@ -101,6 +101,10 @@ export async function fetchSnapshotWithRedeem(
     } catch(error) {
         if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher);
+            logger.sendErrorEvent({
+                eventName: "TreeLatest_SecondCall",
+                errorType: error.errorType,
+            });
             odspSnapshot = await fetchLatestSnapshotCore(
                 odspResolvedUrl,
                 storageTokenFetcher,
