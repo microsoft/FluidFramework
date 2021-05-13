@@ -98,6 +98,12 @@ export interface TinyliciousContainerServices {
     audience: ITinyliciousAudience;
 }
 
-export type TinyliciousMember = IMember;
+/**
+ * Since Tinylicious provides user names for all of its members, we extend the IMember interface to include
+ * this service-specific value. It will be returned for all audience members connected to Tinylicious.
+ */
+export interface TinyliciousMember extends IMember {
+    userName: string;
+}
 
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

@@ -58,21 +58,21 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
     const onAudienceChanged = () => {
         const members = audience.getMembers();
         const currentMember = audience.getCurrentMember();
-        const memberIds: string[] = [];
+        const memberNames: string[] = [];
         members.forEach((member) => {
             if (member.userId !== currentMember?.userId) {
-                memberIds.push(member.userId);
+                memberNames.push(member.userName);
             }
         });
         audienceDiv.innerHTML = `
-            Current User: ${currentMember?.userId} <br />
-            Other Users: ${memberIds.join(", ")}
+            Current User: ${currentMember?.userName} <br />
+            Other Users: ${memberNames.join(", ")}
         `;
     };
 
     const onLastEditedChanged = (result: ILastEditedResult<TinyliciousMember>) => {
         lastEditedDiv.textContent = `
-            Last Edited By: ${result.member.userId} at ${result.timestamp.toLocaleString()}
+            Last Edited By: ${result.member.userName} at ${result.timestamp.toLocaleString()}
         `;
     };
 

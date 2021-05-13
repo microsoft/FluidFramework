@@ -231,7 +231,8 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
         // provides container level tracking of last edit and has to be loaded before any other fluidObject.
         const tracker = await requestFluidObject<IFluidLastEditedTracker>(
             await runtime.getRootDataStore(rootDataStoreId),
-            "");
+            "",
+        );
 
         setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
     }

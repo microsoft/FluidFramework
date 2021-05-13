@@ -57,6 +57,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       const userId = lastEditDetails.user.id;
       const member: TinyliciousMember = {
         userId,
+        userName: (lastEditDetails.user as any).name,
         connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
       };
       this.emit("lastEditedChanged", { member, timestamp });
@@ -92,6 +93,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
         } else {
           users.set(userId, {
             userId,
+            userName: (member.user as any).name,
             connectedClients: [{
               clientId,
               connectionMode: member.mode,
@@ -145,6 +147,7 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       const userId = lastEditDetails.user.id;
       const member: TinyliciousMember = {
         userId,
+        userName: (lastEditDetails.user as any).name,
         connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
       };
       return { member, timestamp };
