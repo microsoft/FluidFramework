@@ -14,6 +14,7 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
@@ -62,6 +63,7 @@ export class RootDataObject
     implements FluidContainer {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
     private readonly disconnectedHandler = () => this.emit("disconnected");
+    private readonly opHandler = (message: ISequencedDocumentMessage) => this.emit("op", message);
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -92,6 +94,7 @@ export class RootDataObject
     protected async hasInitialized() {
         this.runtime.on("connected", this.connectedHandler);
         this.runtime.on("disconnected", this.disconnectedHandler);
+        this.runtime.on("op", this.opHandler);
 
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];

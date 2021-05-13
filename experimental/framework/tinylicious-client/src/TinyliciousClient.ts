@@ -8,6 +8,7 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    RootDataObject,
 } from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
@@ -55,10 +56,7 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             true,
         );
-
-        const fluidContainer = await this.getFluidContainer(container);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+        return this.getFluidContainerAndServices(container);
     }
 
     public async getContainer(
@@ -73,23 +71,23 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             false,
         );
-        const fluidContainer = await this.getFluidContainer(container);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+        return this.getFluidContainerAndServices(container);
     }
 
-    private async getFluidContainer(
+    private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
         const rootDataObject = (await container.request({ url: "/" })).value;
-        return rootDataObject as FluidContainer;
+        const containerServices = this.getContainerServices(container, rootDataObject);
+        return [rootDataObject as FluidContainer, containerServices];
     }
 
     private getContainerServices(
         container: Container,
+        rootDataObject: RootDataObject,
     ): TinyliciousContainerServices {
         return {
-            audience: new TinyliciousAudience(container),
+            audience: new TinyliciousAudience(container, rootDataObject),
         };
     }
 

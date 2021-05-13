@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClientDetails } from "@fluidframework/protocol-definitions";
+import { ConnectionMode } from "@fluidframework/protocol-definitions";
 
 export interface TinyliciousContainerConfig {
     id: string;
@@ -14,33 +14,61 @@ export interface TinyliciousConnectionConfig {
 }
 
 /**
- * Base interface to be implemented to fetch each service's audience. The generic T here is the unique user
- * object that will contain the user's service-specific metadata
+ * Base interface to be implemented to fetch each service's audience. The generic C allows consumers to further
+ * extend the client object with service-specific details about the connecting client, such as device information,
+ * environme
  */
-export interface IServiceAudience<T> {
+export interface IServiceAudience<M extends IMember> {
     /**
-     * Returns an array of all users currently in the Fluid session
+     * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
+     * member object
      */
-    getMembers(): T[];
+    getMembers(): Map<string, M>;
 
     /**
-     * Collection of event listeners that trigger if the members in the Fluid session change.
+     * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
-    on(event: "membersChanged", listener: (members: T[]) => void): this;
-    off(event: "membersChanged", listener: (members: T[]) => void): this;
-    once(event: "membersChanged", listener: (members: T[]) => void): this;
+    getCurrentMember(): M | undefined;
+
+    /**
+     * Returns the current client's details once it is connected. Otherwise, returns undefined.
+     */
+    getCurrentClient(): IConnectedClient | undefined;
+
+    /**
+     * Collection of event listeners that trigger if the members in the Fluid session change and if a member makes an
+     * edit which updates when the last change was made
+     */
+    on(event: "membersChanged", listener: (members: M[]) => void): this;
+    on(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
+    off(event: "membersChanged", listener: (members: M[]) => void): this;
+    off(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
+    once(event: "membersChanged", listener: (members: M[]) => void): this;
+    once(event: "lastEditedMemberChanged", listener: (member: M) => void): this;
 }
 
 /**
- * Base type to be implemented to fetch each service's user object. The client ID is uniquely generated for
- * each connection a user makes with the service and client details provide information regarding the device
- * and environment the user is connecting from. The user details are unique to each service and holds the metadata
- * that the service chooses to provide for the user.
+ * Base interface for providing client information for each connection made to the Fluid session, which will be
+ * different even if it is by the same user, i.e. the clientId will be uniquely generated for each time the user
+ * connects and each indvidiual connection will track its own time that it was last active at. This interface
+ * can be extended to provide additional information specific to each service.
  */
-export interface ServiceUser<T> {
+export interface IConnectedClient {
     clientId: string;
-    clientDetails: IClientDetails;
-    userDetails: T;
+    connectionMode: ConnectionMode;
+    timeLastActive?: Date;
+}
+
+/**
+ * Base interace to be implemented to fetch each service's member. The user ID is unique for each individual
+ * user that is connecting to the session. However, one user may be connecting through multiple clients and
+ * the information for each is provided within connectedClients. The list of clients here is sorted based on
+ * descending order from who made the most recent edit. This interface can be extended by each service
+ * to provide additional service-specific user metadata.
+ */
+export interface IMember {
+    userId: string;
+    connectedClients: IConnectedClient[];
 }
 
 /**
@@ -56,12 +84,8 @@ export interface TinyliciousContainerServices {
      * listeners for when the roster has any changes from users joining/leaving the session
      */
     audience: ITinyliciousAudience;
-  }
-
-export interface TinyliciousUserDetails {
-    id: string;
 }
 
-export type TinyliciousUser = ServiceUser<TinyliciousUserDetails>;
+export type TinyliciousMember = IMember;
 
-export type ITinyliciousAudience = IServiceAudience<TinyliciousUser>;
+export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
+import { ITinyliciousAudience, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -52,16 +52,35 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
 
     const audienceDiv = document.createElement("div");
     audienceDiv.style.fontSize = "20px";
+    const lastEditedDiv = document.createElement("div");
+    lastEditedDiv.style.fontSize = "20px";
 
-    const setAudienceMemberIds = () => {
+    const onAudienceChanged = () => {
         const members = audience.getMembers();
-        const memberIds = members.map((member) => member.userDetails.id);
-        audienceDiv.textContent = `Users: ${memberIds.join(", ")}`;
+        const currentMember = audience.getCurrentMember();
+        const memberIds: string[] = [];
+        members.forEach((member) => {
+            if (member.userId !== currentMember?.userId) {
+                memberIds.push(member.userId);
+            }
+        });
+        audienceDiv.textContent = `
+            Current User: ${currentMember?.userId} \n
+            Other Users: ${memberIds.join(", ")}
+        `;
     };
 
-    setAudienceMemberIds();
+    const onLastEditedChanged = (member: TinyliciousMember) => {
+        lastEditedDiv.textContent = `
+            Last Edited By: ${member.userId} at ${member.connectedClients[0].timeLastActive?.toLocaleString()}
+        `;
+    };
 
-    audience.on("membersChanged", setAudienceMemberIds);
+    onAudienceChanged();
+
+    audience.on("membersChanged", onAudienceChanged);
+    audience.on("lastEditedMemberChanged", onLastEditedChanged);
 
     wrapperDiv.appendChild(audienceDiv);
+    wrapperDiv.appendChild(lastEditedDiv);
 }
