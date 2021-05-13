@@ -108,14 +108,14 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps, IRootDat
         throw new Error("Could not create new Fluid object because an unknown object was passed");
     }
 
-    public async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
+    private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const router = await this.context.containerRuntime.createDataStore(packagePath);
         return requestFluidObject<T>(router, "/");
     }
 
-    public createSharedObject<T extends IFluidLoadable>(
+    private createSharedObject<T extends IFluidLoadable>(
         sharedObjectClass: SharedObjectClass<T>,
     ): T {
         const factory = sharedObjectClass.getFactory();

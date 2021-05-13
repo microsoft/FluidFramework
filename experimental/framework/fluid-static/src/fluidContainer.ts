@@ -2,72 +2,69 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-    LoadableObjectClass,
-} from "./types";
+import { IEvent } from "@fluidframework/common-definitions";
+import { LoadableObjectClass } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
+
+
+interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: (clientId: string) => void): void;
+}
+
 export class FluidContainer
-    extends EventEmitter
+    extends TypedEventEmitter<IFluidContainerEvents>
     implements
         Pick<Container, "audience" | "clientId" | "close" | "closed" | "connected" >,
         Pick<RootDataObject, "initialObjects"> {
-    private readonly _container: Container | undefined = undefined;
-    private readonly _rootDataObject: RootDataObject | undefined = undefined;
+    private readonly _container: Container;
+    private readonly _rootDataObject: RootDataObject;
 
-    public constructor(container: Container, dataObject: RootDataObject) {
+    public constructor(
+        private readonly container: Container,
+        private readonly rootDataObject: RootDataObject,
+    ) {
             super();
             this._container = container;
-            this._rootDataObject = dataObject;
+            this._rootDataObject = rootDataObject;
 
             container.on("connected", (id: string) =>  this.emit("connected", id));
     }
 
-    static async create(container: Container) {
+    static async load(container: Container) {
         const rootDataObject = (await container.request({ url: "/" })).value;
         return new FluidContainer(container, rootDataObject);
     }
 
-    private get container(): Container {
-        assert(this._container !== undefined, "container undefined");
-        return this._container;
-    }
-
-    private get rootDataObject(): RootDataObject {
-        assert(this._rootDataObject !== undefined, "defaultObject undefined");
-        return this._rootDataObject;
-    }
-
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-        return this.rootDataObject.create(objectClass);
+        return this._rootDataObject.create(objectClass);
     }
 
     public close() {
-        this.container.close();
+        this._container.close();
     }
 
     public get initialObjects() {
-        return this.rootDataObject.initialObjects;
+        return this._rootDataObject.initialObjects;
     }
 
     public get closed() {
-        return this.container.closed;
+        return this._container.closed;
     }
 
     public get connected() {
-        return this.container.connected;
+        return this._container.connected;
     }
 
     public get audience(): IAudience {
-        return this.container.audience;
+        return this._container.audience;
     }
 
     public get clientId() {
-        return this.container.clientId;
+        return this._container.clientId;
     }
 }
