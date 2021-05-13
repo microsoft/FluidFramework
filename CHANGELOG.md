@@ -1,5 +1,26 @@
 # Change Log
 
+## 0.104.0
+
+* remove: BREAKING CHANGE: remove most expired deprecated code
+  * Associated pull request: [30387](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30387)
+  * Commit: [bbe19b0e4afafc42493286eed5ca55b08554e3f2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bbe19b0e4afafc42493286eed5ca55b08554e3f2)
+* build: Update @fluidframework packages to 0.39.1
+  * Associated pull request: [30293](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30293)
+  * Commit: [4159056434b54e672ba473c4211cd5da13ff55cd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4159056434b54e672ba473c4211cd5da13ff55cd)
+* feat: add caching of `EditResult` to `CachingLogViewer`
+  * Associated pull request: [30376](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30376)
+  * Commit: [30f812c29fdaf377577a3f49122f32b30b4f6c38](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/30f812c29fdaf377577a3f49122f32b30b4f6c38)
+* refactor: BREAKING CHANGE: rename SharedTree `EditResult` to `EditStatus`
+  * Associated pull request: [30455](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30455)
+  * Commit: [3f0951e63bb609114bb0ebae9b3873aba4cbbcfc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3f0951e63bb609114bb0ebae9b3873aba4cbbcfc)
+* test: Catchup blobbing unit tests
+  * Associated pull request: [30203](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30203)
+  * Commit: [c828e2cd2f57385292230ff6bff5ff3f1ca91f84](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c828e2cd2f57385292230ff6bff5ff3f1ca91f84)
+* refactor: BREAKING CHANGE: remove generic parameters from forest
+  * Associated pull request: [30375](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30375)
+  * Commit: [ddc1328f1d915374a6f06981b4f3669f94568a30](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ddc1328f1d915374a6f06981b4f3669f94568a30)
+
 ## 0.100.1
 
 * build: Update dependencies
