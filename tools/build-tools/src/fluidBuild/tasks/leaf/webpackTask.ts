@@ -65,6 +65,11 @@ export class WebpackTask extends LeafWithDoneFileTask {
                 if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
                     this.logVerboseDependency(child, "build:copy");
                 }
+            } else if (this.addChildTask(dependentTasks, child, "npm run webpack")) {
+                this.logVerboseDependency(child, "webpack");
+                if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
+                    this.logVerboseDependency(child, "build:copy");
+                }
             } else if (this.addChildTask(dependentTasks, child, "tsc")) {
                 this.logVerboseDependency(child, "tsc");
                 if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {

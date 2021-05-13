@@ -314,7 +314,7 @@ export interface IParsedUrl {
 }
 
 // @public
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // @deprecated (undocumented)
     static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
@@ -346,8 +346,8 @@ export enum ReconnectMode {
 }
 
 // @public (undocumented)
-export class RelativeLoader extends EventEmitter implements ILoader {
-    constructor(loader: ILoader, container: Container);
+export class RelativeLoader implements ILoader {
+    constructor(container: Container, loader: ILoader | undefined);
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)

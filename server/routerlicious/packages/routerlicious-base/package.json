@@ -56,7 +56,6 @@
     "@fluidframework/server-services": "^0.1025.0",
     "@fluidframework/server-services-client": "^0.1025.0",
     "@fluidframework/server-services-core": "^0.1025.0",
-    "@fluidframework/server-services-ordering-eventhub": "^0.1025.0",
     "@fluidframework/server-services-ordering-kafkanode": "^0.1025.0",
     "@fluidframework/server-services-ordering-rdkafka": "^0.1025.0",
     "@fluidframework/server-services-utils": "^0.1025.0",

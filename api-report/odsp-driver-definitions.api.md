@@ -13,8 +13,6 @@ export type CacheContentType = "snapshot" | "ops";
 // @public (undocumented)
 export interface HostStoragePolicy {
     // (undocumented)
-    blobDeduping?: boolean;
-    // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
     // (undocumented)

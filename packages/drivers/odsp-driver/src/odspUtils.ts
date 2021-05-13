@@ -25,6 +25,8 @@ import {
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
+    ICacheEntry,
+    snapshotKey,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
@@ -271,4 +273,16 @@ export function toInstrumentedOdspTokenFetcher(
             }),
             { cancel: "generic" });
     };
+}
+
+export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICacheEntry {
+    const cacheEntry: ICacheEntry = {
+        type: snapshotKey,
+        key: "",
+        file: {
+            resolvedUrl: odspResolvedUrl,
+            docId: odspResolvedUrl.hashedDocumentId,
+        },
+    };
+    return cacheEntry;
 }
