@@ -23,7 +23,7 @@ document.title = containerId;
 class CustomLogger implements ITelemetryBaseLogger {
     constructor() {}
     send(event: ITelemetryBaseEvent) {
-        console.log("Custom telemetry object array: " + JSON.stringify(event));
+        console.log("Custom telemetry object array: ".concat(JSON.stringify(event)));
     }
 }
 

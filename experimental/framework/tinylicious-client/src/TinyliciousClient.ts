@@ -32,7 +32,7 @@ export class TinyliciousClientInstance {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, iTelemetryBaseLogger?: ITelemetryBaseLogger) {
+    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             serviceConnectionConfig?.port,
@@ -129,7 +129,7 @@ export class TinyliciousClientInstance {
 export class TinyliciousClient {
     private static globalInstance: TinyliciousClientInstance | undefined;
 
-    static init(iTelemetryBaseLogger?: ITelemetryBaseLogger, serviceConnectionConfig?: TinyliciousConnectionConfig) {
+    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (TinyliciousClient.globalInstance) {
             console.log(
                 `TinyliciousClient has already been initialized. Using existing instance of
@@ -138,7 +138,6 @@ export class TinyliciousClient {
         }
         TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,
-            iTelemetryBaseLogger,
         );
     }
 
