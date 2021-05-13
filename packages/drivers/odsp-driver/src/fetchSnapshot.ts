@@ -79,7 +79,6 @@ async function redeemSharingLink(
                 assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
-                assert(encodedShareUrl !== undefined, "ShareId should be present for share link");
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
@@ -95,24 +94,10 @@ export async function fetchSnapshotWithRedeem(
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+    removeEntries: () => Promise<void>,
 ): Promise<ISnapshotCacheValue> {
     try {
-        const odspSnapshot = await fetchLatestSnapshotCore(
-            odspResolvedUrl,
-            storageTokenFetcher,
-            snapshotOptions,
-            logger,
-            snapshotDownloader,
-            putInCache,
-        );
-        return odspSnapshot;
-    } catch(error) {
-        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
-            logger.sendErrorEvent({
-                eventName: "RedeemFallback",
-                errorType: error.errorType,
-            });
-            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+        try {
             const odspSnapshot = await fetchLatestSnapshotCore(
                 odspResolvedUrl,
                 storageTokenFetcher,
@@ -120,11 +105,36 @@ export async function fetchSnapshotWithRedeem(
                 logger,
                 snapshotDownloader,
                 putInCache,
-                false,
             );
             return odspSnapshot;
+        } catch(error) {
+            if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+                logger.sendErrorEvent({
+                    eventName: "RedeemFallback",
+                    errorType: error.errorType,
+                });
+                await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+                const odspSnapshot = await fetchLatestSnapshotCore(
+                    odspResolvedUrl,
+                    storageTokenFetcher,
+                    snapshotOptions,
+                    logger,
+                    snapshotDownloader,
+                    putInCache,
+                    false,
+                );
+                return odspSnapshot;
+            }
+            throw error;
         }
-        throw error;
+    } catch(error) {
+        // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't
+        // have permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching
+        // snapshot from cache in the future.
+        if (typeof error === "object" && error !== null && error.errorType === DriverErrorType.authorizationError
+            || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+            await removeEntries();
+        }
     }
 }
 
@@ -345,10 +355,8 @@ export function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, erro
     return false;
 }
 
-function getEncodedShareUrl(url: string): string | undefined {
-    if (!url) {
-      return undefined;
-    }
+function getEncodedShareUrl(url: string): string {
+    assert(!url, "Url should not be empty");
 
     /**
      * Encode the url to accepted format by Sharepoint

@@ -603,6 +603,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 valueWithEpoch.value,
             );
         };
+        const removeEntries = async () => {
+            await this.cache.persistedCache.removeEntries();
+        }
         try {
             const odspSnapshot = await fetchSnapshotWithRedeem(
                 this.odspResolvedUrl,
@@ -610,7 +613,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 snapshotOptions,
                 this.logger,
                 snapshotDownloader,
-                putInCache);
+                putInCache,
+                removeEntries);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -631,13 +635,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     snapshotOptionsWithoutBlobs,
                     this.logger,
                     snapshotDownloader,
-                    putInCache);
+                    putInCache,
+                    removeEntries);
                 return odspSnapshot;
-            }
-            // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have
-            // permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching snapshot from cache in the future.
-            if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                await this.cache.persistedCache.removeEntries();
             }
             throw error;
         }

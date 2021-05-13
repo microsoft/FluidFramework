@@ -66,6 +66,9 @@ export async function prefetchLatestSnapshot(
         );
         return cacheP;
     };
+    const removeEntries = async () => {
+        await persistedCache.removeEntries(snapshotKey.file);
+    }
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
@@ -77,19 +80,10 @@ export async function prefetchLatestSnapshot(
                     odspLogger,
                     snapshotDownloader,
                     putInCache,
+                    removeEntries,
                 );
             assert(cacheP !== undefined, "caching was not performed!");
             await cacheP;
             return true;
-    }).catch(async (error) => {
-        const errorType = error.errorType;
-        // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't
-        // have permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching
-        // snapshot from cache in the future.
-        if (errorType === DriverErrorType.authorizationError
-            || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-            await persistedCache.removeEntries(snapshotKey.file);
-        }
-        return false;
-    });
+    }).catch(async (error) => false);
 }
