@@ -37,9 +37,9 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -60,9 +60,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         errorMessage: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
-        statusCode: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -107,9 +107,9 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        statusCode?: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -120,11 +120,11 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterSeconds?: number,
-    statusCode?: number) {
+    props?: ITaggableTelemetryProperties) {
     if (retryAfterSeconds !== undefined && canRetry) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+        return new ThrottlingError(errorMessage, retryAfterSeconds, props);
     }
-    return new GenericNetworkError(errorMessage, canRetry, statusCode);
+    return new GenericNetworkError(errorMessage, canRetry, props);
 }
 
 /**
