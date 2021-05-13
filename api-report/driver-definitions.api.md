@@ -166,8 +166,6 @@ export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     // (undocumented)
     readonly minBlobSize?: number;
-    // @deprecated (undocumented)
-    readonly supportsSummaryUploadWithProtocolTree?: true;
 }
 
 // @public
@@ -249,8 +247,6 @@ export type IStreamResult<T> = {
 // @public
 export interface ISummaryContext {
     readonly ackHandle: string | undefined;
-    // @deprecated (undocumented)
-    readonly includeProtocolTree?: boolean;
     readonly proposalHandle: string | undefined;
     // (undocumented)
     readonly referenceSequenceNumber: number;
