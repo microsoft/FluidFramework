@@ -1,5 +1,5 @@
 ---
-title: PropertySets Overview
+title: Overview
 menuPosition: 2
 ---
 
@@ -27,3 +27,61 @@ following categories:
 
 **Reserved Property**
   A reserved property is a container property whose structure is predefined by PropertyDDS.
+
+  ## Accessing the ProperySet Root
+
+  The root of the *PropertySet* hierachy can be accessed through the root property of the *Property DDS*
+
+  ```javascript
+  var rootProperty = myPropertyDDS.root;
+  ```
+
+  The root property is of type `NodeProperty` from the root you can traverse the hierachy and make changes to values, insert and remove properties.
+
+## Add Data to the PropertySet
+```javascript
+var stringProperty = PropertyFactory.create('String');
+
+// Set it’s value to 'Hello World!'
+stringProperty.setValue('Hello World!');
+
+
+// Add it to the root property under the id 'myProperty'
+rootProperty.insert('myProperty', stringProperty);
+
+console.log('Added one property to the root property');
+rootProperty.prettyPrint();
+```
+### What is Property Factory?
+
+The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum, Uint16, Uint32, etc. and custom tipes) For a more detailed explanation please refer to the [PropertyFactory Section]({{< ref "property-factory.md" >}}).
+
+Changes are always local only and will only modify your local property hierachy. To share the changes you will have to `commit`the changes. This will be explaiend in more detail below.
+## Commiting changes to Fluid
+
+Finally, we are ready to make our first change to the state of the Property DDS. This is done through the commit API.
+
+
+### What is Commit?
+A Commit is the “unit of change” in PropertyDDS. It stores an atomic transaction recording every insert, modify and delete operations that happened since the previous commit.
+
+Much like in Git, a chain of commits is known as a “Branch”. The state of the is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a must be referring the most recent state in order to persist any changes in PropertyDDS.
+
+```javascript
+myPropertyDDS.commit()
+```
+
+## Read Data From The PropertySet
+
+Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the PropertyDDS that we wrote or data into. Once the *Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
+
+```javascript
+// Get the root property
+var rootProperty = myPropertyDDS.root;
+
+// Fetch the string property we previously inserted
+var stringProperty = rootProperty.resolvePath('myProperty');
+
+console.log(`My string property has value ${stringProperty.getValue()}`);
+// My string property has value Hello World!
+```
