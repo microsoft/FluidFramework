@@ -54,12 +54,15 @@ class LoadTestDataStoreModel {
         }
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
         while(runtime.deltaManager.lastSequenceNumber < lastKnownSeq) {
-            await new Promise((resolve,reject)=>{
+            await timeoutPromise((resolve,reject)=>{
                 if(runtime.disposed) {
                     reject(new Error("disposed"));
                     return;
                 }
                 runtime.deltaManager.once("op", resolve);
+            },
+            {
+                reject: false,
             });
         }
     }
