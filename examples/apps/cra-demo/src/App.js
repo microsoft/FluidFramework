@@ -19,7 +19,7 @@ const getContainerId = () => {
 
 TinyliciousClient.init();
 
-const initFluidData = async (setData) => {
+const getFluidData = async () => {
     const containerConfig = {
         name: 'cra-demo-container',
         initialObjects: { myMap: SharedMap }
@@ -29,35 +29,36 @@ const initFluidData = async (setData) => {
     const fluidContainer = isNew
         ? await TinyliciousClient.createContainer({ id }, containerConfig)
         : await TinyliciousClient.getContainer({ id }, containerConfig);
-    setData(fluidContainer.initialObjects);
-}
+        // returned initialObjects are live Fluid data structures
+        return fluidContainer.initialObjects;
+    }
 
 function App() {
 
-    const [fluid, setFluidData] = React.useState();
+    const [fluidData, setFluidData] = React.useState();
     const [time, setViewTime] = React.useState('');
 
     React.useEffect(() => {
-        if (fluid === undefined) {
-            // Get/Create container and set up our Fluid data structures
-            initFluidData(setFluidData);
+        if (fluidData === undefined) {
+            // Get/Create container and return live Fluid data
+            getFluidData().then(data => setFluidData(data));
         } else {
             // set up initial UI state
-            setViewTime(fluid.myMap.get("time"));
+            setViewTime(fluidData.myMap.get("time"));
 
             // sync Fluid data into view state
-            const handleChange = () => setViewTime(fluid.myMap.get("time"));
+            const handleChange = () => setViewTime(fluidData.myMap.get("time"));
 
             // update state each time our map changes
-            fluid.myMap.on("valueChanged", handleChange);
-            return () => { fluid.myMap.off("valueChanged", handleChange) }
+            fluidData.myMap.on("valueChanged", handleChange);
+            return () => { fluidData.myMap.off("valueChanged", handleChange) }
         }
-    }, [fluid]);
+    }, [fluidData]);
 
-    if (!fluid) return <div />;
+    if (!fluidData) return <div />;
 
-    // business logic could be passed into the app via context
-    const setTime = () => fluid.myMap.set("time", Date.now().toString());
+    // business logic could be passed into the view via context
+    const setTime = () => fluidData.myMap.set("time", Date.now().toString());
 
     return (
         <div>
