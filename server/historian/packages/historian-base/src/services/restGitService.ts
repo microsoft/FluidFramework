@@ -77,7 +77,7 @@ export class RestGitService {
 
     public async getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${this.getRepoPath()}/contents/${path}?${query}`);
+        return this.get(`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`);
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
