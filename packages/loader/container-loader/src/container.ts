@@ -326,12 +326,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    // Depending where error happens, we can be attempting to connect to web socket
-                    // and continuously retrying (consider offline mode)
-                    // Host has no container to close, so it's prudent to do it here
-                    const error = err ?? CreateContainerError("Container closed without an error");
-                    container.close(error);
-                    rej(error);
+                    rej(err ?? CreateContainerError("Container closed without an error"));
                 };
                 container.on("closed", onClosed);
 
@@ -345,6 +340,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     },
                     (error) => {
                         const err = CreateContainerError(error);
+                        // Depending where error happens, we can be attempting to connect to web socket
+                        // and continuously retrying (consider offline mode)
+                        // Host has no container to close, so it's prudent to do it here
+                        container.close(error);
                         onClosed(err);
                     });
             }),
@@ -1235,6 +1234,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
+        // Safety net: static version of Container.load() should have got this message through "closed" handler.
+        // But if that did not happen for some reason, fail load for sure.
+        // Otherwise we can get into situations where container is closed and does not try to connect to ordering
+        // service, but caller does not know that (callers do expect container to be not closed on successful path
+        // and listen only on "closed" event)
+        if (this.closed) {
+            throw new Error("Container was closed while load()");
+        }
+
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
@@ -1568,14 +1576,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
+        deltaManager.on("closed", (error?: ICriticalContainerError) => {
+            this.close(error);
+        });
+
         return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
-        });
-
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,

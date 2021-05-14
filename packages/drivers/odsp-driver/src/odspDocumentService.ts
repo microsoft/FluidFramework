@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -130,8 +127,7 @@ export class OdspDocumentService implements IDocumentService {
 
         this.hostPolicy = hostPolicy;
         if (this.odspResolvedUrl.summarizer) {
-            this.hostPolicy = cloneDeep(this.hostPolicy);
-            this.hostPolicy.summarizerClient = true;
+            this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
 
@@ -183,7 +179,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             batchSize,
             concurrency,
-            async (from, to) => service.get(from, to),
+            async (from, to, telemetryProps) => service.get(from, to, telemetryProps),
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];
@@ -207,7 +203,12 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
-                const code = e?.response ? JSON.parse(e?.response)?.error?.code : undefined;
+                let code: string | undefined;
+                try {
+                    code = e?.response ? JSON.parse(e?.response)?.error?.code : undefined;
+                } catch (error) {
+                    throw e;
+                }
                 switch (code) {
                     case "sessionForbiddenOnPreservedFiles":
                     case "sessionForbiddenOnModerationEnabledLibrary":
