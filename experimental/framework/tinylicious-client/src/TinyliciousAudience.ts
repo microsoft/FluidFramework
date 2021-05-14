@@ -3,64 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { RootDataObject } from "@fluid-experimental/fluid-static";
-import { IAudience } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
-import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IConnectedClient, ILastEditedResult, ITinyliciousAudience, TinyliciousMember } from "./interfaces";
+import { ServiceAudience, ILastEditedResult } from "@fluid-experimental/fluid-static";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
-export class TinyliciousAudience extends EventEmitter implements ITinyliciousAudience {
-  private readonly audience: IAudience;
-
-  // Data object that holds the last edited state and is used to load the data prior to the
-  // current client joining the session
-  private readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
-
-  // Maintains a map of the last edited times keyed by client ID after the current client
-  // joined the session
-  private readonly lastEditedTimesByClient = new Map<string, Date>();
-
-  constructor(private readonly container: Container, rootDataObject: RootDataObject) {
-    super();
-    this.audience = container.audience;
-    this.lastEditedTracker = rootDataObject.IFluidLastEditedTracker;
-
-    // Consolidating both the addition/removal of members
-    this.audience.on("addMember", () => {
-      this.emit("membersChanged", this.getMembers());
-    });
-
-    this.audience.on("removeMember", () => {
-      this.emit("membersChanged", this.getMembers());
-    });
-
-    this.container.on("connected", () => {
-      this.emit("membersChanged", this.getMembers());
-    });
-
-    // Update the last edited information anytime the root object emits an op by a member
-    // of the current audience. This in turn emits a "lastEditedChanged" event so that
-    // any listeners can update their state to reflect the changes
-    rootDataObject.on("op", (message: ISequencedDocumentMessage) => {
-      this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
-      const member = this.getMemberByClientId(
-        message.clientId,
-      );
-      if (member !== undefined) {
-        this.emit("lastEditedChanged", { member, timestamp :new Date(message.timestamp) });
-      }
-    });
-
-    // Fetch the last edit information that was stored prior to the current client joining
-    // the session
-    const lastEditedMemberResults = this.getLastEdited();
-    if (lastEditedMemberResults !== undefined) {
-      this.emit("lastEditedChanged", lastEditedMemberResults);
-    }
-  }
-
+export class TinyliciousAudience extends ServiceAudience implements ITinyliciousAudience {
   /**
    * @inheritdoc
    */
@@ -101,31 +48,8 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
   /**
    * @inheritdoc
    */
-  public getCurrentClient(): IConnectedClient | undefined {
-    const clientId = this.container.clientId;
-    if (clientId === undefined) {
-      return undefined;
-    }
-    const client = this.audience.getMember(clientId);
-    if (client === undefined) {
-      throw Error(`Failed to find client ${clientId} even after it is connected`);
-    }
-    return {
-      clientId,
-      connectionMode: client.mode,
-      timeLastActive: this.lastEditedTimesByClient.get(clientId),
-    };
-  }
-
-  /**
-   * @inheritdoc
-   */
   public getCurrentMember(): TinyliciousMember | undefined {
-    const clientId = this.container.clientId;
-    if (clientId === undefined) {
-      return undefined;
-    }
-    return this.getMemberByClientId(clientId);
+    return super.getCurrentMember() as TinyliciousMember;
   }
 
   /**
@@ -144,20 +68,5 @@ export class TinyliciousAudience extends EventEmitter implements ITinyliciousAud
       };
       return { member, timestamp };
     }
-  }
-
-  private getMemberByClientId(clientId: string): TinyliciousMember | undefined {
-    // Fetch the user ID assoicated with this client ID from the runtime
-    const internalAudienceMember = this.audience.getMember(clientId);
-    if (internalAudienceMember === undefined) {
-      return undefined;
-    }
-    // Return the member object with any other clients associated for this user
-    const allMembers = this.getMembers();
-    const lastEditedMember = allMembers.get(internalAudienceMember?.user.id);
-    if (lastEditedMember === undefined) {
-      throw Error(`Attempted to fetch client ${clientId} that is not part of the current member list`);
-    }
-    return lastEditedMember;
   }
 }

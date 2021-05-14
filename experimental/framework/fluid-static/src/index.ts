@@ -4,4 +4,5 @@
  */
 
 export * from "./containerCode";
+export * from "./serviceAudience";
 export * from "./types";

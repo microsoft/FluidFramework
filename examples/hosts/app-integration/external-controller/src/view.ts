@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILastEditedResult, ITinyliciousAudience, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
+import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -70,7 +70,7 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
         `;
     };
 
-    const onLastEditedChanged = (result: ILastEditedResult<TinyliciousMember>) => {
+    const onLastEditedChanged = (result) => {
         lastEditedDiv.textContent = `
             Last Edited By: ${result.member.userName} at ${result.timestamp.toLocaleString()}
         `;
