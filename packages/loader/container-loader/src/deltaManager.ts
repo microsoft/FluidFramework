@@ -829,7 +829,7 @@ export class DeltaManager
         if (to !== undefined) {
             controller = new AbortController();
 
-            assert(this.closeAbortController.signal.onabort === null, "reentrancy");
+            assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
             this.closeAbortController.signal.onabort = () => controller.abort();
 
             const listener = (op: ISequencedDocumentMessage) => {
@@ -1230,7 +1230,7 @@ export class DeltaManager
         // It's responsibility of
         // - attachOpHandler()
         // - fetchMissingDeltas() after it's done with querying storage
-        assert(this.pending.length === 0 || this.fetchReason !== undefined, "Pending ops");
+        assert(this.pending.length === 0 || this.fetchReason !== undefined, 0x1e9 /* "Pending ops" */);
 
         if (messages.length === 0) {
             return;
