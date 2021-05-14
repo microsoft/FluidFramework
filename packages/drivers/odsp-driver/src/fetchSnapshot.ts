@@ -73,39 +73,33 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
 ): Promise<ISnapshotCacheValue> {
-    try {
-        try {
-            const odspSnapshot = await fetchLatestSnapshotCore(
-                odspResolvedUrl,
+    return await fetchLatestSnapshotCore(
+        odspResolvedUrl,
+        storageTokenFetcher,
+        snapshotOptions,
+        logger,
+        snapshotDownloader,
+        putInCache,
+    ).catch(async (error) => {
+        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+            logger.sendErrorEvent({
+                eventName: "RedeemFallback",
+                errorType: error.errorType,
+            });
+            await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+            const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
+                { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
+            return await fetchLatestSnapshotCore(
+                odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
                 snapshotOptions,
                 logger,
                 snapshotDownloader,
                 putInCache,
             );
-            return odspSnapshot;
-        } catch(error) {
-            if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
-                logger.sendErrorEvent({
-                    eventName: "RedeemFallback",
-                    errorType: error.errorType,
-                });
-                await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
-                const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                    { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-                const odspSnapshot = await fetchLatestSnapshotCore(
-                    odspResolvedUrlWithoutShareLink,
-                    storageTokenFetcher,
-                    snapshotOptions,
-                    logger,
-                    snapshotDownloader,
-                    putInCache,
-                );
-                return odspSnapshot;
-            }
-            throw error;
         }
-    } catch(error) {
+        throw error;
+    }).catch(async (error) => {
         // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't
         // have permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching
         // snapshot from cache in the future.
@@ -114,7 +108,7 @@ export async function fetchSnapshotWithRedeem(
             await removeEntries();
         }
         throw error;
-    }
+    });
 }
 
 async function redeemSharingLink(
@@ -127,8 +121,7 @@ async function redeemSharingLink(
         {
             eventName: "RedeemShareLink",
         },
-        async () => {
-            await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+        async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
                 assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
@@ -136,8 +129,8 @@ async function redeemSharingLink(
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
                 return fetchAndParseAsJSONHelper(url, { headers });
-            });
-    });
+        }),
+    );
 }
 
 async function fetchLatestSnapshotCore(
@@ -323,7 +316,7 @@ async function fetchLatestSnapshotCore(
     });
 }
 
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;
     let numBlobs = 0;
     let encodedBlobsSize = 0;
@@ -346,11 +339,11 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
-export function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
-    const errorType = error.errorType;
+function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
     if (odspResolvedUrl.sharingLinkToRedeem !== undefined
-        && (errorType === DriverErrorType.authorizationError
-        || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
+        && (typeof error === "object" && error !== null)
+        && (error.errorType === DriverErrorType.authorizationError
+        || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
         return true;
     }
     return false;

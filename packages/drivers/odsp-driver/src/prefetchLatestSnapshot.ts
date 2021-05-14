@@ -66,9 +66,7 @@ export async function prefetchLatestSnapshot(
         );
         return cacheP;
     };
-    const removeEntries = async () => {
-        await persistedCache.removeEntries(snapshotKey.file);
-    };
+    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
