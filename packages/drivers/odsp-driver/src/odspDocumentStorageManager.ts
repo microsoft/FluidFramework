@@ -791,8 +791,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 ...hierarchicalAppTree.commits,
             },
             trees: {
-                ".protocol": hierarchicalProtocolTree,
                 ...hierarchicalAppTree.trees,
+                ".protocol": hierarchicalProtocolTree,
+
             },
         };
 
