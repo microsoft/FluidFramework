@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -94,8 +91,8 @@ export async function fetchSnapshotWithRedeem(
                     errorType: error.errorType,
                 });
                 await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
-                const odspResolvedUrlWithoutShareLink = cloneDeep(odspResolvedUrl);
-                odspResolvedUrlWithoutShareLink.sharingLinkToRedeem = undefined;
+                const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
+                    { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
                 const odspSnapshot = await fetchLatestSnapshotCore(
                     odspResolvedUrlWithoutShareLink,
                     storageTokenFetcher,
