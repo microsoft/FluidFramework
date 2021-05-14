@@ -1814,15 +1814,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
         const loader = new RelativeLoader(this, this.loader);
-        const appSnapshot = snapshot !== undefined && ".app" in snapshot.trees
-            ? snapshot.trees[".app"]
-            : snapshot;
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
             codeDetails,
-            appSnapshot,
+            snapshot,
             attributes,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
