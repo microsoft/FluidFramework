@@ -6,8 +6,8 @@
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
 const _ = require('lodash');
-const BaseProperty = require('./base_property');
-const ContainerProperty = require('./container_property');
+const { BaseProperty } = require('./base_property');
+const {ContainerProperty} = require('./container_property');
 const deserialize = require('../container_serializer').deserialize;
 const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
@@ -58,7 +58,7 @@ IndexedCollectionBaseProperty.prototype._containsPrimitiveTypes = false;
  *
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
  *                                                                       will be removed
- * @private
+ * @internal
  */
 IndexedCollectionBaseProperty.prototype._cleanDirty = function(in_flags) {
   // Invoke parent
@@ -246,7 +246,7 @@ IndexedCollectionBaseProperty.prototype._removeByKey = function(in_key, in_repor
  *     this can result in an infinite loop
  *
  * @return {Object} The serialized representation of this property
- * @private
+ * @internal
  */
 IndexedCollectionBaseProperty.prototype._serialize = function(in_dirtyOnly,
                                                               in_includeRootTypeid,

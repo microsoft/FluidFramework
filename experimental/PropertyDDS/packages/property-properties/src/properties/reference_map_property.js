@@ -8,11 +8,11 @@
 const StringMapProperty = require('./value_map_property').StringMapProperty;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
-const BaseProperty = require('./base_property');
+const { BaseProperty } = require('./base_property');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _ = require('lodash');
-const ContainerProperty = require('./container_property');
-const ReferenceProperty = require('./reference_property');
+const {ContainerProperty} = require('./container_property');
+const {ReferenceProperty} = require('./reference_property');
 
 
 /**
@@ -30,7 +30,7 @@ var ReferenceMapProperty = function( in_params) {
   StringMapProperty.call( this, in_params );
 };
 ReferenceMapProperty.prototype = Object.create( StringMapProperty.prototype );
-
+/** @internal */
 ReferenceMapProperty.prototype._typeid = 'Reference';
 
 /**

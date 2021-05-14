@@ -6,7 +6,7 @@
  * @namespace property-properties
  */
 const Property = require('./properties/lazy_loaded_properties');
-const ContainerProperty = require('./properties/container_property');
+const {ContainerProperty} = require('./properties/container_property');
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 
 

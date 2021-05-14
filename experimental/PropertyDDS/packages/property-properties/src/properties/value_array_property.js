@@ -13,7 +13,7 @@ const _castFunctors = require('./primitive_type_casts');
 const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
 const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
-const ArrayProperty = require('./array_property');
+const {ArrayProperty} = require('./array_property');
 const Int64Property = require('../properties/int_properties').Int64Property;
 const Uint64Property = require('../properties/int_properties').Uint64Property;
 
@@ -30,10 +30,12 @@ var ValueArrayProperty = function(in_params) {
   ArrayProperty.call(this, in_params, true);
 };
 ValueArrayProperty.prototype = Object.create( ArrayProperty.prototype );
+/** @internal */
 ValueArrayProperty.prototype._isPrimitive = true;
 
 /**
  * returns the value at in_position for a primitive array
+ * @internal
  * @param {number} in_position the array index
  * @return {*} the value
  */
@@ -57,7 +59,7 @@ ValueArrayProperty.prototype.getValues = function() {
 
 /**
  * Resolves a direct child node based on the given path segment
- *
+ * @internal
  * @param {String} in_segment                                   - The path segment to resolve
  * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
  *
@@ -72,7 +74,7 @@ ValueArrayProperty.prototype._resolvePathSegment = function(in_segment, in_segme
  * Function to serialize special primitive types.
  * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
  * special treatment on serialization. For supported types, we can just return the input here.
- *
+ * @internal
  * @param {*} in_obj - The object to be serialized
  * @return {property-properties.SerializedChangeSet} the serialized object
  */
@@ -84,7 +86,7 @@ ValueArrayProperty.prototype._serializeValue = function(in_obj) {
  * Function to serialize arrays of special primitive types.
  * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
  * special treatment on serialization. For supported types, we can just return the input here.
- *
+ * @internal
  * @param {Array} in_array - The array of special objects to be serialized
  * @return {Array<property-properties.SerializedChangeSet>} the serialized object
  */
@@ -96,7 +98,7 @@ ValueArrayProperty.prototype._serializeArray = function(in_array) {
  * Function to deserialize arrays of special primitive types.
  * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
  * special treatment on deserialization. For supported types, we can just return the input here.
- *
+ * @internal
  * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
  * @return {Array} in_array - The array of special objects that were deserialized
  */
@@ -119,13 +121,16 @@ var Float32ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Float32ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Float32ArrayProperty.prototype._typeid = 'Float32';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Float32ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+    /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Float32Array, in_length);
 };
 
@@ -145,13 +150,16 @@ var Float64ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Float64ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Float64ArrayProperty.prototype._typeid = 'Float64';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Float64ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Float64Array, in_length);
 };
 
@@ -170,13 +178,16 @@ var Uint8ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Uint8ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Uint8ArrayProperty.prototype._typeid = 'Uint8';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Uint8ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Uint8Array, in_length);
 };
 
@@ -195,13 +206,16 @@ var Int8ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Int8ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Int8ArrayProperty.prototype._typeid = 'Int8';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Int8ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Int8Array, in_length);
 };
 
@@ -220,13 +234,16 @@ var Uint16ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Uint16ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Uint16ArrayProperty.prototype._typeid = 'Uint16';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Uint16ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Uint16Array, in_length);
 };
 
@@ -245,13 +262,16 @@ var Int16ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Int16ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Int16ArrayProperty.prototype._typeid = 'Int16';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Int16ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Int16Array, in_length);
 };
 
@@ -270,13 +290,16 @@ var Uint32ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Uint32ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Uint32ArrayProperty.prototype._typeid = 'Uint32';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Uint32ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Uint32Array, in_length);
 };
 
@@ -295,13 +318,16 @@ var Int32ArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 Int32ArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 Int32ArrayProperty.prototype._typeid = 'Int32';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Int32ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
 };
 
@@ -407,6 +433,7 @@ var Int64ArrayProperty = function( in_params) {
   Integer64ArrayProperty.call( this, in_params );
 };
 Int64ArrayProperty.prototype = Object.create( Integer64ArrayProperty.prototype );
+/** @internal */
 Int64ArrayProperty.prototype._typeid = 'Int64';
 
 /**
@@ -459,8 +486,10 @@ Int64ArrayProperty.prototype._deserializeValue = function(in_serializedObj) {
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Int64ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, new Int64());
@@ -482,6 +511,7 @@ var Uint64ArrayProperty = function( in_params) {
   Integer64ArrayProperty.call( this, in_params );
 };
 Uint64ArrayProperty.prototype = Object.create( Integer64ArrayProperty.prototype );
+/** @internal */
 Uint64ArrayProperty.prototype._typeid = 'Uint64';
 
 /**
@@ -534,8 +564,10 @@ Uint64ArrayProperty.prototype.insertRange = function(in_offset, in_array) {
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 Uint64ArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, new Uint64());
@@ -557,13 +589,16 @@ var StringArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 StringArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/** @internal */
 StringArrayProperty.prototype._typeid = 'String';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 StringArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, '');
@@ -585,13 +620,16 @@ var BoolArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params, Array, true );
 };
 BoolArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+/**@internal */
 BoolArrayProperty.prototype._typeid = 'Bool';
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 BoolArrayProperty.prototype._dataArrayCreate = function(in_length) {
+  /** @internal */
   this._dataArrayRef = new DataArrays.BoolDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, false);

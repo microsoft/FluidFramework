@@ -63,4 +63,5 @@ experimental:
 - "@fluidframework/react"
 - "@fluid-experimental/property-dds"
 - "@fluid-experimental/property-binder"
+- "@fluid-experimental/property-properties"
 

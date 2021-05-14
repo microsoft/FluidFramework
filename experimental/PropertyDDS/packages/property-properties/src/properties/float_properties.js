@@ -6,7 +6,7 @@
  * @fileoverview Definition of the Float*Property classes
  */
 
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 
 /**
@@ -24,7 +24,9 @@ var Float32Property = function( in_params ) {
   this._data = 0;
 };
 Float32Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Float32Property.prototype._typeid = 'Float32';
+/** @internal */
 Float32Property.prototype._castFunctor = _castFunctors.Float32;
 
 

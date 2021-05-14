@@ -6,7 +6,7 @@
  * @fileoverview Definition of the BooleanProperty class
  */
 
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 
 /**
@@ -25,7 +25,9 @@ var BoolProperty = function(in_params) {
 };
 BoolProperty.prototype = Object.create(ValueProperty.prototype);
 
+/**@internal */
 BoolProperty.prototype._typeid = 'Bool';
+/**@internal */
 BoolProperty.prototype._castFunctor = _castFunctors.Boolean;
 
 module.exports = BoolProperty;

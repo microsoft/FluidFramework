@@ -29,7 +29,7 @@ var castArrays = {
  * @param {TypedArray}                    in_array - The data array to use for the cast
  * @param {number|string|boolean}         in_value - The value to use in the cast
  * @return {number|string|boolean} The casted value
- * @private
+ * @internal
  */
 var _simpleCastFunctor = function(in_array, in_value) {
   in_array[0] = in_value;

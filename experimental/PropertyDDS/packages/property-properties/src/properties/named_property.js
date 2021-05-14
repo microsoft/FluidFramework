@@ -6,8 +6,8 @@
  * @fileoverview Definition of the named property class
  */
 
-const ContainerProperty = require('./container_property');
-const BaseProperty = require('./base_property');
+const {ContainerProperty} = require('./container_property');
+const { BaseProperty } = require('./base_property');
 
 /**
  * A NamedProperty has a URN which uniquely identifies the property object. This makes it possible to store it in a
@@ -28,7 +28,7 @@ var NamedProperty = function(in_params) {
 };
 
 NamedProperty.prototype = Object.create(ContainerProperty.prototype);
-
+/** @internal */
 NamedProperty.prototype._typeid = 'NamedProperty';
 
 /**

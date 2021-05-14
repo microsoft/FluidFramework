@@ -6,7 +6,7 @@
  * @fileoverview Definition of the Uint32Property class
  */
 
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 
 /**
@@ -24,7 +24,9 @@ var Uint8Property = function( in_params ) {
   this._data = 0;
 };
 Uint8Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Uint8Property.prototype._typeid = 'Uint8';
+/** @internal */
 Uint8Property.prototype._castFunctor = _castFunctors.Uint8;
 
 
@@ -44,7 +46,9 @@ var Uint16Property = function( in_params ) {
   this._data = 0;
 };
 Uint16Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Uint16Property.prototype._typeid = 'Uint16';
+/** @internal */
 Uint16Property.prototype._castFunctor = _castFunctors.Uint16;
 
 
@@ -64,7 +68,9 @@ var Uint32Property = function( in_params ) {
   this._data = 0;
 };
 Uint32Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Uint32Property.prototype._typeid = 'Uint32';
+/** @internal */
 Uint32Property.prototype._castFunctor = _castFunctors.Uint32;
 
 module.exports = {

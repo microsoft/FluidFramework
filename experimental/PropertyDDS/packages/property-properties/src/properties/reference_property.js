@@ -6,11 +6,11 @@
  * @fileoverview Definition of the ReferenceProperty class
  */
 
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
-const BaseProperty = require('./base_property');
-const ContainerProperty = require('./container_property');
+const { BaseProperty } = require('./base_property');
+const {ContainerProperty} = require('./container_property');
 const _castFunctors = require('./primitive_type_casts');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _ = require('lodash');
@@ -35,7 +35,9 @@ var ReferenceProperty = function( in_params ) {
   this._data = '';
 };
 ReferenceProperty.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 ReferenceProperty.prototype._typeid = 'Reference';
+/** @internal */
 ReferenceProperty.prototype._castFunctor = _castFunctors.String;
 
 /**
@@ -215,4 +217,4 @@ ReferenceProperty._convertInputToPath = function(in_value) {
   return path;
 };
 
-module.exports = ReferenceProperty;
+module.exports = {ReferenceProperty};

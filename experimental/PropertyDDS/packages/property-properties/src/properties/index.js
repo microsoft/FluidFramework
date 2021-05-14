@@ -2,59 +2,57 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-module.exports = {
-  ArrayProperty: require('./array_property'),
-  BaseProperty: require('./base_property'),
-  BoolArrayProperty: require('./value_array_property'),
-  BoolMapProperty: require('./value_map_property'),
-  BoolProperty: require('./bool_property'),
-  ContainerProperty: require('./container_property'),
-  EnumArrayProperty: require('./enum_array_property'),
-  EnumProperty: require('./enum_property'),
-  Float32ArrayProperty: require('./value_array_property'),
-  Float32MapProperty: require('./value_map_property'),
-  Float32Property: require('./float_properties').Float32Property,
-  Float64ArrayProperty: require('./value_array_property'),
-  Float64MapProperty: require('./value_map_property'),
-  Float64Property: require('./float_properties').Float64Property,
-  IndexedCollectionBaseProperty: require('./indexed_collection_base_property'),
-  Int16ArrayProperty: require('./value_array_property'),
-  Int16MapProperty: require('./value_map_property'),
-  Int16Property: require('./int_properties'),
-  Int32ArrayProperty: require('./value_array_property'),
-  Int32MapProperty: require('./value_map_property'),
-  Int32Property: require('./int_properties'),
-  Int64ArrayProperty: require('./value_array_property'),
-  Int64MapProperty: require('./value_map_property'),
-  Int64Property: require('./int_properties'),
-  Int8ArrayProperty: require('./value_array_property'),
-  Int8MapProperty: require('./value_map_property'),
-  Int8Property: require('./int_properties'),
-  MapProperty: require('./map_property'),
-  NamedNodeProperty: require('./named_node_property'),
-  NamedProperty: require('./named_property'),
-  NodeProperty: require('./node_property'),
-  ReferenceArrayProperty: require('./reference_array_property'),
-  ReferenceMapProperty: require('./reference_map_property'),
-  ReferenceProperty: require('./reference_property'),
-  SetProperty: require('./set_property'),
-  StringArrayProperty: require('./value_array_property'),
-  StringMapProperty: require('./value_map_property'),
-  StringProperty: require('./string_property'),
-  Uint16ArrayProperty: require('./value_array_property'),
-  Uint16MapProperty: require('./value_map_property'),
-  Uint16Property: require('./uint_properties'),
-  Uint32ArrayProperty: require('./value_array_property'),
-  Uint32MapProperty: require('./value_map_property'),
-  Uint32Property: require('./uint_properties'),
-  Uint64ArrayProperty: require('./value_array_property'),
-  Uint64MapProperty: require('./value_map_property'),
-  Uint64Property: require('./int_properties'),
-  Uint8ArrayProperty: require('./value_array_property'),
-  Uint8MapProperty: require('./value_map_property'),
-  Uint8Property: require('./uint_properties'),
-  ValueArrayProperty: require('./value_array_property'),
-  ValueMapProperty: require('./value_map_property'),
-  ValueProperty: require('./value_property'),
-  _castFunctors: require('./primitive_type_casts')
-};
+export const {ArrayProperty} = require('./array_property');
+export const { BaseProperty } = require('./base_property');
+export const BoolArrayProperty = require('./value_array_property');
+export const BoolMapProperty = require('./value_map_property');
+export const BoolProperty = require('./bool_property');
+export const {ContainerProperty} = require('./container_property');
+export const EnumArrayProperty = require('./enum_array_property');
+export const {EnumProperty} = require('./enum_property');
+export const Float32ArrayProperty = require('./value_array_property');
+export const Float32MapProperty = require('./value_map_property');
+export const Float32Property = require('./float_properties').Float32Property;
+export const Float64ArrayProperty = require('./value_array_property');
+export const Float64MapProperty = require('./value_map_property');
+export const Float64Property = require('./float_properties').Float64Property;
+export const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
+export const Int16ArrayProperty = require('./value_array_property');
+export const Int16MapProperty = require('./value_map_property');
+export const Int16Property = require('./int_properties');
+export const Int32ArrayProperty = require('./value_array_property');
+export const Int32MapProperty = require('./value_map_property');
+export const Int32Property = require('./int_properties');
+export const Int64ArrayProperty = require('./value_array_property');
+export const Int64MapProperty = require('./value_map_property');
+export const Int64Property = require('./int_properties');
+export const Int8ArrayProperty = require('./value_array_property');
+export const Int8MapProperty = require('./value_map_property');
+export const Int8Property = require('./int_properties');
+export const {MapProperty} = require('./map_property');
+export const NamedNodeProperty = require('./named_node_property');
+export const NamedProperty = require('./named_property');
+export const {NodeProperty} = require('./node_property');
+export const ReferenceArrayProperty = require('./reference_array_property');
+export const ReferenceMapProperty = require('./reference_map_property');
+export const {ReferenceProperty} = require('./reference_property');
+export const {SetProperty} = require('./set_property');
+export const StringArrayProperty = require('./value_array_property');
+export const StringMapProperty = require('./value_map_property');
+export const StringProperty = require('./string_property');
+export const Uint16ArrayProperty = require('./value_array_property');
+export const Uint16MapProperty = require('./value_map_property');
+export const Uint16Property = require('./uint_properties');
+export const Uint32ArrayProperty = require('./value_array_property');
+export const Uint32MapProperty = require('./value_map_property');
+export const Uint32Property = require('./uint_properties');
+export const Uint64ArrayProperty = require('./value_array_property');
+export const Uint64MapProperty = require('./value_map_property');
+export const Uint64Property = require('./int_properties');
+export const Uint8ArrayProperty = require('./value_array_property');
+export const Uint8MapProperty = require('./value_map_property');
+export const Uint8Property = require('./uint_properties');
+export const ValueArrayProperty = require('./value_array_property');
+export const ValueMapProperty = require('./value_map_property');
+export const {ValueProperty} = require('./value_property');
+export const _castFunctors = require('./primitive_type_casts');

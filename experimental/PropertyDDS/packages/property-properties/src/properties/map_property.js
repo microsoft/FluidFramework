@@ -5,8 +5,8 @@
 /**
  * @fileoverview Definition of the map property class
  */
-const BaseProperty = require('./base_property');
-const ContainerProperty = require('./container_property');
+const { BaseProperty } = require('./base_property');
+const {ContainerProperty} = require('./container_property');
 const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
@@ -80,7 +80,7 @@ MapProperty.prototype._isFlattenLeaf = function() {
  * @param {Boolean} in_typed - If the map's items have a typeid and a value then create the
  *   properties with that typeid, else use the set's typeid (support polymorphic items).
  * @see {setValues}
- * @private
+ * @internal
  */
 MapProperty.prototype._setValuesInternal = function(in_values, in_typed) {
   if (this._containsPrimitiveTypes) {
@@ -388,7 +388,7 @@ MapProperty.prototype.getIds = function() {
  * @return {string|undefined} The guid representing the scope in which the
  * map belongs to. If there is a workspace scope return it, else return the scope of this map.
  * @override
- * @private
+ * @internal
  */
 MapProperty.prototype._getScope = function() {
   var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
@@ -411,4 +411,4 @@ MapProperty.prototype.clear = function() {
 };
 
 
-module.exports = MapProperty;
+module.exports = {MapProperty};

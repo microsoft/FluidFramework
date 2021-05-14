@@ -10,9 +10,9 @@ const IndexedCollectionBaseProperty = require('./indexed_collection_base_propert
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').constants.PROPERTY_PATH_DELIMITER;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const BaseProperty = require('./base_property');
+const { BaseProperty } = require('./base_property');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-const ContainerProperty = require('./container_property');
+const {ContainerProperty} = require('./container_property');
 
 
 // This cache is used to store the static keys of templated types to accelerate the traversal over static members
@@ -50,7 +50,7 @@ var NodeProperty = function( in_params ) {
 };
 
 NodeProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
-
+/** @internal */
 NodeProperty.prototype._typeid = 'NodeProperty';
 
 /**
@@ -61,7 +61,7 @@ NodeProperty.prototype.isDynamic = function() { return true; };
 /**
  * Appends a property
  *
- * @param {String} [in_id]                         - The id under which the property is added. This parameter is
+ * @param {String} in_id                         - The id under which the property is added. This parameter is
  *                                                   optional. For NamedProperties it can be omitted. In that case
  *                                                   the GUID of the named property will be used.
  *
@@ -304,7 +304,7 @@ NodeProperty.prototype._getDynamicChildrenReadOnly = function() {
  * @param {object} in_properties The properties you would like to assign
  * @param {Bool} in_initial  - Whether we are setting default/initial values
  *   or if the function is called directly with the values to set.
- * @private
+ * @internal
  */
 NodeProperty.prototype._setValues = function(in_properties, in_initial) {
   // We currently forward this to the base property, which should also work for a node property
@@ -327,7 +327,7 @@ NodeProperty.prototype._setValues = function(in_properties, in_initial) {
  * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
  * WARNING: not completely impemented for all types
  * @param {object} in_properties The properties you would like to assign
- * @private
+ * @internal
  */
 NodeProperty.prototype.setValues = function(in_properties) {
   NodeProperty.prototype._setValues.call(this, in_properties, false);
@@ -340,7 +340,7 @@ NodeProperty.prototype.setValues = function(in_properties) {
  *                                                                     If none is given, all types are regarded as
  *                                                                     dirty
  * @return {Array.<String>} The list of keys identifying the dirty children
- * @private
+ * @internal
  */
 NodeProperty.prototype._getDirtyChildren = function(in_flags) {
   var flags = in_flags === undefined ? ~BaseProperty.MODIFIED_STATE_FLAGS.CLEAN : in_flags;
@@ -383,4 +383,4 @@ NodeProperty.prototype._signalAllStaticMembersHaveBeenAdded = function(in_scope)
 NodeProperty._cleanStaticChildrenCache = function() {
   _staticChildrenCache = {};
 };
-module.exports = NodeProperty;
+module.exports = {NodeProperty};

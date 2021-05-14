@@ -24,14 +24,14 @@ const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const PropertyTemplate = require('./property_template');
 
 // Include the property classes
-const BaseProperty = require('./properties/base_property');
+const {BaseProperty} = require('./properties/base_property');
 const NamedProperty = require('./properties/named_property');
-const NodeProperty = require('./properties/node_property');
+const {NodeProperty} = require('./properties/node_property');
 const NamedNodeProperty = require('./properties/named_node_property');
-const ContainerProperty = require('./properties/container_property');
+const {ContainerProperty} = require('./properties/container_property');
 
 // Include all primitive properties –- will register at the end.
-const ValueProperty = require('./properties/value_property');
+const {ValueProperty} = require('./properties/value_property');
 const Uint32Property = require('./properties/uint_properties').Uint32Property;
 const StringProperty = require('./properties/string_property');
 const Float32Property = require('./properties/float_properties').Float32Property;
@@ -39,18 +39,18 @@ const Int32Property = require('./properties/int_properties').Int32Property;
 const Int64Property = require('./properties/int_properties').Int64Property;
 const Uint64Property = require('./properties/int_properties').Uint64Property;
 const BoolProperty = require('./properties/bool_property');
-const ReferenceProperty = require('./properties/reference_property');
+const {ReferenceProperty} = require('./properties/reference_property');
 const Float64Property = require('./properties/float_properties').Float64Property;
 const Uint16Property = require('./properties/uint_properties').Uint16Property;
 const Uint8Property = require('./properties/uint_properties').Uint8Property;
 const Int16Property = require('./properties/int_properties').Int16Property;
 const Int8Property = require('./properties/int_properties').Int8Property;
-const EnumProperty = require('./properties/enum_property');
+const {EnumProperty} = require('./properties/enum_property');
 
 // Include collection properties
-const ArrayProperty = require('./properties/array_property');
-const SetProperty = require('./properties/set_property');
-const MapProperty = require('./properties/map_property');
+const {ArrayProperty} = require('./properties/array_property');
+const {SetProperty} = require('./properties/set_property');
+const {MapProperty} = require('./properties/map_property');
 const ValueMapProperty = require('./properties/value_map_property').ValueMapProperty;
 const IndexedCollectionBaseProperty = require('./properties/indexed_collection_base_property');
 
@@ -129,22 +129,27 @@ var _createTemplateValidator = function (skipSemver) {
 var PropertyFactory = function () {
   // Unfortunately, PropertyFactory can't inherit from EventEmitter class as
   // it shares the same member methods names `register` and `unregister`.
+  /** @internal */
   this._eventEmitter = new EventEmitter();
-
+  /** @internal */
   this._templateValidator = _createTemplateValidator.call(this);
 
   // Collection containing both local templates and primitive properties
+  /** @internal */
   this._localPrimitivePropertiesAndTemplates = new Collection();
 
   // Collection containing the local templates sorted by their version number in an ascending order
+  /** @internal */
   this._localVersionedTemplates = new Collection();
 
   // Collection containing the remote templates sorted by their version number in an ascending order
   // within a specified scope.
+  /** @internal */
   this._remoteScopedAndVersionedTemplates = new Collection();
 
   // To hold the template store the PropertyFactory interacts with.
   // Currently we don't have a template store
+  /** @internal */
   this._templateStore = undefined;
 
   // Async queue of schema retrieval tasks
@@ -279,7 +284,7 @@ PropertyFactory.prototype._init = function () {
 /**
  * Helper function used to extract the error messages from a list of Error objects
  * @param {Array.<Error>} in_errors List of error objects
- * @private
+ * @internal
  * @return {Array.<string>} List of error messages
  */
 var _extractErrorMessage = function (in_errors) {
@@ -291,7 +296,7 @@ var _extractErrorMessage = function (in_errors) {
 /**
  * Helper function used to create a sorted collection
  * @return {property-common.Datastructures.SortedCollection} Empty sorted collection
- * @private
+ * @internal
  */
 var _createVersionedSortedCollection = function () {
   var collection = new SortedCollection();
@@ -310,7 +315,7 @@ var _createVersionedSortedCollection = function () {
 /**
  * Register a template
  *
- * @private
+ * @internal
  *
  * @throws if in_template is invalid.
  * @throws if trying to register a primitive property.
@@ -537,7 +542,7 @@ PropertyFactory.prototype.registerFrom = function (in_fromType, in_toConvert) {
  *  its previous or next versions
  * @param {boolean} in_compareRemote - Flag indicating whether we want to compare the given
  *  template against the remote registry
- * @private
+ * @internal
  */
 PropertyFactory.prototype._validateSemver = function (in_template, in_compareRemote) {
   var typeidWithoutVersion = in_template.getTypeidWithoutVersion();
@@ -756,7 +761,7 @@ PropertyFactory.prototype.validate = function (in_template) {
  * Get a template or property object based on a typeid and a context
  *
  * @param {string} in_typeid    - The type unique identifier
- * @param {string} [in_context]  - The context of the property to create
+ * @param {string | undefined} in_context  - The context of the property to create
  * @param {string|undefined} in_scope - The scope in which the property typeid is defined
  *
  * @return {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
@@ -804,7 +809,7 @@ PropertyFactory.prototype.getTemplate = function (in_typeid) {
 
 /**
  * Get remote templates based on typeid
- * @private
+ * @internal
  * @param {string} in_typeid - The type unique identifier
  * @return {array<property-properties.PropertyTemplate>} Array of templates.
  */
@@ -840,7 +845,7 @@ PropertyFactory.prototype._getRemoteTemplates = function (in_typeid) {
  * @throws if the property does not have a unique id.
  * @throws if the property has a typeid that is not registered.
  * @return {property-properties.BaseProperty|undefined} the property instance
- * @private
+ * @internal
  */
 PropertyFactory.prototype._createProperty = function (
   in_typeid, in_context, in_initialProperties, in_scope, in_filteringOptions) {
@@ -968,6 +973,7 @@ PropertyFactory.prototype._getConstructorFunctionForTypeidAndID = function (in_c
 
   propertyConstructorFunction.prototype = Object.create(in_baseConstructor.prototype);
   propertyConstructorFunction.prototype.constructor = propertyConstructorFunction;
+  /** @internal */
   propertyConstructorFunction.prototype._typeid = in_typeid;
   if (in_id !== undefined) {
     propertyConstructorFunction.prototype._id = in_id;
@@ -991,7 +997,7 @@ PropertyFactory.prototype._getConstructorFunctionForTypeidAndID = function (in_c
  * @param {string|undefined} in_scope - The scope in which the property typeid is defined
  *
  * @return {property-properties.BaseProperty} The property that serves as parent for the properties in the template
- * @private
+ * @internal
  */
 PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_id, in_parent,
   in_templateOrConstructor, in_scope) {
@@ -1042,7 +1048,7 @@ PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_
  * @param {string} in_typeid The type unique identifier
  * @param {string|undefined} in_scope - The scope in which the property typeid is defined
  * @return {boolean} Returns true if the typeid is registered. False otherwise.
- * @private
+ * @internal
  */
 PropertyFactory.prototype._isRegisteredTypeid = function (in_typeid, in_scope) {
   return !!this._get(in_typeid, undefined, in_scope);
@@ -1053,7 +1059,7 @@ PropertyFactory.prototype._isRegisteredTypeid = function (in_typeid, in_scope) {
  * Specialized constructors are of Array or Map types
  * @param {string} in_typeid The type unique identifier
  * @return {boolean} Returns true if the typeid is a specialized constructor
- * @private
+ * @internal
  */
 PropertyFactory.prototype._isSpecializedConstructor = function (in_typeid) {
   return this._localPrimitivePropertiesAndTemplates.item(in_typeid) instanceof Collection;
@@ -1266,7 +1272,7 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
  *
  * @param {Object} in_obj Object to check.
  * @return {boolean} True if the object is a BaseProperty.
- * @private
+ * @internal
  */
 PropertyFactory.prototype._isNativePropertyConstructor = function (in_obj) {
   // TODO: This tests seems dangerous. I think it is based on the assumption that constructor is not
@@ -1282,7 +1288,7 @@ PropertyFactory.prototype._isNativePropertyConstructor = function (in_obj) {
  * @param {string} in_context - The context of the in_property
  * @return {Boolean} - True if the property has a typedValue.
  * @throws {TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE} - Thrown when setting a typed value for a primitive.
- * @private
+ * @internal
  */
 PropertyFactory.prototype._parseTypedValue = function (in_property, in_scope, in_context) {
   var res = {
@@ -1330,7 +1336,7 @@ PropertyFactory.prototype._parseTypedValue = function (in_property, in_scope, in
  *                                        This is used for extending inherited properties.
  * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
  *    The options to selectively create only a subset of a property. Creates all properties if undefined.
- * @private
+ * @internal
  */
 // eslint-disable-next-line complexity
 PropertyFactory.prototype._parseTemplate = function (
@@ -1544,7 +1550,7 @@ PropertyFactory.prototype.inheritsFrom = function (in_templateTypeid, in_baseTyp
  * @param {string} in_templateTypeid         - the template typeid
  * @param {object} in_options                - Additional optionsin_options
  * @return {string} the typeid contained in the enum
- * @private
+ * @internal
  */
 PropertyFactory.prototype._getEnumTypeid = function (in_templateTypeid, in_options) {
   const enumRegex = /enum<(.*)>/;
@@ -1563,7 +1569,7 @@ PropertyFactory.prototype._getEnumTypeid = function (in_templateTypeid, in_optio
  *
  * @param {string} in_templateTypeid     - the template typeid
  * @param {object} [in_options]          - Additional optionsin_options
- * @private
+ * @internal
  */
 PropertyFactory.prototype._validateEnumTemplate = function (in_templateTypeid, in_options) {
   const template = this._get(in_templateTypeid, undefined, in_options.scope);
@@ -1651,7 +1657,7 @@ PropertyFactory.prototype._getAllParentsForTemplateInternal = function (in_typei
 
 /**
  * Internal function used to clear and reinitialize the PropertyFactory
- * @private
+ * @internal
  */
 PropertyFactory.prototype._clear = function () {
   this._localPrimitivePropertiesAndTemplates = new Collection();
@@ -1813,7 +1819,7 @@ var _pushTemplateRequestTask = function (in_typeid) {
 /**
 * Pushes a template request task onto the template requests queue
 *
-* @private
+* @internal
 * @param {String} in_task schema retrieval task
 * @param {String} in_callback callback of the task
 *
@@ -1950,4 +1956,4 @@ LazyLoadedProperties.NodeProperty = NodeProperty;
 LazyLoadedProperties.IndexedCollectionBaseProperty = IndexedCollectionBaseProperty;
 
 
-module.exports = PropertyFactory;
+module.exports = {PropertyFactory};

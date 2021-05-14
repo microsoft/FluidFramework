@@ -7,7 +7,7 @@
  */
 
 const NamedProperty = require('./named_property');
-const NodeProperty = require('./node_property');
+const {NodeProperty} = require('./node_property');
 
 /**
  * A NamedNodeProperty is a NodeProperty that has a GUID which unique identifies the property object.
@@ -28,7 +28,7 @@ var NamedNodeProperty = function(in_params) {
 };
 
 NamedNodeProperty.prototype = Object.create(NodeProperty.prototype);
-
+/** @internal */
 NamedNodeProperty.prototype._typeid = 'NamedNodeProperty';
 
 /**

@@ -86,11 +86,8 @@ var PATH_TOKENS = {
  *   are used to define children properties -- UNUSED PARAMETER ??
  * @param {Array.<string>} in_params.inherits List of property template typeids that this
  *   PropertyTemplate inherits from -- UNUSED PARAMETER ??
- * @abstract
  * @constructor
  * @protected
- * @alias property-properties.BaseProperty
- * @category Properties
  */
 var BaseProperty = function(in_params) {
   // Pre-conditions
@@ -119,6 +116,8 @@ var BaseProperty = function(in_params) {
   }
 };
 
+BaseProperty.prototype = Object.create();
+
 BaseProperty.MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
 BaseProperty.prototype.MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
 
@@ -129,8 +128,11 @@ BaseProperty.PATH_TOKENS = PATH_TOKENS;
 BaseProperty.prototype.PATH_TOKENS = PATH_TOKENS;
 
 // Default values. Hide them per instance if required.
+/** @internal */
 BaseProperty.prototype._typeid = 'BaseProperty';
+/** @internal */
 BaseProperty.prototype._context = 'single';
+/** @internal */
 BaseProperty.prototype._isConstant = false;
 
 /**
@@ -151,7 +153,7 @@ BaseProperty.prototype.getContext = function() {
  * Get the scope to which this property belongs to.
  * @return {string|undefined} The guid representing the scope in which the
  * property belongs to
- * @private
+ * @internal
  */
 BaseProperty.prototype._getScope = function() {
   if (this._parent) {
@@ -175,7 +177,7 @@ BaseProperty.prototype.getFullTypeid = function(in_hideCollection) {
  * Updates the parent for the property
  *
  * @param {property-properties.BaseProperty} in_property - The parent property
- * @private
+ * @internal
  */
 BaseProperty.prototype._setParent = function( in_property ) {
   this._parent = in_property;
@@ -261,12 +263,12 @@ BaseProperty.prototype.isDynamic = function() { return false; };
  * Sets the property as dirty and/or pending. This will add one or both flags if not already set and will
  * do the same for its parent. This does not clear any flag, it only sets.
  *
- * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+ * @param {boolean} in_reportToView- By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
  *                                             can be prevented via this flag.
  * @param {property-properties.BaseProperty} [in_callingChild] - The child which is dirtying its parent
  * @param {Number} [in_flags = DIRTY | PENDING_CHANGE] The flags to set.
- * @private
+ * @internal
  */
 BaseProperty.prototype._setDirty = function(in_reportToView, in_callingChild, in_flags) {
   if (in_flags === undefined) {
@@ -310,7 +312,7 @@ BaseProperty.prototype._getDirtyFlags = function() {
 
 /**
  * Helper function, which reports the fact that a property has been dirtied to the checkout view
- * @private
+ * @internal
  */
 // TODO: Cleaner way to make the property tree aware of the DDS hosting it.
 // Currently, this._tree is set in SharedPropertyTree constructor.
@@ -355,7 +357,7 @@ BaseProperty.prototype.applyChangeSet = function(in_changeSet, in_filteringOptio
  * Internal function.
  *
  * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
- * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+ * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
  *                                             can be prevented via this flag.
  * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
@@ -430,7 +432,7 @@ BaseProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_dir
  * Removes the dirtiness flag from this property
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
  *                                                                       will be removed
- * @private
+ * @internal
  */
 BaseProperty.prototype._cleanDirty = function(in_flags) {
   this._setDirtyFlags(in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN :
@@ -465,7 +467,7 @@ BaseProperty.prototype.cleanDirty = function(in_flags) {
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
  *     The type of dirtiness to check for. By default this is DIRTY
  * @return {boolean} Is the property dirty?
- * @private
+ * @internal
  */
 BaseProperty.prototype._isDirty = function(in_dirtinessType) {
   in_dirtinessType = in_dirtinessType === undefined ? MODIFIED_STATE_FLAGS.DIRTY : in_dirtinessType;
@@ -585,7 +587,7 @@ BaseProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType
  * @param {string} in_id - The id for this property
  *
  * @return {string} the new id
- * @private
+ * @internal
  */
 BaseProperty.prototype._setId = function(in_id) {
   if (!_.isString(in_id) && !_.isNumber(in_id)) {
@@ -640,7 +642,7 @@ BaseProperty.prototype.isPrimitiveType = function() {
  * TODO: Do we want to have this feature or is it to dangerous?
  *
  * @return {Object} the flat representation
- * @private
+ * @internal
  */
 BaseProperty.prototype._flatten = function() {
   return {propertyNode: this};
@@ -662,7 +664,7 @@ BaseProperty.prototype.prettyPrint = function(printFct) {
 /**
  * Return a JSON representation of the properties and its children.
  * @return {object} A JSON representation of the properties and its children.
- * @private
+ * @internal
  */
 BaseProperty.prototype._toJson = function() {
   var json = {
@@ -724,7 +726,7 @@ BaseProperty.prototype._prettyPrintChildren = function(indent, printFct) {
  *     path is computed
  * @return {Array<string | undefined>} The paths between from_property and this property
  * will return an empty array if trying to get the path from a child repo to a parent repo.
- * @private
+ * @internal
  */
 BaseProperty.prototype._getPathsThroughRepoRef = function(in_fromProperty) {
   var paths = [];
@@ -779,7 +781,7 @@ BaseProperty.prototype._getPathsThroughRepoRef = function(in_fromProperty) {
  * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
  *     path is computed
  * @return {string} The path between the given in_fromProperty and this property
- * @private
+ * @internal
  */
 BaseProperty.prototype._getIndirectPath = function(in_fromProperty) {
   var path = [];
@@ -812,7 +814,7 @@ BaseProperty.prototype._getIndirectPath = function(in_fromProperty) {
  * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
  *     path is computed
  * @return {string} The path between the given in_fromProperty and this property
- * @private
+ * @internal
  */
 BaseProperty.prototype._getDirectPath = function(in_fromProperty) {
   var path = [];
@@ -857,7 +859,7 @@ BaseProperty.prototype._getDirectPath = function(in_fromProperty) {
  * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
  *     path is computed
  * @return {Array<string>} The paths between the given in_fromProperty and this property
- * @private
+ * @internal
  */
 BaseProperty.prototype._getAllRelativePaths = function(in_fromProperty) {
   if (this.getRoot() !== in_fromProperty.getRoot()) {
@@ -998,7 +1000,7 @@ BaseProperty.BREAK_TRAVERSAL = BREAK_TRAVERSAL;
  *                                                                     If none is given, all types are regarded as
  *                                                                     dirty
  * @return {Array.<String>} The list of keys identifying the dirty children
- * @private
+ * @internal
  */
 BaseProperty.prototype._getDirtyChildren = function(in_flags) {
   return [];
@@ -1020,7 +1022,7 @@ BaseProperty.prototype.getRoot = function () {
  * @param {string} in_pathFromTraversalStart - Path from the root of the traversal to this node
  * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
  *                            otherwise undefined
- * @private
+ * @internal
  */
 BaseProperty.prototype._traverse = function( in_callback, in_pathFromTraversalStart ) {
   return undefined;
@@ -1076,7 +1078,7 @@ BaseProperty.prototype._deserialize = function(in_serializedObj, in_reportToView
  *     this can result in an infinite loop
  *
  * @return {Object} The serialized representation of this property
- * @private
+ * @internal
  */
 BaseProperty.prototype._serialize = function( in_dirtyOnly,
                                               in_includeRootTypeid,
@@ -1186,7 +1188,7 @@ BaseProperty.prototype._unsetAsConstant = function() {
  * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
  *                                             can be prevented via this flag.
- * @private
+ * @internal
  */
 BaseProperty.prototype._setDirtyTree = function(in_reportToView) {
   this._traverse(function(node) {
@@ -1206,7 +1208,7 @@ BaseProperty.prototype._setDirtyTree = function(in_reportToView) {
  * @param {property-properties.BaseProperty} in_targetParent - The parent property
  * @param {string} in_childId - The id of the child property
  * @throws if the property can not be inserted
- * @private
+ * @internal
  */
 BaseProperty.prototype._validateInsertIn = function(in_targetParent, in_childId) {
   // Already a child?
@@ -1244,7 +1246,7 @@ BaseProperty.prototype._validateInsertIn = function(in_targetParent, in_childId)
  * @param {string} in_basePath - The property's absolute path in canonical form
  * @param {Array<string>} in_paths - The array of paths that we wonder if it covers the property and its children
  * @return {Bool} If the property and all its children are included in the paths
- * @private
+ * @internal
  */
 BaseProperty.prototype._coveredByPaths = function(in_basePath, in_paths) {
   // First, get the coverage of the base property
@@ -1290,7 +1292,7 @@ BaseProperty.prototype._coveredByPaths = function(in_basePath, in_paths) {
 
 /**
  * Check if a property has a fixed id during insert
- * @private
+ * @internal
  * @return {boolean} has fixed id
  */
 BaseProperty.prototype._hasFixedId = function() {
@@ -1307,4 +1309,4 @@ Object.defineProperty(
   }
 );
 
-module.exports = BaseProperty;
+module.exports = {BaseProperty};

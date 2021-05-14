@@ -5,8 +5,8 @@
 /**
  * @fileoverview Definition of the set property class
  */
-const BaseProperty = require('./base_property');
-const ContainerProperty = require('./container_property');
+const { BaseProperty } = require('./base_property');
+const {ContainerProperty} = require('./container_property');
 const NamedProperty = require('./named_property');
 const NamedNodeProperty = require('./named_node_property');
 const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
@@ -40,9 +40,10 @@ var SetProperty = function( in_params, in_scope ) {
 };
 
 SetProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
-
+/** @internal */
 SetProperty.prototype._context = 'set';
 // A set property falls back to NamedProperty, if none is specified
+/** @internal */
 SetProperty.prototype._typeid = 'NamedProperty';
 
 /**
@@ -257,7 +258,7 @@ SetProperty.prototype.has = function(in_id) {
  * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
  * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
  *   properties with that typeid, else use the set's typeid (support polymorphic items).
- * @private
+ * @internal
  */
 SetProperty.prototype._setValuesInternal = function(in_properties, in_typed) {
   this._checkIsNotReadOnly(true);
@@ -332,7 +333,7 @@ SetProperty.prototype.getAsArray = function() {
  * @return {string|undefined} The guid representing the scope in which the
  * set belongs to. If there is a workspace scope return it, else return the scope of this set.
  * @override
- * @private
+ * @internal
  */
 SetProperty.prototype._getScope = function() {
   var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
@@ -354,4 +355,4 @@ SetProperty.prototype.clear = function() {
   });
 };
 
-module.exports = SetProperty;
+module.exports = {SetProperty};
