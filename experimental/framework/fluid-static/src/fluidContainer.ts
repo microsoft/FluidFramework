@@ -4,21 +4,21 @@
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import { LoadableObjectClass } from "./types";
+import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
-
 interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): void;
     (event: "dispose" | "disconnected", listener: () => void): void;
 }
 
 interface IFluidContainer {
-    close: Container["close"];
-    closed: Container["closed"];
-    connected: Container["connected"];
-    initialObjects: RootDataObject["initialObjects"];
+    close(error?: ICriticalContainerError): void;
+    readonly closed: boolean;
+    readonly connected: boolean;
+    initialObjects: LoadableObjectRecord;
 }
 
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
@@ -30,11 +30,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
             container.on("connected", (id: string) =>  this.emit("connected", id));
             container.on("dispose", () =>  this.emit("dispose"));
             container.on("disconnected", () =>  this.emit("disconnected"));
-    }
-
-    public static async load(container: Container): Promise<FluidContainer> {
-        const rootDataObject = (await container.request({ url: "/" })).value;
-        return new FluidContainer(container, rootDataObject);
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
