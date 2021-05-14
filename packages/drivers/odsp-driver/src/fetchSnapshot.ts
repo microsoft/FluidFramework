@@ -12,11 +12,18 @@ import {
     IOdspResolvedUrl,
     ISnapshotOptions,
     TokenFetchOptions,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh, IOdspResponse, ISnapshotCacheValue } from "./odspUtils";
+import {
+    getWithRetryForTokenRefresh,
+    getWithRetryForTokenRefreshRepeat,
+    IOdspResponse,
+    ISnapshotCacheValue,
+} from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -74,7 +81,10 @@ export async function fetchLatestSnapshotCore(
                 eventName: "TreeLatest_SecondCall",
                 hasClaims: !!tokenFetchOptions.claims,
                 hasTenantId: !!tokenFetchOptions.tenantId,
-            });
+                // We have two "TreeLatest_SecondCall" events and the other one uses errorType to differentiate cases
+                // Continue that pattern here.
+                errorType: "access denied",
+            }, tokenFetchOptions.previousError);
         }
         const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
         const url = `${snapshotUrl}/trees/latest?ump=1`;
@@ -227,17 +237,25 @@ export async function fetchLatestSnapshotCore(
                 });
                 return value;
             },
-        );
-    }).catch((error) => {
-        // Issue #5895:
-        // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-        // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-        // going getVersions / individual blob download path. This path is very slow, and will not work with
-        // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-        if (typeof error === "object" && error !== null) {
-            error.canRetry = false;
-        }
-        throw error;
+        ).catch((error) => {
+            // Issue #5895:
+            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
+            // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
+            // going getVersions / individual blob download path. This path is very slow, and will not work with
+            // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
+            if (typeof error === "object" && error !== null) {
+                error.canRetry = false;
+                // We hit these errors in stress tests, under load
+                // It's useful to try one more time in such case.
+                // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
+                // (not in "real" offline) and it actually helps.
+                if (error.errorType === DriverErrorType.fetchFailure ||
+                    error.errorType === OdspErrorType.fetchTimeout) {
+                    error[getWithRetryForTokenRefreshRepeat] = true;
+                }
+            }
+            throw error;
+        });
     });
 }
 
