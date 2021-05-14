@@ -73,7 +73,7 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
 ): Promise<ISnapshotCacheValue> {
-    return await fetchLatestSnapshotCore(
+    let odspSnapshot = await fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
         snapshotOptions,
@@ -89,7 +89,7 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-            return await fetchLatestSnapshotCore(
+            odspSnapshot = await fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
                 snapshotOptions,
@@ -109,6 +109,7 @@ export async function fetchSnapshotWithRedeem(
         }
         throw error;
     });
+    return odspSnapshot;
 }
 
 async function redeemSharingLink(
