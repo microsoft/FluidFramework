@@ -6,7 +6,7 @@ import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
-import { renderDiceRoller } from "./view";
+import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
 TinyliciousClient.init();
@@ -65,6 +65,9 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div2);
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
+
+    // Render the user names for the members currently in the session
+    renderAudience(fluidContainer.audience, contentDiv);
 }
 
 start().catch((error) => console.error(error));

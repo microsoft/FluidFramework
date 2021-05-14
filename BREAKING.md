@@ -2,6 +2,7 @@
 
 - [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
 - [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
+- [IContainerRuntimeDirtyable removed](#IContainerRuntimeDirtyable-removed)
 
 ### AgentScheduler removed by default
 In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
@@ -10,6 +11,9 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
+
+### IContainerRuntimeDirtyable removed
+The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
 
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)

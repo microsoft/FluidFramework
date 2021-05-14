@@ -70,7 +70,7 @@ const DefaultChunkSize = 16 * 1024;
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
-    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, nackContent.code);
+    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, { statusCode: nackContent.code });
 }
 
 function createReconnectError(prefix: string, err: any) {
@@ -651,6 +651,13 @@ export class DeltaManager
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
+                    if (typeof origError === "object" && origError !== null &&
+                        origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden) {
+                        connection = new NoDeltaStream();
+                        requestedMode = "read";
+                        break;
+                    }
+
                     const error = CreateContainerError(origError);
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
@@ -1056,6 +1063,10 @@ export class DeltaManager
         connection.on("error", this.errorHandler);
         connection.on("pong", this.pongHandler);
 
+        // Initial messages are always sorted. However, due to early op handler installed by drivers and appending those
+        // ops to initialMessages, resulting set is no longer sorted, which would result in client hitting storage to
+        // fill in gap. We will recover by cancelling this request once we process remaining ops, but it's a waste that
+        // we could avoid
         const initialMessages = connection.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         this.connectionStateProps = {
@@ -1340,7 +1351,10 @@ export class DeltaManager
             }
         }
 
-        this.prevEnqueueMessagesReason = reason;
+        // When / if we report a gap in ops in the future, we want telemetry to correctly reflect source
+        // of prior ops. But if we have some out of order ops (this.pending), then reporting current reason
+        // becomes not accurate, as the gap existed before current batch, so we should just report "unknown".
+        this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
     }
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {

@@ -67,11 +67,20 @@ export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOp
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
                 return get({ refresh: true, claims: e.claims, tenantId: e.tenantId });
-            // fetchIncorrectResponse indicates some error on the wire, retry once.
-            case DriverErrorType.incorrectServerResponse:
-            // If the token was null, then retry once.
-            case OdspErrorType.fetchTokenError:
+
+            // Cases like TreesLatest call make fetch failures non-retriable. We hit these errors in stress tests
+            // It's useful to try one more time in such case.
+            // All other calls will go through regular retry logic (retry driver adapter installed by loader)
+            case DriverErrorType.fetchFailure:
+                if (e.canRetry) {
+                    throw e;
+                }
                 return get({ refresh: true });
+
+            case DriverErrorType.incorrectServerResponse: // fetchIncorrectResponse - some error on the wire, retry once
+            case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
+                return get({ refresh: true });
+
             default:
                 // All code paths (deltas, blobs, trees) already throw exceptions.
                 // Throwing is better than returning null as most code paths do not return nullable-objects,

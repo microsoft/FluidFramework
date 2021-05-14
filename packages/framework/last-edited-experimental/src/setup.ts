@@ -56,12 +56,8 @@ export function setupLastEditedTrackerForContainer(
     // it passes the last edited information to its
     // last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
-        // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
-        // To check for this, we use the runtime's isMessageDirtyable API. If it is not available, we assume
-        // that the message should not be discarded.
-        const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
-            ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
-        if (shouldDiscardMessageFn(message) || !isDirtyable) {
+        // If this message should be discarded as per shouldDiscardMessageFn, return.
+        if (shouldDiscardMessageFn(message)) {
             return;
         }
 
