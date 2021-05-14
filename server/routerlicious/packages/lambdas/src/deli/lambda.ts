@@ -5,7 +5,6 @@
 
 /* eslint-disable no-null/no-null */
 
-import { RangeTracker } from "@fluidframework/common-utils";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -92,7 +91,6 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
-    private readonly branchMap: RangeTracker | undefined;
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
@@ -736,7 +734,6 @@ export class DeliLambda implements IPartitionLambda {
 
     private generateDeliCheckpoint(): IDeliState {
         return {
-            branchMap: this.branchMap?.serialize(),
             clients: this.clientSeqManager.cloneValues(),
             durableSequenceNumber: this.durableSequenceNumber,
             epoch: this.epoch,
