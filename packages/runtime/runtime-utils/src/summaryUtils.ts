@@ -44,7 +44,7 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
     return results;
 }
 
-function byteLength(str: string): number {
+export function utf8ByteLength(str: string): number {
   // returns the byte length of an utf8 string
   let s = str.length;
   for (let i = str.length - 1; i >= 0; i--) {
@@ -63,7 +63,7 @@ function byteLength(str: string): number {
 
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return byteLength(content);
+        return utf8ByteLength(content);
     } else {
         return content.byteLength;
     }
