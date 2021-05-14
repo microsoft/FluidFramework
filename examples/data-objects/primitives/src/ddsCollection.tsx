@@ -4,14 +4,14 @@
  */
 
 import React from "react";
-import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
+import { ISharedMap, SharedMap, IDirectory, IValueChanged } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 
 interface IDdsCollectionProps {
     mapDir: IDirectory;
     mapCreate: (name: string) => SharedMap;
-    listenValueChanged: (listener: (changed: IDirectoryValueChanged) => void) => void;
+    listenValueChanged: (listener: (changed: IValueChanged) => void) => void;
 }
 
 interface IDdsCollectionState {
