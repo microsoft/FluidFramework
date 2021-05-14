@@ -222,7 +222,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(await map2.wait(testKey), bigString);
     });
 
-    it("doesn't resend successful chunked op", async function() {
+    it.skip("doesn't resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
