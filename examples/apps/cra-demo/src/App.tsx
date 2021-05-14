@@ -45,7 +45,7 @@ function App() {
             };
 
             void load();
-            return () => {};
+            return;
         } else {
             const updateData = () => setData(Object.fromEntries(map.entries()));
             updateData();
