@@ -716,7 +716,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     ): ILocalValue {
         assert(
             serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared],
-            "Unexpected serializable type",
+            0x1e4 /* "Unexpected serializable type" */,
         );
         return this.localValueMaker.fromSerializable(serializable);
     }
