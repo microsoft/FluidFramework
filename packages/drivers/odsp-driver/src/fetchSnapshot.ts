@@ -79,7 +79,7 @@ export async function fetchLatestSnapshotCore(
         const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
         const url = `${snapshotUrl}/trees/latest?ump=1`;
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
-        assert(storageToken !== null, "Storage token should not be null");
+        assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
         const formBoundary = uuid();
         const formParams: string[] = [];
         formParams.push(`--${formBoundary}`);
@@ -190,7 +190,7 @@ export async function fetchLatestSnapshotCore(
                     value.sequenceNumber = undefined;
                 } else if (canCache) {
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
-                    assert(fluidEpoch !== undefined, "Epoch  should be present in response");
+                    assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
                         value,
                         fluidEpoch,

@@ -77,7 +77,7 @@ export async function prefetchLatestSnapshot(
                     snapshotDownloader,
                     putInCache,
                 );
-            assert(cacheP !== undefined, "caching was not performed!");
+            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;
             return true;
     }).catch((error) => false);

@@ -123,7 +123,7 @@ export async function refreshTokens(
 ): Promise<IOdspTokens> {
     // Clear out the old tokens while awaiting the new tokens
     const refresh_token = tokens.refreshToken;
-    assert(refresh_token.length > 0, "No refresh token provided.");
+    assert(refresh_token.length > 0, 0x1ec /* "No refresh token provided." */);
 
     const credentials: TokenRequestCredentials = {
         grant_type: "refresh_token",
