@@ -127,7 +127,7 @@ export class OdspDocumentService implements IDocumentService {
 
         this.hostPolicy = hostPolicy;
         if (this.odspResolvedUrl.summarizer) {
-            this.hostPolicy.summarizerClient = true;
+            this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
 
