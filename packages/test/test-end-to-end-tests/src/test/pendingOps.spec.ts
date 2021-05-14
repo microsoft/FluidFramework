@@ -83,6 +83,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
 
+    before(function() {
+        this.skip();
+    });
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
         loader = provider.makeTestLoader(testContainerConfig);
