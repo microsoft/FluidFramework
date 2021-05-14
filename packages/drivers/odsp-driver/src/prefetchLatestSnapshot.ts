@@ -80,7 +80,7 @@ export async function prefetchLatestSnapshot(
                     putInCache,
                     removeEntries,
                 );
-            assert(cacheP !== undefined, "caching was not performed!");
+            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;
             return true;
     }).catch(async (error) => false);

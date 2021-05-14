@@ -662,14 +662,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._storage!;
     }
 
-    public get resubmitFn(): (
+    public get reSubmitFn(): (
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined,
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        return this.resubmit;
+        return this.reSubmit;
     }
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
@@ -1976,7 +1976,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private resubmit(
+    private reSubmit(
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,

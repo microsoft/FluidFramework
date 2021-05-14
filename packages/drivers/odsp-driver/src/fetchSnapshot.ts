@@ -13,6 +13,7 @@ import {
     IOdspResolvedUrl,
     ISnapshotOptions,
     TokenFetchOptions,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 import { getQueryString } from "./getQueryString";
@@ -20,6 +21,7 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     fetchAndParseAsJSONHelper,
     getWithRetryForTokenRefresh,
+    getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
     ISnapshotCacheValue,
 } from "./odspUtils";
@@ -150,12 +152,15 @@ async function fetchLatestSnapshotCore(
                 eventName: "TreeLatest_SecondCall",
                 hasClaims: !!tokenFetchOptions.claims,
                 hasTenantId: !!tokenFetchOptions.tenantId,
-            });
+                // We have two "TreeLatest_SecondCall" events and the other one uses errorType to differentiate cases
+                // Continue that pattern here.
+                errorType: "access denied",
+            }, tokenFetchOptions.previousError);
         }
         const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
         const url = `${snapshotUrl}/trees/latest?ump=1`;
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
-        assert(storageToken !== null, "Storage token should not be null");
+        assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
         const formBoundary = uuid();
         const formParams: string[] = [];
         formParams.push(`--${formBoundary}`);
@@ -266,7 +271,7 @@ async function fetchLatestSnapshotCore(
                     value.sequenceNumber = undefined;
                 } else if (canCache) {
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
-                    assert(fluidEpoch !== undefined, "Epoch  should be present in response");
+                    assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
                         value,
                         fluidEpoch,
@@ -303,17 +308,25 @@ async function fetchLatestSnapshotCore(
                 });
                 return value;
             },
-        );
-    }).catch((error) => {
-        // Issue #5895:
-        // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-        // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-        // going getVersions / individual blob download path. This path is very slow, and will not work with
-        // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-        if (typeof error === "object" && error !== null) {
-            error.canRetry = false;
-        }
-        throw error;
+        ).catch((error) => {
+            // Issue #5895:
+            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
+            // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
+            // going getVersions / individual blob download path. This path is very slow, and will not work with
+            // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
+            if (typeof error === "object" && error !== null) {
+                error.canRetry = false;
+                // We hit these errors in stress tests, under load
+                // It's useful to try one more time in such case.
+                // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
+                // (not in "real" offline) and it actually helps.
+                if (error.errorType === DriverErrorType.fetchFailure ||
+                    error.errorType === OdspErrorType.fetchTimeout) {
+                    error[getWithRetryForTokenRefreshRepeat] = true;
+                }
+            }
+            throw error;
+        });
     });
 }
 
