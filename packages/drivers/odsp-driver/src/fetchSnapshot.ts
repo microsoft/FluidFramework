@@ -67,29 +67,6 @@ export async function fetchSnapshot(
     );
 }
 
-async function redeemSharingLink(
-    odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
-    logger: ITelemetryLogger,
-) {
-    return PerformanceEvent.timedExecAsync(
-        logger,
-        {
-            eventName: "RedeemShareLink",
-        },
-        async () => {
-            await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
-                const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
-                const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-                const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
-                headers.prefer = "redeemSharingLink";
-                return fetchAndParseAsJSONHelper(url, { headers });
-            });
-    });
-}
-
 export async function fetchSnapshotWithRedeem(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
@@ -143,7 +120,30 @@ export async function fetchSnapshotWithRedeem(
     }
 }
 
-export async function fetchLatestSnapshotCore(
+async function redeemSharingLink(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    logger: ITelemetryLogger,
+) {
+    return PerformanceEvent.timedExecAsync(
+        logger,
+        {
+            eventName: "RedeemShareLink",
+        },
+        async () => {
+            await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
+                const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+                const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
+                headers.prefer = "redeemSharingLink";
+                return fetchAndParseAsJSONHelper(url, { headers });
+            });
+    });
+}
+
+async function fetchLatestSnapshotCore(
     odspResolvedUrl: IOdspResolvedUrl,
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
