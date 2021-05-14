@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ServiceAudience, ILastEditedResult } from "@fluid-experimental/fluid-static";
+import { ServiceAudience } from "@fluid-experimental/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
+import { ITinyliciousAudience, TinyliciousLastEditedResult, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends ServiceAudience implements ITinyliciousAudience {
   /**
@@ -55,7 +55,7 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
   /**
    * @inheritdoc
    */
-  public getLastEdited(): ILastEditedResult<TinyliciousMember> | undefined {
+  public getLastEdited(): TinyliciousLastEditedResult | undefined {
     const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
     if (lastEditDetails !== undefined) {
       const timestamp = new Date(lastEditDetails.timestamp);
