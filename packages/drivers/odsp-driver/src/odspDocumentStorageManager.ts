@@ -792,8 +792,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             },
             trees: {
                 ...hierarchicalAppTree.trees,
+                // the app tree could have a .protocol
+                // in that case we want to server protocol to override it
                 ".protocol": hierarchicalProtocolTree,
-
             },
         };
 
