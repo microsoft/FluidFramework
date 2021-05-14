@@ -70,7 +70,7 @@ class LoadTestDataStoreModel {
     /**
      * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
      * common to both the clients. Each client adds a reference to this data store when it becomes a writer
-     * and removes the reference before it transtions to a reader.
+     * and removes the reference before it transitions to a reader.
      * So, at any point in time, the data store can have 0, 1 or 2 references.
      */
     private static async getGCDataStore(
