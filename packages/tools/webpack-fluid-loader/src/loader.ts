@@ -247,7 +247,7 @@ export async function start(
         // This functionality is used in odsp driver to prefetch the latest snapshot and cache it so
         // as to avoid the network call to fetch trees latest.
         if (window.location.hash === "#prefetch") {
-            assert(options.mode === "spo-df" || options.mode === "spo", 
+            assert(options.mode === "spo-df" || options.mode === "spo",
                 0x1ea /* "Prefetch snapshot only available for odsp!" */);
             const prefetched = await prefetchLatestSnapshot(
                 await urlResolver.resolve({ url: documentUrl }),
