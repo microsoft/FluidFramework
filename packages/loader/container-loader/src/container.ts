@@ -644,13 +644,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
 
-        // keep track of last time page was visible for telemetry
-        if (
-            typeof document === "object" &&
+        const isDomAvailable = typeof document === "object" &&
             document !== null &&
             typeof document.addEventListener === "function" &&
-            document.addEventListener !== null
-        ) {
+            document.addEventListener !== null;
+        // keep track of last time page was visible for telemetry
+        if (isDomAvailable) {
             this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
