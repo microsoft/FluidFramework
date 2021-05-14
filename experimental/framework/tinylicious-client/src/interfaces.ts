@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { ILastEditedResult, IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
 
 export interface TinyliciousContainerConfig {
     id: string;
@@ -37,3 +37,5 @@ export interface TinyliciousMember extends IMember {
 }
 
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
+
+export type TinyliciousLastEditedResult = ILastEditedResult<TinyliciousMember>;
