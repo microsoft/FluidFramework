@@ -1,5 +1,5 @@
 ---
-title: PropertySets Schemas
+title: Schemas
 menuPosition: 3
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: PropertySets Factory
+title: PropertyFactory
 menuPosition: 4
 ---
 
