@@ -207,7 +207,12 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
-                const code = e?.response ? JSON.parse(e?.response)?.error?.code : undefined;
+                let code: string | undefined;
+                try {
+                    code = e?.response ? JSON.parse(e?.response)?.error?.code : undefined;
+                } catch (error) {
+                    throw e;
+                }
                 switch (code) {
                     case "sessionForbiddenOnPreservedFiles":
                     case "sessionForbiddenOnModerationEnabledLibrary":
