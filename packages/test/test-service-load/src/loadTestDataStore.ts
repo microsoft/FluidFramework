@@ -16,6 +16,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -226,7 +227,7 @@ class LoadTestDataStoreModel {
         if(!this.haveTaskLock()) {
             try{
                 if(!this.runtime.connected) {
-                    await new Promise<void>((res,rej)=>{
+                    await timeoutPromise((res,rej)=>{
                         const resAndClear = ()=>{
                             res();
                             this.runtime.off("connected", resAndClear);
@@ -240,6 +241,9 @@ class LoadTestDataStoreModel {
                         this.runtime.once("connected",resAndClear);
                         this.runtime.once("dispose",rejAndClear);
                         this.runtime.once("disconnected",rejAndClear);
+                    },
+                    {
+                        durationMs: this.config.testConfig.readWriteCycleMs * 2,
                     });
                 }
                 await this.taskManager.lockTask(this.taskId);
