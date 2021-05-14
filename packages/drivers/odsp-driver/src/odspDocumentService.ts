@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -130,7 +127,6 @@ export class OdspDocumentService implements IDocumentService {
 
         this.hostPolicy = hostPolicy;
         if (this.odspResolvedUrl.summarizer) {
-            this.hostPolicy = cloneDeep(this.hostPolicy);
             this.hostPolicy.summarizerClient = true;
         }
     }
