@@ -20,7 +20,7 @@ const getContainerId = () => {
 TinyliciousClient.init();
 
 const getFluidData = async () => {
-    const containerConfig = {
+    const containerSchema = {
         name: 'cra-demo-container',
         initialObjects: { myMap: SharedMap }
     };
