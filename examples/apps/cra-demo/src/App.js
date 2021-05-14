@@ -43,7 +43,7 @@ function App() {
             initFluidData(setFluidData);
         } else {
             // set up initial UI state
-            setTime(fluid.myMap.get("time"));
+            setViewTime(fluid.myMap.get("time"));
 
             // sync Fluid data into view state
             const handleChange = () => setViewTime(fluid.myMap.get("time"));
