@@ -24,6 +24,7 @@ import { IDeltaHandlerStrategy } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -179,8 +180,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
-    // (undocumented)
-    connectToStorage(): Promise<IDocumentStorageService>;
     // (undocumented)
     dispose(): void;
     // (undocumented)
@@ -357,12 +356,14 @@ export class RelativeLoader implements ILoader {
 }
 
 // @public (undocumented)
-export class RetriableDocumentStorageService implements IDocumentStorageService {
+export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     constructor(internalStorageService: IDocumentStorageService, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger);
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
-    dispose(): void;
+    readonly dispose: () => void;
+    // (undocumented)
+    get disposed(): boolean;
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
