@@ -397,7 +397,7 @@ export class SharedPropertyTree extends SharedObject {
 				remoteChanges: this.remoteChanges,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-			const chunkSize = 64 * 1024; // Default limit seems to be 100k
+			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let serializedSummary =
 				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
 
