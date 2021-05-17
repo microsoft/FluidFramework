@@ -4,14 +4,13 @@
  */
 
 import React from "react";
-import { ISharedMap, SharedMap, IDirectory, IValueChanged } from "@fluidframework/map";
+import { ISharedMap, SharedMap, IDirectory } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 
 interface IDdsCollectionProps {
     mapDir: IDirectory;
     mapCreate: (name: string) => SharedMap;
-    listenValueChanged: (listener: (changed: IValueChanged) => void) => void;
 }
 
 interface IDdsCollectionState {
@@ -40,7 +39,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
 
     componentDidMount() {
         this.getMaps();
-        this.props.listenValueChanged(() => this.getMaps());
+        this.props.mapDir.on("containedValueChanged", () => this.getMaps());
     }
 
     private getMaps(): void {

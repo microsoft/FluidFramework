@@ -9,7 +9,7 @@ import {
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { SharedMap, IDirectory, IValueChanged } from "@fluidframework/map";
+import { SharedMap, IDirectory } from "@fluidframework/map";
 import { DdsCollectionComponent } from "./ddsCollection";
 
 export const PrimitivesName = "PrimitivesCollection";
@@ -42,14 +42,10 @@ export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
      */
     public render(div: HTMLElement) {
         const mapCreate = (name: string) => SharedMap.create(this.runtime, name);
-        const mapListen = (listener: (changed: IValueChanged) => void) => {
-            this.root.on("containedValueChanged", listener);
-        };
         const rerender = () => {
             ReactDOM.render(
                 <div>
-                    <DdsCollectionComponent mapDir={this.mapDir} mapCreate={mapCreate} listenValueChanged={mapListen}>
-                    </DdsCollectionComponent>
+                    <DdsCollectionComponent mapDir={this.mapDir} mapCreate={mapCreate} />
                 </div>,
                 div,
             );
