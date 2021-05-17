@@ -5,7 +5,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
@@ -14,11 +14,12 @@ interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
 }
 
-interface IFluidContainer {
-    dispose(): void;
+interface IFluidContainer extends IEventProvider<IFluidContainerEvents>{
     readonly disposed: boolean;
     readonly connected: boolean;
-    initialObjects: LoadableObjectRecord;
+    readonly initialObjects: LoadableObjectRecord;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    dispose(): void;
 }
 
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
@@ -34,17 +35,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
-    }
-
-    public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-        return this.rootDataObject.create(objectClass);
-    }
-
-    public dispose() {
-        this.container.close();
-        this.container.off("connected", this.connectedHandler);
-        this.container.off("closed", this.disposedHandler);
-        this.container.off("disconnected", this.disconnectedHandler);
     }
 
     public get disposed() {
@@ -71,5 +61,16 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     */
     public get clientId() {
         return this.container.clientId;
+    }
+
+    public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
+        return this.rootDataObject.create(objectClass);
+    }
+
+    public dispose() {
+        this.container.close();
+        this.container.off("connected", this.connectedHandler);
+        this.container.off("closed", this.disposedHandler);
+        this.container.off("disconnected", this.disconnectedHandler);
     }
 }
