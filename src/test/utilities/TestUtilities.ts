@@ -55,7 +55,7 @@ export interface SharedTreeTestingOptions {
 	localMode?: boolean;
 	/**
 	 * MockContainerRuntimeFactory to connect the SharedTree to. A new one will not be created if one is provided.
-	 * If localMode is set to false, it will not be connected to the created SharedTree.
+	 * If localMode is set to true, it will not be connected to the created SharedTree.
 	 * */
 	containerRuntimeFactory?: MockContainerRuntimeFactory;
 	/**
