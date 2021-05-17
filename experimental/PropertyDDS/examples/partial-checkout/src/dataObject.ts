@@ -45,7 +45,9 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         if (this.runtime.existing) {
             const treeHandle = await this.root.wait<IFluidHandle<SharedPropertyTree>>(propertyKey);
             if (this._queryString !== undefined) {
-                treeHandle.absolutePath += `?${  this._queryString}`;
+                // The absolutePath of the DDS should not be updated. Instead, a new handle can be created with the new
+                // path. To be fixed with this issue - https://github.com/microsoft/FluidFramework/issues/6036
+                (treeHandle as any).absolutePath += `?${  this._queryString}`;
             }
             this._tree = await treeHandle.get();
         } else {

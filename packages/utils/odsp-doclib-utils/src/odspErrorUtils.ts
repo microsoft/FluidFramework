@@ -73,13 +73,13 @@ export function createOdspNetworkError(
     let error: OdspError & LoggingError;
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(errorMessage, false, statusCode);
+            error = new GenericNetworkError(errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
             const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
             const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-            error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
+            error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
             break;
         case 404:
             error = new NonRetryableError(
@@ -103,7 +103,7 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, true, statusCode);
+            error = new GenericNetworkError(errorMessage, true, { statusCode });
             break;
         case 501:
             error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
@@ -128,7 +128,7 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
+            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];

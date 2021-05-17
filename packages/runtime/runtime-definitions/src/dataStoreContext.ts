@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -73,7 +73,7 @@ export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext {
 
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
 
     /**
@@ -274,10 +274,10 @@ export interface IFluidDataStoreContext extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     readonly loader: ILoader;

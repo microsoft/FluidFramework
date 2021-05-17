@@ -33,7 +33,6 @@ const FlipTerm = false;
 
 const getDefaultCheckpooint = (epoch: number): IDeliState => {
     return {
-        branchMap: undefined,
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
@@ -41,6 +40,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         sequenceNumber: 0,
         term: 1,
         lastSentMSN: 0,
+        nackMessages: undefined,
     };
 };
 

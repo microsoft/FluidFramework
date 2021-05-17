@@ -16,10 +16,9 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import {
-    ISnapshotTree,
-    SnapshotTreeValue,
-    SnapshotTreeEntry,
-    SnapshotType,
+    IOdspSummaryTree,
+    OdspSummaryTreeValue,
+    OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
 } from "./contracts";
@@ -125,7 +124,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,
-        type: SnapshotType.Container,
+        type: "container",
     };
     return snapshot;
 }
@@ -133,8 +132,8 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
 /**
  * Converts a summary tree to ODSP tree
  */
-export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): ISnapshotTree {
-    const snapshotTree: ISnapshotTree = {
+export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspSummaryTree {
+    const snapshotTree: IOdspSummaryTree = {
         type: "tree",
         entries: [],
     };
@@ -143,7 +142,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
     for (const key of keys) {
         const summaryObject = summary.tree[key];
 
-        let value: SnapshotTreeValue;
+        let value: OdspSummaryTreeValue;
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
@@ -170,7 +169,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
             }
         }
 
-        const entry: SnapshotTreeEntry = {
+        const entry: OdspSummaryTreeEntry = {
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
             value,

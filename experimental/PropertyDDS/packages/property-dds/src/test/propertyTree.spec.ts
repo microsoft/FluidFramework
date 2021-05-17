@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import _ from "lodash";
+
 import { expect } from "chai";
 import { IContainer, ILoader, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidSerializer } from "@fluidframework/core-interfaces";
@@ -108,6 +110,26 @@ describe("PropertyTree", () => {
 
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
 			});
+
+            it("Should not commit empty change by default", async () => {
+				await opProcessingController.pauseProcessing();
+
+				sharedPropertyTree1.commit();
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				expect(sharedPropertyTree2.remoteChanges.length).to.equal(0);
+			});
+
+            it("Should commit empty change", async () => {
+				await opProcessingController.pauseProcessing();
+
+				sharedPropertyTree1.commit(true);
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
+				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.changeSet)).to.equal(true);
+			});
+
 			it("Can start/stopTransmission", async () => {
 				sharedPropertyTree1.stopTransmission(true);
 				sharedPropertyTree1.root.insert("test", PropertyFactory.create("String", undefined, "Magic"));

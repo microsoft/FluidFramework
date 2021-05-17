@@ -18,7 +18,6 @@ describe("Routerlicious", () => {
 
             function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpointParams {
                 return {
-                    branchMap: null,
                     clients: null,
                     durableSequenceNumber: 0,
                     epoch: 0,
@@ -26,6 +25,7 @@ describe("Routerlicious", () => {
                     sequenceNumber,
                     term: 1,
                     lastSentMSN: 0,
+                    nackMessages: undefined,
                     queuedMessage: {
                         offset: logOffset,
                         partition: 1,

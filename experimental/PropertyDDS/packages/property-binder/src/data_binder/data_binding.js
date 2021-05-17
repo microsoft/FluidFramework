@@ -1734,8 +1734,24 @@ class DataBinding {
    * @hidden
    */
   static _registerOnValues(in_path, in_events, in_callback, in_options = {}) {
-    this.registerOnProperty(in_path, in_events, function(property) {
-      in_callback.call(this, property.isPrimitiveType() ? property.getValue() : property.getValues());
+    this.registerOnProperty(in_path, in_events, function(propertyOrKey, parent) {
+
+      // propertyOrIndex could be a primitive value when registering callbacks on primitive collection,
+      // then it value represent the index/key of the entry involved in the registered event.
+      if (propertyOrKey instanceof BaseProperty ) {
+        const property = propertyOrKey;
+        const values = propertyOrKey.isPrimitiveType() ? propertyOrKey.getValue() : propertyOrKey.getValues();
+        in_callback.call(this, values);
+      } else {
+        const key = propertyOrKey;
+        let values;
+        // parent won't be available upon removal
+        if (parent) {
+          values = parent.get(key);
+        }
+        in_callback.call(this, key, values);
+      }
+
     }, in_options);
   }
 

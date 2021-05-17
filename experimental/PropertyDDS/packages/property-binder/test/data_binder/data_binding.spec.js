@@ -562,6 +562,66 @@ describe('DataBinding.registerOnPath() should work for', function() {
     mapRemoveSpy.mockClear();
   });
 
+  it('Map of primitives', function() {
+    var mapInsertSpy = jest.fn();
+    var mapModifySpy = jest.fn();
+    var mapRemoveSpy = jest.fn();
+    ParentDataBinding.registerOnPath('mapPrimitive', ['collectionInsert'], mapInsertSpy);
+    ParentDataBinding.registerOnPath('mapPrimitive', ['collectionModify'], mapModifySpy);
+    ParentDataBinding.registerOnPath('mapPrimitive', ['collectionRemove'], mapRemoveSpy);
+
+    // Register the base (Child) typeid
+    dataBinder.register('BINDING', MapContainerTemplate.typeid, ParentDataBinding);
+    dataBinder.attachTo(workspace);
+
+    var mapContainerPset = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
+    workspace.root.insert('myMapContainerTemplate', mapContainerPset);
+
+    // Expect the insertion of map values to trigger onInsert messages
+    var mapProperty = workspace.root.get(['myMapContainerTemplate', 'mapPrimitive']);
+    workspace.pushNotificationDelayScope();
+    mapProperty.insert('one', '1');
+    mapProperty.insert('two', '2');
+    workspace.popNotificationDelayScope();
+
+    expect(mapInsertSpy).toHaveBeenCalledTimes(2);
+    // Test first parameter (index or key)
+    expect(mapInsertSpy.mock.calls[0][0]).toEqual('one');
+    expect(mapInsertSpy.mock.calls[1][0]).toEqual('two');
+
+    // Test second parameter (changesetContext)
+    expect(mapInsertSpy.mock.calls[0][1].getNestedChangeSet()).toEqual('1');
+    expect(mapInsertSpy.mock.calls[0][1].getContext()).toEqual('map');
+    expect(mapInsertSpy.mock.calls[0][1].getOperationType()).toEqual('insert');
+    expect(mapInsertSpy.mock.calls[0][1].getAbsolutePath()).toEqual('/myMapContainerTemplate.mapPrimitive[one]');
+    mapInsertSpy.mockClear();
+
+    // modify map
+    workspace.pushNotificationDelayScope();
+    mapProperty.setValues({'one': '10'});
+    mapProperty.setValues({'two': '20'});
+    workspace.popNotificationDelayScope();
+    expect(mapModifySpy).toHaveBeenCalledTimes(2);
+    expect(mapModifySpy.mock.calls[0][0]).toEqual('one');
+    expect(mapModifySpy.mock.calls[1][0]).toEqual('two');
+
+    expect(mapModifySpy.mock.calls[0][1].getNestedChangeSet()).toEqual('10');
+    expect(mapModifySpy.mock.calls[0][1].getContext()).toEqual('map');
+    expect(mapModifySpy.mock.calls[0][1].getOperationType()).toEqual('modify');
+    expect(mapModifySpy.mock.calls[0][1].getAbsolutePath()).toEqual('/myMapContainerTemplate.mapPrimitive[one]');
+    mapModifySpy.mockClear();
+
+    // remove from map
+    workspace.pushNotificationDelayScope();
+    mapProperty.remove('one');
+    mapProperty.remove('two');
+    workspace.popNotificationDelayScope();
+    expect(mapRemoveSpy).toHaveBeenCalledTimes(2);
+    expect(mapRemoveSpy.mock.calls[0][0]).toEqual('one');
+    expect(mapRemoveSpy.mock.calls[1][0]).toEqual('two');
+    mapRemoveSpy.mockClear();
+  });
+
   it('set', function() {
     var setInsertSpy = jest.fn();
     var setModifySpy = jest.fn();
@@ -2330,6 +2390,101 @@ describe('DataBinding.registerOnPath() should work for', function() {
     expect(binding._object.name).toEqual('stillMyObject');
     expect(binding._object.position).toEqual({ x: 4, y: 2, z: 3 });
     expect(binding._object.scale).toEqual({ x: 1, y: 12, z: 1 });
+  });
+
+});
+
+describe('DataBinding.registerOnValues() should work for', function() {
+  var dataBinder, workspace;
+
+  catchConsoleErrors();
+
+  beforeAll(function() {
+    registerTestTemplates();
+
+    PropertyFactory.register(Vector3DSchema);
+    PropertyFactory.register(Object3DSchema);
+  });
+
+  beforeEach(async function() {
+    // console.log('inner before each');
+    dataBinder = new DataBinder();
+    workspace = await MockSharedPropertyTree();
+  });
+
+  afterEach(function() {
+    // Unbind checkout view
+    dataBinder.detach();
+
+    // Unregister DataBinding paths
+    _.forEach([
+      ParentDataBinding,
+      ChildDataBinding,
+      PrimitiveChildrenDataBinding,
+      InheritedChildDataBinding,
+      DerivedDataBinding
+    ],
+    unregisterAllOnPathListeners
+    );
+
+    dataBinder = null;
+  });
+
+  it('Map of primitives', function() {
+    var mapInsertSpy = jest.fn();
+    var mapModifySpy = jest.fn();
+    var mapRemoveSpy = jest.fn();
+    ParentDataBinding.registerOnValues('mapPrimitive', ['collectionInsert'], mapInsertSpy);
+    ParentDataBinding.registerOnValues('mapPrimitive', ['collectionModify'], mapModifySpy);
+    ParentDataBinding.registerOnValues('mapPrimitive', ['collectionRemove'], mapRemoveSpy);
+
+    // Register the base (Child) typeid
+    dataBinder.register('BINDING', MapContainerTemplate.typeid, ParentDataBinding);
+    dataBinder.attachTo(workspace);
+
+    var mapContainerPset = PropertyFactory.create(MapContainerTemplate.typeid, 'single');
+    workspace.root.insert('myMapContainerTemplate', mapContainerPset);
+
+    // Expect the insertion of map values to trigger onInsert messages
+    var mapProperty = workspace.root.get(['myMapContainerTemplate', 'mapPrimitive']);
+    workspace.pushNotificationDelayScope();
+    mapProperty.insert('one', '1');
+    mapProperty.insert('two', '2');
+    workspace.popNotificationDelayScope();
+
+    expect(mapInsertSpy).toHaveBeenCalledTimes(2);
+    // Test first parameter (index or key)
+    expect(mapInsertSpy.mock.calls[0][0]).toEqual('one');
+    expect(mapInsertSpy.mock.calls[1][0]).toEqual('two');
+
+    // Test second parameter
+    expect(mapInsertSpy.mock.calls[0][1]).toEqual('1');
+    expect(mapInsertSpy.mock.calls[1][1]).toEqual('2');
+
+    mapInsertSpy.mockClear();
+
+    // modify map
+    workspace.pushNotificationDelayScope();
+    mapProperty.setValues({'one': '10'});
+    mapProperty.setValues({'two': '20'});
+    workspace.popNotificationDelayScope();
+    expect(mapModifySpy).toHaveBeenCalledTimes(2);
+    expect(mapModifySpy.mock.calls[0][0]).toEqual('one');
+    expect(mapModifySpy.mock.calls[1][0]).toEqual('two');
+
+    expect(mapModifySpy.mock.calls[0][1]).toEqual('10');
+    expect(mapModifySpy.mock.calls[1][1]).toEqual('20');
+    mapModifySpy.mockClear();
+
+    // remove from map
+    workspace.pushNotificationDelayScope();
+    mapProperty.remove('one');
+    mapProperty.remove('two');
+    workspace.popNotificationDelayScope();
+    expect(mapRemoveSpy).toHaveBeenCalledTimes(2);
+    expect(mapRemoveSpy.mock.calls[0][0]).toEqual('one');
+    expect(mapRemoveSpy.mock.calls[1][0]).toEqual('two');
+    mapRemoveSpy.mockClear();
   });
 
 });

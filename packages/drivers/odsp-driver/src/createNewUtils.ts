@@ -6,13 +6,13 @@
 import { v4 as uuid } from "uuid";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
-import { IBlob, IOdspSnapshot, ITreeEntry } from "./contracts";
+import { IOdspSnapshotBlob, IOdspSnapshot, IOdspSnapshotTreeEntry } from "./contracts";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to IOdspSnapshot tree
  */
 export function convertSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspSnapshot {
-    const blobs: IBlob[] = [];
+    const blobs: IOdspSnapshotBlob[] = [];
     const treeId = uuid();
     const snapshotTree: IOdspSnapshot = {
         trees: [
@@ -32,8 +32,8 @@ export function convertSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspS
 
 function convertSummaryTreeToIOdspSnapshotCore(
     summary: ISummaryTree,
-    trees: ITreeEntry[],
-    blobs: IBlob[],
+    trees: IOdspSnapshotTreeEntry[],
+    blobs: IOdspSnapshotBlob[],
     path: string = "",
 ) {
     const keys = Object.keys(summary.tree);
@@ -44,7 +44,6 @@ function convertSummaryTreeToIOdspSnapshotCore(
         switch (summaryObject.type) {
             case SummaryType.Tree: {
                 trees.push({
-                    id: uuid(),
                     type: "tree",
                     path: currentPath,
                 });
@@ -54,7 +53,7 @@ function convertSummaryTreeToIOdspSnapshotCore(
             case SummaryType.Blob: {
                 const content = typeof summaryObject.content === "string" ?
                     summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                const blob: IBlob = {
+                const blob: IOdspSnapshotBlob = {
                     id: uuid(),
                     encoding: typeof summaryObject.content === "string" ? undefined : "base64",
                     content,

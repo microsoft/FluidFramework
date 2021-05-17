@@ -49,12 +49,6 @@ data:
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
         },
-        {{- if .Values.eventHub }}
-        "eventHub": {
-            "endpoint": "{{ .Values.eventHub.endpoint }}",
-            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}",
-            "storageContainer": "{{ .Values.eventHub.storageContainer }}"
-        },
         {{- end }}
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

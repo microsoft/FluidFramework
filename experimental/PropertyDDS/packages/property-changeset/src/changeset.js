@@ -1060,16 +1060,23 @@ ChangeSet.prototype._stripReversibleChangeSet = function(in_withoutRoot) {
 /**
  * Helper function to extract the first level paths from a given change set
  * @param {property-changeset.SerializedChangeSet} in_changeSet The ChangeSet to extract paths from
+ * @param {Boolean} isPrimitiveCollection Is this a primitive type collection?
+ *
  * @return {Array<string>} List of paths found at the first level of the change set
  * @private
  */
-var _extractFirstLevelPaths = function(in_changeSet) {
-  var paths = [];
-  _.each(in_changeSet, function(nestedChangeSet) {
-    _.each(nestedChangeSet, function(nestedChangeSet2, path) {
-      paths.push(path);
+var _extractFirstLevelPaths = function(in_changeSet, isPrimitiveCollection) {
+  var paths;
+  if (isPrimitiveCollection) {
+    paths = _.keys(in_changeSet);
+  } else {
+    paths = [];
+    _.each(in_changeSet, function(nestedChangeSet) {
+        _.each(nestedChangeSet, function(nestedChangeSet2, path) {
+            paths.push(path);
+        });
     });
-  });
+  }
 
   return paths;
 };
@@ -1186,8 +1193,10 @@ ChangeSet.prototype._recursivelyInvertReversibleChangeset = function(in_context)
         replacedInsert = true;
         nestedChangeset.remove = undefined;
         delete nestedChangeset.remove;
-        _.each(_extractFirstLevelPaths(nestedChangeset.insert), function(path) {
-          in_context.getUserData()[path] = true;
+        let isPrimitiveType = TypeIdHelper.isPrimitiveType(in_context.getSplitTypeID().typeid);
+        _.each(_extractFirstLevelPaths(nestedChangeset.insert, isPrimitiveType), function(path) {
+          let fullPath = joinPaths(in_context.getFullPath(), path, PROPERTY_PATH_DELIMITER);
+          in_context.getUserData()[fullPath] = true;
         });
       }
       if (oldInsert) {
@@ -1198,7 +1207,8 @@ ChangeSet.prototype._recursivelyInvertReversibleChangeset = function(in_context)
           nestedChangeset.insert = undefined;
           delete nestedChangeset.insert;
         }
-        _.each(_extractFirstLevelPaths(nestedChangeset.remove), function(path) {
+        let isPrimitiveType = TypeIdHelper.isPrimitiveType(in_context.getSplitTypeID().typeid);
+        _.each(_extractFirstLevelPaths(nestedChangeset.remove, isPrimitiveType), function(path) {
           let fullPath = joinPaths(in_context.getFullPath(), path, PROPERTY_PATH_DELIMITER);
           in_context.getUserData()[fullPath] = true;
         });
