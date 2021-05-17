@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
@@ -48,9 +47,6 @@ export interface IClientSequenceNumber {
 }
 
 export interface IDeliState {
-    // Branch related mapping
-    branchMap: IRangeTrackerSnapshot | undefined;
-
     // List of connected clients
     clients: IClientSequenceNumber[] | undefined;
 
