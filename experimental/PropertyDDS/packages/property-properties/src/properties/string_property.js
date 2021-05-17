@@ -6,7 +6,7 @@
  * @fileoverview Definition of the StringProperty class
  */
 
-  const {ValueArrayProperty} = require('./value_array_property').ValueArrayProperty;
+  const {ValueArrayProperty} = require('./value_array_property');
   const {ArrayProperty} = require('./array_property');
   const _ = require('lodash');
   const MSG = require('@fluid-experimental/property-common').constants.MSG;

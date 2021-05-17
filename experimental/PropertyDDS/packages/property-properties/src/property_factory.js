@@ -33,8 +33,8 @@ const {ContainerProperty} = require('./properties/container_property');
 // Include all primitive properties –- will register at the end.
 const {ValueProperty} = require('./properties/value_property');
 const Uint32Property = require('./properties/uint_properties').Uint32Property;
-const StringProperty = require('./properties/string_property');
-const {Float32Property} = require('./properties/float_properties').Float32Property;
+const {StringProperty} = require('./properties/string_property');
+const {Float32Property} = require('./properties/float_properties');
 const Int32Property = require('./properties/int_properties').Int32Property;
 const Int64Property = require('./properties/int_properties').Int64Property;
 const Uint64Property = require('./properties/int_properties').Uint64Property;

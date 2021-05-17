@@ -5,7 +5,7 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const {ValueArrayProperty} = require('./value_array_property').ValueArrayProperty;
+const {ValueArrayProperty} = require('./value_array_property');
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const { BaseProperty } = require('./base_property');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
