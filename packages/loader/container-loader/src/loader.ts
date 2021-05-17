@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -50,12 +49,11 @@ function canUseCache(request: IRequest): boolean {
     return request.headers[LoaderHeader.cache] !== false;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader implements ILoader {
     constructor(
-        private readonly loader: ILoader,
         private readonly container: Container,
+        private readonly loader: ILoader | undefined,
     ) {
-        super();
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -81,6 +79,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             }
         }
 
+        if (this.loader === undefined) {
+            throw new Error("Cannot resolve external containers");
+        }
         return this.loader.resolve(request);
     }
 
@@ -88,6 +89,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         if (request.url.startsWith("/")) {
             const container = await this.resolve(request);
             return container.request(request);
+        }
+
+        if (this.loader === undefined) {
+            return {
+                status: 404,
+                value: "Cannot request external containers",
+                mimeType: "plain/text",
+            };
         }
         return this.loader.request(request);
     }
@@ -204,7 +213,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -234,10 +243,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     constructor(loaderProps: ILoaderProps) {
-        super();
-
         const scope = { ...loaderProps.scope };
-        if (loaderProps.options?.provideScopeLoader === true) {
+        if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
 
@@ -318,7 +325,7 @@ export class Loader extends EventEmitter implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => { console.error("Error during caching Container on the Loader", error); });
+        }).catch((error) => {});
     }
 
     private async resolveCore(
@@ -343,8 +350,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             }
         }
 
-        // parseUrl's id is expected to be of format "tenantId/docId"
-        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
@@ -357,7 +362,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -366,7 +370,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
-                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -424,7 +427,6 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
-        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,

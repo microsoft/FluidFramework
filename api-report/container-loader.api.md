@@ -24,6 +24,7 @@ import { IDeltaHandlerStrategy } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -180,8 +181,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
     // (undocumented)
-    connectToStorage(): Promise<IDocumentStorageService>;
-    // (undocumented)
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
@@ -314,7 +313,7 @@ export interface IParsedUrl {
 }
 
 // @public
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // @deprecated (undocumented)
     static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
@@ -346,8 +345,8 @@ export enum ReconnectMode {
 }
 
 // @public (undocumented)
-export class RelativeLoader extends EventEmitter implements ILoader {
-    constructor(loader: ILoader, container: Container);
+export class RelativeLoader implements ILoader {
+    constructor(container: Container, loader: ILoader | undefined);
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
@@ -357,12 +356,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 }
 
 // @public (undocumented)
-export class RetriableDocumentStorageService implements IDocumentStorageService {
+export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     constructor(internalStorageService: IDocumentStorageService, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger);
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
     dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)

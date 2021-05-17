@@ -137,7 +137,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
         if (isSharingLinkToRedeem) {
-            odspResolvedUrl.sharingLinkToRedeem = request.url.split("?")[0];
+            odspResolvedUrl.sharingLinkToRedeem = request.url;
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.

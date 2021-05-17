@@ -53,7 +53,6 @@ const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
 
 export const generateOdspHostStoragePolicy = (seed: number)=> {
     const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
-        blobDeduping: booleanCases,
         concurrentSnapshotFetch: booleanCases,
         opsBatchSize: numberCases,
         concurrentOpsBatches: numberCases,

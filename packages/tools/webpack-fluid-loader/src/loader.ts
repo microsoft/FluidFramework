@@ -184,9 +184,6 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: {
-            provideScopeLoader: true,
-        },
     });
 }
 
@@ -250,7 +247,8 @@ export async function start(
         // This functionality is used in odsp driver to prefetch the latest snapshot and cache it so
         // as to avoid the network call to fetch trees latest.
         if (window.location.hash === "#prefetch") {
-            assert(options.mode === "spo-df" || options.mode === "spo", "Prefetch snapshot only available for odsp!");
+            assert(options.mode === "spo-df" || options.mode === "spo",
+                0x1ea /* "Prefetch snapshot only available for odsp!" */);
             const prefetched = await prefetchLatestSnapshot(
                 await urlResolver.resolve({ url: documentUrl }),
                 async () => options.odspAccessToken,
@@ -258,7 +256,7 @@ export async function start(
                 new BaseTelemetryNullLogger(),
                 undefined,
             );
-            assert(prefetched, "Snapshot should be prefetched!");
+            assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
         container1 = await loader1.resolve({ url: documentUrl });
         containers.push(container1);

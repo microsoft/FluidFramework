@@ -20,6 +20,7 @@
     "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "bundle-analysis:run": "fluid-run-bundle-analyses",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
+    "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
     "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
     "ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
@@ -61,7 +62,7 @@
     "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --timeout 4s --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:realsvc": "lerna run test:realsvc --stream --no-bail --no-sort",
     "test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
-    "test:report": "npm run test:mocha:report && npm run test:jest:report #&& npm run test:realsvc:report",
+    "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root . -s tsc",
@@ -75,7 +76,7 @@
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.22453",
+    "@fluidframework/build-tools": "^0.2.24071",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.13.1",
