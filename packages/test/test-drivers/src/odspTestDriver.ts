@@ -15,6 +15,7 @@ import {
     getMicrosoftConfiguration,
 } from "@fluidframework/tool-utils";
 import { getDriveId, getDriveItemByRootFileName, IClientConfig } from "@fluidframework/odsp-doclib-utils";
+import { runWithRetry } from "@fluidframework/container-loader";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 
@@ -44,11 +45,14 @@ export class OdspTestDriver implements ITestDriver {
     private static readonly driverIdPCache = new Map<string, Promise<string>>();
     private static async getDriveId(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
-        return getDriveId(
-            server,
-            "",
-            undefined,
-            { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig) });
+        return runWithRetry(
+            async () => getDriveId(
+                server,
+                "",
+                undefined,
+                { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig) }),
+            "getDriveId",
+        );
     }
 
     public static async createFromEnv(
@@ -86,7 +90,12 @@ export class OdspTestDriver implements ITestDriver {
 
         let driveIdP = this.driverIdPCache.get(loginConfig.server);
         if (!driveIdP) {
-            driveIdP = this.getDriveId(loginConfig.server, tokenConfig);
+            driveIdP = OdspTestDriver.getDriveId(loginConfig.server, tokenConfig);
+            this.driverIdPCache.set(loginConfig.server, driveIdP);
+            driveIdP.catch((error) => {
+                this.driverIdPCache.delete(loginConfig.server);
+                throw error;
+            });
         }
 
         const driveId = await driveIdP;

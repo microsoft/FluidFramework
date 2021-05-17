@@ -13,6 +13,6 @@ processOneNode(data)
         if (typeof error === "object" && error !== null && (error as Error).message !== undefined) {
             threads.parentPort.postMessage((error as Error).message);
         } else {
-            threads.parentPort.postMessage(`Error AAA processing ${data.folder}`);
+            threads.parentPort.postMessage(`Error processing ${data.folder}`);
         }
     });

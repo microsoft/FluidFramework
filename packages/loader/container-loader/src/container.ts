@@ -732,7 +732,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
         } else {
-            assert(this.loaded, 0x0d0 /* "Container in non-loaded state before close!" */);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 

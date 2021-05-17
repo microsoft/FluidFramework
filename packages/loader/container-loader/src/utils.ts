@@ -111,8 +111,8 @@ const delay = async (timeMs: number): Promise<void> =>
 export async function runWithRetry<T>(
     api: () => Promise<T>,
     fetchCallName: string,
-    deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
-    logger: ITelemetryLogger,
+    deltaManager?: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
+    logger?: ITelemetryLogger,
     shouldRetry?: () => { retry: boolean, error: any | undefined},
 ): Promise<T> {
     let result: T | undefined;
@@ -126,7 +126,7 @@ export async function runWithRetry<T>(
         try {
             result = await api();
             if (id !== undefined) {
-                deltaManager.refreshDelayInfo(id);
+                deltaManager?.refreshDelayInfo(id);
             }
             success = true;
         } catch (err) {
@@ -141,7 +141,7 @@ export async function runWithRetry<T>(
             }
             // If it is not retriable, then just throw the error.
             if (!canRetryOnError(err)) {
-                logger.sendErrorEvent({
+                logger?.sendErrorEvent({
                     eventName: fetchCallName,
                     retry: numRetries,
                     duration: performance.now() - startTime,
@@ -156,12 +156,12 @@ export async function runWithRetry<T>(
             if (id === undefined) {
                 id = uuid();
             }
-            deltaManager.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
+            deltaManager?.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
             await delay(retryAfterSeconds * 1000);
         }
     } while (!success);
     if (numRetries > 0) {
-        logger.sendTelemetryEvent({
+        logger?.sendTelemetryEvent({
             eventName: fetchCallName,
             retry: numRetries,
             duration: performance.now() - startTime,
