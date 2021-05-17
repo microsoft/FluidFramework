@@ -56,7 +56,7 @@ export class TinyliciousClientInstance {
         );
 
         const rootDataObject = await this.getRootDataObject(container);
-        return new FluidContainer(container, rootDataObject) as FluidContainer;
+        return new FluidContainer(container, rootDataObject);
     }
 
     public async getContainer(
@@ -73,7 +73,7 @@ export class TinyliciousClientInstance {
         );
 
         const rootDataObject = await this.getRootDataObject(container);
-        return new FluidContainer(container, rootDataObject) as FluidContainer;
+        return new FluidContainer(container, rootDataObject);
     }
 
     private async getRootDataObject(
