@@ -120,9 +120,9 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	/**
-	 * Get a factory for SharedDie to register with the data store.
+	 * Get a factory for SharedPropertyTree to register with the data store.
 	 *
-	 * @returns a factory that creates and load SharedDie
+	 * @returns a factory that creates and load SharedPropertyTree
 	 */
 	public static getFactory(): IChannelFactory {
 		return new PropertyTreeFactory();
