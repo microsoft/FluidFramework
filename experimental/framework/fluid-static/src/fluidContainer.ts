@@ -41,7 +41,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public dispose() {
         this.container.close();
         this.container.off("connected", this.connectedHandler);
-        this.container.off("dispose", this.disposedHandler);
+        this.container.off("closed", this.disposedHandler);
         this.container.off("disconnected", this.disconnectedHandler);
     }
 
