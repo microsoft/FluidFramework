@@ -335,6 +335,12 @@ export class SharedPropertyTree extends SharedObject {
 				if (visitor.remoteHeadGuid === visitor.referenceGuid && remoteChangeMap.has(visitor.referenceGuid)) {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
+
+                // If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
+                // keep all remote Changes until this change has been processed
+                if (visitor.remoteHeadGuid === "") {
+                    visitedRemoteChanges.add(remoteChanges[0].guid);
+                }
 			}
 		}
 		let pruned = 0;
