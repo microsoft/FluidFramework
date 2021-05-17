@@ -172,6 +172,11 @@ const MapContainerTemplate = {
   inherits: 'NamedProperty',
   properties: [
     {
+      id: "mapPrimitive",
+      typeid: "String",
+      context: 'map'
+    },
+    {
       id: 'subMap',
       typeid: 'Test:ChildID-0.0.1',
       context: 'map'

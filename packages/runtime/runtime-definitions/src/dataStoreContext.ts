@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -73,7 +73,7 @@ export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext {
 
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
 
     /**
@@ -217,7 +217,7 @@ export interface IFluidDataStoreChannel extends
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    resubmit(type: string, content: any, localOpMetadata: unknown);
+    reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
 }
@@ -274,7 +274,7 @@ export interface IFluidDataStoreContext extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
     /**
      * @deprecated 0.37 Containers created using a loader will make automatically it

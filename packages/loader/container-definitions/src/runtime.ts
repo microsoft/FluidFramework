@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidConfiguration,
@@ -121,7 +121,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 

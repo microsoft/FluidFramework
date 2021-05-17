@@ -12,6 +12,13 @@ export class CombinedProducer implements IProducer {
     constructor(private readonly producers: IProducer[]) {
     }
 
+    /**
+     * Returns true if the producer is connected
+     */
+    public isConnected(): boolean {
+        return this.producers.every((producer) => producer.isConnected());
+    }
+
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const sendP = [];

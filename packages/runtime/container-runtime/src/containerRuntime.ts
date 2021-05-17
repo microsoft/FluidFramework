@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
-    IContainerRuntimeDirtyable,
     IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
 import {
@@ -131,6 +130,7 @@ import {
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
 import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -272,29 +272,6 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
-
-/**
- * Helper to check if the given feature key is set in local storage.
- * @returns the following:
- * - true, if the key is set and the value is "1".
- * - false, if the key is set and the value is "0".
- * - undefined, if local storage is not available or the key is not set.
- */
-function getLocalStorageFeatureGate(key: string): boolean | undefined {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            const itemValue = localStorage.getItem(key);
-            if  (itemValue === "1") {
-                return true;
-            }
-            if (itemValue === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return undefined;
-}
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -548,24 +525,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
         IContainerRuntime,
-        IContainerRuntimeDirtyable,
         IRuntime,
         ISummarizerRuntime,
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    /**
-     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
-     * an upcoming release.
-     */
-    public get IContainerRuntimeDirtyable() {
-        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
-        return this;
-    }
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -698,14 +662,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._storage!;
     }
 
-    public get resubmitFn(): (
+    public get reSubmitFn(): (
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined,
     ) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        return this.resubmit;
+        return this.reSubmit;
     }
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
@@ -810,6 +774,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
+    // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
+    // deleted as soon as GC runs.
+    public get gcTestMode(): boolean {
+        return getLocalStorageFeatureGate(gcTestModeKey)
+            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -892,8 +863,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
-            this._logger,
-            this.runtimeOptions);
+            (id: string) => this.summarizerNode.deleteChild(id),
+            this._logger);
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
@@ -1536,28 +1507,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dirtyContainer;
     }
 
-    /**
-     * Will return true for any message that affect the dirty state of this document
-     * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IFluidDataStoreRuntime.isDirty call returns true/false
-     * @param type - The type of ContainerRuntime message that is being checked
-     * @param contents - The contents of the message that is being verified
-     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
-     * an upcoming release.
-     */
-    public isMessageDirtyable(message: ISequencedDocumentMessage) {
-        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
-        assert(
-            isRuntimeMessage(message) === true,
-            0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
-        );
-        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
-    }
-
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
@@ -1646,9 +1595,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
                 // involving access to deleted data.
-                const gcTestMode =
-                    getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode;
-                if (gcTestMode) {
+                if (this.gcTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
@@ -2029,7 +1976,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private resubmit(
+    private reSubmit(
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,

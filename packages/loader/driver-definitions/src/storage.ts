@@ -240,7 +240,7 @@ export interface IDocumentServicePolicies {
     /**
      * Do not connect to delta stream
      */
-    readonly storageOnly?: boolean;
+    storageOnly?: boolean;
 }
 
 export interface IDocumentService {

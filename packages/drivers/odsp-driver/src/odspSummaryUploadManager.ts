@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -85,8 +83,7 @@ export class OdspSummaryUploadManager {
     ): Promise<IWriteSummaryResponse> {
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
-            // Clone as we change the blob contents.
-            cloneDeep(tree),
+            tree,
             ".app",
             "",
         );
