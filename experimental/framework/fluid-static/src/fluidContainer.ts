@@ -4,43 +4,48 @@
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 interface IFluidContainerEvents extends IEvent {
-    (event: "connected", listener: (clientId: string) => void): void;
-    (event: "dispose" | "disconnected", listener: () => void): void;
+    (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
 }
 
 interface IFluidContainer {
-    close(error?: ICriticalContainerError): void;
-    readonly closed: boolean;
+    dispose(): void;
+    readonly disposed: boolean;
     readonly connected: boolean;
     initialObjects: LoadableObjectRecord;
 }
 
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
+    private readonly connectedHandler = () => this.emit("connected");
+    private readonly disconnectedHandler = () => this.emit("disconnected");
+    private readonly disposedHandler = () => this.emit("disposed");
+
     public constructor(
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
     ) {
-            super();
-            container.on("connected", (id: string) =>  this.emit("connected", id));
-            container.on("dispose", () =>  this.emit("dispose"));
-            container.on("disconnected", () =>  this.emit("disconnected"));
+        super();
+        container.on("connected", this.connectedHandler);
+        container.on("closed", this.disposedHandler);
+        container.on("disconnected", this.disconnectedHandler);
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
         return this.rootDataObject.create(objectClass);
     }
 
-    public close() {
+    public dispose() {
         this.container.close();
+        this.container.off("connected", this.connectedHandler);
+        this.container.off("dispose", this.disposedHandler);
+        this.container.off("disconnected", this.disconnectedHandler);
     }
 
-    public get closed() {
+    public get disposed() {
         return this.container.closed;
     }
 
@@ -50,5 +55,19 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
     public get initialObjects() {
         return this.rootDataObject.initialObjects;
+    }
+
+    /**
+    * @deprecated - Audience is being moved to the client packages
+    */
+    public get audience() {
+        return this.container.audience;
+    }
+
+    /**
+    * @deprecated - clientId is being moved to the client packages
+    */
+    public get clientId() {
+        return this.container.clientId;
     }
 }
