@@ -214,4 +214,4 @@ EnumArrayProperty.prototype.getValidEnumList = function() {
   return this._enumDictionary.enumEntriesById;
 };
 
-module.exports = EnumArrayProperty;
+module.exports = {EnumArrayProperty};

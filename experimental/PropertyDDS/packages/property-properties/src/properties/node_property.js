@@ -6,7 +6,7 @@
  * @fileoverview This file contains the implementation of the NodeProperty class
  */
 const _ = require('lodash');
-const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
+const {IndexedCollectionBaseProperty} = require('./indexed_collection_base_property');
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').constants.PROPERTY_PATH_DELIMITER;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;

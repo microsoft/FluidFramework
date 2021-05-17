@@ -6,7 +6,7 @@
  * @fileoverview Definition of the StringProperty class
  */
 
-  const ValueArrayProperty = require('./value_array_property').ValueArrayProperty;
+  const {ValueArrayProperty} = require('./value_array_property').ValueArrayProperty;
   const {ArrayProperty} = require('./array_property');
   const _ = require('lodash');
   const MSG = require('@fluid-experimental/property-common').constants.MSG;
@@ -446,6 +446,7 @@
 
   /**
    * @inheritdoc
+   * @internal
    */
   StringProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
     // It is unfortunate, but because StringProperty derives from ArrayProperty, it can happen
@@ -639,4 +640,4 @@
     }
   );
 
-  module.exports = StringProperty;
+  module.exports = {StringProperty};

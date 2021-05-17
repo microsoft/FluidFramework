@@ -68,4 +68,4 @@ NamedProperty.prototype.getGuid = function() {
 
 };*/
 
-module.exports = NamedProperty;
+module.exports = {NamedProperty};

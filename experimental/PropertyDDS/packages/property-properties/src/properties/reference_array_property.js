@@ -5,7 +5,7 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const ValueArrayProperty = require('./value_array_property').ValueArrayProperty;
+const {ValueArrayProperty} = require('./value_array_property').ValueArrayProperty;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const { BaseProperty } = require('./base_property');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
@@ -254,4 +254,4 @@ ReferenceArrayProperty._convertInputToPaths = function(in_array, in_callerName) 
   return arr;
 };
 
-module.exports = ReferenceArrayProperty;
+module.exports = {ReferenceArrayProperty};

@@ -7,7 +7,7 @@
  */
 const { BaseProperty } = require('./base_property');
 const {ContainerProperty} = require('./container_property');
-const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
+const {IndexedCollectionBaseProperty} = require('./indexed_collection_base_property');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const _ = require('lodash');

@@ -6,7 +6,7 @@
  * @fileoverview Definition of the named node property class
  */
 
-const NamedProperty = require('./named_property');
+const {NamedProperty} = require('./named_property');
 const {NodeProperty} = require('./node_property');
 
 /**
@@ -55,4 +55,4 @@ NamedNodeProperty.prototype.getGuid = NamedProperty.prototype.getGuid;
  */
 NamedNodeProperty.prototype.getUrn = NamedProperty.prototype.getUrn;
 
-module.exports = NamedNodeProperty;
+module.exports = {NamedNodeProperty};

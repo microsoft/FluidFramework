@@ -5,7 +5,7 @@
 /**
  * @fileoverview Definition of the reference map property class
  */
-const StringMapProperty = require('./value_map_property').StringMapProperty;
+const {StringMapProperty} = require('./value_map_property').StringMapProperty;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const { BaseProperty } = require('./base_property');
@@ -201,4 +201,4 @@ ReferenceMapProperty.prototype._resolvePathSegment = function(in_segment, in_seg
   }
 };
 
-module.exports = ReferenceMapProperty;
+module.exports = {ReferenceMapProperty};

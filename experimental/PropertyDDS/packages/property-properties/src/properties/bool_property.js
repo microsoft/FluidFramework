@@ -30,4 +30,4 @@ BoolProperty.prototype._typeid = 'Bool';
 /**@internal */
 BoolProperty.prototype._castFunctor = _castFunctors.Boolean;
 
-module.exports = BoolProperty;
+module.exports = {BoolProperty};

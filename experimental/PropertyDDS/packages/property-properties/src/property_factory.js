@@ -25,20 +25,20 @@ const PropertyTemplate = require('./property_template');
 
 // Include the property classes
 const {BaseProperty} = require('./properties/base_property');
-const NamedProperty = require('./properties/named_property');
+const {NamedProperty} = require('./properties/named_property');
 const {NodeProperty} = require('./properties/node_property');
-const NamedNodeProperty = require('./properties/named_node_property');
+const {NamedNodeProperty} = require('./properties/named_node_property');
 const {ContainerProperty} = require('./properties/container_property');
 
 // Include all primitive properties –- will register at the end.
 const {ValueProperty} = require('./properties/value_property');
 const Uint32Property = require('./properties/uint_properties').Uint32Property;
 const StringProperty = require('./properties/string_property');
-const Float32Property = require('./properties/float_properties').Float32Property;
+const {Float32Property} = require('./properties/float_properties').Float32Property;
 const Int32Property = require('./properties/int_properties').Int32Property;
 const Int64Property = require('./properties/int_properties').Int64Property;
 const Uint64Property = require('./properties/int_properties').Uint64Property;
-const BoolProperty = require('./properties/bool_property');
+const {BoolProperty} = require('./properties/bool_property');
 const {ReferenceProperty} = require('./properties/reference_property');
 const Float64Property = require('./properties/float_properties').Float64Property;
 const Uint16Property = require('./properties/uint_properties').Uint16Property;
@@ -52,7 +52,7 @@ const {ArrayProperty} = require('./properties/array_property');
 const {SetProperty} = require('./properties/set_property');
 const {MapProperty} = require('./properties/map_property');
 const ValueMapProperty = require('./properties/value_map_property').ValueMapProperty;
-const IndexedCollectionBaseProperty = require('./properties/indexed_collection_base_property');
+const {IndexedCollectionBaseProperty} = require('./properties/indexed_collection_base_property');
 
 const Float32ArrayProperty = require('./properties/value_array_property').Float32ArrayProperty;
 const Float64ArrayProperty = require('./properties/value_array_property').Float64ArrayProperty;
@@ -66,8 +66,8 @@ const Uint8ArrayProperty = require('./properties/value_array_property').Uint8Arr
 const Int8ArrayProperty = require('./properties/value_array_property').Int8ArrayProperty;
 const StringArrayProperty = require('./properties/value_array_property').StringArrayProperty;
 const BoolArrayProperty = require('./properties/value_array_property').BoolArrayProperty;
-const ReferenceArrayProperty = require('./properties/reference_array_property');
-const EnumArrayProperty = require('./properties/enum_array_property');
+const {ReferenceArrayProperty} = require('./properties/reference_array_property');
+const {EnumArrayProperty} = require('./properties/enum_array_property');
 
 const Float64MapProperty = require('./properties/value_map_property').Float64MapProperty;
 const Float32MapProperty = require('./properties/value_map_property').Float32MapProperty;
@@ -80,7 +80,7 @@ const Int64MapProperty = require('./properties/value_map_property').Int64MapProp
 const Int16MapProperty = require('./properties/value_map_property').Int16MapProperty;
 const Int8MapProperty = require('./properties/value_map_property').Int8MapProperty;
 const StringMapProperty = require('./properties/value_map_property').StringMapProperty;
-const ReferenceMapProperty = require('./properties/reference_map_property');
+const {ReferenceMapProperty} = require('./properties/reference_map_property');
 const BoolMapProperty = require('./properties/value_map_property').BoolMapProperty;
 
 const semver = require('semver');

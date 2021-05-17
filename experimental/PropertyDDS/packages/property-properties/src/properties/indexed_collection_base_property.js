@@ -744,4 +744,4 @@ IndexedCollectionBaseProperty.prototype._setDirty = function(in_reportToView, in
   BaseProperty.prototype._setDirty.call(this, in_reportToView, in_callingChild);
 };
 
-module.exports = IndexedCollectionBaseProperty;
+module.exports = {IndexedCollectionBaseProperty};

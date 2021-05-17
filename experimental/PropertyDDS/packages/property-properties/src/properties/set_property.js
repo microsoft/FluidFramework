@@ -7,9 +7,9 @@
  */
 const { BaseProperty } = require('./base_property');
 const {ContainerProperty} = require('./container_property');
-const NamedProperty = require('./named_property');
-const NamedNodeProperty = require('./named_node_property');
-const IndexedCollectionBaseProperty = require('./indexed_collection_base_property');
+const {NamedProperty} = require('./named_property');
+const {NamedNodeProperty} = require('./named_node_property');
+const {IndexedCollectionBaseProperty} = require('./indexed_collection_base_property');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const _ = require('lodash');
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
