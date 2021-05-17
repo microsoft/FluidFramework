@@ -9,6 +9,7 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
+
 interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
 }
