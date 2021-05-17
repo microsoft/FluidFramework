@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { PropertyFactory } from './property_factory';
 import { BaseProperty } from './properties/base_property';
