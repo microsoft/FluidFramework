@@ -6,6 +6,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 interface IFluidContainerEvents extends IEvent {
@@ -60,7 +61,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
     * @deprecated - Audience is being moved to the client packages
     */
-    public get audience() {
+    public get audience(): IAudience {
         return this.container.audience;
     }
 
