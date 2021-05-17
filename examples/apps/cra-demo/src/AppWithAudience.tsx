@@ -4,9 +4,9 @@
  */
 
 import React from "react";
-import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import Fluid, { FluidContainer } from "@fluid-experimental/fluid-static";
-import { TinyliciousService } from "@fluid-experimental/get-container";
+import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import { FluidContainer } from "@fluid-experimental/fluid-static";
+import { SharedMap } from "@fluidframework/map";
 
 const getContainerId = (): { containerId: string; isNew: boolean } => {
     let isNew = false;
@@ -18,55 +18,53 @@ const getContainerId = (): { containerId: string; isNew: boolean } => {
     return { containerId, isNew };
 };
 
-
-
-
-
 function App() {
-
-    const [dataObject, setDataObject] = React.useState<KeyValueDataObject>();
+    const [map, setMap] = React.useState<SharedMap>();
     const [container, setContainer] = React.useState<FluidContainer>();
     const [id, setId] = React.useState<string | undefined>();
     const [data, setData] = React.useState<{ [key: string]: any }>({});
 
     const createSession = () => {
-        const service = new TinyliciousService();
-        Fluid.init(service);
-
-        const dataObjectId = "dateTracker";
+        TinyliciousClient.init({ port: 7070 });
 
         const containerConfig = {
-            dataObjects: [KeyValueDataObject],
-            initialDataObjects: { [dataObjectId]: KeyValueDataObject }
+            name: "simple-container",
+            initialObjects: {
+                map: SharedMap,
+            },
         };
 
         const { containerId, isNew } = getContainerId();
 
         const load = async () => {
             const fluidContainer = isNew
-                ? await Fluid.createContainer(containerId, containerConfig)
-                : await Fluid.getContainer(containerId, containerConfig);
+                ? await TinyliciousClient.createContainer({id: containerId}, containerConfig)
+                : await TinyliciousClient.getContainer({id: containerId}, containerConfig);
 
-            const keyValueDataObject = await fluidContainer.getDataObject<KeyValueDataObject>(dataObjectId)
+            const sharedMap = fluidContainer.initialObjects.map as SharedMap;
 
             setContainer(fluidContainer);
-            setDataObject(keyValueDataObject);
-        }
+            setMap(sharedMap);
+        };
 
-        load();
-    }
+        void load();
+    };
 
     const setupListeners = () => {
-        const updateData = () => setData(dataObject?.query());
+        const updateData = () => {
+            if (map) {
+                setData(Object.fromEntries(map.entries()));
+            }
+        };
         const updateId = (clientId: string) =>  setId(clientId);
         updateData();
-        dataObject?.on("changed", updateData);
+        map?.on("valueChanged", updateData);
         container?.on("connected", updateId);
         return () => {
-            dataObject?.off("changed", updateData)
+            map?.off("valueChanged", updateData);
             container?.off("connected", updateId);
-        }
-    }
+        };
+    };
 
     React.useEffect(() => {
         if (!container) {
@@ -74,38 +72,36 @@ function App() {
         } else {
             setupListeners();
         }
-    }, [dataObject]);
+    }, [map]);
 
-
-    if (!dataObject || !container) return <div />;
-
+    if (!map || !container) { return <div />; }
 
     const MemberList = () => {
         const members: string[] = Array.from(container.audience.getMembers().keys());
         return (
             <ul>
                 { members && members.map((member: string) => {
-                    return !!dataObject.get(member)
-                        ? <li> {dataObject.get("lastEdit") === member ? "* " : ""}  {dataObject.get(member)} </li>
+                    return map.get(member)
+                        ? <li> {map.get("lastEdit") === member ? "* " : ""}  {map.get(member)} </li>
                         : undefined;
                 })}
             </ul>
-        )
-    }
+        );
+    };
 
     return (
         <div className="App">
             Name
             <input
-                value={id ? dataObject.get(id) : ''}
+                value={id ? map.get(id) : ''}
                 type="text"
                 autoComplete="off"
-                onChange={(e) => id && dataObject.set(id, e.target.value)}
+                onChange={(e) => id && map.set(id, e.target.value)}
             />
             <div>
                 <button onClick={() => {
-                    dataObject.set("time", Date.now().toString())
-                    dataObject.set("lastEdit", id)
+                    map.set("time", Date.now().toString());
+                    map.set("lastEdit", id);
                 }}>
                     click
             </button>
@@ -113,7 +109,7 @@ function App() {
             <div>{data["time"]}</div>
             <MemberList />
         </div>
-    )
+    );
 }
 
 export default App;
