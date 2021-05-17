@@ -361,7 +361,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
-    readonly dispose: () => void;
+    dispose(): void;
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
