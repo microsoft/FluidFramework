@@ -12,7 +12,7 @@ import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerError(error: any): ICriticalContainerError;
+export function CreateContainerError(error: any): ICriticalContainerError & LoggingError;
 
 // @public
 export function CreateProcessingError(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
