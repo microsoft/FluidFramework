@@ -644,7 +644,7 @@ export class DeltaManager
                         logNetworkFailure(
                             this.logger,
                             {
-                                delayMs, // milliseconds
+                                delay: delayMs, // milliseconds
                                 eventName: "DeltaConnectionFailureToConnect",
                             },
                             origError);
