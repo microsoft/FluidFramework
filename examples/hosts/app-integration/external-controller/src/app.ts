@@ -5,6 +5,7 @@
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DiceRollerController } from "./controller";
+import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
@@ -31,10 +32,14 @@ export const containerSchema = {
 };
 
 async function start(): Promise<void> {
+    // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+    // and hook to the Telemetry system
+    const consoleLogger: ConsoleLogger = new ConsoleLogger();
+
     // Get or create the document depending if we are running through the create new flow
     const fluidContainer = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId }, containerSchema);
+        ? await TinyliciousClient.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        : await TinyliciousClient.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;

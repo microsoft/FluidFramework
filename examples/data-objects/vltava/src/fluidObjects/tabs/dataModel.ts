@@ -13,9 +13,8 @@ import {
 import {
     ISharedDirectory,
     IDirectory,
-    IDirectoryValueChanged,
+    IValueChanged,
 } from "@fluidframework/map";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 import { v4 as uuid } from "uuid";
@@ -62,17 +61,13 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.tabs = root.getSubDirectory(tabs)!;
 
-        root.on(
-            "valueChanged",
+        this.tabs.on(
+            "containedValueChanged",
             (
-                changed: IDirectoryValueChanged,
+                changed: IValueChanged,
                 local: boolean,
-                op: ISequencedDocumentMessage,
-                target: ISharedDirectory,
             ) => {
-                if (changed.path === this.tabs.absolutePath) {
-                    this.emit("newTab", local);
-                }
+                this.emit("newTab", local);
             });
     }
 

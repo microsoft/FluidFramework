@@ -49,7 +49,7 @@ export class TinyliciousClientInstance {
             containerSchema,
         );
         const container = await this.getContainerCore(
-            serviceContainerConfig.id,
+            serviceContainerConfig,
             runtimeFactory,
             true,
         );
@@ -64,7 +64,7 @@ export class TinyliciousClientInstance {
             containerSchema,
         );
         const container = await this.getContainerCore(
-            serviceContainerConfig.id,
+            serviceContainerConfig,
             runtimeFactory,
             false,
         );
@@ -79,7 +79,7 @@ export class TinyliciousClientInstance {
     }
 
     private async getContainerCore(
-        containerId: string,
+        tinyliciousContainerConfig: TinyliciousContainerConfig,
         containerRuntimeFactory: IRuntimeFactory,
         createNew: boolean,
     ): Promise<Container> {
@@ -90,6 +90,7 @@ export class TinyliciousClientInstance {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
+            logger: tinyliciousContainerConfig.logger,
         });
 
         let container: Container;
@@ -102,10 +103,10 @@ export class TinyliciousClientInstance {
                 package: "no-dynamic-package",
                 config: {},
             });
-            await container.attach({ url: containerId });
+            await container.attach({ url: tinyliciousContainerConfig.id });
         } else {
             // Request must be appropriate and parseable by resolver.
-            container = await loader.resolve({ url: containerId });
+            container = await loader.resolve({ url: tinyliciousContainerConfig.id });
             // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
             // new container here, where we expect this to be loading an existing container.
             if (container.existing === undefined) {
