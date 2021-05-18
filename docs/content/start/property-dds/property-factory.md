@@ -1,6 +1,6 @@
 ---
 title: PropertyFactory
-menuPosition: 4
+menuPosition: 3
 ---
 
 The application creates properties via a singleton class called the ``PropertyFactory``. This factory is responsible

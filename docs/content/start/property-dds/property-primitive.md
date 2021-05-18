@@ -1,6 +1,6 @@
 ---
 title: Primitive Properties
-menuPosition: 5
+menuPosition: 4
 ---
 
 The actual data in PropertySet is stored in the leaf nodes of the tree. Those are called **Primitive Properties**.
@@ -67,8 +67,6 @@ There are three special types of primitive properties:
 
 **Enum Properties**
   An enum is restricted to a set of predefined named values, which are defined in schema that describes the enum.
-  For more details please see the [Enum Properties]({{< ref "property-enums.md" >}}) section which describes both the Schema format and how
-  to create Enum Properties and how to assign values.
 
 **String Properties**
   String properties support OT. TBD

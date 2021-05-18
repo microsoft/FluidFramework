@@ -1,6 +1,6 @@
 ---
 title: Reserved Properties
-menuPosition: 9
+menuPosition: 8
 ---
 Reserved properties are container properties whose Schema is inbuilt into PropertyDDS. These properties have a special meaning
 for PropertyDDS and PropertyDDS might provide additional functionality for those object types.

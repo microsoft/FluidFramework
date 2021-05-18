@@ -1,6 +1,6 @@
 ---
 title: Paths and References
-menuPosition: 6
+menuPosition: 5
 ---
 
 Properties can be addressed in PropertyDDS via path. A path describes how to get from a starting point in the property tree to

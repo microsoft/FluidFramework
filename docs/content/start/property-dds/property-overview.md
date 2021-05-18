@@ -1,6 +1,6 @@
 ---
 title: Overview
-menuPosition: 2
+menuPosition: 1
 ---
 
 ![Example of a PropertySet tree](/images/property_example_data_model.png)

@@ -1,6 +1,6 @@
 ---
 title: Collection Properties
-menuPosition: 7
+menuPosition: 6
 ---
 
 PropertyDDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. PropertyDDS distinguishes between
