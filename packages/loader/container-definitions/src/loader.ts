@@ -18,7 +18,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
@@ -326,7 +326,7 @@ export interface IContainerLoadMode {
 /**
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
-export interface ILoaderHeader {
+export interface ILoaderHeader extends IDriverHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.loadMode]: IContainerLoadMode;

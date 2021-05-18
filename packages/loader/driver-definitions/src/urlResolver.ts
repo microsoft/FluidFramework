@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 export interface IResolvedUrlBase {
@@ -32,13 +30,13 @@ export interface IUrlResolver {
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
-    resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
+    resolve(request: IResolverRequest): Promise<IResolvedUrl | undefined>;
 
     // Creates a url for the created container with any data store path given in the relative url.
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        codeDetails?: any,
     ): Promise<string>;
 }
 
@@ -76,11 +74,12 @@ export enum DriverHeader {
 }
 
 export interface IDriverHeader {
-    [DriverHeader.summarizingClient]: boolean;
-    [DriverHeader.createNew]: any;
+    [DriverHeader.summarizingClient]?: boolean;
+    [DriverHeader.createNew]?: any;
+    [index: string]: any;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<IDriverHeader> { }
+export interface IResolverRequest {
+    url: string;
+    headers?: IDriverHeader;
 }
