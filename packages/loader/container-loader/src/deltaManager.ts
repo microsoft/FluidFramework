@@ -23,8 +23,6 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentDeltaConnection,
-    IDocumentStorageService,
-    LoaderCachingPolicy,
     IDocumentDeltaConnectionEvents,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
@@ -60,8 +58,6 @@ import {
     DataCorruptionError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
@@ -206,7 +202,6 @@ export class DeltaManager
     // Counts the number of noops sent by the client which may not be acked.
     private trailingNoopCount = 0;
     private closed = false;
-    private storageService: RetriableDocumentStorageService | undefined;
     private readonly deltaStreamDelayId = uuid();
     private readonly deltaStorageDelayId = uuid();
 
@@ -363,30 +358,6 @@ export class DeltaManager
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
         return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
-    }
-
-    public async connectToStorage(): Promise<IDocumentStorageService> {
-        if (this.storageService !== undefined) {
-            return this.storageService;
-        }
-        const service = this.serviceProvider();
-        if (service === undefined) {
-            throw new Error("Not attached");
-        }
-
-        let storageService = await service.connectToStorage();
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            storageService = new PrefetchDocumentStorageService(storageService);
-        }
-
-        this.storageService = new RetriableDocumentStorageService(storageService, this, this.logger);
-
-        // ensure we did not lose that policy in the process of wrapping
-        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
-            0x0e0 /* "lost minBlobSize policy" */);
-
-        return this.storageService;
     }
 
     /**
@@ -836,7 +807,7 @@ export class DeltaManager
         if (to !== undefined) {
             controller = new AbortController();
 
-            assert(this.closeAbortController.signal.onabort === null, "reentrancy");
+            assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
             this.closeAbortController.signal.onabort = () => controller.abort();
 
             const listener = (op: ISequencedDocumentMessage) => {
@@ -892,7 +863,6 @@ export class DeltaManager
             return;
         }
         this.closed = true;
-        this.storageService?.dispose();
 
         this.closeAbortController.abort();
 
@@ -1247,7 +1217,7 @@ export class DeltaManager
         // It's responsibility of
         // - attachOpHandler()
         // - fetchMissingDeltas() after it's done with querying storage
-        assert(this.pending.length === 0 || this.fetchReason !== undefined, "Pending ops");
+        assert(this.pending.length === 0 || this.fetchReason !== undefined, 0x1e9 /* "Pending ops" */);
 
         if (messages.length === 0) {
             return;

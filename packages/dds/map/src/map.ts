@@ -354,9 +354,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.resubmitCore}
+      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
       */
-    protected resubmitCore(content: any, localOpMetadata: unknown) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 

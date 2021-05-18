@@ -32,6 +32,8 @@ import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
 
+export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
+
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
@@ -45,6 +47,11 @@ export interface IOdspResponse<T> {
     headers: Map<string, string>;
     commonSpoHeaders: ITelemetryProperties;
     duration: number,
+}
+
+export interface TokenFetchOptionsEx extends TokenFetchOptions {
+    /** previous error we hit in getWithRetryForTokenRefresh */
+    previousError?: any;
 }
 
 function headersToMap(headers: Headers) {
@@ -61,23 +68,23 @@ function headersToMap(headers: Headers) {
  * token on failure. Only specific cases get retry call with refresh = true, all other / unknown errors
  * simply propagate to caller
  */
-export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptions) => Promise<T>) {
+export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptionsEx) => Promise<T>) {
     return get({ refresh: false }).catch(async (e) => {
+        const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
             case DriverErrorType.authorizationError:
-                return get({ refresh: true, claims: e.claims, tenantId: e.tenantId });
-            // fetchIncorrectResponse indicates some error on the wire, retry once.
-            case DriverErrorType.incorrectServerResponse:
-            // If the token was null, then retry once.
-            case OdspErrorType.fetchTokenError:
-                return get({ refresh: true });
+                return get({ ...options, claims: e.claims, tenantId: e.tenantId });
+
+            case DriverErrorType.incorrectServerResponse: // fetchIncorrectResponse - some error on the wire, retry once
+            case OdspErrorType.fetchTokenError: // If the token was null, then retry once.
+                return get(options);
+
             default:
-                // All code paths (deltas, blobs, trees) already throw exceptions.
-                // Throwing is better than returning null as most code paths do not return nullable-objects,
-                // and error reporting is better (for example, getDeltas() will log error to telemetry)
-                // getTree() path is the only potential exception where returning null might result in
-                // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+                // Caller may determine that it wants one retry
+                if (e[getWithRetryForTokenRefreshRepeat] === true) {
+                    return get(options);
+                }
                 throw e;
         }
     });

@@ -4,9 +4,11 @@
  */
 
 import { ILastEditedResult, IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 export interface TinyliciousContainerConfig {
     id: string;
+    logger?: ITelemetryBaseLogger;
 }
 
 export interface TinyliciousConnectionConfig {

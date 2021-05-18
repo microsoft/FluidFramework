@@ -7,6 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
+    IDisposable,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
@@ -42,6 +43,7 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -100,6 +102,8 @@ import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -326,12 +330,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    // Depending where error happens, we can be attempting to connect to web socket
-                    // and continuously retrying (consider offline mode)
-                    // Host has no container to close, so it's prudent to do it here
-                    const error = err ?? CreateContainerError("Container closed without an error");
-                    container.close(error);
-                    rej(error);
+                    rej(err ?? CreateContainerError("Container closed without an error"));
                 };
                 container.on("closed", onClosed);
 
@@ -345,6 +344,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     },
                     (error) => {
                         const err = CreateContainerError(error);
+                        // Depending where error happens, we can be attempting to connect to web socket
+                        // and continuously retrying (consider offline mode)
+                        // Host has no container to close, so it's prudent to do it here
+                        container.close(error);
                         onClosed(err);
                     });
             }),
@@ -394,8 +397,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _attachState = AttachState.Detached;
 
     // Active chaincode and associated runtime
-    private _storageService: IDocumentStorageService | undefined;
-    private get storageService() {
+    private _storageService: IDocumentStorageService & IDisposable | undefined;
+    private get storageService(): IDocumentStorageService  {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -715,7 +718,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
-        // Notify storage about critical errors. They may be due to disconnect between client & server knowlege about
+        this._storageService?.dispose();
+
+        // Notify storage about critical errors. They may be due to disconnect between client & server knowledge about
         // file, like file being overwritten in storage, but client having stale local cache.
         // Driver need to ensure all caches are cleared on critical errors
         this.service?.dispose(error);
@@ -824,9 +829,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            if (this._storageService === undefined) {
-                this._storageService = await this.getDocumentStorageService();
-            }
+            await this.connectStorageService();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
@@ -1137,7 +1140,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             startConnectionP.catch((error) => { });
         }
 
-        this._storageService = await this.getDocumentStorageService();
+        await this.connectStorageService();
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
@@ -1235,6 +1238,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
+        // Safety net: static version of Container.load() should have got this message through "closed" handler.
+        // But if that did not happen for some reason, fail load for sure.
+        // Otherwise we can get into situations where container is closed and does not try to connect to ordering
+        // service, but caller does not know that (callers do expect container to be not closed on successful path
+        // and listen only on "closed" event)
+        if (this.closed) {
+            throw new Error("Container was closed while load()");
+        }
+
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
@@ -1304,8 +1316,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
     }
 
-    private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        return this._deltaManager.connectToStorage();
+    private async connectStorageService(): Promise<void> {
+        if (this._storageService !== undefined) {
+            return;
+        }
+
+        assert(this.service !== undefined, "services must be defined");
+        let storageService = await this.service.connectToStorage();
+        // Enable prefetching for the service unless it has a caching policy set otherwise:
+        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
+            storageService = new PrefetchDocumentStorageService(storageService);
+        }
+
+        this._storageService = new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+
+        // ensure we did not lose that policy in the process of wrapping
+        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
+            0x0e0 /* "lost minBlobSize policy" */);
     }
 
     private async getDocumentAttributes(
@@ -1568,14 +1595,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
+        deltaManager.on("closed", (error?: ICriticalContainerError) => {
+            this.close(error);
+        });
+
         return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
-        });
-
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,

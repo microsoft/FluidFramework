@@ -3,10 +3,10 @@
   "extends": "@fluidframework/build-common/api-extractor-common-report.json",
   "apiReport": {
     "enabled": true,
-    "reportFolder": "<projectFolder>/../../api-report/"
+    "reportFolder": "<projectFolder>../api-report/"
   },
   "docModel": {
     "enabled": true,
-    "apiJsonFilePath": "<projectFolder>/../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
+    "apiJsonFilePath": "<projectFolder>..//../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
   }
 }
