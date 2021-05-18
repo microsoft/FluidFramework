@@ -78,8 +78,9 @@ export class TinyliciousClientInstance {
         container: Container,
     ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
         const rootDataObject = (await container.request({ url: "/" })).value;
+        const fluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices = this.getContainerServices(container, rootDataObject);
-        return [rootDataObject as FluidContainer, containerServices];
+        return [fluidContainer, containerServices];
     }
 
     private getContainerServices(

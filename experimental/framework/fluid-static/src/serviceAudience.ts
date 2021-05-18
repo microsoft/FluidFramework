@@ -8,7 +8,7 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IConnectedClient, IServiceAudience, IMember } from "./types";
-import { RootDataObject } from "./containerCode";
+import { RootDataObject } from "./rootDataObject";
 
 // Base class for providing audience information for sessions interacting with FluidContainer
 // This can be extended by different service-specific client packages to additional parameters to
