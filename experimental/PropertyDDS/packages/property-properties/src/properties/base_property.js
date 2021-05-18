@@ -116,8 +116,6 @@ var BaseProperty = function(in_params) {
   }
 };
 
-BaseProperty.prototype = Object.create();
-
 BaseProperty.MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
 BaseProperty.prototype.MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
 
