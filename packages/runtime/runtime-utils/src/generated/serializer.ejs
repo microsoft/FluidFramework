@@ -183,6 +183,9 @@ export class FluidSerializer implements IFluidSerializer {
             : input;
     }
 
+    // TODO: The below proof-of-concept implementation of 'decode()' will be enabled with tests
+    //       and benchmarks once the refactoring to use EJS codegen lands.
+    /*
     public decode(
         input: any,
     ) {
@@ -193,6 +196,7 @@ export class FluidSerializer implements IFluidSerializer {
             ? this.recursivelyDecode(input)
             : input;
     }
+    */
 
     public stringify(input: any, bind: IFluidHandle) {
         return JSON.stringify(input, (key, value) => {
@@ -218,7 +222,11 @@ export class FluidSerializer implements IFluidSerializer {
 
 <%- indent(recursively("recursivelyEncode", /* fn: */ encodeValue("input"), /* args: */ ["bind: IFluidHandle"]), 1) %>
 
+// TODO: The below proof-of-concept implementation of 'recursivelyDecode()' will be enabled
+//       once the refactoring to use EJS codegen lands.
+/*
 <%- indent(recursively("recursivelyDecode", /* fn: */ decodeValue("input"), /* args: */ []), 1) %>
+*/
 
     protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
         bind.bind(handle);

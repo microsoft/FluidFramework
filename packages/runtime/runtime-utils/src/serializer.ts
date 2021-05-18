@@ -43,6 +43,9 @@ export class FluidSerializer implements IFluidSerializer {
             : input;
     }
 
+    // TODO: The below proof-of-concept implementation of 'decode()' will be enabled with tests
+    //       and benchmarks once the refactoring to use EJS codegen lands.
+    /*
     public decode(
         input: any,
     ) {
@@ -53,6 +56,7 @@ export class FluidSerializer implements IFluidSerializer {
             ? this.recursivelyDecode(input)
             : input;
     }
+    */
 
     public stringify(input: any, bind: IFluidHandle) {
         return JSON.stringify(input, (key, value) => {
@@ -129,6 +133,9 @@ export class FluidSerializer implements IFluidSerializer {
         return clone ?? input;
     }
 
+// TODO: The below proof-of-concept implementation of 'recursivelyDecode()' will be enabled
+//       once the refactoring to use EJS codegen lands.
+/*
     // Invoked for non-null objects to recursively decode references to IFluidHandles.
     // Clones as-needed to avoid mutating the 'input' object.  If no IFluidHandes are present,
     // returns the original 'input'.
@@ -175,6 +182,7 @@ export class FluidSerializer implements IFluidSerializer {
         }
         return clone ?? input;
     }
+*/
 
     protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
         bind.bind(handle);
