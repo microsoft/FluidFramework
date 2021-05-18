@@ -3,16 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 
 export interface IProvideAgentScheduler {
     readonly IAgentScheduler: IAgentScheduler;
 }
 
+export interface IAgentSchedulerEvents extends IEvent {
+    /**
+     * Event when ownership of task changes
+     * @param event - name of the event:
+     * "picked" - the task has been assigned to this client, in response to pick() being called
+     *      If client loses this task (due to disconnect), it will attempt to pick it again (on connection)
+     *      automatically, unless release() is called
+     * "released" - the task was successfully released back to the pool. Client will not attempt to
+     *      re-acquire the task, unless pick() is called.
+     * "lost" - task is lost due to disconnect or data store / container being attached.
+     *      Task will be picked up again by some connected client (this client will try as well,
+     *      unless release() is called)
+     * @param listener - callback notified when change happened for particular key
+     */
+    (event: "picked" | "released" | "lost", listener: (taskId: string) => void)
+}
+
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler {
+export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<IAgentSchedulerEvents> {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
@@ -44,24 +63,6 @@ export interface IAgentScheduler extends IProvideAgentScheduler {
      * Returns a list of all tasks running on this client
      */
     pickedTasks(): string[];
-
-    /**
-     * Event listeners
-     */
-    /**
-     * Event when ownership of task changes
-     * @param event - name of the event:
-     * "picked" - the task has been assigned to this client, in response to pick() being called
-     *      If client loses this task (due to disconnect), it will attempt to pick it again (on connection)
-     *      automatically, unless release() is called
-     * "released" - the task was successfully released back to the pool. Client will not attempt to
-     *      re-acquire the task, unless pick() is called.
-     * "lost" - task is lost due to disconnect or data store / container being attached.
-     *      Task will be picked up again by some connected client (this client will try as well,
-     *      unless release() is called)
-     * @param listener - callback notified when change happened for particular key
-     */
-    on(event: "picked" | "released" | "lost", listener: (taskId: string) => void): this;
 }
 
 declare module "@fluidframework/core-interfaces" {
