@@ -424,7 +424,7 @@ async function getSingleOpBatch(
             }
         }
 
-        await waitForConnectedState(delay * 1000);
+        await waitForConnectedState(delay);
     }
 
     return nothing;
