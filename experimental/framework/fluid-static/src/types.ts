@@ -95,11 +95,6 @@ export interface IServiceAudience<M extends IMember> {
     getMyClient(): IConnectedClient | undefined;
 
     /**
-     * Returns the member who made the last edit along with the edit's timestamp
-     */
-    getLastEdited(): ILastEditedResult<M> | undefined;
-
-    /**
      * Collection of event listeners that trigger if the members in the Fluid session change and if a member makes an
      * edit which updates when the last change was made
      */

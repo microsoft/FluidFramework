@@ -6,9 +6,8 @@
 import { EventEmitter } from "events";
 import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IConnectedClient, ILastEditedResult, IServiceAudience, IMember } from "./types";
+import { IConnectedClient, IServiceAudience, IMember } from "./types";
 import { RootDataObject } from "./containerCode";
 
 // Base class for providing audience information for sessions interacting with FluidContainer
@@ -17,12 +16,10 @@ import { RootDataObject } from "./containerCode";
 export class ServiceAudience extends EventEmitter implements IServiceAudience<IMember> {
   protected readonly audience: IAudience;
 
-  // Data object that holds the last edited state and is used to load the data prior to the
-  // current client joining the session
-  protected readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
-
   // Maintains a map of the last edited times keyed by client ID after the current client
   // joined the session
+  // TODO: This will only maintain the list of edits made after the current client has joined.
+  // We would need an additional DataObject to support storing the last edited state from history
   protected readonly lastEditedTimesByClient = new Map<string, Date>();
 
   constructor(
@@ -31,7 +28,6 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
   ) {
     super();
     this.audience = container.audience;
-    this.lastEditedTracker = rootDataObject.IFluidLastEditedTracker;
 
     // Consolidating both the addition/removal of members
     this.audience.on("addMember", () => {
@@ -58,13 +54,6 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
         this.emit("lastEditedChanged", { member, timestamp :new Date(message.timestamp) });
       }
     });
-
-    // Fetch the last edit information that was stored prior to the current client joining
-    // the session
-    const lastEditedMemberResults = this.getLastEdited();
-    if (lastEditedMemberResults !== undefined) {
-      this.emit("lastEditedChanged", lastEditedMemberResults);
-    }
   }
 
   /**
@@ -133,24 +122,7 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
     return this.getMemberByClientId(clientId);
   }
 
-  /**
-   * @inheritdoc
-   */
-  public getLastEdited(): ILastEditedResult<IMember> | undefined {
-    const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
-    if (lastEditDetails !== undefined) {
-      const timestamp = new Date(lastEditDetails.timestamp);
-      this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
-      const userId = lastEditDetails.user.id;
-      const member: IMember = {
-        userId,
-        connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
-      };
-      return { member, timestamp };
-    }
-  }
-
-  protected getMemberByClientId(clientId: string): IMember | undefined {
+  private getMemberByClientId(clientId: string): IMember | undefined {
     // Fetch the user ID assoicated with this client ID from the runtime
     const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {

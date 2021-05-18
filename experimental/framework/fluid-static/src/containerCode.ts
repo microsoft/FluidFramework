@@ -14,12 +14,6 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-    IFluidLastEditedTracker,
-    IProvideFluidLastEditedTracker,
-    LastEditedTrackerDataObject,
-    setupLastEditedTrackerForContainer,
-} from "@fluidframework/last-edited-experimental";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -66,14 +60,12 @@ interface RootDataObjectProps {
 export class RootDataObject
     // eslint-disable-next-line @typescript-eslint/ban-types
     extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
-    implements FluidContainer, IProvideFluidLastEditedTracker {
+    implements FluidContainer {
     private readonly connectedHandler = (id: string) => this.emit("connected", id);
     private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly opHandler = (message: ISequencedDocumentMessage) => this.emit("op", message);
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
-    private readonly lastEditedFluidObjectId = "last-edited-fluid-object-id";
-    private lastEditedFluidObject: IFluidLastEditedTracker | undefined;
 
     private get initialObjectsDir() {
         const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -97,9 +89,6 @@ export class RootDataObject
         });
 
         await Promise.all(initialObjectsP);
-
-        const lastEditedFluidObject = await LastEditedTrackerDataObject.getFactory().createChildInstance(this.context);
-        this.root.set(this.lastEditedFluidObjectId, lastEditedFluidObject.handle);
     }
 
     protected async hasInitialized() {
@@ -118,10 +107,6 @@ export class RootDataObject
         }
 
         await Promise.all(loadInitialObjectsP);
-
-        this.lastEditedFluidObject =
-            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId)?.get())
-                ?.IFluidLastEditedTracker;
     }
 
     public dispose() {
@@ -139,14 +124,6 @@ export class RootDataObject
 
     public get clientId() {
         return this.context.clientId;
-    }
-
-    public get IFluidLastEditedTracker(): IFluidLastEditedTracker {
-        if (!this.lastEditedFluidObject) {
-            throw new Error("LastEditedTrackerDataObject was not initialized properly");
-        }
-
-        return this.lastEditedFluidObject;
     }
 
     public get initialObjects(): LoadableObjectRecord {
@@ -208,10 +185,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                 RootDataObject,
                 sharedObjects,
                 {},
-                [
-                    LastEditedTrackerDataObject.getFactory().registryEntry,
-                    ...registryEntries,
-                ],
+                registryEntries,
             );
         super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
@@ -224,16 +198,5 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
             rootDataStoreId,
             runtime,
             { initialObjects: this.initialObjects });
-    }
-
-    protected async containerHasInitialized(runtime: IContainerRuntime) {
-        // Load the last edited tracker fluidObject (done by the setup method below). This fluidObject
-        // provides container level tracking of last edit and has to be loaded before any other fluidObject.
-        const tracker = await requestFluidObject<IFluidLastEditedTracker>(
-            await runtime.getRootDataStore(rootDataStoreId),
-            "",
-        );
-
-        setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
     }
 }

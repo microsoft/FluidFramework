@@ -78,11 +78,6 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
 
     onAudienceChanged();
 
-    const getLastEditedResults = audience.getLastEdited();
-    if (getLastEditedResults !== undefined) {
-        onLastEditedChanged(getLastEditedResults);
-    }
-
     audience.on("membersChanged", onAudienceChanged);
     audience.on("lastEditedChanged", onLastEditedChanged);
 

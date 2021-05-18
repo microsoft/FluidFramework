@@ -5,7 +5,7 @@
 
 import { ServiceAudience } from "@fluid-experimental/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITinyliciousAudience, TinyliciousLastEditedResult, TinyliciousMember } from "./interfaces";
+import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends ServiceAudience implements ITinyliciousAudience {
   /**
@@ -50,23 +50,5 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
    */
   public getMyself(): TinyliciousMember | undefined {
     return super.getMyself() as TinyliciousMember;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public getLastEdited(): TinyliciousLastEditedResult | undefined {
-    const lastEditDetails = this.lastEditedTracker?.getLastEditDetails();
-    if (lastEditDetails !== undefined) {
-      const timestamp = new Date(lastEditDetails.timestamp);
-      this.lastEditedTimesByClient.set(lastEditDetails.clientId, timestamp);
-      const userId = lastEditDetails.user.id;
-      const member: TinyliciousMember = {
-        userId,
-        userName: (lastEditDetails.user as any).name,
-        connectedClients: this.getMembers().get(userId)?.connectedClients ?? [],
-      };
-      return { member, timestamp };
-    }
   }
 }
