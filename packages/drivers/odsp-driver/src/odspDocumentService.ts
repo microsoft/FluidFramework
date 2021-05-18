@@ -41,7 +41,7 @@ import { OpsCache } from "./opsCaching";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    readonly policies: IDocumentServicePolicies;
+    private _policies: IDocumentServicePolicies;
 
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
@@ -111,7 +111,7 @@ export class OdspDocumentService implements IDocumentService {
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
     ) {
-        this.policies = {
+        this._policies = {
             // load in storage-only mode if a file version is specified
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
@@ -133,6 +133,9 @@ export class OdspDocumentService implements IDocumentService {
 
     public get resolvedUrl(): IResolvedUrl {
         return this.odspResolvedUrl;
+    }
+    public get policies() {
+        return this._policies;
     }
 
     /**
@@ -215,7 +218,7 @@ export class OdspDocumentService implements IDocumentService {
                     case "sessionForbiddenOnRequireCheckout":
                         // This document can only be opened in storage-only mode. DeltaManager will recognize this error
                         // and load without a delta stream connection.
-                        this.policies.storageOnly = true;
+                        this._policies = {...this._policies,storageOnly: true};
                         throw new DeltaStreamConnectionForbiddenError(code);
                     default:
                         throw e;
