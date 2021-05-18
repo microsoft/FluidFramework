@@ -132,7 +132,7 @@ export function CreateProcessingError(
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function CreateContainerError(error: any): ICriticalContainerError {
+export function CreateContainerError(error: any): ICriticalContainerError & LoggingError {
     assert(error !== undefined, 0x0f5 /* "Missing error input" */);
 
     if (typeof error === "object" && error !== null) {
@@ -151,7 +151,7 @@ export function CreateContainerError(error: any): ICriticalContainerError {
         return (new LoggingError(message, {
             errorType,
             stack,
-        }) as any) as IGenericError;
+        }) as any) as IGenericError & LoggingError;
     } else if (typeof error === "string") {
         return new GenericError(error, new Error(error));
     } else {

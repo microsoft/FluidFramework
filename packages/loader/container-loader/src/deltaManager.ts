@@ -912,16 +912,13 @@ export class DeltaManager
             this.timeTillThrottling = timeNow + delaySeconds;
 
             // Add 'throttling' properties to an error with safely extracted properties:
-            const throttlingWarning: IThrottlingWarning = {
+            const reconfiguredError = CreateContainerError(error);
+            reconfiguredError.addTelemetryProperties({
                 errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delaySeconds,
-            };
-            const reconfiguredError: IThrottlingWarning = {
-                ...CreateContainerError(error),
-                ...throttlingWarning,
-            };
-            this.emit("throttled", reconfiguredError);
+            });
+            this.emit("throttled", reconfiguredError as any as IThrottlingWarning);
         }
     }
 
