@@ -61,7 +61,7 @@
     "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/lodash": "^4.14.118",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@types/sinon": "^9.0.9",
     "@types/string-hash": "^1.1.1",
