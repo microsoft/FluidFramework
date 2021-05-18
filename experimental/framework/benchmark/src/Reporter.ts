@@ -30,9 +30,8 @@ SOFTWARE.
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from 'path';
 import * as fs from 'fs';
-import * as Benchmark from 'benchmark';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import Table = require('easy-table');
+import Benchmark from 'benchmark';
+import Table from 'easy-table';
 import { bold, geometricMean, italicize, pad, prettyNumber, green, red, yellow } from './ReporterUtilities';
 
 interface BenchmarkResults {

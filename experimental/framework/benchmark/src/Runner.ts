@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Benchmark from 'benchmark';
+import Benchmark from 'benchmark';
 import { assert } from 'chai';
 import { Test } from 'mocha';
 import {
