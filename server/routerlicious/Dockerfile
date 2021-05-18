@@ -25,7 +25,6 @@ COPY lerna.json .
 COPY lerna-package-lock.json .
 
 COPY packages/gitresources/package*.json packages/gitresources/
-COPY packages/protocol-definitions/package*.json packages/protocol-definitions/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
 COPY packages/lambdas-driver/package*.json packages/lambdas-driver/
 COPY packages/lambdas/package*.json packages/lambdas/
