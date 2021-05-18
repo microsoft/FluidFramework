@@ -906,7 +906,7 @@ export class DeltaManager
         delayMs: number,
         error: ICriticalContainerError,
     ) {
-        const timeNow = Date.now() * 1000;
+        const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delayMs;
