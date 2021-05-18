@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAgentScheduler } from "./agent";
 
-export class TaskSubscription extends EventEmitter {
+export interface ITaskSubscriptionEvents extends IEvent {
+    (event: "gotTask" | "lostTask", listener: () => void);
+}
+
+/**
+ * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
+ */
+export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
     private subscribed: boolean = false;
 
     public haveTask() {
