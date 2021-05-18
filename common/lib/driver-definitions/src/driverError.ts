@@ -74,7 +74,7 @@ export enum DriverErrorType {
      /**
       * The document is read-only and delta stream connection is forbidden.
       */
-     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
+     deltaStreamConnectionForbidden = DriverErrorType.deltaStreamConnectionForbidden,
 }
 
 /**
