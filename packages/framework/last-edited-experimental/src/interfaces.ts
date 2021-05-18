@@ -30,6 +30,5 @@ export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker 
 
 export interface ILastEditDetails {
     user: IUser;
-    clientId: string;
     timestamp: number;
 }
