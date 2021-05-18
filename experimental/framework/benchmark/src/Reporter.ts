@@ -89,7 +89,7 @@ export class BenchmarkReporter {
 	/**
 	 * Overall totals (one row per suite)
 	 */
-	private overallSummaryTable: Table = new Table();
+	private readonly overallSummaryTable: Table = new Table();
 
 	/**
 	 * Results for each inprogress suite keyed by suite name.
@@ -97,14 +97,14 @@ export class BenchmarkReporter {
 	 *
 	 * Tracking multiple suites at once is required due to nesting of suites.
 	 */
-	private inProgressSuites: Map<string, BenchmarkResults> = new Map<string, BenchmarkResults>();
+	private readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<string, BenchmarkResults>();
 
-	private allBenchmarkPeriodsSeconds: number[] = [];
+	private readonly allBenchmarkPeriodsSeconds: number[] = [];
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
 	private totalSuccessfulBenchmarkCount = 0;
 
-	private outputDirectory: string;
+	private readonly outputDirectory: string;
 
 	/**
 	 * @param outputDirectory - location to output files to.
@@ -270,10 +270,10 @@ export class BenchmarkReporter {
 			}
 		});
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
-		const suiteNameEscaped: string = suiteName.replace(/[^a-z0-9]/gi, '_');
+		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, '_');
 		const outputContentString: string = JSON.stringify(
 			{ suiteName, benchmarks: outputFriendlyBenchmarks },
-			null,
+			undefined,
 			4
 		);
 

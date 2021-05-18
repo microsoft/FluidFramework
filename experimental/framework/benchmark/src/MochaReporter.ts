@@ -8,9 +8,6 @@ import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from './Confi
 import { BenchmarkData, BenchmarkReporter, failedData } from './Reporter';
 import { red } from './ReporterUtilities';
 
-// This reporter logs to the console, so console output is expected.
-/* eslint-disable no-console */
-
 const tags = [performanceTestSuiteTag];
 
 for (const tag of benchmarkTypes) {
@@ -97,7 +94,6 @@ module.exports = class {
 
 				if (isChildProcess) {
 					// Write the data to stdout so the parent process can collect it.
-					// eslint-disable-next-line no-console
 					console.info(JSON.stringify(benchmark));
 				} else {
 					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmark);

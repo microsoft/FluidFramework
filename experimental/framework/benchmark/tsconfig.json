@@ -5,8 +5,6 @@
 		"composite": true,
 		"downlevelIteration": true,
 		"esModuleInterop": true,
-		"module": "commonjs",
-		"moduleResolution": "node",
 		"noUnusedLocals": false,
 		"outDir": "./dist",
 		"rootDir": "./src",
