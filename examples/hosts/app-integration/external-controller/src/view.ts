@@ -57,15 +57,15 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
 
     const onAudienceChanged = () => {
         const members = audience.getMembers();
-        const currentMember = audience.getCurrentMember();
+        const self = audience.getMyself();
         const memberNames: string[] = [];
         members.forEach((member) => {
-            if (member.userId !== currentMember?.userId) {
+            if (member.userId !== self?.userId) {
                 memberNames.push(member.userName);
             }
         });
         audienceDiv.innerHTML = `
-            Current User: ${currentMember?.userName} <br />
+            Current User: ${self?.userName} <br />
             Other Users: ${memberNames.join(", ")}
         `;
     };

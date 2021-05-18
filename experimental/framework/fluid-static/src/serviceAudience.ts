@@ -106,7 +106,7 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
   /**
    * @inheritdoc
    */
-  public getCurrentClient(): IConnectedClient | undefined {
+  public getMyClient(): IConnectedClient | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;
@@ -125,7 +125,7 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
   /**
    * @inheritdoc
    */
-  public getCurrentMember(): IMember | undefined {
+  public getMyself(): IMember | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;

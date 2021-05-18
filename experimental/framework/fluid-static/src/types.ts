@@ -87,12 +87,12 @@ export interface IServiceAudience<M extends IMember> {
     /**
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
-    getCurrentMember(): M | undefined;
+    getMyself(): M | undefined;
 
     /**
      * Returns the current client's details once it is connected. Otherwise, returns undefined.
      */
-    getCurrentClient(): IConnectedClient | undefined;
+    getMyClient(): IConnectedClient | undefined;
 
     /**
      * Returns the member who made the last edit along with the edit's timestamp

@@ -48,8 +48,8 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
   /**
    * @inheritdoc
    */
-  public getCurrentMember(): TinyliciousMember | undefined {
-    return super.getCurrentMember() as TinyliciousMember;
+  public getMyself(): TinyliciousMember | undefined {
+    return super.getMyself() as TinyliciousMember;
   }
 
   /**
