@@ -93,6 +93,7 @@ export class DeliLambda implements IPartitionLambda {
     private minimumSequenceNumber = 0;
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
+    private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
     private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
@@ -174,7 +175,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Check for document inactivity.
                 if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
                     && this.noActiveClients) {
-                    this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
                 }
 
                 // Return early if sending is not required.
@@ -198,7 +199,7 @@ export class DeliLambda implements IPartitionLambda {
         const checkpoint = this.generateCheckpoint(rawMessage);
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
-        this.lastSendP.then(
+        Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
                 if (this.lastInstruction === InstructionType.ClearCache) {
                     checkpoint.clear = true;
@@ -599,15 +600,16 @@ export class DeliLambda implements IPartitionLambda {
         return this.forwardProducer.send([message], message.tenantId, message.documentId);
     }
 
-    private sendToAlfred(message: IRawOperationMessage) {
-        this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
+    private async sendToAlfred(message: IRawOperationMessage) {
+        try {
+            await this.reverseProducer.send([message], message.tenantId, message.documentId);
+        } catch (error) {
             this.context.log?.error(
                 `Could not send message to alfred: ${JSON.stringify(error)}`,
                 {
                     messageMetaData: {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
-
                     },
                 });
             this.context.error(error, {
@@ -615,7 +617,7 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: this.tenantId,
                 documentId: this.documentId,
             });
-        });
+        }
     }
 
     // Check if there are any old/idle clients. Craft and send a leave message to alfred.
@@ -626,7 +628,7 @@ export class DeliLambda implements IPartitionLambda {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                this.sendToAlfred(leaveMessage);
+                void this.sendToAlfred(leaveMessage);
             }
         }
     }
@@ -770,7 +772,7 @@ export class DeliLambda implements IPartitionLambda {
         this.idleTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.activityTimeout);
     }
@@ -789,7 +791,7 @@ export class DeliLambda implements IPartitionLambda {
         this.noopTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.noOpConsolidationTimeout);
     }
