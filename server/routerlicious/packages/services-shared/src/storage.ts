@@ -104,7 +104,6 @@ export class DocumentStorage implements IDocumentStorage {
         winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const deli: IDeliState = {
-            branchMap: undefined,
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
             logOffset: -1,

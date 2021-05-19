@@ -20,7 +20,7 @@ import {
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { fetchLatestSnapshotCore } from "./fetchSnapshot";
+import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -57,28 +57,31 @@ export async function prefetchLatestSnapshot(
             fetchOptions,
         );
     };
+    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
     const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
         cacheP = persistedCache.put(
-            createCacheSnapshotKey(odspResolvedUrl),
+            snapshotKey,
             valueWithEpoch,
         );
         return cacheP;
     };
+    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
         async () => {
-            await fetchLatestSnapshotCore(
+            await fetchSnapshotWithRedeem(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     hostSnapshotFetchOptions,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,
+                    removeEntries,
                 );
             assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;
             return true;
-    }).catch((error) => false);
+    }).catch(async (error) => false);
 }

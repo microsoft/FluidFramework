@@ -86,7 +86,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     // Observing non-deterministic timeouts in CI only.
     // Temporarily disabling pending investigation:
     //
-    // https://github.com/microsoft/FluidFramework/issues/6006
+    // https://github.com/microsoft/FluidFramework/issues/6157
     before(function() {
         this.skip();
     });
