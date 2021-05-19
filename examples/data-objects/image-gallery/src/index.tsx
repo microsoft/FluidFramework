@@ -9,7 +9,6 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
-import { ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
