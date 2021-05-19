@@ -75,7 +75,7 @@
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.7",
     "@types/lodash": "^4.14.149",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^8.2.2",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.0",
     "@types/node": "^12.19.0",

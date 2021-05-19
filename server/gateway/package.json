@@ -134,7 +134,7 @@
     "@types/jsonwebtoken": "^8.3.0",
     "@types/jwt-decode": "^2.2.1",
     "@types/lodash": "^4.14.118",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^8.2.2",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.0",
     "@types/node": "^10.17.24",
