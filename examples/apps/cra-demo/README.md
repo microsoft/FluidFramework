@@ -35,7 +35,7 @@ npx create-react-app my-app-name
 cd my-app-name
 ```
 
-### 1.a Start the servers
+### 1.a Start the app
 
 The `tinylicious` server will be required for Fluid to work.
 
