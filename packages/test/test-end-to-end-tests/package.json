@@ -96,7 +96,7 @@
     "@fluidframework/test-version-utils": "^0.40.0",
     "assert": "^2.0.0",
     "cross-env": "^7.0.2",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.21640",
     "uuid": "^8.3.1"

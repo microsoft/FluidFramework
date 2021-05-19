@@ -67,7 +67,7 @@
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
     "lerna": "3.19.0",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
