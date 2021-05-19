@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILastEditedResult, IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 export interface TinyliciousContainerConfig {
@@ -17,7 +17,7 @@ export interface TinyliciousConnectionConfig {
 
 /**
  * TinyliciousContainerServices is returned by the TinyliciousClient alongside a FluidContainer.
- * It holds the functionality specifically tied to the ODSP service, and how the data stored in
+ * It holds the functionality specifically tied to the Tinylicious service, and how the data stored in
  * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
  * will not be included here but rather on the FluidContainer class itself.
@@ -39,5 +39,3 @@ export interface TinyliciousMember extends IMember {
 }
 
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
-
-export type TinyliciousLastEditedResult = ILastEditedResult<TinyliciousMember>;

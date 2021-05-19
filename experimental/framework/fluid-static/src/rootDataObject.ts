@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
@@ -28,7 +27,6 @@ interface RootDataObjectProps {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
-    private readonly opHandler = (message: ISequencedDocumentMessage) => this.emit("op", message);
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -57,8 +55,6 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     }
 
     protected async hasInitialized() {
-        this.runtime.on("op", this.opHandler);
-
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITinyliciousAudience, TinyliciousLastEditedResult } from "@fluid-experimental/tinylicious-client";
+import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -52,8 +52,6 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
 
     const audienceDiv = document.createElement("div");
     audienceDiv.style.fontSize = "20px";
-    const lastEditedDiv = document.createElement("div");
-    lastEditedDiv.style.fontSize = "20px";
 
     const onAudienceChanged = () => {
         const members = audience.getMembers();
@@ -70,17 +68,8 @@ export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivEleme
         `;
     };
 
-    const onLastEditedChanged = (result: TinyliciousLastEditedResult) => {
-        lastEditedDiv.textContent = `
-            Last Edited By: ${result.member.userName} at ${result.timestamp.toLocaleString()}
-        `;
-    };
-
     onAudienceChanged();
-
     audience.on("membersChanged", onAudienceChanged);
-    audience.on("lastEditedChanged", onLastEditedChanged);
 
     wrapperDiv.appendChild(audienceDiv);
-    wrapperDiv.appendChild(lastEditedDiv);
 }

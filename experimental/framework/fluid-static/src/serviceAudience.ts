@@ -3,28 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IConnectedClient, IServiceAudience, IMember } from "./types";
-import { RootDataObject } from "./rootDataObject";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 
 // Base class for providing audience information for sessions interacting with FluidContainer
 // This can be extended by different service-specific client packages to additional parameters to
 // the user and client details returned in IMember
-export class ServiceAudience extends EventEmitter implements IServiceAudience<IMember> {
+export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> implements IServiceAudience<IMember> {
   protected readonly audience: IAudience;
-
-  // Maintains a map of the last edited times keyed by client ID after the current client
-  // joined the session
-  // TODO: This will only maintain the list of edits made after the current client has joined.
-  // We would need an additional DataObject to support storing the last edited state from history
-  protected readonly lastEditedTimesByClient = new Map<string, Date>();
 
   constructor(
       protected readonly container: Container,
-      rootDataObject: RootDataObject,
   ) {
     super();
     this.audience = container.audience;
@@ -41,19 +33,6 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
     this.container.on("connected", () => {
       this.emit("membersChanged", this.getMembers());
     });
-
-    // Update the last edited information anytime the root object emits an op by a member
-    // of the current audience. This in turn emits a "lastEditedChanged" event so that
-    // any listeners can update their state to reflect the changes
-    rootDataObject.on("op", (message: ISequencedDocumentMessage) => {
-      this.lastEditedTimesByClient.set(message.clientId, new Date(message.timestamp));
-      const member = this.getMemberByClientId(
-        message.clientId,
-      );
-      if (member !== undefined) {
-        this.emit("lastEditedChanged", { member, timestamp :new Date(message.timestamp) });
-      }
-    });
   }
 
   /**
@@ -69,46 +48,23 @@ export class ServiceAudience extends EventEmitter implements IServiceAudience<IM
         if (users.has(userId)) {
           const existingValue = users.get(userId);
           if (existingValue) {
-            existingValue.connectedClients.push({
-              clientId,
-              connectionMode: member.mode,
-              timeLastActive: this.lastEditedTimesByClient.get(clientId),
+            existingValue.connections.push({
+              id: clientId,
+              mode: member.mode,
             });
-            existingValue.connectedClients.sort((a, b) =>
-              (b.timeLastActive?.getMilliseconds() ?? 0) - (a.timeLastActive?.getMilliseconds() ?? 0));
           }
         } else {
           users.set(userId, {
             userId,
-            connectedClients: [{
-              clientId,
-              connectionMode: member.mode,
-              timeLastActive: this.lastEditedTimesByClient.get(clientId),
+            connections: [{
+              id: clientId,
+              mode: member.mode,
             }],
           });
         }
       }
     });
     return users;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public getMyClient(): IConnectedClient | undefined {
-    const clientId = this.container.clientId;
-    if (clientId === undefined) {
-      return undefined;
-    }
-    const client = this.audience.getMember(clientId);
-    if (client === undefined) {
-      throw Error(`Failed to find client ${clientId} even after it is connected`);
-    }
-    return {
-      clientId,
-      connectionMode: client.mode,
-      timeLastActive: this.lastEditedTimesByClient.get(clientId),
-    };
   }
 
   /**

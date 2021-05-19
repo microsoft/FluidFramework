@@ -21,22 +21,18 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
         if (users.has(userId)) {
           const existingValue = users.get(userId);
           if (existingValue) {
-            existingValue.connectedClients.push({
-              clientId,
-              connectionMode: member.mode,
-              timeLastActive: this.lastEditedTimesByClient.get(clientId),
+            existingValue.connections.push({
+              id: clientId,
+              mode: member.mode,
             });
-            existingValue.connectedClients.sort((a, b) =>
-              (b.timeLastActive?.getMilliseconds() ?? 0) - (a.timeLastActive?.getMilliseconds() ?? 0));
           }
         } else {
           users.set(userId, {
             userId,
             userName: (member.user as any).name,
-            connectedClients: [{
-              clientId,
-              connectionMode: member.mode,
-              timeLastActive: this.lastEditedTimesByClient.get(clientId),
+            connections: [{
+              id: clientId,
+              mode: member.mode,
             }],
           });
         }

@@ -8,7 +8,6 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
-    RootDataObject,
 } from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
@@ -79,16 +78,15 @@ export class TinyliciousClientInstance {
     ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
         const rootDataObject = (await container.request({ url: "/" })).value;
         const fluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices = this.getContainerServices(container, rootDataObject);
+        const containerServices = this.getContainerServices(container);
         return [fluidContainer, containerServices];
     }
 
     private getContainerServices(
         container: Container,
-        rootDataObject: RootDataObject,
     ): TinyliciousContainerServices {
         return {
-            audience: new TinyliciousAudience(container, rootDataObject),
+            audience: new TinyliciousAudience(container),
         };
     }
 
