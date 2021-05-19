@@ -10,15 +10,6 @@ import {
     FluidContainer,
     RootDataObject,
 } from "@fluid-experimental/fluid-static";
-import {
-    IDocumentServiceFactory,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import {
-    RouterliciousDocumentServiceFactory,
-    InsecureRouterliciousTokenProvider,
-    InsecureRouterliciousUrlResolver,
-} from "@fluidframework/routerlicious-driver";
 
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import { RouterliciousService } from "@fluid-experimental/get-container";
@@ -31,16 +22,7 @@ import {
  * FRSClientInstance provides the ability to have a Fluid object backed by a FRS service
  */
 export class FRSClientInstance {
-    public readonly documentServiceFactory: IDocumentServiceFactory;
-    public readonly urlResolver: IUrlResolver;
-
-    constructor(private readonly serviceConnectionConfig?: RouterliciousService) {
-        this.urlResolver = new InsecureRouterliciousUrlResolver(
-            1234,
-        );
-        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            new InsecureRouterliciousTokenProvider(),
-        );
+    constructor(private readonly serviceConnectionConfig: RouterliciousService) {
     }
 
     public async createContainer(
@@ -93,8 +75,8 @@ export class FRSClientInstance {
         const codeLoader = { load: async () => module };
 
         const loader = new Loader({
-            urlResolver: this.serviceConnectionConfig?.urlResolver || this.urlResolver,
-            documentServiceFactory: this.serviceConnectionConfig?.documentServiceFactory || this.documentServiceFactory,
+            urlResolver: this.serviceConnectionConfig.urlResolver,
+            documentServiceFactory: this.serviceConnectionConfig.documentServiceFactory,
             codeLoader,
             logger: routerliciousContainerConfig.logger,
         });
@@ -131,7 +113,7 @@ export class FRSClientInstance {
 export class FRSClient {
     private static globalInstance: FRSClientInstance | undefined;
 
-    static init(serviceConnectionConfig?: RouterliciousService) {
+    static init(serviceConnectionConfig: RouterliciousService) {
         if (FRSClient.globalInstance) {
             console.log(
                 `FRSClient has already been initialized. Using existing instance of
