@@ -45,23 +45,15 @@ export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> i
       // Get all the current human members
       if (member.details.capabilities.interactive) {
         const userId = member.user.id;
-        if (users.has(userId)) {
-          const existingValue = users.get(userId);
-          if (existingValue) {
-            existingValue.connections.push({
-              id: clientId,
-              mode: member.mode,
-            });
-          }
-        } else {
-          users.set(userId, {
-            userId,
-            connections: [{
-              id: clientId,
-              mode: member.mode,
-            }],
-          });
+        // Ensure we're tracking the user
+        let user = users.get(userId);
+        if (user === undefined) {
+            user = { userId, connections: [] };
+            users.set(userId, user);
         }
+
+        // Add this connection to their collection
+        user.connections.push({ id: clientId, mode: member.mode });
       }
     });
     return users;
@@ -86,10 +78,10 @@ export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> i
     }
     // Return the member object with any other clients associated for this user
     const allMembers = this.getMembers();
-    const lastEditedMember = allMembers.get(internalAudienceMember?.user.id);
-    if (lastEditedMember === undefined) {
+    const member = allMembers.get(internalAudienceMember?.user.id);
+    if (member === undefined) {
       throw Error(`Attempted to fetch client ${clientId} that is not part of the current member list`);
     }
-    return lastEditedMember;
+    return member;
   }
 }

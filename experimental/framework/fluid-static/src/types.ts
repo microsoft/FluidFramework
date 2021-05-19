@@ -81,7 +81,7 @@ export interface IServiceAudienceEvents extends IEvent {
 }
 
 /**
- * Base interface to be implemented to fetch each service's audience. The generic C allows consumers to further
+ * Base interface to be implemented to fetch each service's audience. The generic M allows consumers to further
  * extend the client object with service-specific details about the connecting client, such as device information,
  * environme
  */

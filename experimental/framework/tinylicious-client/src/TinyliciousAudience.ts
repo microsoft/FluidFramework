@@ -18,24 +18,18 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
       // Get all the current human members
       if (member.details.capabilities.interactive) {
         const userId = member.user.id;
-        if (users.has(userId)) {
-          const existingValue = users.get(userId);
-          if (existingValue) {
-            existingValue.connections.push({
-              id: clientId,
-              mode: member.mode,
-            });
-          }
-        } else {
-          users.set(userId, {
-            userId,
-            userName: (member.user as any).name,
-            connections: [{
-              id: clientId,
-              mode: member.mode,
-            }],
-          });
+        // Ensure we're tracking the user
+        let user = users.get(userId);
+        if (user === undefined) {
+            user = {
+              userId,
+              userName: (member.user as any).name,
+              connections: [],
+            };
+            users.set(userId, user);
         }
+        // Add this connection to their collection
+        user.connections.push({ id: clientId, mode: member.mode });
       }
     });
     return users;
