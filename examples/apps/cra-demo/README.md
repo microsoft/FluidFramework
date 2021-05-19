@@ -8,7 +8,7 @@ Concepts you will learn:
 4. How to use a [SharedMap distributed data structure (DDS)](https://fluidframework.com/docs/apis/map/sharedmap/) to sync data between connected clients
 
 
-\* Just want to see the code? Jump to the [finished tutorial.](https://github.com/microsoft/FluidFramework/blob/release/0.40/examples/apps/cra-demo/src/App.js).
+\* Just want to see the code? Jump to the [finished tutorial.](./src/App.js).
 
 ## Demo introduction
 
