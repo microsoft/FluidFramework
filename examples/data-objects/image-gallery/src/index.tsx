@@ -55,7 +55,6 @@ export class ImageGalleryObject extends DataObject implements IFluidHTMLView {
     };
 
     imageGallery: ImageGallery | undefined;
-    images: ISharedMap | undefined;
 
     private readonly onSlide = (index) => {
         this.root.set("position", index);
