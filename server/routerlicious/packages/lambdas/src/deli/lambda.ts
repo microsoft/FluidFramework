@@ -93,14 +93,16 @@ export class DeliLambda implements IPartitionLambda {
     private minimumSequenceNumber = 0;
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
+    private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
     private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
     private noopTimer: any;
-    private noActiveClients = false;
+    private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
+    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
 
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
@@ -140,15 +142,25 @@ export class DeliLambda implements IPartitionLambda {
         this.nackMessages = lastCheckpoint.nackMessages;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
-        this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
+        this.noActiveClients = msn === -1;
+        this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
+
+        // start the idle timer when created
+        this.setIdleTimer();
     }
 
     public handler(rawMessage: IQueuedMessage) {
+        let kafkaCheckpointMessage: IQueuedMessage | undefined;
+
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            this.context.checkpoint(rawMessage);
+            kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
+            if (kafkaCheckpointMessage) {
+                this.context.checkpoint(kafkaCheckpointMessage);
+            }
+
             return undefined;
         }
 
@@ -174,7 +186,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Check for document inactivity.
                 if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
                     && this.noActiveClients) {
-                    this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
                 }
 
                 // Return early if sending is not required.
@@ -195,10 +207,12 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        const checkpoint = this.generateCheckpoint(rawMessage);
+        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
+        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
-        this.lastSendP.then(
+        Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
                 if (this.lastInstruction === InstructionType.ClearCache) {
                     checkpoint.clear = true;
@@ -599,15 +613,16 @@ export class DeliLambda implements IPartitionLambda {
         return this.forwardProducer.send([message], message.tenantId, message.documentId);
     }
 
-    private sendToAlfred(message: IRawOperationMessage) {
-        this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
+    private async sendToAlfred(message: IRawOperationMessage) {
+        try {
+            await this.reverseProducer.send([message], message.tenantId, message.documentId);
+        } catch (error) {
             this.context.log?.error(
                 `Could not send message to alfred: ${JSON.stringify(error)}`,
                 {
                     messageMetaData: {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
-
                     },
                 });
             this.context.error(error, {
@@ -615,7 +630,7 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: this.tenantId,
                 documentId: this.documentId,
             });
-        });
+        }
     }
 
     // Check if there are any old/idle clients. Craft and send a leave message to alfred.
@@ -626,7 +641,7 @@ export class DeliLambda implements IPartitionLambda {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                this.sendToAlfred(leaveMessage);
+                void this.sendToAlfred(leaveMessage);
             }
         }
     }
@@ -723,13 +738,30 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Generates a checkpoint of the current ticketing state
+     * The deli checkpoint is based on rawMessage
+     * The kafka checkpoint is based on kafkaCheckpointMessage if clients exist
+     * This keeps the kafka checkpoint behind by 1 message until there are no active clients
+     * It ensures that the idle timer and subsequent leave & NoClient messages are created
+     * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
+     * @returns The queued message for the kafka checkpoint
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
-        const deliCheckpoint = this.generateDeliCheckpoint();
-        const checkpoint = deliCheckpoint as ICheckpointParams;
-        checkpoint.queuedMessage = queuedMessage;
-        return checkpoint;
+    private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
+        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        this.nextKafkaCheckpointMessage = rawMessage;
+        return kafkaCheckpointMessage;
+    }
+
+    /**
+     * Generates a checkpoint of the given state
+     */
+    private generateCheckpoint(
+        deliCheckpointMessage: IQueuedMessage,
+        kafkaCheckpointMessage: IQueuedMessage | undefined): ICheckpointParams {
+        return {
+            deliState: this.generateDeliCheckpoint(),
+            deliCheckpointMessage,
+            kafkaCheckpointMessage,
+        };
     }
 
     private generateDeliCheckpoint(): IDeliState {
@@ -770,7 +802,7 @@ export class DeliLambda implements IPartitionLambda {
         this.idleTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.activityTimeout);
     }
@@ -789,7 +821,7 @@ export class DeliLambda implements IPartitionLambda {
         this.noopTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.noOpConsolidationTimeout);
     }

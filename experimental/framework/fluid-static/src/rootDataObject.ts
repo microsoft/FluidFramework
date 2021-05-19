@@ -2,20 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
     BaseContainerRuntimeFactory,
     DataObject,
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-
 import {
     ContainerSchema,
     DataObjectClass,
@@ -26,42 +21,12 @@ import {
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
-export interface IFluidContainerEvents extends IEvent {
-    (event: "connected", listener: (clientId: string) => void): void;
-    (event: "dispose" | "disconnected", listener: () => void): void;
-}
-
-/**
- * FluidContainer defines the interface that the developer will use to interact with Fluid.
- */
-export interface FluidContainer
-    extends Pick<Container, "audience" | "clientId">, IEventProvider<IFluidContainerEvents> {
-    /**
-     * The initialObjects defined in the container config
-     */
-    readonly initialObjects: LoadableObjectRecord;
-
-    /**
-     * Creates a new instance of the provided LoadableObjectClass.
-     *
-     * The returned object needs to be stored via handle by the caller.
-     */
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-}
-
 interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-/**
- * The RootDataObject is the implementation of the FluidContainer.
- */
-export class RootDataObject
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    extends DataObject<{}, RootDataObjectProps, IFluidContainerEvents>
-    implements FluidContainer {
-    private readonly connectedHandler = (id: string) => this.emit("connected", id);
-    private readonly disconnectedHandler = () => this.emit("disconnected");
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -90,9 +55,6 @@ export class RootDataObject
     }
 
     protected async hasInitialized() {
-        this.runtime.on("connected", this.connectedHandler);
-        this.runtime.on("disconnected", this.disconnectedHandler);
-
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
@@ -104,23 +66,6 @@ export class RootDataObject
         }
 
         await Promise.all(loadInitialObjectsP);
-    }
-
-    public dispose() {
-        // remove our listeners and continue disposing
-        this.runtime.off("connected", this.connectedHandler);
-        this.runtime.off("disconnected", this.disconnectedHandler);
-        // After super.dispose(), all event listeners are removed so we need to emit first.
-        this.emit("dispose");
-        super.dispose();
-    }
-
-    public get audience(): IAudience {
-        return this.context.getAudience();
-    }
-
-    public get clientId() {
-        return this.context.clientId;
     }
 
     public get initialObjects(): LoadableObjectRecord {
@@ -138,13 +83,7 @@ export class RootDataObject
         } else if (isSharedObjectClass(objectClass)) {
             return this.createSharedObject<T>(objectClass);
         }
-
         throw new Error("Could not create new Fluid object because an unknown object was passed");
-    }
-
-    public async getDataObject<T extends IFluidLoadable>(id: string) {
-        const handle = await this.root.wait<IFluidHandle<T>>(id);
-        return handle.get();
     }
 
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {

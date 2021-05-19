@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerCode";
+export * from "./fluidContainer";
+export * from "./rootDataObject";
 export * from "./types";
