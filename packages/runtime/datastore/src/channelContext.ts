@@ -26,7 +26,7 @@ export interface IChannelContext {
 
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
-    resubmit(content: any, localOpMetadata: unknown): void;
+    reSubmit(content: any, localOpMetadata: unknown): void;
 
     applyStashedOp(content: any): unknown;
 

@@ -325,7 +325,7 @@ export class Loader implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => { console.error("Error during caching Container on the Loader", error); });
+        }).catch((error) => {});
     }
 
     private async resolveCore(

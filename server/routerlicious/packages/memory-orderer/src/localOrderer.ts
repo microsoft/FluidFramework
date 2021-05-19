@@ -55,7 +55,6 @@ const DefaultScribe: IScribe = {
 };
 
 const DefaultDeli: IDeliState = {
-    branchMap: undefined,
     clients: undefined,
     durableSequenceNumber: 0,
     epoch: 0,

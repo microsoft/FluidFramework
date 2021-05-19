@@ -15,15 +15,15 @@ import { PropertyProxyErrors } from './errors';
  */
 export class Utilities {
   /**
-   * Wraps a function with push/popModifiedEventScope.
+   * Wraps a function with push/pophNotificationDelayScope.
    * @param {external:BaseProperty} property The property that is operated on.
    * @param {Function} updateFunction The function containing the code that modifies properties in the workspace.
    */
-  static wrapWithPushPopModifiedEventScope(property, updateFunction) {
+  static wrapWithPushPopNotificationDelayScope(property, updateFunction) {
     if (property.getWorkspace()) {
-      property.getWorkspace().pushModifiedEventScope();
+      property.getWorkspace().pushNotificationDelayScope();
       updateFunction();
-      property.getWorkspace().popModifiedEventScope();
+      property.getWorkspace().popNotificationDelayScope();
     } else {
       updateFunction();
     }
@@ -129,7 +129,7 @@ export class Utilities {
         valueContext = value.getContext();
       }
 
-      Utilities.wrapWithPushPopModifiedEventScope(property, () => {
+      Utilities.wrapWithPushPopNotificationDelayScope(property, () => {
         if (context === 'array') {
           const proxiedArray = PropertyProxy.proxify(property);
           property.clear();

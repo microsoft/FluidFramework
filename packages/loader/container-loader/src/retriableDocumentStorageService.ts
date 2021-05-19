@@ -17,12 +17,12 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaManager } from "./deltaManager";
 import { runWithRetry } from "./utils";
 
-export class RetriableDocumentStorageService implements IDocumentStorageService {
-    private disposed = false;
+export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
+    private _disposed = false;
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
         private readonly deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
@@ -33,9 +33,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
-
+    public get disposed() {return this._disposed;}
     public dispose() {
-        this.disposed = true;
+        this._disposed = true;
     }
 
     public get repositoryUrl(): string {
@@ -113,7 +113,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     }
 
     private checkStorageDisposed() {
-        if (this.disposed) {
+        if (this._disposed) {
             return {
                 retry: false,
                 error: CreateContainerError("Storage service disposed!!"),

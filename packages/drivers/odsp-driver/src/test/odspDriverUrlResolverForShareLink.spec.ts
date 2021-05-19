@@ -176,13 +176,13 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("Sharing link should be set when isSharingLinkToRedeem header is set", async () => {
+        const url = new URL(sharelink);
         const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            const url = new URL(sharelink);
             storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
             return urlResolverWithShareLinkFetcher.resolve(
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
-        assert.strictEqual(resolvedUrl.sharingLinkToRedeem, sharelink, "Sharing link should be set in resolved url");
+        assert.strictEqual(resolvedUrl.sharingLinkToRedeem, url.toString(), "Sharing link should be set in resolved url");
     });
 
     it("Encode and decode nav param", async () => {
