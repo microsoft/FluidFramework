@@ -156,9 +156,7 @@ export class DeliLambda implements IPartitionLambda {
 
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
-            this.nextKafkaCheckpointMessage = rawMessage;
-
+            kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
             if (kafkaCheckpointMessage) {
                 this.context.checkpoint(kafkaCheckpointMessage);
             }
@@ -209,14 +207,7 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        // the deli checkpoint is based on rawMessage
-        // the kafka checkpoint is based on kafkaCheckpointMessage if clients exist
-        // this keeps the kafka checkpoint behind by 1 message until there are no active clients
-        // it ensures that the idle timer and subsequent leave & NoClient messages are created
-        // if noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
-        kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
-        this.nextKafkaCheckpointMessage = rawMessage;
-
+        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
         const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
 
         // TODO optimize this to avoid doing per message
@@ -744,6 +735,20 @@ export class DeliLambda implements IPartitionLambda {
             timestamp: Date.now(),
         };
         return trace;
+    }
+
+    /**
+     * The deli checkpoint is based on rawMessage
+     * The kafka checkpoint is based on kafkaCheckpointMessage if clients exist
+     * This keeps the kafka checkpoint behind by 1 message until there are no active clients
+     * It ensures that the idle timer and subsequent leave & NoClient messages are created
+     * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
+     * @returns The queued message for the kafka checkpoint
+     */
+    private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
+        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        this.nextKafkaCheckpointMessage = rawMessage;
+        return kafkaCheckpointMessage;
     }
 
     /**
