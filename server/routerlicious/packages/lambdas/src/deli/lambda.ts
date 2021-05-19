@@ -102,7 +102,7 @@ export class DeliLambda implements IPartitionLambda {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
-    private kafkaCheckpointMessage: IQueuedMessage | undefined;
+    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
 
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
@@ -152,14 +152,16 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     public handler(rawMessage: IQueuedMessage) {
+        let kafkaCheckpointMessage: IQueuedMessage | undefined;
+
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            // we still want to stay behind by 1 message in this case
-            if (this.kafkaCheckpointMessage) {
-                this.context.checkpoint(this.kafkaCheckpointMessage);
-            }
+            kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+            this.nextKafkaCheckpointMessage = rawMessage;
 
-            this.kafkaCheckpointMessage = rawMessage;
+            if (kafkaCheckpointMessage) {
+                this.context.checkpoint(kafkaCheckpointMessage);
+            }
 
             return undefined;
         }
@@ -207,16 +209,15 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        // deli checkpoint is based on rawMessage
-        // kafka checkpoint is based on kafkaCheckpointMessage
-        // keep the kafka checkpoint behind by 1 message until there are no active clients
-        // this is to ensure the idle timer / NoClient messages are fired in edge cases
+        // the deli checkpoint is based on rawMessage
+        // the kafka checkpoint is based on kafkaCheckpointMessage if clients exist
+        // this keeps the kafka checkpoint behind by 1 message until there are no active clients
+        // it ensures that the idle timer and subsequent leave & NoClient messages are created
         // if noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
-        const checkpoint = this.generateCheckpoint(
-            rawMessage,
-            this.noActiveClients ? rawMessage : this.kafkaCheckpointMessage);
+        kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        this.nextKafkaCheckpointMessage = rawMessage;
 
-        this.kafkaCheckpointMessage = rawMessage;
+        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
 
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
