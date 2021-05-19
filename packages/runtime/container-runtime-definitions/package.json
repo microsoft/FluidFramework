@@ -28,7 +28,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0-0",
     "@fluidframework/container-definitions": "^0.39.0",
-    "@fluidframework/core-interfacess": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/driver-definitions": "^0.39.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/runtime-definitions": "^0.40.0",
