@@ -25,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.40.0",
+    "@fluidframework/core-interfacess": "^0.39.0",
     "@fluidframework/merge-tree": "^0.40.0",
     "@types/node": "^12.19.0"
   },

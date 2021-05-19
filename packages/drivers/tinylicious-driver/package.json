@@ -27,7 +27,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.40.0",
+    "@fluidframework/core-interfacess": "^0.39.0",
     "@fluidframework/driver-definitions": "^0.39.0",
     "@fluidframework/driver-utils": "^0.40.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
