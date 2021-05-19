@@ -35,7 +35,11 @@ export class CheckpointContext {
         this.pendingUpdateP = this.checkpointCore(checkpoint);
         this.pendingUpdateP?.then(
             () => {
-                this.context.checkpoint(checkpoint.queuedMessage);
+                // kafka checkpoint
+                if (checkpoint.kafkaCheckpointMessage) {
+                    this.context.checkpoint(checkpoint.kafkaCheckpointMessage);
+                }
+
                 this.pendingUpdateP = undefined;
 
                 // Trigger another round if there is a pending update
@@ -74,7 +78,8 @@ export class CheckpointContext {
         if (checkpoint.clear) {
             updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
         } else {
-            const deliCheckpoint: IDeliState = { ...checkpoint };
+            // clone the checkpoint
+            const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
 
             updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
         }

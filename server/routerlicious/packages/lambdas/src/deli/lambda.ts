@@ -98,10 +98,11 @@ export class DeliLambda implements IPartitionLambda {
     private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
     private noopTimer: any;
-    private noActiveClients = false;
+    private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
+    private kafkaCheckpointMessage: IQueuedMessage | undefined;
 
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
@@ -141,15 +142,25 @@ export class DeliLambda implements IPartitionLambda {
         this.nackMessages = lastCheckpoint.nackMessages;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
-        this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
+        this.noActiveClients = msn === -1;
+        this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
+
+        // start the idle timer when created
+        this.setIdleTimer();
     }
 
     public handler(rawMessage: IQueuedMessage) {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            this.context.checkpoint(rawMessage);
+            // we still want to stay behind by 1 message in this case
+            if (this.kafkaCheckpointMessage) {
+                this.context.checkpoint(this.kafkaCheckpointMessage);
+            }
+
+            this.kafkaCheckpointMessage = rawMessage;
+
             return undefined;
         }
 
@@ -196,7 +207,17 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        const checkpoint = this.generateCheckpoint(rawMessage);
+        // deli checkpoint is based on rawMessage
+        // kafka checkpoint is based on kafkaCheckpointMessage
+        // keep the kafka checkpoint behind by 1 message until there are no active clients
+        // this is to ensure the idle timer / NoClient messages are fired in edge cases
+        // if noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
+        const checkpoint = this.generateCheckpoint(
+            rawMessage,
+            this.noActiveClients ? rawMessage : this.kafkaCheckpointMessage);
+
+        this.kafkaCheckpointMessage = rawMessage;
+
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
         Promise.all([this.lastSendP, this.lastNoClientP]).then(
@@ -725,13 +746,16 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Generates a checkpoint of the current ticketing state
+     * Generates a checkpoint of the given state
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
-        const deliCheckpoint = this.generateDeliCheckpoint();
-        const checkpoint = deliCheckpoint as ICheckpointParams;
-        checkpoint.queuedMessage = queuedMessage;
-        return checkpoint;
+    private generateCheckpoint(
+        deliCheckpointMessage: IQueuedMessage,
+        kafkaCheckpointMessage: IQueuedMessage | undefined): ICheckpointParams {
+        return {
+            deliState: this.generateDeliCheckpoint(),
+            deliCheckpointMessage,
+            kafkaCheckpointMessage,
+        };
     }
 
     private generateDeliCheckpoint(): IDeliState {
