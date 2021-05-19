@@ -226,7 +226,8 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
-    const codeLoader = new API.CodeLoader({ summaryOptions: { generateSummaries: false } },
+    const codeLoader = new API.CodeLoader({
+        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
         [
             ["_scheduler", Promise.resolve(chaincode)],
             ["@ms/atmentions", Promise.resolve(chaincode)],

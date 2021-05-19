@@ -1438,7 +1438,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendTelemetryEvent({
                 eventName:"NoCodeProposal",
             });
-            await new Promise<void>((resolve)=>{
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            new Promise<void>((resolve)=>{
                 const waitForCode = ()=>{
                     if(getCodeProposal(protocol.quorum) !== undefined) {
                         resolve();
