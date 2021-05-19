@@ -185,7 +185,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delaySeconds: number, error: ICriticalContainerError): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
