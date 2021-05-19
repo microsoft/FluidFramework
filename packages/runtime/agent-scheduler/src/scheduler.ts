@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IRequest,
@@ -21,12 +20,12 @@ import {
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
-import { IAgentScheduler } from "./agent";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler {
+class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
