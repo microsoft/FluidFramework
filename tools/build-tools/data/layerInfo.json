@@ -154,6 +154,7 @@
                 "packages": [
                     "@fluid-experimental/get-container",
                     "@fluid-experimental/fluid-static",
+                    "@fluid-experimental/frs-client",
                     "@fluid-experimental/tinylicious-client"
                 ],
                 "deps": [
