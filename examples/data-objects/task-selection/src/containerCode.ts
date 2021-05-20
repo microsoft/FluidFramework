@@ -8,14 +8,17 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { TaskManagerDiceRoller, DiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
+import { OldestClientDiceRoller, OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
+import { TaskManagerDiceRoller, TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
 import { IDiceRoller } from "./interface";
 
 const registryEntries = new Map([
-    DiceRollerInstantiationFactory.registryEntry,
+    OldestClientDiceRollerInstantiationFactory.registryEntry,
+    TaskManagerDiceRollerInstantiationFactory.registryEntry,
 ]);
 
 export const taskManagerDiceId = "taskManagerDice";
+export const oldestClientDiceId = "oldestClientDice";
 
 // Just a little helper, since we're going to request multiple objects.
 async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
@@ -46,6 +49,10 @@ class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
         const taskManagerDiceRollerComponentRuntime =
             await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
         await requestFluidObject<IDiceRoller>(taskManagerDiceRollerComponentRuntime, "/");
+
+        const oldestClientDiceRollerComponentRuntime =
+            await runtime.createRootDataStore(OldestClientDiceRoller.ComponentName, oldestClientDiceId);
+        await requestFluidObject<IDiceRoller>(oldestClientDiceRollerComponentRuntime, "/");
     }
 }
 

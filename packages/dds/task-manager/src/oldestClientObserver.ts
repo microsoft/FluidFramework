@@ -7,8 +7,9 @@ import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IOldestClientObserver } from "./interfaces";
 
 /**

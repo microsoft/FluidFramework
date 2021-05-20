@@ -6,7 +6,7 @@
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { IContainer } from "@fluidframework/container-definitions";
 
-import { taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
+import { oldestClientDiceId, taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
 import { IDiceRoller } from "./interface";
 import { renderDiceRoller } from "./view";
 
@@ -50,10 +50,16 @@ async function start(): Promise<void> {
 
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
     const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
+    const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
 
-    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
+    const taskManagerDiv = document.createElement("div");
+    renderDiceRoller(taskManagerDiceRoller, taskManagerDiv);
+
+    const oldestClientDiv = document.createElement("div");
+    renderDiceRoller(oldestClientDiceRoller, oldestClientDiv);
+
     const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(taskManagerDiceRoller, div);
+    div.append(taskManagerDiv, oldestClientDiv);
 }
 
 start().catch((error) => console.error(error));
