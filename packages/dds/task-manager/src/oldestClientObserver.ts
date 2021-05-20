@@ -5,12 +5,28 @@
 
 import { EventEmitter } from "events";
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IOldestClientObserver } from "./interfaces";
+
+export interface IOldestClientObservableEvents extends IEvent {
+    (event: "connected" | "disconnected", listener: () => void);
+}
+
+/**
+ * This is to make OldestClientObserver work with either a ContainerRuntime or an IFluidDataStoreRuntime
+ * (both expose the relevant API surface and eventing).  However, really this info probably shouldn't live on either,
+ * since neither is really the source of truth (they are just the only currently-available plumbing options).
+ * It's information about the connection, so the real source of truth is lower (at the connection layer).
+ */
+export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
+    getQuorum(): IQuorum;
+    attachState: AttachState;
+    connected: boolean;
+    clientId: string | undefined;
+}
 
 /**
  * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
@@ -57,14 +73,14 @@ import { IOldestClientObserver } from "./interfaces";
 export class OldestClientObserver extends EventEmitter implements IOldestClientObserver {
     private readonly quorum: IQuorum;
     private currentIsOldest: boolean = false;
-    constructor(private readonly containerRuntime: IContainerRuntime) {
+    constructor(private readonly observable: IOldestClientObservable) {
         super();
-        this.quorum = this.containerRuntime.getQuorum();
+        this.quorum = this.observable.getQuorum();
         this.currentIsOldest = this.computeIsOldest();
         this.quorum.on("addMember", this.updateOldest);
         this.quorum.on("removeMember", this.updateOldest);
-        containerRuntime.on("connected", this.updateOldest);
-        containerRuntime.on("disconnected", this.updateOldest);
+        observable.on("connected", this.updateOldest);
+        observable.on("disconnected", this.updateOldest);
     }
 
     public isOldest(): boolean {
@@ -85,18 +101,18 @@ export class OldestClientObserver extends EventEmitter implements IOldestClientO
 
     private computeIsOldest(): boolean {
         // If the container is detached, we are the only ones that know about it and are the oldest by default.
-        if (this.containerRuntime.attachState === AttachState.Detached) {
+        if (this.observable.attachState === AttachState.Detached) {
             return true;
         }
 
         // If we're not connected we can't be the oldest connected client.
-        if (!this.containerRuntime.connected) {
+        if (!this.observable.connected) {
             return false;
         }
 
-        assert(this.containerRuntime.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
+        assert(this.observable.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
 
-        const selfSequencedClient = this.quorum.getMember(this.containerRuntime.clientId);
+        const selfSequencedClient = this.quorum.getMember(this.observable.clientId);
         // When in readonly mode our clientId will not be present in the quorum.
         if (selfSequencedClient === undefined) {
             return false;

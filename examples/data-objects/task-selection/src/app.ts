@@ -53,13 +53,27 @@ async function start(): Promise<void> {
     const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
 
     const taskManagerDiv = document.createElement("div");
-    renderDiceRoller(taskManagerDiceRoller, taskManagerDiv);
+    const taskManagerHeaderDiv = document.createElement("div");
+    taskManagerHeaderDiv.style.textAlign = "center";
+    taskManagerHeaderDiv.style.fontSize = "50px";
+    taskManagerHeaderDiv.textContent = "TaskManager";
+    const taskManagerViewDiv = document.createElement("div");
+    renderDiceRoller(taskManagerDiceRoller, taskManagerViewDiv);
+    taskManagerDiv.append(taskManagerHeaderDiv, taskManagerViewDiv);
+
+    const divider = document.createElement("hr");
 
     const oldestClientDiv = document.createElement("div");
-    renderDiceRoller(oldestClientDiceRoller, oldestClientDiv);
+    const oldestClientHeaderDiv = document.createElement("div");
+    oldestClientHeaderDiv.style.textAlign = "center";
+    oldestClientHeaderDiv.style.fontSize = "50px";
+    oldestClientHeaderDiv.textContent = "OldestClientObserver";
+    const oldestClientViewDiv = document.createElement("div");
+    renderDiceRoller(oldestClientDiceRoller, oldestClientViewDiv);
+    oldestClientDiv.append(oldestClientHeaderDiv, oldestClientViewDiv);
 
     const div = document.getElementById("content") as HTMLDivElement;
-    div.append(taskManagerDiv, oldestClientDiv);
+    div.append(taskManagerDiv, divider, oldestClientDiv);
 }
 
 start().catch((error) => console.error(error));

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { OldestClientObserver } from "@fluid-experimental/task-manager";
+import { IOldestClientObservable, OldestClientObserver } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import { IDiceRoller } from "./interface";
 
@@ -43,8 +42,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
             }
         });
 
-        this._oldestClientObserver = new OldestClientObserver(this.runtime as unknown as IContainerRuntime);
-        // Set up oldest client observer here?
+        this._oldestClientObserver = new OldestClientObserver(this.runtime as IOldestClientObservable);
 
         this.volunteerForAutoRoll();
     }
