@@ -11,4 +11,4 @@ api-extractor.json                                                        @micro
 md-magic.config.*                                                         @microsoft/fluid-cr-docs @tylerbutler
 
 # Shared ESLint config
-common\build\eslint-config-fluid                                          @tylerbutler
+common/build/eslint-config-fluid/                                         @tylerbutler
