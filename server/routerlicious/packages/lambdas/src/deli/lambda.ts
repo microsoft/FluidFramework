@@ -5,6 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
+import { EventEmitter } from "events";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -78,7 +79,7 @@ interface ITicketedMessageOutput {
     instruction: InstructionType;
 }
 
-export class DeliLambda implements IPartitionLambda {
+export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
 
@@ -96,8 +97,15 @@ export class DeliLambda implements IPartitionLambda {
     private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
     private lastInstruction = InstructionType.NoOp;
-    private idleTimer: any;
-    private noopTimer: any;
+
+    private activityIdleTimer: any;
+    private noopEvent: any;
+
+    // Op timer properties
+    private opIdleTimer: any | undefined;
+    private opMaxTimeTimer: any | undefined;
+    private messagesSinceLastOpEvent: number = 0;
+
     private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -116,6 +124,8 @@ export class DeliLambda implements IPartitionLambda {
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
+        super();
+
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
@@ -147,8 +157,12 @@ export class DeliLambda implements IPartitionLambda {
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
 
-        // start the idle timer when created
-        this.setIdleTimer();
+        // start the activity idle timer when created
+        this.setActivityIdleTimer();
+
+        if (this.serviceConfiguration.deli.opEvent.enable) {
+            this.updateOpMaxTimeTimer();
+        }
     }
 
     public handler(rawMessage: IQueuedMessage) {
@@ -205,6 +219,8 @@ export class DeliLambda implements IPartitionLambda {
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
+
+            this.messagesSinceLastOpEvent++;
         }
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
@@ -237,15 +253,28 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        this.clearIdleTimer();
-        this.setIdleTimer();
+        this.clearActivityIdleTimer();
+        this.setActivityIdleTimer();
+
+        if (this.serviceConfiguration.deli.opEvent.enable) {
+            this.updateOpIdleTimer();
+
+            if (this.messagesSinceLastOpEvent > this.serviceConfiguration.deli.opEvent.maxOps) {
+                this.emitOpEvent("maxOps");
+            }
+        }
     }
 
     public close() {
         this.checkpointContext.close();
 
-        this.clearIdleTimer();
+        this.clearActivityIdleTimer();
         this.clearNoopConsolidationTimer();
+
+        this.clearOpIdleTimer();
+        this.clearOpMaxTimeTimer();
+
+        this.removeAllListeners();
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
@@ -795,11 +824,11 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private setIdleTimer() {
+    private setActivityIdleTimer() {
         if (this.noActiveClients) {
             return;
         }
-        this.idleTimer = setTimeout(() => {
+        this.activityIdleTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 void this.sendToAlfred(noOpMessage);
@@ -807,10 +836,10 @@ export class DeliLambda implements IPartitionLambda {
         }, this.serviceConfiguration.deli.activityTimeout);
     }
 
-    private clearIdleTimer() {
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = undefined;
+    private clearActivityIdleTimer() {
+        if (this.activityIdleTimer !== undefined) {
+            clearTimeout(this.activityIdleTimer);
+            this.activityIdleTimer = undefined;
         }
     }
 
@@ -818,7 +847,7 @@ export class DeliLambda implements IPartitionLambda {
         if (this.noActiveClients) {
             return;
         }
-        this.noopTimer = setTimeout(() => {
+        this.noopEvent = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 void this.sendToAlfred(noOpMessage);
@@ -827,9 +856,52 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private clearNoopConsolidationTimer() {
-        if (this.noopTimer !== undefined) {
-            clearTimeout(this.noopTimer);
-            this.noopTimer = undefined;
+        if (this.noopEvent !== undefined) {
+            clearTimeout(this.noopEvent);
+            this.noopEvent = undefined;
         }
+    }
+
+    private updateOpIdleTimer() {
+        this.clearOpIdleTimer();
+
+        this.opIdleTimer = setTimeout(() => {
+            this.emitOpEvent("idle");
+        }, this.serviceConfiguration.deli.opEvent.idleTime);
+    }
+
+    private clearOpIdleTimer() {
+        if (this.opIdleTimer !== undefined) {
+            clearTimeout(this.opIdleTimer);
+            this.opIdleTimer = undefined;
+        }
+    }
+
+    private updateOpMaxTimeTimer() {
+        this.clearOpMaxTimeTimer();
+
+        this.opMaxTimeTimer = setTimeout(() => {
+            this.emitOpEvent("maxTime");
+        }, this.serviceConfiguration.deli.opEvent.maxTime);
+    }
+
+    private clearOpMaxTimeTimer() {
+        if (this.opMaxTimeTimer !== undefined) {
+            clearTimeout(this.opMaxTimeTimer);
+            this.opMaxTimeTimer = undefined;
+        }
+    }
+
+    private emitOpEvent(type: string) {
+        if (this.messagesSinceLastOpEvent === 0) {
+            // no need to emit since no messages were handled since last time
+            return;
+        }
+
+        this.messagesSinceLastOpEvent = 0;
+
+        this.emit("opEvent", type, this.sequenceNumber, this.messagesSinceLastOpEvent);
+
+        this.updateOpMaxTimeTimer();
     }
 }
