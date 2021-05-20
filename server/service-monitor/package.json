@@ -43,7 +43,7 @@
     "@fluidframework/build-common": "^0.22.0-0",
     "@fluidframework/eslint-config-fluid": "^0.19.1",
     "@microsoft/api-extractor": "^7.13.1",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
     "@typescript-eslint/parser": "~2.17.0",
