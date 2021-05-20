@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^8.2.2",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "shelljs": "^0.8.4",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"

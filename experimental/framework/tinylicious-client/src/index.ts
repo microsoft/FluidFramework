@@ -6,5 +6,6 @@
 import { TinyliciousClient } from "./TinyliciousClient";
 
 export * from "./interfaces";
+export * from "./TinyliciousAudience";
 // eslint-disable-next-line import/no-default-export
 export default TinyliciousClient;

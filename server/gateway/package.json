@@ -166,7 +166,7 @@
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-loader": "^0.5.5",
     "less": "~3.9.0",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "node-sass": "^4.9.3",
     "nyc": "^15.0.0",
     "parallel-webpack": "^2.3.0",

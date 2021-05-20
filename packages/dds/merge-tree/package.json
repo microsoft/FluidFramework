@@ -58,7 +58,7 @@
     "@fluidframework/container-definitions": "^0.40.0",
     "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/datastore-definitions": "^0.40.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-0",
+    "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/telemetry-utils": "^0.40.0",
     "assert": "^2.0.0"
   },
@@ -85,7 +85,7 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",

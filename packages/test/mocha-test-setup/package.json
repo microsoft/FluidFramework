@@ -52,7 +52,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0-0",
     "@fluidframework/test-driver-definitions": "^0.40.0",
-    "mocha": "^8.1.1"
+    "mocha": "^8.4.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",
