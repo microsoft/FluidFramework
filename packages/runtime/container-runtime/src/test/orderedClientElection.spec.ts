@@ -18,18 +18,16 @@ describe("Ordered Client Election", () => {
             return this as IQuorum;
         },
     };
-    let currentChangeEventCount = 0;
+    let electedChangeEventCount = 0;
     let summarizerChangeEventCount = 0;
 
     function addClient(clientId: string, sequenceNumber: number, isSummarizer = false) {
-        const client: ISequencedClient = {
-            client: {
-                details: {
-                    type: isSummarizer ? summarizerClientType : "",
-                },
-            } as any,
-            sequenceNumber,
+        const details: ISequencedClient["client"]["details"] = {
+            capabilities: { interactive: !isSummarizer },
+            type: isSummarizer ? summarizerClientType : "",
         };
+        const c: Partial<ISequencedClient["client"]> = { details };
+        const client: ISequencedClient = { client: c as ISequencedClient["client"], sequenceNumber };
         quorumMembers.set(clientId, client);
         emitter.emit("addMember", clientId, client);
     }
@@ -44,7 +42,7 @@ describe("Ordered Client Election", () => {
             addClient(id, seq, sum);
         }
         const orderedClients = new OrderedClientElection(mockQuorum);
-        orderedClients.on("currentChange", () => currentChangeEventCount++);
+        orderedClients.on("electedChange", () => electedChangeEventCount++);
         orderedClients.on("summarizerChange", () => summarizerChangeEventCount++);
         return orderedClients;
     }
@@ -67,9 +65,9 @@ describe("Ordered Client Election", () => {
         assert.strictEqual(
             orderedClients.getElectedClient()?.clientId, electedClientId, `${prefix}Invalid elected client id`);
     }
-    function assertEvents(expectedCurrentChangeCount: number, expectedSummarizerChangeCount: number) {
+    function assertEvents(expectedElectedChangeCount: number, expectedSummarizerChangeCount: number) {
         assert.strictEqual(
-            currentChangeEventCount, expectedCurrentChangeCount, "Unexpected currentChange event count");
+            electedChangeEventCount, expectedElectedChangeCount, "Unexpected electedChange event count");
         assert.strictEqual(
             summarizerChangeEventCount, expectedSummarizerChangeCount, "Unexpected summarizerChange event count");
     }
@@ -83,7 +81,7 @@ describe("Ordered Client Election", () => {
 
     afterEach(() => {
         quorumMembers.clear();
-        currentChangeEventCount = 0;
+        electedChangeEventCount = 0;
         summarizerChangeEventCount = 0;
         emitter.removeAllListeners();
     });
