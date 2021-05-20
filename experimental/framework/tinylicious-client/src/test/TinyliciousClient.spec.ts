@@ -32,7 +32,8 @@ describe("TinyliciousClient", () => {
                 map1: SharedMap,
             },
         };
-        const container = await TinyliciousClient.createContainer(containerConfig, schema);
+
+        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
 
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
