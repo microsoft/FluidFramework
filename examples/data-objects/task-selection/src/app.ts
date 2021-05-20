@@ -7,7 +7,7 @@ import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { IContainer } from "@fluidframework/container-definitions";
 
 import { taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
-import { IDiceRoller } from "./dataObject";
+import { IDiceRoller } from "./interface";
 import { renderDiceRoller } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading

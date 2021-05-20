@@ -3,34 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-/**
- * IDiceRoller describes the public API surface for our dice roller data object.
- */
-export interface IDiceRoller extends EventEmitter {
-    /**
-     * Get the dice value as a number.
-     */
-    readonly value: number;
-
-    /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    roll: () => void;
-
-    /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-     */
-    on(event: "diceRolled" | "taskOwnershipChanged", listener: () => void): this;
-
-    hasTask(): boolean;
-}
+import { IDiceRoller } from "./interface";
 
 const taskManagerKey = "taskManager";
 // The root is map-like, so we'll use this key for storing the value.
@@ -40,7 +19,7 @@ const autoRollTaskId = "autoRoll";
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     public static get ComponentName() { return "@fluid-example/task-manager-dice-roller"; }
 
     private _taskManager: TaskManager | undefined;
@@ -135,10 +114,10 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
+export const DiceRollerInstantiationFactory = new DataObjectFactory<TaskManagerDiceRoller, undefined, undefined, IEvent>
 (
-    DiceRoller.ComponentName,
-    DiceRoller,
+    TaskManagerDiceRoller.ComponentName,
+    TaskManagerDiceRoller,
     [TaskManager.getFactory()],
     {},
 );

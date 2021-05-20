@@ -8,7 +8,8 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { DiceRoller, DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
+import { TaskManagerDiceRoller, DiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
+import { IDiceRoller } from "./interface";
 
 const registryEntries = new Map([
     DiceRollerInstantiationFactory.registryEntry,
@@ -43,7 +44,7 @@ class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const taskManagerDiceRollerComponentRuntime =
-            await runtime.createRootDataStore(DiceRoller.ComponentName, taskManagerDiceId);
+            await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
         await requestFluidObject<IDiceRoller>(taskManagerDiceRollerComponentRuntime, "/");
     }
 }
