@@ -37,7 +37,7 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const fluidContainer = createNew
+    const [fluidContainer, containerServices] = createNew
         ? await TinyliciousClient.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await TinyliciousClient.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
@@ -66,8 +66,8 @@ async function start(): Promise<void> {
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
 
-    // Render the user names for the members currently in the session
-    renderAudience(fluidContainer.audience, contentDiv);
+    // Render the audience information for the members currently in the session
+    renderAudience(containerServices.audience, contentDiv);
 }
 
 start().catch((error) => console.error(error));
