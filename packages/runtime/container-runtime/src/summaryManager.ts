@@ -22,7 +22,7 @@ import { ISequencedClient, MessageType } from "@fluidframework/protocol-definiti
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
-import { ITrackedClient, OrderedClients, summarizerClientType, Throttler } from "./summaryManagerUtils";
+import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
@@ -50,7 +50,7 @@ type ShouldSummarizeState =
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly orderedClients: OrderedClients;
+    private readonly orderedClients: OrderedClientElection;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private electedClientId?: string;
@@ -134,7 +134,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.lastSummaryAckSeqForClient = op.sequenceNumber;
         });
 
-        this.orderedClients = new OrderedClients(context.quorum);
+        this.orderedClients = new OrderedClientElection(context.quorum);
         this.orderedClients.on("summarizerChange", (summarizerCount) => {
             const prev = this.hasSummarizersInQuorum;
             this.hasSummarizersInQuorum = summarizerCount > 0;
@@ -142,7 +142,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.refreshSummarizer();
             }
         });
-        this.orderedClients.on("currentChange", (client: ITrackedClient) => {
+        this.orderedClients.on("electedChange", (client: ITrackedClient) => {
             this.hasLoggedTelemetry = false;
             this.lastSummaryAckSeqForClient = client.sequenceNumber; // set to join seq
             this.refreshSummarizer();
@@ -206,7 +206,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private refreshSummarizer() {
         // Compute summarizer
-        const newSummarizerClientId = this.orderedClients.getCurrentClient()?.clientId;
+        const newSummarizerClientId = this.orderedClients.getElectedClient()?.clientId;
         if (newSummarizerClientId !== this.electedClientId) {
             this.electedClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
