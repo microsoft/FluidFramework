@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable, IErrorEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ISequencedClient } from "./clients";
 
 /**
@@ -56,7 +56,7 @@ export interface IPendingProposal extends ISequencedProposal {
     readonly rejectionDisabled: boolean;
 }
 
-export interface IQuorumEvents extends IEvent {
+export interface IQuorumEvents extends IErrorEvent {
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
     (event: "removeMember", listener: (clientId: string) => void);
     (event: "addProposal", listener: (proposal: IPendingProposal) => void);
