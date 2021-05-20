@@ -90,8 +90,11 @@ export function create(
                 content: blobData.content,
                 encoding: "base64",
             };
-            const dataP = uploadBlob(uri, requestBody);
-            handleResponse(dataP, response);
+            uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
+                response.status(200).json(data);
+            }, (err) => {
+                response.status(400).end(err.toString());
+            });
         },
     );
 
