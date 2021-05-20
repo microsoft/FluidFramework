@@ -24,7 +24,10 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     // Call the roll method to modify the shared data when the button is clicked.
     rollButton.addEventListener("click", diceRoller.roll);
 
-    wrapperDiv.append(diceCharDiv, rollButton);
+    const taskOwnerDiv = document.createElement("div");
+    taskOwnerDiv.style.fontSize = "50px";
+
+    wrapperDiv.append(diceCharDiv, rollButton, taskOwnerDiv);
 
     // Get the current value of the shared data to update the view whenever it changes.
     const updateDiceChar = () => {
@@ -34,6 +37,14 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     };
     updateDiceChar();
 
+    const updateTaskOwner = () => {
+        taskOwnerDiv.textContent = diceRoller.hasTask()
+            ? "Task owner"
+            : "Not task owner";
+    };
+    updateTaskOwner();
+
     // Use the diceRolled event to trigger the rerender whenever the value changes.
     diceRoller.on("diceRolled", updateDiceChar);
+    diceRoller.on("taskOwnershipChanged", updateTaskOwner);
 }

@@ -27,7 +27,9 @@ export interface IDiceRoller extends EventEmitter {
     /**
      * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
      */
-    on(event: "diceRolled", listener: () => void): this;
+    on(event: "diceRolled" | "taskOwnershipChanged", listener: () => void): this;
+
+    hasTask(): boolean;
 }
 
 const taskManagerKey = "taskManager";
@@ -89,12 +91,13 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     public volunteerForAutoRoll() {
         this.taskManager.lockTask(autoRollTaskId)
             .then(async () => {
-                console.log(`Picked`);
                 // Attempt to reacquire the task if we lose it
                 this.taskManager.once("lost", () => {
+                    this.emit("taskOwnershipChanged");
                     this.endAutoRollTask();
                     this.volunteerForAutoRoll();
                 });
+                this.emit("taskOwnershipChanged");
                 this.startAutoRollTask();
             }).catch(() => {
                 // We're not going to abandon our attempt, so if the promise rejects it probably means we got
@@ -119,6 +122,10 @@ export class DiceRoller extends DataObject implements IDiceRoller {
             clearInterval(this.autoRollInterval);
             this.autoRollInterval = undefined;
         }
+    }
+
+    public hasTask() {
+        return this.taskManager.haveTaskLock(autoRollTaskId);
     }
 }
 
