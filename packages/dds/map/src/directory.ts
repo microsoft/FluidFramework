@@ -591,9 +591,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.resubmitCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      */
-    protected resubmitCore(content: any, localOpMetadata: unknown) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
@@ -716,7 +716,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     ): ILocalValue {
         assert(
             serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared],
-            "Unexpected serializable type",
+            0x1e4 /* "Unexpected serializable type" */,
         );
         return this.localValueMaker.fromSerializable(serializable);
     }

@@ -18,10 +18,9 @@ import {
     createOdspLogger,
     fetchAndParseAsJSONHelper,
     getOdspResolvedUrl,
-    getWithRetryForTokenRefresh,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { fetchLatestSnapshotCore } from "./fetchSnapshot";
+import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -42,7 +41,7 @@ export async function prefetchLatestSnapshot(
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
 ): Promise<boolean> {
-    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot", { all: { prefetch: true }}));
+    const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
@@ -58,39 +57,31 @@ export async function prefetchLatestSnapshot(
             fetchOptions,
         );
     };
+    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
     const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
         cacheP = persistedCache.put(
-            createCacheSnapshotKey(odspResolvedUrl),
+            snapshotKey,
             valueWithEpoch,
         );
         return cacheP;
     };
+    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
-        async (event: PerformanceEvent) => {
-            let attempts = 1;
-            const success = await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                // Sometimes the token supplied by host is expired, so we attempt again by asking the host
-                // to give us a new valid token.
-                if (tokenFetchOptions.refresh) {
-                    attempts = 2;
-                }
-                await fetchLatestSnapshotCore(
+        async () => {
+            await fetchSnapshotWithRedeem(
                     odspResolvedUrl,
                     storageTokenFetcher,
-                    tokenFetchOptions,
                     hostSnapshotFetchOptions,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,
+                    removeEntries,
                 );
-                assert(cacheP !== undefined, "caching was not performed!");
-                await cacheP;
-                return true;
-            });
-        event.end({ attempts });
-        return success;
-    }).catch((error) => false);
+            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
+            await cacheP;
+            return true;
+    }).catch(async (error) => false);
 }
