@@ -3,23 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { DiceRollerInstantiationFactory } from "./dataObject";
+import { DiceRoller, DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
 
-/**
- * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
- *
- * Since we only need to instantiate and retrieve a single dice roller for our scenario, we can use a
- * ContainerRuntimeFactoryWithDefaultDataStore. We provide it with the type of the data object we want to create
- * and retrieve by default, and the registry entry mapping the type to the factory.
- *
- * This container code will create the single default data object on our behalf and make it available on the
- * Container with a URL of "/", so it can be retrieved via container.request("/").
- */
-export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory,
-    new Map([
-        DiceRollerInstantiationFactory.registryEntry,
-    ]),
-);
+const registryEntries = new Map([
+    DiceRollerInstantiationFactory.registryEntry,
+]);
+
+export const taskManagerDiceId = "taskManagerDice";
+
+// Just a little helper, since we're going to request multiple objects.
+async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
+    const fluidObjectRequest = RequestParser.create({
+        url: ``,
+        headers: request.headers,
+    });
+    return requestFluidObject<T>(
+        await runtime.getRootDataStore(id),
+        fluidObjectRequest);
+}
+
+const requestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts[0] === taskManagerDiceId) {
+            const taskManagerDice = await requestObjectStoreFromId<IDiceRoller>(
+                request, runtime, taskManagerDiceId);
+            return { status: 200, mimeType: "fluid/object", value: taskManagerDice };
+        }
+    };
+
+class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    constructor() {
+        super(registryEntries, [], [requestHandler]);
+    }
+
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        const taskManagerDiceRollerComponentRuntime =
+            await runtime.createRootDataStore(DiceRoller.ComponentName, taskManagerDiceId);
+        await requestFluidObject<IDiceRoller>(taskManagerDiceRollerComponentRuntime, "/");
+    }
+}
+
+export const TaskSelectionFactory = new TaskSelectionContainerRuntimeFactory();

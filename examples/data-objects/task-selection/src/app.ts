@@ -5,7 +5,7 @@
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
-import { DiceRollerContainerRuntimeFactory } from "./containerCode";
+import { taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
 import { IDiceRoller } from "./dataObject";
 import { renderDiceRoller } from "./view";
 
@@ -30,10 +30,10 @@ async function start(): Promise<void> {
     // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
     // function takes the ID of the document we're creating or loading, the container code to load into it, and a
     // flag to specify whether we're creating a new document or loading an existing one.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const container = await getTinyliciousContainer(documentId, TaskSelectionFactory, createNew);
 
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
-    const url = "/";
+    const url = taskManagerDiceId;
     const response = await container.request({ url });
 
     // Verify the response to make sure we got what we expected.
