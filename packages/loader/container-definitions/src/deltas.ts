@@ -14,7 +14,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { ICriticalContainerError } from "./error";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas
@@ -227,8 +226,3 @@ export type ReadOnlyInfo = {
     /** read-only with no delta stream connection */
     readonly storageOnly: boolean;
 };
-
-export interface IDeltaDelayInfo {
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
-    refreshDelayInfo(id: string): void;
-}

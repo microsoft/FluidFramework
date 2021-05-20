@@ -33,7 +33,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         return documentServiceFactory;
     }
 
-    private readonly protocolToDocumentFactoryMap: Map<string | null, IDocumentServiceFactory>;
+    private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
     constructor(documentServiceFactories: IDocumentServiceFactory[]) {
         this.protocolToDocumentFactoryMap = new Map();

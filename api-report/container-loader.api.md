@@ -382,12 +382,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
-// @public (undocumented)
-export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger, shouldRetry?: () => {
-    retry: boolean;
-    error: any | undefined;
-}): Promise<T>;
-
 // @public
 export function waitContainerToCatchUp(container: Container): Promise<boolean>;
 

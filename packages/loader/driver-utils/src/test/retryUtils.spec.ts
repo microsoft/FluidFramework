@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../runWithRetry";
-import { RetryableError } from "../network";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
@@ -20,11 +19,10 @@ async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T>
 }
 
 describe("Retry Util Tests", () => {
-    const deltaDelayInfo = {
-        refreshDelayInfo: () => {},
-        emitDelayInfo: () => {},
-    };
-    const CreateContainerError = (error: any) => new RetryableError("", "");
+    // TODO[andrei]: assert on these
+    const refreshDelayInfo = () => {};
+    const emitDelayInfo = () => {};
+
     const logger = new TelemetryNullLogger();
 
     it("Should succeed at first time", async () => {
@@ -35,7 +33,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         success = await runWithFastSetTimeout(
-            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+            async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
     });
@@ -54,7 +52,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         success = await runWithFastSetTimeout(
-            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+            async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
     });
@@ -78,7 +76,7 @@ describe("Retry Util Tests", () => {
             return true;
         };
         success = await runWithFastSetTimeout(
-            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+            async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
         assert.strictEqual(timerFinished, true, "Timer should be destroyed");
         assert.strictEqual(retryTimes, 0, "Should retry once");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
@@ -98,7 +96,7 @@ describe("Retry Util Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+                async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should retry");
         assert.strictEqual(success, true, "Should succeed as retry should be successful");
@@ -118,7 +116,7 @@ describe("Retry Util Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+                async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -138,7 +136,7 @@ describe("Retry Util Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
+                async () => runWithRetry(api, "test", refreshDelayInfo, emitDelayInfo, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -161,8 +159,8 @@ describe("Retry Util Tests", () => {
             success = await runWithFastSetTimeout(async ()=> runWithRetry(
                 api,
                 "test",
-                deltaDelayInfo,
-                CreateContainerError,
+                refreshDelayInfo,
+                emitDelayInfo,
                 logger,
                 () => {
                     return { retry: false, error: "disposed"};

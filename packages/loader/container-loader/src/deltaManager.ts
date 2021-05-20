@@ -12,7 +12,6 @@ import {
     IDeltaManager,
     IDeltaManagerEvents,
     IDeltaQueue,
-    IDeltaDelayInfo,
     ICriticalContainerError,
     ContainerErrorType,
     IThrottlingWarning,
@@ -144,8 +143,7 @@ export class DeltaManager
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    IEventProvider<IDeltaManagerInternalEvents>,
-    IDeltaDelayInfo
+    IEventProvider<IDeltaManagerInternalEvents>
 {
     public get active(): boolean { return this._active(); }
 

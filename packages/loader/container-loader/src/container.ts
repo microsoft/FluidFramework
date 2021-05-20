@@ -53,7 +53,7 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     canRetryOnError,
-    runWithRetry
+    runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -823,8 +823,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    this._deltaManager,
-                    CreateContainerError,
+                    (id: string) => this._deltaManager.refreshDelayInfo(id),
+                    (id: string, delayMs: number, error: any) =>
+                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
                     this.logger,
                 );
             }

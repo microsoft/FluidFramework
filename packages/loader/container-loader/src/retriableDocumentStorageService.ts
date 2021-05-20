@@ -46,8 +46,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.getSnapshotTree(version),
             "storage_getSnapshotTree",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -57,8 +58,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.readBlob(id),
             "storage_readBlob",
-            this.deltaManager,
-            CreateContainerError,
+            (retryId: string) => this.deltaManager.refreshDelayInfo(retryId),
+            (retryId: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(retryId, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -68,8 +70,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -79,8 +82,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.write(tree, parents, message, ref),
             "storage_write",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -90,8 +94,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
             "storage_uploadSummaryWithContext",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -101,8 +106,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.downloadSummary(handle),
             "storage_downloadSummary",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -112,8 +118,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return runWithRetry(
             async () => this.internalStorageService.createBlob(file),
             "storage_createBlob",
-            this.deltaManager,
-            CreateContainerError,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
             this.logger,
             () => this.checkStorageDisposed(),
         );

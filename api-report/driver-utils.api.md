@@ -8,8 +8,6 @@ import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import { IDeltaDelayInfo } from '@fluidframework/container-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
@@ -280,7 +278,7 @@ export class RetryableError<T> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
-export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, deltaDelayInfo: IDeltaDelayInfo, convertError: (error: any) => ICriticalContainerError, logger: ITelemetryLogger, shouldRetry?: () => {
+export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, refreshDelayInfo: (id: string) => void, emitDelayInfo: (id: string, retryInMs: number, err: any) => void, logger: ITelemetryLogger, shouldRetry?: () => {
     retry: boolean;
     error: any | undefined;
 }): Promise<T>;

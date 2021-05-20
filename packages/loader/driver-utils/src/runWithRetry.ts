@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
-import { ICriticalContainerError, IDeltaDelayInfo } from "@fluidframework/container-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
 
 const delay = async (timeMs: number): Promise<void> =>
@@ -15,8 +14,8 @@ const delay = async (timeMs: number): Promise<void> =>
 export async function runWithRetry<T>(
     api: () => Promise<T>,
     fetchCallName: string,
-    deltaDelayInfo: IDeltaDelayInfo,
-    convertError: (error: any) => ICriticalContainerError,
+    refreshDelayInfo: (id: string) => void,
+    emitDelayInfo: (id: string, retryInMs: number, err: any) => void,
     logger: ITelemetryLogger,
     shouldRetry?: () => { retry: boolean, error: any | undefined},
 ): Promise<T> {
@@ -31,7 +30,7 @@ export async function runWithRetry<T>(
         try {
             result = await api();
             if (id !== undefined) {
-                deltaDelayInfo.refreshDelayInfo(id);
+                refreshDelayInfo(id);
             }
             success = true;
         } catch (err) {
@@ -61,7 +60,7 @@ export async function runWithRetry<T>(
             if (id === undefined) {
                 id = uuid();
             }
-            deltaDelayInfo.emitDelayInfo(id, retryAfterMs, convertError(err));
+            emitDelayInfo(id, retryAfterMs, err);
             await delay(retryAfterMs);
         }
     } while (!success);
