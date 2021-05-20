@@ -78,6 +78,10 @@ export class ProtocolOpHandler {
                 `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
         }
 
+        // Update tracked sequence numbers
+        this.sequenceNumber = message.sequenceNumber;
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
+
         let immediateNoOp = false;
 
         switch (message.type) {
@@ -117,10 +121,6 @@ export class ProtocolOpHandler {
 
             default:
         }
-
-        // Update tracked sequence numbers
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
-        this.sequenceNumber = message.sequenceNumber;
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
