@@ -252,23 +252,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isSummarizing = true;
 
-        let gcData: IGarbageCollectionData;
         try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-            this.snapshotCore(serializer);
-
-            // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
-            // routes of handles serialized during snapshot.
-            gcData = {
-                gcNodes: { "/": serializer.getSerializedRoutes() },
-            };
-
-            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
+            return this.getGCDataCore();
         } finally {
+            assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
             this._isSummarizing = false;
         }
+    }
 
-        return gcData;
+    protected getGCDataCore(): IGarbageCollectionData {
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        this.snapshotCore(serializer);
+
+        // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+        // routes of handles serialized during snapshot.
+        return {
+            gcNodes: { "/": serializer.getSerializedRoutes() },
+        };
     }
 
     /**

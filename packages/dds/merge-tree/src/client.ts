@@ -292,6 +292,20 @@ export class Client {
             accum, start, end, splitRange);
     }
 
+    public getGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
+        this.mergeTree.walkAllSegments(
+            this.mergeTree.root,
+            (seg)=> {
+                if(seg.removedSeq !== undefined) {
+                    handleCollectingSerializer.stringify(
+                        seg.clone().toJSONObject(),
+                        handle);
+                }
+                return true;
+            },
+        );
+    }
+
     public getCollabWindow() {
         return this.mergeTree.getCollabWindow();
     }

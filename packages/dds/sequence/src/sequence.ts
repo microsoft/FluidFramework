@@ -25,9 +25,10 @@ import {
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -442,6 +443,22 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         };
 
         return tree;
+    }
+
+    protected getGCDataCore(): IGarbageCollectionData {
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        if (this.intervalMapKernel.size > 0) {
+            this.intervalMapKernel.serialize(serializer);
+        }
+
+        this.client.getGCData(this.handle, serializer);
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
     }
 
     /**
