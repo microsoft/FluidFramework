@@ -106,7 +106,7 @@ const getContainerId = () => {
 
 ### 3.b Initialize the service client
 
-`TinyliciousClient` must be initialized before being used. This ensures that there is a single instance of the client running in your application. Depending on your deploy target, you might initialize and use different client packages.
+`TinyliciousClient` needs to be initialized before use and can take an optional configuration object to changes settings such as default port. Depending on your deploy target, you might initialize and use different client packages.
 
 ```js
 // add below getContainerId
