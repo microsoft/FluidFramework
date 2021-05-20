@@ -22,7 +22,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants } from "../../../utils";
+import { Constants, handleResponse } from "../../../utils";
 
 async function getDeltas(
     mongoManager: MongoManager,
@@ -214,13 +214,7 @@ export function create(
                 from,
                 to);
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 
@@ -241,13 +235,7 @@ export function create(
                 tenantId,
                 getParam(request.params, "id"));
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 
@@ -272,13 +260,7 @@ export function create(
                 from,
                 to);
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 
