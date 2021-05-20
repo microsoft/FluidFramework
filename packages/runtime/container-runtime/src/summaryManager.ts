@@ -142,9 +142,12 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.refreshSummarizer();
             }
         });
-        this.orderedClients.on("electedChange", (client: ITrackedClient) => {
+        this.orderedClients.on("electedChange", (client: ITrackedClient | undefined) => {
             this.hasLoggedTelemetry = false;
-            this.lastSummaryAckSeqForClient = client.sequenceNumber; // set to join seq
+            if (client !== undefined) {
+                // set to join seq
+                this.lastSummaryAckSeqForClient = client.sequenceNumber;
+            }
             this.refreshSummarizer();
         });
         this.hasSummarizersInQuorum = this.orderedClients.getSummarizerCount() > 0;
