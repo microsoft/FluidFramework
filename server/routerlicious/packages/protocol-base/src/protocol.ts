@@ -71,8 +71,11 @@ export class ProtocolOpHandler {
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        // verify it's moving sequentially
         if (message.sequenceNumber !== this.sequenceNumber + 1) {
-            // verify it's moving sequentially
+            throw new Error(
+                `Protocol state is not moving sequentially. ` +
+                `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
         }
 
         let immediateNoOp = false;
