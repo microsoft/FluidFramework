@@ -226,6 +226,8 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
+    // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
+    // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const codeLoader = new API.CodeLoader({
         summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
         [

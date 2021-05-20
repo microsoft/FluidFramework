@@ -1198,7 +1198,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // LoadContext directly requires protocolHandler to be ready, and eventually calls
         // instantiateRuntime which will want to know existing state.
-        this._protocolHandler = await protocolHandlerP;
+        await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
@@ -1281,7 +1281,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._existing = false;
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
-        this._protocolHandler = await this.initializeProtocolState(
+        await this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1306,8 +1306,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
+        await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
         await this.createDetachedContext(attributes, snapshotTree);
 
@@ -1368,7 +1367,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService | undefined,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<ProtocolOpHandler> {
+    ) {
         let members: [string, ISequencedClient][] = [];
         let proposals: [number, ISequencedProposal, string[]][] = [];
         let values: [string, any][] = [];
@@ -1391,13 +1390,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        const protocolHandler = await this.initializeProtocolState(
+        await this.initializeProtocolState(
             attributes,
             members,
             proposals,
             values);
-
-        return protocolHandler;
     }
 
     private async initializeProtocolState(
@@ -1405,7 +1402,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): Promise<ProtocolOpHandler> {
+    ) {
         const protocol = new ProtocolOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1416,6 +1413,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
+        this._protocolHandler = protocol;
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
         protocol.quorum.on("error", (error) => {
@@ -1431,6 +1429,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
+        const addProposalHandlers = () => {
+            protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
+                if (proposal.key === "code" || proposal.key === "code2") {
+                    this.emit("codeDetailsProposed", proposal.value, proposal);
+                }
+            });
+
+            protocol.quorum.on(
+                "approveProposal",
+                (sequenceNumber, key, value) => {
+                    debug(`approved ${key}`);
+                    if (key === "code" || key === "code2") {
+                        debug(`codeProposal ${JSON.stringify(value)}`);
+                        if (!isFluidCodeDetails(value)) {
+                            this.logger.sendErrorEvent({
+                                    eventName: "CodeProposalNotIFluidCodeDetails",
+                            });
+                        }
+                        this.processCodeProposal().catch((error) => {
+                            this.close(CreateContainerError(error));
+                            throw error;
+                        });
+                    }
+                });
+        };
+
         // back compat for old containers where the code details
         // we're delay added. All new creates should be detached
         // and start with an initial code details.
@@ -1438,45 +1462,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendTelemetryEvent({
                 eventName:"NoCodeProposal",
             });
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            new Promise<void>((resolve)=>{
+            await new Promise<void>((resolve)=>{
                 const waitForCode = ()=>{
                     if(getCodeProposal(protocol.quorum) !== undefined) {
                         resolve();
                     }
                     protocol.quorum.off("approveProposal", waitForCode);
                     this.off("closed", resolve);
+                    addProposalHandlers();
                 };
                 protocol.quorum.on("approveProposal", waitForCode);
                 this.once("closed", resolve);
+                // Resume op processing so that the code proposal can appear.
+                this.resume();
             });
+        } else {
+            addProposalHandlers();
         }
-
-        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
-            if (proposal.key === "code" || proposal.key === "code2") {
-                this.emit("codeDetailsProposed", proposal.value, proposal);
-            }
-        });
-
-        protocol.quorum.on(
-            "approveProposal",
-            (sequenceNumber, key, value) => {
-                debug(`approved ${key}`);
-                if (key === "code" || key === "code2") {
-                    debug(`codeProposal ${JSON.stringify(value)}`);
-                    if (!isFluidCodeDetails(value)) {
-                        this.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
-                        });
-                    }
-                    this.processCodeProposal().catch((error) => {
-                        this.close(CreateContainerError(error));
-                        throw error;
-                    });
-                }
-            });
-
-        return protocol;
     }
 
     private captureProtocolSummary(): ISummaryTree {
