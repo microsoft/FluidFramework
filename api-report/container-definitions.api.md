@@ -216,6 +216,14 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
+// @public (undocumented)
+export interface IDeltaDelayInfo {
+    // (undocumented)
+    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    // (undocumented)
+    refreshDelayInfo(id: string): void;
+}
+
 // @public
 export interface IDeltaHandlerStrategy {
     process: (message: ISequencedDocumentMessage) => void;

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { runWithRetry } from "../runWithRetry";
+import { RetryableError } from "../network";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
@@ -23,7 +24,7 @@ describe("Retry Util Tests", () => {
         refreshDelayInfo: () => {},
         emitDelayInfo: () => {},
     };
-    const CreateContainerError = () => {};
+    const CreateContainerError = (error: any) => new RetryableError("", "");
     const logger = new TelemetryNullLogger();
 
     it("Should succeed at first time", async () => {
