@@ -4,6 +4,7 @@
  */
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { IContainer } from "@fluidframework/container-definitions";
 
 import { taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
 import { IDiceRoller } from "./dataObject";
@@ -24,6 +25,21 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+async function requestDiceRoller(container: IContainer, id: string): Promise<IDiceRoller> {
+    const response = await container.request({ url: id });
+
+    // Verify the response to make sure we got what we expected.
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve data object at URL: "${id}"`);
+    } else if (response.value === undefined) {
+        throw new Error(`Empty response from URL: "${id}"`);
+    }
+
+    // In this app, we know our container code provides a default data object that is an IDiceRoller.
+    const diceRoller: IDiceRoller = response.value;
+    return diceRoller;
+}
+
 async function start(): Promise<void> {
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
@@ -32,23 +48,12 @@ async function start(): Promise<void> {
     // flag to specify whether we're creating a new document or loading an existing one.
     const container = await getTinyliciousContainer(documentId, TaskSelectionFactory, createNew);
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
-    const url = taskManagerDiceId;
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
-
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const diceRoller: IDiceRoller = response.value;
+    const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
 
     // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(diceRoller, div);
+    renderDiceRoller(taskManagerDiceRoller, div);
 }
 
 start().catch((error) => console.error(error));
