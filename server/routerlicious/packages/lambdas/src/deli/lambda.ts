@@ -101,7 +101,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private activityIdleTimer: any;
     private noopEvent: any;
 
-    // Op timer properties
+    // Op event properties
     private opIdleTimer: any | undefined;
     private opMaxTimeTimer: any | undefined;
     private messagesSinceLastOpEvent: number = 0;
