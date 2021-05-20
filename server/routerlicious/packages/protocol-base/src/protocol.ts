@@ -24,10 +24,7 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-interface ICachedScribeProtocolState extends Partial<IScribeProtocolState> {
-    sequenceNumber: number;
-    minimumSequenceNumber: number;
-}
+type CachedScribeProtocolState = Partial<Pick<IScribeProtocolState, "members" | "proposals" | "values">>;
 
 export function isSystemMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
@@ -59,7 +56,7 @@ export class ProtocolOpHandler {
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private cachedProtocolState: ICachedScribeProtocolState;
+    private cachedProtocolState: CachedScribeProtocolState;
 
     constructor(
         public minimumSequenceNumber: number,
@@ -78,10 +75,7 @@ export class ProtocolOpHandler {
             values,
             sendProposal,
             sendReject);
-        this.cachedProtocolState = {
-            sequenceNumber,
-            minimumSequenceNumber,
-        };
+        this.cachedProtocolState = {};
     }
 
     public close() {
@@ -148,9 +142,6 @@ export class ProtocolOpHandler {
         // Update tracked sequence numbers
         this.minimumSequenceNumber = message.minimumSequenceNumber;
         this.sequenceNumber = message.sequenceNumber;
-
-        this.cachedProtocolState.minimumSequenceNumber = this.minimumSequenceNumber;
-        this.cachedProtocolState.sequenceNumber = this.sequenceNumber;
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
