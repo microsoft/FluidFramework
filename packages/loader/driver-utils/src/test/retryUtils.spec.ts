@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { runWithRetry } from "../utils";
+import { runWithRetry } from "../runWithRetry";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
@@ -19,10 +19,11 @@ async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T>
 }
 
 describe("Retry Util Tests", () => {
-    const deltaManager = {
+    const deltaDelayInfo = {
         refreshDelayInfo: () => {},
         emitDelayInfo: () => {},
     };
+    const CreateContainerError = () => {};
     const logger = new TelemetryNullLogger();
 
     it("Should succeed at first time", async () => {
@@ -32,9 +33,10 @@ describe("Retry Util Tests", () => {
             retryTimes -= 1;
             return true;
         };
-        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+        success = await runWithFastSetTimeout(
+            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
-        assert.strictEqual(success, true, "Retry shoul succeed ultimately");
+        assert.strictEqual(success, true, "Retry should succeed ultimately");
     });
 
     it("Check that it retries infinitely", async () => {
@@ -50,9 +52,10 @@ describe("Retry Util Tests", () => {
             }
             return true;
         };
-        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+        success = await runWithFastSetTimeout(
+            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
-        assert.strictEqual(success, true, "Retry shoul succeed ultimately");
+        assert.strictEqual(success, true, "Retry should succeed ultimately");
     });
 
     it("Check that it retries after retry seconds", async () => {
@@ -73,10 +76,11 @@ describe("Retry Util Tests", () => {
             }
             return true;
         };
-        success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+        success = await runWithFastSetTimeout(
+            async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
         assert.strictEqual(timerFinished, true, "Timer should be destroyed");
         assert.strictEqual(retryTimes, 0, "Should retry once");
-        assert.strictEqual(success, true, "Retry shoul succeed ultimately");
+        assert.strictEqual(success, true, "Retry should succeed ultimately");
     });
 
     it("If error is just a string, should retry as canRetry is not false", async () => {
@@ -92,7 +96,8 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+            success = await runWithFastSetTimeout(
+                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should retry");
         assert.strictEqual(success, true, "Should succeed as retry should be successful");
@@ -111,7 +116,8 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+            success = await runWithFastSetTimeout(
+                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -130,7 +136,8 @@ describe("Retry Util Tests", () => {
             return true;
         };
         try {
-            success = await runWithFastSetTimeout(async ()=> runWithRetry(api, "test", deltaManager, logger));
+            success = await runWithFastSetTimeout(
+                async ()=> runWithRetry(api, "test", deltaDelayInfo, CreateContainerError, logger));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -153,7 +160,8 @@ describe("Retry Util Tests", () => {
             success = await runWithFastSetTimeout(async ()=> runWithRetry(
                 api,
                 "test",
-                deltaManager,
+                deltaDelayInfo,
+                CreateContainerError,
                 logger,
                 () => {
                     return { retry: false, error: "disposed"};

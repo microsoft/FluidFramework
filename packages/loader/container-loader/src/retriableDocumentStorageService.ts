@@ -18,8 +18,8 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { runWithRetry } from "@fluidframework/driver-utils";
 import { DeltaManager } from "./deltaManager";
-import { runWithRetry } from "./utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     private _disposed = false;
@@ -47,6 +47,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.getSnapshotTree(version),
             "storage_getSnapshotTree",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -57,6 +58,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.readBlob(id),
             "storage_readBlob",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -67,6 +69,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -77,6 +80,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.write(tree, parents, message, ref),
             "storage_write",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -87,6 +91,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
             "storage_uploadSummaryWithContext",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -97,6 +102,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.downloadSummary(handle),
             "storage_downloadSummary",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
@@ -107,6 +113,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             async () => this.internalStorageService.createBlob(file),
             "storage_createBlob",
             this.deltaManager,
+            CreateContainerError,
             this.logger,
             () => this.checkStorageDisposed(),
         );
