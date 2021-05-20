@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.104.1
+
+* fix: Ignore empty traits when constructing Snapshots from ChangeNodes
+  * Associated pull request: [30723](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30723)
+  * Commit: [69018274a1cb6e9f2464771cb9568d59a8ae3cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/69018274a1cb6e9f2464771cb9568d59a8ae3cdd)
+
 ## 0.104.0
 
 * remove: BREAKING CHANGE: remove most expired deprecated code

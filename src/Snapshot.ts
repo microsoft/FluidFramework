@@ -107,10 +107,12 @@ export class Snapshot {
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const element = node.traits[key];
-					traits.set(
-						key as TraitLabel,
-						element.map((n) => insertNodeRecursive(n, newSnapshotNodes))
-					);
+					if (element.length > 0) {
+						traits.set(
+							key as TraitLabel,
+							element.map((n) => insertNodeRecursive(n, newSnapshotNodes))
+						);
+					}
 				}
 			}
 			const snapshotNode: SnapshotNode = { identifier, definition, traits };

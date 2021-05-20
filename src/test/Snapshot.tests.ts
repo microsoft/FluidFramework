@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { NodeId, TraitLabel } from '../Identifiers';
+import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { Side, Snapshot } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { detachRange, insertIntoTrait, StablePlace, StableRange, validateStableRange } from '../default-edits';
@@ -15,9 +15,29 @@ import {
 	right,
 	leftTraitLocation,
 	makeEmptyNode,
+	makeTestNode,
 } from './utilities/TestUtilities';
 
 describe('Snapshot', () => {
+	describe('creation from a ChangeNode', () => {
+		it('ignores empty traits', () => {
+			const nodeId = '46711f26-5a27-4a35-9f04-0602dd853b43' as NodeId;
+			const testNode = makeTestNode();
+			const node: ChangeNode = {
+				traits: {
+					trait: [testNode],
+					emptyTrait: [],
+				},
+				definition: '9f9f7fd1-780b-4d78-bca7-2342df4523f2' as Definition,
+				identifier: nodeId,
+			};
+
+			const snapshot = Snapshot.fromTree(node);
+			expect(snapshot.getChangeNode(nodeId).traits.trait[0].identifier).to.equal(testNode.identifier);
+			expect(snapshot.getChangeNode(nodeId).traits.emptyTrait).to.equal(undefined);
+		});
+	});
+
 	describe('StableRange validation', () => {
 		it('is malformed when anchors are malformed', () => {
 			expect(
