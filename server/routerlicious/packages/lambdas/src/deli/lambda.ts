@@ -79,6 +79,12 @@ interface ITicketedMessageOutput {
     instruction: InstructionType;
 }
 
+export enum OpEventType {
+    Idle,
+    MaxOps,
+    MaxTime,
+}
+
 export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
@@ -260,7 +266,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.updateOpIdleTimer();
 
             if (this.messagesSinceLastOpEvent > this.serviceConfiguration.deli.opEvent.maxOps) {
-                this.emitOpEvent("maxOps");
+                this.emitOpEvent(OpEventType.MaxOps);
             }
         }
     }
@@ -866,7 +872,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearOpIdleTimer();
 
         this.opIdleTimer = setTimeout(() => {
-            this.emitOpEvent("idle");
+            this.emitOpEvent(OpEventType.Idle);
         }, this.serviceConfiguration.deli.opEvent.idleTime);
     }
 
@@ -881,7 +887,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearOpMaxTimeTimer();
 
         this.opMaxTimeTimer = setTimeout(() => {
-            this.emitOpEvent("maxTime");
+            this.emitOpEvent(OpEventType.MaxTime);
         }, this.serviceConfiguration.deli.opEvent.maxTime);
     }
 
@@ -892,15 +898,15 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
-    private emitOpEvent(type: string) {
+    private emitOpEvent(type: OpEventType) {
         if (this.messagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
 
-        this.messagesSinceLastOpEvent = 0;
-
         this.emit("opEvent", type, this.sequenceNumber, this.messagesSinceLastOpEvent);
+
+        this.messagesSinceLastOpEvent = 0;
 
         this.updateOpMaxTimeTimer();
     }
