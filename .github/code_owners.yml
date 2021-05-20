@@ -92,12 +92,6 @@ experimental/dds/tree/**:
 - CraigMacomber
 - Abe27342
 
-# docs
-docs/**:
-- tylerbutler
-"**/README*.md":
-- tylerbutler
-
 # tools
 tools/**:
 - curtisman
