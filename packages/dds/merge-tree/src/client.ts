@@ -296,7 +296,7 @@ export class Client {
         this.mergeTree.walkAllSegments(
             this.mergeTree.root,
             (seg)=> {
-                if(seg.removedSeq !== undefined) {
+                if(seg.removedSeq === undefined) {
                     handleCollectingSerializer.stringify(
                         seg.clone().toJSONObject(),
                         handle);
