@@ -4,7 +4,7 @@
  */
 
 /**
- * Libraries related to whiteboard collaboration using FluidFramework
+ * Fluid DDS storing a tree.
  *
  * @packageDocumentation
  */
