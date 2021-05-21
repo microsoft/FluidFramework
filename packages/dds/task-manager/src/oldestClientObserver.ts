@@ -29,8 +29,9 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     getQuorum(): IQuorum;
     // Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
     // has information about this [container | data store]", which in the case of detached data store may disagree
-    // with whether we're the oldest client on the connected container.  So in the data store case, I can only
-    // safely use this to assume I have the rights to tasks performed against this data store, and not more broadly.
+    // with whether we're the oldest client on the connected container.  So in the data store case, it's only
+    // safe use this as an indicator about rights to tasks performed against this specific data store, and not
+    // more broadly.
     attachState: AttachState;
     connected: boolean;
     clientId: string | undefined;
@@ -45,10 +46,23 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
  * @remarks
  * ### Creation
  *
- * The `OldestClientObserver` constructor takes an `IContainerRuntime`:
+ * The `OldestClientObserver` constructor takes an `IOldestClientObservable`.  This is most easily satisfied with
+ * either an `IContainerRuntime` or an `IFluidDataStoreRuntime`:
  *
  * ```typescript
- * const oldestClientObserver = new OldestClientObserver(containerRuntime);
+ * // E.g. from within a BaseContainerRuntimeFactory:
+ * protected async containerHasInitialized(runtime: IContainerRuntime) {
+ *     const oldestClientObserver = new OldestClientObserver(runtime);
+ *     // ...
+ * }
+ * ```
+ *
+ * ```typescript
+ * // From within a DataObject
+ * protected async hasInitialized() {
+ *     const oldestClientObserver = new OldestClientObserver(this.runtime);
+ *     // ...
+ * }
  * ```
  *
  * ### Usage
