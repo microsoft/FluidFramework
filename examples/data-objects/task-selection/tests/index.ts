@@ -69,8 +69,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     renderDiceRoller(oldestClientDiceRoller, oldestClientViewDiv);
     oldestClientDiv.append(oldestClientHeaderDiv, oldestClientViewDiv);
 
-    const div = document.getElementById("content") as HTMLDivElement;
-    div.append(taskManagerDiv, divider, oldestClientDiv);
+    element.append(taskManagerDiv, divider, oldestClientDiv);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation
