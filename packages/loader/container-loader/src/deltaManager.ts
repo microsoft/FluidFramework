@@ -51,6 +51,7 @@ import {
     logNetworkFailure,
     waitForConnectedState,
     NonRetryableError,
+    DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
     CreateContainerError,
@@ -623,7 +624,7 @@ export class DeltaManager
                     connection = await docService.connectToDeltaStream(this.client);
                 } catch (origError) {
                     if (typeof origError === "object" && origError !== null &&
-                        origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden) {
+                        origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
                         connection = new NoDeltaStream();
                         requestedMode = "read";
                         break;

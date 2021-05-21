@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient} from "@fluidframework/protocol-definitions";
-import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
+import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -26,10 +26,6 @@ export class DocumentService implements api.IDocumentService {
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
-        private readonly disableCache: boolean,
-        private readonly historianApi: boolean,
-        private readonly directCredentials: ICredentials | undefined,
-        private readonly gitCache: IGitCache | undefined,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
@@ -57,33 +53,13 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             this.gitUrl,
-            this.directCredentials,
         );
         const historian = new Historian(
             this.gitUrl,
-            this.historianApi,
-            this.disableCache,
+            true,
+            false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
-
-        // Insert cached seed data
-        if (this.gitCache !== undefined) {
-            for (const ref of Object.keys(this.gitCache.refs)) {
-                gitManager.addRef(ref, this.gitCache.refs[ref]);
-            }
-
-            for (const commit of this.gitCache.commits) {
-                gitManager.addCommit(commit);
-            }
-
-            for (const tree of this.gitCache.trees) {
-                gitManager.addTree(tree);
-            }
-
-            for (const blob of this.gitCache.blobs) {
-                gitManager.addBlob(blob);
-            }
-        }
 
         this.documentStorageService = new DocumentStorageService(this.documentId, gitManager, this.logger);
         return this.documentStorageService;

@@ -15,6 +15,23 @@ export interface IDeliServerConfiguration {
 
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
+
+    // Controls how deli should track of certain op events
+    opEvent: IDeliOpEventServerConfiguration;
+}
+
+export interface IDeliOpEventServerConfiguration {
+    // Enables emitting events based on the heuristics
+    enable: boolean;
+
+    // Causes an event to fire after deli doesn't process any ops after this amount of time
+    idleTime: number | undefined;
+
+    // Causes an event to fire based on the time since the last emit
+    maxTime: number | undefined;
+
+    // Causes an event to fire based on the number of ops since the last emit
+    maxOps: number | undefined;
 }
 
 // Scribe lambda configuration
@@ -94,6 +111,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
+        opEvent: {
+            enable: false,
+            idleTime: 15 * 1000,
+            maxTime: 5 * 60 * 1000,
+            maxOps: 1500,
+        },
     },
     scribe: {
         generateServiceSummary: true,
