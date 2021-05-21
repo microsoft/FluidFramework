@@ -186,6 +186,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
+        let sequencedMessageCount = 0;
+
         const boxcar = extractBoxcar(rawMessage);
 
         for (const message of boxcar.contents) {
@@ -226,7 +228,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
-            this.messagesSinceLastOpEvent++;
+            sequencedMessageCount++;
         }
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
@@ -262,12 +264,17 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearActivityIdleTimer();
         this.setActivityIdleTimer();
 
-        if (this.serviceConfiguration.deli.opEvent.enable) {
+        // Update the op event idle & max ops counter if ops were just sequenced
+        if (this.serviceConfiguration.deli.opEvent.enable && sequencedMessageCount > 0) {
             this.updateOpIdleTimer();
 
             const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
-            if (maxOps !== undefined && this.messagesSinceLastOpEvent > maxOps) {
-                this.emitOpEvent(OpEventType.MaxOps);
+            if (maxOps !== undefined) {
+                this.messagesSinceLastOpEvent += sequencedMessageCount;
+
+                if (this.messagesSinceLastOpEvent > maxOps) {
+                    this.emitOpEvent(OpEventType.MaxOps);
+                }
             }
         }
     }
@@ -877,7 +884,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     /**
      * Reset the op event idle timer
-     * Called after a kafka message is processed
+     * Called after a message is sequenced
      */
     private updateOpIdleTimer() {
         const idleTime = this.serviceConfiguration.deli.opEvent.idleTime;
