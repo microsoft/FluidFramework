@@ -50,6 +50,7 @@
     "@fluidframework/server-services": "^0.1025.0",
     "@fluidframework/server-services-client": "^0.1025.0",
     "@fluidframework/server-services-core": "^0.1025.0",
+    "@fluidframework/server-services-shared": "^0.1025.0",
     "@fluidframework/server-services-utils": "^0.1025.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",

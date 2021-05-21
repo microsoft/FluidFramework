@@ -185,7 +185,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    emitDelayInfo(id: string, delaySeconds: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -381,12 +381,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     // (undocumented)
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
-
-// @public (undocumented)
-export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger, shouldRetry?: () => {
-    retry: boolean;
-    error: any | undefined;
-}): Promise<T>;
 
 // @public
 export function waitContainerToCatchUp(container: Container): Promise<boolean>;

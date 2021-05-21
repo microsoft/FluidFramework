@@ -17,21 +17,26 @@ describe("Routerlicious", () => {
             let testContext: testUtils.TestContext;
 
             function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpointParams {
+                const queuedMessage = {
+                    offset: logOffset,
+                    partition: 1,
+                    topic: "topic",
+                    value: "",
+                };
+
                 return {
-                    clients: null,
-                    durableSequenceNumber: 0,
-                    epoch: 0,
-                    logOffset,
-                    sequenceNumber,
-                    term: 1,
-                    lastSentMSN: 0,
-                    nackMessages: undefined,
-                    queuedMessage: {
-                        offset: logOffset,
-                        partition: 1,
-                        topic: "topic",
-                        value: "",
+                    deliState: {
+                        clients: undefined,
+                        durableSequenceNumber: 0,
+                        epoch: 0,
+                        logOffset,
+                        sequenceNumber,
+                        term: 1,
+                        lastSentMSN: 0,
+                        nackMessages: undefined,
                     },
+                    deliCheckpointMessage: queuedMessage,
+                    kafkaCheckpointMessage: queuedMessage,
                 };
             }
 

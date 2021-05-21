@@ -55,7 +55,7 @@ export async function getFileLink(
     const valueGenerator = async function() {
         let result: string | undefined;
         let success = false;
-        let retryAfter = 1;
+        let retryAfterMs = 1000;
         do {
             try {
                 result = await getFileLinkCore(getToken, odspUrlParts, identityType, logger);
@@ -68,8 +68,8 @@ export async function getFileLink(
                 }
                 // If the error is throttling error, then wait for the specified time before retrying.
                 // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-                retryAfter = getRetryDelayFromError(err) ?? Math.min(retryAfter * 2, 8000);
-                await delay(retryAfter);
+                retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
+                await delay(retryAfterMs);
             }
         } while (!success);
         return result;
