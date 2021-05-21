@@ -187,8 +187,6 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        // Push first 3 ops so as to get the code proposal approved.
-        deltaConnection.initialMessages.push(...deltaStorageService.ops.slice(0, 3));
         this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
         this.container = await loadContainer(
             documentServiceFactory,
@@ -209,7 +207,7 @@ class Document {
 
         this.replayer.currentReplayedOp = this.from;
 
-        this.snapshotFileName = `${this.from === 3 ? 0 : this.from}`;
+        this.snapshotFileName = `${this.fromOp}`;
 
         this.container.on("op", (message: ISequencedDocumentMessage) => {
             this.documentSeqNumber = message.sequenceNumber;
@@ -508,20 +506,16 @@ export class ReplayTool {
         do {
             nextSnapPoint = originalSummaries.shift() ?? this.args.from;
         } while (nextSnapPoint < this.args.from);
-        // For first turn, we send 3 ops in initial messages for code proposal to be approved.
-        // So we need to subtract 3 the first time for determining first snap point.
-        let firstTurn = true;
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
                 if (this.args.snapFreq !== undefined) {
-                    nextSnapPoint = currentOp + this.args.snapFreq - (firstTurn ? 3 : 0);
+                    nextSnapPoint = currentOp + this.args.snapFreq;
                 } else {
                     nextSnapPoint = originalSummaries.shift() ?? this.args.to;
                 }
             }
-            firstTurn = false;
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
             if (this.documentsFromStorageSnapshots.length > 0) {
