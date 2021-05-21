@@ -47,6 +47,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
+
     constructor(
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
@@ -58,7 +59,6 @@ export class ProtocolOpHandler {
         sendReject: (sequenceNumber: number) => void) {
         this.term = term ?? 1;
         this.quorum = new Quorum(
-            minimumSequenceNumber,
             members,
             proposals,
             values,
@@ -71,6 +71,17 @@ export class ProtocolOpHandler {
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        // verify it's moving sequentially
+        if (message.sequenceNumber !== this.sequenceNumber + 1) {
+            throw new Error(
+                `Protocol state is not moving sequentially. ` +
+                `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
+        }
+
+        // Update tracked sequence numbers
+        this.sequenceNumber = message.sequenceNumber;
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
+
         let immediateNoOp = false;
 
         switch (message.type) {
@@ -82,7 +93,6 @@ export class ProtocolOpHandler {
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
                 this.quorum.addMember(join.clientId, member);
-
                 break;
 
             case MessageType.ClientLeave:
@@ -112,10 +122,6 @@ export class ProtocolOpHandler {
             default:
         }
 
-        // Update tracked sequence numbers
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
-        this.sequenceNumber = message.sequenceNumber;
-
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
         immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
@@ -123,15 +129,16 @@ export class ProtocolOpHandler {
         return { immediateNoOp };
     }
 
+    /**
+     * Gets the scribe protocol state
+     */
     public getProtocolState(): IScribeProtocolState {
-        const quorumSnapshot = this.quorum.snapshot();
-
+        // return a new object every time
+        // this ensures future state changes will not affect outside callers
         return {
-            members: quorumSnapshot.members,
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            proposals: quorumSnapshot.proposals,
             sequenceNumber: this.sequenceNumber,
-            values: quorumSnapshot.values,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            ...this.quorum.snapshot(),
         };
     }
 }

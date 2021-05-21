@@ -83,14 +83,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
 
-    // Observing non-deterministic timeouts in CI only.
-    // Temporarily disabling pending investigation:
-    //
-    // https://github.com/microsoft/FluidFramework/issues/6006
-    before(function() {
-        this.skip();
-    });
-
     beforeEach(async () => {
         provider = getTestObjectProvider();
         loader = provider.makeTestLoader(testContainerConfig);

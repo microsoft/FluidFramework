@@ -75,7 +75,7 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
 ): Promise<ISnapshotCacheValue> {
-    let odspSnapshot = await fetchLatestSnapshotCore(
+    return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
         snapshotOptions,
@@ -84,6 +84,7 @@ export async function fetchSnapshotWithRedeem(
         putInCache,
     ).catch(async (error) => {
         if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+            // Execute the redeem fallback
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
@@ -91,7 +92,7 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-            odspSnapshot = await fetchLatestSnapshotCore(
+            return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
                 snapshotOptions,
@@ -99,8 +100,9 @@ export async function fetchSnapshotWithRedeem(
                 snapshotDownloader,
                 putInCache,
             );
+        } else {
+            throw error;
         }
-        throw error;
     }).catch(async (error) => {
         // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't
         // have permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching
@@ -111,7 +113,6 @@ export async function fetchSnapshotWithRedeem(
         }
         throw error;
     });
-    return odspSnapshot;
 }
 
 async function redeemSharingLink(
@@ -126,7 +127,7 @@ async function redeemSharingLink(
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
                 assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
-                const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+                const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);

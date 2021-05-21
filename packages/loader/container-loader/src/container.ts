@@ -53,6 +53,7 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     canRetryOnError,
+    runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -100,7 +101,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -647,8 +648,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
 
+        const isDomAvailable = typeof document === "object" &&
+            document !== null &&
+            typeof document.addEventListener === "function" &&
+            document.addEventListener !== null;
         // keep track of last time page was visible for telemetry
-        if (typeof document === "object" && document !== null) {
+        if (isDomAvailable) {
             this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
@@ -822,7 +827,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    this._deltaManager,
+                    (id: string) => this._deltaManager.refreshDelayInfo(id),
+                    (id: string, delayMs: number, error: any) =>
+                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
                     this.logger,
                 );
             }
@@ -1430,26 +1437,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("removeMember", (clientId) => {
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
-
-        // back compat for old containers where the code details
-        // we're delay added. All new creates should be detached
-        // and start with an initial code details.
-        if(getCodeProposal(protocol.quorum) === undefined) {
-            this.logger.sendTelemetryEvent({
-                eventName:"NoCodeProposal",
-            });
-            await new Promise<void>((resolve)=>{
-                const waitForCode = ()=>{
-                    if(getCodeProposal(protocol.quorum) !== undefined) {
-                        resolve();
-                    }
-                    protocol.quorum.off("approveProposal", waitForCode);
-                    this.off("closed", resolve);
-                };
-                protocol.quorum.on("approveProposal", waitForCode);
-                this.once("closed", resolve);
-            });
-        }
 
         protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {

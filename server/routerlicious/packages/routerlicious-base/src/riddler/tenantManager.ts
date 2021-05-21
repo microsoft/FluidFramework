@@ -12,6 +12,7 @@ import {
     MongoManager,
     ISecretManager,
 } from "@fluidframework/server-services-core";
+import { NetworkError } from "@fluidframework/server-services-client";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -60,7 +61,10 @@ export class TenantManager {
         return new Promise<void>((resolve, reject) => {
             jwt.verify(token, tenantKey, (error) => {
                 if (error) {
-                    reject(error);
+                    // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
+                    reject(error instanceof jwt.TokenExpiredError
+                        ? new NetworkError(401, "Token expired.")
+                        : new NetworkError(403, "Invalid token."));
                 } else {
                     resolve();
                 }
