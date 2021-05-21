@@ -12,7 +12,7 @@ import {
 } from "@fluid-experimental/fluid-static";
 
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { RouterliciousService } from "@fluid-experimental/get-container";
+import { RouterliciousService, IRouterliciousConfig } from "@fluid-experimental/get-container";
 
 import {
     FRSContainerConfig,
@@ -113,7 +113,7 @@ export class FRSClientInstance {
 export class FRSClient {
     private static globalInstance: FRSClientInstance | undefined;
 
-    static init(serviceConnectionConfig: RouterliciousService) {
+    static init(serviceConnectionConfig: IRouterliciousConfig) {
         if (FRSClient.globalInstance) {
             console.log(
                 `FRSClient has already been initialized. Using existing instance of
@@ -121,7 +121,7 @@ export class FRSClient {
             );
         }
         FRSClient.globalInstance = new FRSClientInstance(
-            serviceConnectionConfig,
+            new RouterliciousService(serviceConnectionConfig),
         );
     }
 
