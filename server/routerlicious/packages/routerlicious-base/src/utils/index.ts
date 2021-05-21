@@ -7,4 +7,5 @@ export * from "./constants";
 export * from "./documentRouter";
 export * from "./middleware";
 export * from "./params";
+export * from "./rest";
 export * from "./runner";
