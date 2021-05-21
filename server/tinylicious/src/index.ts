@@ -8,7 +8,7 @@ import * as path from "path";
 import http from "http";
 import Axios from "axios";
 import winston from "winston";
-import { runService } from "@fluidframework/server-routerlicious-base";
+import { runService } from "@fluidframework/server-services-shared";
 import { configureLogging } from "@fluidframework/server-services-utils";
 import { TinyliciousResourcesFactory } from "./resourcesFactory";
 import { TinyliciousRunnerFactory } from "./runnerFactory";
