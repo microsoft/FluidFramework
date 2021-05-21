@@ -516,6 +516,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         this.durableSequenceNumber = dsn;
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
+                            // since the dsn updated, ops were reliably stored
+                            // we can safely restart the MaxTime timer
                             this.updateOpMaxTimeTimer();
                         }
                     }
@@ -872,6 +874,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Reset the op event idle timer
+     * Called after a kafka message is processed
+     */
     private updateOpIdleTimer() {
         this.clearOpIdleTimer();
 
@@ -887,6 +893,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Resets the op event MaxTime timer
+     * Called after an opEvent is emitted or when the dsn is updated
+     */
     private updateOpMaxTimeTimer() {
         this.clearOpMaxTimeTimer();
 
@@ -902,6 +912,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Emits an opEvent based for the provided type
+     * Also resets the MaxTime timer
+     */
     private emitOpEvent(type: OpEventType) {
         if (this.messagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
