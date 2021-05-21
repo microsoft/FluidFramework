@@ -68,11 +68,9 @@
     "assert": "^2.0.0",
     "axios": "^0.21.1",
     "debug": "^4.1.1",
-    "isomorphic-ws": "^4.0.1",
     "json-stringify-safe": "5.0.1",
     "socket.io-client": "^2.1.1",
-    "uuid": "^8.3.1",
-    "ws": "^6.1.2"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",
@@ -85,7 +83,6 @@
     "@types/nock": "^9.3.0",
     "@types/socket.io-client": "^1.4.32",
     "@types/uuid": "^8.3.0",
-    "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "axios-mock-adapter": "1.19.0",
