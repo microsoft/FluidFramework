@@ -290,6 +290,20 @@ describe('Transaction', () => {
 			});
 			expect(transaction.status).equals(EditStatus.Malformed);
 		});
+		it('can build a node with an explicit empty trait', () => {
+			// Forest should strip off the empty trait
+			const nodeWithEmpty = makeEmptyNode();
+			const traits = new Map<TraitLabel, NodeId[]>();
+			const emptyTrait: NodeId[] = [];
+			traits.set(leftTraitLabel, emptyTrait);
+
+			const transaction = new Transaction(initialSnapshotWithValidation);
+			const detachedSequenceId = 0 as DetachedSequenceId;
+			transaction.applyChange(Change.build([nodeWithEmpty], detachedSequenceId));
+			expect(transaction.status).equals(EditStatus.Applied);
+			const snapshotNodeWithEmpty = transaction.view.getSnapshotNode(nodeWithEmpty.identifier);
+			expect(snapshotNodeWithEmpty.traits.size).to.equal(0);
+		});
 	});
 
 	describe('Detach', () => {

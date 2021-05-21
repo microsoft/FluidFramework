@@ -117,6 +117,10 @@ export class Snapshot {
 			}
 			const snapshotNode: SnapshotNode = { identifier, definition, traits };
 			copyPropertyIfDefined(node, snapshotNode, 'payload');
+			assert(
+				!newSnapshotNodes.has(identifier),
+				`duplicate node in tree for snapshot: { identifier: ${identifier}, definition: ${definition}`
+			);
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
