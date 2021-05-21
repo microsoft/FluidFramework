@@ -35,7 +35,7 @@ async function requestDiceRoller(container: IContainer, id: string): Promise<IDi
         throw new Error(`Empty response from URL: "${id}"`);
     }
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
+    // In this app, we know our container code will respond to these IDs with IDiceRoller data objects.
     const diceRoller: IDiceRoller = response.value;
     return diceRoller;
 }
@@ -48,10 +48,11 @@ async function start(): Promise<void> {
     // flag to specify whether we're creating a new document or loading an existing one.
     const container = await getTinyliciousContainer(documentId, TaskSelectionFactory, createNew);
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
+    // We'll use a separate dice roller for each methodology.
     const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
     const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
 
+    // Demo 1: Using TaskManager
     const taskManagerDiv = document.createElement("div");
     const taskManagerHeaderDiv = document.createElement("div");
     taskManagerHeaderDiv.style.textAlign = "center";
@@ -63,6 +64,7 @@ async function start(): Promise<void> {
 
     const divider = document.createElement("hr");
 
+    // Demo 2: Using OldestClientObserver
     const oldestClientDiv = document.createElement("div");
     const oldestClientHeaderDiv = document.createElement("div");
     oldestClientHeaderDiv.style.textAlign = "center";

@@ -33,10 +33,11 @@ async function requestObjectStoreFromId<T>(request: RequestParser, runtime: ICon
 
 const requestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts[0] === taskManagerDiceId) {
-            const taskManagerDice = await requestObjectStoreFromId<IDiceRoller>(
-                request, runtime, taskManagerDiceId);
-            return { status: 200, mimeType: "fluid/object", value: taskManagerDice };
+        const diceId = request.pathParts[0];
+        if (diceId === taskManagerDiceId || diceId === oldestClientDiceId) {
+            const dice = await requestObjectStoreFromId<IDiceRoller>(
+                request, runtime, diceId);
+            return { status: 200, mimeType: "fluid/object", value: dice };
         }
     };
 
@@ -46,6 +47,7 @@ class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        // We'll create a dice roller for each methodology.
         const taskManagerDiceRollerComponentRuntime =
             await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
         await requestFluidObject<IDiceRoller>(taskManagerDiceRollerComponentRuntime, "/");

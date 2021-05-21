@@ -17,7 +17,7 @@ const diceValueKey = "diceValue";
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
-    public static get ComponentName() { return "@fluid-example/task-manager-dice-roller"; }
+    public static get ComponentName() { return "@fluid-example/oldest-client-dice-roller"; }
 
     private _oldestClientObserver: OldestClientObserver | undefined;
     private autoRollInterval: ReturnType<typeof setInterval> | undefined;
@@ -79,6 +79,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
     }
 
     private startAutoRollTask() {
+        console.log("Starting autoroll from OldestClientDiceRoller");
         if (this.autoRollInterval === undefined) {
             this.autoRollInterval = setInterval(() => {
                 this.roll();
@@ -87,6 +88,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
     }
 
     private endAutoRollTask() {
+        console.log("Ending autoroll from OldestClientDiceRoller");
         if (this.autoRollInterval !== undefined) {
             clearInterval(this.autoRollInterval);
             this.autoRollInterval = undefined;
