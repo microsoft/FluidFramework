@@ -265,7 +265,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpIdleTimer();
 
-            if (this.messagesSinceLastOpEvent > this.serviceConfiguration.deli.opEvent.maxOps) {
+            const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
+            if (maxOps !== undefined && this.messagesSinceLastOpEvent > maxOps) {
                 this.emitOpEvent(OpEventType.MaxOps);
             }
         }
@@ -869,11 +870,16 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     }
 
     private updateOpIdleTimer() {
+        const idleTime = this.serviceConfiguration.deli.opEvent.idleTime;
+        if (idleTime === undefined) {
+            return;
+        }
+
         this.clearOpIdleTimer();
 
         this.opIdleTimer = setTimeout(() => {
             this.emitOpEvent(OpEventType.Idle);
-        }, this.serviceConfiguration.deli.opEvent.idleTime);
+        }, idleTime);
     }
 
     private clearOpIdleTimer() {
@@ -884,11 +890,16 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     }
 
     private updateOpMaxTimeTimer() {
+        const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
+        if (maxTime === undefined) {
+            return;
+        }
+
         this.clearOpMaxTimeTimer();
 
         this.opMaxTimeTimer = setTimeout(() => {
             this.emitOpEvent(OpEventType.MaxTime);
-        }, this.serviceConfiguration.deli.opEvent.maxTime);
+        }, maxTime);
     }
 
     private clearOpMaxTimeTimer() {

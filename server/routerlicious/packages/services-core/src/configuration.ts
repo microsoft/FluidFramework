@@ -25,13 +25,13 @@ export interface IDeliOpEventServerConfiguration {
     enable: boolean;
 
     // Causes an event to fire after deli doesn't process any ops after this amount of time
-    idleTime: number;
+    idleTime: number | undefined;
 
     // Causes an event to fire based on the time since the last emit
-    maxTime: number;
+    maxTime: number | undefined;
 
     // Causes an event to fire based on the number of ops since the last emit
-    maxOps: number;
+    maxOps: number | undefined;
 }
 
 // Scribe lambda configuration
