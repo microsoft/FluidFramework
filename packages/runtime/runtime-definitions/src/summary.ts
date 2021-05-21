@@ -26,7 +26,7 @@ export interface ISummaryTreeWithStats {
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
     /** The channel's garbage collection data */
-    gcData: IGarbageCollectionData;
+    gcData?: IGarbageCollectionData;
 }
 
 export interface ISummarizeResult {
@@ -36,7 +36,7 @@ export interface ISummarizeResult {
 
 export interface IContextSummarizeResult extends ISummarizeResult {
     /** The context's garbage collection data */
-    gcData: IGarbageCollectionData;
+    gcData?: IGarbageCollectionData;
 }
 
 export interface ISummarizeInternalResult extends IContextSummarizeResult {
@@ -154,6 +154,7 @@ export interface ISummarizerNode {
 /**
  * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
  * - usedRoutes - The routes in this node that are currently in use.
+ * - gcData - The GC data for this node. If GC is disabled, this returns undefined.
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
  *   summary or not.
@@ -167,6 +168,7 @@ export interface ISummarizerNode {
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     /** The routes in this node that are currently in use. */
     readonly usedRoutes: string[];
+    readonly gcData: IGarbageCollectionData | undefined;
 
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(

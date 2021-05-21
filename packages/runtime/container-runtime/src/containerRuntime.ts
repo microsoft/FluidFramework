@@ -90,7 +90,6 @@ import {
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
     channelsTreeName,
@@ -1636,7 +1635,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         trackState: boolean,
         /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
-    }): Promise<IChannelSummarizeResult> {
+    }): Promise<ISummaryTreeWithStats> {
         const { runGC, fullTree = false, trackState, summaryLogger } = options;
 
         if (runGC) {
@@ -1647,7 +1646,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return summarizeResult as IChannelSummarizeResult;
+        return summarizeResult as ISummaryTreeWithStats;
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
