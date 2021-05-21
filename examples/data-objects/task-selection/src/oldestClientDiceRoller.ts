@@ -72,7 +72,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
             this.emit("taskOwnershipChanged");
             this.startAutoRollTask();
         } else {
-            this.oldestClientObserver.once("gotOldest", () => {
+            this.oldestClientObserver.once("becameOldest", () => {
                 this.volunteerForAutoRoll();
             });
         }
