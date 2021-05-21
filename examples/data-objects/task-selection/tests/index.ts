@@ -4,11 +4,11 @@
  */
 
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { IContainer } from "@fluidframework/container-definitions";
 
+import { oldestClientDiceId, taskManagerDiceId, TaskSelectionFactory } from "../src/containerCode";
+import { IDiceRoller } from "../src/interface";
 import { renderDiceRoller } from "../src/view";
-import { TaskSelectionFactory } from "../src/containerCode";
-import { TaskManagerDiceRoller } from "../src/taskManagerDiceRoller";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -19,6 +19,21 @@ if (window.location.hash.length === 0) {
 }
 const documentId = window.location.hash.substring(1);
 
+async function requestDiceRoller(container: IContainer, id: string): Promise<IDiceRoller> {
+    const response = await container.request({ url: id });
+
+    // Verify the response to make sure we got what we expected.
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve data object at URL: "${id}"`);
+    } else if (response.value === undefined) {
+        throw new Error(`Empty response from URL: "${id}"`);
+    }
+
+    // In this app, we know our container code will respond to these IDs with IDiceRoller data objects.
+    const diceRoller: IDiceRoller = response.value;
+    return diceRoller;
+}
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
@@ -28,11 +43,34 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     // to store ops.
     const container = await getSessionStorageContainer(documentId, TaskSelectionFactory, createNewFlag);
 
-    // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<TaskManagerDiceRoller>(container);
+    // We'll use a separate dice roller for each methodology.
+    const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
+    const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
 
-    // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(defaultObject, element);
+    // Demo 1: Using TaskManager
+    const taskManagerDiv = document.createElement("div");
+    const taskManagerHeaderDiv = document.createElement("div");
+    taskManagerHeaderDiv.style.textAlign = "center";
+    taskManagerHeaderDiv.style.fontSize = "50px";
+    taskManagerHeaderDiv.textContent = "TaskManager";
+    const taskManagerViewDiv = document.createElement("div");
+    renderDiceRoller(taskManagerDiceRoller, taskManagerViewDiv);
+    taskManagerDiv.append(taskManagerHeaderDiv, taskManagerViewDiv);
+
+    const divider = document.createElement("hr");
+
+    // Demo 2: Using OldestClientObserver
+    const oldestClientDiv = document.createElement("div");
+    const oldestClientHeaderDiv = document.createElement("div");
+    oldestClientHeaderDiv.style.textAlign = "center";
+    oldestClientHeaderDiv.style.fontSize = "50px";
+    oldestClientHeaderDiv.textContent = "OldestClientObserver";
+    const oldestClientViewDiv = document.createElement("div");
+    renderDiceRoller(oldestClientDiceRoller, oldestClientViewDiv);
+    oldestClientDiv.append(oldestClientHeaderDiv, oldestClientViewDiv);
+
+    const div = document.getElementById("content") as HTMLDivElement;
+    div.append(taskManagerDiv, divider, oldestClientDiv);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation
