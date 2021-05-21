@@ -116,11 +116,11 @@ export class SummaryWriter implements ISummaryWriter {
             };
         }
 
-        // We should not accept a summary earlier than our current protocol state
+        // We should not accept this summary if it is less than current protocol sequence number
         if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
             return {
                 message: {
-                    errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${op.sequenceNumber}`,
+                    errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
                     summaryProposal: {
                         summarySequenceNumber: op.sequenceNumber,
                     },
