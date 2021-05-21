@@ -43,86 +43,51 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.getSnapshotTree(version),
             "storage_getSnapshotTree",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.readBlob(id),
             "storage_readBlob",
-            (retryId: string) => this.deltaManager.refreshDelayInfo(retryId),
-            (retryId: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(retryId, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.write(tree, parents, message, ref),
             "storage_write",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
             "storage_uploadSummaryWithContext",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.downloadSummary(handle),
             "storage_downloadSummary",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return runWithRetry(
+        return this.runWithRetry(
             async () => this.internalStorageService.createBlob(file),
             "storage_createBlob",
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
-            this.logger,
-            () => this.checkStorageDisposed(),
         );
     }
 
@@ -134,5 +99,17 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             };
         }
         return { retry: true, error: undefined };
+    }
+
+    private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
+        return runWithRetry(
+            api,
+            callName,
+            (id: string) => this.deltaManager.refreshDelayInfo(id),
+            (id: string, delayMs: number, error: any) =>
+                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
+            this.logger,
+            () => this.checkStorageDisposed(),
+        );
     }
 }
