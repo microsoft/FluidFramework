@@ -1438,26 +1438,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
-        // back compat for old containers where the code details
-        // we're delay added. All new creates should be detached
-        // and start with an initial code details.
-        if(getCodeProposal(protocol.quorum) === undefined) {
-            this.logger.sendTelemetryEvent({
-                eventName:"NoCodeProposal",
-            });
-            await new Promise<void>((resolve)=>{
-                const waitForCode = ()=>{
-                    if(getCodeProposal(protocol.quorum) !== undefined) {
-                        resolve();
-                    }
-                    protocol.quorum.off("approveProposal", waitForCode);
-                    this.off("closed", resolve);
-                };
-                protocol.quorum.on("approveProposal", waitForCode);
-                this.once("closed", resolve);
-            });
-        }
-
         protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
