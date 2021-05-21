@@ -53,6 +53,7 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     canRetryOnError,
+    runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -100,7 +101,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -826,7 +827,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    this._deltaManager,
+                    (id: string) => this._deltaManager.refreshDelayInfo(id),
+                    (id: string, delayMs: number, error: any) =>
+                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
                     this.logger,
                 );
             }
