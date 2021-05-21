@@ -168,12 +168,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        // back-compat: 0.40 - We don't use the gcData returned by summarize anymore.
-        if (summarizeResult.gcData !== undefined) {
-            this._gcData = cloneGCData(summarizeResult.gcData);
-        }
-        return summarizeResult;
+        return this.summarizeFn(fullTree, trackState);
     }
 
     /**

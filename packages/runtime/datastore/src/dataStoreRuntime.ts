@@ -730,7 +730,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // back-compat: 0.40 - We don't use the gcData returned by summarize anymore.
+                // The GC data returned by summarize can be different from the one returned by getGCData. There can be
+                // certain issues that arise from this. The GC data from summarize will be removed and is tracked here:
+                // https://github.com/microsoft/FluidFramework/issues/6223
                 if (contextSummary.gcData !== undefined) {
                     // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
                     // to be a path from the root.
@@ -766,7 +768,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         0x180 /* "getAttachSummary should always return a tree" */);
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
-                    // back-compat: 0.40 - We don't use the gcData returned by summarize anymore.
+                    // The GC data returned by here can be different from the one returned by getGCData. There can be
+                    // certain issues that arise from this. The GC data here will be removed and is tracked here:
+                    // https://github.com/microsoft/FluidFramework/issues/6223
                     if (contextSummary.gcData !== undefined) {
                         // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
                         // to be a path from the root.
