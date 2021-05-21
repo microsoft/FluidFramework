@@ -110,7 +110,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     // Op event properties
     private opIdleTimer: any | undefined;
     private opMaxTimeTimer: any | undefined;
-    private messagesSinceLastOpEvent: number = 0;
+    private sequencedMessagesSinceLastOpEvent: number = 0;
 
     private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -270,9 +270,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
             const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
             if (maxOps !== undefined) {
-                this.messagesSinceLastOpEvent += sequencedMessageCount;
+                this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
-                if (this.messagesSinceLastOpEvent > maxOps) {
+                if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
@@ -935,14 +935,14 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
      * Also resets the MaxTime timer
      */
     private emitOpEvent(type: OpEventType) {
-        if (this.messagesSinceLastOpEvent === 0) {
+        if (this.sequencedMessagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
 
-        this.emit("opEvent", type, this.sequenceNumber, this.messagesSinceLastOpEvent);
+        this.emit("opEvent", type, this.sequenceNumber, this.sequencedMessagesSinceLastOpEvent);
 
-        this.messagesSinceLastOpEvent = 0;
+        this.sequencedMessagesSinceLastOpEvent = 0;
 
         this.updateOpMaxTimeTimer();
     }
