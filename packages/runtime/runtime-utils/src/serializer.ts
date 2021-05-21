@@ -78,6 +78,7 @@ export class FluidSerializer implements IFluidSerializer {
 
     // Parses the serialized data - context must match the context with which the JSON was stringified
     public parse(input: string) {
+        // Note: 'decodeValue()' is tolerant of undefined/null, so no need to check here.
         return JSON.parse(input, (key, value) => this.decodeValue(value));
     }
 
@@ -118,14 +119,17 @@ export class FluidSerializer implements IFluidSerializer {
     };
 
     // Invoked for non-null objects to recursively replace references to IFluidHandles.
-    // Clones as-needed to avoid mutating the 'input' object.  If no IFluidHandes are present,
-    // returns the original 'input'.
+    // Clones as-needed to avoid mutating the `input` object.  If no IFluidHandes are present,
+    // returns the original `input`.
     private recursivelyReplace(
         input: any,
         replacer: (input: any, context: any) => any,
         context?: any,
     ) {
-        // Execute the 'replace' on the current input.  Note that Caller is responsible for ensuring that 'input'
+        // Note: Caller is responsible for ensuring that `input` is defined / non-null.
+        //       (Required for Object.keys() below.)
+
+        // Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
         // is a non-null object.
         const maybeReplaced = replacer(input, context);
 
@@ -142,21 +146,21 @@ export class FluidSerializer implements IFluidSerializer {
             const value = input[key];
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!!value && typeof value === "object") {
-                // Note: Except for IFluidHandle, 'input' must not contain circular references (as object must
+                // Note: Except for IFluidHandle, `input` must not contain circular references (as object must
                 //       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
                 //       lead to a later error when attempting to stringify().
                 const replaced = this.recursivelyReplace(value, replacer, context);
 
-                // If the 'replaced' object is different than the original 'value' then the subgraph contained one
-                // or more handles.  If this happens, we need to return a clone of the 'input' object where the
-                // current property is replaced by the 'replaced' value.
+                // If the `replaced` object is different than the original `value` then the subgraph contained one
+                // or more handles.  If this happens, we need to return a clone of the `input` object where the
+                // current property is replaced by the `replaced` value.
                 if (replaced !== value) {
-                    // Lazily create a shallow clone of the 'input' object if we haven't done so already.
+                    // Lazily create a shallow clone of the `input` object if we haven't done so already.
                     clone = clone ?? (Array.isArray(input)
                         ? [...input]
                         : { ...input });
 
-                    // Overwrite the current property 'key' in the clone with the 'replaced' value.
+                    // Overwrite the current property `key` in the clone with the `replaced` value.
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     clone![key] = replaced;
                 }
