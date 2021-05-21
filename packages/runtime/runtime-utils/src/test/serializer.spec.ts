@@ -49,6 +49,12 @@ describe("FluidSerializer", () => {
                 assert.strictEqual(actual, input,
                     "replaceHandles() on input with no handles must return original input.");
 
+                const decoded = serializer.decode(actual);
+                assert.strictEqual(decoded, input,
+                    "decode() on input with no handles must return original input.");
+                assert.deepStrictEqual(decoded, input,
+                    "input must round-trip through replaceHandles()/decode().");
+
                 const stringified = serializer.stringify(input, handle);
                 const parsed = serializer.parse(stringified);
                 assert.deepStrictEqual(parsed, input,
@@ -82,6 +88,12 @@ describe("FluidSerializer", () => {
                 assert.deepStrictEqual(replaced, expected,
                     "replaceHandles() must return expected output.");
 
+                const decoded = serializer.decode(replaced);
+                assert.notStrictEqual(decoded, input,
+                    "decode() must shallow-clone rather than mutate original object.");
+                assert.deepStrictEqual(decoded, input,
+                    "input must round-trip through replaceHandles()/decode().");
+
                 const stringified = serializer.stringify(input, handle);
 
                 // Note that we're using JSON.parse() in this test, so the handles remained serialized.
@@ -112,6 +124,12 @@ describe("FluidSerializer", () => {
             const replaced = serializer.replaceHandles(input, handle);
             assert.notStrictEqual(replaced, input,
                 "replaceHandles() must shallow-clone rather than mutate original object.");
+
+            const decoded = serializer.decode(replaced);
+            assert.notStrictEqual(decoded, input,
+                "decode() must shallow-clone rather than mutate original object.");
+            assert.deepStrictEqual(decoded, input,
+                "input must round-trip through replaceHandles()/decode().");
 
             const stringified = serializer.stringify(input, handle);
             const parsed = serializer.parse(stringified);
