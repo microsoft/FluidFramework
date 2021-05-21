@@ -12,7 +12,11 @@ import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IOldestClientObserver } from "./interfaces";
 
 export interface IOldestClientObservableEvents extends IEvent {
-    (event: "connected" | "disconnected", listener: () => void);
+    (event: "connected", listener: () => void);
+    // Typescript won't convert IFluidDataStoreRuntime and ContainerRuntime if we unify these,
+    // I believe this is because the "connected" event has a clientId arg in the runtimes.
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "disconnected", listener: () => void);
 }
 
 /**
@@ -23,6 +27,10 @@ export interface IOldestClientObservableEvents extends IEvent {
  */
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
     getQuorum(): IQuorum;
+    // Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
+    // has information about this [container | data store]", which in the case of detached data store may disagree
+    // with whether we're the oldest client on the connected container.  So in the data store case, I can only
+    // safely use this to assume I have the rights to tasks performed against this data store, and not more broadly.
     attachState: AttachState;
     connected: boolean;
     clientId: string | undefined;
