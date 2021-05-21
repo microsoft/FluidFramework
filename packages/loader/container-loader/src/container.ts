@@ -1705,7 +1705,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
-            } else if (client?.shouldHaveLeft === true) {
+            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
                 errorMsg = "messageClientIdShouldHaveLeft";
             }
             if (errorMsg !== undefined) {
