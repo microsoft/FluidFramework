@@ -514,6 +514,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         }
 
                         this.durableSequenceNumber = dsn;
+
+                        if (this.serviceConfiguration.deli.opEvent.enable) {
+                            this.updateOpMaxTimeTimer();
+                        }
                     }
 
                     break;
