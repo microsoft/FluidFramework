@@ -42,6 +42,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
             }
         });
 
+        // We can instantiate an OldestClientObserver using an IFluidDataStoreRuntime.
         this._oldestClientObserver = new OldestClientObserver(this.runtime);
 
         this.volunteerForAutoRoll();
@@ -64,6 +65,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 
     public volunteerForAutoRoll() {
         if (this.oldestClientObserver.isOldest()) {
+            // If we're oldest, start the autoroll and watch for loss of oldest.
             this.oldestClientObserver.once("lostOldest", () => {
                 this.emit("taskOwnershipChanged");
                 this.endAutoRollTask();
@@ -72,6 +74,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
             this.emit("taskOwnershipChanged");
             this.startAutoRollTask();
         } else {
+            // Otherwise watch to become oldest.
             this.oldestClientObserver.once("becameOldest", () => {
                 this.volunteerForAutoRoll();
             });

@@ -24,5 +24,8 @@ export interface IDiceRoller extends EventEmitter {
      */
     on(event: "diceRolled" | "taskOwnershipChanged", listener: () => void): this;
 
+    /**
+     * Exposing this just so we can provide some visual feedback in the view.
+     */
     hasTask(): boolean;
 }

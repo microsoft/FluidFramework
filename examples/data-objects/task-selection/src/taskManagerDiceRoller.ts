@@ -32,6 +32,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
 
+        // We create a TaskManager just like any other DDS.
         const taskManager = TaskManager.create(this.runtime);
         this.root.set(taskManagerKey, taskManager.handle);
     }
@@ -70,6 +71,8 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     };
 
     public volunteerForAutoRoll() {
+        // Try to take the task and wait until we get it.  This may wait forever if the current task holder
+        // doesn't release it.
         this.taskManager.lockTask(autoRollTaskId)
             .then(async () => {
                 // Attempt to reacquire the task if we lose it
@@ -121,6 +124,7 @@ export const TaskManagerDiceRollerInstantiationFactory =
 (
     TaskManagerDiceRoller.ComponentName,
     TaskManagerDiceRoller,
+    // Since TaskManager is a DDS, we need to register it for creation.
     [TaskManager.getFactory()],
     {},
 );
