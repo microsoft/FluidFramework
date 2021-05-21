@@ -145,13 +145,11 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * @returns a deep cloned array of proposals
      */
     public snapshotProposals(): IQuorumSnapshot["proposals"] {
-        const serializedProposals = Array.from(this.proposals).map(
+        return Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
                 Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]]);
-
-        return cloneDeep(serializedProposals);
     }
 
     /**
