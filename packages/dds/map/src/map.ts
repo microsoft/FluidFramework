@@ -30,8 +30,6 @@ import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 interface IMapSerializationFormat {
-    /** @deprecated - added to prevent buggy caching. remove once all loaders past 0.35 */
-    absolutePath?: string,
     blobs?: string[];
     content: IMapDataObjectSerializable;
 }
@@ -315,7 +313,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         }
 
         const header: IMapSerializationFormat = {
-            absolutePath: this.handle.absolutePath,
             blobs,
             content: headerBlob,
         };
