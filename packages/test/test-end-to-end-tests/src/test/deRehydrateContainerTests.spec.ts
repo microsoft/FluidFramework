@@ -32,6 +32,7 @@ import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { serializedContainer } from "./serializedContainer";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -236,6 +237,39 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 
             // Check for default data store
             const response = await container2.request({ url: "/" });
+            assert.strictEqual(response.status, 200, "Component should exist!!");
+            const defaultDataStore = response.value as TestFluidObject;
+            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+
+            // Check for dds
+            const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+            const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+            const sharedString = await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
+            const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+            const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+            const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+            const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+            const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
+            const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+            const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
+            assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
+            assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
+            assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
+            assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
+            assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
+            assert.strictEqual(crc.id, crcId, "CRC should exist!!");
+            assert.strictEqual(coc.id, cocId, "COC should exist!!");
+            assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
+            assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
+            assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
+        });
+
+        it("Rehydrate container from saved snapshot and check contents before attach", async () => {
+            const snapshotTree = JSON.stringify(serializedContainer);
+            const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+            // Check for default data store
+            const response = await container.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
             assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
