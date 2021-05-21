@@ -55,8 +55,6 @@ class SummaryNodeWithGC extends SummaryNode {
  *   directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
-    private gcData: IGarbageCollectionData | undefined;
-
     // Tracks the work-in-progress used routes during summary.
     private wipSerializedUsedRoutes: string | undefined;
 
@@ -65,6 +63,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
+
+    // The garbace collection data for this node. If GC is disbaled, this returns undefined.
+    private _gcData: IGarbageCollectionData | undefined;
+    public get gcData(): IGarbageCollectionData | undefined {
+        return this._gcData;
+    }
 
     // Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
     // that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
@@ -127,7 +131,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
             // If the GC details has GC data, initialize our GC data from it.
             if (gcDetailsInInitialSummary.gcData !== undefined) {
-                this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+                this._gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
             }
         }
     }
@@ -152,7 +156,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
             // If there is no cached GC data, return empty data in summarize result. It is the caller's responsibility
             // to ensure that GC data is available by calling getGCData before calling summarize.
-            const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
+            const gcData = this._gcData !== undefined ? cloneGCData(this._gcData) : { gcNodes: {} };
 
             return {
                 ...summarizeResult,
@@ -165,7 +169,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        this.gcData = cloneGCData(summarizeResult.gcData);
+        this._gcData = cloneGCData(summarizeResult.gcData);
         return summarizeResult;
     }
 
@@ -185,12 +189,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
         // have data from previous GC run for clients with older summary format before GC was added. They won't have
         // GC details in their initial summary.
-        if (!fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
-            return cloneGCData(this.gcData);
+        if (!fullGC && !this.hasDataChanged() && this._gcData !== undefined) {
+            return cloneGCData(this._gcData);
         }
 
         const gcData = await this.getGCDataFn(fullGC);
-        this.gcData = cloneGCData(gcData);
+        this._gcData = cloneGCData(gcData);
         return gcData;
     }
 
