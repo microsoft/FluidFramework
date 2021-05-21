@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { IOldestClientObserver } from "./interfaces";
@@ -92,7 +90,8 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
  * });
  * ```
  */
-export class OldestClientObserver extends EventEmitter implements IOldestClientObserver {
+export class OldestClientObserver extends TypedEventEmitter<IOldestClientObservableEvents>
+    implements IOldestClientObserver {
     private readonly quorum: IQuorum;
     private currentIsOldest: boolean = false;
     constructor(private readonly observable: IOldestClientObservable) {
