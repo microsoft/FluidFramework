@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+import fs from "fs";
 import {
     Loader,
 } from "@fluidframework/container-loader";
@@ -23,27 +25,24 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { strict as assert } from "assert";
-import fs from "fs";
 
 describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
-
     const loaderContainerTracker = new LoaderContainerTracker();
     let disableIsolatedChannels = false;
 
     function tests(): void {
         it("Rehydrate container from saved snapshot and check contents before attach", async () => {
-            const snapshotTree = fs.readFileSync('content/serializedContainerTestContent/serializedContainer.json', 'utf8')
+            const snapshotTree = fs.readFileSync("content/serializedContainerTestContent/serializedContainer.json", "utf8");
 
             const loader = createTestLoader();
             const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-        
+
             // Check for default data store
             const response = await container.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
             assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
-        
+
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
@@ -66,8 +65,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
-        
-        
+
         const codeDetails: IFluidCodeDetails = {
             package: "detachedContainerTestPackage1",
             config: {},
@@ -82,10 +80,10 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         const sharedInkId = "sink1Key";
         const sparseMatrixId = "sparsematrixKey";
         const sharedCounterId = "sharedcounterKey";
-        
+
         function createTestLoader(): Loader {
             const provider = getTestObjectProvider();
-    
+
             const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
                 [sharedStringId, SharedString.getFactory()],
                 [sharedMapId, SharedMap.getFactory()],
@@ -111,9 +109,8 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             return testLoader;
         }
     }
-    
+
     tests();
     disableIsolatedChannels = true;
     tests();
 });
-
