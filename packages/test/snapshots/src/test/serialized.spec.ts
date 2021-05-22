@@ -32,7 +32,8 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 
     function tests(): void {
         it("Rehydrate container from saved snapshot and check contents before attach", async () => {
-            const snapshotTree = fs.readFileSync("content/serializedContainerTestContent/serializedContainer.json", "utf8");
+            const snapshotTree = fs.readFileSync(
+                "content/serializedContainerTestContent/serializedContainer.json", "utf8");
 
             const loader = createTestLoader();
             const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
