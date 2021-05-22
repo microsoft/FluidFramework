@@ -272,7 +272,7 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
 
-		const editLog = new EditLog(editHistory);
+		const editLog = new EditLog(editHistory, this.logger);
 		const logViewer = new CachingLogViewer(
 			editLog,
 			initialTree,

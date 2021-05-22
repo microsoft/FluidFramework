@@ -5,6 +5,7 @@
 
 import BTree from '@taylorsw04/sorted-btree';
 import { IsoBuffer } from '@fluidframework/common-utils';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId } from './generic';
 import { EditId } from './Identifiers';
@@ -169,12 +170,16 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
 	private readonly editAddedHandlers: EditAddedHandler<TChange>[] = [];
 
+	private readonly logger?: ITelemetryLogger;
+
 	/**
 	 * Construct an `EditLog` using the given options.
 	 * @param summary - An edit log summary used to populate the edit log.
+	 * @param logger - An optional logger to record telemetry/errors
 	 */
-	public constructor(summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] }) {
+	public constructor(summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] }, logger?: ITelemetryLogger) {
 		const { editChunks, editIds } = summary;
+		this.logger = logger;
 
 		this.editChunks = new BTree<number, EditChunk<TChange>>(undefined, compareFiniteNumbers);
 
@@ -372,17 +377,18 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	/**
 	 * Assigns provided handles to edit chunks based on chunk index specified.
 	 */
-	public processEditChunkHandle(chunkHandle: EditHandle, chunkKey: number): void {
-		const chunk = assertNotUndefined(
-			this.editChunks.get(chunkKey),
-			'A chunk handle op should not be received before the edit ops it corresponds to.'
-		);
-		assertNotUndefined(
-			chunk.edits,
-			'A chunk handle op should not be received before the edit ops it corresponds to.'
-		);
-		chunk.handle = chunkHandle;
-		this.addKeyToCache(chunkKey);
+	public processEditChunkHandle(chunkHandle: EditHandle, startRevision: number): void {
+		const chunk = this.editChunks.get(startRevision);
+		if (chunk !== undefined) {
+			assertNotUndefined(
+				chunk.edits,
+				'A chunk handle op should not be received before the edit ops it corresponds to.'
+			);
+			chunk.handle = chunkHandle;
+			this.addKeyToCache(startRevision);
+		} else {
+			this.logger?.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
+		}
 	}
 
 	/**
