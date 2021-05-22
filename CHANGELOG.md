@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.90.2
+
+* fix: add logger and error to editlog
+  * Associated pull request: [30804](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30804)
+  * Commit: [196df49a002eb0271a69a54968a355bfcc485d79](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/196df49a002eb0271a69a54968a355bfcc485d79)
+
 ## 0.90.1
 
 _Version update only._
