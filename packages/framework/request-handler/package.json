@@ -57,7 +57,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.30.0-0",
     "@fluidframework/container-runtime-definitions": "^0.40.0",
-    "@fluidframework/core-interfaces": "^0.40.0",
+    "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/runtime-definitions": "^0.40.0",
     "@fluidframework/runtime-utils": "^0.40.0",
     "assert": "^2.0.0"

@@ -110,7 +110,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     // Op event properties
     private opIdleTimer: any | undefined;
     private opMaxTimeTimer: any | undefined;
-    private messagesSinceLastOpEvent: number = 0;
+    private sequencedMessagesSinceLastOpEvent: number = 0;
 
     private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -186,6 +186,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.logOffset = rawMessage.offset;
 
+        let sequencedMessageCount = 0;
+
         const boxcar = extractBoxcar(rawMessage);
 
         for (const message of boxcar.contents) {
@@ -226,7 +228,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
 
-            this.messagesSinceLastOpEvent++;
+            sequencedMessageCount++;
         }
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
@@ -262,12 +264,17 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearActivityIdleTimer();
         this.setActivityIdleTimer();
 
-        if (this.serviceConfiguration.deli.opEvent.enable) {
+        // Update the op event idle & max ops counter if ops were just sequenced
+        if (this.serviceConfiguration.deli.opEvent.enable && sequencedMessageCount > 0) {
             this.updateOpIdleTimer();
 
             const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
-            if (maxOps !== undefined && this.messagesSinceLastOpEvent > maxOps) {
-                this.emitOpEvent(OpEventType.MaxOps);
+            if (maxOps !== undefined) {
+                this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
+
+                if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
+                    this.emitOpEvent(OpEventType.MaxOps);
+                }
             }
         }
     }
@@ -515,6 +522,12 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         }
 
                         this.durableSequenceNumber = dsn;
+
+                        if (this.serviceConfiguration.deli.opEvent.enable) {
+                            // since the dsn updated, ops were reliably stored
+                            // we can safely restart the MaxTime timer
+                            this.updateOpMaxTimeTimer();
+                        }
                     }
 
                     break;
@@ -869,6 +882,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Reset the op event idle timer
+     * Called after a message is sequenced
+     */
     private updateOpIdleTimer() {
         const idleTime = this.serviceConfiguration.deli.opEvent.idleTime;
         if (idleTime === undefined) {
@@ -889,6 +906,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Resets the op event MaxTime timer
+     * Called after an opEvent is emitted or when the dsn is updated
+     */
     private updateOpMaxTimeTimer() {
         const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
         if (maxTime === undefined) {
@@ -909,15 +930,19 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
     }
 
+    /**
+     * Emits an opEvent based for the provided type
+     * Also resets the MaxTime timer
+     */
     private emitOpEvent(type: OpEventType) {
-        if (this.messagesSinceLastOpEvent === 0) {
+        if (this.sequencedMessagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
 
-        this.emit("opEvent", type, this.sequenceNumber, this.messagesSinceLastOpEvent);
+        this.emit("opEvent", type, this.sequenceNumber, this.sequencedMessagesSinceLastOpEvent);
 
-        this.messagesSinceLastOpEvent = 0;
+        this.sequencedMessagesSinceLastOpEvent = 0;
 
         this.updateOpMaxTimeTimer();
     }

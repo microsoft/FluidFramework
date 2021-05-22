@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/core-interfaces",
+  "name": "@fluidframework/container-definitions",
   "version": "0.40.0",
-  "description": "Fluid object interfaces",
+  "description": "Fluid container definitions",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
@@ -17,7 +17,10 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "ci:build": "npm run build:compile",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "ci:test": "echo No test for this package",
+    "ci:test:coverage": "echo No test for this package",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
@@ -27,6 +30,12 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
+  },
+  "dependencies": {
+    "@fluidframework/common-definitions": "^0.20.0-0",
+    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/driver-definitions": "^0.39.0",
+    "@fluidframework/protocol-definitions": "^0.1024.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",

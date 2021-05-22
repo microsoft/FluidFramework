@@ -53,6 +53,7 @@ import {
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
     canRetryOnError,
+    runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -100,7 +101,7 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -826,7 +827,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    this._deltaManager,
+                    (id: string) => this._deltaManager.refreshDelayInfo(id),
+                    (id: string, delayMs: number, error: any) =>
+                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
                     this.logger,
                 );
             }
@@ -1435,26 +1438,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
-        // back compat for old containers where the code details
-        // we're delay added. All new creates should be detached
-        // and start with an initial code details.
-        if(getCodeProposal(protocol.quorum) === undefined) {
-            this.logger.sendTelemetryEvent({
-                eventName:"NoCodeProposal",
-            });
-            await new Promise<void>((resolve)=>{
-                const waitForCode = ()=>{
-                    if(getCodeProposal(protocol.quorum) !== undefined) {
-                        resolve();
-                    }
-                    protocol.quorum.off("approveProposal", waitForCode);
-                    this.off("closed", resolve);
-                };
-                protocol.quorum.on("approveProposal", waitForCode);
-                this.once("closed", resolve);
-            });
-        }
-
         protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
@@ -1742,7 +1725,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
-            } else if (client?.shouldHaveLeft === true) {
+            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
                 errorMsg = "messageClientIdShouldHaveLeft";
             }
             if (errorMsg !== undefined) {
