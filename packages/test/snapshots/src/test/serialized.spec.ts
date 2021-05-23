@@ -26,19 +26,24 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
-describeNoCompat(`Container Serialization Backwards Compatiblity`, (getTestObjectProvider) => {
+describeNoCompat(`Container Serialization Backwards Compatibility`, (getTestObjectProvider) => {
     const loaderContainerTracker = new LoaderContainerTracker();
-    let disableIsolatedChannels = false;
+    let disableIsolatedChannels: boolean;
+    let filename: string;
+    const contentFolder = "content/serializedContainerTestContent"
 
-    tests();
-    disableIsolatedChannels = true;
-    tests();
+    for (filename of recurseFiles(contentFolder)) {
+        disableIsolatedChannels = false;
+        tests();
+        disableIsolatedChannels = true;
+        tests();
+    }
 
     function tests(): void {
-        it(`Rehydrate container from saved snapshot and check contents before attach${
+        const filenameShort = filename.slice(contentFolder.length + 1);
+        it(`Rehydrate container from ${filenameShort} and check contents before attach${
             disableIsolatedChannels ? " (disable isolated channels)" : ""}`, async () => {
-            const snapshotTree = fs.readFileSync(
-                "content/serializedContainerTestContent/serializedContainer.json", "utf8");
+            const snapshotTree = fs.readFileSync(filename, "utf8");
 
             const loader = createTestLoader();
             const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
@@ -116,3 +121,15 @@ describeNoCompat(`Container Serialization Backwards Compatiblity`, (getTestObjec
         }
     }
 });
+
+function *recurseFiles(rootPath: string): IterableIterator<string> {
+    for (const child of fs.readdirSync(rootPath)) {
+        const filenameFull = `${rootPath}/${child}`;
+        const stat = fs.statSync(filenameFull);
+        if (stat && stat.isDirectory()) {
+            yield *recurseFiles(filenameFull);
+        } else {
+            yield filenameFull;
+        }
+    }
+}
