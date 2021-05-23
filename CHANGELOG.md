@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.104.2
+
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.104.1
 
 * fix: Ignore empty traits when constructing Snapshots from ChangeNodes
