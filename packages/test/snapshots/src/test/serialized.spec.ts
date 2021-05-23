@@ -26,12 +26,17 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
-describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeNoCompat(`Container Serialization Backwards Compatiblity`, (getTestObjectProvider) => {
     const loaderContainerTracker = new LoaderContainerTracker();
     let disableIsolatedChannels = false;
 
+    tests();
+    disableIsolatedChannels = true;
+    tests();
+
     function tests(): void {
-        it("Rehydrate container from saved snapshot and check contents before attach", async () => {
+        it(`Rehydrate container from saved snapshot and check contents before attach${
+            disableIsolatedChannels ? " (disable isolated channels)" : ""}`, async () => {
             const snapshotTree = fs.readFileSync(
                 "content/serializedContainerTestContent/serializedContainer.json", "utf8");
 
@@ -110,8 +115,4 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             return testLoader;
         }
     }
-
-    tests();
-    disableIsolatedChannels = true;
-    tests();
 });
