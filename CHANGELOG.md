@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.100.2
+
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.100.1
 
 * build: Update dependencies
