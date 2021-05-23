@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.96.3
+
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.96.2
 
 * Merge remote-tracking branch 'origin/releases/2021.04.4' into user/crmacomb/releaseupdate4.5
