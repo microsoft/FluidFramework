@@ -27,6 +27,14 @@
   * Associated pull request: [30375](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30375)
   * Commit: [ddc1328f1d915374a6f06981b4f3669f94568a30](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ddc1328f1d915374a6f06981b4f3669f94568a30)
 
+## 0.100.2
+
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.100.1
 
 * build: Update dependencies
@@ -40,6 +48,12 @@
 * merge: `releases/2021.04.5` into `master`
   * Associated pull request: [30117](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30117)
   * Commit: [0adc48540669cac605f054023fab717935609eb6](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0adc48540669cac605f054023fab717935609eb6)
+
+## 0.96.3
+
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
 
 ## 0.96.2
 
@@ -60,6 +74,12 @@
 * docs: remove invalid @sealed on abstract class
   * Associated pull request: [29904](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29904)
   * Commit: [887c249e7defbebd9622c8906eb96d23818ecb6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/887c249e7defbebd9622c8906eb96d23818ecb6d)
+
+## 0.90.2
+
+* fix: add logger and error to editlog
+  * Associated pull request: [30804](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30804)
+  * Commit: [196df49a002eb0271a69a54968a355bfcc485d79](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/196df49a002eb0271a69a54968a355bfcc485d79)
 
 ## 0.90.1
 
