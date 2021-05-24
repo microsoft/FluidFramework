@@ -28,6 +28,7 @@
     "lint:fix": "npm run eslint:fix",
     "start": "node ./dist/nodeStressTest.js",
     "start:mini": "node ./dist/nodeStressTest.js --profile mini",
+    "start:hi": "node ./dist/mini.js",
     "tsc": "tsc",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
