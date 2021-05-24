@@ -65,7 +65,7 @@ packages/tools/**:
 packages/utils/odsp-doclib-utils/**:
 - markfields
 - curtisman
-packages/utils/telemtry-utils/**:
+packages/utils/telemetry-utils/**:
 - markfields
 - vladsud
 - wes-carlson
