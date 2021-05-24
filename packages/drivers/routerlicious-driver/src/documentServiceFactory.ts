@@ -19,16 +19,9 @@ import {
 } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
+import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
-
-export interface IRouterliciousDriverPolicies {
-    /**
-     * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
-     * Default: true
-     */
-    enablePrefetch: boolean;
-}
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,

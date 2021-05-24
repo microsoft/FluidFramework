@@ -15,7 +15,7 @@ import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousStorageRestWrapper } from "./restWrapper";
-import { IRouterliciousDriverPolicies } from "./documentServiceFactory";
+import { IRouterliciousDriverPolicies } from "./policies";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
