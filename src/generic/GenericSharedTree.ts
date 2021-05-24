@@ -389,7 +389,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
 
-		const editLog = new EditLog(editHistory);
+		const editLog = new EditLog(editHistory, this.logger);
 		const logViewer = new CachingLogViewer(
 			editLog,
 			Snapshot.fromTree(initialTree),
