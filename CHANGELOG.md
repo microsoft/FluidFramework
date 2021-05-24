@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.106.4
+
+* merge releases/2021.05.2
+  * Commit: [70ee75e33b1a2c3178d2efc56c90a96af17a6b69](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/70ee75e33b1a2c3178d2efc56c90a96af17a6b69)
+
 ## 0.106.3
 
 * fix: add missing dep, fix misleading param name, and bad comment
