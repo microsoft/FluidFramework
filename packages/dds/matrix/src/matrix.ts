@@ -21,7 +21,9 @@ import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
@@ -433,6 +435,28 @@ export class SharedMatrix<T extends Serializable = Serializable>
         };
 
         return tree;
+    }
+
+    /**
+     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
+     * objects.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
+        // serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        for (let r = 0; r < this.rowCount; r++) {
+            for (let c = 0; c < this.colCount; c++) {
+                serializer.stringify(this.getCell(r, c), this.handle);
+            }
+        }
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
     }
 
     /**
