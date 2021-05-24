@@ -446,9 +446,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // serializes.
         const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 
-        for (let r = 0; r < this.rowCount; r++) {
-            for (let c = 0; c < this.colCount; c++) {
-                serializer.stringify(this.getCell(r, c), this.handle);
+        for (let row = 0; row < this.rowCount; row++) {
+            for (let col = 0; col < this.colCount; col++) {
+                serializer.stringify(this.getCell(row, col), this.handle);
             }
         }
 
