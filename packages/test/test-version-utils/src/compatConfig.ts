@@ -35,13 +35,34 @@ interface CompatConfig {
     dataRuntime?: string | number,
 }
 
-function genConfig(compatVersion: number): CompatConfig[] {
+// we are currently supporting 0.39 long-term
+const LTSVersions = ["^0.39.0"];
+
+function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
         return [{
             name: `Non-Compat`,
             kind: CompatKind.None,
             compatVersion: 0,
         }];
+    }
+
+    if (typeof compatVersion === "string") {
+        return [
+            {
+                name: `compat LTS ${compatVersion} - old loader`,
+                kind: CompatKind.Loader,
+                compatVersion,
+                loader: compatVersion,
+            },
+            {
+                name: `compat LTS ${compatVersion} - old loader + old driver`,
+                kind: CompatKind.Loader,
+                compatVersion,
+                driver: compatVersion,
+                loader: compatVersion,
+            },
+        ];
     }
 
     const allOld = {
@@ -167,7 +188,7 @@ nconf.argv({
         fluid: {
             test: {
                 compat: undefined,
-                compatVersion: [0, -1, -2],
+                compatVersion: [0, -1, -2, ...LTSVersions],
                 driver: "local",
             },
         },
