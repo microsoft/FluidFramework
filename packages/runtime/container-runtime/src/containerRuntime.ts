@@ -72,7 +72,6 @@ import {
     ITree,
     MessageType,
     IVersion,
-    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -98,6 +97,7 @@ import {
 import {
     addBlobToSummary,
     addTreeToSummary,
+    assertIsSummaryTree,
     convertToSummaryTree,
     createRootSummarizerNodeWithGC,
     FluidSerializer,
@@ -1643,10 +1643,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
-        assert(summarizeResult.summary.type === SummaryType.Tree,
-            0x12f /* "Container Runtime's summarize should always return a tree" */);
+        assertIsSummaryTree(summarizeResult, "Container Runtime's summarize should always return a tree");
 
-        return summarizeResult as ISummaryTreeWithStats;
+        return summarizeResult;
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */

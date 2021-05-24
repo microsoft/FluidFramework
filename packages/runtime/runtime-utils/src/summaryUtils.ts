@@ -97,6 +97,20 @@ export function calculateStats(summary: ISummaryTree): ISummaryStats {
     return stats;
 }
 
+/**
+ * Validates that the given summarize result is of type ISummaryTreeWithStats.
+ * Ensures that after any call to assertIsSummaryTree, any summarizeResult passed in will be known to
+ * be an ISummaryTreeWithStats.
+ */
+export function assertIsSummaryTree(
+    summarizeResult: ISummarizeResult,
+    msg: string,
+): asserts summarizeResult is ISummaryTreeWithStats {
+    if (summarizeResult.summary.type !== SummaryType.Tree) {
+        throw new Error(msg);
+    }
+}
+
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void {
     const blob: ISummaryBlob = {
         type: SummaryType.Blob,
