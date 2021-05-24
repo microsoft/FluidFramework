@@ -2,7 +2,7 @@
 # for more details.
 
 "area: dds":
-  - any: ["/packages/dds/**", "!/packages/dds/sequence/**"]
+  - "/packages/dds/**"
 
 "area: dds: sharedstring":
   - /packages/dds/sequence/**
@@ -32,6 +32,9 @@
 "area: server":
   - /server/**
 
+"area: test":
+  - packages/test/**
+
 "area: tools":
   - /tools/**
 
@@ -45,6 +48,3 @@
 
 documentation:
   - /docs/content/**
-
-testing:
-- packages/test/**
