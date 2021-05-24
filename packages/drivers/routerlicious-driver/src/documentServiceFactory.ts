@@ -22,15 +22,34 @@ import { DocumentService } from "./documentService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
+export interface IRouterliciousDriverPolicies {
+    /**
+     * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
+     * Default: true
+     */
+    enablePrefetch: boolean;
+}
+
+const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
+    enablePrefetch: true,
+};
+
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
  * use the routerlicious implementation.
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
+    private readonly driverPolicies: IRouterliciousDriverPolicies;
+
     constructor(
         private readonly tokenProvider: ITokenProvider,
+        driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        this.driverPolicies = {
+            ...defaultRouterliciousDriverPolicies,
+            ...driverPolicies,
+        };
     }
 
     public async createContainer(
@@ -112,6 +131,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             logger2,
             this.tokenProvider,
             tenantId,
-            documentId);
+            documentId,
+            this.driverPolicies);
     }
 }

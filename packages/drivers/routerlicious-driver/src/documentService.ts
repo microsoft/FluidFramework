@@ -15,6 +15,7 @@ import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousStorageRestWrapper } from "./restWrapper";
+import { IRouterliciousDriverPolicies } from "./documentServiceFactory";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -30,6 +31,7 @@ export class DocumentService implements api.IDocumentService {
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
+        private readonly driverPolicies: IRouterliciousDriverPolicies,
     ) {
     }
 
@@ -60,8 +62,17 @@ export class DocumentService implements api.IDocumentService {
             false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
+            caching: this.driverPolicies.enablePrefetch
+                ? api.LoaderCachingPolicy.Prefetch
+                : api.LoaderCachingPolicy.NoCaching,
+        };
 
-        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager, this.logger);
+        this.documentStorageService = new DocumentStorageService(
+            this.documentId,
+            gitManager,
+            this.logger,
+            documentStorageServicePolicies);
         return this.documentStorageService;
     }
 
