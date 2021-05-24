@@ -30,7 +30,7 @@ describeNoCompat(`Container Serialization Backwards Compatibility`, (getTestObje
     const loaderContainerTracker = new LoaderContainerTracker();
     let disableIsolatedChannels: boolean;
     let filename: string;
-    const contentFolder = "content/serializedContainerTestContent"
+    const contentFolder = "content/serializedContainerTestContent";
 
     for (filename of recurseFiles(contentFolder)) {
         disableIsolatedChannels = false;
