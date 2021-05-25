@@ -48,13 +48,8 @@ class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         // We'll create a dice roller for each methodology.
-        const taskManagerDiceRollerComponentRuntime =
-            await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
-        await requestFluidObject<IDiceRoller>(taskManagerDiceRollerComponentRuntime, "/");
-
-        const oldestClientDiceRollerComponentRuntime =
-            await runtime.createRootDataStore(OldestClientDiceRoller.ComponentName, oldestClientDiceId);
-        await requestFluidObject<IDiceRoller>(oldestClientDiceRollerComponentRuntime, "/");
+        await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
+        await runtime.createRootDataStore(OldestClientDiceRoller.ComponentName, oldestClientDiceId);
     }
 }
 
