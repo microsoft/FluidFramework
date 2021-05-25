@@ -95,11 +95,11 @@ describe(`Container Serialization Backwards Compatibility`, () => {
         const sparseMatrixId = "sparsematrixKey";
         const sharedCounterId = "sharedcounterKey";
 
-        function createTestLoader(): Loader {    
+        function createTestLoader(): Loader {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
             const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
             const urlResolver = new LocalResolver();
-    
+
             const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
                 [sharedStringId, SharedString.getFactory()],
                 [sharedMapId, SharedMap.getFactory()],
@@ -116,8 +116,8 @@ describe(`Container Serialization Backwards Compatibility`, () => {
                 [[codeDetails, factory]],
                 { summaryOptions: { disableIsolatedChannels } });
             const testLoader = new Loader({
-                urlResolver: urlResolver,
-                documentServiceFactory: documentServiceFactory,
+                urlResolver,
+                documentServiceFactory,
                 codeLoader,
             });
             loaderContainerTracker.add(testLoader);
