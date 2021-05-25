@@ -19,8 +19,13 @@ import {
 } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
+import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+
+const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
+    enablePrefetch: true,
+};
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -28,9 +33,16 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
+    private readonly driverPolicies: IRouterliciousDriverPolicies;
+
     constructor(
         private readonly tokenProvider: ITokenProvider,
+        driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        this.driverPolicies = {
+            ...defaultRouterliciousDriverPolicies,
+            ...driverPolicies,
+        };
     }
 
     public async createContainer(
@@ -112,6 +124,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             logger2,
             this.tokenProvider,
             tenantId,
-            documentId);
+            documentId,
+            this.driverPolicies);
     }
 }
