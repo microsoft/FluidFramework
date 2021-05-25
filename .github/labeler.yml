@@ -24,7 +24,7 @@
 
 # Add "area: repo" label to any root or .github changes
 "area: repo":
-  - any: ["./*", ".github/**", "!BREAKING.md"]
+  - any: ["*", ".github/**", "!BREAKING.md"]
 
 "area: runtime":
   - packages/runtime/**
