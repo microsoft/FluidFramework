@@ -1328,7 +1328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        assert(this.service !== undefined, "services must be defined");
+        assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
         let storageService = await this.service.connectToStorage();
         // Enable prefetching for the service unless it has a caching policy set otherwise:
         if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {

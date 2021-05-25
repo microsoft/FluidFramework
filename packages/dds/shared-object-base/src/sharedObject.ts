@@ -242,33 +242,39 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).getGCData}
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
-        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
-        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
-        // See: https://github.com/microsoft/FluidFramework/issues/4547
-
-        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created below)
-        // to serialize handles in this object's data. The routes of these serialized handles are outbound routes
-        // to other Fluid objects.
+        // Set _isSummarizing to true. This flag is used to ensure that we only use SummarySerializer (created in
+        // getGCDataCore) to serialize handles in this object's data.
         assert(!this._isSummarizing, 0x078 /* "Possible re-entrancy! Summary should not already be in progress." */);
         this._isSummarizing = true;
 
         let gcData: IGarbageCollectionData;
         try {
-            const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-            this.snapshotCore(serializer);
-
-            // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
-            // routes of handles serialized during snapshot.
-            gcData = {
-                gcNodes: { "/": serializer.getSerializedRoutes() },
-            };
-
+            gcData = this.getGCDataCore();
             assert(this._isSummarizing, 0x079 /* "Possible re-entrancy! Summary should have been in progress." */);
         } finally {
             this._isSummarizing = false;
         }
 
         return gcData;
+    }
+
+    /**
+     * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
+     * other GC nodes.
+     * Derived classes must override this to provide custom list of references to other GC nodes.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // We run the full summarize logic to get the list of outbound routes from this object. This is a little
+        // expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
+        // See: https://github.com/microsoft/FluidFramework/issues/4547
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+        this.snapshotCore(serializer);
+
+        // The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+        // routes of handles serialized during snapshot.
+        return {
+            gcNodes: { "/": serializer.getSerializedRoutes() },
+        };
     }
 
     /**

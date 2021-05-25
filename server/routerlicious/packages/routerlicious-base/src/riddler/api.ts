@@ -119,11 +119,11 @@ export function create(
     });
 
     /**
-     * Deletes the given tenant
+     * Deletes a tenant by adding a disabled flag
      */
     router.delete("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.deleteTenant(tenantId);
+        const tenantP = manager.disableTenant(tenantId);
         handleResponse(tenantP, response);
     });
 
