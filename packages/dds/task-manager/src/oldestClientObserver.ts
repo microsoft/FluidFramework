@@ -6,7 +6,7 @@
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
-import { IOldestClientObservable, IOldestClientObservableEvents, IOldestClientObserver } from "./interfaces";
+import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObserver } from "./interfaces";
 
 /**
  * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
@@ -63,7 +63,7 @@ import { IOldestClientObservable, IOldestClientObservableEvents, IOldestClientOb
  * });
  * ```
  */
-export class OldestClientObserver extends TypedEventEmitter<IOldestClientObservableEvents>
+export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents>
     implements IOldestClientObserver {
     private readonly quorum: IQuorum;
     private currentIsOldest: boolean = false;
