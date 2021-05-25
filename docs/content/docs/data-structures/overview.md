@@ -18,7 +18,8 @@ Below we've enumerated the data structures and described when they may be most u
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy.
 
 * [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) - a basic key-value data structure
-* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) – a SharedMap with hierarchical paths instead of simple keys
+* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) – a SharedMap with hierarchical paths instead of
+simple keys
 * [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) – a “single-object SharedMap”; useful for wrapping objects.
 
 ### Key Value Scenarios
@@ -92,3 +93,13 @@ Typical scenarios require the connected clients to "agree" on some course of act
 ## Experimental Data Structures
 
 {{< BetaFlag >}}
+
+### Property DDS
+
+[PropertyDDS](https://github.com/microsoft/FluidFramework/tree/main/experimental/PropertyDDS) represents the managed
+data in a typed, hierarchical data model called a *PropertySet*. This model has many similarities to JSON, but is a
+richer model, which adds more fine-grained types, additional collection types, references and gives the ability to use
+schemas to describe the structure of properties.
+
+A PropertySet is a tree structured data model in which every node of the tree is a property. More documentation on this
+DDS will be available over time.
