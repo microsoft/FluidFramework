@@ -142,8 +142,8 @@ Refer to later sections for more details about the events raised by each DDS.
 Because distributed data structures can be stored within each other, you can combine DDSes to create collaborative data
 models. The following two questions can help determine the best data structures to use for a collaborative data model.
 
-- What is the _granularity of collaboration_ that my scenario needs?
-- How does the merge behavior of a distributed data structure affect this?
+* What is the _granularity of collaboration_ that my scenario needs?
+* How does the merge behavior of a distributed data structure affect this?
 
 In your scenario, what do users need to individually edit? For example, imagine that you are storing data about
 geometric shapes because you're building a collaborative editing tool. You might store the coordinates of the shape, its
@@ -204,23 +204,23 @@ DataObject](./dataobject-aqueduct.md) section.
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
-- [SharedMap][] -- a basic key-value distributed data structure.
-- [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
-- [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
+* [SharedMap][] -- a basic key-value distributed data structure.
+* [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
+* [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Sequences
 
 These DDSes are used for storing sequential data. They are all optimistic.
 
-- [SharedNumberSequence][] -- a distributed sequence of numbers.
-- [SharedObjectSequence][] -- a distributed sequence of objects.
-- [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
+* [SharedNumberSequence][] -- a distributed sequence of numbers.
+* [SharedObjectSequence][] -- a distributed sequence of objects.
+* [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
 ### Specialized data structures
 
-- [SharedCounter][] -- a distributed counter.
-- [SharedString][] -- a specialized data structure for handling collaborative text.
-- [Ink][] -- a specialized data structure for ink data.
+* [SharedCounter][] -- a distributed counter.
+* [SharedString][] -- a specialized data structure for handling collaborative text.
+* [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->

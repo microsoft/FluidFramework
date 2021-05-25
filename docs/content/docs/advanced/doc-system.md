@@ -3,6 +3,7 @@ title: Using the documentation system effectively
 menuPosition: 3
 ---
 
+<!-- markdownlint-disable MD036 -->
 
 The Fluid docs are built using [Hugo](https://gohugo.io/). It contains many of the features one would expect from a
 modern documentation system. Content is written in Markdown.
@@ -236,7 +237,7 @@ build time.
 
 **Input**
 
-```
+```golang
 {{% include file="content/docs/advanced/images/example.ditaa" safeHTML=true %}}
 ```
 

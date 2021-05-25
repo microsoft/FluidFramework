@@ -37,8 +37,8 @@ topic](../advanced/summarizer.md).
 
 ## Drivers
 
-The Fluid Framework uses a loose-coupling architecture for integrating with Fluid services. Drivers are used to abstract the
-service-specific behavior. This enables an implementer to use any ordering and storage architecture or technology to
+The Fluid Framework uses a loose-coupling architecture for integrating with Fluid services. Drivers are used to abstract
+the service-specific behavior. This enables an implementer to use any ordering and storage architecture or technology to
 implement the Fluid service.
 
 

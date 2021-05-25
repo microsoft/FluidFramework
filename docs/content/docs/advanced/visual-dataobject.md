@@ -567,7 +567,7 @@ Now we are going to take the scaffolding that we set up earlier and add in our R
 update to our local React state update. If you read through Option A, you will see that the Fluid React libraries will
 now handle much of the event-listening logic that we wrote earlier.
 
-##### Final code
+#### Final React code
 
 ```typescript
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";

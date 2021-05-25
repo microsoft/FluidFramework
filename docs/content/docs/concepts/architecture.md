@@ -72,8 +72,8 @@ resolver,** connects to the Fluid service using the **Fluid service driver**, an
 
 ![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
 
-The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
-is located. The Fluid service driver consumes this information.
+The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that
+service it is located. The Fluid service driver consumes this information.
 
 The **Fluid service driver** connects to the Fluid service, requests space on the server for new Fluid containers, and
 creates the three objects, **DeltaConnection**, **DeltaStorageService**, and **DocumentStorageService**, that the Fluid
