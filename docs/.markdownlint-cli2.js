@@ -5,9 +5,13 @@
 
 module.exports = {
     "customRules": [
-        "markdownlint-rule-github-internal-links"
+        "markdownlint-rule-emphasis-style",
+        "markdownlint-rule-github-internal-links",
     ],
     "config": {
+        "emphasis-style": {
+            style: "*"
+        },
         "first-line-heading": { // MD041
             "level": 2,
         },
@@ -23,13 +27,6 @@ module.exports = {
         "no-multiple-blanks": { // MD012
             "maximum": 2,
         },
-        "ul-style": { // MD004
-            "style": "consistent",
-        }
-        // "MD010": false,
-        // "MD025": false,
-        // "MD026": false,
-        // "MD028": false
     },
     "globs": [
         "content/**/*.md",

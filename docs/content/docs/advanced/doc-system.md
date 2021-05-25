@@ -147,7 +147,7 @@ This is a warning
 
 {{< callout danger >}}
 
-This is a _dangerous_ warning
+This is a *dangerous* warning
 
 {{< /callout >}}
 
@@ -161,7 +161,7 @@ By default, each box's heading is the type. You can change this by providing a t
 ```markdown
 {{%/* callout note "A note about syntax" */%}}
 
-Markdown formatting _goes_ **here.**
+Markdown formatting *goes* **here.**
 
 {{%/* /callout */%}}
 ```
@@ -170,7 +170,7 @@ Markdown formatting _goes_ **here.**
 
 {{% callout note "A note about syntax" %}}
 
-Markdown formatting _goes_ **here.**
+Markdown formatting *goes* **here.**
 
 {{% /callout %}}
 

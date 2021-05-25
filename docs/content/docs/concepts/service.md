@@ -3,7 +3,7 @@ title: The Fluid service
 menuPosition: 6
 ---
 
-The Fluid Framework contains a service component. A reference implementation of a Fluid service called _Routerlicious_ is
+The Fluid Framework contains a service component. A reference implementation of a Fluid service called *Routerlicious* is
 included in the FluidFramework repo. Note that Routerlicious is one of many Fluid services that could be implemented.
 The Fluid Framework uses a loose-coupling architecture for integrating with services, so Fluid is not limited to a single
 implementation.
@@ -21,7 +21,7 @@ Fluid services like Routerlicious have three responsibilities:
 ## Ordering and drivers
 
 The Fluid service ensures that all operations are ordered and also broadcasts the operations to other connected clients.
-We sometimes refer to this as "op routing;" this is the source of the name _Routerlicious_.
+We sometimes refer to this as "op routing;" this is the source of the name *Routerlicious*.
 
 
 ## Summaries

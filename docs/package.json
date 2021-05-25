@@ -51,6 +51,7 @@
     "markdown-magic": "^1.0.0",
     "markdown-magic-package-scripts": "^1.2.1",
     "markdownlint-cli2": "^0.1.3",
+    "markdownlint-rule-emphasis-style": "^1.0.1",
     "markdownlint-rule-github-internal-links": "^0.0.2",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",

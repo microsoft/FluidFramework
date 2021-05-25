@@ -3,19 +3,19 @@ title: Introducing distributed data structures
 menuPosition: 2
 ---
 
-The Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
-client has access to the same state. We call them _distributed data structures_ because they are similar to data
+The Fluid Framework provides developers with *distributed data structures* (DDSes) that automatically ensure that each
+client has access to the same state. We call them *distributed data structures* because they are similar to data
 structures used commonly when programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by
 DDSes are designed to be familiar to programmers who've used these types of data structures before. For example, the
 [SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary data structure, and provides `get`
 and `set` methods to store and retrieve data in the map.
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
-However, a DDS is not _just_ a local object. A DDS can also be changed by other users that are editing.
+However, a DDS is not *just* a local object. A DDS can also be changed by other users that are editing.
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with "Shared" by convention. _SharedMap_, _SharedMatrix_, _SharedString_,
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedMatrix*, *SharedString*,
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
@@ -31,14 +31,14 @@ Understanding the merge logic enables you to "preserve user intent" when users a
 that the merge behavior should match what users intend or expect as they are editing data.
 
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
-structures like SharedMap, is _last writer wins_ (LWW). With this merge strategy, when multiple clients write different
+structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
 [API documentation]({{< relref "/docs/apis" >}}) for each DDS for more details about the merge strategy it uses.
 
 ## Performance characteristics
 
 Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
-generally fall into two broad categories: _optimistic_ and _consensus-based_.
+generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 {{% callout tip "See also" %}}
 
@@ -50,7 +50,7 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 ### Optimistic data structures
 
 Optimistic DDSes are capable of applying Fluid operations before they are sequenced by the Fluid service. The local
-changes are said to be applied _optimistically_, hence the name _optimistic DDSes_. The DDSes also apply remote
+changes are said to be applied *optimistically*, hence the name *optimistic DDSes*. The DDSes also apply remote
 operations as they are made in a consistent way.
 
 Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], [SharedMatrix][], and
@@ -78,10 +78,10 @@ To understand why consensus-based DDSes are useful, consider implementing a stac
 know!) to implement a stack DDS as an optimistic one. In the ops-based Fluid architecture, one would define an operation
 like `pop`, and when a client sees that operation in the op stream, it pops a value from its local stack object.
 
-Imagine that client A pops, and client B also pops shortly after that, but _before_ it sees client A's remote pop
+Imagine that client A pops, and client B also pops shortly after that, but *before* it sees client A's remote pop
 operation. With an optimistic DDS, the client will apply the local operation before the server even sees it. It doesn't
-wait. Thus, client A pops a value off the local stack, and client B pops the same value -- even though it was _supposed_
-to pop the second value. This represents divergent behavior; we expect a _distributed_ stack to ensure that `pop`
+wait. Thus, client A pops a value off the local stack, and client B pops the same value -- even though it was *supposed*
+to pop the second value. This represents divergent behavior; we expect a *distributed* stack to ensure that `pop`
 operations -- and any other operation for that matter -- are applied such that the clients reach a consistent state
 eventually. The optimistic implementation we just described violates that expectation.
 
@@ -103,8 +103,8 @@ the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like numbers and strings, and _JSON serializable_ objects. For
-objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called _handles_, which _are_
+Distributed data structures can store primitive values like numbers and strings, and *JSON serializable* objects. For
+objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called *handles*, which *are*
 serializable.
 
 When storing a DDS within another DDS, you must store its handle, not the DDS itself. For example, consider this code:
@@ -142,7 +142,7 @@ Refer to later sections for more details about the events raised by each DDS.
 Because distributed data structures can be stored within each other, you can combine DDSes to create collaborative data
 models. The following two questions can help determine the best data structures to use for a collaborative data model.
 
-* What is the _granularity of collaboration_ that my scenario needs?
+* What is the *granularity of collaboration* that my scenario needs?
 * How does the merge behavior of a distributed data structure affect this?
 
 In your scenario, what do users need to individually edit? For example, imagine that you are storing data about
@@ -163,7 +163,7 @@ Let's assume for a moment that all of the data about a shape is stored as a sing
 }
 ```
 
-If we want to make this data collaborative using Fluid, the most direct -- _but ultimately flawed_ -- approach is to
+If we want to make this data collaborative using Fluid, the most direct -- *but ultimately flawed* -- approach is to
 store our shape object in a SharedMap. Our SharedMap would look something like this:
 
 ```json
@@ -184,7 +184,7 @@ other user.
 Imagine that you are collaborating with a colleague, and you change the shape's width while your colleague changes the
 shape's height. This will generate two operations: a `set` operation for you, and another `set` operation for your
 colleague. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's
-merge behavior is LWW. Since we're storing the shape as an object, both `set` operations _set the whole object_.
+merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
 
 This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
