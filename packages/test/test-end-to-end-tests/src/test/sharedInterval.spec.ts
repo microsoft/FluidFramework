@@ -130,6 +130,36 @@ function testIntervalCollection(intervalCollection: IntervalCollection<SequenceI
     }
     assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
 
+    if (intervalArray[0]) {
+        let interval: SequenceInterval;
+
+        let id = intervalArray[0].getIntervalId();
+        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
+        if (id !== undefined) {
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, intervalArray[0]);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, intervalArray[0]);
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, undefined);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, undefined);
+        }
+
+        id = intervalArray[intervalArray.length - 1].getIntervalId();
+        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
+        if (id !== undefined) {
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, undefined);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, undefined);
+        }
+    }
+
     intervalCollection.delete(0, 0);
     intervalCollection.delete(0, 1);
     intervalCollection.delete(0, 2);

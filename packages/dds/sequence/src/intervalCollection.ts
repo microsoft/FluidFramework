@@ -9,6 +9,9 @@ import { EventEmitter } from "events";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
+
+const reservedIntervalIdKey = "intervalId";
 
 export interface ISerializedInterval {
     sequenceNumber: number;
@@ -39,6 +42,15 @@ export class Interval implements ISerializableInterval {
         props?: MergeTree.PropertySet) {
         if (props) {
             this.addProperties(props);
+        }
+    }
+
+    public getIntervalId(): string | undefined {
+        if (this.properties) {
+            const id = this.properties[reservedIntervalIdKey];
+            if (id !== undefined) {
+                return id.toString() as string;
+            }
         }
     }
 
@@ -169,6 +181,15 @@ export class SequenceInterval implements ISerializableInterval {
             this.checkOverlaps(b, result);
         }
         return result;
+    }
+
+    public getIntervalId(): string | undefined {
+        if (this.properties) {
+            const id = this.properties[reservedIntervalIdKey];
+            if (id !== undefined) {
+                return id.toString() as string;
+            }
+        }
     }
 
     public union(b: SequenceInterval) {
@@ -308,6 +329,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.map(fn);
     }
 
+    public mapUntil(fn: (interval: TInterval) => boolean) {
+        this.intervalTree.mapUntil(fn);
+    }
+
     public gatherIterationResults(
         results: TInterval[],
         iteratesForward: boolean,
@@ -431,7 +456,12 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return transientInterval;
     }
 
-    public createInterval(start: number, end: number, intervalType: MergeTree.IntervalType) {
+    public removeExistingInterval(interval: TInterval) {
+        this.intervalTree.removeExisting(interval);
+        this.endIntervalTree.removeExisting(interval);
+    }
+
+    public createInterval(start: number, end: number, intervalType: MergeTree.IntervalType): TInterval {
         return this.helpers.create(this.label, start, end, this.client, intervalType);
     }
 
@@ -441,16 +471,29 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         end: number,
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
-        const interval = this.createInterval(start, end, intervalType);
+        const interval: TInterval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
             if (this.label && (this.label.length > 0)) {
                 interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
             }
+            interval.properties[reservedIntervalIdKey] = uuid();
             this.intervalTree.put(interval, this.conflictResolver);
             this.endIntervalTree.put(interval, interval, this.endConflictResolver);
         }
         return interval;
+    }
+
+    public getIntervalById(id: string) {
+        let result: TInterval | undefined;
+        this.mapUntil((interval: TInterval) => {
+            if (interval.properties && interval.properties[reservedIntervalIdKey].toString() === id) {
+                result = interval;
+                return false;
+            }
+            return true;
+        });
+        return result;
     }
 
     public serialize() {
@@ -734,9 +777,24 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         return interval;
     }
 
-    public deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
-        const interval = this.localCollection.removeInterval(serializedInterval.start, serializedInterval.end);
+    private deleteExistingInterval(interval: TInterval) {
+        // The given interval is known to exist in the collection.
+        this.localCollection.removeExistingInterval(interval);
+        const serializedInterval: ISerializedInterval = interval.serialize(this.client);
+        this.submitDelete(interval, serializedInterval, true, undefined);
+    }
 
+    public deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+        // An interval with the given start and end is not known to exist in the collection.
+        const interval = this.localCollection.removeInterval(serializedInterval.start, serializedInterval.end);
+        this.submitDelete(interval, serializedInterval, local, op);
+    }
+
+    private submitDelete(
+        interval: TInterval,
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage) {
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
@@ -749,8 +807,18 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         }
 
         this.emit("deleteInterval", interval, local, op);
+    }
 
-        return this;
+    public getIntervalById(id: string) {
+        return this.localCollection.getIntervalById(id);
+    }
+
+    public removeIntervalById(id: string) {
+        const interval = this.localCollection.getIntervalById(id);
+        if (interval) {
+            this.deleteExistingInterval(interval);
+        }
+        return interval;
     }
 
     public serializeInternal() {
@@ -939,5 +1007,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         }
 
         this.view.gatherIterationResults(results, iteratesForward, start, end);
+    }
+
+    public getIntervalById(id: string) {
+        if (this.view) {
+            return this.view.getIntervalById(id);
+        }
+    }
+
+    public removeIntervalById(id: string) {
+        if (this.view) {
+            return this.view.removeIntervalById(id);
+        }
     }
 }
