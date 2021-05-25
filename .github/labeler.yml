@@ -2,49 +2,49 @@
 # for more details.
 
 "area: dds":
-  - "/packages/dds/**"
+  - "packages/dds/**"
 
 "area: dds: sharedstring":
-  - /packages/dds/sequence/**
+  - packages/dds/sequence/**
 
 "area: driver":
-  - /packages/drivers/**
+  - packages/drivers/**
 
 "area: examples":
-  - /examples/**
+  - examples/**
 
 "area: framework":
-  - /packages/framework/**
+  - packages/framework/**
 
 "area: host":
-  - /packages/hosts/**
+  - packages/hosts/**
 
 "area: loader":
-  - /packages/hosts/**
+  - packages/loader/**
 
 # Add "area: repo" label to any root or .github changes
 "area: repo":
-  - any: ["./*", "./.github/**", "!./BREAKING.md"]
+  - any: ["*", ".github/**", "!BREAKING.md"]
 
 "area: runtime":
-  - /packages/runtime/**
+  - packages/runtime/**
 
 "area: server":
-  - /server/**
+  - server/**
 
 "area: test":
   - packages/test/**
 
 "area: tools":
-  - /tools/**
+  - tools/**
 
 "area: website":
-  - any: ["/docs/**", "!/docs/content/**"]
+  - any: ["docs/**", "!docs/content/**"]
 
 # Any change to BREAKING.md or to any api-report path in the repo
 "breaking change":
-  - ./BREAKING.md
+  - BREAKING.md
   - api-report/*
 
 documentation:
-  - /docs/content/**
+  - docs/content/**
