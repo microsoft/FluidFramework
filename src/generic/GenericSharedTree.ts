@@ -256,7 +256,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
-	private async uploadEditChunk(edits: EditWithoutId<TChange>[], startRevision: number): Promise<void> {
+	private async uploadEditChunk(edits: readonly EditWithoutId<TChange>[], startRevision: number): Promise<void> {
 		try {
 			const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
 			this.submitLocalMessage({

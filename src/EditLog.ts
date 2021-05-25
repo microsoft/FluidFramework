@@ -21,14 +21,14 @@ import { compareFiniteNumbers } from './SnapshotUtilities';
  */
 export interface OrderedEditSet<TChange> {
 	/**
-	 * @returns the length of this `OrderedEditSet`
+	 * The length of this `OrderedEditSet`.
 	 */
-	length: number;
+	readonly length: number;
 
 	/**
-	 * @returns the edit IDs of all edits in the log.
+	 * The edit IDs of all edits in the log.
 	 */
-	editIds: EditId[];
+	readonly editIds: readonly EditId[];
 
 	/**
 	 * @returns the index of the edit with the given editId within this `OrderedEditSet`.
@@ -78,7 +78,7 @@ export interface EditLogSummary<TChange> {
 	 * A of list of serialized chunks and their corresponding keys.
 	 * Start revision is the index of the first edit in the chunk in relation to the edit log.
 	 */
-	readonly editChunks: readonly { startRevision: number; chunk: EditChunkOrHandle<TChange> }[];
+	readonly editChunks: readonly { readonly startRevision: number; readonly chunk: EditChunkOrHandle<TChange> }[];
 
 	/**
 	 * A list of edits IDs for all sequenced edits.
@@ -92,7 +92,7 @@ export interface EditLogSummary<TChange> {
  * @internal
  */
 export interface EditHandle {
-	get: () => Promise<ArrayBufferLike>;
+	readonly get: () => Promise<ArrayBufferLike>;
 }
 
 interface SequencedOrderedEditId {
@@ -114,7 +114,7 @@ interface EditChunk<TChange> {
  * Either a chunk of edits or a handle that can be used to load that chunk.
  * @internal
  */
-export type EditChunkOrHandle<TChange> = EditHandle | EditWithoutId<TChange>[];
+export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
 
 type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 
@@ -190,7 +190,10 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 				this.editChunks.set(startRevision, { edits: chunk });
 			} else {
 				this.editChunks.set(startRevision, {
-					handle: chunk,
+					// This typecast should not be required,
+					// however typescript fails to infer types correctly in the case of readonly arrays guarded by Array.isArray
+					// See https://github.com/microsoft/TypeScript/issues/17002
+					handle: chunk as EditHandle,
 				});
 			}
 		});
@@ -360,7 +363,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	/**
 	 * @returns The edits of edit chunks that do not have associated edit handles, does not include the last edit chunk if it is not full.
 	 */
-	public *getEditChunksReadyForUpload(): Iterable<[number, EditWithoutId<TChange>[]]> {
+	public *getEditChunksReadyForUpload(): Iterable<[number, readonly EditWithoutId<TChange>[]]> {
 		const maxStartRevision = this.editChunks.maxKey();
 
 		if (maxStartRevision === undefined) {
@@ -432,8 +435,9 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 			// Add to the last edit chunk if it has room, otherwise create a new chunk.
 			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
 			// and so a new chunk should be created.
-			const { edits: lastEditChunk } = lastPair[1];
+			const { edits: lastEditChunk, handle } = lastPair[1];
 			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
+				assert(handle === undefined, 'chunks which are modified must not already have been uploaded');
 				lastEditChunk.push(editWithoutId);
 			} else {
 				this.editChunks.set(startRevision, { edits });

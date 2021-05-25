@@ -178,7 +178,7 @@ export interface EditBase<TChange> {
 // Warning: (ae-internal-missing-underscore) The name "EditChunkOrHandle" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type EditChunkOrHandle<TChange> = EditHandle | EditWithoutId<TChange>[];
+export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
 
 // @public
 export interface EditCommittedEventArguments<TSharedTree> {
@@ -195,7 +195,7 @@ export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArgumen
 // @internal
 export interface EditHandle {
     // (undocumented)
-    get: () => Promise<ArrayBufferLike>;
+    readonly get: () => Promise<ArrayBufferLike>;
 }
 
 // @public
@@ -215,8 +215,8 @@ export type EditingResult<TChange> = {
 // @internal
 export interface EditLogSummary<TChange> {
     readonly editChunks: readonly {
-        startRevision: number;
-        chunk: EditChunkOrHandle<TChange>;
+        readonly startRevision: number;
+        readonly chunk: EditChunkOrHandle<TChange>;
     }[];
     readonly editIds: readonly EditId[];
 }
@@ -384,8 +384,7 @@ export interface NodeInTrait {
 
 // @public @sealed
 export interface OrderedEditSet<TChange> {
-    // (undocumented)
-    editIds: EditId[];
+    readonly editIds: readonly EditId[];
     // (undocumented)
     getEditAtIndex(index: number): Promise<Edit<TChange>>;
     // (undocumented)
@@ -396,8 +395,7 @@ export interface OrderedEditSet<TChange> {
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
-    // (undocumented)
-    length: number;
+    readonly length: number;
     // (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
     // (undocumented)

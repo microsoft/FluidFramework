@@ -42,12 +42,12 @@ export interface EditResultCacheEntry {
 	/**
 	 * The snapshot resulting from an edit.
 	 */
-	snapshot: Snapshot;
+	readonly snapshot: Snapshot;
 	/**
 	 * The status code for the edit that produced the snapshot.
 	 * Undefined when the snapshot was loaded from a summary.
 	 */
-	status?: EditStatus;
+	readonly status?: EditStatus;
 }
 
 /**
