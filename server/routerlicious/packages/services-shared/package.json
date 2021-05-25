@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.30.0-0",
+    "@fluidframework/common-utils": "^0.30.0",
     "@fluidframework/gitresources": "^0.1025.0",
     "@fluidframework/protocol-base": "^0.1025.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
@@ -42,7 +42,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0-0",
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/debug": "^4.1.5",
     "@types/ioredis": "^4.22.0",
