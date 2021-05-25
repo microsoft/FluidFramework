@@ -25,7 +25,3 @@ describe("stress test", () => {
         });
     });
 });
-
-// export async function g() {
-//     await main();
-// }
