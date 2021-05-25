@@ -404,9 +404,11 @@ export class DataStores implements IDisposable {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                // be a path from the root.
-                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                    // be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                }
             }));
 
         // Get the outbound routes and add a GC node for this channel.
