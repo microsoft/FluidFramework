@@ -4,7 +4,7 @@
  */
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import { IContainer } from "@fluidframework/container-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { oldestClientDiceId, taskManagerDiceId, TaskSelectionFactory } from "./containerCode";
 import { IDiceRoller } from "./interface";
@@ -25,21 +25,6 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
-async function requestDiceRoller(container: IContainer, id: string): Promise<IDiceRoller> {
-    const response = await container.request({ url: id });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${id}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${id}"`);
-    }
-
-    // In this app, we know our container code will respond to these IDs with IDiceRoller data objects.
-    const diceRoller: IDiceRoller = response.value;
-    return diceRoller;
-}
-
 async function start(): Promise<void> {
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
@@ -49,8 +34,8 @@ async function start(): Promise<void> {
     const container = await getTinyliciousContainer(documentId, TaskSelectionFactory, createNew);
 
     // We'll use a separate dice roller for each methodology.
-    const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
-    const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
+    const taskManagerDiceRoller: IDiceRoller = await requestFluidObject<IDiceRoller>(container, taskManagerDiceId);
+    const oldestClientDiceRoller: IDiceRoller = await requestFluidObject<IDiceRoller>(container, oldestClientDiceId);
 
     // Demo 1: Using TaskManager
     const taskManagerDiv = document.createElement("div");
