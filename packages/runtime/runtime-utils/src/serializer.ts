@@ -44,7 +44,7 @@ export class FluidSerializer implements IFluidSerializer {
         bind: IFluidHandle,
     ) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
-        // return the result of 'recursivelyEncode()'.
+        // return the result of 'recursivelyReplace()'.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return !!input && typeof input === "object"
             ? this.recursivelyReplace(input, this.encodeValue, bind)
@@ -62,7 +62,7 @@ export class FluidSerializer implements IFluidSerializer {
      */
      public decode(input: any) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
-        // return the result of 'recursivelyDecode()'.
+        // return the result of 'recursivelyReplace()'.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return !!input && typeof input === "object"
             ? this.recursivelyReplace(input, this.decodeValue)
@@ -70,28 +70,19 @@ export class FluidSerializer implements IFluidSerializer {
     }
 
     public stringify(input: any, bind: IFluidHandle) {
-        return JSON.stringify(input, (key, value) => {
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            return value && this.encodeValue(value, bind);
-        });
+        return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
     }
 
     // Parses the serialized data - context must match the context with which the JSON was stringified
     public parse(input: string) {
-        // Note: 'decodeValue()' is tolerant of undefined/null, so no need to check here.
         return JSON.parse(input, (key, value) => this.decodeValue(value));
     }
 
     // If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
-    // Otherwise returns the original 'value'.
-    //
-    // Note: Caller is responsible for ensuring that 'value' is not 'undefined' or 'null'.  This
-    //       avoids redundant checking when 'encodeValue()' is applied by 'recursivelyEncode()'.
-    //
-    // (Used by 'replaceHandles()' and 'stringify()')
+    // Otherwise returns the original 'value'.  Used by 'replaceHandles()' and 'stringify()'.
     private readonly encodeValue = (value: any, bind: IFluidHandle) => {
         // Detect if 'value' is an IFluidHandle.
-        const handle = value.IFluidHandle;
+        const handle = value?.IFluidHandle;
 
         // If 'value' is an IFluidHandle return its encoded form.
         return handle !== undefined
@@ -100,9 +91,7 @@ export class FluidSerializer implements IFluidSerializer {
     };
 
     // If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
-    // Otherwise returns the original 'value'.
-    //
-    // (Used by 'decode()' and 'parse()')
+    // Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
     private readonly decodeValue = (value: any) => {
         // If 'value' is a serialized IFluidHandle return the deserialized result.
         if (isSerializedHandle(value)) {
