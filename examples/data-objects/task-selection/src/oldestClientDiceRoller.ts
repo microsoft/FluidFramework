@@ -54,8 +54,9 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
     }
 
     public get value() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(diceValueKey);
+        const value = this.root.get<number>(diceValueKey);
+        assert(value !== undefined, "Dice value not initialized");
+        return value;
     }
 
     public readonly roll = () => {
