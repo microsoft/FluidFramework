@@ -81,7 +81,7 @@ off the queue by only one client
 
 ### Consensus Scenarios
 
-People use consensus data structures to guarantee that only one client does an action, or that all clients consent to
+Consensus data structures guarantee that only one client does an action, or that all clients consent to
 an action.
 
 Typical scenarios require the connected clients to "agree" on some course of action.
