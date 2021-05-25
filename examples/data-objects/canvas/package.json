@@ -38,13 +38,13 @@
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.40.0",
-    "@fluidframework/common-definitions": "^0.20.0-0",
+    "@fluidframework/common-definitions": "^0.20.0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/ink": "^0.40.0",
     "@fluidframework/view-interfaces": "^0.40.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0-0",
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.40.0",
