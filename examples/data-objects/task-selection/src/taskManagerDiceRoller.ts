@@ -20,8 +20,6 @@ const autoRollTaskId = "autoRoll";
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
-    public static get ComponentName() { return "@fluid-example/task-manager-dice-roller"; }
-
     private _taskManager: TaskManager | undefined;
     private autoRollInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -123,7 +121,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
 export const TaskManagerDiceRollerInstantiationFactory =
     new DataObjectFactory<TaskManagerDiceRoller, undefined, undefined, IEvent>
 (
-    TaskManagerDiceRoller.ComponentName,
+    "@fluid-example/task-manager-dice-roller",
     TaskManagerDiceRoller,
     // Since TaskManager is a DDS, we need to register it for creation.
     [TaskManager.getFactory()],

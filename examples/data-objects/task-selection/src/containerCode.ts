@@ -8,8 +8,8 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { OldestClientDiceRoller, OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
-import { TaskManagerDiceRoller, TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
+import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
+import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
 import { IDiceRoller } from "./interface";
 
 const registryEntries = new Map([
@@ -48,8 +48,8 @@ class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         // We'll create a dice roller for each methodology.
-        await runtime.createRootDataStore(TaskManagerDiceRoller.ComponentName, taskManagerDiceId);
-        await runtime.createRootDataStore(OldestClientDiceRoller.ComponentName, oldestClientDiceId);
+        await runtime.createRootDataStore(TaskManagerDiceRollerInstantiationFactory.type, taskManagerDiceId);
+        await runtime.createRootDataStore(OldestClientDiceRollerInstantiationFactory.type, oldestClientDiceId);
     }
 }
 
