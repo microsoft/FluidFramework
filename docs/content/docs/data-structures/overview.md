@@ -47,7 +47,7 @@ These DDSes are used for storing sequential data. They are optimistic.
 * [SharedMatrix]({{< relref "SharedMatrix" >}}) – a data structure to efficiently use two-dimensional tabular data.
 * [SharedString]({{< relref "SharedString" >}}) – a specialized data structure for handling collaborative text.
 
-Sequence Data Structures are useful when you'll need to insert data in the middle of a list or array. Unlike the
+Sequence data structures are useful when you'll need to insert data in the middle of a list or array. Unlike the
 key-value data structures, sequences have a sequential order and can handle simultaneous inserts from multiple users.
 
 ### Sequence Scenarios
