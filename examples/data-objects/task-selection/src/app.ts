@@ -34,8 +34,8 @@ async function start(): Promise<void> {
     const container = await getTinyliciousContainer(documentId, TaskSelectionFactory, createNew);
 
     // We'll use a separate dice roller for each methodology.
-    const taskManagerDiceRoller: IDiceRoller = await requestFluidObject<IDiceRoller>(container, taskManagerDiceId);
-    const oldestClientDiceRoller: IDiceRoller = await requestFluidObject<IDiceRoller>(container, oldestClientDiceId);
+    const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(container, taskManagerDiceId);
+    const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(container, oldestClientDiceId);
 
     // Demo 1: Using TaskManager
     const taskManagerDiv = document.createElement("div");

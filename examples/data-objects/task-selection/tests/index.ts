@@ -4,7 +4,7 @@
  */
 
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { IContainer } from "@fluidframework/container-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { oldestClientDiceId, taskManagerDiceId, TaskSelectionFactory } from "../src/containerCode";
 import { IDiceRoller } from "../src/interface";
@@ -19,21 +19,6 @@ if (window.location.hash.length === 0) {
 }
 const documentId = window.location.hash.substring(1);
 
-async function requestDiceRoller(container: IContainer, id: string): Promise<IDiceRoller> {
-    const response = await container.request({ url: id });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${id}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${id}"`);
-    }
-
-    // In this app, we know our container code will respond to these IDs with IDiceRoller data objects.
-    const diceRoller: IDiceRoller = response.value;
-    return diceRoller;
-}
-
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
@@ -44,8 +29,8 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, TaskSelectionFactory, createNewFlag);
 
     // We'll use a separate dice roller for each methodology.
-    const taskManagerDiceRoller: IDiceRoller = await requestDiceRoller(container, taskManagerDiceId);
-    const oldestClientDiceRoller: IDiceRoller = await requestDiceRoller(container, oldestClientDiceId);
+    const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(container, taskManagerDiceId);
+    const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(container, oldestClientDiceId);
 
     // Demo 1: Using TaskManager
     const taskManagerDiv = document.createElement("div");
