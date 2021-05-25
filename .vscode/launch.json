@@ -269,8 +269,8 @@
             "program": "${file}",
             "stopOnEntry": false,
             "args": [
-                "--no-timeouts",
-                "--exit",
+               // "--no-timeouts",
+               // "--exit",
             ],
             "cwd": "${fileDirname}",
             "skipFiles": [
