@@ -14,6 +14,10 @@ import {
     TestFluidObject,
     LoaderContainerTracker,
 } from "@fluidframework/test-utils";
+import {
+    LocalDocumentServiceFactory,
+    LocalResolver,
+} from "@fluidframework/local-driver";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -23,10 +27,9 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedCounter } from "@fluidframework/counter";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-describeNoCompat(`Container Serialization Backwards Compatibility`, (getTestObjectProvider) => {
+describe(`Container Serialization Backwards Compatibility`, () => {
     const loaderContainerTracker = new LoaderContainerTracker();
     let disableIsolatedChannels: boolean;
     let filename: string;
@@ -92,9 +95,11 @@ describeNoCompat(`Container Serialization Backwards Compatibility`, (getTestObje
         const sparseMatrixId = "sparsematrixKey";
         const sharedCounterId = "sharedcounterKey";
 
-        function createTestLoader(): Loader {
-            const provider = getTestObjectProvider();
-
+        function createTestLoader(): Loader {    
+            const deltaConnectionServer = LocalDeltaConnectionServer.create();
+            const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+            const urlResolver = new LocalResolver();
+    
             const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
                 [sharedStringId, SharedString.getFactory()],
                 [sharedMapId, SharedMap.getFactory()],
@@ -111,10 +116,9 @@ describeNoCompat(`Container Serialization Backwards Compatibility`, (getTestObje
                 [[codeDetails, factory]],
                 { summaryOptions: { disableIsolatedChannels } });
             const testLoader = new Loader({
-                urlResolver: provider.urlResolver,
-                documentServiceFactory: provider.documentServiceFactory,
+                urlResolver: urlResolver,
+                documentServiceFactory: documentServiceFactory,
                 codeLoader,
-                logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}}),
             });
             loaderContainerTracker.add(testLoader);
             return testLoader;
