@@ -6,8 +6,8 @@
 import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
+import { ILoadTestConfig } from "../testConfigFile";
+import { createTestDriver, getProfile, initialize, safeExit } from "../utils";
 
 async function main() {
     commander
