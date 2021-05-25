@@ -27,8 +27,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node ./dist/nodeStressTest.js",
-    "start:mini": "node ./dist/nodeStressTest.js --profile mini",
-    "start:hi": "node ./dist/mini.js",
+    "start:mini": "node ./dist/nodeStressTest.js --driver local --profile mini",
     "tsc": "tsc",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
@@ -75,6 +74,7 @@
     "@fluidframework/test-utils": "^0.40.0",
     "@fluidframework/tool-utils": "^0.40.0",
     "commander": "^5.1.0",
+    "mocha": "^8.4.0",
     "random-js": "^1.0.8"
   },
   "devDependencies": {
