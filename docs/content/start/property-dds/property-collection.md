@@ -3,7 +3,7 @@ title: Collection Properties
 menuPosition: 6
 ---
 
-PropertyDDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. PropertyDDS distinguishes between
+Property DDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. Property DDS distinguishes between
 two different types of collections:
 
 **Primitive Collections**
@@ -243,11 +243,11 @@ textMapProperty.remove('entry 1');   // Returns the removed property object
 
 ## Sets
 
-A set is an unordered collection of properties. Currently, PropertyDDS only supports sets for
+A set is an unordered collection of properties. Currently, Property DDS only supports sets for
 `NamedProperties`, i.e. properties that have a unique GUID associated with them. The set is
 internally implemented as a map where the key to a property is always its GUID. Named properties can be inserted into
-maps without explicitly specifying their GUID, PropertyDDS will automatically take the GUID of the named property. At the
-moment, PropertyDDS does not support primitive property sets. To access a property in the set, it is addressed via the GUID.
+maps without explicitly specifying their GUID, Property DDS will automatically take the GUID of the named property. At the
+moment, Property DDS does not support primitive property sets. To access a property in the set, it is addressed via the GUID.
 
 The following code shows how sets can be used:
 

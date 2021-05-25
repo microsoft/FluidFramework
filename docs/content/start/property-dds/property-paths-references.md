@@ -3,7 +3,7 @@ title: Paths and References
 menuPosition: 5
 ---
 
-Properties can be addressed in PropertyDDS via path. A path describes how to get from a starting point in the property tree to
+Properties can be addressed in Property DDS via path. A path describes how to get from a starting point in the property tree to
 another property.
 
 A path consists of a sequence of segments, each describing how to get from a property to one of its children. The segments
@@ -81,7 +81,7 @@ root.resolvePath('"\\"doubleQuotes\\""].x');
 // Spaces don't need to be escaped
 root.resolvePath('with spaces.x');
 
-// PropertyDDS provies a helper function to perform quoting where needed
+// Property DDS proxies a helper function to perform quoting where needed
 let {PathHelper} = require('@fluid-experimental/property-changeset');
 root.resolvePath(PropertyUtils.PathHelper.quotePathSegmentIfNeeded('"doubleQuotes"'));
 ```
@@ -113,7 +113,7 @@ map.getRelativePath(pointInMap);  // === '../'
 
 ## Reference Properties
 
-A ReferenceProperty references another property (the **Referenced Property**) within the property dds via a path. This
+A ReferenceProperty references another property (the **Referenced Property**) within the Property DDS via a path. This
 reference is transparently resolved while traversing the property sets tree.
 
 **Example**

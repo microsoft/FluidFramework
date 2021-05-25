@@ -1,5 +1,5 @@
 ---
-title: "How to use property dds"
+title: "How to use Property DDS"
 draft: false
 area: property-binder
 cascade:

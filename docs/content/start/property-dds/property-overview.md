@@ -3,11 +3,11 @@ title: Overview
 menuPosition: 1
 ---
 
-![Example of a PropertySet tree](/images/property_example_data_model.png)
-
-PropertyDDS represents the managed data in a typed, hierarchical data model called a *PropertySet*. This model has many
+Property DDS represents the managed data in a typed, hierarchical data model called a *PropertySet*. This model has many
 similarities to JSON, but is a richer model, which adds more fine-grained types, additional collection types,
 references and gives the ability to use schemas to describe the structure of properties.
+
+## Data Model
 
 A PropertySet is a tree structured data model in which every node of the tree is a property that can be of one of the
 following categories:
@@ -17,7 +17,7 @@ following categories:
   It has a type that defines which data is stored in the leaf (e.g. ``String``, ``UInt32``, ``Boolean``).
 
 **Collection**
-  PropertyDDS supports three basic types of collections: ``map``, ``set`` and ``array``. These collections can either contain
+  Property DDS supports three basic types of collections: ``map``, ``set`` and ``array``. These collections can either contain
   other property objects or they can directly contain primitive values.
 
 **Container Property**
@@ -26,19 +26,24 @@ following categories:
   dynamically add additional properties to a property with a schema that inherits from *NodeProperty*.
 
 **Reserved Property**
-  A reserved property is a container property whose structure is predefined by PropertyDDS.
+  A reserved property is a container property whose structure is predefined by Property DDS.
 
-  ## Accessing the ProperySet Root
+![Example of a PropertySet tree](/images/property_example_data_model.png)
 
-  The root of the *PropertySet* hierachy can be accessed through the root property of the *Property DDS*
 
-  ```javascript
-  var rootProperty = myPropertyDDS.root;
-  ```
+## ProperySet Root
 
-  The root property is of type `NodeProperty` from the root you can traverse the hierachy and make changes to values, insert and remove properties.
+The root of the *PropertySet* hierarchy can be accessed through the root property of the *Property DDS*
+
+```javascript
+var rootProperty = myPropertyDDS.root;
+```
+
+The root property is of type `NodeProperty` from the root you can traverse the hierarchy and make changes to values,
+insert and remove properties.
 
 ## Add Data to the PropertySet
+
 ```javascript
 var stringProperty = PropertyFactory.create('String');
 
@@ -52,20 +57,24 @@ rootProperty.insert('myProperty', stringProperty);
 console.log('Added one property to the root property');
 rootProperty.prettyPrint();
 ```
+
 ### What is Property Factory?
 
-The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum, Uint16, Uint32, etc. and custom tipes) For a more detailed explanation please refer to the [PropertyFactory Section]({{< ref "property-factory.md" >}}).
+The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum, Uint16
+, Uint32, etc. and custom types) For a more detailed explanation please refer to the
+[PropertyFactory Section]({{< ref "property-factory.md" >}}).
 
-Changes are always local only and will only modify your local property hierachy. To share the changes you will have to `commit`the changes. This will be explaiend in more detail below.
-## Commiting changes to Fluid
+Changes are always local only and will only modify your local property hierarchy. To share the changes you will have to
+`commit`the changes. This will be explained in more detail below.
 
-Finally, we are ready to make our first change to the state of the Property DDS. This is done through the commit API.
+## Adding Data to Property DDS
 
+Data is added to the Property DDS via "commits"
 
-### What is Commit?
-A Commit is the “unit of change” in PropertyDDS. It stores an atomic transaction recording every insert, modify and delete operations that happened since the previous commit.
+A Commit is the “unit of change” in Property DDS. It stores an atomic transaction recording every insert, modify and
+delete operations that happened since the previous commit.
 
-Much like in Git, a chain of commits is known as a “Branch”. The state of the is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a must be referring the most recent state in order to persist any changes in PropertyDDS.
+Much like in Git, a chain of commits is known as a “Branch”. The state of the is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a must be referring the most recent state in order to persist any changes in Property DDS.
 
 ```javascript
 myPropertyDDS.commit()
@@ -73,7 +82,7 @@ myPropertyDDS.commit()
 
 ## Read Data From The PropertySet
 
-Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the PropertyDDS that we wrote or data into. Once the *Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
+Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the Property DDS that we wrote or data into. Once the *Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
 
 ```javascript
 // Get the root property

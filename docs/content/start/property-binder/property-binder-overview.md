@@ -3,13 +3,15 @@ title: Property DataBinder Overview
 menuPosition: 2
 ---
 
-We assume that you already have some basic knowledge of how to interact with the property dds and
-its API. If not, we suggest to first read more about it on the [Property DSS]({{< ref "start/property-dds/property-dds.md" >}}).
+We assume that you already have some basic knowledge of how to interact with the Property DDS and
+its API. If not, we suggest to first read more about it on the
+[Property DDS]({{< ref "start/property-dds/property-dds.md" >}}).
 
-[Property DSS]({{< ref "start/property-dds/property-dds.md" >}}) is designed for writing collaborative, data-centric
+[Property DDS]({{< ref "start/property-dds/property-dds.md" >}}) is designed for writing collaborative, data-centric
 applications. However, the mapping from the hierarchical data stored in
-[Property DSS]({{< ref "start/property-dds/property-dds.md" >}}) to business logic, and processing of the changes to this
-hierarchical data, is usually not straightforward. [Property DataBinder]({{< ref "docs/apis/property-binder" >}}) was created to help map changes in the [Property DSS]({{< ref "start/property-dds/property-dds.md" >}}) hierarchy to
+[Property DDS]({{< ref "start/property-dds/property-dds.md" >}}) to business logic, and processing of the changes to this
+hierarchical data, is usually not straightforward. [Property DataBinder]({{< ref "docs/apis/property-binder" >}}) was
+created to help map changes in the [Property DDS]({{< ref "start/property-dds/property-dds.md" >}}) hierarchy to
 the runtime models in the application, and to abstract the low-level
 changes to high-level objects and callback functions.
 
@@ -23,7 +25,7 @@ of the [Property DataBinder]({{< ref "docs/apis/property-binder" >}}).
 
 ## Property DDS and Fluid Document
 
-In the above figure, the application has a propety dds that is a
+In the above figure, the application has a Property DDS that is a
 materialized view of the property data stored in a Fluid Document.
 Changes to the Property DDS may be coming in from the Fluid Document,
 from collaborators, or from local edits done by the
@@ -32,7 +34,7 @@ application.
 ### Runtime Representation
 
 On the right, the application requires one or more sets of runtime
-representations to represent the properties from the property dds. These runtime
+representations to represent the properties from the Property DDS These runtime
 representations may be THREE.js graphics objects, UI Widgets in React or Angular, sketching
 constraints, mesh faces or even simply sets of helpers to modify the
 underlying Property DDS data.
