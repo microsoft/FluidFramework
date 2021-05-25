@@ -458,7 +458,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.intervalMapKernel.serialize(serializer);
         }
 
-        this.client.generateGCData(this.handle, serializer);
+        this.client.serializeGCData(this.handle, serializer);
 
         return {
             gcNodes:{

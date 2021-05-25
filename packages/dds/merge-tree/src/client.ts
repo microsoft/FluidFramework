@@ -293,11 +293,11 @@ export class Client {
     }
 
     /**
-     * Generates the data required for garbage collection. The IFluidHandles stored in all segements that haven't
+     * Serializes the data required for garbage collection. The IFluidHandles stored in all segements that haven't
      * been removed represent routes to other objects. We serialize the data in these segments using the passed in
      * serializer which keeps track of all serialized handles.
      */
-    public generateGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
+    public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
         this.mergeTree.walkAllSegments(
             this.mergeTree.root,
             (seg) => {
