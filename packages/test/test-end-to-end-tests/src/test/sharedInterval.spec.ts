@@ -129,15 +129,45 @@ function testIntervalCollection(intervalCollection: IntervalCollection<SequenceI
     }
     assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
 
-    intervalCollection.delete(0, 0);
-    intervalCollection.delete(0, 1);
-    intervalCollection.delete(0, 2);
-    intervalCollection.delete(1, 0);
-    intervalCollection.delete(1, 1);
-    intervalCollection.delete(1, 2);
-    intervalCollection.delete(2, 0);
-    intervalCollection.delete(2, 1);
-    intervalCollection.delete(2, 2);
+    if (typeof(intervalArray[0]?.getIntervalId) === "function") {
+        let interval: SequenceInterval;
+
+        let id = intervalArray[0].getIntervalId();
+        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
+        if (id !== undefined) {
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, intervalArray[0]);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, intervalArray[0]);
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, undefined);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, undefined);
+        }
+
+        id = intervalArray[intervalArray.length - 1].getIntervalId();
+        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
+        if (id !== undefined) {
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+            interval = intervalCollection.getIntervalById(id);
+            assert.strictEqual(interval, undefined);
+            interval = intervalCollection.removeIntervalById(id);
+            assert.strictEqual(interval, undefined);
+        }
+    }
+
+    for (const interval of intervalArray) {
+        const id = typeof(interval.getIntervalId) === "function" ? interval.getIntervalId() : undefined;
+        if (id !== undefined) {
+            intervalCollection.removeIntervalById(id);
+        }
+        else {
+            intervalCollection.delete(interval.start.getOffset(), interval.end.getOffset());
+        }
+    }
 }
 
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
