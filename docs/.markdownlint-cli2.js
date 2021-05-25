@@ -27,6 +27,15 @@ module.exports = {
         "no-multiple-blanks": { // MD012
             "maximum": 2,
         },
+        "proper-names": {
+            "code_blocks": false,
+            "names": [
+                "Fluid Framework",
+                "JavaScript",
+                "Microsoft",
+                "npm",
+            ]
+        }
     },
     "globs": [
         "content/**/*.md",
