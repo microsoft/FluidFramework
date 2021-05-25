@@ -66,7 +66,7 @@ key-value data structures, sequences have a sequential order and can handle simu
 
 * [Ink]({{< relref "/docs/apis/ink/ink.md" >}}) – a specialized data structure for ink data.
 
-    Ink is a specific form of an append only list. It's great for capturing ink strokes.
+    Ink is a form of an append only list. It's intended for capturing ink strokes.
 
 
 ## Consensus Data Structures
