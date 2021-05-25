@@ -7,7 +7,9 @@
 import * as path from "path";
 import http from "http";
 import Axios from "axios";
-import { runService } from "@fluidframework/server-services-utils";
+import winston from "winston";
+import { runService } from "@fluidframework/server-services-shared";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import { TinyliciousResourcesFactory } from "./resourcesFactory";
 import { TinyliciousRunnerFactory } from "./runnerFactory";
 
@@ -20,8 +22,13 @@ import { TinyliciousRunnerFactory } from "./runnerFactory";
 // TODO: Set this globally since the Historian use the global Axios default instance.  Make this encapsulated.
 Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
 
+const configPath = path.join(__dirname, "../config.json");
+
+configureLogging(configPath);
+
 runService(
     new TinyliciousResourcesFactory(),
     new TinyliciousRunnerFactory(),
+    winston,
     "tinylicious",
-    path.join(__dirname, "../config.json"));
+    configPath);

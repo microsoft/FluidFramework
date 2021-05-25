@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@fluidframework/server-services-utils";
+import * as core from "@fluidframework/server-services-core";
 import { TinyliciousResources } from "./resources";
 import { TinyliciousRunner } from "./runner";
 
-export class TinyliciousRunnerFactory implements utils.IRunnerFactory<TinyliciousResources> {
-    public async create(resources: TinyliciousResources): Promise<utils.IRunner> {
+export class TinyliciousRunnerFactory implements core.IRunnerFactory<TinyliciousResources> {
+    public async create(resources: TinyliciousResources): Promise<core.IRunner> {
         return new TinyliciousRunner(
             resources.webServerFactory,
             resources.config,
