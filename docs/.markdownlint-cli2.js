@@ -4,10 +4,16 @@
  */
 
 module.exports = {
+    "customRules": [
+        "markdownlint-rule-github-internal-links"
+    ],
     "config": {
         "first-line-heading": { // MD041
             "level": 2,
         },
+        "github-internal-links": {
+            "verbose": false
+          },
         "line_length": { // MD013
             "code_blocks": true,
             "line_length": 120,

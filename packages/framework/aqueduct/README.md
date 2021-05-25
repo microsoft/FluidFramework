@@ -96,7 +96,7 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 ### DataObjectFactory example
 
-In the below example we build a `DataObjectFactory` for the [`Clicker`](#data-object-example) example above. To build a
+In the below example we build a `DataObjectFactory` for the [`Clicker`](#dataobject-example) example above. To build a
 `DataObjectFactory`, we need to provide factories for the distributed data structures we are using inside of our
 `DataObject`. In the above example we store a handle to a `SharedCounter` in `this.root` to track our `"clicks"`. The
 `DataObject` comes with the `SharedDirectory` (`this.root`) already initialized, so we just need to add the factory for
@@ -123,7 +123,7 @@ The `this.providers` object on `PureDataObject` is initialized in the constructo
 provided by the Container. To access a specific provider you need to:
 
 1. Define the type in the generic on `PureDataObject`/`DataObject`
-2. Add the symbol to your factory (see [DataObjectFactory Example](#data-object-factory-example) below)
+2. Add the symbol to your factory (see [DataObjectFactory Example](#dataobjectfactory-example) below)
 
 In the below example we have an `IFluidUserInfo` interface that looks like this:
 
@@ -167,13 +167,13 @@ that enables you as a container developer to:
 
 - Define the registry of data objects that can be created
 - Declare the default data object
-- Declare [Container Services](#container-service-development)
+- Use [provider entries](#provider-entries-development)
 - Declare Container level [Request Handlers](#container-level-request-handlers)
 
 ## Container object example
 
-In the below example we will write a Container that exposes the above [`Clicker`](#data-object-example) using the
-[`Clicker Factory`](#data-object-factory-example). You will notice below that the Container developer defines the
+In the below example we will write a Container that exposes the above [`Clicker`](#dataobject-example) using the
+[`Clicker Factory`](#dataobjectfactory-example). You will notice below that the Container developer defines the
 registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default.
 The default data object is created the first time the Container is created.
 
