@@ -3,15 +3,6 @@ title: Anatomy of a distributed data structure
 menuPosition: 1
 ---
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
-{{% callout warning "Draft!" %}}
-
-This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
-
-{{% /callout %}}
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 Although each distributed data structure (DDS) has its own unique functionality, they all share some broad traits.
 Understanding these traits is the first step to understanding how DDSes work.  They are:
 
@@ -65,12 +56,6 @@ SharedMap will, as remote clients modify data. To make the local client aware of
 for the local client to observe and respond to these changes. This is typically done through eventing, like the
 "valueChanged" event on SharedMap.
 
-{{< callout danger TODO >}}
-
-Add link to event documentation
-
-{{< /callout >}}
-
 ## Conflict resolution strategies
 
 Data structures must be aware that multiple clients can act on the structure remotely, and the propagation of those
@@ -122,8 +107,8 @@ acceptable for real-time interactivity, but can be useful for scenarios with mor
 1. Strictly speaking, summarization isn't a mandatory requirement of a DDS. If the ops are retained, the DDS can
    be reconstructed from those. However, in practice it is not practical to load from ops alone, as this will
    degrade load time over the lifetime of the DDS.
-1. The requirement of "eventual consistency" has some flexibility to it.  Discrepancies between clients are
-allowed as long as they don't result in disagreements between clients on the observable state of the data. For example:
+1. The requirement of "eventual consistency" has some flexibility to it.  Discrepancies between clients are allowed as
+   long as they don't result in disagreements between clients on the observable state of the data. For example:
    - SharedString can be represented differently across clients in internal in-memory representation depending on op
      order, but this discrepancy is invisible to the user of the SharedString DDS.
    - SharedMap will raise a different number of valueChanged events across clients when simultaneous sets occur. the

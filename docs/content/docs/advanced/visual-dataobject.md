@@ -4,15 +4,6 @@ menuPosition: 3
 draft: true
 ---
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
-{{% callout warning "Draft!" %}}
-
-This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
-
-{{% /callout %}}
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 ## Introducing IFluidHtmlView
 
 All Fluid objects expose their capabilities using the `IFluidX` interface pattern. Please see [Feature detection
