@@ -42,7 +42,7 @@ to manage your object.
 
 ### DataObject example
 
-In the below example we have a simple data object, _Clicker_, that will render a value alongside a button the the page.
+In the below example we have a simple data object, *Clicker*, that will render a value alongside a button the the page.
 Every time the button is pressed the value will increment. Because this data object renders to the DOM it also extends
 `IFluidHTMLView`.
 
