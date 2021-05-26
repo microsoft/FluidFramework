@@ -9,6 +9,7 @@ const excludedTypography = [
     ["’", "'"],
     ["“", "\""],
     ["”", "\""],
+    ["–", "-"],
 ];
 
 const clamp = (number, min, max) => {

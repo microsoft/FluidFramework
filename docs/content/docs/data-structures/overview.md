@@ -20,9 +20,9 @@ Below we've enumerated the data structures and described when they may be most u
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy.
 
 * [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) -- a basic key-value data structure.
-* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) –- a SharedMap with hierarchical paths instead of
+* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) -- a SharedMap with hierarchical paths instead of
 simple keys.
-* [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) -- a “single-object SharedMap”; useful for wrapping objects.
+* [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Key Value Scenarios
 
@@ -46,7 +46,7 @@ entire value rather than merging two updates. Try splitting the data across mult
 
 These DDSes are used for storing sequential data. They are optimistic.
 
-* [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) – a sequence of numbers.
+* [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) - a sequence of numbers.
 * [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
 * [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
 * [SharedString]({{< relref "SharedString" >}}) -- a specialized data structure for handling collaborative text.
