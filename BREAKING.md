@@ -8,7 +8,7 @@ We have renamed some packages to better reflect their status. See the [npm packa
 scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
 the npm scopes.
 
-- `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/laste-edited`
+- `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
 
 ## 0.40 Breaking changes
 
