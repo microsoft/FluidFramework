@@ -4,6 +4,7 @@
  */
 
 import child_process from "child_process";
+import assert from "assert";
 
 const childArgs: string[] = [
     "./dist/nodeStressTest.js",
@@ -20,8 +21,7 @@ describe("stress test", () => {
             cwd:"../../",
         },
         );
-        process.on("exit", (code) => {
-            console.log("code",code);
-        });
+        await new Promise((resolve) => process.once("close", resolve));
+        assert(process.exitCode === 0, "exit code is not 0");
     });
 });
