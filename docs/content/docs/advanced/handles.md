@@ -1,6 +1,6 @@
 ---
 title: Handles
-menuPosition: 1
+menuPosition: 2
 ---
 
 A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed
