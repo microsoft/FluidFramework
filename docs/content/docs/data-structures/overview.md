@@ -5,10 +5,12 @@ menuPosition: 1
 
 The Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each
 connected client has access to the same state. The APIs provided by DDSes are designed to be familiar to programmers
-who’ve used common data structures before.
+who've used common data structures before.
 
-When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
-However, a DDS is not just a local object. A DDS can also be changed by other users that are editing.
+Distributed data structures look like local data structures. You can add data to it, remove data, update it, etc.
+However, a DDS is not a local object. A DDS can also be changed by other users in the container. Because users can
+simultaneously change the same data structure, you need to consider which DDS you choose and how you model your data
+in the DDS.
 
 Choosing the correct data structure for your scenario can improve the performance and code structure of your application.
 Below we've enumerated the data structures and described when they may be most useful.
@@ -17,10 +19,10 @@ Below we've enumerated the data structures and described when they may be most u
 
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy.
 
-* [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) - a basic key-value data structure
-* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) – a SharedMap with hierarchical paths instead of
-simple keys
-* [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) – a “single-object SharedMap”; useful for wrapping objects.
+* [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) -- a basic key-value data structure.
+* [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) –- a SharedMap with hierarchical paths instead of
+simple keys.
+* [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) -- a “single-object SharedMap”; useful for wrapping objects.
 
 ### Key Value Scenarios
 
@@ -32,20 +34,22 @@ Key-value data structures are the most common choice for many scenarios.
 
 ### Common Issues
 
-* Storing a counter in a map will have unexpected behavior. Use the SharedCounter instead.
-* Storing a lot of data in one key-value entry may cause performance issues. Each update will update the entire value.
-Try splitting the data across multiple keys
-* Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't collaboratively
-modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk
+* Storing a counter in a map will have [unexpected behavior]({{< relref "/docs/data-structures/keyvalue-ddses.md" >}}).
+Use the SharedCounter instead.
+* Storing arrays, lists, or logs in a key-value entry may lead to
+[unexpected behavior]({{< relref "/docs/data-structures/keyvalue-ddses.md" >}}) because users can't collaboratively.
+modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
+* Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the
+entire value rather than merging two updates. Try splitting the data across multiple keys.
 
 ## Sequences
 
 These DDSes are used for storing sequential data. They are optimistic.
 
 * [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) – a sequence of numbers.
-* [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) – a sequence of objects.
-* [SharedMatrix]({{< relref "SharedMatrix" >}}) – a data structure to efficiently use two-dimensional tabular data.
-* [SharedString]({{< relref "SharedString" >}}) – a specialized data structure for handling collaborative text.
+* [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
+* [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
+* [SharedString]({{< relref "SharedString" >}}) -- a specialized data structure for handling collaborative text.
 
 Sequence data structures are useful when you'll need to insert data in the middle of a list or array. Unlike the
 key-value data structures, sequences have a sequential order and can handle simultaneous inserts from multiple users.
@@ -59,12 +63,12 @@ key-value data structures, sequences have a sequential order and can handle simu
 
 ## Specialized data structures
 
-* [SharedCounter]({{< relref "SharedCounter" >}}) – a counter.
+* [SharedCounter]({{< relref "SharedCounter" >}}) -- a counter.
 
     The SharedCounter is useful to keep track of increments. While a key-value data structure appears like a good fit,
     two users simultaneously setting the same key can cause issues.
 
-* [Ink]({{< relref "/docs/apis/ink/ink.md" >}}) – a specialized data structure for ink data.
+* [Ink]({{< relref "/docs/apis/ink/ink.md" >}}) -- a specialized data structure for ink data.
 
     Ink is a form of an append only list. It's intended for capturing ink strokes.
 
@@ -74,10 +78,10 @@ key-value data structures, sequences have a sequential order and can handle simu
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-* [OrderedCollection]({{< relref "/docs/apis/ordered-collection" >}}) - an ordered queue of items, but each item is pulled
-off the queue by only one client
-* [RegisterCollection]({{< relref "/docs/apis/register-collection" >}}) - Stores values, but keeps a record of all changes
-* Quorum - Allows clients to agree on a proposal. Quorum also contains client information
+* [OrderedCollection]({{< relref "/docs/apis/ordered-collection" >}}) -- an ordered queue of items, but each item is pulled
+off the queue by only one client.
+* [RegisterCollection]({{< relref "/docs/apis/register-collection" >}}) -- Stores values, but keeps a record of all changes
+* Quorum - Allows clients to agree on a proposal. Quorum also contains client information.
 
 ### Consensus Scenarios
 
@@ -86,8 +90,8 @@ an action.
 
 Typical scenarios require the connected clients to "agree" on some course of action.
 
-* Import data from an external source (multiple clients performing this could lead to duplicate data)
-* Upgrade a data schema (all clients agree to simultaneously make the change)
+* Import data from an external source (multiple clients performing this could lead to duplicate data).
+* Upgrade a data schema (all clients agree to simultaneously make the change).
 
 
 ## Experimental Data Structures
