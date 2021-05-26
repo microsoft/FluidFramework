@@ -1,6 +1,6 @@
 ---
 title: Anatomy of a distributed data structure
-draft: true
+menuPosition: 1
 ---
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
