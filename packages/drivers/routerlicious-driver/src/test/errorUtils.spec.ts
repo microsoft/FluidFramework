@@ -105,11 +105,11 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 with retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 429, 5);
+                throwR11sNetworkError(message, 429, 5000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 5,
+                retryAfterMs: 5000,
             });
         });
         it("throws retriable error on 429 without retry-after", () => {
@@ -142,11 +142,11 @@ describe("ErrorUtils", () => {
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 400, 200);
+                throwR11sNetworkError(message, 400, 200000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterSeconds: 200,
+                retryAfterMs: 200000,
             });
         });
         it("throws non-retriable error on anything else", () => {

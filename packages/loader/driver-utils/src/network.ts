@@ -127,10 +127,10 @@ export const createWriteError = (errorMessage: string) =>
 export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
-    retryAfterSeconds?: number,
+    retryAfterMs?: number,
     props?: ITaggableTelemetryProperties) {
-    if (retryAfterSeconds !== undefined && canRetry) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds, props);
+    if (retryAfterMs !== undefined && canRetry) {
+        return new ThrottlingError(errorMessage, retryAfterMs, props);
     }
     return new GenericNetworkError(errorMessage, canRetry, props);
 }
