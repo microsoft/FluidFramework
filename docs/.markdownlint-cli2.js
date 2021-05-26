@@ -86,6 +86,7 @@ module.exports = {
             "names": [
                 "Fluid Framework",
                 "JavaScript",
+                "JSON",
                 "Microsoft",
                 "npm",
             ]
