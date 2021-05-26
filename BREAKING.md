@@ -1,8 +1,8 @@
 ## 0.41 Breaking changes
 
-- [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
+- [AgentScheduler removed by default](#0.41-package-renames)
 
-### Package Renames
+### 0.41 package renames
 
 We have renamed some packages to better reflect their status. See the [npm package
 scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
