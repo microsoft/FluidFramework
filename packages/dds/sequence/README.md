@@ -141,16 +141,16 @@ As mentioned above annotate operations behave like operations on Shared Maps. Th
 So, if two collaborators set the same key on the annotates properties the operation that gets ordered last will
 determine the value.
 
-## Shared String
+## SharedString
 
-The Shared String is a specialized data structure for handling collaborative text. It is based on a more general
+The SharedString is a specialized data structure for handling collaborative text. It is based on a more general
 Sequence data structure but has additional features that make working with text easier.
 
-In addition to text, a Shared String can also contain markers. Markers can be used to store metadata at positions within
+In addition to text, a SharedString can also contain markers. Markers can be used to store metadata at positions within
 the text, like the details of an image or Fluid object that should be rendered with the text.
 
-Both markers and text are stored as segments in the Shared String. Text segments will be split and merged when
-modifications are made to the Shared String and will therefore have variable length matching the length of the text
+Both markers and text are stored as segments in the SharedString. Text segments will be split and merged when
+modifications are made to the SharedString and will therefore have variable length matching the length of the text
 content they contain. Marker segments are never split or merged, and always have a length of 1.
 
 ### Examples
@@ -168,17 +168,19 @@ content they contain. Marker segments are never split or merged, and always have
   - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/CollaborativeTextArea.tsx)
   - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/collaborativeInput.tsx)
 
-## Sparse Matrix
+## SparseMatrix (obsolete)
 
-The Sparse Matrix is a specialized data structure for efficiently handling collaborative tabular data. The Sparse Matrix
+**OBSOLETE:** SparseMatrix has been replaced by SharedMatrix.
+
+The SparseMatrix is a specialized data structure for efficiently handling collaborative tabular data. The SparseMatrix
 works in a similar fashion to [raster scanning](https://en.wikipedia.org/wiki/Raster_scan). When a row is inserted it is
-inserted with the maximum possible number of columns, 16,385. This makes it easy to find any cell in the Sparse Matrix
-as it will exist at `Row * MaxCol + Col`. In order to store this efficiently the Sparse Matrix doesn't materialize cells
+inserted with the maximum possible number of columns, 16,385. This makes it easy to find any cell in the SparseMatrix
+as it will exist at `Row * MaxCol + Col`. In order to store this efficiently the SparseMatrix doesn't materialize cells
 that don't have data, this is where *Sparse* comes from.
 
-Just like any other sequence, the Sparse Matrix is made of segments. The segment types are RunSegments and
+Just like any other sequence, the SparseMatrix is made of segments. The segment types are RunSegments and
 PaddingSegments. RunSegment contain the data for cells that have data, and PaddingSegments fill the spaces that have no
-data. PaddingSegments just contain how long they are, and this is how the Sparse Matrix efficiently stores all the rows
+data. PaddingSegments just contain how long they are, and this is how the SparseMatrix efficiently stores all the rows
 with the max number of columns. For instance, if we had a Matrix with 2 rows, and each row only contained data in a
 couple columns it's serialized form would look something like this:
 
