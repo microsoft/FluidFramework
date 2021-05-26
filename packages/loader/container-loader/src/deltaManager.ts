@@ -390,6 +390,10 @@ export class DeltaManager
      * @param readonly - set or clear force readonly.
      */
     public forceReadonly(readonly: boolean) {
+        this.logger.sendTelemetryEvent({
+            eventName: "ForceReadOnly",
+            value: readonly,
+        });
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
