@@ -8,7 +8,7 @@ menuPosition: 3
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=packages/dds/sequence/README.md&start=2) -->
-Every item in a SharedSegmentSequence is at a specific position starting at 0, kind of like an array. However, it
+Every item in a **SharedSegmentSequence** is at a specific position starting at 0, kind of like an array. However, it
 differs from an array in that the positions can move as local and remote collaborators make modifications to the
 sequence. There are a number of different sequence types:
 
@@ -27,7 +27,8 @@ farther position is closer to the length.
 
 ## Using a Sequence
 
-Sequences support three basic operations: insert, remove, and annotate.
+Sequences support three basic operations: insert, remove, and annotate. Insert and remove are used to add and remove
+segments from the sequence, while annotate is used to add metadata to segments.
 
 Insert operations on the sequence take a single position argument along with the content. This position is inclusive.
 This position can any position in the sequence including 0, and the length of the sequence.
@@ -77,7 +78,7 @@ be any value from 1 to the length of the sequence.
 ```
 
 Annotate operations can add or remove map-like properties to or from content of the sequence. They can store any JSON
-serializable data and have similar behavior to a shared map. Annotate takes a start and end position which work the same
+serializable data and have similar behavior to a SharedMap. Annotate takes a start and end position which work the same
 way as the start and end of the remove operation. In addition to start and end annotate also takes a map-like properties
 object. Each key of the provided properties object will be set on each position of the specified range. Setting a
 property key to null will remove that property from the positions in the range.
@@ -124,8 +125,8 @@ affected by the operation, the type of the operation, and the properties that we
 
 ## How Collaboration Works
 
-Like other data structures the sequences are eventually consistent which means all collaborators will end up in the same
-final state, however, the intermediate states seen by each collaborator may not be seen by other collaborators. These
+The Fluid sequence data structures are eventually consistent, which means all collaborators will end up in the same
+final state. However, the intermediate states seen by each collaborator may not be seen by other collaborators. These
 intermediate states occur when two or more collaborators modify the same position in the sequence which results in a
 conflict.
 
@@ -143,10 +144,10 @@ content visible to the collaborator creating the operation will be modified, any
 
 For remove this means we can't have an insert and a remove at the same time, as they will have an order, and all
 collaborators will see the operations in the same order. We also detect overlapping removes made by different
-collaborators, the resolutions here is straightforward, the content is removed.
+collaborators, the resolutions here is straightforward -- the content is removed.
 
-As mentioned above annotate operations behave like operations on Shared Maps. The merge strategy here is last one wins.
-So, if two collaborators set the same key on the annotates properties the operation that gets ordered last will
+As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy here is last one wins.
+So, if two collaborators set the same key on the annotate properties the operation that gets ordered last will
 determine the value.
 
 ## SharedString
@@ -160,6 +161,11 @@ the text, like the details of an image or Fluid object that should be rendered w
 Both markers and text are stored as segments in the SharedString. Text segments will be split and merged when
 modifications are made to the SharedString and will therefore have variable length matching the length of the text
 content they contain. Marker segments are never split or merged, and always have a length of 1.
+
+The length of the SharedString will be the combined length of all the text and marker segments. Just like with other
+sequences, when talking about positions in a SharedString we use the terms near and far. The nearest position in a
+SharedString is 0, and the farthest position is its length. When comparing two positions the nearer positions is closer
+to 0, and the farther position is closer to the length.
 
 ### Examples
 
