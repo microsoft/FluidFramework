@@ -1,6 +1,6 @@
 ## 0.41 Breaking changes
 
-- [AgentScheduler removed by default](#0.41-package-renames)
+- [Package renames](#0.41-package-renames)
 
 ### 0.41 package renames
 
