@@ -43,8 +43,16 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase {
-    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+// Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
+// compatible way to augment an enum, as it can't be optional. So for now
+// we need to duplicate the value here. We likely need to rethink our
+// DriverErrorType strategy so that it supports extension with optional
+// value.
+const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
+export class DeltaStreamConnectionForbiddenError extends LoggingError {
+    static readonly errorType: string =
+        DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
+    readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
     readonly canRetry = false;
 
     constructor(errorMessage: string) {
@@ -134,5 +142,5 @@ export function createGenericNetworkError(
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
+    error.retryAfterSeconds * 1000 : undefined;

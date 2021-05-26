@@ -5,12 +5,8 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fromUtf8ToBase64, bufferToString, performance } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
-import { DeltaManager } from "./deltaManager";
 
 export interface IParsedUrl {
     id: string;
@@ -103,71 +99,4 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 
     const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
     return snapshotTree;
-}
-
-const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
-
-export async function runWithRetry<T>(
-    api: () => Promise<T>,
-    fetchCallName: string,
-    deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
-    logger: ITelemetryLogger,
-    shouldRetry?: () => { retry: boolean, error: any | undefined},
-): Promise<T> {
-    let result: T | undefined;
-    let success = false;
-    let retryAfterSeconds = 1; // has to be positive!
-    let numRetries = 0;
-    const startTime = performance.now();
-    let lastError: any;
-    let id: string | undefined;
-    do {
-        try {
-            result = await api();
-            if (id !== undefined) {
-                deltaManager.refreshDelayInfo(id);
-            }
-            success = true;
-        } catch (err) {
-            if (shouldRetry !== undefined) {
-                const res = shouldRetry();
-                if (res.retry === false) {
-                    if (res.error !== undefined) {
-                        throw res.error;
-                    }
-                    throw err;
-                }
-            }
-            // If it is not retriable, then just throw the error.
-            if (!canRetryOnError(err)) {
-                logger.sendErrorEvent({
-                    eventName: fetchCallName,
-                    retry: numRetries,
-                    duration: performance.now() - startTime,
-                }, err);
-                throw err;
-            }
-            numRetries++;
-            lastError = err;
-            // If the error is throttling error, then wait for the specified time before retrying.
-            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            retryAfterSeconds = getRetryDelayFromError(err) ?? Math.min(retryAfterSeconds * 2, 8);
-            if (id === undefined) {
-                id = uuid();
-            }
-            deltaManager.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
-            await delay(retryAfterSeconds * 1000);
-        }
-    } while (!success);
-    if (numRetries > 0) {
-        logger.sendTelemetryEvent({
-            eventName: fetchCallName,
-            retry: numRetries,
-            duration: performance.now() - startTime,
-        },
-        lastError);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return result!;
 }

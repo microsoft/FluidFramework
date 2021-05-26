@@ -22,7 +22,9 @@ import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
+    TinyliciousContainerServices,
 } from "./interfaces";
+import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
  * TinyliciousClientInstance provides the ability to have a Fluid object backed by a Tinylicious service
@@ -44,7 +46,7 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -53,13 +55,13 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             true,
         );
-        return this.getRootDataObject(container);
+        return this.getFluidContainerAndServices(container);
     }
 
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -68,14 +70,24 @@ export class TinyliciousClientInstance {
             runtimeFactory,
             false,
         );
-        return this.getRootDataObject(container);
+        return this.getFluidContainerAndServices(container);
     }
 
-    private async getRootDataObject(
+    private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
         const rootDataObject = (await container.request({ url: "/" })).value;
-        return rootDataObject as FluidContainer;
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        const containerServices = this.getContainerServices(container);
+        return [fluidContainer, containerServices];
+    }
+
+    private getContainerServices(
+        container: Container,
+    ): TinyliciousContainerServices {
+        return {
+            audience: new TinyliciousAudience(container),
+        };
     }
 
     private async getContainerCore(
@@ -140,7 +152,7 @@ export class TinyliciousClient {
     static async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to create a container",
@@ -155,7 +167,7 @@ export class TinyliciousClient {
     static async getContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<FluidContainer> {
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to get a container",

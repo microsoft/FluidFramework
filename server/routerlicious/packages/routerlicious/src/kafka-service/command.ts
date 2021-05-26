@@ -9,7 +9,7 @@ import { configureLogging } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
-import { runService } from "@fluidframework/server-routerlicious-base";
+import { runService } from "@fluidframework/server-services-shared";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
