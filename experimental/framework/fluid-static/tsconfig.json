@@ -5,7 +5,6 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "module": "esnext",
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,

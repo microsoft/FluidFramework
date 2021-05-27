@@ -128,8 +128,11 @@
     "repoPackages": {
       "build": "common/build",
       "common-def": "common/lib/common-definitions",
-      "protocol-def": "common/lib/protocol-definitions",
       "common-utils": "common/lib/common-utils",
+      "container-def": "common/lib/container-definitions",
+      "core-interfaces": "common/lib/core-interfaces",
+      "driver-def": "common/lib/driver-definitions",
+      "protocol-def": "common/lib/protocol-definitions",
       "server": "server/routerlicious",
       "client": {
         "directory": "",

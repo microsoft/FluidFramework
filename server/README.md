@@ -6,8 +6,6 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Admin](./admin) provides tenant management for Routerlicious
 
-[Auspkn](./auspkn) provides REST API access to npm packages. Useful as a CDN. Its API is based off of unpkg.
-
 [Charts](./charts) Kubernetes charts for some micro-services
 
 [Gateway](./gateway) Internal landing page for the Fluid server

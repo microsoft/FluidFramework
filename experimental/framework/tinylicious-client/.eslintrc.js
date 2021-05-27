@@ -8,6 +8,6 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "parserOptions": {
-        "project": ["./tsconfig.json"]
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
 }

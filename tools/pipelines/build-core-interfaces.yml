@@ -1,0 +1,63 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-core-interfaces pipeline
+
+name: $(Build.BuildId)
+
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - common/lib/core-interfaces
+    - tools/pipelines/build-core-interfaces.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
+
+pr:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - common/lib/core-interfaces
+    - tools/pipelines/build-core-interfaces.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildDirectory: common/lib/core-interfaces
+    tagName: core-interfaces

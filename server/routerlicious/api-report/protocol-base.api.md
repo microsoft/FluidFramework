@@ -120,7 +120,6 @@ export class ProtocolOpHandler {
     constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
     // (undocumented)
     close(): void;
-    // (undocumented)
     getProtocolState(): IScribeProtocolState;
     // (undocumented)
     minimumSequenceNumber: number;
@@ -136,7 +135,7 @@ export class ProtocolOpHandler {
 
 // @public
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
-    constructor(minimumSequenceNumber: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
+    constructor(members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
     addMember(clientId: string, details: ISequencedClient): void;
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
@@ -155,8 +154,10 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     removeMember(clientId: string): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
     snapshot(): IQuorumSnapshot;
+    snapshotMembers(): IQuorumSnapshot["members"];
+    snapshotProposals(): IQuorumSnapshot["proposals"];
+    snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
     }
 

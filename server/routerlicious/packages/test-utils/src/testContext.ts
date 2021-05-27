@@ -15,7 +15,7 @@ interface IWaitOffset {
 }
 
 export class TestContext extends EventEmitter implements IContext {
-    public offset: number = Number.NEGATIVE_INFINITY;
+    public offset: number = -1;
     private waits: IWaitOffset[] = [];
 
     constructor(public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext")) {
