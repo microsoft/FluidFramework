@@ -127,7 +127,7 @@ describe('SharedTree', () => {
 		});
 
 		it('prevents multiparenting detached trees', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
 
 			const childNode = makeEmptyNode();
 			const childId = 0 as DetachedSequenceId;
@@ -160,7 +160,7 @@ describe('SharedTree', () => {
 		});
 
 		it('prevents deletion of the root', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
 			expect(tree.currentView.hasNode(initialSnapshot.root));
 			assertNoDelta(tree, () => {
 				// Try to delete the root
@@ -201,7 +201,7 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid inserts', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
 
 			const firstNode = makeEmptyNode();
 			const secondNode = makeEmptyNode();
@@ -220,7 +220,7 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid detaches', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
 
 			const firstNode = makeEmptyNode();
 			const secondNode = makeEmptyNode();
@@ -253,7 +253,7 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates malformed inserts', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowMalformed: true });
 
 			assertNoDelta(tree, () => {
 				tree.processLocalEdit(newEdit([Change.build([], 0 as DetachedSequenceId)]));
@@ -354,10 +354,11 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid inserts', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
+				allowInvalid: true,
 			});
 
 			containerRuntimeFactory.processAllMessages();
@@ -390,7 +391,7 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates invalid detaches', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
@@ -430,7 +431,7 @@ describe('SharedTree', () => {
 		});
 
 		it('tolerates malformed inserts', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowMalformed: true });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
@@ -825,6 +826,7 @@ describe('SharedTree', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
 				logger: { send: (event) => events.push(event) },
+				allowInvalid: true,
 			});
 			// Invalid edit
 			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));

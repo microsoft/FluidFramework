@@ -447,6 +447,14 @@ export class SharedTree extends GenericSharedTree<Change> {
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
+export enum SharedTreeDiagnosticEvent {
+    AppliedEdit = "appliedEdit",
+    CatchUpBlobUploaded = "uploadedCatchUpBlob",
+    DroppedInvalidEdit = "droppedInvalidEdit",
+    DroppedMalformedEdit = "droppedMalformedEdit"
+}
+
+// @public
 export class SharedTreeEditor {
     constructor(tree: SharedTree);
     delete(target: NodeData): EditId;

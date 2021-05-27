@@ -27,6 +27,7 @@ import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait, StablePlace } from '../../default-edits';
 import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
+import { SharedTreeDiagnosticEvent } from '../../generic/GenericSharedTree';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -58,6 +59,12 @@ export interface SharedTreeTestingOptions {
 	 * If localMode is set to true, it will not be connected to the created SharedTree.
 	 * */
 	containerRuntimeFactory?: MockContainerRuntimeFactory;
+	/** Iff true, do not `fail` on invalid edits */
+	allowInvalid?: boolean;
+	/** Iff true, do not `fail` on malformed edits */
+	allowMalformed?: boolean;
+	/** Unless set to true, a SharedTree error causes the test to fail */
+	noFailOnError?: boolean;
 	/**
 	 * If not set, full history will be preserved.
 	 */
@@ -149,6 +156,23 @@ export function setUpTestSharedTree(
 	// Enable expensiveValidation
 	const factory = SharedTree.getFactory(options.summarizeHistory ?? true);
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
+
+	if (options.allowInvalid === undefined || !options.allowInvalid) {
+		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
+	}
+
+	if (options.allowMalformed === undefined || !options.allowMalformed) {
+		tree.on(SharedTreeDiagnosticEvent.DroppedMalformedEdit, () => fail('unexpected malformed edit'));
+	}
+
+	if (options.noFailOnError === undefined || !options.noFailOnError) {
+		// any errors thrown by a SharedObject event listener will be caught and
+		// reemitted on this event.  For testing purposes, rethrow so that it
+		// actually causes the test to fail.
+		tree.on('error', (error) => {
+			throw error;
+		});
+	}
 
 	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
 

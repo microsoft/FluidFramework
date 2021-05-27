@@ -39,7 +39,7 @@ export function checkoutTests(
 	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change>>
 ): Mocha.Suite {
 	async function setUpTestCheckout(
-		options: SharedTreeTestingOptions = { localMode: true }
+		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
 	): Promise<{ checkout: Checkout<Change>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
@@ -348,6 +348,7 @@ export function checkoutTests(
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
 			localMode: false,
+			allowInvalid: true,
 		};
 
 		it('emits ViewChange events for remote edits', async () => {
@@ -377,7 +378,7 @@ export function checkoutTests(
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,
