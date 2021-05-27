@@ -730,7 +730,7 @@ export class DeltaManager
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         if (this.readonly === true) {
-            assert(this.readOnlyInfo.readonly === true, "Unexpected mismatch in readonly");
+            assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new LoggingError("Op is sent in read-only document state", {
                 errorType: ContainerErrorType.genericError,
                 readonly: this.readOnlyInfo.readonly,
