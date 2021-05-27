@@ -1,6 +1,6 @@
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { ConstraintEffect } from '../default-edits';
-import { BuildNode } from '../generic';
+import { ChangeNode as BuildNode } from '../generic';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
@@ -10,7 +10,7 @@ import { Sequence } from './Sequence';
 import { PlaceView, RangeView, Trait, TreeNodeView } from './ViewAnchors';
 
 /**
- * A kind of anchor for use within commands.
+ * Mutable version of {@link PlaceView} allowing insertion to this Place.
  */
 export interface Place extends PlaceView<Place, TreeNode, NodeParent, Range> {
 	// Implicitly detaches or builds if needed then inserts (aka moves)?
@@ -21,7 +21,7 @@ export interface Place extends PlaceView<Place, TreeNode, NodeParent, Range> {
 }
 
 /**
- * A kind of anchor for use within commands.
+ * Mutable version of {@link RangeView} allowing detaching and constraints on this range.
  */
 export interface Range extends RangeView<Place, TreeNode, Range> {
 	/**
@@ -38,19 +38,7 @@ export interface Range extends RangeView<Place, TreeNode, Range> {
 }
 
 /**
- * A kind of anchor for use within commands.
- * Mutable Tree view for use withing a Transaction.
- *
- * TODO:
- * most of this API is not implementable in the placeholder case.
- * Either:
- * make APIs that need to async fetch data throw
- * OR
- * expose placeholders in the API
- *
- * can also add async option which makes placeholders transparent.
- *
- * TODO: Trait iterator is invalidated by edits?
+ * Mutable version of {@link TreeNodeView} allowing setValue on this TreeNode.
  */
 export interface TreeNode extends TreeNodeView<Place, TreeNode, Range, NodeParent> {
 	setValue(newValue: Serializable): void;

@@ -9,7 +9,16 @@ import { Anchor, PlaceData, RangeData, TreeNodeData } from './Anchors';
 import { Sequence, SequenceIterator } from './Sequence';
 
 /**
- * A kind of anchor for use within commands.
+ * The anchors in this file are all contextualized (extend `Anchor`/ have a revision they refer to),
+ * and thus can be used to navigate around within the tree at that revision.
+ *
+ * In `MutableAnchors.ts` there are extensions to these with allow modifying the tree,
+ * creating actual edits which use these anchors to encode the tree locations within the edits.
+ */
+
+/**
+ * An Anchor for a space between nodes in a trait, or at the beginning or end of a trait.
+ * Used for the destination of inserts, and for the ends of ranges.
  */
 export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, PlaceData {
 	/**
@@ -21,19 +30,28 @@ export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, Place
 	 * Parent of this Place.
 	 *
 	 * undefined if this Place at the root.
-	 * TODO: what should we allow with root places? is the root a sequence so we can insert/delete there?Regarding #7
+	 *
+	 * TODO: Clarify how how the API works around the root.
 	 */
 	readonly parent?: TParent;
 
-	// TODO: add optional anchor policy parameters.
-	adjacentNode(side: Side): TNode;
+	/**
+	 * @returns the adjacent node, anchored by its NodeId, or `undefined` if an end of the trait is reached.
+	 */
+	// TODO: add optional anchor policy parameters?
+	adjacentNode(side: Side): TNode | undefined;
 
-	// PlaceData must be after this in same trait for result to be valid.
+	/**
+	 * Construct a range from this Place to `end`.
+	 * PlaceData must be after this in same trait for result to be valid.
+	 */
 	rangeTo(end: PlaceData): TRange;
 }
 
 /**
- * A kind of anchor for use within commands.
+ * An anchor to a subset of a trait.
+ * Used for the source of moves and deletes/detach.
+ * Also used for constraints.
  */
 export interface RangeView<TPlace, TNode, TRange> extends Anchor, RangeData, Sequence<TNode, TPlace> {
 	readonly start: TPlace;
@@ -80,8 +98,8 @@ enum ContentsConstraint {
 }
 
 /**
- * A kind of anchor for use within commands.
- * Mutable Tree view for use withing a Transaction.
+ * An anchor to a particular node.
+ * Used in SetValue.
  *
  * TODO:
  * most of this API is not implementable in the placeholder case.

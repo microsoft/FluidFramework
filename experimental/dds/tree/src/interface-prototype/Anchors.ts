@@ -2,24 +2,33 @@ import { ConstraintEffect } from '../default-edits';
 
 // This import is a layering violation. Maybe find a better design.
 import type { TreeView } from './Checkout';
+import { Covariant } from './TypeCheck';
 
 export type StableId = string & { readonly StableId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
 
-//////////////////////////////////////////////////////////////////////////////////
-
-//////////////// Anchors //////////////
-
 /**
- * Common interface shared by all anchors.
+ * {@link AnchorData} + Context.
+ * See TreeView.contextualizeAnchor.
+ *
+ * An Anchor is a way to look up a tree location in a context (ex: a specific revision).
+ * They are used in edits to refer to tree locations to allow merge resolution.
+ * Thus Anchors include the bulk of merge resolution policy, and need to be able to describe all tree locations that can be used in edits.
+ * The different types of anchors for these different types of tree locations are defined in `ViewAnchor` as extensions of Anchor.
+ *
  * These anchor objects may reference a specific `Tree` and thus can only be used in the context of that tree.
  * See the "Data" variants for the API subset which works between different trees.
  *
- * In an actual implementation, we would want these to be opaque nominally typed objects.
+ * In an actual implementation, we would want these to be opaque nominally typed objects since the API here is insufficient for the actual implementation to work with:
+ * its just enough for the public API surface.
+ *
+ * An Anchor is a way to look up a tree location in a context (ex: a specific revision).
+ * This particular representation of anchor comes with such a context, and thus corresponds to a location in a concrete tree (or is invalid).
+ * Note that this context may be change over time, which can cause the anchor to become invalid, and/or move.
  */
 export interface Anchor extends AnchorData {
 	/**
 	 * Get an immutable view of the current state of the Tree.
-	 * This anchor can be contextualized into the returned view to allow using it to walk that this frozen view of the free,
+	 * This anchor can be contextualized into the returned view to allow using it to walk that this frozen view of the tree,
 	 * unaffected by any future edits.
 	 */
 	snapshot(): TreeView;
@@ -58,7 +67,10 @@ export interface Anchor extends AnchorData {
 
 type Valid = -1; // TODO something better.
 
-// usable across revisions/contexts
+/**
+ * The data for an Anchor: a specification of how to look up a tree location in a context (ex: a specific revision).
+ * Logically this is an Anchor, but unlike {@link Anchor}, it might not have a context.
+ */
 export interface AnchorData {
 	/**
 	 * @returns a form of this anchor which is Json compatible. If not implemented, already Json compatible.
@@ -71,7 +83,7 @@ export interface AnchorData {
 /**
  * More Type safe version of AnchorData.
  */
-export interface AnchorDataSafe<TAnchor = AnchorData> extends AnchorData {
+export interface AnchorDataSafe<TAnchor = AnchorData> extends AnchorData, Covariant<TAnchor> {
 	/**
 	 * @returns a form of this anchor which is Json compatible. If not implemented, already Json compatible.
 	 */
@@ -80,7 +92,9 @@ export interface AnchorDataSafe<TAnchor = AnchorData> extends AnchorData {
 }
 
 // Type brand for Json support
-export type JsonCompatible = { readonly JsonCompatible: '7619c7cd-2b74-41c8-bc90-702e83360106' };
+export interface JsonCompatible {
+	readonly JsonCompatible: '7619c7cd-2b74-41c8-bc90-702e83360106';
+}
 
 /**
  * These 'Data' types are implemented by the anchors, but you can also get them by casting deserialized anchors to them.
