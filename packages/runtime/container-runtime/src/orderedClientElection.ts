@@ -136,8 +136,8 @@ export class OrderedClientElection extends TypedEventEmitter<IOrderedClientElect
     }
 
     private readonly addClient = (clientId: string, client: ISequencedClient) => {
-        const isSummarizer = client.client.details?.type === summarizerClientType;
-        const eligible = !isSummarizer && (client.client.details?.capabilities.interactive ?? true);
+        const isSummarizer = client.client.details.type === summarizerClientType;
+        const eligible = !isSummarizer && client.client.details.capabilities.interactive;
         const newClient: TrackedClient = eligible ? this.insertEligibleClient(clientId, client.sequenceNumber) : {
             clientId,
             sequenceNumber: client.sequenceNumber,

@@ -201,6 +201,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         } else if (this.orderedClients.getSummarizerCount() > 0) {
             // Need to wait for any other existing summarizer clients to close,
             // because they can live longer than their parent container.
+            // TODO: We will need to remove this check when we allow elected summarizer
+            // to change, because they could get stuck in quorum.
             return { shouldSummarize: true, shouldStart: false };
         } else {
             return { shouldSummarize: true, shouldStart: true };
