@@ -9,7 +9,6 @@ import * as jwt from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 
