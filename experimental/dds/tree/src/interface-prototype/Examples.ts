@@ -97,15 +97,15 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 		const delta = before.delta(after);
 		// Note that this only actually looks at the root of newly inserted roots.
 		// Thus wouldn't be a good way to enforce any actual invariants about `foo` nodes,
-		// its just a contrived example of responded to changes, observing trees and performing edits.
+		// its just a contrived example of responding to changes, observing trees and performing edits.
 		for (const added of delta.added) {
-			const n: TreeNodeViewReadonly = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
+			const inserted: TreeNodeViewReadonly = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
 			// Here we have an example of using the tree viewing APIs.
 			// In this trivial case the only thing we do with them is check the definition, but real apps would use these APIs to walk the tree and build the document view for the user.
-			if (n.definition === foo) {
+			if (inserted.definition === foo) {
 				// This shows how the application can perform an edit.
 				// Typically this would be done in response to some user action, but this example doesn't have any user interface, so we just perform it in response to an edit instead.
-				checkout.runCommand(doubleInsertExample, {}, { parent: n as TreeNodeData });
+				checkout.runCommand(doubleInsertExample, {}, { parent: inserted });
 			}
 		}
 	});
