@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as bodyParser from "body-parser";
+import { json, urlencoded } from "body-parser";
 import cors from "cors";
 // eslint-disable-next-line import/no-duplicates
 import express from "express";
@@ -33,11 +33,28 @@ export function create(
     // Express app configuration
     const app: Express = express();
 
-    app.use(morgan(store.get("logger:morganFormat"), { stream }));
+    const loggerFormat = store.get("logger:morganFormat");
+    if (loggerFormat === "json") {
+        app.use(morgan((tokens, req, res) => {
+            const messageMetaData = {
+                method: tokens.method(req, res),
+                url: tokens.url(req, res),
+                status: tokens.status(req, res),
+                contentLength: tokens.res(req, res, "content-length"),
+                responseTime: tokens["response-time"](req, res),
+                serviceName: "historian",
+                eventName: "http_requests",
+             };
+             winston.info("request log generated", { messageMetaData });
+             return undefined;
+        }, { stream }));
+    } else {
+        app.use(morgan(loggerFormat, { stream }));
+    }
 
     const requestSize = store.get("requestSizeLimit");
-    app.use(bodyParser.json({ limit: requestSize }));
-    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(json({ limit: requestSize }));
+    app.use(urlencoded({ limit: requestSize, extended: false }));
 
     app.use(bindCorrelationId());
 
