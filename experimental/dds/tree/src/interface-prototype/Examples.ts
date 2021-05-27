@@ -73,7 +73,7 @@ const commands: CommandRegistry = [insertExample, doubleInsertExample];
 // Some dummy schema related data.
 const foo: Definition = 'Foo' as Definition;
 const bar: Definition = 'Bar' as Definition;
-const baz: Definition = 'Bar' as Definition;
+const baz: Definition = 'Baz' as Definition;
 
 const testTrait: TraitLabel = 'testTrait' as TraitLabel;
 
