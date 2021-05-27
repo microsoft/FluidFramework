@@ -35,7 +35,7 @@ export interface IR11sSocketError {
      * Optional Retry-After time in seconds.
      * The client should wait this many seconds before retrying its request.
      */
-    retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 export interface IR11sError {
@@ -96,6 +96,6 @@ export function errorObjectFromSocketError(socketError: IR11sSocketError, handle
     return createR11sNetworkError(
         message,
         socketError.code,
-        socketError.retryAfter,
+        socketError.retryAfterMs,
     );
 }
