@@ -109,7 +109,7 @@ describe("ErrorUtils", () => {
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterMs: 5000,
+                retryAfterSeconds: 5000,
             });
         });
         it("throws retriable error on 429 without retry-after", () => {
@@ -146,7 +146,7 @@ describe("ErrorUtils", () => {
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
-                retryAfterMs: 200000,
+                retryAfterSeconds: 200000,
             });
         });
         it("throws non-retriable error on anything else", () => {

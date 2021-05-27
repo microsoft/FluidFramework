@@ -130,7 +130,7 @@ export function createGenericNetworkError(
     retryAfterMs?: number,
     props?: ITaggableTelemetryProperties) {
     if (retryAfterMs !== undefined && canRetry) {
-        return new ThrottlingError(errorMessage, retryAfterMs, props);
+        return new ThrottlingError(errorMessage, retryAfterMs / 1000, props);
     }
     return new GenericNetworkError(errorMessage, canRetry, props);
 }
