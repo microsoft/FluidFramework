@@ -367,9 +367,6 @@ export class RestGitService {
 
     private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            // winston.info(
-            //     `DEBUG-INFO: ${this.tenantId} ${this.documentId}
-            //      ${options.method} ${options.url} ${JSON.stringify(options.body)}`);
             options.headers["Storage-Routing-Id"] = this.getStorageRoutingHeaderValue();
             request(
                 options,
@@ -392,8 +389,7 @@ export class RestGitService {
 
     private getStorageRoutingHeaderValue()
     {
-        // return `${this.tenantId}:${this.documentId}`;
-        return this.documentId;
+        return `${this.tenantId}:${this.documentId}`;
     }
 
     /**

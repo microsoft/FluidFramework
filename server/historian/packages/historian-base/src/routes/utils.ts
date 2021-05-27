@@ -5,6 +5,8 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { Response } from "express";
+import * as jwt from "jsonwebtoken";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
@@ -62,12 +64,13 @@ export async function createGitService(
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = customData.externalStorageData !== undefined &&
     customData.externalStorageData !== null;
+    const decoded = jwt.decode(token) as ITokenClaims;
     const service = new RestGitService(
         details.storage,
         cache,
         writeToExternalStorage,
         tenantId,
-        "testdoc",
+        decoded.documentId,
         asyncLocalStorage);
 
     return service;
