@@ -1,6 +1,6 @@
 ---
 title: Summarizer
-menuPosition: 2
+menuPosition: 3
 ---
 
 Summaries are client-generated snapshots of the state of the document at a given sequence number. A summary is a
