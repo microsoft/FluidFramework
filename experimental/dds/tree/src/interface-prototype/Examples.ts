@@ -99,6 +99,8 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 		// Thus wouldn't be a good way to enforce any actual invariants about `foo` nodes,
 		// its just a contrived example of responding to changes, observing trees and performing edits.
 		for (const added of delta.added) {
+			// Get an contextualized anchor from the delta.
+			// Theoretically the delta should produce something suable as anchors directly, but this prototype is just reusing the existing delta APIs which don't know about anchors.
 			const inserted: TreeNodeViewReadonly = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
 			// Here we have an example of using the tree viewing APIs.
 			// In this trivial case the only thing we do with them is check the definition, but real apps would use these APIs to walk the tree and build the document view for the user.
