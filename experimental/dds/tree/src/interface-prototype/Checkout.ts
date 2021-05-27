@@ -28,9 +28,9 @@ import { PlaceView, RangeView, Trait, TreeNodeView } from './ViewAnchors';
 
 export type CommandId = StableId & { readonly CommandId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
 
-type AnchorSet = {
+interface AnchorSet {
 	[key: string]: Anchor;
-};
+}
 
 type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
 	[Property in keyof TAnchorSet]: Decontextualize<TAnchorSet[Property]>;
@@ -52,7 +52,7 @@ export interface CommandContext extends IdSerializer, LogViewer, OrderedEditSet<
 }
 
 // TODO: actually implement this as a NodeId based anchor using the standard root node id.
-export const root: TreeNodeData = (null as unknown) as TreeNodeData;
+export const root: TreeNodeData = (undefined as unknown) as TreeNodeData;
 
 /**
  * A view of a tree.
@@ -158,7 +158,7 @@ type Decontextualize<TData extends AnchorData> = TData extends PlaceData
 	? TreeNodeData
 	: AnchorData;
 
-//////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////
 
 // Document and Snapshots
 
@@ -198,7 +198,7 @@ export interface PrefetchFilter {
 type Filter<T> = (_: T) => boolean;
 
 interface Aborted {
-	error: Error | String;
+	error: Error | string;
 }
 
 /**
@@ -241,12 +241,12 @@ export function anchorDataFromNodeId(id: NodeId): TreeNodeData {
 	throw new Error('not implemented');
 }
 
-//// Misc things
+// Misc things
 export class RecoverableError extends Error {
 	public constructor(message: string) {
 		super(message);
 		this.name = 'RecoverableError';
-		if (Error.captureStackTrace) {
+		if (Error.captureStackTrace !== undefined) {
 			Error.captureStackTrace(this);
 		}
 	}

@@ -1,9 +1,11 @@
 import { v4 } from 'uuid';
+import { CheckoutEvent } from '../Checkout';
+import { fail } from '../Common';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
 import { Definition, TraitLabel } from '../Identifiers';
-import { Side } from '../Snapshot';
+import { Side, Snapshot } from '../Snapshot';
 import { StableId, TreeNodeData } from './Anchors';
 import {
 	anchorDataFromNodeId,
@@ -18,7 +20,7 @@ import {
 } from './Checkout';
 import { Place, TreeNode } from './MutableAnchors';
 
-//////////////// Command examples //////////////
+// ////////////// Command examples //////////////
 
 // Inserts a node with the specified Definition and identifier at the specified Place, and return it.
 export const insertExample = {
@@ -31,7 +33,7 @@ export const insertExample = {
 		const definition = context.loadDefinition(def);
 		const identifier = context.loadNodeId(id);
 		const range = place.insert({ definition, identifier, traits: {} });
-		return range.start.adjacentNode(Side.After);
+		return range.start.adjacentNode(Side.After) ?? fail();
 	},
 };
 
@@ -39,9 +41,11 @@ function newNodeId(): StableId {
 	return v4() as StableId;
 }
 
+type Empty = Record<string, never>;
+
 export const doubleInsertExample = {
 	id: '08bac27d-632f-48bb-834a-90af8d67ca60' as CommandId,
-	run: (context: CommandContext, _: {}, { parent }: { parent: TreeNode }): TreeNode => {
+	run: (context: CommandContext, _: Empty, { parent }: { parent: TreeNode }): TreeNode => {
 		const a = context.runCommand(
 			insertExample,
 			{ definition: context.stabilize(bar), identifier: newNodeId() },
@@ -78,7 +82,8 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 	const checkout = await tree.checkout(commands, fetchAll);
 
 	// Example app policy: this app just watches the tree, and adds bar(baz) subtree under any new `foo` node.
-	checkout.on('viewChange', (before, after) => {
+	// TODO: Make TypedEventEmitter use strong types.
+	checkout.on(CheckoutEvent.ViewChange, (before: Snapshot, after: Snapshot) => {
 		const delta = before.delta(after);
 		for (const added of delta.added) {
 			const n: TreeNodeViewReadonly = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
@@ -94,14 +99,14 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 	console.log(treeRoot.queryJsonSnapshot.subtree);
 }
 
-function wait(ms) {
+async function wait(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Note: Redo is the same as undoing an undo (at this level).
-export const undo: Command<{ editId: StableId }, {}, void> = {
+export const undo: Command<{ editId: StableId }, Empty, void> = {
 	id: '083ed8c8-9ee3-435f-b949-190a8eb9915c' as CommandId,
-	run: (context: CommandContext, { editId }: { editId: StableId }, anchors: {}): void => {
+	run: (context: CommandContext, { editId }: { editId: StableId }, anchors: Empty): void => {
 		// TODO: need way to deal with history access being async sometimes, but sometimes require command to be synchronous.
 		// For now just using "in session" methods which are synchronous. (TODO: proper errors when not in session, or support it)
 		// TODO: need way to report failure (including localized strings).
