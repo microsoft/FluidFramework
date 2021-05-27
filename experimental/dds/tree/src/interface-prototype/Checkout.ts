@@ -234,8 +234,13 @@ interface IdSerializer {
 	loadNodeId(id: StableId): NodeId;
 	loadEditId(id: StableId): EditId;
 }
-
-// This allows interop between snapshot and anchor APIs.
+/**
+ * This allows interop between snapshot and anchor APIs.
+ * Eventually this should be unneeded because either:
+ * - We stop exposing NodeId's at this API level, so we always already have TreeNodeData instead,
+ * OR
+ * - We make NodeId usable as a TreeNodeData directly.
+ */
 export function anchorDataFromNodeId(id: NodeId): TreeNodeData {
 	// TODO: implement or make unneeded.
 	throw new Error('not implemented');
