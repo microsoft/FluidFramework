@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -44,11 +47,15 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
     };
-    const runtimeOptions = {
-        generateSummaries: true,
-        enableWorker: false,
-        initialSummarizerDelayMs: 10,
-        summaryConfigOverrides,
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: {
+            generateSummaries: true,
+            initialSummarizerDelayMs: 10,
+            summaryConfigOverrides,
+        },
+        gcOptions: {
+            gcAllowed: true,
+        },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -57,54 +64,71 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        runtimeOptions,
+        flattenRuntimeOptions(runtimeOptions),
     );
 
-    let container1: IContainer;
+    let mainContainer: IContainer;
+    let mainDataStore: TestDataObject;
+    let summaryCollection: SummaryCollection;
+
+    /**
+     * Waits for a summary with the current state of the document (including all in-flight changes). It basically
+     * synchronizes all containers and waits for a summary that contains the last processed sequence number.
+     * @returns the version of this summary. This version can be used to load a Container with the summary associated
+     * with it.
+     */
+     async function waitForSummary(): Promise<string> {
+        await provider.ensureSynchronized();
+        const ackedSummary: IAckedSummary =
+            await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);
+        return ackedSummary.summaryAck.contents.handle;
+    }
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
-    const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
-
-    async function waitForSummary(container: IContainer): Promise<string | undefined> {
-        let handle: string | undefined;
-        // wait for summary ack/nack
-        await new Promise((resolve, reject) => container.on("op", (op) => {
-            if (op.type === "summaryAck") {
-                handle = op.contents.handle;
-                resolve(true);
-            } else if (op.type === "summaryNack") {
-                reject(new Error("summaryNack"));
-            }
-        }));
-        return handle;
-    }
+    const loadContainer = async (summaryVersion: string): Promise<IContainer> => {
+        const requestHeader = {
+            [LoaderHeader.version]: summaryVersion,
+        };
+        return provider.loadContainer(runtimeFactory, undefined /* options */, requestHeader);
+    };
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
 
         // Create a Container for the first client.
-        container1 = await createContainer();
+        mainContainer = await createContainer();
+
+        // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
+        // re-sent. Do it here so that the extra events don't mess with rest of the test.
+        mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+        mainDataStore._root.set("test", "value");
+
+        await provider.ensureSynchronized();
+
+        // Create and setup a summary collection that will be used to track and wait for summaries.
+        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger(), {});
     });
 
     it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
-        const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
+        const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await factory.createInstance(dataStore1._context.containerRuntime);
-        dataStore1._root.set("dataStore2", dataStore2.handle);
+        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for ops to be processed so that summarizer creates dataStore2.
-        await provider.ensureSynchronized();
+        // Wait for summary that contains the above set.
+        await waitForSummary();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
-        dataStore1._root.delete("dataStore2");
+        mainDataStore._root.delete(directoryKey);
 
-        // Wait for the summarizer to generate a summary where dataStore2 is unreferenced.
-        await waitForSummary(container1);
+        // Wait for the summary that contains the above delete. Also, get this summary's version so that we can load
+        // a new container with it.
+        const summaryVersion = await waitForSummary();
 
-        // Load a new container which should initialize with the summary taken above. The initial summary for
-        // dataStore2 will have it marked as unreferenced.
-        const container2 = await loadContainer();
+        // Load a new container with the version of the summary above. The initial summary for dataStore2 will
+        // have it marked as unreferenced.
+        const container2 = await loadContainer(summaryVersion);
 
         // Request dataStore2 without externalRequest header and verify that we can load it.
         const request: IRequest = { url: dataStore2.id };
@@ -121,24 +145,25 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     });
 
     it("should succeed requests with externalRequest flag for data stores that are re-referenced", async () => {
-        const dataStore1 = await requestFluidObject<TestDataObject>(container1, "default");
+        const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await factory.createInstance(dataStore1._context.containerRuntime);
-        dataStore1._root.set("dataStore2", dataStore2.handle);
+        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for ops to be processed so that summarizer creates dataStore2.
-        await provider.ensureSynchronized();
+        // Wait for summary that contains the above set.
+        await waitForSummary();
 
         // Now delete the handle so that dataStore2 is marked as unreferenced.
-        dataStore1._root.delete("dataStore2");
+        mainDataStore._root.delete(directoryKey);
 
-        // Wait for the summarizer to generate a summary where dataStore2 is unreferenced.
-        await waitForSummary(container1);
+        // Wait for the summary that contains the above delete. Also, get this summary's version so that we can load
+        // a new container with it.
+        let summaryVersion = await waitForSummary();
 
-        // Load a new container which should initialize with the summary taken above. The initial summary for
-        // dataStore2 will have it marked as unreferenced.
-        const container2 = await loadContainer();
+        // Load a new container with the version of the summary above. The initial summary for dataStore2 will
+        // have it marked as unreferenced.
+        const container2 = await loadContainer(summaryVersion);
 
         // Request dataStore2 with externalRequest = true to the header and verify that we are unable to
         // load dataStore2.
@@ -150,14 +175,15 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         assert(response.status === 404, "dataStore2 should have failed to load");
 
         // Add the handle of dataStore2 to mark it as referenced again.
-        dataStore1._root.set("dataStore2", dataStore2.handle);
+        mainDataStore._root.set(directoryKey, dataStore2.handle);
 
-        // Wait for the summarizer to generate a summary where dataStore2 is unreferenced.
-        await waitForSummary(container1);
+        // Wait for the summary that contains the above set. Also, get this summary's version so that we can load
+        // a new container with it.
+        summaryVersion = await waitForSummary();
 
-        // Load a new container which should initialize with the summary taken above. The initial summary for
-        // dataStore2 will have it marked as referenced now.
-        const container3 = await loadContainer();
+        // Load a new container with the version of the summary above. The initial summary for dataStore2 will
+        // have it marked as unreferenced.
+        const container3 = await loadContainer(summaryVersion);
         response = await container3.request(request);
         assert(response.status === 200, "dataStore2 should successfully load now");
     });

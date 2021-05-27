@@ -155,7 +155,7 @@ export class FluidPackageCheck {
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
-                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 7070 test:mocha")
             } else {
                 expectedTestScripts.push("npm run test:mocha");
             }
@@ -428,9 +428,15 @@ export class FluidPackageCheck {
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "**/_api-extractor-temp/**",
-        ]
-        const expected = pkg.name.startsWith("@fluidframework/test-") ?
+        ];
+
+        if (pkg.getScript("build:docs")) {
+            expectedCommon.push("**/_api-extractor-temp/**");
+        }
+
+        const testPackage = pkg.name.startsWith("@fluidframework/test-")
+            || pkg.name.startsWith("@fluid-internal/test-")
+        const expected = testPackage ?
             expectedCommon :
             [...expectedCommon,
                 "src/test",

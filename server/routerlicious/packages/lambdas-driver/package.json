@@ -47,17 +47,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.29.0-0",
+    "@fluidframework/common-utils": "^0.29.0",
     "@fluidframework/server-services-client": "^0.1023.0",
     "@fluidframework/server-services-core": "^0.1023.0",
-    "@fluidframework/server-services-utils": "^0.1023.0",
     "async": "^2.6.1",
     "lodash": "^4.17.21",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.20.0",
+    "@fluidframework/build-common": "^0.21.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/server-test-utils": "^0.1023.0",
     "@types/async": "^2.0.50",

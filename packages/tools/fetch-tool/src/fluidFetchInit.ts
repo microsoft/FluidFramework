@@ -72,7 +72,12 @@ async function initializeODSPCore(
     const getWebsocketTokenStub = (_options: odsp.OdspResourceTokenFetchOptions) => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         getStorageTokenStub,
-        getWebsocketTokenStub);
+        getWebsocketTokenStub,
+        undefined,
+        {
+            opsBatchSize: 20000,
+            concurrentOpsBatches: 4,
+        });
     return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 

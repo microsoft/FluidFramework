@@ -22,6 +22,9 @@ export interface IScribeServerConfiguration {
     // Enables generating service summaries
     generateServiceSummary: boolean;
 
+    // Enables including pending messages in checkpoints
+    enablePendingCheckpointMessages: boolean;
+
     // Enables clearing the checkpoint cache after a service summary is created
     clearCacheAfterServiceSummary: boolean;
 
@@ -79,6 +82,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     scribe: {
         generateServiceSummary: true,
+        enablePendingCheckpointMessages: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
     },

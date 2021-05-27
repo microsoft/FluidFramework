@@ -6,6 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import assert from "assert";
+import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
@@ -133,18 +134,19 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
-                const lastSequenceNumber = this.pendingMessages.peekBack()?.sequenceNumber ?? this.sequenceNumber;
+                const lastProtocolHandlerSequenceNumber =
+                    this.pendingMessages.peekBack()?.sequenceNumber ?? this.protocolHandler.sequenceNumber;
 
                 // Handles a partial checkpoint case where messages were inserted into DB but checkpointing failed.
-                if (value.operation.sequenceNumber <= lastSequenceNumber) {
+                if (value.operation.sequenceNumber <= lastProtocolHandlerSequenceNumber) {
                     continue;
                 }
 
-                // Ensure sequence numbers are monotonically increasing
-                if (value.operation.sequenceNumber !== lastSequenceNumber + 1) {
+                // Ensure protocol handler sequence numbers are monotonically increasing
+                if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
                     // unexpected sequence number. if a pending message reader is available, ask for those ops
                     if (this.pendingMessageReader !== undefined) {
-                        const from = lastSequenceNumber + 1;
+                        const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
                         for (const additionalPendingMessage of additionalPendingMessages) {
@@ -163,7 +165,10 @@ export class ScribeLambda extends SequencedLambda {
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
                 this.pendingMessages.push(value.operation);
-                this.pendingCheckpointMessages.push(value);
+
+                if (this.serviceConfiguration.scribe.enablePendingCheckpointMessages) {
+                    this.pendingCheckpointMessages.push(value);
+                }
 
                 // Update the current sequence and min sequence numbers
                 const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
@@ -185,7 +190,7 @@ export class ScribeLambda extends SequencedLambda {
                     };
                     this.processFromPending(value.operation.referenceSequenceNumber);
 
-                    // Only process the op if the protocol state advances. This elimiates the corner case where we have
+                    // Only process the op if the protocol state advances. This eliminates the corner case where we have
                     // already captured this summary and are processing this message due to a replay of the stream.
                     if (this.protocolHead < this.protocolHandler.sequenceNumber) {
                         try {
@@ -221,9 +226,11 @@ export class ScribeLambda extends SequencedLambda {
                                         },
                                     );
                                 } else {
-                                    await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
+                                    const nackMessage = summaryResponse.message as ISummaryNack;
+                                    await this.sendSummaryNack(nackMessage);
                                     this.context.log?.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}`,
+                                        `Client summary failure @${value.operation.sequenceNumber}. `
+                                        + `Error: ${nackMessage.errorMessage}`,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
@@ -235,6 +242,7 @@ export class ScribeLambda extends SequencedLambda {
                                 }
                             }
                         } catch (ex) {
+                            this.context.log?.error(`Failed to summarize the document. Exception: ${inspect(ex)}`);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.

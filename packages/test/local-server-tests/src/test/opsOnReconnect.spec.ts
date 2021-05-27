@@ -57,7 +57,7 @@ describe("Ops on Reconnect", () => {
     /**
      * Waits for the "connected" event from the given container.
      */
-    async function waitForContainerReconnection(container: Container): Promise<void> {
+    async function waitForContainerReconnection(container: IContainer): Promise<void> {
         await new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 
@@ -102,6 +102,7 @@ describe("Ops on Reconnect", () => {
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
         const loader = await createLoader();
         const container2 = await loader.resolve({ url: documentLoadUrl });
+        await waitForContainerReconnection(container2);
         container2.on("op", (containerMessage: ISequencedDocumentMessage) => {
             if (!isRuntimeMessage(containerMessage)) {
                 return;

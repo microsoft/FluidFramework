@@ -6,12 +6,13 @@
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { TestContainerRuntimeFactory, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -28,14 +29,23 @@ class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-describeNoCompat("UpgradeManager (hot-swap)", (getTestObjectProvider) => {
+const runtimeFactory: IProvideRuntimeFactory & IProvideFluidCodeDetailsComparer = {
+    IRuntimeFactory: new TestContainerRuntimeFactory(TestDataObject.type,TestDataObject.getFactory()),
+    IFluidCodeDetailsComparer: {
+        get IFluidCodeDetailsComparer() {return this;},
+        satisfies: async ()=> true,
+        compare: async ()=>undefined,
+    },
+};
+
+describeNoCompat("UpgradeManager", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const createContainer = async (): Promise<IContainer> =>
-        provider.createContainer(TestDataObject.getFactory(), { hotSwapContext: true });
+        provider.createContainer(runtimeFactory);
 
     const loadContainer = async (): Promise<IContainer> =>
-        provider.loadContainer(TestDataObject.getFactory(), { hotSwapContext: true });
+        provider.loadContainer(runtimeFactory);
 
     beforeEach(async () => {
         provider = getTestObjectProvider();

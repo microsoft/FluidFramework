@@ -325,6 +325,7 @@ describe("Routerlicious", () => {
             testStorage = new services.DocumentStorage(
                 databaseManager,
                 testTenantManager,
+                false,
             );
         });
 

@@ -23,10 +23,12 @@ import {
     WebServerFactory,
 } from "./services";
 
+const defaultTinyliciousPort = 7070;
+
 export class TinyliciousResourcesFactory implements utils.IResourcesFactory<TinyliciousResources> {
     public async create(config: Provider): Promise<TinyliciousResources> {
         // Pull in the default port off the config
-        const port = utils.normalizePort(process.env.PORT || "35843");
+        const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);

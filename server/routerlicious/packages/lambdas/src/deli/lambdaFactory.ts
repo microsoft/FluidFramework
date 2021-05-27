@@ -20,8 +20,18 @@ import {
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import {
+    FileMode,
+    ISummarySnapshotPayload,
+    ITreeEntry,
+    SummarySnapshotTreeEntry,
+    SummarySnapshotType,
+ } from "@fluidframework/protocol-definitions";
+import {
+    IGitManager,
+    buildSnapshotTreeHierarchy,
+    convertTreeToSnapshotTree,
+ } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -40,6 +50,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
+        lastSentMSN: 0,
     };
 };
 
@@ -50,7 +61,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly singleSummaryUploadApi = true,
+        ) {
         super();
     }
 
@@ -227,9 +240,39 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
+        let summaryId;
+        if (this.singleSummaryUploadApi)
+        {
+            summaryId = await this.updateAndUploadSnapshotTree(serviceProtocolEntries, lastCommit.tree.sha, gitManager);
+        }
+        else
+        {
+            summaryId = await this.updateAndUploadSummaryTree(serviceProtocolEntries, lastCommit.tree.sha, gitManager);
+        }
+
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: `Term Change Summary @T${checkpoint.term}S${checkpoint.sequenceNumber}`,
+            parents: [lastCommit.sha],
+            tree: summaryId,
+        };
+
+        // Finally commit the summary and update the ref.
+        const commit = await gitManager.createCommit(commitParams);
+        await gitManager.upsertRef(documentId, commit.sha);
+    }
+
+    private async updateAndUploadSummaryTree(
+        serviceProtocolEntries: ITreeEntry[],
+        lastCommitId: string,
+        gitManager: IGitManager): Promise<string> {
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             gitManager.createTree({ entries: serviceProtocolEntries }),
-            gitManager.getTree(lastCommit.tree.sha, false),
+            gitManager.getTree(lastCommitId, false),
         ]);
 
         const newTreeEntries = lastSummaryTree.tree
@@ -252,19 +295,35 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         });
 
         const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
-        const commitParams: ICreateCommitParams = {
-            author: {
-                date: new Date().toISOString(),
-                email: "praguertdev@microsoft.com",
-                name: "Routerlicious Service",
-            },
-            message: `Term Change Summary @T${checkpoint.term}S${checkpoint.sequenceNumber}`,
-            parents: [lastCommit.sha],
-            tree: gitTree.sha,
-        };
 
-        // Finally commit the summary and update the ref.
-        const commit = await gitManager.createCommit(commitParams);
-        await gitManager.upsertRef(documentId, commit.sha);
+        return gitTree.sha;
+    }
+
+    public async updateAndUploadSnapshotTree(
+        serviceProtocolEntries: ITreeEntry[],
+        lastCommitId: string,
+        gitManager: IGitManager): Promise<string> {
+            const lastSummaryTree = await gitManager.getTree(lastCommitId, true);
+            const summarySnapshot = buildSnapshotTreeHierarchy(lastSummaryTree);
+
+            const summarySnapshotEntries = summarySnapshot.entries !== undefined ?
+             summarySnapshot.entries.filter((entry) => entry.path !== ".serviceProtocol") : [];
+
+            const serviceProtocolTree = await convertTreeToSnapshotTree({ entries: serviceProtocolEntries });
+
+            const serviceProtocolEntry: SummarySnapshotTreeEntry = {
+                type: "tree",
+                path: ".serviceProtocol",
+                value: serviceProtocolTree,
+            };
+
+            summarySnapshotEntries.push(serviceProtocolEntry);
+
+            const snapshotPayload: ISummarySnapshotPayload = {
+                entries: summarySnapshotEntries,
+                type: SummarySnapshotType.Channel,
+            };
+
+            return gitManager.createSummary(snapshotPayload).then((response) => response.id);
     }
 }

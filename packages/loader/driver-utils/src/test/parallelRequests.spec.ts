@@ -5,7 +5,14 @@
 
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { ParallelRequests } from "../parallelRequests";
+
+enum HowMany {
+    Exact,
+    Partial,
+    TooMany,
+}
 
 describe("Parallel Requests", () => {
     async function test(
@@ -15,7 +22,7 @@ describe("Parallel Requests", () => {
         to: number,
         expectedRequests: number,
         knownTo: boolean,
-        partial = false)
+        howMany: HowMany = HowMany.Exact)
     {
         let nextElement = from;
         let requests = 0;
@@ -35,8 +42,17 @@ describe("Parallel Requests", () => {
                 assert(requests <= request);
                 assert(!knownTo || _to <= to);
 
-                if (partial) {
-                    length = Math.min(length, payloadSize / 2 + 1);
+                switch (howMany) {
+                    case HowMany.Partial:
+                        length = Math.min(length, payloadSize / 2 + 1);
+                        break;
+                    case HowMany.TooMany:
+                        length += 2;
+                        break;
+                    case HowMany.Exact:
+                        break;
+                    default:
+                        unreachableCase(howMany);
                 }
                 // covering knownTo === false case
                 const actualTo = Math.min(_from + length, to);
@@ -46,11 +62,12 @@ describe("Parallel Requests", () => {
                     payload.push(i);
                 }
 
-                return { partial: _from === to ? false : partial, cancel: false, payload};
+                return { partial: _from !== to && howMany === HowMany.Partial, cancel: false, payload};
             },
             (deltas: number[]) => {
                 dispatches++;
-                assert(dispatches <= requests);
+                // Big chunks are broken into smaller ones
+                assert(dispatches <= requests || howMany === HowMany.TooMany);
                 for (const el of deltas) {
                     assert(el === nextElement);
                     nextElement++;
@@ -61,9 +78,8 @@ describe("Parallel Requests", () => {
         await manager.run(concurrency);
 
         assert(nextElement === to);
-        assert(dispatches <= requests);
         assert(!knownTo || dispatches === requests);
-        assert(requests === expectedRequests);
+        assert.equal(requests, expectedRequests, "expected requests");
     }
 
     async function testCancel(
@@ -121,34 +137,42 @@ describe("Parallel Requests", () => {
     it("no concurrency, single request, over", async () => {
         await test(1, 100, 123, 156, 1, true);
         await test(1, 100, 123, 156, 1, false);
-        await test(1, 100, 123, 156, 1, true, true);
+        await test(1, 100, 123, 156, 1, true, HowMany.TooMany);
+        await test(1, 100, 123, 156, 1, true, HowMany.Partial);
     });
 
     it("no concurrency, single request, exact", async () => {
         await test(1, 156 - 123, 123, 156, 1, true);
         await test(1, 156 - 123, 123, 156, 2, false);
-        await test(1, 156 - 123, 123, 156, 2, true, true);
-        await test(1, 156 - 123, 123, 156, 3, false, true);
+        await test(1, 156 - 123, 123, 156, 1, true, HowMany.TooMany);
+        await test(1, 156 - 123, 123, 156, 2, true, HowMany.Partial);
+        await test(1, 156 - 123, 123, 156, 2, false, HowMany.TooMany);
+        await test(1, 156 - 123, 123, 156, 3, false, HowMany.Partial);
     });
 
     it("concurrency, single request, exact", async () => {
         await test(2, 156 - 123, 123, 156, 1, true);
-        await test(2, 156 - 123, 123, 156, 2, true, true);
+        await test(2, 156 - 123, 123, 156, 1, true, HowMany.TooMany);
+        await test(2, 156 - 123, 123, 156, 2, true, HowMany.Partial);
         // here, the number of actual requests is Ok to be 2..3
         await test(2, 156 - 123, 123, 156, 3, false);
-        await test(2, 156 - 123, 123, 156, 3, false, true);
+        await test(2, 156 - 123, 123, 156, 3, false, HowMany.TooMany);
+        await test(2, 156 - 123, 123, 156, 3, false, HowMany.Partial);
     });
 
     it("no concurrency, multiple requests", async () => {
         await test(1, 10, 123, 156, 4, true);
         await test(1, 10, 123, 156, 4, false);
+        await test(1, 10, 123, 156, 3, false, HowMany.TooMany);
     });
 
     it("two concurrent requests exact", async () => {
         await test(2, 10, 123, 153, 3, true);
-        await test(2, 10, 123, 153, 6, true, true);
+        await test(2, 10, 123, 153, 3, true, HowMany.TooMany);
+        await test(2, 10, 123, 153, 6, true, HowMany.Partial);
         await test(2, 10, 123, 153, 5, false);
-        await test(2, 10, 123, 153, 8, false, true);
+        await test(2, 10, 123, 153, 5, false, HowMany.TooMany);
+        await test(2, 10, 123, 153, 8, false, HowMany.Partial);
     });
 
     it("two concurrent requests one over", async () => {
@@ -166,5 +190,53 @@ describe("Parallel Requests", () => {
     it("cancellation", async () => {
         await testCancel(1, 1000, 502, 10, 60);
         await testCancel(1, undefined, 502, 10, 60);
+    });
+
+    it("exception in request", async () => {
+        const manager = new ParallelRequests<number>(
+            1,
+            100,
+            10,
+            new TelemetryUTLogger(),
+            async (request: number, _from: number, _to: number) => {
+                throw new Error("request");
+            },
+            (deltas: number[]) => {
+                throw new Error("response");
+            },
+        );
+
+        let success = true;
+        try {
+            await manager.run(10);
+        } catch (error) {
+            success = false;
+            assert(error.message === "request");
+        }
+        assert(!success);
+    });
+
+    it("exception in response", async () => {
+        const manager = new ParallelRequests<number>(
+            1,
+            100,
+            10,
+            new TelemetryUTLogger(),
+            async (request: number, _from: number, _to: number) => {
+                return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
+            },
+            (deltas: number[]) => {
+                throw new Error("response");
+            },
+        );
+
+        let success = true;
+        try {
+            await manager.run(10);
+        } catch (error) {
+            success = false;
+            assert(error.message === "response");
+        }
+        assert(!success);
     });
 });

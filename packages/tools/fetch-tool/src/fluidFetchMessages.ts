@@ -5,9 +5,7 @@
 
 import fs from "fs";
 import { assert} from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import {
-    IDocumentDeltaStorageService,
     IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
@@ -16,7 +14,6 @@ import {
     MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { parallel } from "@fluidframework/driver-utils";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -28,19 +25,6 @@ import {
 
 function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
-}
-
-async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
-    console.log(`Loading ops at ${from}`);
-    for (let iter = 0; iter < 3; iter++) {
-        try {
-            return await deltaStorage.get(from - 1, to); // from is exclusive for get()
-        } catch (error) {
-            console.error("Hit error while downloading ops. Retrying");
-            console.error(error);
-        }
-    }
-    throw new Error("Giving up after 3 attempts to download chunk.");
 }
 
 async function* loadAllSequencedMessages(
@@ -82,27 +66,18 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
-    const concurrency = 4;
-    const batch = 20000; // see data in issue #5211 on possible sizes we can use.
-
-    const queue = parallel<ISequencedDocumentMessage>(
-        concurrency,
+    const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
         undefined, // to
-        batch,
-        new TelemetryUTLogger(),
-        async (_request: number, from: number, to: number) => {
-            const { messages, partialResult } = await loadChunk(from, to, deltaStorage);
-            return {partial: partialResult, cancel: false, payload: messages};
-        },
     );
 
     while (true) {
-        const messages = await queue.pop();
-        if (messages === undefined) {
+        const result = await stream.read();
+        if (result.done) {
             break;
         }
         requests++;
+        const messages = result.value;
 
         // Empty buckets should never be returned
         assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
@@ -125,7 +100,7 @@ async function* loadAllSequencedMessages(
     }
 
     // eslint-disable-next-line max-len
-    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests, using ${concurrency} parallel requests`);
+    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
 
     if (connectToWebSocket) {
         let logMsg = "";
