@@ -10,6 +10,7 @@ import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+    IntervalCollection,
     IntervalCollectionView,
     ISerializedInterval,
     SequenceInterval,
@@ -51,6 +52,95 @@ const assertIntervalsHelper = (
     }
 };
 
+function testIntervalCollection(intervalCollection: IntervalCollection<SequenceInterval>) {
+    if (!intervalCollection[Symbol.iterator]) {
+        // Check for prior version that doesn't support iteration
+        return;
+    }
+
+    const intervalArray: SequenceInterval[] = [];
+    intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
+    intervalArray[1] = intervalCollection.add(0, 1, IntervalType.SlideOnRemove);
+    intervalArray[2] = intervalCollection.add(0, 2, IntervalType.SlideOnRemove);
+    intervalArray[3] = intervalCollection.add(1, 0, IntervalType.SlideOnRemove);
+    intervalArray[4] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
+    intervalArray[5] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
+    intervalArray[6] = intervalCollection.add(2, 0, IntervalType.SlideOnRemove);
+    intervalArray[7] = intervalCollection.add(2, 1, IntervalType.SlideOnRemove);
+    intervalArray[8] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
+
+    let i: number;
+    let result;
+    let tempArray: SequenceInterval[] = [];
+    let iterator = intervalCollection.CreateForwardIteratorWithStartPosition(1);
+    tempArray[0] = intervalArray[3];
+    tempArray[1] = intervalArray[4];
+    tempArray[2] = intervalArray[5];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with start position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
+
+    iterator = intervalCollection.CreateBackwardIteratorWithStartPosition(0);
+    tempArray = [];
+    tempArray[0] = intervalArray[2];
+    tempArray[1] = intervalArray[1];
+    tempArray[2] = intervalArray[0];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with start position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with start position");
+
+    iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
+    tempArray = [];
+    tempArray[0] = intervalArray[7];
+    tempArray[1] = intervalArray[4];
+    tempArray[2] = intervalArray[1];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with end position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
+
+    iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    for (const interval of intervalCollection) {
+        assert.strictEqual(interval, intervalArray[i], "Mismatch in for...of iteration of collection");
+        i++;
+    }
+    assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
+
+    intervalCollection.delete(0, 0);
+    intervalCollection.delete(0, 1);
+    intervalCollection.delete(0, 2);
+    intervalCollection.delete(1, 0);
+    intervalCollection.delete(1, 1);
+    intervalCollection.delete(1, 2);
+    intervalCollection.delete(2, 0);
+    intervalCollection.delete(2, 1);
+    intervalCollection.delete(2, 2);
+}
+
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -60,6 +150,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         const stringId = "stringKey";
 
         let sharedString: SharedString;
+        let intervalCollection: IntervalCollection<SequenceInterval>;
         let intervals: IntervalCollectionView<SequenceInterval>;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
@@ -76,7 +167,11 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
-            intervals = await sharedString.getIntervalCollection("intervals").getView();
+
+            intervalCollection = sharedString.getIntervalCollection("intervals");
+            intervals = await intervalCollection.getView();
+
+            testIntervalCollection(intervalCollection);
         });
 
         it("replace all is included", async () => {
