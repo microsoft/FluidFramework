@@ -92,7 +92,7 @@ async function getDeltasFromSummaryAndStorage(
     documentId: string,
     from?: number,
     to?: number) {
-    const tenant = await tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId, documentId);
     const gitManager = tenant.gitManager;
 
     const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
