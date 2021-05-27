@@ -29,8 +29,9 @@
     "lint:fix": "npm run eslint:fix",
     "start": "node ./dist/nodeStressTest.js",
     "start:mini": "node ./dist/nodeStressTest.js --driver tinylicious --profile mini",
+    "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc",
-    "test:realsvc:run": "mocha dist/test",
+    "test:realsvc:run": "mocha dist/test --no-timeouts",
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
@@ -80,7 +81,8 @@
     "@fluidframework/tool-utils": "^0.40.0",
     "commander": "^5.1.0",
     "cross-env": "^7.0.2",
-    "random-js": "^1.0.8"
+    "random-js": "^1.0.8",
+    "start-server-and-test": "^1.11.7"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",

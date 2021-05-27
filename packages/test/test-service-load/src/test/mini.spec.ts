@@ -18,7 +18,6 @@ describe("stress test", () => {
             "node",
             childArgs,
             { stdio: "inherit",
-            cwd:"../../",
         },
         );
         await new Promise((resolve) => process.once("close", resolve));
