@@ -106,7 +106,8 @@ describeNoCompat("GC reference updates in local summary", (getTestObjectProvider
         });
 
         let dataStoreTree: ISummaryTree | undefined;
-        for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
+        const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
+        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
             if (id === dataStoreId) {
                 assert(
                     summaryObject.type === SummaryType.Tree,
