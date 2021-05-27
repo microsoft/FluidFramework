@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/last-edited-experimental",
+  "name": "@fluid-experimental/last-edited",
   "version": "0.41.0",
   "description": "Tracks the last edited information in the Container.",
   "homepage": "https://fluidframework.com",

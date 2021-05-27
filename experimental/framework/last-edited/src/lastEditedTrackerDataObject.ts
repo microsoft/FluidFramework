@@ -16,9 +16,8 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory =
-        // eslint-disable-next-line @typescript-eslint/ban-types
         new DataObjectFactory<LastEditedTrackerDataObject, undefined, undefined, IEvent>(
-            "@fluidframework/last-edited-experimental",
+            "@fluid-experimental/last-edited",
             LastEditedTrackerDataObject,
             [SharedSummaryBlock.getFactory()],
             {},
