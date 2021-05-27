@@ -811,8 +811,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             && !this.runtimeOptions.gcOptions.disableGC
         );
 
-        // Default to true (disabled) until a few versions have passed.
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? true;
+        // Default to false (enabled).
+        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -1223,11 +1223,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused, 0x128 /* "Container should not already be paused before applying stashed ops" */);
         this.paused = true;
-        this.scheduleManager.setPaused(true);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.context.deltaManager.inbound.pause();
         const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
         stashP.then(() => {
             this.paused = false;
-            this.scheduleManager.setPaused(false);
+            this.context.deltaManager.inbound.resume();
         }, (error) => {
             this.closeFn(CreateContainerError(error));
         });

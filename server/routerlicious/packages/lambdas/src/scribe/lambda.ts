@@ -194,9 +194,6 @@ export class ScribeLambda implements IPartitionLambda {
                             const summaryResponse = await this.summaryWriter.writeClientSummary(
                                 operation,
                                 this.lastClientSummaryHead,
-                                this.protocolHandler.minimumSequenceNumber,
-                                this.protocolHandler.sequenceNumber,
-                                this.protocolHandler.quorum.snapshot(),
                                 scribeCheckpoint,
                                 this.pendingCheckpointMessages.toArray(),
                             );
