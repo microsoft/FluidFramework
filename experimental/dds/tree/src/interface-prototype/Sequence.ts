@@ -4,10 +4,9 @@
 export interface Sequence<Element, Place = Element | undefined> {
 	[Symbol.iterator](): SequenceIterator<Element, Place>;
 	iteratorFromEnd(): SequenceIterator<Element, Place>;
-	areInOrder(first: Element, second: Element): boolean;
 	readonly length: number;
 	indexOf(element: Element): number;
-	elementAtIndex(index: number): Element;
+	at(index: number): Element;
 }
 
 export interface SequenceIterator<Element, Place = Element | undefined> extends IterableIterator<Element> {

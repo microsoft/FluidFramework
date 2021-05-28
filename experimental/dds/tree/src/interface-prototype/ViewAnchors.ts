@@ -53,7 +53,7 @@ export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, Place
  * Used for the source of moves and deletes/detach.
  * Also used for constraints.
  */
-export interface RangeView<TPlace, TNode, TRange> extends Anchor, RangeData, Sequence<TNode, TPlace> {
+export interface RangeView<TPlace, TNode, TRange> extends Anchor, RangeData, TraitSection<TNode, TPlace> {
 	readonly start: TPlace;
 	readonly end: TPlace;
 
@@ -112,10 +112,11 @@ enum ContentsConstraint {
  *
  * TODO: Trait iterator is invalidated by edits?
  */
-export interface TreeNodeView<TPlace, TNode, TRange, TParent>
+export interface TreeNodeView<TPlace, TNode, TRange extends TraitSection<TNode, TPlace>, TParent>
 	extends Anchor,
 		TreeNodeData,
-		Sequence<Trait<TNode, TPlace>, Query<TNode, TPlace>> {
+		Sequence<Trait<TNode, TPlace>>,
+		Query<TNode, TPlace> {
 	/**
 	 * Parent of this Node.
 	 *
@@ -161,7 +162,7 @@ interface Query<TChild, TPlace> extends RawTreeNode<TChild> {
 
 	// TODO: add optional anchor policy parameters.
 	// Stable across edits: behavior depends on anchoring.
-	childrenFromTrait(label: TraitLabel): Sequence<TChild, TPlace>;
+	childrenFromTrait(label: TraitLabel): TraitSection<TChild, TPlace>;
 
 	// Maybe add child access helpers like these for common cases:
 	childFromTrait(label: TraitLabel): TChild | undefined; // returns child if exactly 1.
@@ -172,7 +173,7 @@ interface Query<TChild, TPlace> extends RawTreeNode<TChild> {
 
 // Only needed when using TreeNode[Symbol.iterator]
 
-export interface Trait<TNode, TPlace> extends Sequence<TNode, TPlace> {
+export interface Trait<TNode, TPlace> extends TraitSection<TNode, TPlace> {
 	/**
 	 * Parent of this Node.
 	 *
@@ -186,7 +187,9 @@ export interface Trait<TNode, TPlace> extends Sequence<TNode, TPlace> {
  * Stable anchor based sequence of nodes. Can be held onto and iterated on across edits.
  * Behavior across edits depends on how it was anchored.
  */
-// type NodeSequence = Sequence<TreeNodeView, PlaceView>;
+interface TraitSection<TNode, TPlace> extends Sequence<TNode, TPlace> {
+	areInOrder(first: TPlace, second: TPlace): boolean;
+}
 
 /**
  * Stable anchor based sequence of nodes. Can be held onto and iterated on across edits.
