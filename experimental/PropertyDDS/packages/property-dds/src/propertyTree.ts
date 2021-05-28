@@ -160,7 +160,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get changeSet(): SerializedChangeSet {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.tipView;
 	}
 
@@ -530,8 +530,8 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = lastDelta ?? -1;
 			}
 		} catch (e) {
-			this.tipView = {changeSet: {}, metadata: {}};
-			this.remoteTipView = {changeSet: {}, metadata: {}};
+			this.tipView = {};
+			this.remoteTipView = {};
 			this.remoteChanges = [];
 		} finally {
 			this._root.deserialize(this.tipView);
@@ -545,6 +545,7 @@ export class SharedPropertyTree extends SharedObject {
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
 		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
+
 		this.localChanges.push(change);
 	}
 
