@@ -1,23 +1,25 @@
 import { v4 } from 'uuid';
 import { CheckoutEvent } from '../Checkout';
 import { fail } from '../Common';
+import { ConstraintEffect } from '../default-edits';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
 import { Definition, TraitLabel } from '../Identifiers';
 import { Side, Snapshot } from '../Snapshot';
-import { StableId, TreeNodeData } from './Anchors';
+import { StableId } from './Anchors';
 import {
 	anchorDataFromNodeId,
 	Command,
 	CommandContext,
 	CommandId,
+	commandInvalid,
 	CommandRegistry,
 	PrefetchFilter,
 	root,
 	SharedTree,
 } from './Checkout';
-import { Place, TreeNode } from './TreeAnchors';
+import { ContentsConstraint, Place, Trait, Range, TreeNode } from './TreeAnchors';
 
 // ////////////// Command examples //////////////
 
@@ -125,7 +127,61 @@ async function wait(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export const deleteNode = {
+	id: '710e8cce-c7fa-4d4e-ade2-1ed66bd9bdfc' as CommandId,
+	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): Place => {
+		const before = target.adjacentPlace(Side.Before);
+		const range = before.rangeTo(target.adjacentPlace(Side.After));
+
+		// This particular delete command uses the policy that if the deleted tree was changed from when this command initially ran,
+		// apply it anyway, but mark it for possible application level merge resolution if part of an offline merge.
+		context.useAsConstraint(
+			range.withContentsOrdered(ContentsConstraint.DeepEquality),
+			ConstraintEffect.ValidRetryOffline
+		);
+
+		context.detach(range);
+		// This requires `before` to use anchoring which is valid despite the delete having occurred.
+		// Meeting this requirement may require anchoring Before (ex: to be a before(target) instead of a predecessor(target)):
+		// depends on the default anchoring policy of adjacentPlace.
+		return before;
+	},
+};
+
+export const moveToFront = {
+	id: '64cacbb8-a52c-47ce-bf68-88be3d2cbd80' as CommandId,
+	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): void => {
+		const before = target.adjacentPlace(Side.Before);
+		const range = before.rangeTo(target.adjacentPlace(Side.After));
+		const parent = target.parent ?? commandInvalid();
+		const trait = parent as Trait; // TODO: better way to do this.
+		const end = trait.iteratorFromEnd().current(); // Assuming this is anchored based on the end of the trait, not relative to what ever node is last.
+
+		// This enforces that the move to front is not changing which trait the target is in.
+		// If target is moved to another trait before moved before this gets applied, this will detect it and make it conflicted.
+		// The application could then rerun this command to fix it, moving it to the end of its new trait.
+		context.useAsConstraint(before.rangeTo(end), ConstraintEffect.InvalidAndDiscard);
+
+		context.insert(end, range);
+	},
+};
+
+// This is not a command (since it takes in a comparison function), but could be called by one.
+function sort(context: CommandContext, target: Range, cmp: (a: TreeNode, b: TreeNode) => number): void {
+	// This marks this command as conflicted if the contents of the range have changed.
+	context.useAsConstraint(target.withContents(), ConstraintEffect.InvalidAndDiscard);
+
+	// Perform a sort in a way that will still merge correctly, even if the input nodes were reordered.
+	// This works by sorting the nodes in temporary storage, then moving each one to be after its predecessor.
+	const sorted = [...target].sort(cmp);
+	for (let i = 1; i < sorted.length; i++) {
+		const src = sorted[i].adjacentPlace(Side.Before).rangeTo(sorted[i].adjacentPlace(Side.After));
+		context.insert(sorted[i - 1].adjacentPlace(Side.After), src);
+	}
+}
+
 // Note: Redo is the same as undoing an undo (at this level).
+// TODO: Maybe allow a kind of anchor to a Revision（and maybe definition and label?)
 export const undo: Command<{ editId: StableId }, Empty, void> = {
 	id: '083ed8c8-9ee3-435f-b949-190a8eb9915c' as CommandId,
 	run: (context: CommandContext, { editId }: { editId: StableId }, anchors: Empty): void => {

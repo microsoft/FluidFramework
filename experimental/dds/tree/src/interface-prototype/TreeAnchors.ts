@@ -98,7 +98,7 @@ export interface Range extends Anchor, RangeData, TraitSection {
 	): Range;
 }
 
-enum ContentsConstraint {
+export enum ContentsConstraint {
 	UnorderedShallow,
 	OrderedShallow,
 	DeepEquality,

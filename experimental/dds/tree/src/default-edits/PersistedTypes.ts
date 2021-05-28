@@ -212,6 +212,17 @@ export enum ConstraintEffect {
 	 * (applying it is better than not, but perhaps the high level logic could produce something better).
 	 */
 	ValidRetry,
+
+	/**
+	 * Discard Edit, but record metadata that application may want to try and recover this change by recreating it if part of an offline merge.
+	 */
+	InvalidRetryOffline,
+
+	/**
+	 * Apply the change, but flag it for possible reconsideration by the app if part of an offline merge.
+	 * (applying it is better than not, but perhaps the high level logic could produce something better).
+	 */
+	ValidRetryOffline,
 }
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.

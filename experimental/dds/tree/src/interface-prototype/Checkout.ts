@@ -236,6 +236,17 @@ export class PlaceholderNotLoaded extends RecoverableError {
 	}
 }
 
+// TODO: more metadata.
+export class CommandInvalid extends RecoverableError {
+	public constructor() {
+		super('command is invalid');
+	}
+}
+
+export function commandInvalid(): never {
+	throw new CommandInvalid();
+}
+
 export type CommandRegistry = readonly Command<any, any, any>[];
 
 // callbacks to inform the registry about commands being used.
