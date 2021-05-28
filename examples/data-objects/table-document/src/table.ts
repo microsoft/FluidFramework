@@ -3,18 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
-import {
-    Jsonable,
-    JsonablePrimitive,
-} from "@fluidframework/datastore-definitions";
 
-export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
+export type TableDocumentItem = any;
 
 /**
  * @deprecated - ITable is an abandoned prototype.  Please use SharedMatrix with
- *               the IMatrixProducer/Consumer interfaces instead. */
+ *               the IMatrixProducer/Consumer interfaces instead.
+ */
 export interface ITable {
     readonly numRows: number;
     readonly numCols: number;
