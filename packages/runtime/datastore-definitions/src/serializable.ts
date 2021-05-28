@@ -7,7 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Jsonable } from "./jsonable";
 
 /**
- * Used to constrain a type 'T' to types that fluid can intrinsically serialize.  Produces an
+ * Used to constrain a type 'T' to types that Fluid can intrinsically serialize.  Produces an
  * error if `T` contains non-Jsonable members.
  *
  * Typical usage:
