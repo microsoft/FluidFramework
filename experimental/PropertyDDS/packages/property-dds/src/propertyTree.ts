@@ -165,7 +165,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
     public get activeCommit(): IPropertyTreeMessage {
-        if(this.localChanges.length > 0) {
+        if(this.localChanges.length > 1) {
             return this.localChanges[this.localChanges.length - 1];
         } else {
             return this.remoteChanges[this.remoteChanges.length - 1];
