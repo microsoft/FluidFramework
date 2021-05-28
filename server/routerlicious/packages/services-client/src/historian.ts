@@ -7,7 +7,7 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
-import { IPragueGraphSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -134,7 +134,7 @@ export class Historian implements IHistorian {
             `/git/trees/${encodeURIComponent(sha)}`,
             this.getQueryString({ recursive: recursive ? 1 : 0 }));
     }
-    public async createSummary(summary: IPragueGraphSummaryPayload): Promise<IWriteSummaryResponse> {
+    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         return this.restWrapper.post<IWriteSummaryResponse>(`/git/summaries`, summary, this.getQueryString());
     }
     /* eslint-enable @typescript-eslint/promise-function-async */

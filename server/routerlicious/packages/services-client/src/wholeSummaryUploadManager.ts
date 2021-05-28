@@ -7,18 +7,18 @@ import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/com
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    IPragueGraphSummaryPayload,
-    IPragueGraphSummaryTree,
-    PragueGraphSummaryTreeValue,
-    IPragueGraphSummaryTreeBaseEntry,
-    PragueGraphSummaryTreeEntry,
+    IWholeSummaryPayload,
+    IWholeSummaryTree,
+    WholeSummaryTreeValue,
+    IWholeSummaryTreeBaseEntry,
+    WholeSummaryTreeEntry,
 } from "./storageContracts";
 import { IGitManager, ISummaryUploadManager } from "./storage";
 
 /**
  * Converts summary to snapshot tree and uploads with single snaphot tree payload.
  */
- export class PragueGraphSummaryUploadManager implements ISummaryUploadManager {
+ export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(
         private readonly manager: IGitManager,
     ) {
@@ -44,7 +44,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
             tree,
             "",
         );
-        const snapshotPayload: IPragueGraphSummaryPayload = {
+        const snapshotPayload: IWholeSummaryPayload = {
             entries: snapshotTree.entries,
             message: undefined,
             sequenceNumber: undefined,
@@ -63,10 +63,10 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
         parentHandle: string | undefined,
         tree: ISummaryTree,
         path: string = "",
-    ): Promise<IPragueGraphSummaryTree> {
-        const snapshotTree: IPragueGraphSummaryTree = {
+    ): Promise<IWholeSummaryTree> {
+        const snapshotTree: IWholeSummaryTree = {
             type: "tree",
-            entries: [] as PragueGraphSummaryTreeEntry[],
+            entries: [] as WholeSummaryTreeEntry[],
         };
 
         const keys = Object.keys(tree.tree);
@@ -74,7 +74,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
             const summaryObject = tree.tree[key];
 
             let id: string | undefined;
-            let value: PragueGraphSummaryTreeValue | undefined;
+            let value: WholeSummaryTreeValue | undefined;
 
             const currentPath = path === "" ? key : `${path}/${key}`;
             switch (summaryObject.type) {
@@ -118,12 +118,12 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
                 }
             }
 
-            const baseEntry: IPragueGraphSummaryTreeBaseEntry = {
+            const baseEntry: IWholeSummaryTreeBaseEntry = {
                 path: encodeURIComponent(key),
                 type: getGitType(summaryObject),
             };
 
-            let entry: PragueGraphSummaryTreeEntry;
+            let entry: WholeSummaryTreeEntry;
 
             if (value) {
                 assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);

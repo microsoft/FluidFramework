@@ -3,42 +3,42 @@
  * Licensed under the MIT License.
  */
 
-export interface IPragueGraphSummaryPayload {
+export interface IWholeSummaryPayload {
     type: "container" | "channel";
     message: string;
     sequenceNumber: number;
-    entries: PragueGraphSummaryTreeEntry[];
+    entries: WholeSummaryTreeEntry[];
 }
 
 export interface IWriteSummaryResponse {
     id: string;
 }
 
-export type PragueGraphSummaryTreeEntry = IPragueGraphSummaryTreeValueEntry | IPragueGraphSummaryTreeHandleEntry;
+export type WholeSummaryTreeEntry = IWholeSummaryTreeValueEntry | IWholeSummaryTreeHandleEntry;
 
-export interface IPragueGraphSummaryTreeBaseEntry {
+export interface IWholeSummaryTreeBaseEntry {
     path: string;
     type: "blob" | "tree" | "commit";
 }
 
-export interface IPragueGraphSummaryTreeValueEntry extends IPragueGraphSummaryTreeBaseEntry {
-    value: PragueGraphSummaryTreeValue;
+export interface IWholeSummaryTreeValueEntry extends IWholeSummaryTreeBaseEntry {
+    value: WholeSummaryTreeValue;
     // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
     unreferenced?: true;
 }
 
-export interface IPragueGraphSummaryTreeHandleEntry extends IPragueGraphSummaryTreeBaseEntry {
+export interface IWholeSummaryTreeHandleEntry extends IWholeSummaryTreeBaseEntry {
     id: string;
 }
 
-export type PragueGraphSummaryTreeValue = IPragueGraphSummaryTree | IPragueGraphSummaryBlob;
+export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 
-export interface IPragueGraphSummaryTree {
+export interface IWholeSummaryTree {
     type: "tree";
-    entries?: PragueGraphSummaryTreeEntry[];
+    entries?: WholeSummaryTreeEntry[];
 }
 
-export interface IPragueGraphSummaryBlob {
+export interface IWholeSummaryBlob {
     type: "blob";
     content: string;
     encoding: "base64" | "utf-8";

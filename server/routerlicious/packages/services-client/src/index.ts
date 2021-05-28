@@ -9,7 +9,7 @@ export * from "./generateNames";
 export * from "./gitManager";
 export * from "./historian";
 export * from "./interfaces";
-export * from "./pragueGraphSummaryUploadManager";
+export * from "./wholeSummaryUploadManager";
 export * from "./promiseTimeout";
 export * from "./restWrapper";
 export * from "./scopes";

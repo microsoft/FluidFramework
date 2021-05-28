@@ -11,7 +11,7 @@ import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
-import { IPragueGraphSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
 
 describe.only("Historian", () => {
     const endpoint = "http://test:3000";
@@ -456,7 +456,7 @@ describe.only("Historian", () => {
     });
 
     describe("createSummary", () => {
-        const summaryPayload: IPragueGraphSummaryPayload = {
+        const summaryPayload: IWholeSummaryPayload = {
             type: "container",
             message: "hello",
             sequenceNumber: 1,

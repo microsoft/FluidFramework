@@ -5,7 +5,7 @@
 
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
-import { IPragueGraphSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 /**
  * Required params to create ref with config
@@ -68,7 +68,7 @@ export interface IGitService {
     getTag(tag: string): Promise<git.ITag>;
     createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
     getTree(sha: string, recursive: boolean): Promise<git.ITree>;
-    createSummary(summary: IPragueGraphSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
 }
 
 /**
@@ -102,7 +102,7 @@ export interface IGitManager {
     createRef(branch: string, sha: string): Promise<git.IRef>;
     upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<git.ICommit>;
-    createSummary(summary: IPragueGraphSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
 }
 
 /**
