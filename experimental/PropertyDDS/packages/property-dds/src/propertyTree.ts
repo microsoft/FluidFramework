@@ -40,11 +40,6 @@ export const enum OpKind {
 	ChangeSet = 0,
 }
 
-export interface CommitNode {
-	changeSet: SerializedChangeSet,
-	metadata: Metadata
-}
-
 export interface IPropertyTreeMessage {
 	op: OpKind;
 	changeSet: SerializedChangeSet;
@@ -67,7 +62,7 @@ interface ISnapshot {
 	numChunks: number;
 }
 interface ISnapshotSummary {
-	remoteTipView?: CommitNode;
+	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
 }
@@ -91,8 +86,8 @@ export interface SharedPropertyTreeOptions {
  * in the total order)
  */
 export class SharedPropertyTree extends SharedObject {
-	tipView: CommitNode = { changeSet: {}, metadata: {}};
-	remoteTipView: CommitNode = { changeSet: {}, metadata: {}};
+	tipView: SerializedChangeSet = {};
+	remoteTipView: SerializedChangeSet = {};
 	localChanges: IPropertyTreeMessage[] = [];
 	remoteChanges: IPropertyTreeMessage[] = [];
 	unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
@@ -164,8 +159,17 @@ export class SharedPropertyTree extends SharedObject {
 		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 	}
 
-	public get activeCommit(): CommitNode {
+	public get changeSet(): SerializedChangeSet {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.tipView;
+	}
+
+    public get activeCommit(): IPropertyTreeMessage {
+        if(this.localChanges.length > 0) {
+            return this.localChanges[this.localChanges.length - 1];
+        } else {
+            return this.remoteChanges[this.remoteChanges.length - 1];
+        }
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
@@ -181,7 +185,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
-		_changeSet._toReversibleChangeSet(this.tipView.changeSet);
+		_changeSet._toReversibleChangeSet(this.tipView);
 
 		const remoteHeadGuid =
 			this.remoteChanges.length > 0
@@ -484,10 +488,7 @@ export class SharedPropertyTree extends SharedObject {
 					materializedView = ChangeSetUtils.getFilteredChangeSetByPaths(materializedView, this.options.paths);
 				}
 
-				this.tipView.changeSet = materializedView;
-				// how would we store and retreive metadata in MH? currently this will just set it to an empty object
-				// until we decide how this is handled in MH
-				this.tipView.metadata = {};
+				this.tipView = materializedView;
 				this.remoteTipView = _.cloneDeep(this.tipView);
 				this.remoteChanges = [];
 
@@ -533,7 +534,7 @@ export class SharedPropertyTree extends SharedObject {
 			this.remoteTipView = {changeSet: {}, metadata: {}};
 			this.remoteChanges = [];
 		} finally {
-			this._root.deserialize(this.tipView.changeSet);
+			this._root.deserialize(this.tipView);
 			this.root.cleanDirty();
 		}
 	}
@@ -542,9 +543,8 @@ export class SharedPropertyTree extends SharedObject {
 	protected onDisconnect() {}
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
-		const changeSetWrapper = new ChangeSet(this.tipView.changeSet);
+		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
-		this.tipView.metadata = change.metadata;
 		this.localChanges.push(change);
 	}
 
@@ -555,13 +555,12 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges.push(change);
 
 		// Apply the remote change set to the remote tip view
-		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView.changeSet);
+		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
 		remoteChangeSetWrapper.applyChangeSet(change.changeSet);
-		this.remoteTipView.metadata = change.metadata;
 
 		// Rebase the local changes
 		const pendingChanges = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView.changeSet);
+		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView);
 
 		const changesToTip: SerializedChangeSet = {};
 		const changesNeeded = this.rebaseLocalChanges(change, pendingChanges, changesToTip);
@@ -576,7 +575,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		// This is disabled for performance reasons. Only used during debugging
-		// assert(JSON.stringify(this.root.serialize()) === JSON.stringify(this.tipView.changeSet));
+		// assert(JSON.stringify(this.root.serialize()) === JSON.stringify(this.tipView));
 	}
 	private rebaseToRemoteChanges(change: IRemotePropertyTreeMessage) {
 		this.unrebasedRemoteChanges[change.guid] = _.cloneDeep(change);
@@ -790,7 +789,7 @@ export class SharedPropertyTree extends SharedObject {
 
 		// Udate the the tip view
 		this.tipView = _.cloneDeep(this.remoteTipView);
-		const changeSet = new ChangeSet(this.tipView.changeSet);
+		const changeSet = new ChangeSet(this.tipView);
 		changeSet.applyChangeSet(accumulatedChanges);
 
 		return true;
