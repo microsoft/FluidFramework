@@ -1,12 +1,13 @@
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { ICheckoutEvents } from '../Checkout';
-import { Change } from '../default-edits';
+import { Change, ConstraintEffect } from '../default-edits';
 import { OrderedEditSet } from '../EditLog';
+import { ChangeNode as BuildNode } from '../generic';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel, EditId } from '../Identifiers';
+import { Definition, NodeId, TraitLabel, EditId, DetachedSequenceId } from '../Identifiers';
 import { LogViewer } from '../LogViewer';
 
 // TODO: we are just reusing the exiting Snapshot type.
@@ -22,9 +23,8 @@ import { LogViewer } from '../LogViewer';
 // Probably something more like TreeNodeHandle and/or the non-mutating subset of TreeNode.
 import { Snapshot } from '../Snapshot';
 import { Anchor, AnchorData, PlaceData, RangeData, StableId, TreeNodeData } from './Anchors';
-import { DetachedSequence, Place, Range, TreeNode } from './MutableAnchors';
-import { areSafelyAssignable, isAssignableTo, isTrue } from './TypeCheck';
-import { PlaceView, RangeView, Trait, TreeNodeView } from './ViewAnchors';
+import { DetachedSequence, Place, Range, TreeNode } from './TreeAnchors';
+import { areSafelyAssignable, isTrue } from './TypeCheck';
 
 export type CommandId = StableId & { readonly CommandId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
 
@@ -49,6 +49,29 @@ export interface CommandContext extends IdSerializer, LogViewer, OrderedEditSet<
 		parameters: TOptions,
 		anchors: DecontextualizedAnchorSet<TAnchorSet> // Anchors will be contextualized into the tree provided to the command.
 	): TResult;
+
+	/**
+	 * Detach this range from the tree.
+	 *
+	 * This range will point to the detached nodes, but the same range is also returned as the a more strongly typed DetachedSequence.
+	 */
+	detach(range: RangeData): DetachedSequence;
+
+	// Could include moveTo(place) here, though it would be redundant with place.insert(range)
+
+	// Add a a constraint that this range is valid to the current transaction.
+	useAsConstraint(range: RangeData, effect: ConstraintEffect): void;
+
+	// Implicitly detaches or builds if needed then inserts (aka moves)?
+	insert(
+		destination: PlaceData,
+		source: TreeNodeData | RangeData | DetachedSequence | DetachedSequenceId | BuildNode
+	): Range;
+
+	// If the insert API is ambiguous we can add a move.
+	// move(destination: Place, source: TreeNodeData | RangeData | DetachedSequence | DetachedSequenceId);
+
+	setValue(newValue: Serializable): void;
 }
 
 // TODO: actually implement this as a NodeId based anchor using the standard root node id.
@@ -59,7 +82,7 @@ export const root: TreeNodeData = (undefined as unknown) as TreeNodeData;
  *
  * This view may change over time as edits are applied.
  */
-export interface TreeView extends EventEmitterWithErrorHandling<ICheckoutEvents> {
+export interface Tree extends EventEmitterWithErrorHandling<ICheckoutEvents> {
 	/**
 	 * The current view of this tree as an immutable snapshot.
 	 * This is updated copy on write, and thus may be held onto arbitrarily but will not update:
@@ -78,25 +101,6 @@ export interface TreeView extends EventEmitterWithErrorHandling<ICheckoutEvents>
 	 *
 	 * This converts PlaceData -> Place, RangeData -> Range etc.
 	 */
-	contextualizeAnchor<TData extends AnchorData>(anchor: TData): ContextualizeView<TData>;
-}
-
-/**
- * Mutable Tree:
- * This allows mutating the tree through this view.
- *
- * Typically used with Snapshot Isolation by commands so only edits made by the command are visible while the command is running.
- */
-export interface Tree extends TreeView {
-	/**
-	 * Get a mutable handle into the tree from anchors which might have come from another context
-	 * (ex: serialized, or just from another tree).
-	 *
-	 * Returned anchors will observe the current state of this tree, and update as this tree changes.
-	 * They may be invalid, and the validity may change over time as the tree is edited.
-	 *
-	 * This converts PlaceData -> Place, RangeData -> Range etc.
-	 */
 	contextualizeAnchor<TData extends AnchorData>(anchor: TData): Contextualize<TData>;
 }
 
@@ -108,23 +112,8 @@ type Contextualize<TData extends AnchorData> = TData extends PlaceData
 	? TreeNode
 	: Anchor;
 
-export type PlaceViewReadonly = PlaceView<PlaceViewReadonly, TreeNodeViewReadonly, ParentReadonly, RangeViewReadonly>;
-export type RangeViewReadonly = RangeView<PlaceViewReadonly, TreeNodeViewReadonly, RangeViewReadonly>;
-export type TreeNodeViewReadonly = TreeNodeView<
-	PlaceViewReadonly,
-	TreeNodeViewReadonly,
-	RangeViewReadonly,
-	ParentReadonly
->;
-
 // We would use this more specific type, but it causes the mutable versions to not be subtypes of the views.
 // export type ParentReadonly = Trait<TreeNodeViewReadonly, PlaceViewReadonly>;
-
-export type ParentReadonly = Trait<TreeNodeViewReadonly, PlaceViewReadonly> | DetachedSequence;
-
-isTrue<isAssignableTo<Place, PlaceViewReadonly>>();
-isTrue<isAssignableTo<Range, RangeViewReadonly>>();
-isTrue<isAssignableTo<TreeNode, TreeNodeViewReadonly>>();
 
 isTrue<areSafelyAssignable<Place, Contextualize<Place>>>();
 isTrue<areSafelyAssignable<Range, Contextualize<Range>>>();
@@ -133,22 +122,6 @@ isTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNode>>>();
 isTrue<areSafelyAssignable<Place, Contextualize<PlaceData>>>();
 isTrue<areSafelyAssignable<Range, Contextualize<RangeData>>>();
 isTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNodeData>>>();
-
-isTrue<areSafelyAssignable<PlaceViewReadonly, ContextualizeView<Place>>>();
-isTrue<areSafelyAssignable<RangeViewReadonly, ContextualizeView<Range>>>();
-isTrue<areSafelyAssignable<TreeNodeViewReadonly, ContextualizeView<TreeNode>>>();
-
-isTrue<areSafelyAssignable<PlaceViewReadonly, ContextualizeView<PlaceData>>>();
-isTrue<areSafelyAssignable<RangeViewReadonly, ContextualizeView<RangeData>>>();
-isTrue<areSafelyAssignable<TreeNodeViewReadonly, ContextualizeView<TreeNodeData>>>();
-
-type ContextualizeView<TData extends AnchorData> = TData extends PlaceData
-	? PlaceViewReadonly
-	: TData extends RangeData
-	? RangeViewReadonly
-	: TData extends TreeNodeData
-	? TreeNodeViewReadonly
-	: Anchor;
 
 type Decontextualize<TData extends AnchorData> = TData extends PlaceData
 	? PlaceData
@@ -207,7 +180,7 @@ interface Aborted {
  *  - Notifications for changes (via `viewChange` event).
  *  - Modifying the tree via commands which add a transaction (via `runCommand`).
  */
-export interface Checkout extends TreeView {
+export interface Checkout extends Tree {
 	/**
 	 * Run a command to transactionally modify the tree.
 	 *

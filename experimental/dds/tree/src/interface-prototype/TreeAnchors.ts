@@ -3,7 +3,7 @@ import { ChangeNode, TreeNode as RawTreeNode } from '../generic';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel } from '../Identifiers';
+import { Definition, NodeId, TraitLabel, DetachedSequenceId } from '../Identifiers';
 import { Side } from '../Snapshot';
 import { Anchor, PlaceData, RangeData, TreeNodeData } from './Anchors';
 import { Sequence, SequenceIterator } from './Sequence';
@@ -12,7 +12,7 @@ import { Sequence, SequenceIterator } from './Sequence';
  * The anchors in this file are all contextualized (extend `Anchor`/ have a revision they refer to),
  * and thus can be used to navigate around within the tree at that revision.
  *
- * In `MutableAnchors.ts` there are extensions to these with allow modifying the tree,
+ * In `Checkout.ts` there are methods which take these allow modifying the tree（usable within Commands）,
  * creating actual edits which use these anchors to encode the tree locations within the edits.
  */
 
@@ -20,11 +20,11 @@ import { Sequence, SequenceIterator } from './Sequence';
  * An Anchor for a space between nodes in a trait, or at the beginning or end of a trait.
  * Used for the destination of inserts, and for the ends of ranges.
  */
-export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, PlaceData {
+export interface Place extends Anchor, PlaceData {
 	/**
 	 * Iterate the trait (or DetachedSequence) containing this node, starting at this node.
 	 */
-	iteratorFromHere(): SequenceIterator<TNode, TPlace>;
+	iteratorFromHere(): SequenceIterator<TreeNode, Place>;
 
 	/**
 	 * Parent of this Place.
@@ -33,19 +33,26 @@ export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, Place
 	 *
 	 * TODO: Clarify how how the API works around the root.
 	 */
-	readonly parent?: TParent;
+	readonly parent?: NodeParent;
 
 	/**
 	 * @returns the adjacent node, anchored by its NodeId, or `undefined` if an end of the trait is reached.
 	 */
 	// TODO: add optional anchor policy parameters?
-	adjacentNode(side: Side): TNode | undefined;
+	adjacentNode(side: Side): TreeNode | undefined;
 
 	/**
 	 * Construct a range from this Place to `end`.
 	 * PlaceData must be after this in same trait for result to be valid.
 	 */
-	rangeTo(end: PlaceData): TRange;
+	rangeTo(end: PlaceData): Range;
+}
+
+export type NodeParent = Trait | DetachedSequence;
+
+export interface DetachedSequence extends Sequence<TreeNode, Place> {
+	// TODO: Only needed to interop with currently build, remove after new builder?
+	id: DetachedSequenceId;
 }
 
 /**
@@ -53,9 +60,9 @@ export interface PlaceView<TPlace, TNode, TParent, TRange> extends Anchor, Place
  * Used for the source of moves and deletes/detach.
  * Also used for constraints.
  */
-export interface RangeView<TPlace, TNode, TRange> extends Anchor, RangeData, TraitSection<TNode, TPlace> {
-	readonly start: TPlace;
-	readonly end: TPlace;
+export interface Range extends Anchor, RangeData, TraitSection {
+	readonly start: Place;
+	readonly end: Place;
 
 	// Could include moveTo(place) here, though it would be redundant with place.insert(range)
 
@@ -75,20 +82,20 @@ export interface RangeView<TPlace, TNode, TRange> extends Anchor, RangeData, Tra
 	 */
 	withLength(
 		length?: number // defaults to current length
-	): TRange;
+	): Range;
 	withContents(
 		contents?: Set<NodeId> // defaults to current contents
-	): TRange;
+	): Range;
 	withContentsOrdered(
 		constraint: ContentsConstraint,
 		contents?: Iterable<NodeId> // defaults to current contents
-	): TRange;
+	): Range;
 	withParent(
 		parentNode?: NodeId // defaults to current parent
-	): TRange;
+	): Range;
 	withTraitParent(
 		label?: TraitLabel // defaults to current parent trait
-	): TRange;
+	): Range;
 }
 
 enum ContentsConstraint {
@@ -112,17 +119,13 @@ enum ContentsConstraint {
  *
  * TODO: Trait iterator is invalidated by edits?
  */
-export interface TreeNodeView<TPlace, TNode, TRange extends TraitSection<TNode, TPlace>, TParent>
-	extends Anchor,
-		TreeNodeData,
-		Sequence<Trait<TNode, TPlace>>,
-		Query<TNode, TPlace> {
+export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<TreeNode> {
 	/**
 	 * Parent of this Node.
 	 *
 	 * undefined if this node is the root.
 	 */
-	readonly parent?: TParent;
+	readonly parent?: NodeParent;
 
 	readonly id: NodeId;
 	readonly definition: Definition;
@@ -131,20 +134,20 @@ export interface TreeNodeView<TPlace, TNode, TRange extends TraitSection<TNode, 
 	readonly value: Serializable; // This assumes the Serializable is immutable/copy on write.
 
 	// Overrides version from Query providing more specific output.
-	childrenFromTrait(label: TraitLabel): TRange;
+	childrenFromTrait(label: TraitLabel): Range;
 
 	// Other accessors:
 	// Could inline these, but for now list under separate object for easier maintenance.
 	// Access children without boxing values in TreeNodes.
-	readonly queryValue: Query<Serializable | TNode, TPlace>;
+	readonly queryValue: Query<Serializable | TreeNode>;
 
 	// Access children as json compatible snapshots (will not change over time)
 	// Includes node identities, values boxed into Nodes.
-	readonly queryJsonSnapshot: Query<ChangeNode, TPlace>;
+	readonly queryJsonSnapshot: Query<ChangeNode>;
 
 	// Access children as json compatible nodes (will change over time)
 	// Includes node identities, values boxed into Nodes.
-	readonly queryJsonProxy: Query<ChangeNode, TPlace>;
+	readonly queryJsonProxy: Query<ChangeNode>;
 
 	// TODO: do we want to allow using the "json" objects as Anchors?
 	// Should they have methods?
@@ -154,15 +157,15 @@ export interface TreeNodeView<TPlace, TNode, TRange extends TraitSection<TNode, 
 	// but allow opting into more expensive once when needed (ex: when you know its going into an edit or will need to be used across changes that could otherwise invalidate it)
 	//
 	// TODO: Once the API is in a more polished state consider adding short hand versions for predecessor and successor.
-	adjacentPlace(side: Side): TPlace;
+	adjacentPlace(side: Side): Place;
 }
 
-interface Query<TChild, TPlace> extends RawTreeNode<TChild> {
+interface Query<TChild> extends RawTreeNode<TChild> {
 	readonly subtree: TChild;
 
 	// TODO: add optional anchor policy parameters.
 	// Stable across edits: behavior depends on anchoring.
-	childrenFromTrait(label: TraitLabel): TraitSection<TChild, TPlace>;
+	childrenFromTrait(label: TraitLabel): TraitSection<TChild>;
 
 	// Maybe add child access helpers like these for common cases:
 	childFromTrait(label: TraitLabel): TChild | undefined; // returns child if exactly 1.
@@ -173,13 +176,13 @@ interface Query<TChild, TPlace> extends RawTreeNode<TChild> {
 
 // Only needed when using TreeNode[Symbol.iterator]
 
-export interface Trait<TNode, TPlace> extends TraitSection<TNode, TPlace> {
+export interface Trait extends TraitSection {
 	/**
 	 * Parent of this Node.
 	 *
 	 * undefined if this node is the root.
 	 */
-	readonly parent?: TNode;
+	readonly parent?: TreeNode;
 	readonly label: TraitLabel;
 }
 
@@ -187,15 +190,9 @@ export interface Trait<TNode, TPlace> extends TraitSection<TNode, TPlace> {
  * Stable anchor based sequence of nodes. Can be held onto and iterated on across edits.
  * Behavior across edits depends on how it was anchored.
  */
-interface TraitSection<TNode, TPlace> extends Sequence<TNode, TPlace> {
-	areInOrder(first: TPlace, second: TPlace): boolean;
+interface TraitSection<TChild = TreeNode> extends Sequence<TChild, Place> {
+	areInOrder(first: Place, second: Place): boolean;
 }
-
-/**
- * Stable anchor based sequence of nodes. Can be held onto and iterated on across edits.
- * Behavior across edits depends on how it was anchored.
- */
-// type NodeIterator = SequenceIterator<TreeNodeView, PlaceView>;
 
 // Note: other iterators are not assumed to be safe to use across edits (may be invalidated by edits)
 // TODO: what do we do with invalid iterators? Throw recoverable error if used?

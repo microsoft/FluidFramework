@@ -16,9 +16,8 @@ import {
 	PrefetchFilter,
 	root,
 	SharedTree,
-	TreeNodeViewReadonly,
 } from './Checkout';
-import { Place, TreeNode } from './MutableAnchors';
+import { Place, TreeNode } from './TreeAnchors';
 
 // ////////////// Command examples //////////////
 
@@ -32,7 +31,7 @@ export const insertExample = {
 	): TreeNode => {
 		const definition = context.loadDefinition(def);
 		const identifier = context.loadNodeId(id);
-		const range = place.insert({ definition, identifier, traits: {} });
+		const range = context.insert(place, { definition, identifier, traits: {} });
 		return range.start.adjacentNode(Side.After) ?? fail();
 	},
 };
@@ -101,7 +100,7 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 		for (const added of delta.added) {
 			// Get an contextualized anchor from the delta.
 			// Theoretically the delta should produce something suable as anchors directly, but this prototype is just reusing the existing delta APIs which don't know about anchors.
-			const inserted: TreeNodeViewReadonly = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
+			const inserted: TreeNode = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
 			// Here we have an example of using the tree viewing APIs.
 			// In this trivial case the only thing we do with them is check the definition, but real apps would use these APIs to walk the tree and build the document view for the user.
 			if (inserted.definition === foo) {
@@ -112,7 +111,7 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 		}
 	});
 
-	const treeRoot: TreeNodeViewReadonly = checkout.contextualizeAnchor(root);
+	const treeRoot: TreeNode = checkout.contextualizeAnchor(root);
 	// Here this example 'app' just prints the tree, demonstrating getting a simple json compatible view of the tree.
 	// A more realistic application would build a real view of the document here, which would be invalided using ViewChange.
 	console.log(treeRoot.queryJsonSnapshot.subtree);

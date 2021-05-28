@@ -1,7 +1,7 @@
 import { ConstraintEffect } from '../default-edits';
 
 // This import is a layering violation. Maybe find a better design.
-import type { TreeView } from './Checkout';
+import type { Tree } from './Checkout';
 import { Covariant } from './TypeCheck';
 
 export type StableId = string & { readonly StableId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
@@ -31,7 +31,7 @@ export interface Anchor extends AnchorData {
 	 * This anchor can be contextualized into the returned view to allow using it to walk that this frozen view of the tree,
 	 * unaffected by any future edits.
 	 */
-	snapshot(): TreeView;
+	snapshot(): Tree;
 
 	/**
 	 * If true, accessing data in this node may throw PlaceholderNotLoaded.
@@ -111,3 +111,5 @@ export interface RangeData extends AnchorDataSafe<RangeData> {
 export interface TreeNodeData extends AnchorDataSafe<TreeNodeData> {
 	readonly _brandTreeNodeData: unknown;
 }
+
+// See also `TreeAnchors.ts` for the actual Contextualized anchors for navigating trees (Place, Range and TreeNode).
