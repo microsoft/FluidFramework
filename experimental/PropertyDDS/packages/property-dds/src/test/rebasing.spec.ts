@@ -28,7 +28,7 @@ import {
 	NamedProperty,
 } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
-import { SharedPropertyTree } from "../propertyTree";
+import { CommitNode, SharedPropertyTree } from "../propertyTree";
 
 function createLocalLoader(
 	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
@@ -452,15 +452,16 @@ describe("PropertyDDS", () => {
 			});
 			afterEach(async () => {
 				// We expect the internal representation to be the same between both properties
-				expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(
-					(sharedPropertyTree2 as any).remoteTipView,
+				expect(((sharedPropertyTree1 as any).remoteTipView as CommitNode).changeSet).to.deep.equal(
+					((sharedPropertyTree2 as any).remoteTipView as CommitNode).changeSet,
 				);
 
 				// We expect the property tree to be the same between both
 				expect(sharedPropertyTree1.root.serialize()).to.deep.equal(sharedPropertyTree2.root.serialize());
 
 				// We expect the property tree to correspond to the remote tip view
-				expect((sharedPropertyTree1 as any).remoteTipView).to.deep.equal(sharedPropertyTree2.root.serialize());
+				expect(((sharedPropertyTree1 as any).remoteTipView as CommitNode).changeSet)
+                    .to.deep.equal(sharedPropertyTree2.root.serialize());
 
 				// We expect all properties from the set to be present
 				const array = sharedPropertyTree1.root.get<ArrayProperty>("array");

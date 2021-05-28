@@ -33,14 +33,19 @@ import { PropertyTreeFactory } from "./propertyTreeFactory";
 
 export type SerializedChangeSet = any;
 
+export type Metadata = any;
+
 export const enum OpKind {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	ChangeSet = 0,
 }
-
+export interface CommitNode {
+    changeSet: SerializedChangeSet,
+    metadata: Metadata
+}
 export interface IPropertyTreeMessage {
 	op: OpKind;
-	changeSet: SerializedChangeSet;
+	commitNode: CommitNode;
 	guid: string;
 	referenceGuid: string;
 	remoteHeadGuid: string;
@@ -59,7 +64,7 @@ interface ISnapshot {
 	numChunks: number;
 }
 interface ISnapshotSummary {
-	remoteTipView?: SerializedChangeSet;
+	remoteTipView?: CommitNode;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
 }
@@ -83,9 +88,8 @@ export interface SharedPropertyTreeOptions {
  * in the total order)
  */
 export class SharedPropertyTree extends SharedObject {
-	// Initial state of the PRNG.  Must not be zero.  (See `advance()` below for details.)
-	tipView: SerializedChangeSet = {};
-	remoteTipView: SerializedChangeSet = {};
+	tipView: CommitNode = { changeSet: {}, metadata: {}};
+	remoteTipView: CommitNode = { changeSet: {}, metadata: {}};
 	localChanges: IPropertyTreeMessage[] = [];
 	remoteChanges: IPropertyTreeMessage[] = [];
 	unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
@@ -157,25 +161,26 @@ export class SharedPropertyTree extends SharedObject {
 		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 	}
 
-	public get changeSet() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	public get activeCommit(): CommitNode {
 		return this.tipView;
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
 	}
 
-	public commit(submitEmptyChange = false) {
+	public commit(submitEmptyChange = false, metadata: Metadata = {}) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
         if (submitEmptyChange || !_.isEmpty(changes)) {
-            this.applyChangeSet(changes);
+            this.applyChangeSet(changes, metadata);
             this.root.cleanDirty();
         }
 	}
 
-	private applyChangeSet(changeSet: SerializedChangeSet) {
+	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
-		_changeSet._toReversibleChangeSet(this.tipView);
+		_changeSet._toReversibleChangeSet(this.tipView.changeSet);
+
+        const commitNode = {changeSet, metadata};
 
 		const remoteHeadGuid =
 			this.remoteChanges.length > 0
@@ -183,7 +188,7 @@ export class SharedPropertyTree extends SharedObject {
 				: this.headCommitGuid;
 		const change = {
 			op: OpKind.ChangeSet,
-			changeSet,
+			commitNode,
 			guid: uuidv4(),
 			remoteHeadGuid,
 			referenceGuid:
@@ -493,18 +498,19 @@ export class SharedPropertyTree extends SharedObject {
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
-						const remoteChange = JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
+						const remoteChange: IPropertyTreeMessage
+                            = JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
 								`http://localhost:3000/branch/${branchGuid}/commit/${remoteChange.guid}/changeSet`,
 							)
 						).data;
-						remoteChange.changeSet = changeSet;
+						remoteChange.commitNode.changeSet = changeSet;
 
 						if (remoteChange) {
 							if (isPartialCheckoutActive && this.options.paths) {
-								remoteChange.changeSet = ChangeSetUtils.getFilteredChangeSetByPaths(
-									remoteChange.changeSet,
+								remoteChange.commitNode.changeSet = ChangeSetUtils.getFilteredChangeSetByPaths(
+									remoteChange.commitNode.changeSet,
 									this.options.paths,
 								);
 							}
@@ -518,8 +524,8 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = lastDelta ?? -1;
 			}
 		} catch (e) {
-			this.tipView = {};
-			this.remoteTipView = {};
+			this.tipView = {changeSet: {}, metadata: {}};
+			this.remoteTipView = {changeSet: {}, metadata: {}};
 			this.remoteChanges = [];
 		} finally {
 			this._root.deserialize(this.tipView);
@@ -531,9 +537,9 @@ export class SharedPropertyTree extends SharedObject {
 	protected onDisconnect() {}
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
-		const changeSetWrapper = new ChangeSet(this.tipView);
-		changeSetWrapper.applyChangeSet(change.changeSet);
-
+		const changeSetWrapper = new ChangeSet(this.tipView.changeSet);
+		changeSetWrapper.applyChangeSet(change.commitNode.changeSet);
+        this.tipView.metadata = change.commitNode.metadata;
 		this.localChanges.push(change);
 	}
 
@@ -544,12 +550,13 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges.push(change);
 
 		// Apply the remote change set to the remote tip view
-		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
-		remoteChangeSetWrapper.applyChangeSet(change.changeSet);
+		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView.changeSet);
+		remoteChangeSetWrapper.applyChangeSet(change.commitNode.changeSet);
+        this.remoteTipView.metadata = change.commitNode.metadata;
 
 		// Rebase the local changes
 		const pendingChanges = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView);
+		new ChangeSet(pendingChanges)._toReversibleChangeSet(this.tipView.changeSet);
 
 		const changesToTip: SerializedChangeSet = {};
 		const changesNeeded = this.rebaseLocalChanges(change, pendingChanges, changesToTip);
@@ -625,16 +632,16 @@ export class SharedPropertyTree extends SharedObject {
 			let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
 
 			for (const c of relevantRemoteChanges) {
-				let changeset = c.changeSet;
+				let changeset = c.commitNode.changeSet;
 				let applyAfterMetaInformation: Map<any, any> | undefined;
 
 				if (alreadyRebasedChanges[0]?.guid === c.guid) {
-					const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+					const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].commitNode.changeSet));
 					invertedChange._toInverseChangeSet();
 					invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
 					applyAfterMetaInformation = new Map();
 					const conflicts2 = [];
-					changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+					changeset = _.cloneDeep(alreadyRebasedChanges[0].commitNode.changeSet);
 					rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
 						applyAfterMetaInformation,
 					});
@@ -665,14 +672,14 @@ export class SharedPropertyTree extends SharedObject {
 					? this.remoteChanges[i].rebaseMetaInformation
 					: undefined;
 
-			let changeset = this.remoteChanges[i].changeSet;
+			let changeset = this.remoteChanges[i].commitNode.changeSet;
 			if (changesOnOtherLocalBranch[0]?.guid === this.remoteChanges[i].guid) {
-				const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+				const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].commitNode.changeSet));
 				invertedChange._toInverseChangeSet();
 				invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
 				applyAfterMetaInformation = new Map();
-				changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+				changeset = _.cloneDeep(changesOnOtherLocalBranch[0].commitNode.changeSet);
 				rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
 				// This is disabled for performance reasons. Only used during debugging
@@ -688,7 +695,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		change.rebaseMetaInformation = new Map();
-		rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
+		rebaseBaseChangeSet._rebaseChangeSet(change.commitNode.changeSet, conflicts, {
 			applyAfterMetaInformation: change.rebaseMetaInformation,
 		});
 	}
@@ -696,17 +703,17 @@ export class SharedPropertyTree extends SharedObject {
 	private rebaseChangeArrays(baseChangeSet: ChangeSet, changesToRebase: IPropertyTreeMessage[]) {
 		let rebaseBaseChangeSet = baseChangeSet;
 		for (const change of changesToRebase) {
-			const copiedChangeSet = new ChangeSet(_.cloneDeep(change.changeSet));
+			const copiedChangeSet = new ChangeSet(_.cloneDeep(change.commitNode.changeSet));
 			copiedChangeSet._toInverseChangeSet();
 
 			const conflicts = [] as any[];
 			change.rebaseMetaInformation = new Map();
-			rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
+			rebaseBaseChangeSet._rebaseChangeSet(change.commitNode.changeSet, conflicts, {
 				applyAfterMetaInformation: change.rebaseMetaInformation,
 			});
 
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
-			copiedChangeSet.applyChangeSet(change.changeSet, {
+			copiedChangeSet.applyChangeSet(change.commitNode.changeSet, {
 				applyAfterMetaInformation: change.rebaseMetaInformation,
 			});
 			rebaseBaseChangeSet = copiedChangeSet;
@@ -718,7 +725,7 @@ export class SharedPropertyTree extends SharedObject {
 		pendingChanges: SerializedChangeSet,
 		newTipDelta: SerializedChangeSet,
 	): boolean {
-		let rebaseBaseChangeSet = _.cloneDeep(change.changeSet);
+		let rebaseBaseChangeSet = _.cloneDeep(change.commitNode.changeSet);
 
 		const accumulatedChanges: SerializedChangeSet = {};
 		const conflicts = [] as any[];
@@ -743,19 +750,19 @@ export class SharedPropertyTree extends SharedObject {
 
 			const rebaseMetaInformation = new Map();
 
-			const copiedChangeSet = new ChangeSet(_.cloneDeep(this.localChanges[i].changeSet));
-			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(this.localChanges[i].changeSet, conflicts, {
+			const copiedChangeSet = new ChangeSet(_.cloneDeep(this.localChanges[i].commitNode.changeSet));
+			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(this.localChanges[i].commitNode.changeSet, conflicts, {
 				applyAfterMetaInformation: rebaseMetaInformation,
 			});
 
 			copiedChangeSet._toInverseChangeSet();
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
-			copiedChangeSet.applyChangeSet(this.localChanges[i].changeSet, {
+			copiedChangeSet.applyChangeSet(this.localChanges[i].commitNode.changeSet, {
 				applyAfterMetaInformation: rebaseMetaInformation,
 			});
 			rebaseBaseChangeSet = copiedChangeSet.getSerializedChangeSet();
 
-			new ChangeSet(accumulatedChanges).applyChangeSet(this.localChanges[i].changeSet);
+			new ChangeSet(accumulatedChanges).applyChangeSet(this.localChanges[i].commitNode.changeSet);
 		}
 
 		// Compute the inverse of the pending changes and store the result in newTipDelta

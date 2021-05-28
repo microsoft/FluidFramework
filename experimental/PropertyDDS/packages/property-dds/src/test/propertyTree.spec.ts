@@ -111,6 +111,23 @@ describe("PropertyTree", () => {
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
 			});
 
+            it("Can commit with metadata", async () => {
+				await opProcessingController.pauseProcessing();
+
+				sharedPropertyTree1.root.insert("test", PropertyFactory.create("String", undefined, "Magic"));
+
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal("Magic");
+				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
+
+				sharedPropertyTree1.commit(false, {someKey: "some data"});
+                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+
+				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
+                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+			});
+
             it("Should not commit empty change by default", async () => {
 				await opProcessingController.pauseProcessing();
 
@@ -127,7 +144,7 @@ describe("PropertyTree", () => {
 
 				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
-				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.changeSet)).to.equal(true);
+				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.commitNode.changeSet)).to.equal(true);
 			});
 
 			it("Can start/stopTransmission", async () => {
