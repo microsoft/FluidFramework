@@ -490,12 +490,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.videoPlayers);
-        },
-        key: "insert morton",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertNewCollectionComponent(f.images);
         },
         key: "insert image",
@@ -3039,7 +3033,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    public videoPlayers: IFluidObjectCollection;
     public images: IFluidObjectCollection;
     public progressBars: IFluidObjectCollection;
 
@@ -4585,16 +4578,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private async openCollections() {
         const root = this.collabDocument.getRoot();
 
-        const [progressBars, math, videoPlayers, images] = await Promise.all([
+        const [progressBars, math, images] = await Promise.all([
             root.get<IFluidHandle>("progressBars").get(),
             root.get<IFluidHandle<IMathCollection>>("math").get(),
-            root.get<IFluidHandle>("videoPlayers").get(),
             root.get<IFluidHandle>("images").get(),
         ]);
 
         this.math = math;
         this.progressBars = progressBars.IFluidObjectCollection;
-        this.videoPlayers = videoPlayers.IFluidObjectCollection;
         this.images = images.IFluidObjectCollection;
     }
 
