@@ -21,6 +21,6 @@ describe("stress test", () => {
         },
         );
         await new Promise((resolve) => process.once("close", resolve));
-        assert(process.exitCode === 0, "exit code is not 0");
+        assert.strictEqual(process.exitCode, 0, "exit code is not 0");
     });
 });
