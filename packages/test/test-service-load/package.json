@@ -28,7 +28,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node ./dist/nodeStressTest.js",
-    "start:mini": "node ./dist/nodeStressTest.js --driver tinylicious --profile mini",
+    "start:mini": "node ./dist/nodeStressTest.js  --profile mini",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc:run",
     "test:realsvc": "npm run test:realsvc:tinylicious",
