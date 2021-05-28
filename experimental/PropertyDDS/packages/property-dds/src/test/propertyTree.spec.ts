@@ -144,7 +144,7 @@ describe("PropertyTree", () => {
 
 				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
-				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.commitNode.changeSet)).to.equal(true);
+				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.changeSet)).to.equal(true);
 			});
 
 			it("Can start/stopTransmission", async () => {

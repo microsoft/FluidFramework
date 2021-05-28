@@ -18,7 +18,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -26,7 +27,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -36,7 +38,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -58,7 +61,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -66,7 +70,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -76,7 +81,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -100,7 +106,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -108,7 +115,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -118,7 +126,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -128,7 +137,8 @@ describe("PropertyTree", () => {
 
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "D",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -150,7 +160,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -158,7 +169,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -168,7 +180,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -193,7 +206,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -201,7 +215,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -211,7 +226,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "D",
 				remoteHeadGuid: "B",
@@ -220,7 +236,8 @@ describe("PropertyTree", () => {
 			};
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "D",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -245,7 +262,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -253,7 +271,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -263,7 +282,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "D",
 				remoteHeadGuid: "A",
@@ -272,7 +292,8 @@ describe("PropertyTree", () => {
 			};
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "D",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -281,7 +302,8 @@ describe("PropertyTree", () => {
 			};
 			unrebasedRemoteChanges.E = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "E",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -306,7 +328,8 @@ describe("PropertyTree", () => {
 			const remoteChanges: IPropertyTreeMessage[] = [
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -314,7 +337,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -322,7 +346,8 @@ describe("PropertyTree", () => {
 				},
 				{
 					op: OpKind.ChangeSet,
-					commitNode: {metadata: {}, changeSet: {}},
+					metadata: {},
+                    changeSet: {},
 					guid: "C",
 					referenceGuid: "B",
 					remoteHeadGuid: "A",
@@ -332,7 +357,8 @@ describe("PropertyTree", () => {
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
 			unrebasedRemoteChanges.B = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "B",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -341,7 +367,8 @@ describe("PropertyTree", () => {
 			};
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
-				commitNode: {metadata: {}, changeSet: {}},
+				metadata: {},
+                changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "A",
