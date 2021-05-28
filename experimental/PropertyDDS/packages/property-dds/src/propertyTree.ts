@@ -39,10 +39,12 @@ export const enum OpKind {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	ChangeSet = 0,
 }
+
 export interface CommitNode {
-    changeSet: SerializedChangeSet,
-    metadata: Metadata
+	changeSet: SerializedChangeSet,
+	metadata: Metadata
 }
+
 export interface IPropertyTreeMessage {
 	op: OpKind;
 	changeSet: SerializedChangeSet;
@@ -181,8 +183,6 @@ export class SharedPropertyTree extends SharedObject {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView.changeSet);
 
-        const commitNode = {changeSet, metadata};
-
 		const remoteHeadGuid =
 			this.remoteChanges.length > 0
 				? this.remoteChanges[this.remoteChanges.length - 1].guid
@@ -190,7 +190,7 @@ export class SharedPropertyTree extends SharedObject {
 		const change = {
 			op: OpKind.ChangeSet,
 			changeSet,
-            metadata,
+			metadata,
 			guid: uuidv4(),
 			remoteHeadGuid,
 			referenceGuid:
@@ -485,9 +485,9 @@ export class SharedPropertyTree extends SharedObject {
 				}
 
 				this.tipView.changeSet = materializedView;
-                // how would we store and retreive metadata in MH? currently this will just set it to an empty object
-                // until we decide how this is handled in MH
-                this.tipView.metadata = {};
+				// how would we store and retreive metadata in MH? currently this will just set it to an empty object
+				// until we decide how this is handled in MH
+				this.tipView.metadata = {};
 				this.remoteTipView = _.cloneDeep(this.tipView);
 				this.remoteChanges = [];
 
@@ -504,7 +504,7 @@ export class SharedPropertyTree extends SharedObject {
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
 						const remoteChange: IPropertyTreeMessage
-                            = JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
+							= JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
 								`http://localhost:3000/branch/${branchGuid}/commit/${remoteChange.guid}/changeSet`,
@@ -544,7 +544,7 @@ export class SharedPropertyTree extends SharedObject {
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
 		const changeSetWrapper = new ChangeSet(this.tipView.changeSet);
 		changeSetWrapper.applyChangeSet(change.changeSet);
-        this.tipView.metadata = change.metadata;
+		this.tipView.metadata = change.metadata;
 		this.localChanges.push(change);
 	}
 
@@ -557,7 +557,7 @@ export class SharedPropertyTree extends SharedObject {
 		// Apply the remote change set to the remote tip view
 		const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView.changeSet);
 		remoteChangeSetWrapper.applyChangeSet(change.changeSet);
-        this.remoteTipView.metadata = change.metadata;
+		this.remoteTipView.metadata = change.metadata;
 
 		// Rebase the local changes
 		const pendingChanges = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);

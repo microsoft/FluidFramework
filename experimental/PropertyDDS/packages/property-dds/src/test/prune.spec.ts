@@ -19,7 +19,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -28,7 +28,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -39,7 +39,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -62,7 +62,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -71,7 +71,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -82,7 +82,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -107,7 +107,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -116,7 +116,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -127,7 +127,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -138,7 +138,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "D",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -161,7 +161,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -170,7 +170,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -181,7 +181,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -207,7 +207,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -216,7 +216,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -227,7 +227,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "D",
 				remoteHeadGuid: "B",
@@ -237,7 +237,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "D",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -263,7 +263,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -272,7 +272,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -283,7 +283,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "D",
 				remoteHeadGuid: "A",
@@ -293,7 +293,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.D = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "D",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -303,7 +303,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.E = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "E",
 				referenceGuid: "B",
 				remoteHeadGuid: "B",
@@ -329,7 +329,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "A",
 					referenceGuid: "",
 					remoteHeadGuid: "",
@@ -338,7 +338,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "B",
 					referenceGuid: "A",
 					remoteHeadGuid: "A",
@@ -347,7 +347,7 @@ describe("PropertyTree", () => {
 				{
 					op: OpKind.ChangeSet,
 					metadata: {},
-                    changeSet: {},
+					changeSet: {},
 					guid: "C",
 					referenceGuid: "B",
 					remoteHeadGuid: "A",
@@ -358,7 +358,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.B = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "B",
 				referenceGuid: "A",
 				remoteHeadGuid: "A",
@@ -368,7 +368,7 @@ describe("PropertyTree", () => {
 			unrebasedRemoteChanges.C = {
 				op: OpKind.ChangeSet,
 				metadata: {},
-                changeSet: {},
+				changeSet: {},
 				guid: "C",
 				referenceGuid: "B",
 				remoteHeadGuid: "A",
