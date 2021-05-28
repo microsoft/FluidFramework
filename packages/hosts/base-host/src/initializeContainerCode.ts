@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,6 +32,7 @@ function isOldestClient(container: Container) {
 }
 
 /**
+ * @deprecated - container's should be create with the detached flow
  * Ensures that the given container has an approved code proposal, and proposes the code package passed if needed.
  * Note that although this guarantees an approved code proposal before returning, the context may not have been
  * reloaded yet.

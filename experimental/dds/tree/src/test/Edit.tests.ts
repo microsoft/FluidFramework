@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { expect } from 'chai';
 import { NodeId } from '../Identifiers';
-import { deepCompareNodes } from '../EditUtilities';
-import { makeEmptyNode, makeTestNode } from './utilities/TestUtilities';
+import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestUtilities';
 
 // TODO #45414: Re-enable when compareEdits compares the actual changes instead of just the edit IDs.
 // 			    Commented out instead of skipped to avoid linting errors.

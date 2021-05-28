@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -136,6 +136,7 @@ describe.only("Historian", () => {
         restWrapper = new BasicRestWrapper(
             endpoint,
             initialQueryString,
+            undefined,
             undefined,
             initialHeaders,
             undefined,

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,12 +16,20 @@ class TestInterval implements IInterval {
     }
 
     public compare(b: TestInterval) {
-        const startResult = this.start - b.start;
+        const startResult = this.compareStart(b);
         if (startResult === 0) {
-            return (this.end - b.end);
+            return this.compareEnd(b);
         } else {
             return startResult;
         }
+    }
+
+    public compareStart(b: TestInterval) {
+        return this.start - b.start;
+    }
+
+    public compareEnd(b: TestInterval) {
+        return this.end - b.end;
     }
 
     public overlaps(b: TestInterval) {

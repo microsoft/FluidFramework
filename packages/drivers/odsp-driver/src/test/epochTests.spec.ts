@@ -1,200 +1,227 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { OdspErrorType } from "@fluidframework/odsp-doclib-utils";
-import { IOdspResolvedUrl } from "../contracts";
+import {
+    IOdspResolvedUrl,
+    ICacheEntry,
+    IEntry,
+} from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
-import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch, mockFetchCore, createResponse } from "./mockFetch";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "fileId";
+    const itemId = "itemId";
     let epochTracker: EpochTracker;
-    let cache: LocalPersistentCacheAdapter;
+    let localCache: LocalPersistentCache;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
     beforeEach(() => {
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTracker(cache, new TelemetryNullLogger());
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        epochTracker.fileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
+        localCache = createUtLocalCache();
+        // use null logger here as we expect errors
+        epochTracker = new EpochTracker(
+            localCache,
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
     });
 
-    it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
-        let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
+    it("Cache, old versions", async () => {
         const cacheEntry1: ICacheEntry = {
             key:"key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
-        cache.put(cacheEntry2, { value: "val2", fluidEpoch: "epoch2", version: "0.1" }, 0);
+        const value1: IVersionedValueWithEpoch =
+            {value: "val1", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+        const value2 =
+            {value: "val2", fluidEpoch: "epoch1", version: "non-existing version" };
+        await localCache.put(cacheEntry1, value1);
+        await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
-        await epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        try {
-            await epochTracker.fetchFromCache(cacheEntry2, undefined, "other");
-        } catch (error) {
-            success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
-        }
-        assert(await cache.get(cacheEntry1) === undefined, "Entry 1 should not exist");
-        assert(await cache.get(cacheEntry2) === undefined, "Entry 2 should not exist");
-        assert.strictEqual(success, false, "Fetching fro cache should fail!!");
+        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        // This should not fail, just return nothing!
+        await epochTracker.get(cacheEntry2);
+        // Make sure nothing changed as result of reading data.
+        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry2) === undefined, "Entry 2 should not exist");
     });
 
-    it("Epoch error when fetch response and should clear cache", async () => {
-        let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
+    it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
         const cacheEntry1: ICacheEntry = {
             key:"key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
+        const value1: IVersionedValueWithEpoch =
+            {value: "val1", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+        const value2: IVersionedValueWithEpoch =
+            {value: "val2", fluidEpoch: "epoch2", version: persistedCacheValueVersion };
+        await localCache.put(cacheEntry1, value1);
+        await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
-        await epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
+        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        // This should not fail, just return nothing!
+        await epochTracker.get(cacheEntry2);
+        // Make sure nothing changed as result of reading data.
+        assert(await epochTracker.get(cacheEntry1) === "val1", "Entry 1 should continue to exist");
+        assert(await epochTracker.get(cacheEntry2) === undefined, "Entry 2 should not exist");
+    });
+
+    it("Epoch error when fetch response and should clear cache", async () => {
+        let success: boolean = true;
+        const cacheEntry1: IEntry = {
+            key:"key1",
+            type: "snapshot",
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
+        // This will set the initial epoch value in epoch tracker.
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
+            await mockFetchOk(
+                async () => epochTracker.fetchArray("fetchUrl", {}, "test"),
                 {},
-                async () => epochTracker.fetchArray("fetchUrl", {}, "other"),
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
-        assert(await cache.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
+        assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
     it("Epoch error when fetch response as json and should clear cache", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
-        // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
+            // This will set the initial epoch value in epoch tracker.
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
+            await mockFetchOk(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
                 { "x-fluid-epoch": "epoch2" });
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
-        assert(await cache.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
+        assert(await epochTracker.get(cacheEntry1) === undefined, "Entry in cache should be cleared");
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
     it("Epoch error should not occur if response does not contain epoch", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch({}, async () => {
-                return epochTracker.fetchArray("fetchUrl", {}, "other");
-            });
+            await mockFetchOk(async () => epochTracker.fetchArray("fetchUrl", {}, "test"));
         } catch (error) {
             success = false;
         }
         assert.strictEqual(success, true, "Fetching should succeed!!");
-        assert.strictEqual((await cache.get(cacheEntry1)).value, "val1", "Entry in cache should be present");
+        assert.strictEqual(
+            await epochTracker.get(cacheEntry1),
+            "val1",
+            "Entry in cache should be present");
     });
 
     it("Epoch error should not occur if response contains same epoch", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetch(
+            await mockFetchOk(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
                 { "x-fluid-epoch": "epoch1" });
         } catch (error) {
             success = false;
         }
         assert.strictEqual(success, true, "Fetching should succeed!!");
-        assert.strictEqual((await cache.get(cacheEntry1)).value, "val1", "Entry in cache should be present");
+        assert.strictEqual(
+            await epochTracker.get(cacheEntry1),
+            "val1", "Entry in cache should be present");
     });
 
     it("Should differentiate between epoch and coherency 409 errors when coherency 409", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetchCore(
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+            await mockFetchSingle(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409));
         } catch (error) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError, "Error should be throttling error");
         }
         assert.strictEqual(success, false, "Fetching should not succeed!!");
-        assert.strictEqual((await cache.get(cacheEntry1)).value, "val1",
+        assert.strictEqual(
+            await epochTracker.get(cacheEntry1),
+            "val1",
             "Entry in cache should be present because it was not epoch 409");
     });
 
     it("Should differentiate between epoch and coherency 409 errors when epoch 409", async () => {
         let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        epochTracker.setEpoch("epoch1", true, "test");
+        await epochTracker.put(cacheEntry1, "val1");
         // This will set the initial epoch value in epoch tracker.
-        await mockFetch({}, async () => {
-            return epochTracker.fetchFromCache(cacheEntry1, undefined, "other");
-        });
+        await epochTracker.get(cacheEntry1);
         try {
-            await mockFetchCore(
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "other"),
+            await mockFetchSingle(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
         } catch (error) {
             success = false;
-            assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error should be epoch error");
+            assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
+                "Error should be epoch error");
         }
         assert.strictEqual(success, false, "Fetching should not succeed!!");
-        assert((await cache.get(cacheEntry1)) === undefined,
+        assert(
+            await epochTracker.get(cacheEntry1) === undefined,
             "Entry in cache should be absent because it was epoch 409");
     });
 });

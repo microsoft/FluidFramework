@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,7 +21,9 @@ import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
@@ -92,7 +94,6 @@ export class SharedMatrix<T = any>
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
     private cells = new SparseArray2D<MatrixItem<T>>();     // Stores cell values.
-    private annotations = new SparseArray2D<Serializable<T>>();         // Tracks cell annotations.
     private pending = new SparseArray2D<number>();                      // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
@@ -250,9 +251,10 @@ export class SharedMatrix<T = any>
         }
 
         this.cells.setCell(rowHandle, colHandle, value);
-        this.annotations.setCell(rowHandle, colHandle, undefined);
 
-        this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        if (this.isAttached()) {
+            this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+        }
     }
 
     private sendSetCellOp(
@@ -261,29 +263,25 @@ export class SharedMatrix<T = any>
         value: MatrixItem<T>,
         rowHandle: Handle,
         colHandle: Handle,
+        localSeq = this.nextLocalSeq(),
     ) {
-        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
-        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
-        if (this.isAttached()) {
-            const localSeq = this.nextLocalSeq();
+        assert(this.isAttached(), 0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */);
 
-            const op: ISetOp<T> = {
-                type: MatrixOp.set,
-                row,
-                col,
-                value,
-            };
+        const op: ISetOp<T> = {
+            type: MatrixOp.set,
+            row,
+            col,
+            value,
+        };
 
-            const metadata: ISetOpMetadata = {
-                rowHandle,
-                colHandle,
-                localSeq,
-            };
+        const metadata: ISetOpMetadata = {
+            rowHandle,
+            colHandle,
+            localSeq,
+        };
 
-            this.submitLocalMessage(op, metadata);
-
-            this.pending.setCell(rowHandle, colHandle, localSeq);
-        }
+        this.submitLocalMessage(op, metadata);
+        this.pending.setCell(rowHandle, colHandle, localSeq);
     }
 
     private submitVectorMessage(
@@ -370,7 +368,7 @@ export class SharedMatrix<T = any>
                 const colHandle = this.colHandles.getHandle(col);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -413,7 +411,7 @@ export class SharedMatrix<T = any>
                 const rowHandle = this.rowHandles.getHandle(row);
                 const value = this.cells.getCell(rowHandle, colHandle);
                 // eslint-disable-next-line no-null/no-null
-                if (value !== undefined && value !== null) {
+                if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
                         col,
@@ -457,6 +455,28 @@ export class SharedMatrix<T = any>
         };
 
         return tree;
+    }
+
+    /**
+     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
+     * objects.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
+        // serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        for (let row = 0; row < this.rowCount; row++) {
+            for (let col = 0; col < this.colCount; col++) {
+                serializer.stringify(this.getCell(row, col), this.handle);
+            }
+        }
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
     }
 
     /**
@@ -533,12 +553,13 @@ export class SharedMatrix<T = any>
                     const col = this.cols.handleToPosition(colHandle, localSeq);
 
                     if (row >= 0 && col >= 0) {
-                        this.setCellCore(
+                        this.sendSetCellOp(
                             row,
                             col,
                             setOp.value,
                             rowHandle,
                             colHandle,
+                            localSeq,
                         );
                     }
                 }
@@ -567,7 +588,6 @@ export class SharedMatrix<T = any>
             const [cellData, pendingCliSeqData] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
             this.cells = SparseArray2D.load(cellData);
-            this.annotations = new SparseArray2D();
             this.pending = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
@@ -622,7 +642,6 @@ export class SharedMatrix<T = any>
                             if (this.pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
-                                this.annotations.setCell(rowHandle, colHandle, undefined);
 
                                 for (const consumer of this.consumers.values()) {
                                     consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -657,7 +676,6 @@ export class SharedMatrix<T = any>
     private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
         for (const rowHandle of rowHandles) {
             this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
-            this.annotations.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
             this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
         }
     };
@@ -665,7 +683,6 @@ export class SharedMatrix<T = any>
     private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
         for (const colHandle of colHandles) {
             this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
-            this.annotations.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
             this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
         }
     };

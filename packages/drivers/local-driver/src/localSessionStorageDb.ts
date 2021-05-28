@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
@@ -8,7 +8,8 @@ import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
 
 /**
- * A collection for testing that stores data in the browsers session storage
+ * A collection for local session storage, where data is stored in the browser
+ * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
     private readonly collectionName: string;
@@ -16,7 +17,14 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         this.collectionName = `${namespace}-${name}`;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.find}
+     *
+     * Each query key consists of several keys separated by '.' e.g: "operation.sequenceNumber".
+     * The hierarchical syntax allows finding nested key patterns.
+     */
     public async find(query: any, sort: any): Promise<any[]> {
+        // split the keys and get the corresponding value
         function getValueByKey(propertyBag, key: string) {
             const keys = key.split(".");
             let value = propertyBag;
@@ -27,6 +35,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             return value;
         }
 
+        // getting keys of the query we are trying to find
         const queryKeys = Object.keys(query);
         let filteredCollection = this.getAllInternal();
         queryKeys.forEach((key) => {
@@ -67,16 +76,29 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return filteredCollection;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.findAll}
+     */
     public async findAll(): Promise<any[]> {
         return Promise.resolve(this.getAllInternal());
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.findOne}
+     *
+     * Query is expected to have a member "_id" which is a string used to find value in the database.
+     */
     public async findOne(query: any): Promise<any> {
         return Promise.resolve(this.findOneInternal(query));
     }
 
-    public async update(filter: any, set: any, addToSet: any): Promise<void> {
-        const value = this.findOneInternal(filter);
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.update}
+     *
+     * Query is expected to have a member "_id" which is a string used to find value in the database.
+     */
+    public async update(query: any, set: any, addToSet: any): Promise<void> {
+        const value = this.findOneInternal(query);
         if (!value) {
             throw new Error("Not found");
         } else {
@@ -87,8 +109,13 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
-    public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
-        const value = this.findOneInternal(filter);
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.upsert}
+     *
+     * Query is expected to have a member "_id" which is a string used to find value in the database.
+     */
+    public async upsert(query: any, set: any, addToSet: any): Promise<void> {
+        const value = this.findOneInternal(query);
         if (!value) {
             this.insertInternal(set);
         } else {
@@ -99,6 +126,11 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.insertOne}
+     *
+     * Value is expected to have a member "_id" which is a string used to search in the database.
+     */
     public async insertOne(value: any): Promise<any> {
         const presentVal = this.findOneInternal(value);
         // Only raise error when the object is present and the value is not equal.
@@ -112,6 +144,11 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return this.insertInternal(value);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.findOrCreate}
+     *
+     * Value and query are expected to have a member "_id" which is a string used to search or insert in the database.
+     */
     public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
         const existing = this.findOneInternal(query);
         if (existing) {
@@ -121,22 +158,39 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return { value, existing: false };
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.insertMany}
+     *
+     * Each element in values is expected to have a member "_id" which is a string used to insert in the database.
+     */
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
         this.insertInternal(...values);
     }
 
-    public async deleteOne(filter: any): Promise<any> {
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteOne}
+     */
+    public async deleteOne(query: any): Promise<any> {
         throw new Error("Method not implemented.");
     }
 
-    public async deleteMany(filter: any): Promise<any> {
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteMany}
+     */
+    public async deleteMany(query: any): Promise<any> {
         throw new Error("Method not implemented.");
     }
 
+    /**
+     * {@inheritDoc @fluidframework/server-services-core#ICollection.createIndex}
+     */
     public async createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
+    /**
+     * Return all values in the database
+     */
     private getAllInternal(): any[] {
         const values: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
@@ -150,6 +204,12 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return values;
     }
 
+    /**
+     * Inserts values into the session storge.
+     * Values are expected to have a member "_id" which is a unique id, otherwise will be assigned one
+     *
+     * @param values - data to insert to the database
+     */
     private insertInternal(...values: any[]) {
         for (const value of values) {
             if (value) {
@@ -161,6 +221,13 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
+    /**
+     * Finds the query in session storage and returns its value.
+     * Returns null if query is not found.
+     * Query is expected to have a member "_id" which is a unique id.
+     *
+     * @param query - what to find in the database
+     */
     private findOneInternal(query: any): any {
         if (query._id) {
             const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
@@ -220,6 +287,6 @@ export class LocalSessionStorageDbFactory implements ITestDbFactory {
         this.testDatabase = new LocalSessionStorageDb(namespace);
     }
     public async connect(): Promise<IDb> {
-        return Promise.resolve(this.testDatabase);
+        return this.testDatabase;
     }
 }

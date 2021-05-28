@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -49,8 +49,8 @@ interface IOdspDriveInfo {
 export interface IOdspDriveItem {
     path: string;
     name: string;
-    drive: string;
-    item: string;
+    driveId: string;
+    itemId: string;
     isFolder: boolean;
 }
 
@@ -119,7 +119,7 @@ export async function getChildrenByDriveItem(
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveItem[]> {
     if (!driveItem.isFolder) { return []; }
-    let url = `https://${server}/_api/v2.1/drives/${driveItem.drive}/items/${driveItem.item}/children`;
+    let url = `https://${server}/_api/v2.1/drives/${driveItem.driveId}/items/${driveItem.itemId}/children`;
     let children: any[] = [];
     do {
         const response = await getAsync(url, authRequestInfo);
@@ -223,8 +223,8 @@ function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
     return {
         path,
         name: parsedDriveItemBody.name,
-        drive: parsedDriveItemBody.parentReference.driveId,
-        item: parsedDriveItemBody.id,
+        driveId: parsedDriveItemBody.parentReference.driveId,
+        itemId: parsedDriveItemBody.id,
         isFolder: !!parsedDriveItemBody.folder,
     };
 }

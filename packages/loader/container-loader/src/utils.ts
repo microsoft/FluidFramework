@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { parse } from "url";
+import { v4 as uuid } from "uuid";
 import { fromUtf8ToBase64, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { v4 as uuid } from "uuid";
 
 export interface IParsedUrl {
     id: string;

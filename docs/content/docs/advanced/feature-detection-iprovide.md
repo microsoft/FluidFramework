@@ -4,15 +4,6 @@ menuPosition: 3
 draft: true
 ---
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
-{{% callout warning "Draft!" %}}
-
-This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
-
-{{% /callout %}}
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 In an earlier section we introduced the DataObject, a convenient way to combine distributed data structures and our own
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application --
 data included.
@@ -117,6 +108,9 @@ object of the correct type or `undefined`.
 [DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
 [DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
 [Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 [SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
 [SharedCounter]: {{< relref "SharedCounter" >}}
 [SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
@@ -126,7 +120,6 @@ object of the correct type or `undefined`.
 [SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
 [SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
 

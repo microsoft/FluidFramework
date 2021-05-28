@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,8 +7,10 @@ import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { getHashedDocumentId } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 
 describe("Odsp Driver Resolver", () => {
     const siteUrl = "https://localhost";
@@ -21,7 +23,7 @@ describe("Odsp Driver Resolver", () => {
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
     it("Can create new request", async () => {
@@ -48,23 +50,28 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        assert.deepStrictEqual(resolvedUrl, {
+        const expected: IOdspResolvedUrl = {
             endpoints: {
                 snapshotStorageUrl: "",
                 attachmentGETStorageUrl: "",
                 attachmentPOSTStorageUrl: "",
+                deltaStorageUrl: "",
             },
             tokens: {},
             type: "fluid",
+            odspResolvedUrl: true,
+            id: "odspCreateNew",
             url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
             siteUrl: "https://localhost",
             hashedDocumentId: "",
             driveId: "driveId",
             itemId: "",
             fileName: "fileName",
+            fileVersion: undefined,
             summarizer: false,
             codeHint: { containerPackageName: undefined },
-        });
+        };
+        assert.deepStrictEqual(resolvedUrl, expected);
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
 
         const [url, queryString] = response?.split("?") ?? [];
@@ -268,5 +275,33 @@ describe("Odsp Driver Resolver", () => {
             // eslint-disable-next-line max-len
             "fluid-odsp://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/?driveId=driveId&itemId=&path=/",
         );
+    });
+
+    it("Should resolve url with file version", async () => {
+        // Arrange
+        const testFilePath = "data1";
+        const itemId = "item";
+        const fileVersion = "285.0";
+        const testRequest: IRequest = {
+            url: `${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}&fileVersion=${fileVersion}`,
+        };
+
+        // Act
+        const resolvedUrl = await resolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        // Assert
+        assert.strictEqual(resolvedUrl.fileName, "", "FileName should be absent");
+        assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
+        assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
+        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+            "Doc id should be present");
+        assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
+        assert.strictEqual(resolvedUrl.fileVersion, fileVersion, "FileVersion should be equal");
+
+        const expectedResolvedUrl = `fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/`
+            + `${testFilePath}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}&fileVersion=${fileVersion}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 });

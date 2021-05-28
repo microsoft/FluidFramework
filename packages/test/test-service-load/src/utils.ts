@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import crypto from "crypto";
@@ -8,15 +8,16 @@ import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver } from "@fluidframework/test-drivers";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createFluidTestDriver, generateOdspHostStoragePolicy } from "@fluidframework/test-drivers";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import random from "random-js";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { fluidExport, ILoadTest } from "./loadTestDataStore";
+import { createFluidExport } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -54,7 +55,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-        this.baseLogger?.send(event);
+        this.baseLogger?.send({...event, hostName: pkgName});
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
@@ -82,15 +83,21 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
+export const createCodeLoader =
+    (options: IContainerRuntimeOptions)=>
+        new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver) {
+export async function initialize(testDriver: ITestDriver, seed: number) {
+    const randEng = random.engines.mt19937();
+    randEng.seed(seed);
+    const options = random.pick(randEng, generateLoaderOptions(seed));
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader,
+        codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
         logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
+        options,
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
@@ -106,28 +113,17 @@ export async function initialize(testDriver: ITestDriver) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function load(testDriver: ITestDriver, url: string, runId: number) {
-    const documentServiceFactory =
-        new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory());
-
-    // Construct the loader
-    const loader = new Loader({
-        urlResolver: testDriver.createUrlResolver(),
-        documentServiceFactory,
-        codeLoader,
-        logger: ChildLogger.create(await loggerP, undefined, {all: { runId, driverType: testDriver.type }}),
-    });
-
-    const container = await loader.resolve({ url });
-    return {documentServiceFactory, container, test: await requestFluidObject<ILoadTest>(container,"/")};
+export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+    const options = generateOdspHostStoragePolicy(seed);
+    return createFluidTestDriver(
+        driver,
+        {
+            odsp: {
+                directory: "stress",
+                options: options[ (runId ?? seed) % options.length],
+            },
+        });
 }
-
-export const createTestDriver =
-    async (driver: TestDriverTypes) => createFluidTestDriver(driver,{
-        odsp: {
-            directory: "stress",
-        },
-    });
 
 export function getProfile(profileArg: string) {
     let config: ITestConfig;

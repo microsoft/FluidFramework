@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -15,7 +15,7 @@ interface IWaitOffset {
 }
 
 export class TestContext extends EventEmitter implements IContext {
-    public offset: number = Number.NEGATIVE_INFINITY;
+    public offset: number = -1;
     private waits: IWaitOffset[] = [];
 
     constructor(public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext")) {

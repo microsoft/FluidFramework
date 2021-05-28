@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
@@ -31,7 +31,11 @@ export interface IOpProcessingController {
 export interface ITestObjectProvider {
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions): IHostLoader;
     createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
-    loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
+    loadContainer(
+        entryPoint: fluidEntryPoint,
+        options?: ILoaderOptions,
+        requestHeader?: IRequestHeader,
+    ): Promise<IContainer>;
 
     /**
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
@@ -51,7 +55,6 @@ export interface ITestObjectProvider {
 
     documentId: string,
     driver: ITestDriver;
-
 }
 
 export enum DataObjectFactoryType {
@@ -164,10 +167,11 @@ export class TestObjectProvider {
         return container;
     }
 
-    public async loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+    public async loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions, requestHeader?: IRequestHeader) {
         const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
-        return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId) });
+        return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId), headers: requestHeader });
     }
+
     /**
      * Make a test loader.  Container created/loaded thru this loader will not be automatically added
      * to the OpProcessingController, and will need to be added manually if needed.

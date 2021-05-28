@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -18,6 +18,7 @@ import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -70,6 +71,7 @@ export class Chaincode implements IFluidDataStoreFactory {
             sequence.SharedObjectSequence.getFactory(),
             sequence.SharedNumberSequence.getFactory(),
             ConsensusQueue.getFactory(),
+            ConsensusRegisterCollection.getFactory(),
             sequence.SparseMatrix.getFactory(),
             map.SharedDirectory.getFactory(),
             sequence.SharedIntervalCollection.getFactory(),

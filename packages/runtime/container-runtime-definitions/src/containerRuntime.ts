@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -33,7 +33,6 @@ import {
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
-import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -46,7 +45,7 @@ export interface IProvideContainerRuntime {
     IContainerRuntime: IContainerRuntime;
 }
 
-export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
+export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved",
@@ -67,7 +66,6 @@ export type IContainerRuntimeBaseWithCombinedEvents =
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
-    Partial<IProvideContainerRuntimeDirtyable>,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
@@ -76,11 +74,14 @@ export interface IContainerRuntime extends
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     readonly loader: ILoader;

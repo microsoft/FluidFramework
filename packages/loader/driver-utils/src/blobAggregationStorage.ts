@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -266,15 +266,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             await this.unpackSnapshot(tree);
         }
         return tree;
-    }
-
-    public async read(id: string): Promise<string> {
-        // optimize it a bit to avoid unneeded conversions while we transition to using readBlob everywhere.
-        if (this.isRealStorageId(id)) {
-            return bufferToString2(await this.storage.readBlob(id),"base64");
-        }
-        const blob = await this.readBlob(id);
-        return bufferToString2(blob, "base64");
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {

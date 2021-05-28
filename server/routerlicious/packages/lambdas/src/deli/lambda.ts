@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 /* eslint-disable no-null/no-null */
 
-import { RangeTracker } from "@fluidframework/common-utils";
+import { EventEmitter } from "events";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -38,8 +38,8 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
+    INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
-    INackFutureMessagesControlMessageContents,
 } from "@fluidframework/server-services-core";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -79,7 +79,13 @@ interface ITicketedMessageOutput {
     instruction: InstructionType;
 }
 
-export class DeliLambda implements IPartitionLambda {
+export enum OpEventType {
+    Idle,
+    MaxOps,
+    MaxTime,
+}
+
+export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
 
@@ -92,20 +98,28 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
-    private readonly branchMap: RangeTracker | undefined;
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
+    private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
     private lastInstruction = InstructionType.NoOp;
-    private idleTimer: any;
-    private noopTimer: any;
-    private noActiveClients = false;
+
+    private activityIdleTimer: any;
+    private noopEvent: any;
+
+    // Op event properties
+    private opIdleTimer: any | undefined;
+    private opMaxTimeTimer: any | undefined;
+    private sequencedMessagesSinceLastOpEvent: number = 0;
+
+    private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
+    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
 
-    // when set, all messages will be nacked based on the provided info
-    private nackFutureMessages: INackFutureMessagesControlMessageContents | undefined;
+    // when set, messages will be nacked based on the provided info
+    private nackMessages: INackMessagesControlMessageContents | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -116,6 +130,8 @@ export class DeliLambda implements IPartitionLambda {
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
+        super();
+
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
@@ -138,22 +154,39 @@ export class DeliLambda implements IPartitionLambda {
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
+        this.logOffset = lastCheckpoint.logOffset;
+        this.nackMessages = lastCheckpoint.nackMessages;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
-        this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
+        this.noActiveClients = msn === -1;
+        this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
 
-        this.logOffset = lastCheckpoint.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
+
+        // start the activity idle timer when created
+        this.setActivityIdleTimer();
+
+        if (this.serviceConfiguration.deli.opEvent.enable) {
+            this.updateOpMaxTimeTimer();
+        }
     }
 
-    public handler(rawMessage: IQueuedMessage): void {
+    public handler(rawMessage: IQueuedMessage) {
+        let kafkaCheckpointMessage: IQueuedMessage | undefined;
+
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            this.context.checkpoint(rawMessage);
-            return;
+            kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
+            if (kafkaCheckpointMessage) {
+                this.context.checkpoint(kafkaCheckpointMessage);
+            }
+
+            return undefined;
         }
 
         this.logOffset = rawMessage.offset;
+
+        let sequencedMessageCount = 0;
 
         const boxcar = extractBoxcar(rawMessage);
 
@@ -175,7 +208,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Check for document inactivity.
                 if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
                     && this.noActiveClients) {
-                    this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
                 }
 
                 // Return early if sending is not required.
@@ -194,12 +227,16 @@ export class DeliLambda implements IPartitionLambda {
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
+
+            sequencedMessageCount++;
         }
 
-        const checkpoint = this.generateCheckpoint(rawMessage);
+        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
+        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
-        this.lastSendP.then(
+        Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
                 if (this.lastInstruction === InstructionType.ClearCache) {
                     checkpoint.clear = true;
@@ -224,15 +261,34 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        this.clearIdleTimer();
-        this.setIdleTimer();
+        this.clearActivityIdleTimer();
+        this.setActivityIdleTimer();
+
+        // Update the op event idle & max ops counter if ops were just sequenced
+        if (this.serviceConfiguration.deli.opEvent.enable && sequencedMessageCount > 0) {
+            this.updateOpIdleTimer();
+
+            const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
+            if (maxOps !== undefined) {
+                this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
+
+                if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
+                    this.emitOpEvent(OpEventType.MaxOps);
+                }
+            }
+        }
     }
 
     public close() {
         this.checkpointContext.close();
 
-        this.clearIdleTimer();
+        this.clearActivityIdleTimer();
         this.clearNoopConsolidationTimer();
+
+        this.clearOpIdleTimer();
+        this.clearOpMaxTimeTimer();
+
+        this.removeAllListeners();
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
@@ -245,14 +301,38 @@ export class DeliLambda implements IPartitionLambda {
         const message = rawMessage as IRawOperationMessage;
         const dataContent = this.extractDataContent(message);
 
-        // Check if we should nack all messages
-        if (this.nackFutureMessages) {
-            return this.createNackMessage(
-                message,
-                this.nackFutureMessages.code,
-                this.nackFutureMessages.type,
-                this.nackFutureMessages.message,
-                this.nackFutureMessages.retryAfter);
+        // Check if we should nack this message
+        const nackMessages = this.nackMessages;
+        if (nackMessages) {
+            let shouldNack = true;
+
+            if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
+                // this is a system message. don't nack it
+                shouldNack = false;
+            } else if (nackMessages.allowedScopes) {
+                const clientId = message.clientId;
+                if (clientId) {
+                    const client = this.clientSeqManager.get(clientId);
+                    if (client) {
+                        for (const scope of nackMessages.allowedScopes) {
+                            if (client.scopes.includes(scope)) {
+                                // this client has an allowed scope. don't nack it
+                                shouldNack = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (shouldNack) {
+                return this.createNackMessage(
+                    message,
+                    nackMessages.content.code,
+                    nackMessages.content.type,
+                    nackMessages.content.message,
+                    nackMessages.content.retryAfter);
+            }
         }
 
         // Check incoming message order. Nack if there is any gap so that the client can resend.
@@ -442,13 +522,19 @@ export class DeliLambda implements IPartitionLambda {
                         }
 
                         this.durableSequenceNumber = dsn;
+
+                        if (this.serviceConfiguration.deli.opEvent.enable) {
+                            // since the dsn updated, ops were reliably stored
+                            // we can safely restart the MaxTime timer
+                            this.updateOpMaxTimeTimer();
+                        }
                     }
 
                     break;
                 }
 
-                case ControlMessageType.NackFutureMessages: {
-                    this.nackFutureMessages = controlMessage.contents as INackFutureMessagesControlMessageContents;
+                case ControlMessageType.NackMessages: {
+                    this.nackMessages = controlMessage.contents;
                     break;
                 }
 
@@ -576,15 +662,16 @@ export class DeliLambda implements IPartitionLambda {
         return this.forwardProducer.send([message], message.tenantId, message.documentId);
     }
 
-    private sendToAlfred(message: IRawOperationMessage) {
-        this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
+    private async sendToAlfred(message: IRawOperationMessage) {
+        try {
+            await this.reverseProducer.send([message], message.tenantId, message.documentId);
+        } catch (error) {
             this.context.log?.error(
                 `Could not send message to alfred: ${JSON.stringify(error)}`,
                 {
                     messageMetaData: {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
-
                     },
                 });
             this.context.error(error, {
@@ -592,7 +679,7 @@ export class DeliLambda implements IPartitionLambda {
                 tenantId: this.tenantId,
                 documentId: this.documentId,
             });
-        });
+        }
     }
 
     // Check if there are any old/idle clients. Craft and send a leave message to alfred.
@@ -603,7 +690,7 @@ export class DeliLambda implements IPartitionLambda {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                this.sendToAlfred(leaveMessage);
+                void this.sendToAlfred(leaveMessage);
             }
         }
     }
@@ -700,18 +787,34 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Generates a checkpoint of the current ticketing state
+     * The deli checkpoint is based on rawMessage
+     * The kafka checkpoint is based on kafkaCheckpointMessage if clients exist
+     * This keeps the kafka checkpoint behind by 1 message until there are no active clients
+     * It ensures that the idle timer and subsequent leave & NoClient messages are created
+     * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
+     * @returns The queued message for the kafka checkpoint
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
-        const deliCheckpoint = this.generateDeliCheckpoint();
-        const checkpoint = deliCheckpoint as ICheckpointParams;
-        checkpoint.queuedMessage = queuedMessage;
-        return checkpoint;
+    private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
+        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        this.nextKafkaCheckpointMessage = rawMessage;
+        return kafkaCheckpointMessage;
+    }
+
+    /**
+     * Generates a checkpoint of the given state
+     */
+    private generateCheckpoint(
+        deliCheckpointMessage: IQueuedMessage,
+        kafkaCheckpointMessage: IQueuedMessage | undefined): ICheckpointParams {
+        return {
+            deliState: this.generateDeliCheckpoint(),
+            deliCheckpointMessage,
+            kafkaCheckpointMessage,
+        };
     }
 
     private generateDeliCheckpoint(): IDeliState {
         return {
-            branchMap: this.branchMap?.serialize(),
             clients: this.clientSeqManager.cloneValues(),
             durableSequenceNumber: this.durableSequenceNumber,
             epoch: this.epoch,
@@ -719,6 +822,7 @@ export class DeliLambda implements IPartitionLambda {
             sequenceNumber: this.sequenceNumber,
             term: this.term,
             lastSentMSN: this.lastSentMSN,
+            nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
         };
     }
 
@@ -740,22 +844,22 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private setIdleTimer() {
+    private setActivityIdleTimer() {
         if (this.noActiveClients) {
             return;
         }
-        this.idleTimer = setTimeout(() => {
+        this.activityIdleTimer = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.activityTimeout);
     }
 
-    private clearIdleTimer() {
-        if (this.idleTimer !== undefined) {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = undefined;
+    private clearActivityIdleTimer() {
+        if (this.activityIdleTimer !== undefined) {
+            clearTimeout(this.activityIdleTimer);
+            this.activityIdleTimer = undefined;
         }
     }
 
@@ -763,18 +867,83 @@ export class DeliLambda implements IPartitionLambda {
         if (this.noActiveClients) {
             return;
         }
-        this.noopTimer = setTimeout(() => {
+        this.noopEvent = setTimeout(() => {
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
-                this.sendToAlfred(noOpMessage);
+                void this.sendToAlfred(noOpMessage);
             }
         }, this.serviceConfiguration.deli.noOpConsolidationTimeout);
     }
 
     private clearNoopConsolidationTimer() {
-        if (this.noopTimer !== undefined) {
-            clearTimeout(this.noopTimer);
-            this.noopTimer = undefined;
+        if (this.noopEvent !== undefined) {
+            clearTimeout(this.noopEvent);
+            this.noopEvent = undefined;
         }
+    }
+
+    /**
+     * Reset the op event idle timer
+     * Called after a message is sequenced
+     */
+    private updateOpIdleTimer() {
+        const idleTime = this.serviceConfiguration.deli.opEvent.idleTime;
+        if (idleTime === undefined) {
+            return;
+        }
+
+        this.clearOpIdleTimer();
+
+        this.opIdleTimer = setTimeout(() => {
+            this.emitOpEvent(OpEventType.Idle);
+        }, idleTime);
+    }
+
+    private clearOpIdleTimer() {
+        if (this.opIdleTimer !== undefined) {
+            clearTimeout(this.opIdleTimer);
+            this.opIdleTimer = undefined;
+        }
+    }
+
+    /**
+     * Resets the op event MaxTime timer
+     * Called after an opEvent is emitted or when the dsn is updated
+     */
+    private updateOpMaxTimeTimer() {
+        const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
+        if (maxTime === undefined) {
+            return;
+        }
+
+        this.clearOpMaxTimeTimer();
+
+        this.opMaxTimeTimer = setTimeout(() => {
+            this.emitOpEvent(OpEventType.MaxTime);
+        }, maxTime);
+    }
+
+    private clearOpMaxTimeTimer() {
+        if (this.opMaxTimeTimer !== undefined) {
+            clearTimeout(this.opMaxTimeTimer);
+            this.opMaxTimeTimer = undefined;
+        }
+    }
+
+    /**
+     * Emits an opEvent based for the provided type
+     * Also resets the MaxTime timer
+     */
+    private emitOpEvent(type: OpEventType) {
+        if (this.sequencedMessagesSinceLastOpEvent === 0) {
+            // no need to emit since no messages were handled since last time
+            return;
+        }
+
+        this.emit("opEvent", type, this.sequenceNumber, this.sequencedMessagesSinceLastOpEvent);
+
+        this.sequencedMessagesSinceLastOpEvent = 0;
+
+        this.updateOpMaxTimeTimer();
     }
 }

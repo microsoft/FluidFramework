@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { SharedOT } from "@fluid-experimental/ot";
+import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import { IAppState, IClient, IArrayish, makeBubble, randomColor } from "@fluid-experimental/bubblebench-common";
 import { observe } from "./proxy";
 
@@ -15,7 +15,7 @@ export class AppState implements IAppState {
     public readonly localClient: IClient;
 
     constructor(
-        tree: SharedOT,
+        tree: SharedJson1,
         private _width: number,
         private _height: number,
         numBubbles: number,

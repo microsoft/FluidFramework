@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -65,6 +65,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
 
     public get(id: string): FluidDataStoreContext | undefined {
         return this._contexts.get(id);
+    }
+
+    public delete(id: string): boolean {
+        this.deferredContexts.delete(id);
+        this.notBoundContexts.delete(id);
+        return this._contexts.delete(id);
     }
 
     /**

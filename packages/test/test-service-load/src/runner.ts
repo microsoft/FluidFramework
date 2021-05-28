@@ -1,26 +1,25 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { Container } from "@fluidframework/container-loader";
-import { IRunConfig } from "./loadTestDataStore";
-import { createTestDriver, getProfile, load, loggerP, safeExit } from "./utils";
+import { Container, Loader } from "@fluidframework/container-loader";
+import random from "random-js";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { LoaderHeader } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if(runConfig.verbose) {
         console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-    }else{
-        process.stdout.write(".");
-    }
-}
-
-function printProgress(runConfig: IRunConfig) {
-    if(!runConfig.verbose) {
-        process.stdout.write(".");
     }
 }
 
@@ -31,6 +30,7 @@ async function main() {
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
         .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
+        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
@@ -41,6 +41,7 @@ async function main() {
     const runId: number  = commander.runId;
     const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
+    const seed: number = commander.seed;
 
     const profile = getProfile(profileArg);
 
@@ -52,16 +53,66 @@ async function main() {
         console.error("Missing --url argument needed to run child process");
         process.exit(-1);
     }
+
+    const randEng = random.engines.mt19937();
+    // combine the runId with the seed for generating local randoms
+    // this makes runners repeatable, but ensures each runner
+    // will get its own set of randoms
+    randEng.seedWithArray([seed, runId]);
+
+    const l = await loggerP;
+    process.on("unhandledRejection", (reason, promise) => {
+        try{
+            l.sendErrorEvent({eventName: "UnhandledPromiseRejection"}, reason);
+        } catch(e) {
+            console.error("Error during logging unhandled promise rejection: ", e);
+        }
+    });
     const result = await runnerProcess(
         driver,
         {
             runId,
             testConfig: profile,
             verbose,
+            randEng,
         },
-        url);
+        url,
+        seed);
 
     await safeExit(result, url, runId);
+}
+
+function *factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+    let counter = 0;
+    const factoryReused = create();
+
+    while (true) {
+        counter++;
+        // Switch between creating new factory vs. reusing factory.
+        // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+        // At the same time we want to test newly created factory.
+        let documentServiceFactory: T = factoryReused;
+        let headers: IRequestHeader = {};
+        switch (counter % 5) {
+            default:
+            case 0:
+                documentServiceFactory = create();
+                break;
+            case 1:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "cached"} };
+                break;
+            case 2:
+                headers = { [LoaderHeader.loadMode]: { opsBeforeReturn : "all"} };
+                break;
+            case 3:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "none"} };
+                break;
+            case 4:
+                headers = { [LoaderHeader.loadMode]: { deltaConnection : "delayed"} };
+                break;
+        }
+        yield { documentServiceFactory, headers };
+    }
 }
 
 /**
@@ -71,32 +122,60 @@ async function runnerProcess(
     driver: TestDriverTypes,
     runConfig: IRunConfig,
     url: string,
+    seed: number,
 ): Promise<number> {
     try {
-        const testDriver = await createTestDriver(driver);
+        const loaderOptions = generateLoaderOptions(seed);
+        const containerOptions = generateRuntimeOptions(seed);
 
-        let reset = true;
-        let done = false;
-        while(!done) {
-            const {documentServiceFactory, container, test} = await load(testDriver, url, runConfig.runId);
+        const testDriver = await createTestDriver(driver, seed, runConfig.runId);
+        const baseLogger = await loggerP;
+        const logger = ChildLogger.create(
+            baseLogger, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
+
+        let iteration = 0;
+        const iterator = factoryPermutations(
+            () => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()));
+
+        for (const {documentServiceFactory, headers} of iterator) {
+            iteration++;
+
+            // Switch between creating new factory vs. reusing factory.
+            // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+            // At the same time we want to test newly created factory.
+
+            // Construct the loader
+            const loader = new Loader({
+                urlResolver: testDriver.createUrlResolver(),
+                documentServiceFactory,
+                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                logger,
+                options: loaderOptions,
+            });
+
+            const container = await loader.resolve({ url, headers });
+            container.resume();
+            const test = await requestFluidObject<ILoadTest>(container,"/");
+
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
-                printProgress(runConfig);
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                const done = await test.run(runConfig, iteration === 0 /* reset */);
                 printStatus(runConfig, done ?  `finished` : "closed");
+                if (done) {
+                    break;
+                }
             }catch(error) {
                 await loggerP.then(
                     async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
                 throw error;
             }
-            finally{
-                reset = false;
+            finally {
                 if(!container.closed) {
                     container.close();
                 }
-                await loggerP.then(async (l)=>l.flush({url, runId: runConfig.runId}));
+                await baseLogger.flush({url, runId: runConfig.runId});
             }
         }
         return 0;
@@ -112,7 +191,7 @@ function scheduleFaultInjection(
     container: Container,
     runConfig: IRunConfig) {
     const schedule = ()=>{
-        const injectionTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+        const injectionTime = runConfig.testConfig.readWriteCycleMs * random.real(0, 5)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0,4)} min`);
         setTimeout(() => {
             if(container.connected && container.resolvedUrl !== undefined) {
@@ -120,8 +199,9 @@ function scheduleFaultInjection(
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if(deltaConn !== undefined) {
                     // 1 in numClients chance of non-retritable error to not overly conflict with container close
-                    const canRetry = Math.floor(Math.random() * runConfig.testConfig.numClients) === 0 ? false : true;
-                    switch(Math.floor(Math.random() * 5)) {
+                    const canRetry =
+                        random.integer(0,  runConfig.testConfig.numClients - 1)(runConfig.randEng) === 0 ? false : true;
+                    switch(random.integer(0,  5)(runConfig.randEng)) {
                         // dispreferr errors
                         case 0: {
                             deltaConn.injectError(canRetry);
@@ -180,7 +260,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 // this will bias toward the summarizer client which is always quorum index 0.
                 if(quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember",scheduleLeave);
-                    const leaveTime = runConfig.testConfig.readWriteCycleMs * 5 * Math.random();
+                    const leaveTime = runConfig.testConfig.readWriteCycleMs * random.real(0,  5)(runConfig.randEng);
                     printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0,4)} min`);
                     setTimeout(
                         ()=>{

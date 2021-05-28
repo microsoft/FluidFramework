@@ -1,20 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { DriverError, DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
     GenericNetworkError,
     isOnline,
-    NetworkErrorBasic,
+    RetryableError,
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
+import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 
@@ -34,60 +35,6 @@ export const fluidEpochMismatchError = 409;
 // Error code for when the fetched token is null.
 export const fetchTokenErrorCode = 724;
 
-export enum OdspErrorType {
-    /**
-     * Storage is out of space
-     */
-    outOfStorageError = "outOfStorageError",
-
-    /**
-     * Invalid file name (at creation of the file)
-     */
-    invalidFileNameError = "invalidFileNameError",
-
-    /**
-     * Snapshot is too big. Host application specified limit for snapshot size, and snapshot was bigger
-     * that that limit, thus request failed. Hosting application is expected to have fall-back behavior for
-     * such case.
-     */
-    snapshotTooBig = "snapshotTooBig",
-
-    /*
-     * Maximum time limit to fetch reached. Host application specified limit for fetching of snapshot, when
-     * that limit is reached, request fails. Hosting application is expected to have fall-back behavior for
-     * such case.
-     */
-    fetchTimeout = "fetchTimeout",
-
-    /*
-        * SPO admin toggle: fluid service is not enabled.
-        */
-    fluidNotEnabled = "fluidNotEnabled",
-
-    /**
-     * Epoch version mismatch failures.
-     * This occurs when the file is modified externally. So the version at the client receiving this error
-     * does not match the one at the server.
-     */
-    epochVersionMismatch = "epochVersionMismatch",
-
-    fetchTokenError = "fetchTokenError",
-}
-
-/**
- * Base interface for all errors and warnings
- */
-export interface IOdspError {
-    readonly errorType: OdspErrorType;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
-}
-
-export type OdspError =
-    | DriverError
-    | IOdspError;
-
 export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
     interface LoggingHeader {
         headerName: string;
@@ -105,7 +52,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
         contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
-        isAfd: headers["x-msedge-ref"] !== undefined,
     };
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);
@@ -127,58 +73,62 @@ export function createOdspNetworkError(
     let error: OdspError & LoggingError;
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(errorMessage, false, statusCode);
+            error = new GenericNetworkError(errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
             const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
             const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-            error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
+            error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
             break;
         case 404:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
             break;
         case 406:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
+            break;
+        case 410:
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch, statusCode);
+            error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
         case 413:
-            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, true, statusCode);
+            error = new GenericNetworkError(errorMessage, true, { statusCode });
             break;
         case 501:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
             break;
         case 507:
-            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, { statusCode });
             break;
         case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.offlineError, { statusCode });
             break;
         case fetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.fetchFailure, { statusCode });
             break;
         case fetchIncorrectResponse:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false, statusCode);
+            // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
+            error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
+            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];

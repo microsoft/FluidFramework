@@ -1,0 +1,50 @@
+# This file is a map of labels to repo glob paths. See https://github.com/marketplace/actions/labeler
+# for more details.
+
+"area: dds":
+  - "packages/dds/**"
+
+"area: dds: sharedstring":
+  - packages/dds/sequence/**
+
+"area: driver":
+  - packages/drivers/**
+
+"area: examples":
+  - examples/**
+
+"area: framework":
+  - packages/framework/**
+
+"area: host":
+  - packages/hosts/**
+
+"area: loader":
+  - packages/loader/**
+
+# Add "area: repo" label to any root or .github changes
+"area: repo":
+  - any: ["*", ".github/**", "!BREAKING.md"]
+
+"area: runtime":
+  - packages/runtime/**
+
+"area: server":
+  - server/**
+
+"area: test":
+  - packages/test/**
+
+"area: tools":
+  - tools/**
+
+"area: website":
+  - any: ["docs/**", "!docs/content/**"]
+
+# Any change to BREAKING.md or to any api-report path in the repo
+"breaking change":
+  - BREAKING.md
+  - api-report/*
+
+documentation:
+  - docs/content/**

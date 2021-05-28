@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import assert from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
@@ -60,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 
         axiosMockAdapter.reset();
         restWrapper = new RouterliciousRestWrapper(
-            new TelemetryNullLogger(),
+            new TelemetryUTLogger(),
             getAuthHeader,
         );
         await restWrapper.load();

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,12 +13,16 @@ import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import random from "random-js";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
     runId: number,
     testConfig: ILoadTestConfig,
     verbose: boolean,
+    randEng: random.Engine,
 }
 
 export interface ILoadTest {
@@ -30,6 +34,8 @@ const taskManagerKey = "taskManager";
 const counterKey = "counter";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
+const gcDataStoreKey = "dataStore";
+
 /**
  * Encapsulate the data model and to not expose raw DSS to the main loop.
  * Eventually this can  spawn isolated sub-dirs for workloads,
@@ -57,12 +63,46 @@ class LoadTestDataStoreModel {
         }
     }
 
+    /**
+     * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
+     * common to both the clients. Each client adds a reference to this data store when it becomes a writer
+     * and removes the reference before it transtions to a reader.
+     * So, at any point in time, the data store can have 0, 1 or 2 references.
+     */
+    private static async getGCDataStore(
+        config: IRunConfig,
+        root: ISharedDirectory,
+        containerRuntime: IContainerRuntimeBase,
+    ): Promise<LoadTestDataStore> {
+        const halfClients = Math.floor(config.testConfig.numClients / 2);
+        const gcDataStoreIdKey = `gc_dataStore_${config.runId % halfClients}`;
+        let gcDataStore: LoadTestDataStore | undefined;
+        if (!root.has(gcDataStoreIdKey)) {
+            // The data store for this pair doesn't exist, create it and store its url.
+            gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
+            root.set(gcDataStoreIdKey, gcDataStore.id);
+        }
+        // If we did not create the data store above, load it by getting its url.
+        if (gcDataStore === undefined) {
+            const gcDataStoreId = root.get(gcDataStoreIdKey);
+            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+                throw new Error("GC data store not available");
+            }
+            gcDataStore = response.value as LoadTestDataStore;
+        }
+        return gcDataStore;
+    }
+
     public static async createRunnerInstance(
         config: IRunConfig,
         reset: boolean,
         root: ISharedDirectory,
         runtime: IFluidDataStoreRuntime,
+        containerRuntime: IContainerRuntimeBase,
     ) {
+        await LoadTestDataStoreModel.waitForCatchup(runtime);
+
         if(!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
         }
@@ -72,11 +112,8 @@ class LoadTestDataStoreModel {
         }
 
         if(!runDir.has(counterKey)) {
-            await LoadTestDataStoreModel.waitForCatchup(runtime);
-            if(!runDir.has(counterKey)) {
-                runDir.set(counterKey, SharedCounter.create(runtime).handle);
-                runDir.set(startTimeKey,Date.now());
-            }
+            runDir.set(counterKey, SharedCounter.create(runtime).handle);
+            runDir.set(startTimeKey,Date.now());
         }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
         const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
@@ -88,6 +125,8 @@ class LoadTestDataStoreModel {
             throw new Error("taskmanger not available");
         }
 
+        const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
+
         const dataModel =  new LoadTestDataStoreModel(
             root,
             config,
@@ -95,6 +134,8 @@ class LoadTestDataStoreModel {
             taskmanager,
             runDir,
             counter,
+            runDir,
+            gcDataStore.handle,
         );
 
         if(reset) {
@@ -121,6 +162,8 @@ class LoadTestDataStoreModel {
         private readonly taskManager: ITaskManager,
         private readonly dir: IDirectory,
         public readonly counter: ISharedCounter,
+        private readonly runDir: IDirectory,
+        private readonly gcDataStoreHandle: IFluidHandle,
     ) {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
@@ -170,6 +213,8 @@ class LoadTestDataStoreModel {
 
     public abandonTask() {
         if(this.haveTaskLock()) {
+            // We are becoming the reader. Remove the reference to the GC data store.
+            this.runDir.delete(gcDataStoreKey);
             this.taskManager.abandon(this.taskId);
         }
     }
@@ -199,6 +244,11 @@ class LoadTestDataStoreModel {
                 }
                 await this.taskManager.lockTask(this.taskId);
                 this.taskStartTime = Date.now();
+
+                // We just became the writer. Add a reference to the GC data store.
+                if (!this.runDir.has(gcDataStoreKey)) {
+                    this.runDir.set(gcDataStoreKey, this.gcDataStoreHandle);
+                }
             }catch(e) {
                 if(this.runtime.disposed || !this.runtime.connected) {
                     return;
@@ -242,7 +292,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
     public async run(config: IRunConfig, reset: boolean) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
-            config, reset, this.root, this.runtime);
+            config, reset, this.root, this.runtime, this.context.containerRuntime);
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
@@ -280,7 +330,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await wait(cycleMs / 2);
                     }else{
                         // Random jitter of +- 50% of opWaitMs
-                        await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
+                        await wait(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
                     }
                 }else{
                     await dataModel.lockTask();
@@ -306,7 +356,11 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    LoadTestDataStoreInstantiationFactory,
-    new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
-);
+export const createFluidExport = (options: IContainerRuntimeOptions) =>
+    new ContainerRuntimeFactoryWithDefaultDataStore(
+        LoadTestDataStoreInstantiationFactory,
+        new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
+        undefined,
+        undefined,
+        options,
+    );

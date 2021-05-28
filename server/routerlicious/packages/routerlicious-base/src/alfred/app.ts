@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,13 +16,12 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { getTenantIdFromRequest } from "../utils";
+import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -95,18 +94,11 @@ export function create(
     app.use(routes.api);
 
     // Catch 404 and forward to error handler
-    app.use((req, res, next) => {
-        const err = new Error("Not Found");
-        (err as any).status = 404;
-        next(err);
-    });
+    app.use(catch404());
 
     // Error handlers
 
-    app.use((err, req, res, next) => {
-        res.status(err.status || 500);
-        res.json({ error: safeStringify(err), message: err.message });
-    });
+    app.use(handleError());
 
     return app;
 }

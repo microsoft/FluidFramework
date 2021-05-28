@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
 
 import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
+import { IFluidLastEditedTracker } from "@fluid-experimental/last-edited";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";

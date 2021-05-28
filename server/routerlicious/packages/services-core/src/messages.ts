@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,6 +8,7 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 
 // String identifying the raw operation message
@@ -151,8 +152,8 @@ export enum ControlMessageType {
     // Instruction sent to update Durable sequence number
     UpdateDSN = "updateDSN",
 
-    // Instruction sent to have deli nack all future messages
-    NackFutureMessages = "nackFutureMessages",
+    // Instruction sent to control if deli nacks messages
+    NackMessages = "nackMessages",
 }
 
 export interface IUpdateDSNControlMessageContents {
@@ -160,4 +161,20 @@ export interface IUpdateDSNControlMessageContents {
     clearCache: boolean;
 }
 
-export type INackFutureMessagesControlMessageContents = INackContent;
+export interface INackMessagesControlMessageContents {
+    /**
+     * The INackContent to send when nacking the message
+     */
+    content: INackContent;
+
+    /**
+     * If a client has a scope in this list, there message will be allowed
+     * If undefined, scope will not affect message nacking
+     */
+    allowedScopes?: ScopeType[];
+
+    /**
+     * Controls if system messages should be nacked
+     */
+    allowSystemMessages?: boolean;
+}

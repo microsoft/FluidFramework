@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,9 +14,12 @@ import {
     ITestObjectProvider,
     ChannelFactoryRegistry,
     ITestFluidObject,
+    LocalCodeLoader,
+    SupportedExportInterfaces,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -24,11 +27,12 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MessageType, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { convertContainerToDriverSerializedFormat, requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -59,19 +63,19 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
+const createFluidObject = (async (
+    dataStoreContext: IFluidDataStoreContext,
+    type: string,
+) => {
+    return requestFluidObject<ITestFluidObject>(
+        await dataStoreContext.containerRuntime.createDataStore(type),
+        "");
+});
+
 describeFullCompat("Detached Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;
-
-    const createFluidObject = (async (
-        dataStoreContext: IFluidDataStoreContext,
-        type: string,
-    ) => {
-        return requestFluidObject<ITestFluidObject>(
-            await dataStoreContext.containerRuntime.createDataStore(type),
-            "");
-    });
 
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -185,79 +189,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         assert.strictEqual(JSON.stringify(testChannel2.summarize()), JSON.stringify(testChannel1.summarize()),
             "Value for summarize should be same!!");
-    });
-
-    it("ReAttach detached container on failed attach", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const oldFunc = provider.documentServiceFactory.createContainer;
-        provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
-        let failedOnce = false;
-        try {
-            await container.attach(request);
-        } catch (e) {
-            failedOnce = true;
-            provider.documentServiceFactory.createContainer = oldFunc;
-        }
-        assert.strictEqual(failedOnce, true, "Attach call should fail");
-        assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
-        const response = await container.request({ url: "/" });
-        const dataStore = response.value as ITestFluidObject;
-
-        // Create a sub data store of type TestFluidObject.
-        const dataStore1 = await createFluidObject(dataStore.context, "default");
-        const defP = new Deferred<void>();
-        container.on("op", (op: ISequencedDocumentMessage) => {
-            if (op.contents?.type === DataStoreMessageType.Attach) {
-                assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
-                    "There should be an attach op for created data store");
-                defP.resolve();
-            }
-        });
-        dataStore1.channel.bindToContext();
-
-        await container.attach(request);
-        assert.strictEqual(container.attachState, AttachState.Attached, "Container should now be attached");
-        await defP.promise;
-
-        // Now load the container from another loader.
-        const loader2 = provider.makeTestLoader(testContainerConfig);
-        // Create a new request url from the resolvedUrl of the first container.
-        assert(container.resolvedUrl);
-        const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-        const container2 = await loader2.resolve({ url: requestUrl2 });
-
-        // Get the sub data store and assert that it is attached.
-        const response2 = await container2.request({ url: `/${dataStore1.context.id}` });
-        const dataStore2 = response2.value as ITestFluidObject;
-        assert(dataStore2, "Data store created in failed attach mode should exist");
-        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached, "Data store 1 should be attached");
-        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached, "Data store 2 should be attached");
-    });
-
-    it("Directly attach container through service factory, should resolve to same container", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // Get the root dataStore from the detached container.
-        const response = await container.request({ url: "/" });
-        const dataStore = response.value as ITestFluidObject;
-
-        // Create a sub dataStore of type TestFluidObject.
-        const subDataStore1 = await createFluidObject(dataStore.context, "default");
-        dataStore.root.set("attachKey", subDataStore1.handle);
-
-        const snapshotTree = container.serialize();
-        const summaryForAttach = convertContainerToDriverSerializedFormat(snapshotTree);
-        const resolvedUrl = await provider.urlResolver.resolve(request);
-        assert(resolvedUrl);
-        const service = await provider.documentServiceFactory.createContainer(summaryForAttach as any, resolvedUrl);
-        const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
-
-        const container2 = await loader.resolve({ url: absoluteUrl });
-        // Get the root dataStore from the detached container.
-        const response2 = await container2.request({ url: "/" });
-        const dataStore2 = response2.value as ITestFluidObject;
-        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
-            "Stored handle should match!!");
     });
 
     it("Fire ops during container attach for shared string", async () => {
@@ -614,5 +545,101 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader.resolve({ url: requestUrl2 });
         assert.strictEqual(container, container2, "Both containers should be same");
+    });
+});
+
+describeNoCompat("Detached Container", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    let request: IRequest;
+    let loader: Loader;
+
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+        request = provider.driver.createCreateNewRequest(provider.documentId);
+        loader = provider.makeTestLoader(testContainerConfig) as Loader;
+    });
+
+    it("Retry attaching detached container", async () => {
+        let retryTimes = 1;
+        const documentServiceFactory: IDocumentServiceFactory = {
+            ...provider.documentServiceFactory,
+            createContainer: async (createNewSummary, createNewResolvedUrl, logger) => {
+                if (retryTimes > 0) {
+                    retryTimes -= 1;
+                    const error = new Error("Test Error");
+                    (error as any).canRetry = true;
+                    throw error;
+                }
+                return provider.documentServiceFactory.createContainer(createNewSummary, createNewResolvedUrl, logger);
+            },
+        };
+
+        const fluidExport: SupportedExportInterfaces = {
+            IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
+        };
+        const codeLoader = new LocalCodeLoader([
+            [provider.defaultCodeDetails, fluidExport],
+        ]);
+        const mockLoader = new Loader({
+            urlResolver: provider.urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            logger: new TelemetryNullLogger(),
+        });
+
+        const container = await mockLoader.createDetachedContainer(provider.defaultCodeDetails);
+        await container.attach(request);
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
+        assert.strictEqual(container.closed, false, "Container should be open");
+        assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
+        if (provider.driver.type === "odsp") {
+            assert.ok(container.id, "No container ID");
+        } else {
+            assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
+        }
+        assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
+    }).timeout(5000);
+
+    it("Container should be closed on failed attach with non retryable error", async () => {
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const oldFunc = provider.documentServiceFactory.createContainer;
+        provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        let failedOnce = false;
+        try {
+            await container.attach(request);
+        } catch (e) {
+            failedOnce = true;
+            provider.documentServiceFactory.createContainer = oldFunc;
+        }
+        assert.strictEqual(failedOnce, true, "Attach call should fail");
+        assert.strictEqual(container.closed, true, "Container should be closed");
+    });
+
+    it("Directly attach container through service factory, should resolve to same container", async () => {
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // Get the root dataStore from the detached container.
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+
+        // Create a sub dataStore of type TestFluidObject.
+        const subDataStore1 = await createFluidObject(dataStore.context, "default");
+        dataStore.root.set("attachKey", subDataStore1.handle);
+
+        const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
+        const resolvedUrl = await provider.urlResolver.resolve(request);
+        assert(resolvedUrl);
+        const service = await provider.documentServiceFactory.createContainer(
+            summaryForAttach,
+            resolvedUrl,
+        );
+        const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
+
+        const container2 = await loader.resolve({ url: absoluteUrl });
+        // Get the root dataStore from the detached container.
+        const response2 = await container2.request({ url: "/" });
+        const dataStore2 = response2.value as ITestFluidObject;
+        assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
+            "Stored handle should match!!");
     });
 });

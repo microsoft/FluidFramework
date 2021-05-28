@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -23,8 +23,7 @@ function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]
     const node = view.getSnapshotNode(nodeId);
     switch (node.definition) {
         case NodeKind.scalar:
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return JSON.parse(node.payload!.base64);
+            return node.payload;
         case NodeKind.array: {
             return new TreeArrayProxy(tree, nodeId, update);
         }
@@ -58,7 +57,7 @@ export const TreeObjectProxy = <T extends Object>(
                 const child = view.getSnapshotNode(childId);
 
                 if (child.definition === NodeKind.scalar) {
-                    update(Change.setPayload(childId, { base64: JSON.stringify(value) }));
+                    update(Change.setPayload(childId, value));
                     return true;
                 }
             }
@@ -83,7 +82,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
     ) {
         return new Proxy(this, {
             get(target, key) {
-                if (typeof key !== "symbol" && !isNaN(key as number)) {
+                if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });
@@ -94,7 +93,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
                 return target[key];
             },
             set(target, key, value) {
-                if (typeof key !== "symbol" && !isNaN(key as number)) {
+                if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });

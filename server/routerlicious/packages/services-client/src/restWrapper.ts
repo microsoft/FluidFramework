@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,6 +12,7 @@ export abstract class RestWrapper {
     constructor(
         protected readonly baseurl?: string,
         protected defaultQueryString: Record<string, unknown> = {},
+        protected readonly maxBodyLength = 1000 * 1024 * 1024,
         protected readonly maxContentLength = 1000 * 1024 * 1024,
     ) {
     }
@@ -24,6 +25,7 @@ export abstract class RestWrapper {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             headers,
+            maxBodyLength: this.maxBodyLength,
             maxContentLength: this.maxContentLength,
             method: "GET",
             url: `${url}${this.generateQueryString(queryString)}`,
@@ -41,6 +43,7 @@ export abstract class RestWrapper {
             baseURL: this.baseurl,
             data: requestBody,
             headers,
+            maxBodyLength: this.maxBodyLength,
             maxContentLength: this.maxContentLength,
             method: "POST",
             url: `${url}${this.generateQueryString(queryString)}`,
@@ -56,6 +59,7 @@ export abstract class RestWrapper {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
             headers,
+            maxBodyLength: this.maxBodyLength,
             maxContentLength: this.maxContentLength,
             method: "DELETE",
             url: `${url}${this.generateQueryString(queryString)}`,
@@ -73,6 +77,7 @@ export abstract class RestWrapper {
             baseURL: this.baseurl,
             data: requestBody,
             headers,
+            maxBodyLength: this.maxBodyLength,
             maxContentLength: this.maxContentLength,
             method: "PATCH",
             url: `${url}${this.generateQueryString(queryString)}`,
@@ -100,6 +105,7 @@ export class BasicRestWrapper extends RestWrapper {
     constructor(
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
+        maxBodyLength = 1000 * 1024 * 1024,
         maxContentLength = 1000 * 1024 * 1024,
         private defaultHeaders: Record<string, unknown> = {},
         private readonly axios: AxiosInstance = Axios,
@@ -107,7 +113,7 @@ export class BasicRestWrapper extends RestWrapper {
         private readonly refreshDefaultHeaders?: () => Record<string, unknown>,
         private readonly getCorrelationId?: () => string | undefined,
     ) {
-        super(baseurl, defaultQueryString, maxContentLength);
+        super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {

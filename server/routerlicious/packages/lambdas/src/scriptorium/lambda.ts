@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     extractBoxcar,
     ICollection,
@@ -23,7 +24,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -47,6 +48,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         this.pendingOffset = message;
         this.sendPending();
+
+        return undefined;
     }
 
     public close() {
@@ -100,6 +103,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
         return this.opCollection
             .insertMany(dbOps, false)
             .catch(async (error) => {
+                this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
+
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
                 if (error.code !== 11000) {

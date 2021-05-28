@@ -1,17 +1,17 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { PerformanceEvent} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState } from "./networkUtils";
 
-const MaxFetchDelaySeconds = 10;
-const MissingFetchDelaySeconds = 0.1;
+const MaxFetchDelayInMs = 10000;
+const MissingFetchDelayInMs = 100;
 
 /**
  * Helper class to organize parallel fetching of data
@@ -40,8 +40,12 @@ export class ParallelRequests<T> {
         private to: number | undefined,
         private readonly payloadSize: number,
         private readonly logger: ITelemetryLogger,
-        private readonly requestCallback: (request: number, from: number, to: number, strongTo: boolean) =>
-            Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
+        private readonly requestCallback: (
+            request: number,
+            from: number,
+            to: number,
+            strongTo: boolean,
+            props: ITelemetryProperties) => Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
         private readonly responseCallback: (payload: T[]) => void)
     {
         this.latestRequested = from;
@@ -162,7 +166,7 @@ export class ParallelRequests<T> {
 
             this.requests++;
 
-            const promise = this.requestCallback(this.requests, from, to, this.to !== undefined);
+            const promise = this.requestCallback(this.requests, from, to, this.to !== undefined, {});
 
             // dispatch any prior received data
             this.dispatch();
@@ -285,23 +289,16 @@ export class ParallelRequests<T> {
 }
 
 /**
- * Read interface for the Queue
- */
-export interface IReadPipe<T> {
-    pop(): Promise<T | undefined>;
-}
-
-/**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
  */
-export class Queue<T> implements IReadPipe<T> {
-    private readonly queue: Promise<T | undefined>[] = [];
-    private deferred: Deferred<T | undefined> | undefined;
+export class Queue<T> implements IStream<T> {
+    private readonly queue: Promise<IStreamResult<T>>[] = [];
+    private deferred: Deferred<IStreamResult<T>> | undefined;
     private done = false;
 
     public pushValue(value: T) {
-        this.pushCore(Promise.resolve(value));
+        this.pushCore(Promise.resolve({ done: false, value }));
     }
 
     public pushError(error: any) {
@@ -310,11 +307,11 @@ export class Queue<T> implements IReadPipe<T> {
     }
 
     public pushDone() {
-        this.pushCore(Promise.resolve(undefined));
+        this.pushCore(Promise.resolve({ done: true }));
         this.done = true;
     }
 
-    protected pushCore(value: Promise<T | undefined>) {
+    protected pushCore(value: Promise<IStreamResult<T>>) {
         assert(!this.done, 0x112 /* "cannot push onto queue if done" */);
         if (this.deferred) {
             assert(this.queue.length === 0, 0x113 /* "deferred queue should be empty" */);
@@ -325,14 +322,14 @@ export class Queue<T> implements IReadPipe<T> {
         }
     }
 
-    public async pop(): Promise<T | undefined> {
+    public async read(): Promise<IStreamResult<T>> {
         assert(this.deferred === undefined, 0x114 /* "cannot pop if deferred" */);
-        const el = this.queue.shift();
-        if (el !== undefined) {
-            return el;
+        const value = this.queue.shift();
+        if (value !== undefined) {
+            return value;
         }
         assert(!this.done, 0x115 /* "queue should not be done during pop" */);
-        this.deferred = new Deferred<T>();
+        this.deferred = new Deferred<IStreamResult<T>>();
         return this.deferred.promise;
     }
 }
@@ -348,11 +345,8 @@ export class Queue<T> implements IReadPipe<T> {
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-    deltaStorage: IDocumentDeltaStorageService,
-    request: number,
-    from: number,
-    to: number,
-    telemetryEvent: PerformanceEvent,
+    get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
+    props: ITelemetryProperties,
     strongTo: boolean,
     signal?: AbortSignal):
         Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
@@ -361,37 +355,24 @@ async function getSingleOpBatch(
 
     let retry: number = 0;
     const deltas: ISequencedDocumentMessage[] = [];
-    let deltasRetrievedTotal = 0;
     const nothing = { partial: false, cancel: true, payload: []};
-
-    const start = performance.now();
 
     while (signal?.aborted !== true) {
         retry++;
-        let delay = Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
+        let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
         let canRetry = false;
 
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
             canRetry = true;
-            // left is inclusive for ParallelRequests, but exclusive for IDocumentDeltaStorageService
-            // right is exclusive for both
-            const deltasP = deltaStorage.get(from - 1, to);
+            const deltasP = get({ ...props, retry } /* telemetry props */);
 
             const { messages, partialResult } = await deltasP;
             deltas.push(...messages);
 
             const deltasRetrievedLast = messages.length;
-            deltasRetrievedTotal += deltasRetrievedLast;
 
             if (deltasRetrievedLast !== 0 || !strongTo) {
-                telemetryEvent.reportProgress({
-                    chunkDeltas: deltasRetrievedTotal,
-                    chunkFrom: from,
-                    chunkTo: to,
-                    chunkRequests: retry,
-                    chunkDuration: TelemetryLogger.formatTick(performance.now() - start),
-                });
                 return { payload: deltas, cancel: false, partial: partialResult};
             }
 
@@ -406,18 +387,14 @@ async function getSingleOpBatch(
                 // then give up after some time. This likely indicates the issue with ordering service not flushing
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
                 // current as it can't get ops.
-                telemetryEvent.cancel({
-                    category: "error",
-                    error: "too many retries",
-                    retry,
-                    request,
-                    deltasRetrievedTotal,
-                    replayFrom: from,
-                    to,
-                });
                 throw createGenericNetworkError(
-                    "Failed to retrieve ops from storage: giving up after too many retries",
+                    "Failed to retrieve ops from storage: too many retries",
                     false /* canRetry */,
+                    undefined /* retryAfterSeconds */,
+                    {
+                        retry,
+                        ...props,
+                    },
                 );
             }
         } catch (error) {
@@ -430,9 +407,7 @@ async function getSingleOpBatch(
                 this.logger,
                 {
                     eventName: "GetDeltas_Error",
-                    fetchTo: to,
-                    from,
-                    request,
+                    ...props,
                     retry,
                 },
                 error);
@@ -440,7 +415,6 @@ async function getSingleOpBatch(
 
             if (!canRetry) {
                 // It's game over scenario.
-                telemetryEvent.cancel({ category: "error" }, error);
                 throw error;
             }
             const retryAfter = getRetryDelayFromError(error);
@@ -450,50 +424,49 @@ async function getSingleOpBatch(
             }
         }
 
-        /*
-        if (to !== undefined && this.lastQueuedSequenceNumber >= to) {
-            // the client caught up while we were trying to fetch ops from storage
-            // bail out since we no longer need to request these ops
-            return nothing;
-        }
-        */
-
-        await waitForConnectedState(delay * 1000);
+        await waitForConnectedState(delay);
     }
 
-    // Might need to change to non-error event
-    telemetryEvent.cancel({ error: "container closed" });
     return nothing;
 }
 
 export function requestOps(
-    deltaStorage: IDocumentDeltaStorageService,
+    get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
     concurrency: number,
-    from: number,
-    to: number | undefined,
+    fromTotal: number,
+    toTotal: number | undefined,
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-): IReadPipe<ISequencedDocumentMessage[]> {
+): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
     let deltasRetrievedTotal = 0;
     const queue = new Queue<ISequencedDocumentMessage[]>();
 
+    const propsTotal: ITelemetryProperties = {
+        fromTotal,
+        toTotal,
+    };
+
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: `GetDeltas`,
-        from,
-        to,
+        ...propsTotal,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
-        from,
-        to,
+        fromTotal,
+        toTotal,
         payloadSize,
         logger,
-        async (request: number, _from: number, _to: number, strongTo: boolean) => {
+        async (request: number, from: number, to: number, strongTo: boolean, propsPerRequest: ITelemetryProperties) => {
             requests++;
-            return getSingleOpBatch(deltaStorage, request, _from, _to, telemetryEvent, strongTo, signal);
+            return getSingleOpBatch(
+                async (propsAll) => get(from, to, propsAll),
+                { request, from, to, ...propsTotal, ...propsPerRequest },
+                strongTo,
+                signal,
+            );
         },
         (deltas: ISequencedDocumentMessage[]) => {
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
@@ -520,4 +493,35 @@ export function requestOps(
         });
 
     return queue;
+}
+
+export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
+    read: async () => { return { done: true };},
+};
+
+export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
+    IStream<ISequencedDocumentMessage[]>
+{
+    let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
+    return {
+        read: async () => {
+            if (messages === undefined) {
+                return { done: true };
+            }
+            const value = await messages;
+            messages = undefined;
+            return value.length === 0 ? { done: true } : { done: false, value };
+        },
+    };
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T> {
+    return {
+        read: async () => {
+            const value = await stream.read();
+            handler(value);
+            return value;
+        },
+    };
 }

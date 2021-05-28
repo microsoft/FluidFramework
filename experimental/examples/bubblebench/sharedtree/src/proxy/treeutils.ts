@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,7 +24,7 @@ export const makeScalar = <T>(value: Serializable<T>): TreeNode<EditNode> => ({
     identifier: nodeId(),
     definition: NodeKind.scalar as Definition,
     traits: {},
-    payload: { base64: JSON.stringify(value) },
+    payload: value,
 });
 
 /* eslint-disable no-null/no-null */

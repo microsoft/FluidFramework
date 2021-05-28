@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,7 @@ import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
     LastEditedTrackerDataObject,
-} from "@fluidframework/last-edited-experimental";
+} from "@fluid-experimental/last-edited";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Vltava } from "../vltava";
 

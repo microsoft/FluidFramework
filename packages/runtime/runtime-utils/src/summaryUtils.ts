@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,6 @@ import {
     IsoBuffer,
     Uint8ArrayToString,
     unreachableCase,
-    stringToBuffer,
 } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -45,9 +44,26 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
     return results;
 }
 
+export function utf8ByteLength(str: string): number {
+  // returns the byte length of an utf8 string
+  let s = str.length;
+  for (let i = str.length - 1; i >= 0; i--) {
+    const code = str.charCodeAt(i);
+    if (code > 0x7f && code <= 0x7ff) {
+        s++;
+    } else if (code > 0x7ff && code <= 0xffff) {
+        s += 2;
+    }
+    if (code >= 0xDC00 && code <= 0xDFFF) {
+        i--; // trail surrogate
+    }
+  }
+  return s;
+}
+
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return stringToBuffer(content, "utf8").byteLength;
+        return utf8ByteLength(content);
     } else {
         return content.byteLength;
     }
@@ -259,32 +275,6 @@ export function convertSnapshotTreeToSummaryTree(
         builder.addWithStats(key, subtree);
     }
     return builder.getSummaryTree();
-}
-
-/**
- * Utility to convert serialized snapshot taken in detached container to format where we can use it to
- * attach the container.
- * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
- */
-export function convertContainerToDriverSerializedFormat(
-    serializedSnapshotTree: string,
-): ISummaryTree {
-    const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
-    const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
-    const appSummaryTree: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {},
-    };
-    const entries = Object.entries(summaryTree.tree);
-    for (const [key, subTree] of entries) {
-        if (key !== ".protocol") {
-            appSummaryTree.tree[key] = subTree;
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete summaryTree.tree[key];
-        }
-    }
-    summaryTree.tree[".app"] = appSummaryTree;
-    return summaryTree;
 }
 
 /**
