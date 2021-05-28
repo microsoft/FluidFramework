@@ -16,6 +16,7 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
+    Serializable,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -206,14 +207,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc ISharedMap.get}
     */
-    public get<T = any>(key: string): T | undefined {
+    public get<T = any>(key: string): Serializable<T> | undefined {
         return this.kernel.get<T>(key);
     }
 
     /**
     * {@inheritDoc ISharedMap.wait}
     */
-    public async wait<T = any>(key: string): Promise<T> {
+    public async wait<T = any>(key: string): Promise<Serializable<T> | undefined> {
         return this.kernel.wait<T>(key);
     }
 
@@ -227,7 +228,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * {@inheritDoc ISharedMap.set}
     */
-    public set(key: string, value: any): this {
+    public set<T = any>(key: string, value: Serializable<T>): this {
         this.kernel.set(key, value);
         return this;
     }

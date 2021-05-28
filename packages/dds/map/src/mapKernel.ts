@@ -7,6 +7,7 @@ import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces"
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -282,34 +283,25 @@ export class MapKernel implements IValueTypeCreator {
     /**
      * {@inheritDoc ISharedMap.get}
      */
-    public get<T = any>(key: string): T | undefined {
-        if (!this.data.has(key)) {
-            return undefined;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const localValue = this.data.get(key)!;
-
-        return localValue.value as T;
+    public get<T>(key: string): Serializable<T> | undefined {
+        return this.data.get(key)?.value as Serializable<T> | undefined;
     }
 
     /**
      * {@inheritDoc ISharedMap.wait}
      */
-    public async wait<T = any>(key: string): Promise<T> {
-        // Return immediately if the value already exists
+    public async wait<T>(key: string): Promise<Serializable<T> | undefined> {
+        // Return immediately if the value already exists.  Note that we must use '.has()' to
+        // differentiate between the absence of an item and the presence of the 'undefined' value.
         if (this.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.get<T>(key)!;
+            return this.get<T>(key);
         }
 
         // Otherwise subscribe to changes
-        return new Promise<T>((resolve) => {
+        return new Promise<Serializable<T> | undefined>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                    resolve(this.get<T>(changed.key)!);
+                    resolve(this.get<T>(changed.key));
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }
             };
@@ -330,7 +322,7 @@ export class MapKernel implements IValueTypeCreator {
     /**
      * {@inheritDoc ISharedMap.set}
      */
-    public set(key: string, value: any) {
+    public set<T>(key: string, value: Serializable<T>) {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");

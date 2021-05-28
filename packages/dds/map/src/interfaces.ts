@@ -6,6 +6,7 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -252,20 +253,20 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, Serializable> {
     /**
      * Retrieves the given key from the map.
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
-    get<T = any>(key: string): T | undefined;
+    get<T = any>(key: string): Serializable<T> | undefined;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
      * @param key - Key to retrieve from
      * @returns The stored value once available
      */
-    wait<T = any>(key: string): Promise<T>;
+    wait<T = any>(key: string): Promise<Serializable<T> | undefined>;
 
     /**
      * Sets the value stored at key to the provided value.
@@ -273,8 +274,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @param value - Value to set
      * @returns The ISharedMap itself
      */
-    set<T = any>(key: string, value: T): this;
-
+    set<T = any>(key: string, value: Serializable<T> | undefined): this;
 }
 
 /**

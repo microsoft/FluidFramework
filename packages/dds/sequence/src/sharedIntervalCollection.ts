@@ -129,8 +129,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(
-            this.getIntervalCollectionPath(label));
+        return this.intervalMapKernel.wait(
+            this.getIntervalCollectionPath(label),
+        ) as unknown as IntervalCollection<TInterval>;
     }
 
     // TODO: fix race condition on creation by putting type on every operation
@@ -144,7 +145,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         }
 
         const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<TInterval>>(realLabel);
+            this.intervalMapKernel.get(realLabel) as unknown as IntervalCollection<TInterval>;
         return sharedCollection;
     }
 

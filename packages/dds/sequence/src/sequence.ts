@@ -18,6 +18,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
+    Serializable,
 } from "@fluidframework/datastore-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
@@ -397,8 +398,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
-            this.getIntervalCollectionPath(label));
+        return this.intervalMapKernel.wait(
+            this.getIntervalCollectionPath(label) as unknown as Serializable,
+        ) as unknown as IntervalCollection<SequenceInterval>;
     }
 
     // TODO: fix race condition on creation by putting type on every operation
@@ -411,9 +413,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 undefined);
         }
 
-        const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
-        return sharedCollection;
+        const sharedCollection = this.intervalMapKernel.get(labelPath);
+        return sharedCollection as unknown as IntervalCollection<SequenceInterval>;
     }
 
     protected snapshotCore(serializer: IFluidSerializer): ITree {
@@ -707,7 +708,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
         this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
+            const intervalCollection =
+                this.intervalMapKernel.get(ev.key) as unknown as IntervalCollection<SequenceInterval>;
             if (!intervalCollection.attached) {
                 intervalCollection.attachGraph(this.client, ev.key);
             }
@@ -715,7 +717,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         // Initialize existing SharedIntervalCollections
         for (const key of this.intervalMapKernel.keys()) {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
+            const intervalCollection =
+                this.intervalMapKernel.get(key) as unknown as IntervalCollection<SequenceInterval>;
             intervalCollection.attachGraph(this.client, key);
         }
     }
