@@ -27,9 +27,9 @@ Choosing the correct data structure for your scenario can improve the performanc
 
 DDSes vary from each other by three characteristics:
 
-**Basic data structure:** For example, key-value pair, a sequence, or a queue.
-**Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new value is relayed to all other clients. But some DDSes only allow a change if it is accepted by other clients by a consensus process.
-**Merge policy:** The policy that determines how conflicting changes from clients are resolved.
+- **Basic data structure:** For example, key-value pair, a sequence, or a queue.
+- **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new value is relayed to all other clients. But some DDSes only allow a change if it is accepted by other clients by a consensus process.
+- **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
 
 Below we've enumerated the data structures and described when they may be most useful.
 
