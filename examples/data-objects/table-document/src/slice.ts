@@ -47,6 +47,8 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.doc.getCellValue(row, col);
     }
 

@@ -1,6 +1,6 @@
 ---
 title: Using the documentation system effectively
-menuPosition: 3
+menuPosition: 7
 ---
 
 <!-- markdownlint-disable MD036 -->

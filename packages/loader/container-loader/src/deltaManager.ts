@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -67,7 +67,8 @@ const DefaultChunkSize = 16 * 1024;
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
-    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, { statusCode: nackContent.code });
+    const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
+    return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
 function createReconnectError(prefix: string, err: any) {
@@ -390,6 +391,12 @@ export class DeltaManager
      * @param readonly - set or clear force readonly.
      */
     public forceReadonly(readonly: boolean) {
+        if (readonly !== this._forceReadonly) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ForceReadOnly",
+                value: readonly,
+            });
+        }
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
@@ -723,9 +730,16 @@ export class DeltaManager
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (this.readonly) {
-            this.close(CreateContainerError("Op is sent in read-only document state"));
+        if (this.readonly === true) {
+            assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
+            const error = new LoggingError("Op is sent in read-only document state", {
+                errorType: ContainerErrorType.genericError,
+                readonly: this.readOnlyInfo.readonly,
+                forcedReadonly: this.readOnlyInfo.forced,
+                readonlyPermissions: this.readOnlyInfo.permissions,
+                storageOnly: this.readOnlyInfo.storageOnly,
+            });
+            this.close(CreateContainerError(error));
             return -1;
         }
 
