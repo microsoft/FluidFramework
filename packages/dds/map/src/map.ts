@@ -160,22 +160,25 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc MapKernel.keys}
-    */
+     * Get an iterator over the keys in this map.
+     * @returns The iterator
+     */
     public keys(): IterableIterator<string> {
         return this.kernel.keys();
     }
 
     /**
-    * {@inheritDoc MapKernel.entries}
-    */
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public entries(): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
 
     /**
-    * {@inheritDoc MapKernel.values}
-    */
+     * Get an iterator over the values in this map.
+     * @returns The iterator
+     */
     public values(): IterableIterator<any> {
         return this.kernel.values();
     }
@@ -189,66 +192,71 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc MapKernel.size}
-    */
+     * The number of key/value pairs stored in the map.
+     */
     public get size() {
         return this.kernel.size;
     }
 
     /**
-    * {@inheritDoc MapKernel.forEach}
-    */
+     * Executes the given callback on each entry in the map.
+     * @param callbackFn - Callback function
+     */
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
         this.kernel.forEach(callbackFn);
     }
 
     /**
-    * {@inheritDoc ISharedMap.get}
-    */
+     * {@inheritDoc ISharedMap.get}
+     */
     public get<T = any>(key: string): T | undefined {
         return this.kernel.get<T>(key);
     }
 
     /**
-    * {@inheritDoc ISharedMap.wait}
-    */
+     * {@inheritDoc ISharedMap.wait}
+     */
     public async wait<T = any>(key: string): Promise<T> {
         return this.kernel.wait<T>(key);
     }
 
     /**
-    * {@inheritDoc MapKernel.has}
-    */
+     * Check if a key exists in the map.
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
+     */
     public has(key: string): boolean {
         return this.kernel.has(key);
     }
 
     /**
-    * {@inheritDoc ISharedMap.set}
-    */
+     * {@inheritDoc ISharedMap.set}
+     */
     public set(key: string, value: any): this {
         this.kernel.set(key, value);
         return this;
     }
 
     /**
-    * {@inheritDoc MapKernel.delete}
-    */
+     * Delete a key from the map.
+     * @param key - Key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
+     */
     public delete(key: string): boolean {
         return this.kernel.delete(key);
     }
 
     /**
-    * {@inheritDoc MapKernel.clear}
-    */
+     * Clear all data from the map.
+     */
     public clear(): void {
         this.kernel.clear();
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
-    */
-   protected snapshotCore(serializer: IFluidSerializer): ITree {
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     */
+    protected snapshotCore(serializer: IFluidSerializer): ITree {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
@@ -339,15 +347,15 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-    */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     */
     protected onDisconnect() {
         debug(`Map ${this.id} is now disconnected`);
     }
 
     /**
-      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-      */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
@@ -358,8 +366,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-    */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             this.kernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
@@ -367,8 +375,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-    */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     */
     protected registerCore() {
         for (const value of this.values()) {
             if (SharedObject.is(value)) {
