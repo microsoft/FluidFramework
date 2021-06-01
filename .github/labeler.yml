@@ -5,6 +5,9 @@
   - ".github/*"
   - ".github/workflows/**"
 
+"area: contributor experience":
+  - ".vscode/**"
+
 "area: dds":
   - experimental/dds/**
   - packages/dds/**
