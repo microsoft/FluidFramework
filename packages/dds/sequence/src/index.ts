@@ -16,6 +16,12 @@ export {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+export {
+    IValueType,
+    IValueFactory,
+    IValueOperation,
+    IValueOpEmitter,
+} from "./interfaces";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";

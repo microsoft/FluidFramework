@@ -5,7 +5,6 @@
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
@@ -31,11 +30,13 @@ import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
+import { IValueChanged } from "./interfaces";
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
