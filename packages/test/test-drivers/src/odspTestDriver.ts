@@ -30,9 +30,9 @@ export interface IOdspTestLoginInfo {
     password: string;
 }
 
-type TokenConfig = IOdspTestLoginInfo & IClientConfig;
+export type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 
-interface IOdspTestDriverConfig extends TokenConfig {
+export interface IOdspTestDriverConfig extends TokenConfig {
     directory: string;
     driveId: string;
     options: HostStoragePolicy | undefined
@@ -130,7 +130,7 @@ export class OdspTestDriver implements ITestDriver {
     public get version() { return this.api.version; }
     private readonly testIdToUrl = new Map<string, string>();
     private constructor(
-        private readonly config: Readonly<IOdspTestDriverConfig>,
+        public readonly config: Readonly<IOdspTestDriverConfig>,
         private readonly api = OdspDriverApi) { }
 
     async createContainerUrl(testId: string): Promise<string> {
@@ -161,8 +161,8 @@ export class OdspTestDriver implements ITestDriver {
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
         return new this.api.OdspDocumentServiceFactory(
-            this.getStorageToken.bind(this),
-            this.getPushToken.bind(this),
+            this.getStorageToken,
+            this.getPushToken,
             undefined,
             this.config.options,
         );
@@ -180,10 +180,10 @@ export class OdspTestDriver implements ITestDriver {
         );
     }
 
-    private async getStorageToken(options: OdspResourceTokenFetchOptions) {
+    public readonly getStorageToken = async (options: OdspResourceTokenFetchOptions) => {
         return OdspTestDriver.getStorageToken(options, this.config);
-    }
-    private async getPushToken(options: OdspResourceTokenFetchOptions) {
+    };
+    public readonly getPushToken = async (options: OdspResourceTokenFetchOptions) => {
         const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
             new URL(options.siteUrl).hostname,
             this.config,
@@ -192,5 +192,5 @@ export class OdspTestDriver implements ITestDriver {
         );
 
         return tokens.accessToken;
-    }
+    };
 }
