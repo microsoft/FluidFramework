@@ -138,10 +138,7 @@ describe("Runtime", () => {
                 lastRefSeq = 0;
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
-                summaryCollection = new SummaryCollection(
-                    mockDeltaManager,
-                    mockLogger,
-                    {});
+                summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
             });
 
             describe("Summary Schedule", () => {
@@ -314,6 +311,7 @@ describe("Runtime", () => {
                         "RunningSummarizer should still be starting since timestamp is within maxAckWaitTime");
 
                     // Emit next op after maxAckWaitTime
+                    // clock.tick(summaryConfig.maxAckWaitTime + 1000);
                     await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:MissingSummaryAckFoundByOps" },
