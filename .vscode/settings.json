@@ -26,4 +26,7 @@
         "tools/pipelines/*.yml": "azure-pipelines"
     },
     "[azure-pipelines].customSchemaFile": "",
+    "deno.enable": true,
+    "deno.lint": true,
+    "deno.unstable": true,
 }
