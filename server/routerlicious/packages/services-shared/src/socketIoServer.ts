@@ -9,23 +9,19 @@ import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import Redis from "ioredis";
-import socketIo from "socket.io";
-import socketIoRedis from "socket.io-redis";
+import { Namespace, Server, Socket } from "socket.io";
+import { createAdapter } from "socket.io-redis";
+import type { Adapter } from "socket.io-adapter";
 import * as winston from "winston";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import { SocketIORedisConnection, SocketIoRedisSubscriptionConnection } from "./socketIoRedisConnection";
-
-const socketJoin = util.promisify(
-    (socket: SocketIO.Socket, roomId: string, callback: (err: NodeJS.ErrnoException) => void) => {
-        socket.join(roomId, callback);
-    });
 
 class SocketIoSocket implements core.IWebSocket {
     public get id(): string {
         return this.socket.id;
     }
 
-    constructor(private readonly socket: SocketIO.Socket) {
+    constructor(private readonly socket: Socket) {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -33,7 +29,7 @@ class SocketIoSocket implements core.IWebSocket {
     }
 
     public async join(id: string): Promise<void> {
-        await socketJoin(this.socket, id);
+        await this.socket.join(id);
     }
 
     public async emit(event: string, ...args: any[]) {
@@ -53,10 +49,10 @@ class SocketIoServer implements core.IWebSocketServer {
     private readonly events = new EventEmitter();
 
     constructor(
-        private readonly io: SocketIO.Server,
+        private readonly io: Server,
         private readonly pub: Redis.Redis,
         private readonly sub: Redis.Redis) {
-        this.io.on("connection", (socket: SocketIO.Socket) => {
+        this.io.on("connection", (socket: Socket) => {
             const webSocket = new SocketIoSocket(socket);
             this.events.emit("connection", webSocket);
         });
@@ -100,14 +96,17 @@ export function create(
     });
 
     // Create and register a socket.io connection on the server
-    const io = socketIo();
-    // Explicitly allow all origins. As a service that has potential to host countless different client apps,
-    // it would impossible to hardcode or configure restricted CORS policies.
-    io.origins((_origin, callback) => {
-        callback(null, true);
+    const io = new Server(server, {
+        // enable compatibility with socket.io v2 clients
+        allowEIO3: true,
+        cors: {
+            // Explicitly allow all origins. As a service that has potential to host countless different client apps,
+            // it would impossible to hardcode or configure restricted CORS policies.
+            origin: "*",
+        },
     });
 
-    let adapter: SocketIO.Adapter | undefined;
+    let adapter: (typeof Adapter | ((nsp: Namespace) => Adapter)) | undefined;
 
     if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
         const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions =
@@ -123,7 +122,7 @@ export function create(
         adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
     }
     else {
-        adapter = socketIoRedis({ pubClient: pub, subClient: sub });
+        adapter = createAdapter({ pubClient: pub, subClient: sub });
     }
 
     io.attach(server);

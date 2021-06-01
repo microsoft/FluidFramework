@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 
 import * as msgpack from "notepack.io";
 import * as socketio from "socket.io";
+import type { Adapter, BroadcastOptions } from "socket.io-adapter";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
@@ -65,7 +66,7 @@ export interface ISocketIoRedisOptions {
  * - https://github.com/socketio/socket.io-emitter
  * - https://github.com/socketio/socket.io-adapter
  */
-export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapter {
+export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
     private static options: ISocketIoRedisOptions;
     private static shouldDisableDefaultNamespace: boolean;
 
@@ -138,7 +139,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
      * Add a socket to a room
      */
     public async add(socketId: string, roomId: string, callback?: ((err?: any) => void) | undefined): Promise<void> {
-        return this.addAll(socketId, [roomId], callback);
+        return this.addAll(socketId, new Set([roomId]), callback);
     }
 
     /**
@@ -146,7 +147,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
      */
     public async addAll(
         socketId: string,
-        roomIds: string[],
+        roomIds: Set<string>,
         callback?: ((err?: any) => void) | undefined): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
             const newRooms: string[] = [];
@@ -243,11 +244,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
      */
     public broadcast(
         packet: any,
-        opts: {
-            rooms?: string[] | undefined;
-            except?: string[] | undefined;
-            flags?: { [flag: string]: boolean; } | undefined;
-        },
+        opts: BroadcastOptions,
         remote?: boolean): void {
         if (this.isDefaultNamespaceAndDisable) {
             return;
@@ -257,8 +254,8 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
             this.publish(packet, opts);
         }
 
-        const rooms = opts.rooms ?? [];
-        const except = opts.except ?? [];
+        const rooms = opts.rooms ? Array.from(opts.rooms) : [];
+        const except = opts.except ? Array.from(opts.except) : [];
         const flags = opts.flags ?? {};
         const packetOpts = {
             preEncoded: true,
@@ -299,13 +296,13 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
     /**
      * Publishes the packet to Redis
      */
-    private publish(packet: any, opts: { rooms?: string[] | undefined; except?: string[] | undefined }) {
+    private publish(packet: any, opts: { rooms?: Set<string> | undefined; except?: Set<string> | undefined }) {
         packet.nsp = this.nsp.name;
 
         const msg = msgpack.encode([this.uid, packet, opts]);
 
         let channel = this.channel;
-        if (opts.rooms?.length === 1) {
+        if (opts.rooms?.size === 1) {
             channel += `${opts.rooms[0]}#`;
         }
 
@@ -360,11 +357,11 @@ export class RedisSocketIoAdapter extends EventEmitter implements socketio.Adapt
                 throw new Error(`Invalid namespace. ${packet.nsp} !== ${this.nsp.name}`);
             }
 
-            let opts: { rooms?: string[] | undefined } = args[1];
+            let opts: { rooms?: Set<string> | undefined } = args[1];
 
-            if (!opts || !opts.rooms || opts.rooms.length === 0) {
+            if (!opts || !opts.rooms || opts.rooms.size === 0) {
                 opts = {
-                    rooms: [room],
+                    rooms: new Set([room]),
                 };
             }
 
