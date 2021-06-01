@@ -4,8 +4,8 @@ menuPosition: 6
 draft: true
 ---
 
-Property DDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. Property DDS distinguishes between
-two different types of collections:
+Property DDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. Property DDS
+distinguishes between two different types of collections:
 
 **Primitive Collections**
   Primitive collections are strictly typed with one of the Primitive Property Types (e.g. a String array or Float64
@@ -20,11 +20,11 @@ two different types of collections:
   PropertySet tree. It is possible to create **polymorphic property collections**, which can contain properties of
   different types of properties.
 
-  - If a property collection of properties with a user registered schema is created, it is admissible to also add
+- If a property collection of properties with a user registered schema is created, it is admissible to also add
     properties of types that inherit from this schema
-  - A property collection without a typeid (either leaving out the ``typeid`` entry in the schema or passing
-    undefined in the ``create`` call) may contain arbitrary properties (with the exception that primitive properties in
-    a polymorphic array are not yet supported)
+- A property collection without a typeid (either leaving out the ``typeid`` entry in the schema or passing undefined in
+    the ``create`` call) may contain arbitrary properties (with the exception that primitive properties in a polymorphic
+    array are not yet supported)
 
   The collection itself only supports adding and removing property objects. Modifications of the contained properties is
   done via their property objects (e.g. by calling ``setValue`` on a contained property). It is possible to address the

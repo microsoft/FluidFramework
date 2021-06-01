@@ -7,7 +7,8 @@ draft: true
 A *Property Sets Schema* defines the structure of a Property Set. It defines which child properties exist in a
 property and which types they have.
 
-The following example shows a possible schema for your rectangle. This example is only meant to show the various possibilities in defining schemas and is not necessarily showing the best way to define a rectangle.
+The following example shows a possible schema for your rectangle. This example is only meant to show the various
+possibilities in defining schemas and is not necessarily showing the best way to define a rectangle.
 
 ```json
 {
@@ -39,7 +40,8 @@ The following example shows a possible schema for your rectangle. This example i
 }
 ```
 
-Here, we've defined size as an array of 2 elements (instead of using “width” and “height” properties) to demonstrate the use of the context, array, and length keywords.
+Here, we've defined size as an array of 2 elements (instead of using "width" and "height" properties) to demonstrate the
+use of the context, array, and length keywords.
 
 
 ```json
@@ -77,21 +79,23 @@ The Sample:Color-1.0.0 schema could be defined this way, for example.
 }
 ```
 
-# Keywords
+## Keywords
 
-## Inheritance
+### Inheritance
 
 
-This optional field allows a schema to inherit the properties/attributes of another. It is a string or array of strings containing the type identifier(s) of the schema(s) to be inherited from.
+This optional field allows a schema to inherit the properties/attributes of another. It is a string or array of strings
+containing the type identifier(s) of the schema(s) to be inherited from.
 
 ```json
 "inherits": ["NamedProperty"]
 ```
 
-## Sub-Properties
+### Sub-Properties
 
 
-At any level of a schema definition, you can have various entries. One of them is properties. It is an array of property definitions. These are what we usually call sub-properties.
+At any level of a schema definition, you can have various entries. One of them is properties. It is an array of property
+definitions. These are what we usually call sub-properties.
 
 ```json
   {
@@ -116,15 +120,17 @@ At any level of a schema definition, you can have various entries. One of them i
   }
 ```
 
-## Sub-Property Field Name
+### Sub-Property Field Name
 
 
-All the entries in the properties array must be objects, and each must contain an id. This is the string that will later be used to retrieve the property to set or get its value.
+All the entries in the properties array must be objects, and each must contain an id. This is the string that will later
+be used to retrieve the property to set or get its value.
 
-## context
+### context
 
 
-This identifier describes the type of collection of values the property contains. If not specified, it is assumed to be ‘single’.
+This identifier describes the type of collection of values the property contains. If not specified, it is assumed to be
+‘single'.
 
 
 Context types:
@@ -138,17 +144,20 @@ Context types:
 **set**
   The sub-property contains an unordered collection of NamedProperty.
 
-## length
+### length
 
-This is an optional keyword that can be used when context is ‘array’ to specify a fixed-length array. If no length is specified, the array length is dynamic.
+This is an optional keyword that can be used when context is ‘array' to specify a fixed-length array. If no length is
+specified, the array length is dynamic.
 
 
+### nnotation
 
-## nnotation
+This is an optional object containing extra information about the property, such as a description or links to the
+documentation. The content of an annotation is constrained to the schema and is never present in the Property Set or
+Change Set.
 
-This is an optional object containing extra information about the property, such as a description or links to the documentation. The content of an annotation is constrained to the schema and is never present in the Property Set or Change Set.
-
-It is good practice to have an annotation object on every type definition, and to provide values for the following reserved properties in it.
+It is good practice to have an annotation object on every type definition, and to provide values for the following
+reserved properties in it.
 
 
 Provide values for the following reserved properties in it:
@@ -159,14 +168,18 @@ Provide values for the following reserved properties in it:
 **doc**
   A url to the documentation page.
 
-## default values
+### default values
 
 
-A property can be defined with a default value by passing it using the attribute “value”. A default can be attached to primitives, enums, strings, arrays, sets and maps.
+A property can be defined with a default value by passing it using the attribute "value". A default can be attached to
+primitives, enums, strings, arrays, sets and maps.
 
-Default values can be overridden in inherited schemas. To do that, the inherited property should keep the same 'id', 'typeid' and 'context' as the base property it overrides.
+Default values can be overridden in inherited schemas. To do that, the inherited property should keep the same 'id',
+'typeid' and 'context' as the base property it overrides.
 
-Default values of arrays, sets, and maps also support polymorphic typed entries. In other words an array of 'typeid' shape, can have items of 'typeid' square and/or circle where square and circle inherit from shape. To define polymorphic values, the attribute 'typedValue' containing a 'typeid' and 'value' is used.
+Default values of arrays, sets, and maps also support polymorphic typed entries. In other words an array of 'typeid'
+shape, can have items of 'typeid' square and/or circle where square and circle inherit from shape. To define polymorphic
+values, the attribute 'typedValue' containing a 'typeid' and 'value' is used.
 
 ```json
 {
@@ -222,20 +235,24 @@ Example of polymorphic default values
 }
 ```
 
-## Constants
+### Constants
 
 
-A schema can define read-only properties through Constants. They are declared in a “constants” array which is at the same level as the properties one.
+A schema can define read-only properties through Constants. They are declared in a "constants" array which is at the
+same level as the properties one.
 
-    Each constant should have an id, value and a valid typeid. The id must be unique per declared constants and properties, that is a constant and a property cannot have the same id.
+Each constant should have an id, value and a valid typeid. The id must be unique per declared constants and
+properties, that is a constant and a property cannot have the same id.
 
-    A constant can be of primitive, enum, string, array, set, map, or custom type.
+A constant can be of primitive, enum, string, array, set, map, or custom type.
 
-    They are read only properties; values and instances can be retrieved like any other properties.
-    Constants can be overridden in inherited schemas. To do that, the inherited constant should keep the same 'id', 'typeid' and 'context' as the base one it overrides.
+They are read only properties; values and instances can be retrieved like any other properties. Constants can be
+overridden in inherited schemas. To do that, the inherited constant should keep the same 'id', 'typeid' and 'context' as
+the base one it overrides.
 
-
-Constants of arrays, sets, and maps also support polymorphic typed entries. In other words an array of 'typeid' shape, can have items of 'typeid' square and/or circle where square and circle inherit from shape. To define polymorphic values, the attribute 'typedValue' containing a 'typeid' and 'value' is used.
+Constants of arrays, sets, and maps also support polymorphic typed entries. In other words an array of 'typeid' shape,
+can have items of 'typeid' square and/or circle where square and circle inherit from shape. To define polymorphic
+values, the attribute 'typedValue' containing a 'typeid' and 'value' is used.
 
 ```json
 {

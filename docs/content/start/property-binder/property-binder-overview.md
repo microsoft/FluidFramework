@@ -43,10 +43,9 @@ underlying Property DDS data.
 A single Property may lead to multiple runtime representations; for
 example, a Material may be mapped to a THREE.js material, but also to a
 widget for modifying the material properties. In the figure, there are
-two sets, one named ‘VIEW’ and the other ‘MODEL’. These names (referred
+two sets, one named ‘VIEW' and the other ‘MODEL'. These names (referred
 to as `BindingTypes`) are chosen by the application and/or the component
 defining the runtime models.
-
 
 
 The [Property DataBinder]({{< ref "docs/apis/property-binder" >}}) provides functionality for managing these
@@ -72,8 +71,8 @@ removed from the Property DDS, [DataBinder]({{< ref "docs/apis/property-binder/d
 
 As with the runtime representations, the application-defined
 `bindingType` can be used to create classes of DataBindings for
-working with different representations. In the figure, the names ‘VIEW’
-and ‘MODEL’ are used.
+working with different representations. In the figure, the names ‘VIEW'
+and ‘MODEL' are used.
 
 ## Callbacks
 
@@ -97,8 +96,9 @@ can be tracked.
 
 ## Example
 
-The following is a simple example of the usage of the [DataBinder]({{< ref "docs/apis/property-binder/databinder" >}}) to track changes to a graphics scene described with
-a Scene, Meshes, and Materials. For simplicity, we will focus on the changes to the Material.
+The following is a simple example of the usage of the [DataBinder]({{< ref "docs/apis/property-binder/databinder" >}})
+to track changes to a graphics scene described with a Scene, Meshes, and Materials. For simplicity, we will focus on the
+changes to the Material.
 
 The *Schema* is defined as follows; the Scene contains a set of meshes, that have associated material properties. The
 material color property is described as a string:
@@ -125,6 +125,7 @@ material color property is described as a string:
     ]
   };
 ```
+
 We populate our *Property DDS* with a Scene, containing a single mesh. We set the starting color of the Material to red:
 
 ```javascript
@@ -139,23 +140,26 @@ We populate our *Property DDS* with a Scene, containing a single mesh. We set th
 ```
 
 We define a runtime representation for the material, which in this example, will be a
-`THREE.MeshPhongMaterial`. We choose the string ‘VIEW’ as the *bindingType*; this string could be any string we want,
+`THREE.MeshPhongMaterial`. We choose the string ‘VIEW' as the *bindingType*; this string could be any string we want,
 to permit differentiating different runtime representations.
 
 ```javascript
 myDataBinder.defineRepresentation('VIEW', 'Sample:Material-1.0.0', () => new THREE.MeshPhongMaterial());
 ```
+
 Next, we define a class that extends the *DataBinding* class, to capture changes to the *Property* hieararchy. The
 class can overload the constructor and the onPreRemove functions to capture changes to the lifetime of the
 Material *Property*.
 
 In the ``initialize()`` function, the class defines a callback to be notified if the subproperty ``color`` is inserted
-(which happens on Material creation), or modified. Whenever the underlying Property DDS data is modified, ``changeColor`` is
-called and the data binding will update the `THREE.MeshPhongMaterial`.
+(which happens on Material creation), or modified. Whenever the underlying Property DDS data is modified,
+``changeColor`` is called and the data binding will update the `THREE.MeshPhongMaterial`.
 
-The constructor is fetching the representation of the material using [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}). By default,
-[getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) returns the representation that has the same binding type as the instance of the *DataBinding*,
-which in this example is ‘VIEW’.
+The constructor is fetching the representation of the material using [getRepresentation()]({{< ref
+"docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}). By default,
+[getRepresentation()]({{< ref
+"docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) returns the
+representation that has the same binding type as the instance of the *DataBinding*, which in this example is ‘VIEW'.
 
 ```javascript
   class MaterialDataBinding extends DataBinding {
@@ -175,22 +179,26 @@ which in this example is ‘VIEW’.
 ```
 
 
-
-Finally, the application registers this DataBinding with the [DataBinder]({{< ref "docs/apis/property-binder/databinder" >}}) by using [defineDataBinding()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}}), and then
-activates it. By activating it, the [DataBinder]({{< ref "docs/apis/property-binder/databinder" >}}) will look for any ``Sample:Material-1.0.0`` Properties in the
-Property DDS, and instantiate the data bindings. The runtime representations will be instantiated on demand
-when the [getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) call is made.
+Finally, the application registers this DataBinding with the [DataBinder]({{< ref "docs/apis/property-binder/databinder"
+>}}) by using [defineDataBinding()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-definedatabinding-Method" >}}), and then activates it.
+By activating it, the [DataBinder]({{< ref "docs/apis/property-binder/databinder" >}}) will look for any
+``Sample:Material-1.0.0`` Properties in the Property DDS, and instantiate the data bindings. The runtime representations
+will be instantiated on demand when the [getRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) call is made.
 
 ```javascript
   dataBinder.defineDataBinding('VIEW', 'Sample:Material-1.0.0', MaterialDataBinding);
   dataBinder.activateDataBinding('VIEW', 'Sample:Material-1.0.0');
 ```
+
 Although we are defining the *DataBinding* and then immediately activating it, the expected usage is that the
 component providing the functionality (such as graphics rendering) would define the runtime representations and
 data bindings, while the application using the component would activate the bindings.
 
 ## Other Resources
- * [Property DataBinder API]({{< ref "docs/apis/property-binder" >}})
- * [Property DataBinder Binding Definition and Activation]({{< ref "property-binder-binding-definition.md" >}})
- * [Property DataBinder Callbacks]({{< ref "property-binder-callbacks.md" >}})
- * [Property DataBinder Runtime Representations]({{< ref "property-binder-runtime-representation.md" >}})
+
+* [Property DataBinder API]({{< ref "docs/apis/property-binder" >}})
+* [Property DataBinder Binding Definition and Activation]({{< ref "property-binder-binding-definition.md" >}})
+* [Property DataBinder Callbacks]({{< ref "property-binder-callbacks.md" >}})
+* [Property DataBinder Runtime Representations]({{< ref "property-binder-runtime-representation.md" >}})

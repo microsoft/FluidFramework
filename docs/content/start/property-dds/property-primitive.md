@@ -8,8 +8,6 @@ The actual data in PropertySet is stored in the leaf nodes of the tree. Those ar
 Primitive Properties are strictly typed and can have on of the following types:
 
 
-
-
 |    Typeid     |  Description  |
 |---------------|---------------|
 | **Float32**   |   A 32 bit floating point value (according to IEEE 754) |

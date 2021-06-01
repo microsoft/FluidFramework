@@ -4,6 +4,7 @@ menuPosition: 5
 draft: true
 ---
 
+<!-- markdownlint-disable MD036 -->
 
 The goal of the *DataBinder* runtime representation mechanism is to provide
 a way of associating one or more alternate representations of a model to
@@ -84,19 +85,18 @@ destroyed (as well as the *BaseProperty*, of course).
 ### Runtime Representation Definition
 
 
-The definition of a runtime representation is done with
-[defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}). The function takes as arguments a
-bindingType, an *Property* schema typeId, a maker function, an initializer function,
-and a destroyer function. Please see the documentation for more parameters
-to the definition function, such as providing user data.
+The definition of a runtime representation is done with [defineRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}). The function takes
+as arguments a bindingType, an *Property* schema typeId, a maker function, an initializer function, and a destroyer
+function. Please see the documentation for more parameters to the definition function, such as providing user data.
 
 
 **Binding type**
 
 The bindingType allows multiple representations to be associated with a
 specific *Property*. In the Camera example above, the CameraModel class could
-have a bindingType of ‘MODEL’, while the THREE.PerspectiveCamera could have
-a bindingType of ‘VIEW’. Later, clients can fetch the desired runtime
+have a bindingType of ‘MODEL', while the THREE.PerspectiveCamera could have
+a bindingType of ‘VIEW'. Later, clients can fetch the desired runtime
 representation using the appropriate bindingType.
 
 **TypeId**
@@ -105,11 +105,10 @@ The typeId provided tells the *DataBinder* what *Property* type the runtime
 representation will be built for. Inheritance is supported, see Type
 Inheritance below.
 
-Normally, a representation will be associated with a property with precisely
-the provided typeId. However, you can optionally pass an *upgradeType* to the
-[defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}})
-function, and this will allow forward-compatibility
-based on the semantic version associated with the type and the representation.
+Normally, a representation will be associated with a property with precisely the provided typeId. However, you can
+optionally pass an *upgradeType* to the [defineRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}) function, and this
+will allow forward-compatibility based on the semantic version associated with the type and the representation.
 
 For example, if the *upgradeType* is MINOR, then a representation associated
 with the semantic version 1.2.0 will apply to all versions greater than or
@@ -140,16 +139,15 @@ when the associated *Property* is removed from the *Property DDS*. If present,
 the *DataBinder* will call this function, and internally forget the instance
 of the runtime representation. This gives the definer of the runtime
 representation a chance to clean up any related data structures. Note,
-however, that there is no guarantee that the runtime representation isn’t
+however, that there is no guarantee that the runtime representation isn't
 still being used in another part of the application (e.g., in a THREE scene).
 This is the responsibility of the hosting application to maintain.
 
 ### Creation and Fetching
 
-Once a runtime representation has been defined for a given *Property* type, it can
-be fetched using the [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) function.
-
-
+Once a runtime representation has been defined for a given *Property* type, it can be fetched using the
+[dataBinder.getRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) function.
 
 
 The creation of runtime representations is lazy, i.e., the runtime
@@ -157,15 +155,18 @@ representations are only created if requested. This is to avoid unnecessary
 creation of instances, but it also alleviates creation-order problems when
 there are interdependencies between runtime representations.
 
-Once they are created, the instance of the runtime representation is preserved
-until the *Property* is destroyed. Note that it is no longer possible to fetch
-the runtime representation once its associated *Property* is removed. This includes
-calling either data binding's [getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) convenience function or
-[dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) in onPreRemove and onRemove data binding callbacks since when these callbacks
-are called *Property DDS* has already removed the associated *Property* from the Property DDS.
+Once they are created, the instance of the runtime representation is preserved until the *Property* is destroyed. Note
+that it is no longer possible to fetch the runtime representation once its associated *Property* is removed. This
+includes calling either data binding's [getRepresentation()]({{< ref
+"docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) convenience function
+or [dataBinder.getRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}) in onPreRemove and
+onRemove data binding callbacks since when these callbacks are called *Property DDS* has already removed the associated
+*Property* from the Property DDS.
 
-When using [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}), you provide the *Property* for which you want the
-runtime representation for, and the bindingType, to get the appropriate
+When using [dataBinder.getRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}), you provide the
+*Property* for which you want the runtime representation for, and the bindingType, to get the appropriate
 representation.
 
 ### Type Inheritance
@@ -192,6 +193,7 @@ For example:
      'MODEL', 'Mesh3D-1.0.0', () => new Mesh3DModel()
    );
 ```
+
 If `Camera3D-1.0.0` and `Mesh3D-1.0.0` both inherit from `Object3D-1.0.0`,
 then the creation of a `Camera3D-1.0.0` *Property* would lead to the creation
 of an Object3DModel, while the creation of a `Mesh3D-1.0.0` *Property* would
@@ -200,26 +202,33 @@ lead to the creation of a Mesh3DModel.
 ### Stateless Representations
 
 A Runtime Representation may be marked 'stateless' using the ``stateless: true`` flag in the optional ``options``
-argument for [defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}), for example:
+argument for [defineRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}}), for example:
 
 ```javascript
    datadataBinder.defineRepresentation(
      'VIEW', 'Object3D-1.0.0', () => new Object3DView(),  {stateless: true}
    );
 ```
-A Stateless Representation differs from a 'standard' one in that it's not stored by *DataBinder*, it is always
-recreated on demand when it is requested via [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}).
-A Stateless Representation may specify an Initializer function similarly to 'standard' Representations in
-order to break up cycles in the initialization of Runtime Representations. However, the Destroyer function will be
-ignored - since this Representation can not contain any state, there should be no need for a cleanup; in
-addition, the *DataBinder* is not tracking the object so cannot even call the function at the appropriate time.
-Note that it is possible for multiple instances of the stateless runtime representation to exist, so applications
-that define Stateless Representations must take this into account. For example it doesn't make sense to cache or
-compare such representations as they're always recreated on the fly.
+
+A Stateless Representation differs from a 'standard' one in that it's not stored by *DataBinder*, it is always recreated
+on demand when it is requested via [dataBinding.getRepresentation()]({{< ref
+"docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}}) or
+[dataBinder.getRepresentation()]({{< ref
+"docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}}). A Stateless
+Representation may specify an Initializer function similarly to 'standard' Representations in order to break up cycles
+in the initialization of Runtime Representations. However, the Destroyer function will be ignored - since this
+Representation can not contain any state, there should be no need for a cleanup; in addition, the *DataBinder* is not
+tracking the object so cannot even call the function at the appropriate time. Note that it is possible for multiple
+instances of the stateless runtime representation to exist, so applications that define Stateless Representations must
+take this into account. For example it doesn't make sense to cache or compare such representations as they're always
+recreated on the fly.
 
 
-## Other Resources^
+## Other Resources
+
+<!-- markdownlint-disable -->
 * [dataBinder.defineRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-definerepresentation-Method" >}})
 * [dataBinder.getRepresentation()]({{< ref "docs/apis/property-binder/databinder#property-binder-databinder-getrepresentation-Method" >}})
 * [dataBinding.getRepresentation()]({{< ref "docs/apis/property-binder/databinding#property-binder-databinding-getrepresentation-Method" >}})
-
+<!-- markdownlint-enable -->

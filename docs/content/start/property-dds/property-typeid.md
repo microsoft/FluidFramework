@@ -7,11 +7,11 @@ draft: true
 The property types are identified via a *typeid*. Typeids are used to instantiate a property of a specific type, to
 refer to this property type in a schema and they are also stored in the data model to enable application to implement
 behaviors that depend on the type of the data. Primitive Properties and Reserved Properties have unique typeids which
-are defined by Property DDS. Users defined types can be created by creating a schema for the type and registering it under a
-specific typeid. To prevent naming conflicts between multiple applications, each user defined typeid is assigned to a
-*namespace*. Allowed characters in namespace and type fields are uppercase and lowercase alphabet letters (a-z, A-Z),
-digits (0-9) and the dot (.). Additionally, to facilitate migration and interoperability between different versions
-of applications, each typeid contains a version.
+are defined by Property DDS. Users defined types can be created by creating a schema for the type and registering it
+under a specific typeid. To prevent naming conflicts between multiple applications, each user defined typeid is assigned
+to a *namespace*. Allowed characters in namespace and type fields are uppercase and lowercase alphabet letters (a-z,
+A-Z), digits (0-9) and the dot (.). Additionally, to facilitate migration and interoperability between different
+versions of applications, each typeid contains a version.
 
 A typeid for a user-defined type therefore has the following structure:
 

@@ -4,12 +4,14 @@ menuPosition: 5
 draft: true
 ---
 
-Properties can be addressed in Property DDS via path. A path describes how to get from a starting point in the property tree to
-another property.
+<!-- markdownlint-disable MD036 -->
 
-A path consists of a sequence of segments, each describing how to get from a property to one of its children. The segments
-are separated with the ``.`` character for container properties. Collections use the square brackets ``[]`` to address their
-children.
+Properties can be addressed in Property DDS via path. A path describes how to get from a starting point in the property
+tree to another property.
+
+A path consists of a sequence of segments, each describing how to get from a property to one of its children. The
+segments are separated with the ``.`` character for container properties. Collections use the square brackets ``[]`` to
+address their children.
 
 ```javascript
 // Create a simple PropertySets tree
@@ -126,7 +128,6 @@ Looks to the application like this:
 ![Reference Property Example 2](/images/reference_properties_example2.png)
 
 
-
 ## Creating a ReferenceProperty
 
 You can create a ReferenceProperty by passing the typeid ``Reference`` to ``PropertyFactory.create``. This will create
@@ -166,10 +167,10 @@ A ReferenceProperty can also be included as part of a property schema, once agai
 
 ## Setting the reference
 
-If not specified, the Reference’s stored path will be an empty string and it will point to an undefined property.You can
+If not specified, the Reference's stored path will be an empty string and it will point to an undefined property.You can
 set a reference via the `setValue` function by providing the referenced property's absolute path, or its path relative
-to the parent of the reference property. It is also possible to set a reference by using the `set` method, and providing the
-referenced property itself. This will automatically use the absolute path of that property as the stored path.
+to the parent of the reference property. It is also possible to set a reference by using the `set` method, and providing
+the referenced property itself. This will automatically use the absolute path of that property as the stored path.
 
 ```javascript
 reference.setValue('/point');    // resolution via an absolute path
@@ -245,7 +246,6 @@ myProp.get('ref1').get(BaseProperty.PATH_TOKENS.REF);
 **get with reference resolution option**
 
 
-
 ```javascript
 myProp.get('ref1', {ReferenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
 ```
@@ -271,7 +271,7 @@ target after the first ``ref1`` path, then follow ``nested`` inside of
 myProp.resolvePath('ref1*');
 ```
 
-The asterisk is a token in a path that works in a way that is similar to the ``get`` method’s REF token. It indicates
+The asterisk is a token in a path that works in a way that is similar to the ``get`` method's REF token. It indicates
 that the preceding reference path segment will not follow the reference and instead return the ReferenceProperty
 instead.
 
@@ -279,7 +279,6 @@ instead.
 > that you use ``get`` whenever possible)
 
 ## Other methods available to Reference properties
-
 
 
 ### ``getReferenceTargetTypeid``
@@ -304,7 +303,6 @@ anonymousReference.getReferenceTargetTypeid(); // === 'BaseProperty'.
 > inherits from this type, it might actually have a different typeid.
 
 
-
 ### `isReferenceValid`
 
 This method will return a boolean indicating whether the Reference contains a valid path to a property. Note that an
@@ -319,9 +317,8 @@ the hood, these are arrays / maps of strings representing  paths to the referenc
 ## Creating a ReferenceArray
 
 
-You can create a ReferenceArray by setting the property’s typeid to
-‘Reference’ and its context to ‘array’. For example:
-
+You can create a ReferenceArray by setting the property's typeid to
+‘Reference' and its context to ‘array'. For example:
 
 
 ```javascript
@@ -377,9 +374,9 @@ myRoot.get(['refArray', 0]);
 myRoot.resolvePath('refArray[0]'); // === myProp1
 ```
 
-> When calling get or resolvePath on a ReferenceArray or ReferenceMap, referenceResolutionMode and path tokens
-> will not affect the outcome. For example, all of the following will resolve into the referenced property, as if no token
-> or option was provided:
+> When calling get or resolvePath on a ReferenceArray or ReferenceMap, referenceResolutionMode and path tokens will not
+> affect the outcome. For example, all of the following will resolve into the referenced property, as if no token or
+> option was provided:
 
 ```javascript
 referenceArray.get(["0", BaseProperty.PATH_TOKENS.REF]);
@@ -437,7 +434,6 @@ reference.getReferenceTargetTypeid(); // === 'String'
 var anonymousReference = PropertyFactory.create('Reference', 'array');
 anonymousReference.getReferenceTargetTypeid(); // === 'BaseProperty'<!-- endtab -->
 ```
-
 
 Note that what this method returns is the type that is specified in
 the typeid of this reference array / reference map and not the actual

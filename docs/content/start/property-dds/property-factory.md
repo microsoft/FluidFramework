@@ -52,6 +52,7 @@ let positionProperty = PropertyFactory.create('shape:position2d-1.0.0', undefine
 
 
 The following sections explains a few basic operations that can be performed on every property object:
+
 ```javascript
 // Printing the contents of a property for debugging purposes
 positionProperty.prettyPrint()

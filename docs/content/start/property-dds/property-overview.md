@@ -22,9 +22,10 @@ following categories:
   other property objects or they can directly contain primitive values.
 
 **Container Property**
-  A container property is a property that has child properties. It can either have a fixed structure, which is defined
-  via a [Schema]({{< ref "property-schemas.md" >}}), or it can be a *NodeProperty*, which has a dynamic structure. It is also possible to
-  dynamically add additional properties to a property with a schema that inherits from *NodeProperty*.
+  A container property is a property that has child properties. It can either have a fixed
+  structure, which is defined via a [Schema]({{< ref "property-schemas.md" >}}), or it can be a *NodeProperty*, which
+  has a dynamic structure. It is also possible to dynamically add additional properties to a property with a schema that
+  inherits from *NodeProperty*.
 
 **Reserved Property**
   A reserved property is a container property whose structure is predefined by Property DDS.
@@ -48,7 +49,7 @@ insert and remove properties.
 ```javascript
 var stringProperty = PropertyFactory.create('String');
 
-// Set it’s value to 'Hello World!'
+// Set it's value to 'Hello World!'
 stringProperty.setValue('Hello World!');
 
 
@@ -61,9 +62,9 @@ rootProperty.prettyPrint();
 
 ### What is Property Factory?
 
-The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum, Uint16
-, Uint32, etc. and custom types) For a more detailed explanation please refer to the
-[PropertyFactory Section]({{< ref "property-factory.md" >}}).
+The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum,
+Uint16, Uint32, etc. and custom types) For a more detailed explanation please refer to the
+[PropertyFactory Section]({{<ref "property-factory.md" >}}).
 
 Changes are always local only and will only modify your local property hierarchy. To share the changes you will have to
 `commit`the changes. This will be explained in more detail below.
@@ -72,10 +73,12 @@ Changes are always local only and will only modify your local property hierarchy
 
 Data is added to the Property DDS via "commits"
 
-A Commit is the “unit of change” in Property DDS. It stores an atomic transaction recording every insert, modify and
+A Commit is the "unit of change" in Property DDS. It stores an atomic transaction recording every insert, modify and
 delete operations that happened since the previous commit.
 
-Much like in Git, a chain of commits is known as a “Branch”. The state of the is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a must be referring the most recent state in order to persist any changes in Property DDS.
+Much like in Git, a chain of commits is known as a "Branch". The state of the is constructed by walking along the
+history and applying the commits on top of the previous one at any point in time. It is important to note that — since
+history cannot be modified — a must be referring the most recent state in order to persist any changes in Property DDS.
 
 ```javascript
 myPropertyDDS.commit()
@@ -83,7 +86,9 @@ myPropertyDDS.commit()
 
 ## Read Data From The PropertySet
 
-Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the Property DDS that we wrote or data into. Once the *Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
+Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must
+initialize the Property DDS with the Fluid `documentId`from the Property DDS that we wrote or data into. Once the
+*Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
 
 ```javascript
 // Get the root property
