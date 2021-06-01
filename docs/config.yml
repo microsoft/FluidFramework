@@ -53,12 +53,6 @@ menu:
   - identifier: "recipes"
     name: "Recipes"
     weight: -200
-  - identifier: "property-dds"
-    name: "Property DDS"
-    weight: -150
-  - identifier: "property-binder"
-    name: "Property DataBinder"
-    weight: -125
   - identifier: "faq"
     name: "FAQ"
     url: "/start/faq/"
