@@ -4,9 +4,9 @@
  */
 
 import {expectError} from 'tsd';
-import { Jsonable, AsJsonable } from '../dist/jsonable';
+import { Jsonable } from '../dist/jsonable';
 
-declare function foo<T>(a: AsJsonable<T>): void;
+declare function foo<T>(a: Jsonable<T>): void;
 
 // --- ideally wouldn't work but do as we don't know how to just exclude classes
 
