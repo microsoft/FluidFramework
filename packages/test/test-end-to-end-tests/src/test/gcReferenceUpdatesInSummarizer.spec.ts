@@ -136,7 +136,7 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
         await provider.ensureSynchronized();
 
         // Create and setup a summary collection that will be used to track and wait for summaries.
-        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger(), {});
+        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
     });
 
     describe("SharedMatrix", () => {

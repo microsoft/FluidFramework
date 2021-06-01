@@ -22,3 +22,4 @@ export * from "./typedEventEmitter";
 export * from "./unreachable";
 export * from "./lazy";
 export * from "./performanceIsomorphic";
+export * from "./delay";

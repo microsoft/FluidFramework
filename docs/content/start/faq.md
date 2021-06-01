@@ -20,7 +20,7 @@ The Fluid Framework was designed with performance and ease of development as top
 
 ### What is a DDS?
 
-DDS is short for _distributed data structure_. DDSes are the foundation of the Fluid Framework. They are designed such
+DDS is short for *distributed data structure*. DDSes are the foundation of the Fluid Framework. They are designed such
 that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 

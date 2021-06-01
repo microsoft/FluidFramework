@@ -13,7 +13,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import {
     setupLastEditedTrackerForContainer,
     IFluidLastEditedTracker,
-} from "@fluidframework/last-edited-experimental";
+} from "@fluid-experimental/last-edited";
 import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,

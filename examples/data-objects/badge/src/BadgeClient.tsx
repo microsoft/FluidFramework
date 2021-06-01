@@ -22,7 +22,7 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
             model.historySequence.insert(len, [
                 {
                     value: newItem,
-                    timestamp: new Date(),
+                    timestamp: new Date().toJSON(),
                 },
             ]);
             model.currentCell.set(newItem);
