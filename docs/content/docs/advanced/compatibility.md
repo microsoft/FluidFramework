@@ -46,7 +46,7 @@ drivers increase and become external, this may change in the future.
 The loader contract (also called container definitions) is consumed by the runtime layer.  Consumers of the Fluid
 Framework may have different frequencies for releasing their host (with driver and loader) as their runtime code, so
 this compatibility across this boundary is important.  Currently Fluid maintains that the driver/loader will be
-backwards _and_ forwards compatible with the runtime by at least 1 version.  For a given driver or loader version `2.x`,
+backwards *and* forwards compatible with the runtime by at least 1 version.  For a given driver or loader version `2.x`,
 it should be compatible with runtime versions `1.x`, `2.x`, and `3.x`.  This is illustrated by the table below:
 
 Driver/Loader | | 1.x | 2.x | 3.x
@@ -65,7 +65,7 @@ Runtime       | |     |     |
 
 Within the Fluid Framework, the runtime consists of a few parts:
 
-1. The container-level runtime code: this corresponds to a single data source/document, and _contains_ the data stores.
+1. The container-level runtime code: this corresponds to a single data source/document, and *contains* the data stores.
    The container-level runtime code is dictated by the "code" value in the quorum.  Typically developers building on
    Fluid will create an instance of the Fluid `ContainerRuntime` by passing it a registry- which instructs how to
    instantiate data stores; this may be dynamic, or all data store code could bundled with the container runtime.
