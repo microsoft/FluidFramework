@@ -8,7 +8,7 @@ import { ChangeNode as BuildNode } from '../generic';
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
 import { Definition, NodeId, TraitLabel, EditId, DetachedSequenceId } from '../Identifiers';
-import { LogViewer } from '../LogViewer';
+import { LogViewer, Revision } from '../LogViewer';
 
 // TODO: we are just reusing the exiting Snapshot type.
 // This existing type does not support partial checkout:
@@ -26,7 +26,9 @@ import { Anchor, AnchorData, PlaceData, RangeData, StableId, TreeNodeData } from
 import { DetachedSequence, Place, Range, TreeNode } from './TreeAnchors';
 import { areSafelyAssignable, isTrue } from './TypeCheck';
 
+// Some branded ID types.
 export type CommandId = StableId & { readonly CommandId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
+export type Branch = StableId & { readonly Branch: '424000db-aa8f-4cb3-81dc-dcd9585700f3' };
 
 interface AnchorSet {
 	[key: string]: Anchor;
@@ -36,6 +38,29 @@ type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
 	[Property in keyof TAnchorSet]: Decontextualize<TAnchorSet[Property]>;
 };
 
+/**
+ * Editing Operation that can be performed as part of a transaction.
+ * Runs with Snapshot Isolation.
+ *
+ * A call to a particular command makes an edit at some level of abstraction.
+ * The command performs this edit using the CommandContext to either make edits directly to the tree, or via nested commands.
+ *
+ * Merge resolution always starts with the low level tree edits.
+ * When an Edit is applied, it produces result based on the `ConstraintEffect`s indicating how the edit went.
+ * If the resulting result is one of the `Retry` versions, then the application may
+ * try to create a new Edit by rerunning the commands that produced the original edit.
+ *
+ * Unlike the low level tree edits, commands are not required to be deterministic since only one client will rerun the command,
+ * and the resulting low level deterministic tree changes will be packed up into an Edit for the other clients to apply.
+ *
+ * When retrying an edit, the application will be provided with a Command tree (now shown in this APi prototype),
+ * and can replay it as the desired abstraction level. Note that the application might not have the required commands present,
+ * or they might have changed somewhat since the command was originally ran.
+ * An example app policy for this could be to apply it at the lowest level that is valid (raising the level every time it detects invalidity).
+ * The other extreme would be to replay it at the highest possible level, lowering the abstraction only if the command is unavailable or invalid.
+ * There are also priority based options (where some levels of abstraction could be preferred regardless of if they are higher or lower).
+ * Eventually we expect to settle on a single policy that will work well for all apps and provide that as a library.
+ */
 export interface Command<TOptions extends Serializable, TAnchorSet extends AnchorSet, TResult> {
 	run(context: CommandContext, options: TOptions, anchors: TAnchorSet): TResult;
 	id: CommandId;
@@ -136,31 +161,42 @@ type Decontextualize<TData extends AnchorData> = TData extends PlaceData
 // Document and Snapshots
 
 export interface SharedTree extends Tree {
-	// createBranch(...);
-	// mergeBranch(...);
-	// deleteBranch(...);
-	// squash(firstRevision: ShortId, lastRevision: ShortId); // Revision id is changeId of preceding edit
-	// addSnapshot(revision: ShortId): SharedTreeSnapshot;
-	// getSnapshot(revision: ShortId): SharedTreeSnapshot;
-	// removeSnapshot(revision: ShortId): void;
-	// readonly firstRevision: ShortId;  // Or a constant value, e.g. 0x1?
-	// getChange(changeId: ShortId): TreeNode;
-	// nextChange(changeId: ShortId): ShortId; // Must take branching into account once we have that
-	// previousChange(changeId: ShortId): ShortId;
-	// createDiff(...);
-	// ...
+	/**
+	 * Viewer for trees defined by editLog. This allows access to views of the tree at different revisions (various points in time).
+	 */
+	// TODO: this just uses the existing types. Might want to make a version of LogViewer using Tree, Anchor etc.
+	// TODO: how do we want to expose querying for history of specific content (git blame style)?
+	readonly logViewer: LogViewer;
 
 	// Synchronously produce a checkout where placeholders show up wherever they are in the actual data.
 	checkout(r: CommandRegistry): Checkout;
+
 	// Get a checkout with control over where the placeholders are.
 	checkout(r: CommandRegistry, prefetchFilter: PrefetchFilter): Promise<Checkout>;
 	// TODO: maybe option to get checkout with different API for when enforcing no placeholders at all (aka prefetching everything)
+
+	// If branching is a feature that gets added to fluid in general, then branch selection APIs will not be specific to SharedTree
+	// (ex: they would either go on the container or SharedObject).
+	// If branching is custom implemented for SharedTree, then the checkout APIs here could be used to checkout branches and/or revisions.
+	// Checkout a Revision results in a git style headless state.
+	// Branch APIs would looks something like:
+	// checkout(r: CommandRegistry, options?: {target?: Revision | Branch, prefetchFilter: PrefetchFilter}): Promise<Checkout>;
+	// mergeBranch(branch: Branch, options?: {squash: boolean, allowFF: boolean, strategy: ...}): ConstraintEffect; // Would be on checkout
+	// deleteBranch(branch: Branch);
 }
 
 /**
  * Specifies what data to prefetch.
  * Where the filters return false, Placeholders are allowed.
  * Returning true for all with fetch everything and produce no placeholders.
+ *
+ * This typically is used to expose schema based information about where chunk edges are allowed into this other wise schemaless API layer.
+ * An alternative approach would be to not expose pre-fetching at all at this layer, and instead implement it entirely at the schema based layer (not included in this prototype).
+ * In such a setup, it may make sense to make chunks more explicit in the API, and/or not have the mutable anchor+view API at the non-schema based layer
+ * (instead require looking up anchors in snapshots, with explicit handling on unloaded data),
+ * and put the nice anchor+view mutable APIs at the schema aware level.
+ *
+ * TODO: should we focus on the schema aware/typed API, and make the non-schema aware one optimized for writing higher level APIs instead of end user use?
  */
 export interface PrefetchFilter {
 	value: Filter<Definition>;

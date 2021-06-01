@@ -1,3 +1,4 @@
+import { Serializable } from '@fluidframework/datastore-definitions';
 import { v4 } from 'uuid';
 import { CheckoutEvent } from '../Checkout';
 import { fail } from '../Common';
@@ -22,6 +23,14 @@ import {
 import { ContentsConstraint, Place, Trait, Range, TreeNode } from './TreeAnchors';
 
 // ////////////// Command examples //////////////
+
+// Notes:
+// A couple of these examples pass definitions and traitLabels into commands via the `options`.
+// This is expected to be relatively rare when working with more realistic and/or strongly typed examples,
+// however its worth showing as it demonstrates the how to use StableId in such cases to make sure that
+// options does not contain data which will not work if deserialized on another client.
+// Theoretically Serializable should be made to not admit the various ShortId types, so getting this wrong would be a type error,
+// But this has not been done in this prototype.
 
 // Inserts a node with the specified Definition and identifier at the specified Place, and return it.
 export const insertExample = {
@@ -180,6 +189,18 @@ function sort(context: CommandContext, target: Range, cmp: (a: TreeNode, b: Tree
 	}
 }
 
+// Example command using sort.
+export const sortNumbers = {
+	id: '7c16bdc0-f772-46a3-acc5-3504ae745880' as CommandId,
+	run: (context: CommandContext, options: Empty, { target }: { target: Range }): void => {
+		sort(context, target, (a, b) => requireNumber(a.value) - requireNumber(b.value));
+	},
+};
+
+function requireNumber(n: Serializable): number {
+	return typeof n === 'number' ? n : commandInvalid();
+}
+
 // Note: Redo is the same as undoing an undo (at this level).
 // TODO: Maybe allow a kind of anchor to a Revision（and maybe definition and label?)
 export const undo: Command<{ editId: StableId }, Empty, void> = {
@@ -201,24 +222,3 @@ export const undo: Command<{ editId: StableId }, Empty, void> = {
 		// return tree.editor.revert(edit, snapshotBefore);
 	},
 };
-
-/*
-sharedTree.submitChange(foo, fooId, { fooness: 42 }, { thePlace: place1 });
- */
-
-// function foo(context: CommandContext, { fooness }: { fooness: number }, { thePlace }: { thePlace: Place }): void {
-// 	// TODO: context.call returns void: what is this doing?
-// 	// const sequence = context.call(bar, barId, { barness: fooness * 2 }, { theNode: node1, theRange: range1 });
-// 	// context.insert(sequence, thePlace);
-// 	// context.insert(context.create(SomeNodeBuilder(), thePlace);
-// }
-
-// function bar(
-// 	context: CommandContext,
-// 	{ barness }: { barness: number },
-// 	{ theNode, theRange }: { theNode: TreeNode; theRange: Range }
-// ): TreeNode | NodeSequence | undefined {
-// 	// if (Splat.isInstance(theNode) && barness % 3) {
-// 	// 	return context.remove(theRange);
-// 	// }
-// }
