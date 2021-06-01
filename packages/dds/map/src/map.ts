@@ -155,7 +155,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
-            [],
             this,
         );
     }
