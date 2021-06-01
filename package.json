@@ -138,6 +138,7 @@
         ]
       },
       "tools": [
+        "tools/benchmark",
         "tools/generator-fluid",
         "server/tinylicious"
       ],
