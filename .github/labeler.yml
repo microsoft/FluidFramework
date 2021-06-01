@@ -1,17 +1,29 @@
 # This file is a map of labels to repo glob paths. See https://github.com/marketplace/actions/labeler
 # for more details.
 
+"area: build":
+  - ".github/*"
+  - ".github/workflows/**"
+
 "area: dds":
-  - "packages/dds/**"
+  - experimental/dds/**
+  - packages/dds/**
+
+"area: dds: propertydds":
+  - experimental/PropertyDDS/**
 
 "area: dds: sharedstring":
   - packages/dds/sequence/**
+
+"area: dev experience":
+  - experimental/framework/**
 
 "area: driver":
   - packages/drivers/**
 
 "area: examples":
   - examples/**
+  - experimental/examples/**
 
 "area: framework":
   - packages/framework/**
@@ -45,6 +57,10 @@
 "breaking change":
   - BREAKING.md
   - api-report/*
+
+dependencies:
+  - lerna-package-lock.json
+  - package-lock.json
 
 documentation:
   - docs/content/**
