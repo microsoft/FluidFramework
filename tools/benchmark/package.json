@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/benchmark",
+  "name": "@fluid-tools/benchmark",
   "version": "0.40.0",
   "description": "Benchmarking tools",
   "homepage": "https://fluidframework.com",
