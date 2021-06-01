@@ -30,14 +30,6 @@ import { areSafelyAssignable, isTrue } from './TypeCheck';
 export type CommandId = StableId & { readonly CommandId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
 export type Branch = StableId & { readonly Branch: '424000db-aa8f-4cb3-81dc-dcd9585700f3' };
 
-interface AnchorSet {
-	[key: string]: Anchor;
-}
-
-type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
-	[Property in keyof TAnchorSet]: Decontextualize<TAnchorSet[Property]>;
-};
-
 /**
  * Editing Operation that can be performed as part of a transaction.
  * Runs with Snapshot Isolation.
@@ -63,8 +55,17 @@ type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
  */
 export interface Command<TOptions extends Serializable, TAnchorSet extends AnchorSet, TResult> {
 	run(context: CommandContext, options: TOptions, anchors: TAnchorSet): TResult;
+	/**
+	 * Long term stable identifier to this command.
+	 * A command may be rerun at some point in the future (ex: as part of merge resolution),
+	 * and will be identified using its id.
+	 * Thus changes to the semantics of a command should include a new ID, but other changes to a command may or may not:
+	 * While commands may get rerun, they are not required to produce exactly the same results,
+	 * and may fail with CommandInvalid if they can not handle the context in which they are run.
+	 */
 	id: CommandId;
-	// Maybe include localized string information/metadata here?
+	// TODO: Maybe include localized string information/metadata here?
+	// There should be a way to generate human readable command descriptions for change history, undo etc.
 }
 
 // TODO: maybe add more things to this, or move it Anchor.
@@ -256,6 +257,15 @@ export function anchorDataFromNodeId(id: NodeId): TreeNodeData {
 }
 
 // Misc things
+
+interface AnchorSet {
+	[key: string]: Anchor;
+}
+
+type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
+	[Property in keyof TAnchorSet]: Decontextualize<TAnchorSet[Property]>;
+};
+
 export class RecoverableError extends Error {
 	public constructor(message: string) {
 		super(message);
