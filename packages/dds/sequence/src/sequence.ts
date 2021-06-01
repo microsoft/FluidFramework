@@ -25,8 +25,10 @@ import {
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
 import {
@@ -445,6 +447,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     /**
+     * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
+        // serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        if (this.intervalMapKernel.size > 0) {
+            this.intervalMapKernel.serialize(serializer);
+        }
+
+        this.client.serializeGCData(this.handle, serializer);
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
+    }
+
+    /**
      * Replace the range specified from start to end with the provided segment
      * This is done by inserting the segment at the end of the range, followed
      * by removing the contents of the range
@@ -478,7 +501,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected resubmitCore(content: any, localOpMetadata: unknown) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
@@ -675,7 +698,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 while (this.loadedDeferredOutgoingOps.length > 0) {
                     const opData = this.loadedDeferredOutgoingOps.shift();
-                    this.resubmitCore(opData[0], opData[1]);
+                    this.reSubmitCore(opData[0], opData[1]);
                 }
             }
         }

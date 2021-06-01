@@ -115,10 +115,10 @@ export class LocalChannelContext implements IChannelContext {
         }
     }
 
-    public resubmit(content: any, localOpMetadata: unknown) {
+    public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
         assert(this.attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
-        this.services.value.deltaConnection.resubmit(content, localOpMetadata);
+        this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
     public applyStashedOp() {

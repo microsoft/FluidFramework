@@ -29,6 +29,7 @@ import { ITaggableTelemetryProperties } from '@fluidframework/telemetry-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
@@ -38,7 +39,7 @@ import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError {
-    constructor(errorMessage: string, claims: string | undefined, tenantId: string | undefined, statusCode: number);
+    constructor(errorMessage: string, claims: string | undefined, tenantId: string | undefined, props?: ITaggableTelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
@@ -112,10 +113,21 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, statusCode?: number): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, props?: ITaggableTelemetryProperties): GenericNetworkError | ThrottlingError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
+
+// @public (undocumented)
+export class DeltaStreamConnectionForbiddenError extends LoggingError {
+    constructor(errorMessage: string);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    static readonly errorType: string;
+    // (undocumented)
+    readonly errorType: string;
+}
 
 // @public (undocumented)
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
@@ -148,7 +160,7 @@ export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asse
 
 // @public
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase {
-    constructor(errorMessage: string, canRetry: boolean, statusCode: number | undefined);
+    constructor(errorMessage: string, canRetry: boolean, props?: ITaggableTelemetryProperties);
     // (undocumented)
     readonly canRetry: boolean;
     // (undocumented)
@@ -224,7 +236,7 @@ export enum OnlineStatus {
 
 // @public
 export class ParallelRequests<T> {
-    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLogger, requestCallback: (request: number, from: number, to: number, strongTo: boolean) => Promise<{
+    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLogger, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
         partial: boolean;
         cancel: boolean;
         payload: T[];
@@ -258,7 +270,7 @@ export function readAndParseFromBlobs<T>(blobs: {
 }, id: string): T;
 
 // @public (undocumented)
-export function requestOps(get: (from: number, to: number) => Promise<IDeltasFetchResult>, concurrency: number, from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T> extends NetworkErrorBasic<T> {
@@ -266,6 +278,12 @@ export class RetryableError<T> extends NetworkErrorBasic<T> {
     // (undocumented)
     readonly errorType: T;
 }
+
+// @public (undocumented)
+export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, refreshDelayInfo: (id: string) => void, emitDelayInfo: (id: string, retryInMs: number, err: any) => void, logger: ITelemetryLogger, shouldRetry?: () => {
+    retry: boolean;
+    error: any | undefined;
+}): Promise<T>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {
@@ -293,7 +311,7 @@ export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamRe
 
 // @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning {
-    constructor(errorMessage: string, retryAfterSeconds: number, statusCode?: number);
+    constructor(errorMessage: string, retryAfterSeconds: number, props?: ITaggableTelemetryProperties);
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)

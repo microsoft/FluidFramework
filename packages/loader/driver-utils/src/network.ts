@@ -37,9 +37,26 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
+    }
+}
+
+// Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
+// compatible way to augment an enum, as it can't be optional. So for now
+// we need to duplicate the value here. We likely need to rethink our
+// DriverErrorType strategy so that it supports extension with optional
+// value.
+const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
+export class DeltaStreamConnectionForbiddenError extends LoggingError {
+    static readonly errorType: string =
+        DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
+    readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
+    readonly canRetry = false;
+
+    constructor(errorMessage: string) {
+        super(errorMessage, { statusCode: 400 });
     }
 }
 
@@ -51,9 +68,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         errorMessage: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
-        statusCode: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -98,9 +115,9 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        statusCode?: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -111,11 +128,11 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterSeconds?: number,
-    statusCode?: number) {
+    props?: ITaggableTelemetryProperties) {
     if (retryAfterSeconds !== undefined && canRetry) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+        return new ThrottlingError(errorMessage, retryAfterSeconds, props);
     }
-    return new GenericNetworkError(errorMessage, canRetry, statusCode);
+    return new GenericNetworkError(errorMessage, canRetry, props);
 }
 
 /**
@@ -125,5 +142,5 @@ export function createGenericNetworkError(
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
+    error.retryAfterSeconds * 1000 : undefined;

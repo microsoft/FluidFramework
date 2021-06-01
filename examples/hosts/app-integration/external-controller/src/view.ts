@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -36,4 +37,39 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
 
     // Use the diceRolled event to trigger the rerender whenever the value changes.
     diceRoller.on("diceRolled", updateDiceChar);
+}
+
+/**
+ * Render the user names of the members currently active in the session into the provided div
+ * @param audience - Object that provides the list of current members and listeners for when the list changes
+ * @param div - The div to render into
+ */
+export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivElement) {
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.style.textAlign = "center";
+    wrapperDiv.style.margin = "70px";
+    div.appendChild(wrapperDiv);
+
+    const audienceDiv = document.createElement("div");
+    audienceDiv.style.fontSize = "20px";
+
+    const onAudienceChanged = () => {
+        const members = audience.getMembers();
+        const self = audience.getMyself();
+        const memberNames: string[] = [];
+        members.forEach((member) => {
+            if (member.userId !== self?.userId) {
+                memberNames.push(member.userName);
+            }
+        });
+        audienceDiv.innerHTML = `
+            Current User: ${self?.userName} <br />
+            Other Users: ${memberNames.join(", ")}
+        `;
+    };
+
+    onAudienceChanged();
+    audience.on("membersChanged", onAudienceChanged);
+
+    wrapperDiv.appendChild(audienceDiv);
 }

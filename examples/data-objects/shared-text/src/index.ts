@@ -7,6 +7,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
@@ -26,8 +27,6 @@ const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@flui
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
 const progressBars = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
-const videoPlayers = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/video-players");
 const images = import(
     /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection");
 
@@ -52,8 +51,6 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
@@ -77,6 +74,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             [
                 ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
+                AgentSchedulerFactory.registryEntry,
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
@@ -86,6 +84,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
 
         // On first boot create the base component
         if (!runtime.existing) {
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
             await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
         }
 

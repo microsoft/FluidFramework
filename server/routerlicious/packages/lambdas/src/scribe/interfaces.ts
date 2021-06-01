@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
     ISummaryAck,
     ISummaryNack,
@@ -39,9 +38,6 @@ export interface ISummaryWriter {
     writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
         lastSummaryHead: string | undefined,
-        protocolMinimumSequenceNumber: number,
-        protocolSequenceNumber: number,
-        quorumSnapshot: IQuorumSnapshot,
         checkpoint: IScribe,
         pendingOps: ISequencedOperationMessage[]): Promise<ISummaryWriteResponse>;
 
@@ -63,7 +59,7 @@ export interface IPendingMessageReader {
      * @param from Starting sequence number (inclusive)
      * @param to End sequence number (inclusive)
      */
-     readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
+    readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 /**

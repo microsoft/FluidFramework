@@ -160,6 +160,7 @@ export interface ISummarizerNode {
  * - createChild - Added the following params:
  *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
  *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
+ * - deleteChild - Deletes a child node.
  * - isReferenced - This tells whether this node is referenced in the document or not.
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
@@ -185,6 +186,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC;
+
+    /**
+     * Delete the child with the given id..
+     */
+    deleteChild(id: string): void;
 
     getChild(id: string): ISummarizerNodeWithGC | undefined;
 

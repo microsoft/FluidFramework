@@ -268,7 +268,7 @@ export class EpochTracker implements IPersistedFileCache {
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
             this.logger.sendErrorEvent({ eventName: "Coherency409" }, error);
-            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1000, 429);
+            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1);
         }
     }
 
@@ -393,7 +393,7 @@ export function createOdspCacheAndTracker(
     fileEntry: IFileEntry,
     logger: ITelemetryLogger): ICacheAndTracker
 {
-    const epochTracker = new EpochTracker(persistedCacheArg, fileEntry, logger);
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
     return {
         cache: {
             ...nonpersistentCache,

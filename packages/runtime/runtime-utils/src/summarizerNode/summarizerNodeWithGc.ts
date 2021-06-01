@@ -165,7 +165,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        this.gcData = cloneGCData(summarizeResult.gcData);
+        if (summarizeResult.gcData !== undefined) {
+            this.gcData = cloneGCData(summarizeResult.gcData);
+        }
         return summarizeResult;
     }
 
@@ -350,6 +352,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         this.children.set(id, child);
         return child;
+    }
+
+    /**
+     * Deletes the child node with the given id.
+     */
+    public deleteChild(id: string): void {
+        this.children.delete(id);
     }
 
     /**

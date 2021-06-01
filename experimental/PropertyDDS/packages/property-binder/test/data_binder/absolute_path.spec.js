@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals sinon, expect  */
 /* eslint spaced-comment: 0 */
 /* eslint-disable max-nested-callbacks */
+
 /*
  * TODO: failing assertions are commented out to enable a clean pass for PRs.
  *
@@ -12,9 +14,9 @@
  * we plan to get rid of modificationSet mid-term, it makes no sense to try and fix those.
  *
  */
+
 import _ from 'underscore';
 import { DataBinder } from '../../src/data_binder/data_binder';
-// import { MockSharedPropertyTree } from './mockWorkspace';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import {
   registerTestTemplates, ParentTemplate, ReferenceParentTemplate,
