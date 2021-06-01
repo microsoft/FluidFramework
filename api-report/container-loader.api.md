@@ -24,6 +24,7 @@ import { IDeltaHandlerStrategy } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -180,13 +181,11 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
     // (undocumented)
-    connectToStorage(): Promise<IDocumentStorageService>;
-    // (undocumented)
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    emitDelayInfo(id: string, delaySeconds: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -357,12 +356,14 @@ export class RelativeLoader implements ILoader {
 }
 
 // @public (undocumented)
-export class RetriableDocumentStorageService implements IDocumentStorageService {
+export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     constructor(internalStorageService: IDocumentStorageService, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger);
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
     dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
@@ -380,12 +381,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService 
     // (undocumented)
     write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
-
-// @public (undocumented)
-export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger, shouldRetry?: () => {
-    retry: boolean;
-    error: any | undefined;
-}): Promise<T>;
 
 // @public
 export function waitContainerToCatchUp(container: Container): Promise<boolean>;

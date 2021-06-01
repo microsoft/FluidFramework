@@ -113,18 +113,20 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterSeconds?: number, props?: ITaggableTelemetryProperties): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITaggableTelemetryProperties): GenericNetworkError | ThrottlingError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
 
 // @public (undocumented)
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase {
+export class DeltaStreamConnectionForbiddenError extends LoggingError {
     constructor(errorMessage: string);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    static readonly errorType: string;
+    // (undocumented)
+    readonly errorType: string;
 }
 
 // @public (undocumented)
@@ -276,6 +278,12 @@ export class RetryableError<T> extends NetworkErrorBasic<T> {
     // (undocumented)
     readonly errorType: T;
 }
+
+// @public (undocumented)
+export function runWithRetry<T>(api: () => Promise<T>, fetchCallName: string, refreshDelayInfo: (id: string) => void, emitDelayInfo: (id: string, retryInMs: number, err: any) => void, logger: ITelemetryLogger, shouldRetry?: () => {
+    retry: boolean;
+    error: any | undefined;
+}): Promise<T>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {

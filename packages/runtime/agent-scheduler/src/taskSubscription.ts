@@ -3,16 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAgentScheduler } from "./agent";
 
-export class TaskSubscription extends EventEmitter {
+export interface ITaskSubscriptionEvents extends IEvent {
+    (event: "gotTask" | "lostTask", listener: () => void);
+}
+
+/**
+ * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
+ */
+export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
     private subscribed: boolean = false;
 
-    public haveTask() {
-        return this.agentScheduler.pickedTasks().includes(this.taskId);
-    }
-
+    /**
+     * @param agentScheduler - The AgentScheduler that will be subscribed against
+     * @param taskId - The string ID of the task to subscribe against
+     */
     constructor(private readonly agentScheduler: IAgentScheduler, public readonly taskId: string) {
         super();
         agentScheduler.on("picked", (_taskId: string) => {
@@ -32,6 +40,18 @@ export class TaskSubscription extends EventEmitter {
         });
     }
 
+    /**
+     * Check if currently holding ownership of the task.
+     * @returns true if currently the task owner, false otherwise.
+     */
+    public haveTask() {
+        return this.agentScheduler.pickedTasks().includes(this.taskId);
+    }
+
+    /**
+     * Volunteer for the task.  By default, the TaskSubscription will only watch the task and not volunteer.
+     * This is safe to call multiple times across multiple TaskSubscriptions.
+     */
     public volunteer() {
         if (!this.subscribed) {
             // AgentScheduler throws if the same task is picked twice but we don't care because our

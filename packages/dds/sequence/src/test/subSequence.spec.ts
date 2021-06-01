@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/dist/test";
@@ -19,7 +20,7 @@ class SubSequenceTestClient extends TestClient {
 
     public insertItemsRemote<T>(
         pos: number,
-        items: T[],
+        items: Serializable<T>[],
         props: PropertySet,
         seq: number,
         refSeq: number,

@@ -129,7 +129,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
@@ -811,8 +811,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             && !this.runtimeOptions.gcOptions.disableGC
         );
 
-        // Default to true (disabled) until a few versions have passed.
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? true;
+        // Default to false (enabled).
+        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -899,32 +899,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
-        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+
+        this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const defaultAction = () => {
+            if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
                 // and register summary ack handler to re-register this handler
                 // after successful summary
-                opActions.default = undefined;
-                opActions.summaryAck = summaryAckAction;
+                this.summaryCollection.once(MessageType.SummaryAck, () => {
+                    this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                    // we've caught up, so re-register the default action to monitor for
+                    // falling behind, and unregister ourself
+                    this.summaryCollection.on("default", defaultAction);
+                });
+                this.summaryCollection.off("default", defaultAction);
             }
         };
-        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-            // we've caught up, so re-register the default action to monitor for
-            // falling behind, and unregister ourself
-            opActions.default = defaultAction;
-            opActions.summaryAck = undefined;
-        };
-        const opActions: SummaryCollectionOpActions = {
-            default: defaultAction,
-        };
-
-        this.summaryCollection = new SummaryCollection(
-            this.deltaManager,
-            this.logger,
-            opActions,
-        );
+        this.summaryCollection.on("default", defaultAction);
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -941,8 +934,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
+            this.summaryCollection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
+            maxOpsSinceLastSummary,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
@@ -1223,11 +1218,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused, 0x128 /* "Container should not already be paused before applying stashed ops" */);
         this.paused = true;
-        this.scheduleManager.setPaused(true);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.context.deltaManager.inbound.pause();
         const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
         stashP.then(() => {
             this.paused = false;
-            this.scheduleManager.setPaused(false);
+            this.context.deltaManager.inbound.resume();
         }, (error) => {
             this.closeFn(CreateContainerError(error));
         });

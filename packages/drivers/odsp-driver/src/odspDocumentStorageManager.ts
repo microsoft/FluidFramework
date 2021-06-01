@@ -17,7 +17,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
-    DriverErrorType,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -36,7 +35,7 @@ import {
     IOdspSnapshotBlob,
     IVersionedValueWithEpoch,
 } from "./contracts";
-import { fetchLatestSnapshotCore, fetchSnapshot } from "./fetchSnapshot";
+import { fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
@@ -246,7 +245,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
-        assert(ops !== undefined, 0x0a6 /* "Input ops are undefined!" */);
         this._ops = ops;
     }
 
@@ -603,14 +601,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 valueWithEpoch.value,
             );
         };
+        const removeEntries = async () => this.cache.persistedCache.removeEntries();
         try {
-            const odspSnapshot = await fetchLatestSnapshotCore(
+            const odspSnapshot = await fetchSnapshotWithRedeem(
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 snapshotOptions,
                 this.logger,
                 snapshotDownloader,
-                putInCache);
+                putInCache,
+                removeEntries);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -625,19 +625,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     errorType,
                 });
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
-                const odspSnapshot = await fetchLatestSnapshotCore(
+                const odspSnapshot = await fetchSnapshotWithRedeem(
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
                     snapshotDownloader,
-                    putInCache);
+                    putInCache,
+                    removeEntries);
                 return odspSnapshot;
-            }
-            // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have
-            // permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching snapshot from cache in the future.
-            if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                await this.cache.persistedCache.removeEntries();
             }
             throw error;
         }

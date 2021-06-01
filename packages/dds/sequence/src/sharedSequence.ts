@@ -6,13 +6,13 @@
 import {
     BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection,
 } from "@fluidframework/merge-tree";
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IChannelAttributes, IFluidDataStoreRuntime, Serializable } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;
 
 export interface IJSONRunSegment<T> extends IJSONSegment {
-    items: T[];
+    items: Serializable<T>[];
 }
 
 export class SubSequence<T> extends BaseSegment {
@@ -20,9 +20,9 @@ export class SubSequence<T> extends BaseSegment {
     public static is(segment: ISegment): segment is SubSequence<any> {
         return segment.type === SubSequence.typeString;
     }
-    public static fromJSONObject(spec: any) {
+    public static fromJSONObject<U>(spec: Serializable) {
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new SubSequence<any>(spec.items);
+            const segment = new SubSequence<U>(spec.items);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -33,7 +33,7 @@ export class SubSequence<T> extends BaseSegment {
 
     public readonly type = SubSequence.typeString;
 
-    constructor(public items: T[]) {
+    constructor(public items: Serializable<T>[]) {
         super();
         this.cachedLength = items.length;
     }
@@ -76,7 +76,7 @@ export class SubSequence<T> extends BaseSegment {
     // TODO: retain removed items for undo
     // returns true if entire run removed
     public removeRange(start: number, end: number) {
-        let remnantItems = [] as T[];
+        let remnantItems: Serializable<T>[] = [];
         const len = this.items.length;
         if (start > 0) {
             remnantItems = remnantItems.concat(this.items.slice(0, start));
@@ -115,7 +115,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
      * @param items - The items to insert.
      * @param props - Optional. Properties to set on the inserted items.
      */
-    public insert(pos: number, items: T[], props?: PropertySet) {
+    public insert(pos: number, items: Serializable<T>[], props?: PropertySet) {
         const segment = new SubSequence<T>(items);
         if (props) {
             segment.addProperties(props);
@@ -147,8 +147,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
      * @param start - The inclusive start of the range
      * @param end - The exclusive end of the range
      */
-    public getItems(start: number, end?: number): T[] {
-        const items: T[] = [];
+    public getItems(start: number, end?: number): Serializable<T>[] {
+        const items: Serializable<T>[] = [];
         let firstSegment: ISegment;
 
         // Return if the range is incorrect.
