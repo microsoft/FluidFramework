@@ -5,7 +5,7 @@
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { rootDataObjectRequestHandler } from "@fluidframework/request-handler";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
 import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
@@ -20,7 +20,7 @@ export const oldestClientDiceId = "oldestClientDice";
 
 class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
-        super(registryEntries, [], [rootDataObjectRequestHandler]);
+        super(registryEntries, [], [rootDataStoreRequestHandler]);
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
