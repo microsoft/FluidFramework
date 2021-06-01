@@ -1,6 +1,7 @@
 ---
 title: Container Properties
 menuPosition: 7
+draft: true
 ---
 A *container property* is a property that has children and thus is an inner node in the PropertySet tree. The structure
 of a container property is defined via a [Schema]({{< ref "property-schemas.md" >}}) that defines which children the property has and what their types are. We can distinguish two different types of container properties:

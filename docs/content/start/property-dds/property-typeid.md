@@ -1,6 +1,7 @@
 ---
 title: TypeIds
 menuPosition: 3
+draft: true
 ---
 
 The property types are identified via a *typeid*. Typeids are used to instantiate a property of a specific type, to

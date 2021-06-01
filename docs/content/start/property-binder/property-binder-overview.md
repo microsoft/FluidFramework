@@ -1,6 +1,7 @@
 ---
 title: Property DataBinder Overview
 menuPosition: 2
+draft: true
 ---
 
 We assume that you already have some basic knowledge of how to interact with the Property DDS and

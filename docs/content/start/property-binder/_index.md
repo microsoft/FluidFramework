@@ -1,8 +1,8 @@
 ---
 title: "How to use Property DDS"
-draft: false
+draft: true
 area: property-binder
 cascade:
     area: property-binder
-    draft: false
+    draft: true
 ---

@@ -1,6 +1,7 @@
 ---
 title: Schemas
 menuPosition: 2
+draft: true
 ---
 
 A *Property Sets Schema* defines the structure of a Property Set. It defines which child properties exist in a

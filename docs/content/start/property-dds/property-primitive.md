@@ -1,6 +1,7 @@
 ---
 title: Primitive Properties
 menuPosition: 4
+draft: true
 ---
 
 The actual data in PropertySet is stored in the leaf nodes of the tree. Those are called **Primitive Properties**.

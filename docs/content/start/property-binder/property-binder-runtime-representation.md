@@ -1,6 +1,7 @@
 ---
 title: Property DataBinder Runtime Representation
 menuPosition: 5
+draft: true
 ---
 
 

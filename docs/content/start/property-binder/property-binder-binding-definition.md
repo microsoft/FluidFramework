@@ -1,6 +1,7 @@
 ---
 title: Defining and activating Property DataBindings
 menuPosition: 3
+draft: true
 ---
 
 An *Application* may have any number of *DataBinder* instances. A given *DataBinder* instance may only be

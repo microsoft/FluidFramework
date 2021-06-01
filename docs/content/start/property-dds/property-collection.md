@@ -1,6 +1,7 @@
 ---
 title: Collection Properties
 menuPosition: 6
+draft: true
 ---
 
 Property DDS supports three different types of collection Properties: ``array``, ``map`` and ``set``. Property DDS distinguishes between
