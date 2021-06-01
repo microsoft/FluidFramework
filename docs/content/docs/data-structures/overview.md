@@ -33,15 +33,15 @@ DDSes vary from each other by three characteristics:
 
 Below we've enumerated the data structures and described when they may be most useful.
 
-## Simple Data Object
+## Simple data object
 
 Use the [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) DDS when you simply need to wrap a data object, whether it is a number, string, or any other data type. You can also use a complex data type, such as an array or JavaScript object, in a SharedCell, but the value of a SharedCell can be changed only whole-for-whole; so this is not an appropriate choice if the application's clients will be changing subparts of the value, such as specific properties of an object or specific items in an array. In the latter scenarios, consider separating the data items with one of the key-value DDSes.
 
 This DDS is optimistic and uses a last-writer-wins merge policy, which means that every change is accepted and all clients ultimately get the value set by the most recent change made on any client.
 
-## Key-value Data
+## Key-value data
 
-These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although, the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole. 
+These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole. 
 
 * [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) -- a basic key-value data structure.
 * [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) –- a SharedMap with hierarchical paths instead of
@@ -51,11 +51,11 @@ simple keys.
 
 Key-value data structures are the most common choice for many scenarios.
 
-* User preference data
-* Current state of a survey
-* The configuration of a view
+* User preference data.
+* Current state of a survey.
+* The configuration of a view.
 
-### Common Issues and Best Practices for Key-Value DDSes
+### Common issues and best practices for key-value DDSes
 
 * Storing a counter in a map will have [unexpected behavior]({{< relref "/docs/data-structures/keyvalue-ddses.md" >}}).
 Use the SharedCounter instead.
@@ -74,13 +74,13 @@ key-value data structures, sequences have a sequential order and can handle simu
 * [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
 * [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
 
-### Sequence Scenarios
+### Sequence scenarios
 
 * Tabular data
 * Timelines
 * Lists
 
-### Common Issues and Best Practices for Sequence DDSes
+### Common issues and best practices for sequence DDSes
 
 * Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it from the sequence and then insert a new value at the position where the old value was. But because other clients can insert and remove, there's no reliable way of getting the new value into the the desired position.  
 
@@ -90,7 +90,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 * [SharedString]({{< relref "SharedString" >}}) -- a data structure for handling collaborative text.
 
-### String Scenarios
+### String scenarios
 
 * Text editor
 
@@ -105,7 +105,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
     Ink is a form of an append only list. It's intended for capturing ink strokes. It is optimistic.
 
-## Consensus Data Structures
+## Consensus data structures
 
 Consensus data structures have one or both of these characteristics:
 
@@ -120,14 +120,14 @@ off the queue by only one client. If multiple clients pull, they each get a diff
 * [ConsensusRegisterCollection]({{< relref "/docs/apis/register-collection/consensusregistercollection" >}}) -- Stores "registers" (i.e., key-value pairs), but changes are made only when all clients acknowledge the change. Also, it keeps a record of all changes to each register.
 * Quorum - Allows clients to agree on a proposal. Quorum also contains client information.
 
-### Consensus Scenarios
+### Consensus scenarios
 
 Typical scenarios require the connected clients to "agree" on some course of action.
 
 * Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 * Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
-## Experimental Data Structures
+## Experimental data structures
 
 {{< BetaFlag >}}
 
