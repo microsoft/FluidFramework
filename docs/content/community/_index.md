@@ -3,8 +3,10 @@ title: Welcome to the Fluid Community
 ---
 
 {{< in_your_face
-  lead=`Community`
-  subText="We believe that an <strong>open, inclusive, and respectful</strong> community will help shape a better future for this project. That's why Fluid Framework is <strong>Open Source</strong>. Below you will find various ways to get <strong>involved</strong>."
+    lead=`Community`
+    subText=`We believe that an <strong>open, inclusive, and respectful</strong> community will help shape a better
+        future for this project. That's why Fluid Framework is <strong>Open Source</strong>. Below you will find various
+        ways to get <strong>involved</strong>.`
 >}}
 
 {{< cta_container  >}}
@@ -21,7 +23,8 @@ title: Welcome to the Fluid Community
     linkURL="https://stackoverflow.com/questions/tagged/fluid-framework"
     iconClasses="stack-overflow"
     linkText="Ask Technical Questions"
-    subtext="The team monitors questions tagged \"fluid-framework\" on Stack Overflow. Feel free to ask questions or, if you can, give us a hand by answering some."
+    subtext=`The team monitors questions tagged \"fluid-framework\" on Stack Overflow. Feel free to ask questions or,
+        if you can, give us a hand by answering some.`
   >}}
 
   {{< cta
@@ -45,7 +48,7 @@ This project has adopted the [Microsoft Open Source Code of
 Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct
 FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
+contact [Microsoft](mailto:opencode@microsoft.com)
 with any additional questions or comments.
 
 </div>

@@ -9,7 +9,7 @@ import {
     NodeId,
     TreeNode,
 } from "@fluid-experimental/tree";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 export const enum NodeKind {
     scalar = "s",
@@ -20,7 +20,7 @@ export const enum NodeKind {
 export const nodeId = () => Math.random().toString(36).slice(2) as NodeId;
 
 // Helper for creating Scalar nodes in SharedTree
-export const makeScalar = (value: Jsonable): TreeNode<EditNode> => ({
+export const makeScalar = <T>(value: Serializable<T>): TreeNode<EditNode> => ({
     identifier: nodeId(),
     definition: NodeKind.scalar as Definition,
     traits: {},
@@ -29,7 +29,7 @@ export const makeScalar = (value: Jsonable): TreeNode<EditNode> => ({
 
 /* eslint-disable no-null/no-null */
 
-export function fromJson(value: Partial<Jsonable>): TreeNode<EditNode> {
+export function fromJson<T>(value: Serializable<T>): TreeNode<EditNode> {
     if (typeof value === "object") {
         if (Array.isArray(value)) {
             return {
