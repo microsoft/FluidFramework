@@ -1,8 +1,6 @@
 ---
-uid: container-and-component-loading
+title: Container and component loading deep dive
 ---
-
-# Container and component loading deep dive
 
 This doc provides an in-depth outline of how Container and Component loading works. It also provides an overview of how
 Fluid packages are partitioned. While the system is not overly complex, looking at it as a whole can be overwhelming,
