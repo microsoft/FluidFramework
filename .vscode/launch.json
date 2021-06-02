@@ -269,6 +269,8 @@
             "program": "${file}",
             "stopOnEntry": false,
             "args": [
+                "--require",
+                "source-map-support/register",
                 "--no-timeouts",
                 "--exit",
             ],
