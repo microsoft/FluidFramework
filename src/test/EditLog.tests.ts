@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { EditHandle, EditLog, editsPerChunk, separateEditAndId } from '../EditLog';
+import { EditHandle, EditLog, separateEditAndId } from '../EditLog';
 import { Change } from '../default-edits';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
@@ -231,7 +231,7 @@ describe('EditLog', () => {
 	it('creates a new edit chunk once the previous one has been filled', () => {
 		const log = new EditLog();
 
-		for (let i = 0; i < editsPerChunk; i++) {
+		for (let i = 0; i < log.editsPerChunk; i++) {
 			const edit = newEdit([]);
 			log.addSequencedEdit(edit);
 			expect(log.getEditLogSummary().editChunks.length).to.be.equal(1);

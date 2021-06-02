@@ -19,7 +19,7 @@ import {
 	newEdit,
 } from '../../generic';
 import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree } from '../../default-edits';
-import { editsPerChunk } from '../../EditLog';
+import { EditLog } from '../../EditLog';
 import { Snapshot } from '../../Snapshot';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
@@ -626,7 +626,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				});
 
 				// Generate enough edits to cause a chunk upload.
-				for (let i = 0; i < editsPerChunk / 2 + 1; i++) {
+				for (let i = 0; i < (tree.edits as EditLog<Change>).editsPerChunk / 2 + 1; i++) {
 					const insertee = makeEmptyNode();
 					tree.editor.insert(insertee, StablePlace.before(left));
 					tree.editor.delete(StableRange.only(insertee));

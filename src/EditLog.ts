@@ -132,11 +132,6 @@ function joinEditAndId<TChange>(id: EditId, edit: EditWithoutId<TChange>): Edit<
 }
 
 /**
- * The number of edits associated with each blob.
- */
-export const editsPerChunk = 100;
-
-/**
  * The number of blobs to be loaded in memory at any time.
  * TODO:#49901: Change cache size once the virtualized history summary format is being written.
  * 		 This is so the summarizer doesn't have to reload every edit to generate summaries.
@@ -173,13 +168,23 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	private readonly logger?: ITelemetryLogger;
 
 	/**
+	 * The number of edits associated with each blob.
+	 */
+	public readonly editsPerChunk: number;
+
+	/**
 	 * Construct an `EditLog` using the given options.
 	 * @param summary - An edit log summary used to populate the edit log.
 	 * @param logger - An optional logger to record telemetry/errors
 	 */
-	public constructor(summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] }, logger?: ITelemetryLogger) {
+	public constructor(
+		summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] },
+		logger?: ITelemetryLogger,
+		editsPerChunk = 100
+	) {
 		const { editChunks, editIds } = summary;
 		this.logger = logger;
+		this.editsPerChunk = editsPerChunk;
 
 		this.editChunks = new BTree<number, EditChunk<TChange>>(undefined, compareFiniteNumbers);
 
@@ -375,7 +380,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 				const edits = assertNotUndefined(chunk.edits);
 
 				// If there is no handle, the chunk should either not be the last chunk or should be full if it is.
-				if (maxStartRevision !== startRevision || edits.length >= editsPerChunk) {
+				if (maxStartRevision !== startRevision || edits.length >= this.editsPerChunk) {
 					yield [startRevision, edits];
 				}
 			}
@@ -436,7 +441,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
 			// and so a new chunk should be created.
 			const { edits: lastEditChunk, handle } = lastPair[1];
-			if (lastEditChunk !== undefined && lastEditChunk.length < editsPerChunk) {
+			if (lastEditChunk !== undefined && lastEditChunk.length < this.editsPerChunk) {
 				assert(handle === undefined, 'chunks which are modified must not already have been uploaded');
 				lastEditChunk.push(editWithoutId);
 			} else {
