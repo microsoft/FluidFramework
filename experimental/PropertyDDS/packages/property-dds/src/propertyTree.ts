@@ -175,10 +175,18 @@ export class SharedPropertyTree extends SharedObject {
 		return this._root as NodeProperty;
 	}
 
-	public commit(submitEmptyChange = false, metadata: Metadata = {}) {
+	public commit(submitEmptyChange?: boolean, metadata?: Metadata) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-        if (submitEmptyChange || !_.isEmpty(changes)) {
-            this.applyChangeSet(changes, metadata);
+
+        let doSubmit = !!submitEmptyChange;
+
+        // if no override provided dont submit unless metadata are provided
+        if (submitEmptyChange === undefined) {
+            doSubmit =  metadata !== undefined;
+        }
+
+        if (doSubmit || !_.isEmpty(changes)) {
+            this.applyChangeSet(changes, metadata || {});
             this.root.cleanDirty();
         }
 	}
