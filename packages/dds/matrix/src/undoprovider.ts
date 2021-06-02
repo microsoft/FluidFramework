@@ -85,9 +85,14 @@ export class VectorUndoProvider {
 
                 try {
                     while (trackingGroup.size > 0) {
-                        const sg = trackingGroup.segments[0] as PermutationSegment;
-                        callback(sg);
-                        sg.trackingCollection.unlink(trackingGroup);
+                        const segment = trackingGroup.segments[0] as PermutationSegment;
+
+                        // Unlink 'segment' from the current tracking group before invoking the callback
+                        // to exclude the current undo/redo segment from those copied to the replacement
+                        // segment (if any). (See 'PermutationSegment.transferToReplacement()')
+                        segment.trackingCollection.unlink(trackingGroup);
+
+                        callback(segment);
                     }
                 } finally {
                     this.currentOp = undefined;
@@ -117,8 +122,10 @@ export class MatrixUndoProvider<T> {
         rows.undo = new VectorUndoProvider(
             consumer,
             /* undoInsert: */ (segment: PermutationSegment) => {
-                const start = this.rows.getPosition(segment);
-                this.matrix.removeRows(start, segment.cachedLength);
+                if (segment.removedSeq === undefined) {
+                    const start = this.rows.getPosition(segment);
+                    this.matrix.removeRows(start, segment.cachedLength);
+                }
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
                 this.matrix._undoRemoveRows(segment);
@@ -127,8 +134,10 @@ export class MatrixUndoProvider<T> {
         cols.undo = new VectorUndoProvider(
             consumer,
             /* undoInsert: */ (segment: PermutationSegment) => {
-                const start = this.cols.getPosition(segment);
-                this.matrix.removeCols(start, segment.cachedLength);
+                if (segment.removedSeq === undefined) {
+                    const start = this.cols.getPosition(segment);
+                    this.matrix.removeCols(start, segment.cachedLength);
+                }
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
                 this.matrix._undoRemoveCols(segment);

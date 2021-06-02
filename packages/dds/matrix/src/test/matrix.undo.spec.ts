@@ -55,7 +55,7 @@ describe("Matrix", () => {
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
             });
 
-            it("fail: undo/redo insertRow 2x1", async () => {
+            it("undo/redo insertRow 2x1", async () => {
                 matrix1.insertCols(/* start: */ 0, /* count: */ 1);
                 undo1.closeCurrentOperation();
 
@@ -245,6 +245,18 @@ describe("Matrix", () => {
                 expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 1);
             });
 
+            it("undo/redo overlapping insertCol/removeCol in single undo group", async () => {
+                matrix1.insertCols(/* start: */ 0, /* count: */ 3);
+                matrix1.removeCols(/* start: */ 0, /* count: */ 1);
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 2);
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 0);
+
+                undo1.redoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 2);
+            });
+
             it("undo/redo insertCol 1x2", async () => {
                 matrix1.insertRows(/* start: */ 0, /* count: */ 1);
                 undo1.closeCurrentOperation();
@@ -287,6 +299,18 @@ describe("Matrix", () => {
 
                 undo1.redoOperation();
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
+            });
+
+            it("undo/redo overlapping insertRow/removeRow in single undo group", async () => {
+                matrix1.insertRows(/* start: */ 0, /* count: */ 3);
+                matrix1.removeRows(/* start: */ 0, /* count: */ 1);
+                expectSize(matrix1, /* rowCount */ 2, /* colCount: */ 0);
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 0);
+
+                undo1.redoOperation();
+                expectSize(matrix1, /* rowCount */ 2, /* colCount: */ 0);
             });
 
             it("undo/redo removeCol 0 of 2x2", async () => {

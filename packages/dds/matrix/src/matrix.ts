@@ -350,7 +350,7 @@ export class SharedMatrix<T = any>
         this.submitRowMessage(op);
 
         // Transfer handles from the original segment to the newly inserted empty segment.
-        original.transferHandlesTo(inserted);
+        original.transferToReplacement(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'rowsChanged'
         // callback, which occurs before the handle span is populated.
@@ -393,7 +393,7 @@ export class SharedMatrix<T = any>
         this.submitColMessage(op);
 
         // Transfer handles from the original segment to the newly inserted empty segment.
-        original.transferHandlesTo(inserted);
+        original.transferToReplacement(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'colsChanged'
         // callback, which occurs before the handle span is populated.
