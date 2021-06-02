@@ -175,7 +175,7 @@ export class SharedPropertyTree extends SharedObject {
 		return this._root as NodeProperty;
 	}
 
-	public commit(submitEmptyChange?: boolean, metadata?: Metadata) {
+	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 
         let doSubmit = !!submitEmptyChange;
