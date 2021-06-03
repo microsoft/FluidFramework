@@ -537,6 +537,7 @@ export class RunningSummarizer implements IDisposable {
             eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
             timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
+            sequenceNumber: ackNack.sequenceNumber,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
