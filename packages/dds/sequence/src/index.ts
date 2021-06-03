@@ -4,6 +4,9 @@
  */
 
 export {
+    IValueOpEmitter,
+} from "./interfaces";
+export {
     DeserializeCallback,
     IIntervalHelpers,
     Interval,
@@ -11,17 +14,9 @@ export {
     ISerializedInterval,
     IntervalCollection,
     IntervalCollectionIterator,
-    IntervalCollectionValueType,
     IntervalCollectionView,
     SequenceInterval,
-    SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-export {
-    IValueType,
-    IValueFactory,
-    IValueOperation,
-    IValueOpEmitter,
-} from "./interfaces";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";
