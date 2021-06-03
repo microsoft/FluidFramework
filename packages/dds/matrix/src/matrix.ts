@@ -349,7 +349,8 @@ export class SharedMatrix<T = any>
         const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
         this.submitRowMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted empty segment.
+        // Transfer handles and undo/redo tracking groups from the original segment to the
+        // newly inserted segment.
         original.transferToReplacement(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'rowsChanged'
@@ -392,7 +393,8 @@ export class SharedMatrix<T = any>
         const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
         this.submitColMessage(op);
 
-        // Transfer handles from the original segment to the newly inserted empty segment.
+        // Transfer handles and undo/redo tracking groups from the original segment to the
+        // newly inserted segment.
         original.transferToReplacement(inserted);
 
         // Invalidate the handleCache in case it was populated during the 'colsChanged'
