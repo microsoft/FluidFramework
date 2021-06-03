@@ -94,7 +94,7 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 
 	// Fluid Serialization (like Json) orders object fields arbitrarily, so reordering fields is not considered considered a change.
 	// Therefor the keys arrays must be sorted here.
-	if (!(Array.isArray(a))) {
+	if (!Array.isArray(a)) {
 		aKeys.sort();
 		bKeys.sort();
 	}
