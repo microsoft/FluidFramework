@@ -122,10 +122,8 @@ export class MatrixUndoProvider<T> {
         rows.undo = new VectorUndoProvider(
             consumer,
             /* undoInsert: */ (segment: PermutationSegment) => {
-                if (segment.removedSeq === undefined) {
-                    const start = this.rows.getPosition(segment);
-                    this.matrix.removeRows(start, segment.cachedLength);
-                }
+                const start = this.rows.getPosition(segment);
+                this.matrix.removeRows(start, segment.cachedLength);
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
                 this.matrix._undoRemoveRows(segment);
@@ -134,10 +132,8 @@ export class MatrixUndoProvider<T> {
         cols.undo = new VectorUndoProvider(
             consumer,
             /* undoInsert: */ (segment: PermutationSegment) => {
-                if (segment.removedSeq === undefined) {
-                    const start = this.cols.getPosition(segment);
-                    this.matrix.removeCols(start, segment.cachedLength);
-                }
+                const start = this.cols.getPosition(segment);
+                this.matrix.removeCols(start, segment.cachedLength);
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
                 this.matrix._undoRemoveCols(segment);
