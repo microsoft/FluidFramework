@@ -320,10 +320,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         return tree;
     }
 
-    public getSerializableStorage(): IMapDataObjectSerializable {
-        return this.kernel.getSerializableStorage(this.serializer);
-    }
-
     /**
     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
     */
