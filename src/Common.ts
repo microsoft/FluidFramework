@@ -31,7 +31,7 @@ export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
  * Returns if the supplied event is a SharedTree telemetry event.
  */
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean {
-	return ((event as unknown) as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
+	return (event as unknown as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
 }
 
 /**
