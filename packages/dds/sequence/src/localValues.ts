@@ -20,7 +20,7 @@ import {
     IValueOpEmitter,
     IValueOperation,
     IValueType,
-} from "./interfaces";
+} from "./mapKernelInterfaces";
 
 /**
  * A local value to be stored in a container type DDS.

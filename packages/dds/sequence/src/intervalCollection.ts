@@ -9,7 +9,7 @@ import { EventEmitter } from "events";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
 
 export interface ISerializedInterval {
     sequenceNumber: number;

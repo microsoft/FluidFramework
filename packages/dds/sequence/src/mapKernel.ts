@@ -8,6 +8,12 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+    ILocalValue,
+    LocalValueMaker,
+    makeSerializable,
+    ValueTypeLocalValue,
+} from "./localValues";
+import {
     ISerializableValue,
     ISerializedValue,
     IValueChanged,
@@ -16,13 +22,7 @@ import {
     IValueTypeCreator,
     IValueTypeOperationValue,
     ISharedMapEvents,
-} from "./interfaces";
-import {
-    ILocalValue,
-    LocalValueMaker,
-    makeSerializable,
-    ValueTypeLocalValue,
-} from "./localValues";
+} from "./mapKernelInterfaces";
 
 /**
  * Defines the means to process and submit a given op on a map.

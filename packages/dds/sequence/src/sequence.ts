@@ -30,13 +30,13 @@ import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
-import { IValueChanged } from "./interfaces";
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { MapKernel } from "./mapKernel";
+import { IValueChanged } from "./mapKernelInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
