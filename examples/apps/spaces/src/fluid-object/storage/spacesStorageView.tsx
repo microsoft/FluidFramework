@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
@@ -89,8 +89,8 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
     };
 
 // Stronger typing here maybe?
-interface ISpacesStorageViewProps<T = AsSerializable<any>> {
-    getViewForItem: (item: T) => Promise<JSX.Element | undefined>,
+interface ISpacesStorageViewProps<T = any> {
+    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>,
     getUrlForItem: (itemId: string) => string;
     storage: ISpacesStorage<T>;
     editable: boolean;
@@ -100,7 +100,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
         // Again stronger typing would be good
         const [itemMap, setItemMap] =
-            React.useState<Map<string, ISpacesStoredItem<AsSerializable<any>>>>(props.storage.itemList);
+            React.useState<Map<string, ISpacesStoredItem<any>>>(props.storage.itemList);
 
         React.useEffect(() => {
             const onItemListChanged = (newMap: Map<string, Layout>) => {

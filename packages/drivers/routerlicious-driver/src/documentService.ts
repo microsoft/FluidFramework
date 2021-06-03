@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
-import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
+import { IClient} from "@fluidframework/protocol-definitions";
+import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { NullBlobStorageService } from "@fluidframework/driver-utils";
@@ -15,6 +15,7 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousStorageRestWrapper } from "./restWrapper";
+import { IRouterliciousDriverPolicies } from "./policies";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -26,15 +27,11 @@ export class DocumentService implements api.IDocumentService {
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
-        private readonly errorTracking: IErrorTrackingService,
-        private readonly disableCache: boolean,
-        private readonly historianApi: boolean,
-        private readonly directCredentials: ICredentials | undefined,
-        private readonly gitCache: IGitCache | undefined,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
+        private readonly driverPolicies: IRouterliciousDriverPolicies,
     ) {
     }
 
@@ -58,35 +55,24 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             this.gitUrl,
-            this.directCredentials,
         );
         const historian = new Historian(
             this.gitUrl,
-            this.historianApi,
-            this.disableCache,
+            true,
+            false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
+            caching: this.driverPolicies.enablePrefetch
+                ? api.LoaderCachingPolicy.Prefetch
+                : api.LoaderCachingPolicy.NoCaching,
+        };
 
-        // Insert cached seed data
-        if (this.gitCache !== undefined) {
-            for (const ref of Object.keys(this.gitCache.refs)) {
-                gitManager.addRef(ref, this.gitCache.refs[ref]);
-            }
-
-            for (const commit of this.gitCache.commits) {
-                gitManager.addCommit(commit);
-            }
-
-            for (const tree of this.gitCache.trees) {
-                gitManager.addTree(tree);
-            }
-
-            for (const blob of this.gitCache.blobs) {
-                gitManager.addBlob(blob);
-            }
-        }
-
-        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager, this.logger);
+        this.documentStorageService = new DocumentStorageService(
+            this.documentId,
+            gitManager,
+            this.logger,
+            documentStorageServicePolicies);
         return this.documentStorageService;
     }
 
@@ -138,9 +124,5 @@ export class DocumentService implements api.IDocumentService {
             }
             throw error;
         }
-    }
-
-    public getErrorTrackingService() {
-        return this.errorTracking;
     }
 }

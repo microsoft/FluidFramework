@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { IColor } from "office-ui-fabric-react";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { AsSerializable } from "@fluidframework/datastore-definitions";
 
 export interface IBadgeType {
     key: string;
@@ -21,11 +20,11 @@ export interface IBadgeIcon {
 }
 export interface IBadgeHistory {
     value: IBadgeType;
-    timestamp: Date;
+    timestamp: string;  // String encoded UTC timestamp in ISO format
 }
 
 export interface IBadgeModel {
-    currentCell: SharedCell<AsSerializable<IBadgeType>>;
+    currentCell: SharedCell<IBadgeType>;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IBadgeHistory>;
 }

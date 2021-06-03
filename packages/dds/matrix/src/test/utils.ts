@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { SharedMatrix } from "..";
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
@@ -119,7 +118,7 @@ function withReader<TCells, TResult>(
  * Extracts the contents of the given `matrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.
  */
-export const extract = <T extends Serializable>(
+export const extract = <T>(
     matrix: IMatrixReader<T> | IMatrixProducer<T>,
     rowStart = 0,
     colStart = 0,
@@ -146,7 +145,7 @@ export const extract = <T extends Serializable>(
  * Asserts that given `matrix` has the specified dimensions.  This is useful for distinguishing
  * between variants of empty matrices (zero rows vs. zero cols vs. zero rows and zero cols).
  */
-export function expectSize<T extends Serializable>(
+export function expectSize<T>(
     matrix: IMatrixReader<T> | IMatrixProducer<T>,
     rowCount: number,
     colCount: number,

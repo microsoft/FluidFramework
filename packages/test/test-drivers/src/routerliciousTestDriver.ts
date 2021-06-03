@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
@@ -93,11 +92,6 @@ export class RouterliciousTestDriver implements ITestDriver {
 
         return new this.api.RouterliciousDocumentServiceFactory(
             tokenProvider,
-            false,
-            new DefaultErrorTracking(),
-            false,
-            true,
-            undefined,
         );
     }
 

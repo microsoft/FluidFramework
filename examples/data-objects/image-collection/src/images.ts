@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -125,10 +125,7 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
         }
 
         this.root.on("valueChanged", (changed) => {
-            if (this.images.has(changed.key)) {
-                // TODO add support for video playback values
-                // this.videoPlayers.get(changed.key).update(this.root.get(changed.key));
-            } else {
+            if (!this.images.has(changed.key)) {
                 const player = new ImageComponent(
                     this.root.get(changed.key)!,
                     changed.key,

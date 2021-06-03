@@ -1,17 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockEmptyDeltaConnection,
     MockStorage,
     MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 import { UndoRedoStackManager } from "./undoRedoStackManager";
@@ -23,7 +22,7 @@ describe("Matrix", () => {
         // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer1: TestConsumer<undefined | null | number>;
         let undo1: UndoRedoStackManager;
-        let expect: <T extends Serializable>(expected: readonly (readonly T[])[]) => Promise<void>;
+        let expect: <T>(expected: readonly (readonly (MatrixItem<T>)[])[]) => Promise<void>;
 
         function singleClientTests() {
             it("undo/redo setCell", async () => {
@@ -56,7 +55,7 @@ describe("Matrix", () => {
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
             });
 
-            it("fail: undo/redo insertRow 2x1", async () => {
+            it("undo/redo insertRow 2x1", async () => {
                 matrix1.insertCols(/* start: */ 0, /* count: */ 1);
                 undo1.closeCurrentOperation();
 
@@ -246,6 +245,18 @@ describe("Matrix", () => {
                 expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 1);
             });
 
+            it("undo/redo overlapping insertCol/removeCol in single undo group", async () => {
+                matrix1.insertCols(/* start: */ 0, /* count: */ 3);
+                matrix1.removeCols(/* start: */ 0, /* count: */ 1);
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 2);
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 0);
+
+                undo1.redoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 2);
+            });
+
             it("undo/redo insertCol 1x2", async () => {
                 matrix1.insertRows(/* start: */ 0, /* count: */ 1);
                 undo1.closeCurrentOperation();
@@ -288,6 +299,18 @@ describe("Matrix", () => {
 
                 undo1.redoOperation();
                 expectSize(matrix1, /* rowCount */ 1, /* colCount: */ 0);
+            });
+
+            it("undo/redo overlapping insertRow/removeRow in single undo group", async () => {
+                matrix1.insertRows(/* start: */ 0, /* count: */ 3);
+                matrix1.removeRows(/* start: */ 0, /* count: */ 1);
+                expectSize(matrix1, /* rowCount */ 2, /* colCount: */ 0);
+
+                undo1.undoOperation();
+                expectSize(matrix1, /* rowCount */ 0, /* colCount: */ 0);
+
+                undo1.redoOperation();
+                expectSize(matrix1, /* rowCount */ 2, /* colCount: */ 0);
             });
 
             it("undo/redo removeCol 0 of 2x2", async () => {
@@ -436,7 +459,7 @@ describe("Matrix", () => {
         describe("local client", () => {
             // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
             // equivalent, and then returns the 2nd matrix.
-            async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+            async function summarize<T>(matrix: SharedMatrix<T>) {
                 // Create a summay
                 const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
@@ -467,7 +490,7 @@ describe("Matrix", () => {
             }
 
             before(() => {
-                expect = async <T extends Serializable>(expected: readonly (readonly T[])[]) => {
+                expect = async <T>(expected: readonly (readonly (MatrixItem<T>)[])[]) => {
                     const actual = extract(matrix1);
                     assert.deepEqual(actual, expected, "Matrix must match expected.");
                     assert.deepEqual(extract(consumer1), actual, "Matrix must notify IMatrixConsumers of all changes.");

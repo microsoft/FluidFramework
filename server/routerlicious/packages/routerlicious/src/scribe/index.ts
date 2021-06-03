@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
@@ -58,7 +58,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     if (mongoExpireAfterSeconds > 0) {
         if (createCosmosDBIndexes) {
-            await scribeDeltas.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+            await scribeDeltas.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
         } else {
             await scribeDeltas.createTTLIndex(
                 {

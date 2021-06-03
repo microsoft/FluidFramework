@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -80,6 +80,7 @@ export class DataStores implements IDisposable {
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
             (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
+        private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
@@ -157,13 +158,8 @@ export class DataStores implements IDisposable {
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "Duplicate data store created with existing ID",
-                {
-                    sequenceNumber: message.sequenceNumber,
-                    clientId: message.clientId,
-                    referenceSequenceNumber: message.referenceSequenceNumber,
-                },
+                extractSafePropertiesFromMessage(message),
             );
-            this.logger.sendErrorEvent({ eventName: "DuplicateDataStoreId" }, error);
             throw error;
         }
 
@@ -408,9 +404,11 @@ export class DataStores implements IDisposable {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                // be a path from the root.
-                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                    // be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                }
             }));
 
         // Get the outbound routes and add a GC node for this channel.
@@ -512,11 +510,13 @@ export class DataStores implements IDisposable {
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
-        assert(this.runtime.options.runGCInTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
+        assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
-            // Delete the contexts of unused data stores.
             const dataStoreId = route.split("/")[1];
+            // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
+            // Delete the summarizer node of the unused data stores.
+            this.deleteChildSummarizerNodeFn(dataStoreId);
         }
     }
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -290,6 +290,26 @@ export class Client {
             },
             this.getCurrentSeq(), this.getClientId(),
             accum, start, end, splitRange);
+    }
+
+    /**
+     * Serializes the data required for garbage collection. The IFluidHandles stored in all segements that haven't
+     * been removed represent routes to other objects. We serialize the data in these segments using the passed in
+     * serializer which keeps track of all serialized handles.
+     */
+    public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
+        this.mergeTree.walkAllSegments(
+            this.mergeTree.root,
+            (seg) => {
+                // Only serialize segments that have not been removed.
+                if (seg.removedSeq === undefined) {
+                    handleCollectingSerializer.stringify(
+                        seg.clone().toJSONObject(),
+                        handle);
+                }
+                return true;
+            },
+        );
     }
 
     public getCollabWindow() {

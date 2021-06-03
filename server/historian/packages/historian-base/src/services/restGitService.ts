@@ -1,20 +1,24 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { AsyncLocalStorage } from "async_hooks";
+import type { OutgoingHttpHeaders } from "http";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
     IGetRefParamsExternal,
     ICreateRefParamsExternal,
-    IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+    IPatchRefParamsExternal,
+    BasicRestWrapper,
+    RestWrapper,
+} from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
-import request from "request";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -39,17 +43,32 @@ function endsWith(value: string, endings: string[]): boolean {
 }
 
 export class RestGitService {
-    private readonly authHeader: string;
+    private readonly restWrapper: RestWrapper;
 
     constructor(
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
+        const defaultHeaders: OutgoingHttpHeaders = {
+            "User-Agent": userAgent,
+        };
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
-            this.authHeader = `Basic ${token.toString("base64")}`;
+            defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+
+        this.restWrapper = new BasicRestWrapper(
+            storage.url,
+            undefined,
+            undefined,
+            undefined,
+            defaultHeaders,
+            undefined,
+            undefined,
+            undefined,
+            () => getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
+        );
     }
 
     public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
@@ -283,92 +302,25 @@ export class RestGitService {
     }
 
     private async get<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            headers: {
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "GET",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 200);
+        return this.restWrapper.get<T>(url)
+            .catch(getRequestErrorTranslator(url, "GET"));
     }
 
     private async post<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "POST",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 201);
+        return this.restWrapper.post<T>(url, requestBody, undefined, {
+            "Content-Type": "application/json",
+        }).catch(getRequestErrorTranslator(url, "POST"));
     }
 
     private async delete<T>(url: string): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            headers: {
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            method: "DELETE",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 204);
+        return this.restWrapper.delete<T>(url)
+            .catch(getRequestErrorTranslator(url, "DELETE"));
     }
 
     private async patch<T>(url: string, requestBody: any): Promise<T> {
-        const options: request.OptionsWithUrl = {
-            body: requestBody,
-            headers: {
-                "Content-Type": "application/json",
-                "User-Agent": userAgent,
-                "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-            },
-            json: true,
-            method: "PATCH",
-            url: `${this.storage.url}${url}`,
-        };
-        this.authorize(options);
-
-        return this.request(options, 200);
-    }
-
-    /**
-     * Updates the provided options with authorization information
-     */
-    private authorize(options: request.OptionsWithUrl) {
-        if (this.authHeader) {
-            options.headers.Authorization = this.authHeader;
-        }
-    }
-
-    private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            request(
-                options,
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== statusCode) {
-                        winston.info(response.body);
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.restWrapper.patch<T>(url, requestBody, undefined, {
+            "Content-Type": "application/json",
+        }).catch(getRequestErrorTranslator(url, "PATCH"));
     }
 
     /**
@@ -384,9 +336,9 @@ export class RestGitService {
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
         if (useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
-            const cachedValue = await this.cache.get<T>(key).catch((error) => {
+            const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
-                return null;
+                return undefined;
             });
 
             if (cachedValue) {

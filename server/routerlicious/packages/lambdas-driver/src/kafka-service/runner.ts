@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,7 +13,6 @@ import {
     IPartitionLambdaFactory,
     IRunner,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
@@ -23,8 +22,7 @@ export class KafkaRunner implements IRunner {
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
-        private readonly consumer: IConsumer,
-        private readonly config: Provider) {
+        private readonly consumer: IConsumer) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -45,14 +43,21 @@ export class KafkaRunner implements IRunner {
             deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
+            const metadata = {
+                messageMetaData: {
+                    documentId: errorData?.documentId,
+                    tenantId: errorData?.tenantId,
+                },
+            };
+
             if (errorData && !errorData.restart) {
-                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.");
-                logger?.error(inspect(error));
+                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.", metadata);
+                logger?.error(inspect(error), metadata);
             } else {
-                logger?.error("KakfaRunner encountered an error that will trigger a restart.");
-                logger?.error(inspect(error));
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.", metadata);
+                logger?.error(inspect(error), metadata);
                 deferred.reject(error);
             }
         });

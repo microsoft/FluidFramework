@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -544,6 +544,22 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 expectAllAfterValues("testKey3", "/testSubDir", "value3.3");
                 expectAllSize(1, "/testSubDir");
             });
+        });
+
+        it("Only creates a subdirectory once when simultaneously created", async () => {
+            const root1SubDir = sharedDirectory1.createSubDirectory("testSubDir");
+            root1SubDir.set("testKey", "testValue");
+            const root2SubDir = sharedDirectory2.createSubDirectory("testSubDir");
+            root2SubDir.set("testKey2", "testValue2");
+
+            await provider.ensureSynchronized();
+
+            assert.strictEqual(sharedDirectory1.getSubDirectory("testSubDir"), root1SubDir,
+                "Created two separate subdirectories in root1");
+            assert.strictEqual(sharedDirectory2.getSubDirectory("testSubDir"), root2SubDir,
+                "Created two separate subdirectories in root2");
+            assert.strictEqual(root1SubDir.get("testKey2"), "testValue2", "Value 2 not present");
+            assert.strictEqual(root2SubDir.get("testKey"), "testValue", "Value 1 not present");
         });
     });
 

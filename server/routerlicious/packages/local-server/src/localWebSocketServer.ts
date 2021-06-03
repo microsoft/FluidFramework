@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -35,10 +35,6 @@ export class LocalWebSocket implements core.IWebSocket {
         this.events.emit(event, ...args);
     }
 
-    public broadcastToRoom(roomId: string, event: string, ...args: any[]) {
-        this.server.pubsub.publish(roomId, event, ...args);
-    }
-
     public emitToRoom(roomId: string, event: string, ...args: any[]) {
         this.server.pubsub.publish(roomId, event, ...args);
     }
@@ -58,7 +54,7 @@ export class LocalWebSocket implements core.IWebSocket {
 export class LocalWebSocketServer implements core.IWebSocketServer {
     private readonly events = new EventEmitter();
 
-    constructor(public readonly pubsub: IPubSub) {}
+    constructor(public readonly pubsub: IPubSub) { }
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.events.on(event, listener);

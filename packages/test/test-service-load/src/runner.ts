@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -20,14 +20,6 @@ import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 function printStatus(runConfig: IRunConfig, message: string) {
     if(runConfig.verbose) {
         console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-    }else{
-        process.stdout.write(".");
-    }
-}
-
-function printProgress(runConfig: IRunConfig) {
-    if(!runConfig.verbose) {
-        process.stdout.write(".");
     }
 }
 
@@ -68,6 +60,14 @@ async function main() {
     // will get its own set of randoms
     randEng.seedWithArray([seed, runId]);
 
+    const l = await loggerP;
+    process.on("unhandledRejection", (reason, promise) => {
+        try{
+            l.sendErrorEvent({eventName: "UnhandledPromiseRejection"}, reason);
+        } catch(e) {
+            console.error("Error during logging unhandled promise rejection: ", e);
+        }
+    });
     const result = await runnerProcess(
         driver,
         {
@@ -129,8 +129,9 @@ async function runnerProcess(
         const containerOptions = generateRuntimeOptions(seed);
 
         const testDriver = await createTestDriver(driver, seed, runConfig.runId);
+        const baseLogger = await loggerP;
         const logger = ChildLogger.create(
-            await loggerP, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
+            baseLogger, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
 
         let iteration = 0;
         const iterator = factoryPermutations(
@@ -159,7 +160,6 @@ async function runnerProcess(
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(documentServiceFactory, container, runConfig);
             try{
-                printProgress(runConfig);
                 printStatus(runConfig, `running`);
                 const done = await test.run(runConfig, iteration === 0 /* reset */);
                 printStatus(runConfig, done ?  `finished` : "closed");
@@ -175,7 +175,7 @@ async function runnerProcess(
                 if(!container.closed) {
                     container.close();
                 }
-                await loggerP.then(async (l)=>l.flush({url, runId: runConfig.runId}));
+                await baseLogger.flush({url, runId: runConfig.runId});
             }
         }
         return 0;

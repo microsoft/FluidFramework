@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -36,6 +36,10 @@ export class KafkaNodeProducer implements IProducer {
         private readonly topicReplicationFactor?: number) {
         clientOptions.clientId = clientId;
         this.connect();
+    }
+
+    public isConnected() {
+        return this.connected;
     }
 
     /**

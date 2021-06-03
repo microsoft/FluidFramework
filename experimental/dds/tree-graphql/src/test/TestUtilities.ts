@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -42,13 +42,6 @@ export class NodeIdGenerator {
 	private nextId = 0;
 
 	public new(): NodeId {
-		// Prefix 'i' to avoid 'sorted-btree' default comparator issues with mixed string/numeric keys
-		// (See https://github.com/qwertie/btree-typescript/pull/15)
-		return `i${this.nextId++}` as NodeId;
+		return String(this.nextId++) as NodeId;
 	}
-}
-
-/** 'Encode' a scalar type */
-export function encodeScalar(x: string | number | boolean): Payload {
-	return { base64: x.toString(10) };
 }

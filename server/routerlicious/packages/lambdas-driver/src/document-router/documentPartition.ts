@@ -1,22 +1,24 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import {
     IContextErrorData,
+    IPartitionConfig,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IQueuedMessage,
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
-import { AsyncQueue, queue } from "async";
+import { QueueObject, queue } from "async";
 import * as _ from "lodash";
-import { Provider } from "nconf";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private readonly q: AsyncQueue<IQueuedMessage>;
+    private readonly q: QueueObject<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda | undefined;
     private corrupt = false;
@@ -25,18 +27,18 @@ export class DocumentPartition {
 
     constructor(
         factory: IPartitionLambdaFactory,
-        config: Provider,
-        tenantId: string,
-        documentId: string,
+        config: IPartitionConfig,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         public readonly context: DocumentContext,
         private readonly activityTimeout: number) {
         this.updateActivityTime();
 
-        // Default to the git tenant if not specified
-        const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.tenantId = tenantId;
-        clonedConfig.documentId = documentId;
-        const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
+        const documentConfig: IPartitionLambdaConfig = {
+            leaderEpoch: config.leaderEpoch,
+            tenantId,
+            documentId,
+        };
 
         this.q = queue(
             (message: IQueuedMessage, callback) => {
@@ -44,7 +46,16 @@ export class DocumentPartition {
                 try {
                     if (!this.corrupt) {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.lambda!.handler(message);
+                        const optionalPromise = this.lambda!.handler(message);
+                        if (optionalPromise) {
+                            optionalPromise
+                                .then(callback as any)
+                                .catch((error) => {
+                                    this.markAsCorrupt(message, error);
+                                    callback();
+                                });
+                            return;
+                        }
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
                         this.context.checkpoint(message);
@@ -52,8 +63,7 @@ export class DocumentPartition {
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
-                    context.error(error, { restart: false, tenantId, documentId });
-                    this.corrupt = true;
+                    this.markAsCorrupt(message, error);
                 }
 
                 // Handle the next message
@@ -88,7 +98,7 @@ export class DocumentPartition {
             return;
         }
 
-        this.q.push(message);
+        void this.q.push(message);
         this.updateActivityTime();
     }
 
@@ -117,6 +127,24 @@ export class DocumentPartition {
 
     public isInactive(now: number = Date.now()) {
         return !this.context.hasPendingWork() && this.activityTimeoutTime && now > this.activityTimeoutTime;
+    }
+
+    /**
+     * Marks this document partition as corrupt
+     * Future messages will be checkpointed but no real processing will happen
+     */
+    private markAsCorrupt(message: IQueuedMessage, error: any) {
+        this.corrupt = true;
+        this.context.log?.error(
+            `Marking document as corrupted due to error: ${inspect(error)}`,
+            {
+                messageMetaData: {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                },
+            });
+        this.context.error(error, { restart: false, tenantId: this.tenantId, documentId: this.documentId });
+        this.context.checkpoint(message);
     }
 
     private updateActivityTime() {

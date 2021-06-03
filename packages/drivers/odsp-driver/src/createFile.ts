@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,12 +14,11 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import {
-    IOdspResolvedUrl,
-    ISnapshotTree,
-    SnapshotTreeValue,
-    SnapshotTreeEntry,
-    SnapshotType,
+    IOdspSummaryTree,
+    OdspSummaryTreeValue,
+    OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
 } from "./contracts";
@@ -31,7 +30,6 @@ import {
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { TokenFetchOptions } from "./tokenFetch";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
@@ -45,7 +43,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
@@ -94,7 +92,7 @@ export async function createNewFluidFile(
                 });
                 return content.itemId;
             },
-            { cancel: "error" });
+            { end: true, cancel: "error" });
     });
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
@@ -126,7 +124,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,
-        type: SnapshotType.Container,
+        type: "container",
     };
     return snapshot;
 }
@@ -134,8 +132,8 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
 /**
  * Converts a summary tree to ODSP tree
  */
-export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): ISnapshotTree {
-    const snapshotTree: ISnapshotTree = {
+export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspSummaryTree {
+    const snapshotTree: IOdspSummaryTree = {
         type: "tree",
         entries: [],
     };
@@ -144,7 +142,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
     for (const key of keys) {
         const summaryObject = summary.tree[key];
 
-        let value: SnapshotTreeValue;
+        let value: OdspSummaryTreeValue;
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
@@ -171,7 +169,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
             }
         }
 
-        const entry: SnapshotTreeEntry = {
+        const entry: OdspSummaryTreeEntry = {
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
             value,

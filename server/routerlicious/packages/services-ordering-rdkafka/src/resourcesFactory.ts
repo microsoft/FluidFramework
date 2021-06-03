@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -48,6 +48,10 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
         const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const replicationFactor = config.get("kafka:lib:replicationFactor");
+        const optimizedRebalance = config.get("kafka:lib:rdkafkaOptimizedRebalance");
+        const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
+        const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
+        const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -67,7 +71,14 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
             clientId,
             receiveTopic,
             groupId,
-            { numberOfPartitions, replicationFactor },
+            {
+                numberOfPartitions,
+                replicationFactor,
+                optimizedRebalance,
+                automaticConsume,
+                consumeTimeout,
+                maxConsumerCommitRetries,
+            },
         );
 
         return new RdkafkaResources(

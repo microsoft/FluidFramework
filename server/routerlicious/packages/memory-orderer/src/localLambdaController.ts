@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -75,11 +75,12 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.removeAllListeners();
     }
 
-    public process(message: IQueuedMessage): void {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public process(message: IQueuedMessage): Promise<void> | undefined {
         if (!this.lambda) {
             throw new Error("The lambda has not started yet");
         }
 
-        this.lambda.handler(message);
+        return this.lambda.handler(message);
     }
 }

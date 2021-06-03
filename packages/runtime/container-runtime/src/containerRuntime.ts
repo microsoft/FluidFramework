@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
-    IContainerRuntimeDirtyable,
     IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
 import {
@@ -130,7 +129,8 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { SummaryCollection } from "./summaryCollection";
+import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -218,6 +218,11 @@ export interface IGCRuntimeOptions {
      * changed or not.
      */
     runFullGC?: boolean;
+
+    /**
+     * Allows additional GC options to be passed.
+     */
+    [key: string]: any;
 }
 
 export interface ISummaryRuntimeOptions {
@@ -263,20 +268,10 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-function localStorageRunGC(): boolean | undefined {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.FluidRunGC === "1") {
-                return true;
-            }
-            if  (localStorage.FluidRunGC === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return undefined;
-}
+// Local storage key to turn GC on / off.
+const runGCKey = "FluidRunGC";
+// Local storage key to turn GC test mode on / off.
+const gcTestModeKey = "FluidGCTestMode";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -509,12 +504,18 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         disableGC: oldRuntimeOptions.disableGC,
         runFullGC: oldRuntimeOptions.runFullGC,
     };
+    const agentSchedulerOption: boolean | undefined = runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection;
 
-    return {
+    const backCompatOptions: IContainerRuntimeOptions = {
         summaryOptions,
         gcOptions,
-        addGlobalAgentSchedulerAndLeaderElection: runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection,
     };
+
+    if (agentSchedulerOption !== undefined) {
+        backCompatOptions.addGlobalAgentSchedulerAndLeaderElection = agentSchedulerOption;
+    }
+
+    return backCompatOptions;
 }
 
 /**
@@ -524,24 +525,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
         IContainerRuntime,
-        IContainerRuntimeDirtyable,
         IRuntime,
         ISummarizerRuntime,
         ISummarizerInternalsProvider
 {
     public get IContainerRuntime() { return this; }
-    /**
-     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
-     * an upcoming release.
-     */
-    public get IContainerRuntimeDirtyable() {
-        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedIContainerRuntimeDirtyable" });
-        return this;
-    }
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -587,7 +575,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
-            addGlobalAgentSchedulerAndLeaderElection: true,
+            addGlobalAgentSchedulerAndLeaderElection: false,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
@@ -787,6 +775,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
+    // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
+    // deleted as soon as GC runs.
+    public get gcTestMode(): boolean {
+        return getLocalStorageFeatureGate(gcTestModeKey)
+            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -810,15 +805,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
 
         // Can override with localStorage flag.
-        this.shouldRunGC = localStorageRunGC() ?? (
+        this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
             // Must not be disabled permanently in summary.
             (this.summaryGCFeature > 0)
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
 
-        // Default to true (disabled) until a few versions have passed.
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? true;
+        // Default to false (enabled).
+        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -869,6 +864,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getGCDataFn,
                     getInitialGCSummaryDetailsFn,
                 ),
+            (id: string) => this.summarizerNode.deleteChild(id),
             this._logger);
 
         this.blobManager = new BlobManager(
@@ -904,32 +900,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
-        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+
+        this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const defaultAction = () => {
+            if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
                 // and register summary ack handler to re-register this handler
                 // after successful summary
-                opActions.default = undefined;
-                opActions.summaryAck = summaryAckAction;
+                this.summaryCollection.once(MessageType.SummaryAck, () => {
+                    this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                    // we've caught up, so re-register the default action to monitor for
+                    // falling behind, and unregister ourself
+                    this.summaryCollection.on("default", defaultAction);
+                });
+                this.summaryCollection.off("default", defaultAction);
             }
         };
-        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-            // we've caught up, so re-register the default action to monitor for
-            // falling behind, and unregister ourself
-            opActions.default = defaultAction;
-            opActions.summaryAck = undefined;
-        };
-        const opActions: SummaryCollectionOpActions = {
-            default: defaultAction,
-        };
-
-        this.summaryCollection = new SummaryCollection(
-            this.deltaManager,
-            this.logger,
-            opActions,
-        );
+        this.summaryCollection.on("default", defaultAction);
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -946,8 +935,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
+            this.summaryCollection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
+            maxOpsSinceLastSummary,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
@@ -1228,11 +1219,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused, 0x128 /* "Container should not already be paused before applying stashed ops" */);
         this.paused = true;
-        this.scheduleManager.setPaused(true);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.context.deltaManager.inbound.pause();
         const stashP = this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
         stashP.then(() => {
             this.paused = false;
-            this.scheduleManager.setPaused(false);
+            this.context.deltaManager.inbound.resume();
         }, (error) => {
             this.closeFn(CreateContainerError(error));
         });
@@ -1512,28 +1504,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dirtyContainer;
     }
 
-    /**
-     * Will return true for any message that affect the dirty state of this document
-     * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IFluidDataStoreRuntime.isDirty call returns true/false
-     * @param type - The type of ContainerRuntime message that is being checked
-     * @param contents - The contents of the message that is being verified
-     * @deprecated 0.38 The IContainerRuntimeDirtyable interface and isMessageDirtyable() method will be removed in
-     * an upcoming release.
-     */
-    public isMessageDirtyable(message: ISequencedDocumentMessage) {
-        // The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated 0.38
-        console.warn("The IContainerRuntimeDirtyable interface and isMessageDirtyable() method are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedIsMessageDirtyable" });
-        assert(
-            isRuntimeMessage(message) === true,
-            0x12c /* "Message passed for dirtyable check should be a container runtime message" */,
-        );
-        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
-    }
-
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
@@ -1620,9 +1590,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
                 this.dataStores.updateUsedRoutes(usedRoutes);
 
-                // If we are running in GC test mode, delete objects for unused routes. This enables testing
-                // scenarios involving access to deleted data.
-                if (this.options.runGCInTestMode) {
+                // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
+                // involving access to deleted data.
+                if (this.gcTestMode) {
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -35,12 +35,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
-    // True if we received the leave. False if timed out. Undefined when
-    // starting the timer.
-    private leaveReceivedResult: boolean | undefined;
     private waitEvent: PerformanceEvent | undefined;
-    private _clientSentOps: boolean = false;
-    private clientConnectionMode: ConnectionMode | undefined;
 
     public get connectionState(): ConnectionState {
         return this._connectionState;
@@ -67,18 +62,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
             () => {
-                this.leaveReceivedResult = false;
                 this.applyForConnectedState("timeout");
             },
         );
-    }
-
-    // This is true when this client submitted any ops.
-    public clientSentOps(connectionMode: ConnectionMode) {
-        assert(this._connectionState === ConnectionState.Connected,
-            0x1d7 /* "Ops could only be sent when connected" */);
-        this._clientSentOps = true;
-        this.clientConnectionMode = connectionMode;
     }
 
     public receivedAddMemberEvent(clientId: string) {
@@ -106,7 +92,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
-            this.waitEvent?.end({ leaveReceived: this.leaveReceivedResult, source });
+            this.waitEvent?.end({ source });
             this.setConnectionState(ConnectionState.Connected);
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
@@ -126,7 +112,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // If the client which has left was us, then finish the timer.
         if (this.clientId === clientId) {
             this.prevClientLeftTimer.clear();
-            this.leaveReceivedResult = true;
             this.applyForConnectedState("removeMemberEvent");
         }
     }
@@ -178,46 +163,39 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
         const oldState = this._connectionState;
         this._connectionState = value;
+        const quorum = this.handler.protocolHandler()?.quorum;
+        let client: ILocalSequencedClient | undefined;
+        if (this._clientId !== undefined) {
+            client = quorum?.getMember(this._clientId);
+        }
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting,
                 0x1d8 /* "Should only transition from Connecting state" */);
             // Mark our old client should have left in the quorum if it's still there
-            if (this._clientId !== undefined) {
-                const client: ILocalSequencedClient | undefined =
-                    this.handler.protocolHandler()?.quorum.getMember(this._clientId);
-                if (client !== undefined) {
-                    client.shouldHaveLeft = true;
-                }
+            if (client !== undefined) {
+                client.shouldHaveLeft = true;
             }
             this._clientId = this.pendingClientId;
-            // Set _clientSentOps to false as this is a fresh connection.
-            this._clientSentOps = false;
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this._pendingClientId = undefined;
-            // Only wait for "leave" message if we have some outstanding ops and the client was write client as
-            // server would not accept ops from read client. Also check if the timer is not already running as we
-            // could receive "Disconnected" event multiple times without getting connected and in that case we
+            // Only wait for "leave" message if the connected client exists in the quorum because only the write
+            // client will exist in the quorum and only for those clients we will receive "removeMember" event and
+            // the client has some unacked ops.
+            // Also server would not accept ops from read client. Also check if the timer is not already running as
+            // we could receive "Disconnected" event multiple times without getting connected and in that case we
             // don't want to reset the timer as we still want to wait on original client which started this timer.
-            // We also check the dirty state of this connection as we only want to wait for the client leave of the
-            // client which created the ops. This helps with situation where a client disconnects immediately after
-            // getting connected without sending any ops(from previous client). In this case, we would join as write
-            // because there would be a diff between client seq number and clientSeqNumberObserved but then we don't
-            // want to wait for newly disconnected client to leave as it has not sent any ops yet.
-            if (this.handler.shouldClientJoinWrite()
-                && this.clientConnectionMode === "write"
+            if (client !== undefined
+                && this.handler.shouldClientJoinWrite()
                 && this.prevClientLeftTimer.hasTimer === false
-                && this._clientSentOps
             ) {
-                this.leaveReceivedResult = undefined;
                 this.prevClientLeftTimer.restart();
             } else {
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
-                    clientConnectionMode: this.clientConnectionMode,
+                    inQuorum: client !== undefined,
                     hasTimer: this.prevClientLeftTimer.hasTimer,
-                    clientSentOps: this._clientSentOps,
                     shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
                 });
             }

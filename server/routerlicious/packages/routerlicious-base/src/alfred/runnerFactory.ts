@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,7 +11,6 @@ import {
     NodeManager,
     ReservationManager,
 } from "@fluidframework/server-memory-orderer";
-import { EventHubProducer } from "@fluidframework/server-services-ordering-eventhub";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -45,7 +44,6 @@ export class OrdererManager implements core.IOrdererManager {
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
         private readonly kafkaFactory: KafkaOrdererFactory,
-        private readonly eventHubFactory: KafkaOrdererFactory,
     ) {
     }
 
@@ -62,8 +60,6 @@ export class OrdererManager implements core.IOrdererManager {
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
-            case "eventHub":
-                return this.eventHubFactory.create(tenantId, documentId);
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
@@ -138,8 +134,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 servername: redisConfig2.host,
             };
         }
+
+        const redisParams2 = {
+            expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClient = new Redis(redisOptions2);
-        const clientManager = new services.ClientManager(redisClient);
+        const clientManager = new services.ClientManager(redisClient, redisParams2);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -187,6 +188,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 servername: redisConfigForThrottling.host,
             };
         }
+        const redisParamsForThrottling = {
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+        };
+
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         // Rest API Throttler
@@ -198,7 +203,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
+        const throttleStorageManager =
+            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
@@ -280,21 +286,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
-        let eventHubOrdererFactory: KafkaOrdererFactory = null;
-        if (config.get("eventHub")) {
-            const eventHubProducer = new EventHubProducer(config.get("eventHub:endpoint"), topic);
-            eventHubOrdererFactory = new KafkaOrdererFactory(
-                eventHubProducer,
-                maxSendMessageSize,
-                core.DefaultServiceConfiguration);
-        }
-
         const orderManager = new OrdererManager(
             serverUrl,
             tenantManager,
             localOrderManager,
-            kafkaOrdererFactory,
-            eventHubOrdererFactory);
+            kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];

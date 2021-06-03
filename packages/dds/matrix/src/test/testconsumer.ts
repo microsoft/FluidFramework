@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { MatrixItem } from "..";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own
@@ -14,13 +14,16 @@ import { Serializable } from "@fluidframework/datastore-definitions";
  * Comparing the state of the TestConsumer with the original IMatrixProducer is a
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
-export class TestConsumer<T extends Serializable = Serializable> implements IMatrixConsumer<T>, IMatrixReader<T> {
+export class TestConsumer<T = any> implements
+    IMatrixConsumer<MatrixItem<T>>,
+    IMatrixReader<MatrixItem<T>>
+{
     private readonly rows: DenseVector<void> = new DenseVector<void>();
     private readonly cols: DenseVector<void> = new DenseVector<void>();
-    private readonly actual: RowMajorMatrix<T> = new RowMajorMatrix<T>(this.rows, this.cols);
-    private readonly expected: IMatrixReader<T>;
+    private readonly actual: RowMajorMatrix<MatrixItem<T>> = new RowMajorMatrix(this.rows, this.cols);
+    private readonly expected: IMatrixReader<MatrixItem<T>>;
 
-    constructor(producer: IMatrixProducer<T>) {
+    constructor(producer: IMatrixProducer<MatrixItem<T>>) {
         this.expected = producer.openMatrix(this);
 
         this.rows.splice(/* start: */ 0, /* deleteCount: */ 0, /* insertCount: */ this.expected.rowCount);
@@ -84,7 +87,7 @@ export class TestConsumer<T extends Serializable = Serializable> implements IMat
 
     // #region IMatrixReader
 
-    getCell(row: number, col: number): T {
+    getCell(row: number, col: number): MatrixItem<T> {
         return this.expected.getCell(row, col);
     }
 

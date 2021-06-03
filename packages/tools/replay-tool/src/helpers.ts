@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -226,7 +226,10 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
-    const codeLoader = new API.CodeLoader({ summaryOptions: { generateSummaries: false } },
+    // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
+    // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
+    const codeLoader = new API.CodeLoader({
+        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
         [
             ["_scheduler", Promise.resolve(chaincode)],
             ["@ms/atmentions", Promise.resolve(chaincode)],

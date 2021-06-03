@@ -1,11 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { Loader } from "@fluidframework/container-loader";
+import {
+    getSnapshotTreeFromSerializedContainer,
+    Loader,
+} from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -55,8 +58,6 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
     }
     const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
         assertChannelTree(root, key, `${key} datastore not present`);
-
-    const assertSchedulerTree = (root: ISnapshotTree) => assertDatastoreTree(root, "_scheduler");
 
     function assertBlobContents<T>(subtree: ISnapshotTree, key: string): T {
         const id = subtree.blobs[key];
@@ -153,10 +154,8 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
-
-            // Check for scheduler
-            assertSchedulerTree(snapshotTree);
+            const snapshotTree: ISnapshotTree =
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -178,16 +177,18 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree1: ISnapshotTree =
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const snapshotTree2: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree2: ISnapshotTree =
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
-                "3 trees should be there(protocol, default dataStore, scheduler");
+                "2 trees should be there(protocol, default dataStore");
 
             // Check for protocol attributes
             const protocolAttributes1 = assertProtocolAttributes(snapshotTree1);
@@ -216,16 +217,11 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const snapshotTree: ISnapshotTree = JSON.parse(container.serialize());
+            const snapshotTree: ISnapshotTree =
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 
             assertProtocolTree(snapshotTree);
-            const { channelsTree } = assertSchedulerTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
-            assert(
-                // eslint-disable-next-line unicorn/no-unsafe-regex
-                Object.keys(channelsTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
-                "peer data store tree not present",
-            );
 
             assertDatastoreTree(snapshotTree, dataStore2.runtime.id, "Handle Bounded dataStore should be in summary");
         });
@@ -237,12 +233,6 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const snapshotTree = container.serialize();
 
             const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-
-            // Check for scheduler
-            const schedulerResponse = await container2.request({ url: "_scheduler" });
-            assert.strictEqual(schedulerResponse.status, 200, "Scheduler Component should exist!!");
-            const schedulerDataStore = schedulerResponse.value as TestFluidObject;
-            assert.strictEqual(schedulerDataStore.runtime.id, "_scheduler", "Id should be of scheduler");
 
             // Check for default data store
             const response = await container2.request({ url: "/" });
@@ -281,12 +271,6 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 
             const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
             await container2.attach(request);
-
-            // Check for scheduler
-            const schedulerResponse = await container2.request({ url: "_scheduler" });
-            assert.strictEqual(schedulerResponse.status, 200, "Scheduler Component should exist!!");
-            const schedulerDataStore = schedulerResponse.value as TestFluidObject;
-            assert.strictEqual(schedulerDataStore.runtime.id, "_scheduler", "Id should be of scheduler");
 
             // Check for default data store
             const response = await container2.request({ url: "/" });
@@ -580,16 +564,10 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = JSON.parse(container.serialize());
+            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 
             assertProtocolTree(snapshotTree);
-            const { channelsTree } = assertSchedulerTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
-            assert.ok(
-                // eslint-disable-next-line unicorn/no-unsafe-regex
-                !Object.keys(channelsTree.trees).some((key) => /^(?:\w+-){4}\w+$/.test(key)),
-                "unbounded/unreferenced data store tree present",
-            );
         });
     };
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -92,14 +92,6 @@ export class LocalDocumentService implements api.IDocumentService {
         });
 
         return documentDeltaConnection;
-    }
-
-    /**
-     * Returns null
-     */
-    public getErrorTrackingService(): any {
-        // eslint-disable-next-line no-null/no-null
-        return null;
     }
 }
 

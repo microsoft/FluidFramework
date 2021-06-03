@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,12 +9,13 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import * as fileLinkImport from "../getFileLink";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
-import { IOdspResolvedUrl, SharingLinkHeader } from "../contracts";
+import { SharingLinkHeader } from "../contractsPublic";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 
 describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
@@ -175,13 +176,13 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     });
 
     it("Sharing link should be set when isSharingLinkToRedeem header is set", async () => {
+        const url = new URL(sharelink);
         const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-            const url = new URL(sharelink);
             storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
             return urlResolverWithShareLinkFetcher.resolve(
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
-        assert.strictEqual(resolvedUrl.sharingLinkToRedeem, sharelink, "Sharing link should be set in resolved url");
+        assert.strictEqual(resolvedUrl.sharingLinkToRedeem, url.toString(), "Sharing link should be set in resolved url");
     });
 
     it("Encode and decode nav param", async () => {

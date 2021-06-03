@@ -84,6 +84,11 @@ An example developer flow would be to:
 Then use another command window to deliver the changes:
 * `npm run build` - build
 * `docker-compose restart {modified service}` - allow the container to pick up the changes stored on the local machine
+
+> **Note:** Some dependencies are required to be installed and built on the OS they are running on.
+> When you update one of these dependencies (e.g. change versions) you will need to fully restart the service using `npm stop && npm start`.
+> Current dependencies with this requirement: zookeeper
+
 or
 
 ### Standalone
@@ -284,9 +289,6 @@ Add a token field to api load call.
 await prague.api.load(id, { encrypted: false, token });
 ```
 Passing an invalid token will fail the load call.
-
-## Verdaccio and the Chaincode CDN
-Coming Soon...
 
 ## Trademark
 

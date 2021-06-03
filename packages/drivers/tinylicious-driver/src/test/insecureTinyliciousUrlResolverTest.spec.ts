@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -27,6 +27,23 @@ describe("Insecure Url Resolver Test", () => {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
+
+    it("Should resolve url with custom domain and port", async () => {
+        const customEndpoint = "http://custom-endpoint.io";
+        const customFluidEndpoint = "fluid://custom-endpoint.io";
+        const customPort = 1234;
+        const customResolver = new InsecureTinyliciousUrlResolver(customPort,customEndpoint);
+        const testRequest: IRequest = {
+            url: `${documentId}`,
+            headers: {},
+        };
+
+        const resolvedUrl = await customResolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `${customFluidEndpoint}/tinylicious/${documentId}`;
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 

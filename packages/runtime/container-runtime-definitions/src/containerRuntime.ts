@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -33,7 +33,6 @@ import {
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
-import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -67,7 +66,6 @@ export type IContainerRuntimeBaseWithCombinedEvents =
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
-    Partial<IProvideContainerRuntimeDirtyable>,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
@@ -83,7 +81,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     readonly loader: ILoader;

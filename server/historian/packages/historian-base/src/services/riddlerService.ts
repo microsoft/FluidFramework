@@ -1,24 +1,38 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { OutgoingHttpHeaders } from "http";
 import { ITenantConfig } from "@fluidframework/server-services-core";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
-import * as request from "request-promise-native";
 import * as winston from "winston";
-import { getTokenLifetimeInSec } from "../utils";
+import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
 export class RiddlerService implements ITenantService {
+    private readonly restWrapper: RestWrapper;
     constructor(
-        private readonly endpoint: string,
+        endpoint: string,
         private readonly cache: RedisTenantCache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
+        this.restWrapper = new BasicRestWrapper(
+            endpoint,
+            undefined,
+            undefined,
+            undefined,
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            undefined,
+            undefined,
+            undefined,
+            () => getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
+        );
     }
 
     public async getTenant(tenantId: string, token: string): Promise<ITenantConfig> {
@@ -26,31 +40,18 @@ export class RiddlerService implements ITenantService {
         return tenant;
     }
 
-    private getCommonHeaders(): OutgoingHttpHeaders {
-        return {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "x-correlation-id": getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
-        };
-    }
-
     private async getTenantDetails(tenantId: string): Promise<ITenantConfig> {
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
             winston.error(`Error fetching tenant details from cache`, error);
-            return null;
+            return undefined;
         });
         if (cachedDetail) {
             winston.info(`Resolving tenant details from cache`);
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
-        const details = await request.get(
-            `${this.endpoint}/api/tenants/${tenantId}`,
-            {
-                headers: {
-                    ...this.getCommonHeaders(),
-                },
-                json: true,
-            }) as ITenantConfig;
+        const tenantUrl = `/api/tenants/${tenantId}`;
+        const details = await this.restWrapper.get<ITenantConfig>(tenantUrl)
+            .catch(getRequestErrorTranslator(tenantUrl, "GET"));
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
             winston.error(`Error caching tenant details to redis`, error);
         });
@@ -68,18 +69,11 @@ export class RiddlerService implements ITenantService {
             return;
         }
 
-        await request.post(
-            `${this.endpoint}/api/tenants/${tenantId}/validate`,
-            {
-                body: {
-                    token,
-                },
-                headers: {
-                    ...this.getCommonHeaders(),
-                },
-                json: true,
-            });
+        const tokenValidationUrl = `/api/tenants/${tenantId}/validate`;
+        await this.restWrapper.post(tokenValidationUrl, { token })
+            .catch(getRequestErrorTranslator(tokenValidationUrl, "POST"));
 
+        // TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
         let tokenLifetimeInSec = getTokenLifetimeInSec(token);
         // in case the service clock is behind, reducing the lifetime of token by 5%
         // to avoid using an expired token.

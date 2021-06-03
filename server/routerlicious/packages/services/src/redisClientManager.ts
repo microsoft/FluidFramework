@@ -1,32 +1,43 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 import { IClientManager } from "@fluidframework/server-services-core";
+import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 export class ClientManager implements IClientManager {
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "client";
+
     constructor(
         private readonly client: Redis,
-        private readonly expireAfterSeconds = 60 * 60 * 24,
-        private readonly prefix = "client") {
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
         client.on("error", (error) => {
             winston.error("Client Manager Redis Error:", error);
         });
     }
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
-        const result = await this.client.hmset(this.getKey(tenantId, documentId), clientId, JSON.stringify(details));
-        if (result !== "OK")
-        {
-            return  Promise.reject(result);
-        }
-
-        await this.client.expire(this.getKey(tenantId, documentId), this.expireAfterSeconds);
+        const key = this.getKey(tenantId, documentId);
+        const data: { [key: string]: any } = { [clientId]: JSON.stringify(details) };
+        return executeRedisMultiWithHmsetExpire(
+            this.client,
+            key,
+            data,
+            this.expireAfterSeconds);
     }
 
     public async removeClient(tenantId: string, documentId: string, clientId: string): Promise<void> {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,7 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, ITaggableTelemetryProperties } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -37,9 +37,26 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
+    }
+}
+
+// Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
+// compatible way to augment an enum, as it can't be optional. So for now
+// we need to duplicate the value here. We likely need to rethink our
+// DriverErrorType strategy so that it supports extension with optional
+// value.
+const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
+export class DeltaStreamConnectionForbiddenError extends LoggingError {
+    static readonly errorType: string =
+        DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
+    readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
+    readonly canRetry = false;
+
+    constructor(errorMessage: string) {
+        super(errorMessage, { statusCode: 400 });
     }
 }
 
@@ -51,9 +68,9 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         errorMessage: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
-        statusCode: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -62,9 +79,9 @@ export class NetworkErrorBasic<T> extends LoggingError {
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
@@ -72,9 +89,19 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
-        statusCode: number | undefined,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, errorType, false, statusCode);
+        super(errorMessage, errorType, false, props);
+    }
+}
+
+export class RetryableError<T> extends NetworkErrorBasic<T> {
+    constructor(
+        errorMessage: string,
+        readonly errorType: T,
+        props?: ITaggableTelemetryProperties,
+    ) {
+        super(errorMessage, errorType, true, props);
     }
 }
 
@@ -88,24 +115,24 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        statusCode?: number,
+        props?: ITaggableTelemetryProperties,
     ) {
-        super(errorMessage, { statusCode });
+        super(errorMessage, props);
     }
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError, undefined /* statusCodes */);
+    new NonRetryableError(errorMessage, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
-    retryAfterSeconds?: number,
-    statusCode?: number) {
-    if (retryAfterSeconds !== undefined && canRetry) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+    retryAfterMs?: number,
+    props?: ITaggableTelemetryProperties) {
+    if (retryAfterMs !== undefined && canRetry) {
+        return new ThrottlingError(errorMessage, retryAfterMs / 1000, props);
     }
-    return new GenericNetworkError(errorMessage, canRetry, statusCode);
+    return new GenericNetworkError(errorMessage, canRetry, props);
 }
 
 /**
@@ -115,5 +142,5 @@ export function createGenericNetworkError(
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds;
+export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
+    error.retryAfterSeconds * 1000 : undefined;

@@ -1,19 +1,22 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
+import { Jsonable } from "./jsonable";
 
 /**
- * A union of the types that Fluid can intrinsically serialize, which is any type is that is
- * Json serializable + Json serializable objects/arrays with IFluidHandles at the leaves.
+ * Used to constrain a type 'T' to types that Fluid can intrinsically serialize.  Produces an
+ * error if `T` contains non-Jsonable members.
  *
- * Convenient when declaring type constraints, such as `<T extends Serializable>`.
+ * Typical usage:
+ * ```ts
+ *      function serialize<T>(value: Serializable<T>) { ... }
+ * ```
+ *
+ * Important: `T extends Serializable<T>` is a *superset* of `Serializable<T>` and almost always incorrect.
  *
  * (See Jsonable for caveats regarding serialization of `undefined` and non-finite numbers.)
  */
-export type Serializable = Jsonable<JsonablePrimitive | IFluidHandle>;
-
-export type AsSerializable<T> = AsJsonable<T, JsonablePrimitive | IFluidHandle>;
+export type Serializable<T = any> = Jsonable<T, IFluidHandle>;

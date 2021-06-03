@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,7 @@ import {
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluidframework/test-pairwise-generator";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -32,17 +32,20 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 export function generateRuntimeOptions(seed: number) {
     const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
         disableIsolatedChannels: booleanCases,
-        generateSummaries: booleanCases,
+        generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
         summaryConfigOverrides:[undefined],
         maxOpsSinceLastSummary: numberCases,
     };
 
-    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+    // Using an Omit here such that when new options are added, it is required to either explicitly omit them from
+    // the stress test matrix or else define the options matrix.
+    type OptionsUnderTest = Omit<IContainerRuntimeOptions, "addGlobalAgentSchedulerAndLeaderElection">;
+
+    const runtimeOptionsMatrix: OptionsMatrix<OptionsUnderTest> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
-        addGlobalAgentSchedulerAndLeaderElection: [undefined],
     };
 
-    return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);
+    return generatePairwiseOptions<OptionsUnderTest>(runtimeOptionsMatrix, seed);
 }
