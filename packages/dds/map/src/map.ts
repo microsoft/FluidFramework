@@ -42,13 +42,13 @@ const snapshotFileName = "header";
  */
 export class MapFactory implements IChannelFactory {
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
         snapshotFormatVersion: "0.2",
@@ -56,22 +56,22 @@ export class MapFactory implements IChannelFactory {
     };
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
@@ -84,8 +84,8 @@ export class MapFactory implements IChannelFactory {
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
@@ -128,22 +128,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * String representation for the class.
-    */
+     * String representation for the class.
+     */
     public readonly [Symbol.toStringTag]: string = "SharedMap";
 
     /**
-    * MapKernel which manages actual map operations.
-    */
+     * MapKernel which manages actual map operations.
+     */
     private readonly kernel: MapKernel;
 
     /**
-    * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
-    *
-    * @param id - String identifier.
-    * @param runtime - Data store runtime.
-    * @param attributes - The attributes for the map.
-    */
+     * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
+     *
+     * @param id - String identifier.
+     * @param runtime - Data store runtime.
+     * @param attributes - The attributes for the map.
+     */
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
@@ -184,9 +184,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * Get an iterator over the entries in this map.
-    * @returns The iterator
-    */
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
@@ -329,8 +329,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-    */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     */
     protected async loadCore(storage: IChannelStorageService) {
         // eslint-disable-next-line @typescript-eslint/ban-types
         const json = await readAndParse<object>(storage, snapshotFileName);
