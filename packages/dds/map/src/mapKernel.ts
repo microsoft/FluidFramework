@@ -171,7 +171,7 @@ export class MapKernel {
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
-        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
+        private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
