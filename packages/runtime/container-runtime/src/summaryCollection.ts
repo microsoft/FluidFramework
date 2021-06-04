@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Deferred, assert } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -14,6 +14,7 @@ import {
     ISummaryNack,
     MessageType,
 } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 
 /**
  * Interface for summary op messages with typed contents.
@@ -193,17 +194,14 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 }
 
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
-export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
-export interface ISummaryCollectionOpEvents extends IEvent {
-    (event: OpActionEventName, listener: OpActionEventListener);
-}
+export type SummaryCollectionOpEvents = { [K in OpActionEventName]: [op: ISequencedDocumentMessage] };
 
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
  */
-export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
+export class SummaryCollection extends TypedEventEmitter<SummaryCollectionOpEvents> {
     // key: clientId
     private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
@@ -216,10 +214,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     private lastAck: IAckedSummary | undefined;
 
     public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
-
-    public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
-        return super.emit(event, ...args);
-    }
 
     public get opsSinceLastAck() {
         return this.deltaManager.lastSequenceNumber -

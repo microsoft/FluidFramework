@@ -14,7 +14,7 @@ import {
     ITree,
 } from "@fluidframework/protocol-definitions";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
-import { convertToSummaryTree, utf8ByteLength } from "../summaryUtils";
+import { convertToSummaryTree, utf8ByteLength } from "../../summaryUtils";
 
 describe("Summary Utils", () => {
     describe("Convert to Summary Tree", () => {

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     Deferred,
     PromiseTimer,
@@ -30,7 +29,8 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response, TypedEventEmitter } from "@fluidframework/runtime-utils";
+import { IEventProvider } from "@fluidframework/runtime-definitions";
 import { GenerateSummaryData } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -94,11 +94,11 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 export const createSummarizingWarning =
     (details: string, logged: boolean) => new SummarizingWarning(details, logged);
 
-export interface ISummarizerEvents extends IEvent {
+export interface ISummarizerEvents {
     /**
      * An event indicating that the Summarizer is having problems summarizing
      */
-    (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
+    summarizingError: [error: ISummarizingWarning];
 }
 export interface ISummarizer
     extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
@@ -625,7 +625,7 @@ export class RunningSummarizer implements IDisposable {
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
-export class Summarizer extends EventEmitter implements ISummarizer {
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     public get IFluidLoadable() { return this; }
     public get IFluidRouter() { return this; }
     public get IFluidRunnable() { return this; }

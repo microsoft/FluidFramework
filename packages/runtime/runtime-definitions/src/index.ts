@@ -6,6 +6,7 @@
 export * from "./dataStoreFactory";
 export * from "./dataStoreRegistry";
 export * from "./dataStoreContext";
+export * from "./events";
 export * from "./garbageCollection";
 export * from "./protocol";
 export * from "./summary";

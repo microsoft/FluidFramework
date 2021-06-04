@@ -24,7 +24,6 @@ import {
     assert,
     Deferred,
     LazyPromise,
-    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -63,6 +62,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    TypedEventEmitter,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -98,9 +98,9 @@ export interface ISharedObjectRegistry {
 /**
  * Base data store class
  */
-export class FluidDataStoreRuntime extends
-TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime
+    extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
+    implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the data store runtime
      * @param context - The data store context

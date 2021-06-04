@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RequestParser } from "../requestParser";
+import { RequestParser } from "../../requestParser";
 
 describe("RequestParser", () => {
     describe(".getPathParts", () => {

@@ -31,13 +31,17 @@ import {
     CreateChildSummarizerNodeParam,
     IContainerRuntimeBase,
     IFluidDataStoreContext,
+    IFluidDataStoreContextEvents,
     IFluidDataStoreRegistry,
     IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 
-export class MockFluidDataStoreContext implements IFluidDataStoreContext {
+export class MockFluidDataStoreContext
+    extends TypedEventEmitter<IFluidDataStoreContextEvents>
+    implements IFluidDataStoreContext {
     public documentId: string;
     public isLocalDataStore: boolean = true;
     public packagePath: readonly string[];
@@ -73,26 +77,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         public readonly id: string = uuid(),
         public readonly existing: boolean = false,
         public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreContext"),
-    ) {}
-
-    on(event: string | symbol, listener: (...args: any[]) => void): this {
-        switch (event) {
-            case "leader":
-            case "notleader":
-            case "attaching":
-            case "attached":
-                return this;
-            default:
-                throw new Error("Method not implemented.");
-        }
-    }
-
-    once(event: string | symbol, listener: (...args: any[]) => void): this {
-        return this;
-    }
-
-    off(event: string | symbol, listener: (...args: any[]) => void): this {
-        throw new Error("Method not implemented.");
+    ) {
+        super();
     }
 
     public getQuorum(): IQuorum {

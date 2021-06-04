@@ -23,7 +23,6 @@ import {
     assert,
     Deferred,
     LazyPromise,
-    TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -60,7 +59,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { addBlobToSummary, convertSummaryTreeToITree, TypedEventEmitter } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {

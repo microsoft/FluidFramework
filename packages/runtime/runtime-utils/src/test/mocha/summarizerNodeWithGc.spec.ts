@@ -16,8 +16,8 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode/summarizerNodeWithGc";
-import { mergeStats } from "../summaryUtils";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../../summarizerNode/summarizerNodeWithGc";
+import { mergeStats } from "../../summaryUtils";
 
 describe("SummarizerNodeWithGC Tests", () => {
     const summarizerNodeId = "testNode";

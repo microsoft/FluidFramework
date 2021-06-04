@@ -39,7 +39,6 @@ import {
 import {
     assert,
     Trace,
-    TypedEventEmitter,
     unreachableCase,
 } from "@fluidframework/common-utils";
 import {
@@ -108,6 +107,7 @@ import {
     create404Response,
     exceptionToResponse,
     responseToException,
+    TypedEventEmitter,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";

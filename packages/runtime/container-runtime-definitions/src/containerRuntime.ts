@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
     ContainerWarning,
@@ -30,6 +29,7 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IEventProvider,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
@@ -46,20 +46,19 @@ export interface IProvideContainerRuntime {
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
-    (
-        event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved",
-        listener: () => void);
-    (event: "connected", listener: (clientId: string) => void);
-    (event: "localHelp", listener: (message: IHelpMessage) => void);
-    (
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
-    );
+    codeDetailsProposed: [codeDetails: IFluidCodeDetails, proposal: IPendingProposal];
+    dirtyDocument: [];
+    dirty: [];
+    disconnected: [];
+    dispose: [];
+    savedDocument: [];
+    saved: [];
+    connected: [clientId: string];
+    localHelp: [message: IHelpMessage];
+    fluidDataStoreInstantiated: [dataStorePkgName: string, registryPath: string, createNew: boolean];
 }
 
-export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.

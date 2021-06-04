@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -38,6 +38,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
+import { IEventProvider } from "./events";
 
 /**
  * Runtime flush mode handling
@@ -55,14 +56,19 @@ export enum FlushMode {
     Manual,
 }
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
-    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+export interface IContainerRuntimeBaseEvents {
+    batchBegin: [op: ISequencedDocumentMessage];
+    op: [op: ISequencedDocumentMessage];
+    batchEnd: [error: any, op: ISequencedDocumentMessage];
+    signal: [message: IInboundSignalMessage, local: boolean];
     /**
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
-    (event: "leader" | "notleader", listener: () => void);
+    leader: [];
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    notleader: [];
 }
 
 /**
@@ -228,13 +234,17 @@ export type CreateChildSummarizerNodeFn = (
     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
 ) => ISummarizerNodeWithGC;
 
-export interface IFluidDataStoreContextEvents extends IEvent {
+export interface IFluidDataStoreContextEvents {
     /**
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
-    (event: "leader" | "notleader", listener: () => void);
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    (event: "attaching" | "attached", listener: () => void);
+    leader: [];
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    notleader: [];
+    attaching: [];
+    attached: [];
 }
 
 /**

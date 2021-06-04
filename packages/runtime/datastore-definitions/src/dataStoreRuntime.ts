@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
     IFluidSerializer,
@@ -23,22 +23,29 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
+import {
+    IEventProvider,
+    IInboundSignalMessage,
+    IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
-export interface IFluidDataStoreRuntimeEvents extends IEvent {
+export interface IFluidDataStoreRuntimeEvents {
     /**
      * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
      */
-    (event: "leader" | "notleader", listener: () => void);
-    (
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
-        event: "disconnected" | "dispose" | "attaching" | "attached",
-        listener: () => void,
-    );
-    (event: "op", listener: (message: ISequencedDocumentMessage) => void);
-    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-    (event: "connected", listener: (clientId: string) => void);
+    leader: [];
+    /**
+     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
+     */
+    notleader: [];
+    disconnected: [];
+    dispose: [];
+    attaching: [];
+    attached: [];
+    op: [message: ISequencedDocumentMessage];
+    signal: [message: IInboundSignalMessage, local: boolean];
+    connected: [clientId: string];
 }
 
 /**
