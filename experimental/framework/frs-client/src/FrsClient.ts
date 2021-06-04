@@ -24,6 +24,7 @@ import {
 } from "./interfaces";
 import { FrsAudience } from "./FrsAudience";
 import { FrsSimpleUrlResolver } from "./FrsSimpleUrlResolver";
+import { debug } from "./debug";
 
 /**
  * FrsClientInstance provides the ability to have a Fluid object backed by the FRS service
@@ -46,22 +47,25 @@ export class FrsClientInstance {
         containerConfig: FrsContainerConfig,
         containerSchema: ContainerSchema,
     ): Promise<[FluidContainer, FrsContainerServices]> {
-        return this.getContainerCore(
-            containerConfig,
-            containerSchema,
-            true,
-        );
+        const loader = this.createLoader(containerConfig, containerSchema);
+        const container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+        await container.attach({ url: containerConfig.id });
+        return this.getFluidContainerAndServices(container);
     }
 
     public async getContainer(
         containerConfig: FrsContainerConfig,
         containerSchema: ContainerSchema,
     ): Promise<[FluidContainer, FrsContainerServices]> {
-        return this.getContainerCore(
-            containerConfig,
-            containerSchema,
-            false,
-        );
+        const loader = this.createLoader(containerConfig, containerSchema);
+        const container = await loader.resolve({ url: containerConfig.id });
+        if (container.existing === false) {
+            throw new Error("Attempted to load a non-existing container");
+        }
+        return this.getFluidContainerAndServices(container);
     }
 
     private async getFluidContainerAndServices(
@@ -81,46 +85,22 @@ export class FrsClientInstance {
         };
     }
 
-    private async getContainerCore(
+    private createLoader(
         containerConfig: FrsContainerConfig,
         containerSchema: ContainerSchema,
-        createNew: boolean,
-    ): Promise<[FluidContainer, FrsContainerServices]> {
+    ): Loader {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
         const urlResolver = new FrsSimpleUrlResolver(this.connectionConfig, containerConfig.id);
-        const loader = new Loader({
+        return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: containerConfig.logger,
         });
-
-        let container: Container;
-
-        if (createNew) {
-            // We're not actually using the code proposal (our code loader always loads the same module
-            // regardless of the proposal), but the Container will only give us a NullRuntime if there's
-            // no proposal.  So we'll use a fake proposal.
-            container = await loader.createDetachedContainer({
-                package: "no-dynamic-package",
-                config: {},
-            });
-            await container.attach({ url: containerConfig.id });
-        } else {
-            // Request must be appropriate and parseable by resolver.
-            container = await loader.resolve({ url: containerConfig.id });
-            // If we didn't create the container properly, then it won't function correctly.
-            // So we'll throw if we got a
-            // new container here, where we expect this to be loading an existing container.
-            if (container.existing === undefined) {
-                throw new Error("Attempted to load a non-existing container");
-            }
-        }
-        return this.getFluidContainerAndServices(container);
     }
 }
 
@@ -134,10 +114,11 @@ export class FrsClient {
 
     static init(connectionConfig: FrsConnectionConfig) {
         if (FrsClient.globalInstance) {
-            console.log(
+            debug(
                 `FrsClient has already been initialized. Using existing instance of
                 FrsClient instead.`,
             );
+            return;
         }
         FrsClient.globalInstance = new FrsClientInstance(
             connectionConfig,
