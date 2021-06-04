@@ -25,7 +25,7 @@ module.exports = env => {
         rules: [
           {
             test: /\.tsx?$/,
-            loader: 'ts-loader'
+            loader: require.resolve("ts-loader")
           },
           {
             test: /\.css$/,
@@ -43,7 +43,7 @@ module.exports = env => {
           },
           {
             test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-            loader: 'url-loader',
+            loader: require.resolve('url-loader'),
             options: {
               limit: 10000
             }

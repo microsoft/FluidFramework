@@ -25,7 +25,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader: 'ts-loader',
+                            loader: require.resolve("ts-loader"),
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -36,7 +36,7 @@ module.exports = env => {
                     },
                     {
                         test: /\.js$/,
-                        use: ["source-map-loader"],
+                        use: [require.resolve("source-map-loader")],
                         enforce: "pre"
                     },
                     {
@@ -56,7 +56,7 @@ module.exports = env => {
                     },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: 'url-loader',
+                        loader: require.resolve('url-loader'),
                         options: {
                             limit: 10000
                         }
