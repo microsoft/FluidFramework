@@ -17,7 +17,6 @@ export interface FrsConnectionConfig {
     key: string;
     orderer: string;
     storage: string;
-    absoluteUrlBase?: string;
     tokenProvider?: ITokenProvider
     user?: FrsMember;
 }
