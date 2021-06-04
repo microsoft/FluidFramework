@@ -60,13 +60,13 @@
     "@fluidframework/driver-utils": "^0.41.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.41.0",
-    "@fluidframework/server-local-server": "^0.1025.0-0",
-    "@fluidframework/server-services-client": "^0.1025.0-0",
-    "@fluidframework/server-services-core": "^0.1025.0-0",
-    "@fluidframework/server-test-utils": "^0.1025.0-0",
+    "@fluidframework/server-local-server": "^0.1026.0-0",
+    "@fluidframework/server-services-client": "^0.1026.0-0",
+    "@fluidframework/server-services-core": "^0.1026.0-0",
+    "@fluidframework/server-test-utils": "^0.1026.0-0",
     "assert": "^2.0.0",
     "debug": "^4.1.1",
-    "jsrsasign": "^10.0.2",
+    "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

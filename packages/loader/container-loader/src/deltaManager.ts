@@ -67,7 +67,8 @@ const DefaultChunkSize = 16 * 1024;
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
-    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, { statusCode: nackContent.code });
+    const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
+    return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
 function createReconnectError(prefix: string, err: any) {
@@ -940,7 +941,7 @@ export class DeltaManager
     }
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
-        const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
+        const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
         this.enqueueMessages(messages, "opHandler");
     };
 

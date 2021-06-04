@@ -61,11 +61,30 @@ export class PermutationSegment extends BaseSegment {
     }
 
     /**
-     * Transfers ownership of the associated row/col handles to the given 'destination' segment.
-     * The original segment's handle allocation is reset.  Used by 'undoRow/ColRemove' when
-     * copying cells to restore row/col segments.)
+     * Invoked by '_undoRow/ColRemove' to prepare the newly inserted destination
+     * segment to serve as the replacement for this removed segment.  This moves handle
+     * allocations from this segment to the replacement as well as maintains tracking
+     * groups for the undo/redo stack.
      */
-    public transferHandlesTo(destination: PermutationSegment) {
+    public transferToReplacement(destination: PermutationSegment) {
+        // When this segment was removed, it may have been split from a larger original
+        // segment.  In this case, it will have been added to an undo/redo tracking group
+        // that associates all of the fragments from the original insertion.
+        //
+        // Move this association from the this removed segment to its replacement so that
+        // it is included if the undo stack continues to unwind to the original insertion.
+        //
+        // Out of paranoia we link and unlink in separate loops to avoid mutating the underlying
+        // set during enumeration.  In pratice, this is unlikely to matter since there should be
+        // exactly 0 or 1 items in the enumeration.
+        for (const group of this.trackingCollection.trackingGroups) {
+            group.link(destination);
+        }
+        for (const group of this.trackingCollection.trackingGroups) {
+            group.unlink(this);
+        }
+
+        // Move handle allocations from this segment to its replacement.
         destination._start = this._start;
         this.reset();
     }

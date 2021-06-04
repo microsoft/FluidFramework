@@ -128,7 +128,8 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, { statusCode });
+            const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
+            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];
