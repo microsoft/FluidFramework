@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export type ArrayOrNever<T> = T extends any[] ? T : never;
+export const eventThis = Symbol("eventThis");
+export type EventThis = typeof eventThis;
+
+export type EventArgs<T, TThis> =
+    T extends any[] ? { [K in keyof T]: T[K] extends EventThis ? TThis : T[K] } : T;
 
 export type EventName<
     TEvents,
@@ -12,17 +16,18 @@ export type EventName<
 
 export type EventHandler<
     TEvents,
+    TThis,
     TKey extends keyof TEvents = keyof TEvents,
     TArgs extends TEvents[TKey] = TEvents[TKey]
-> = (...args: ArrayOrNever<TArgs>) => void;
+> = (...args: EventArgs<TArgs, TThis>) => void;
 
-export type EventSubscribe<TEvents, TResult> = <
+export type EventSubscribe<TEvents, TThis> = <
     TKey extends keyof TEvents = keyof TEvents,
     TArgs extends TEvents[TKey] = TEvents[TKey]
 >(
     event: EventName<TEvents, TKey>,
-    listener: EventHandler<TEvents, TKey, TArgs>,
-) => TResult;
+    listener: EventHandler<TEvents, TThis, TKey, TArgs>,
+) => TThis;
 
 export interface IErrorEvents {
     error: [error: any];

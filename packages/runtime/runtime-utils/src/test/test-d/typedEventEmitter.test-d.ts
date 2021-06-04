@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
+import { EventArgs, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
 import { expectAssignable, expectError, expectType } from 'tsd';
 import { IEventEmitter, TypedEventEmitter } from "../../../dist";
 
@@ -12,6 +12,7 @@ interface ITestEvents {
     ping: [];
     bad(): void;
     alsoBad: number;
+    this: [n: number, that: EventThis];
 }
 
 class TestEmitter extends TypedEventEmitter<ITestEvents> {
@@ -27,12 +28,12 @@ class TestEmitter extends TypedEventEmitter<ITestEvents> {
         expectError(this.on("alert", (x: number) => {
             // should fail with wrong type arg
         }));
-        this.off("bad", (args) => {
-            expectType<never>(args);
-        });
-        this.prependListener("alsoBad", (args) => {
-            expectType<never>(args);
-        });
+        expectError(this.off("bad", (args) => {
+            // not an array
+        }));
+        expectError(this.prependListener("alsoBad", (args) => {
+            // not an array
+        }));
         this.prependOnceListener("ping", () => {
             // do nothing
         });
@@ -45,8 +46,8 @@ class TestEmitter extends TypedEventEmitter<ITestEvents> {
         this.emit("alert", "received a ping");
         expectError(this.emit("alert", 1));
         this.emit("ping");
-        this.emit("bad");
-        this.emit("alsoBad");
+        expectError(this.emit("bad"));
+        expectError(this.emit("alsoBad"));
 
         // Verify listener events
         this.on("newListener", (event, listener) => {
@@ -70,6 +71,12 @@ class TestEmitter extends TypedEventEmitter<ITestEvents> {
         expectError(this.on("error", (error, extra) => {
             // too many args
         }));
+
+        this.emit("this", 2, this);
+        this.on("this", (n, that) => {
+            expectType<number>(n);
+            expectType<this>(that);
+        });
     }
 }
 
@@ -90,12 +97,12 @@ export function testConcreteTypes(emitter: TestEmitter) {
     expectError(emitter.on("alert", (x: number) => {
         // should fail with wrong type arg
     }));
-    emitter.off("bad", (args) => {
+    expectError(emitter.off("bad", (args) => {
         expectType<never>(args);
-    });
-    emitter.prependListener("alsoBad", (args) => {
+    }));
+    expectError(emitter.prependListener("alsoBad", (args) => {
         expectType<never>(args);
-    });
+    }));
     expectError(emitter.once("reallyBad", (args) => {
         // should fail
     }));
@@ -111,8 +118,8 @@ export function testConcreteTypes(emitter: TestEmitter) {
     emitter.emit("alert", "received a ping");
     expectError(emitter.emit("alert", 1));
     emitter.emit("ping");
-    emitter.emit("bad");
-    emitter.emit("alsoBad");
+    expectError(emitter.emit("bad"));
+    expectError(emitter.emit("alsoBad"));
     expectError(emitter.emit("reallyBad"));
 
     // Verify listener events
@@ -137,6 +144,12 @@ export function testConcreteTypes(emitter: TestEmitter) {
     expectError(emitter.on("error", (error, extra) => {
         // too many args
     }));
+
+    emitter.emit("this", 2, emitter);
+    emitter.on("this", (n, that) => {
+        expectType<number>(n);
+        expectType<typeof emitter>(that);
+    });
 }
 
 // Verify external emitter interface
@@ -152,12 +165,12 @@ export function testContractTypes(emitter: IEventProvider<ITestEvents>) {
     expectError(emitter.on("alert", (x: number) => {
         // should fail with wrong type arg
     }));
-    emitter.off("bad", (args) => {
+    expectError(emitter.off("bad", (args) => {
         expectType<never>(args);
-    });
-    emitter.prependListener("alsoBad", (args) => {
+    }));
+    expectError(emitter.prependListener("alsoBad", (args) => {
         expectType<never>(args);
-    });
+    }));
     expectError(emitter.once("reallyBad", (args) => {
         // should fail
     }));
@@ -197,10 +210,16 @@ export function testContractTypes(emitter: IEventProvider<ITestEvents>) {
     expectError(emitter.on("error", (error, extra) => {
         // too many args
     }));
+
+    emitter.on("this", (n, that) => {
+        expectType<number>(n);
+        expectType<typeof emitter>(that);
+    });
 }
 
 interface IBaseEvents extends IErrorEvents {
     base: [b: boolean];
+    testThis: [me: EventThis];
 }
 
 interface IExtendedEvents extends IBaseEvents {
@@ -233,9 +252,19 @@ class ExtendableEmitter<T extends IBaseEvents> extends TypedEventEmitter<T> {
         expectError(this.emit("base", 1));
         expectError(this.emit("extended", 1));
         this.emit("error", Error("x"));
+
+        // By casting this to what it should be
+        this.emit("testThis", ...[this] as EventArgs<T["testThis"], this>);
+        // By expecting this to be what it knows it is
+        this.emit<"testThis", IBaseEvents["testThis"]>("testThis", this);
+        // Don't do this
+        this.emit<"testThis", [EventThis]>("testThis", this);
+        this.on("testThis", (me) => {
+            expectAssignable<ExtendableEmitter<T>>(me);
+            expectAssignable<this>(me);
+        });
     }
 }
-
 
 export function testExtendedTypes(emitter: ExtendableEmitter<IExtendedEvents>) {
     expectAssignable<IEventProvider<IBaseEvents>>(emitter);
@@ -262,6 +291,12 @@ export function testExtendedTypes(emitter: ExtendableEmitter<IExtendedEvents>) {
     expectError(emitter.emit("base", 1));
     emitter.emit("extended", 1);
     emitter.emit("error", Error("x"));
+
+    emitter.emit("testThis", emitter);
+    emitter.on("testThis", (me) => {
+        expectType<ExtendableEmitter<IExtendedEvents>>(me);
+        expectType<typeof emitter>(me);
+    });
 }
 
 export function testExtendableTypes<T extends IBaseEvents>(emitter: ExtendableEmitter<T>) {
@@ -289,4 +324,23 @@ export function testExtendableTypes<T extends IBaseEvents>(emitter: ExtendableEm
     expectError(emitter.emit("base", 1));
     expectError(emitter.emit("extended", 1));
     emitter.emit("error", Error("x"));
+
+    // By casting this to what it should be
+    emitter.emit("testThis", ...[emitter] as EventArgs<T["testThis"], typeof emitter>);
+    // By expecting this to be what it knows it is
+    emitter.emit<"testThis", IBaseEvents["testThis"]>("testThis", emitter);
+    // Don't do this
+    emitter.emit<"testThis", [EventThis]>("testThis", emitter);
+    emitter.on("testThis", (me) => {
+        expectAssignable<ExtendableEmitter<T>>(me);
+        expectAssignable<typeof emitter>(me);
+    });
+}
+
+class FurtherExtendedEmitter extends ExtendableEmitter<IExtendedEvents> {}
+export function furtherTest(f: FurtherExtendedEmitter) {
+    f.on("testThis", (me) => {
+        expectType<FurtherExtendedEmitter>(me);
+    });
+    f.emit("testThis", f)
 }

@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import {
-    ArrayOrNever,
+    EventArgs,
     EventHandler,
     EventName,
     IErrorEvents,
@@ -36,7 +36,7 @@ export interface IEventEmitter<
         TArgs extends TEvents[TKey] = TEvents[TKey]
     >(
         event: EventName<TEvents, TKey>,
-        ...args: ArrayOrNever<TArgs>
+        ...args: EventArgs<TArgs, this>
     ): boolean;
     removeAllListeners<TKey extends keyof AllEvents>(event?: EventName<AllEvents, TKey>): this;
     listeners<
@@ -44,7 +44,7 @@ export interface IEventEmitter<
         TArgs extends AllEvents[TKey] = AllEvents[TKey]
     >(
         event: EventName<AllEvents, TKey>
-    ): EventHandler<AllEvents, TKey, TArgs>[];
+    ): EventHandler<AllEvents, this, TKey, TArgs>[];
     listenerCount<TKey extends keyof AllEvents>(event: EventName<AllEvents, TKey>): number;
 }
 
