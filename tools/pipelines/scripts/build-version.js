@@ -166,17 +166,7 @@ function main() {
     }
 
     // Generate and print the version to console
-    let version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
-    if (arg_test_build) {
-        const split = version.split("-");
-        if (split.length !== 2) {
-            console.error(`ERROR: Invalid format for test version ${version}`);
-            process.exit(8);
-        }
-        // '0.' prefix so test build versions have lower precedence
-        split[1] = `0.${split[1]}-test`;
-        version = split.join("-");
-    }
+    let version = arg_test_build ? `0.0.0-${arg_build_num}-test` : getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
     if (arg_release) {
