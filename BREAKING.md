@@ -832,6 +832,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
         },
         "types": {
             "IComponent": "IFluidObject",
+            "fluid/component": "fluid/object",
 
             "SharedObjectComponentHandle": "SharedObjectHandle",
             "RemoteComponentHandle": "RemoteFluidObjectHandle",
@@ -951,14 +952,18 @@ As part of the Fluid Data Library (FDL) and Fluid Component Library (FCL) split 
 -   `IComponentSerializer `will become `IFluidSerializer`
 -   `IComponentTokenProvider` will become `IFluidTokenProvider`
 
-`IComponent` will also become `IFluidObject`
+`IComponent` will also become `IFluidObject`, and the mime type for for requests will change from `fluid/component` to `fluid/object`
 
 To ensure forward compatability when accessing the above interfaces outside the context of a container e.g. from the host, you should use the nullish coalesing operator (??).
 
 For example
 
 ```typescript
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "fluid/object"
+            )) {
             return undefined;
         }
 
