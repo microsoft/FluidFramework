@@ -6,10 +6,10 @@ This package is marked as experimental and currently under development. The API 
 
 ## Using frs-client
 
-The frs-client package has a default `FrsClient` static class that allows you to interact with Fluid.
+The frs-client package has a `FrsClient` static class that allows you to interact with Fluid.
 
 ```javascript
-import FrsClient from "@fluid-experimental/frs-client";
+import { FrsClient } from "@fluid-experimental/frs-client";
 ```
 
 ## Initializing FrsClient
@@ -19,7 +19,7 @@ Fluid requires a backing service to enable collaborative communication. The FrsC
 In the example below we are connecting to the FRS service by providing the tenantId and key that is uniquely generated for us when onboarding to the service, and the orderer and storage servers we wish to connect to. We can also optionally pass in our own user details instead of having the client designate a random GUID and a token provider for authentication.
 
 ```javascript
-import FrsClient, { FrsConnectionConfig } from "@fluid-experimental/frs-client";
+import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 
 const config: FrsConnectionConfig = { 
     tenantId: "",
