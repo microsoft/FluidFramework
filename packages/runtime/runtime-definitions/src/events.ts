@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export const eventThis = Symbol("eventThis");
+export const eventThis = Symbol("EventThis");
 export type EventThis = typeof eventThis;
 
 export type EventArgs<T, TThis> =
-    T extends any[] ? { [K in keyof T]: T[K] extends EventThis ? TThis : T[K] } : T;
+    T extends any[]
+    ? T
+    : T extends (...args: infer A) => any
+    ? { [K in keyof A]: A[K] extends EventThis ? TThis : A[K] }
+    : T;
 
 export type EventName<
     TEvents,

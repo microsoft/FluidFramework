@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 export type OmittedEventEmitterMembers =
-    | keyof IEventProvider<unknown>
+    | keyof IEventProvider<any>
     | "emit"
     | "removeAllListeners"
     | "listeners"

@@ -5,14 +5,14 @@
 
 import { EventArgs, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
 import { expectAssignable, expectError, expectType } from 'tsd';
-import { IEventEmitter, TypedEventEmitter } from "../../../dist";
+import { IEventEmitter, TypedEventEmitter } from "../../..";
 
 interface ITestEvents {
     alert: [message: string, counts?: number[]];
     ping: [];
-    bad(): void;
+    bad: void;
     alsoBad: number;
-    this: [n: number, that: EventThis];
+    this(n: number, that: EventThis): void;
 }
 
 class TestEmitter extends TypedEventEmitter<ITestEvents> {
@@ -219,7 +219,7 @@ export function testContractTypes(emitter: IEventProvider<ITestEvents>) {
 
 interface IBaseEvents extends IErrorEvents {
     base: [b: boolean];
-    testThis: [me: EventThis];
+    testThis(me: EventThis): void;
 }
 
 interface IExtendedEvents extends IBaseEvents {
@@ -253,12 +253,10 @@ class ExtendableEmitter<T extends IBaseEvents> extends TypedEventEmitter<T> {
         expectError(this.emit("extended", 1));
         this.emit("error", Error("x"));
 
-        // By casting this to what it should be
-        this.emit("testThis", ...[this] as EventArgs<T["testThis"], this>);
-        // By expecting this to be what it knows it is
+        // Preferred method: by expecting this to be what it knows it is
         this.emit<"testThis", IBaseEvents["testThis"]>("testThis", this);
-        // Don't do this
-        this.emit<"testThis", [EventThis]>("testThis", this);
+        // By casting args to what it should be, but casts other params as well
+        this.emit("testThis", ...[this] as EventArgs<T["testThis"], this>);
         this.on("testThis", (me) => {
             expectAssignable<ExtendableEmitter<T>>(me);
             expectAssignable<this>(me);
@@ -325,12 +323,10 @@ export function testExtendableTypes<T extends IBaseEvents>(emitter: ExtendableEm
     expectError(emitter.emit("extended", 1));
     emitter.emit("error", Error("x"));
 
-    // By casting this to what it should be
-    emitter.emit("testThis", ...[emitter] as EventArgs<T["testThis"], typeof emitter>);
-    // By expecting this to be what it knows it is
+    // Preferred method: by expecting this to be what it knows it is
     emitter.emit<"testThis", IBaseEvents["testThis"]>("testThis", emitter);
-    // Don't do this
-    emitter.emit<"testThis", [EventThis]>("testThis", emitter);
+    // By casting args to what it should be, but casts other params as well
+    emitter.emit("testThis", ...[emitter] as EventArgs<T["testThis"], typeof emitter>);
     emitter.on("testThis", (me) => {
         expectAssignable<ExtendableEmitter<T>>(me);
         expectAssignable<typeof emitter>(me);
@@ -343,4 +339,20 @@ export function furtherTest(f: FurtherExtendedEmitter) {
         expectType<FurtherExtendedEmitter>(me);
     });
     f.emit("testThis", f)
+}
+
+type Complex<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : number;
+interface IComplexEvents<T> {
+    maybe: [complex: Complex<T>];
+    maybeNot(complex: Complex<T>): void;
+}
+export function checkComplex<T>(emitter: IEventEmitter<IComplexEvents<T>>, complex: Complex<T>) {
+    emitter.emit("maybe", complex);
+    expectError(emitter.emit("maybeNot", complex)); // doesn't work when checking against EventThis
+    emitter.on("maybe", (complex) => {
+        expectType<Complex<T>>(complex);
+    });
+    emitter.on("maybeNot", (complex) => {
+        expectError<Complex<T>>(complex); // doesn't work when checking against EventThis
+    });
 }
