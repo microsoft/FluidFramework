@@ -26,6 +26,7 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
+"@fluidframework/aqueduct": "^0.42.0",
     "@fluidframework/container-definitions": "^0.39.0",
     "@fluidframework/container-loader": "^0.42.0",
     "@fluidframework/core-interfaces": "^0.39.0",
@@ -33,11 +34,13 @@
     "@fluidframework/routerlicious-driver": "^0.42.0",
     "@fluidframework/test-runtime-utils": "^0.42.0",
     "@fluidframework/view-interfaces": "^0.42.0",
-    "@fluidframework/web-code-loader": "^0.42.0"
+    "@fluidframework/web-code-loader": "^0.42.0",
+    "semver": "^7.3.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@types/semver": "^7.3.6",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

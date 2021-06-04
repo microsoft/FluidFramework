@@ -33,9 +33,9 @@ async function getFluidObjectAndRenderCore(loader: Loader, url: string, div: HTM
  * case it simply runs the attach method again.
  */
 export async function getFluidObjectAndRender(loader: Loader, container: Container, url: string, div: HTMLDivElement) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    getFluidObjectAndRenderCore(loader, url, div);
-    container.on("contextChanged", () => {
+    await getFluidObjectAndRenderCore(loader, url, div);
+    container.on("contextChanged", (codeDetails) => {
+        console.log("Context changed", codeDetails);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getFluidObjectAndRenderCore(loader, url, div);
     });

@@ -1,17 +1,113 @@
 <!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
 <!-- Licensed under the MIT License. -->
 
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Fluid Document Loader</title>
+        <style>
+            body {
+                background: lightgray;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                margin: 0px;
+                padding: 10px;
+            }
+            .toolbar {
+                align-items: flex-start;
+                background-color: #f1f1f1;
+                display: flex;
+                flex-direction: column;
+                margin: 2px;
+                max-height: 0;
+                overflow: hidden;
+                padding: 0 18px;
+                transition: max-height 0.2s ease-out;
+            }
+            .collapsible {
+                background-color: gray;
+                border: none;
+                cursor: pointer;
+                font-size: 14px;
+                outline: none;
+                padding: 10px;
+                text-align: left;
+            }
+            .active,
+            .collapsible:hover {
+                background-color: gray;
+            }
+            .collapsible:after {
+                color: white;
+                content: "➕";
+                float: right;
+                font-size: 10px;
+                margin-left: 5px;
+            }
+            .active:after {
+                content: "➖";
+            }
+        </style>
+    </head>
 
-<head>
-    <meta charset="utf-8">
-    <title>Fluid Document Loader</title>
-</head>
-
-<body>
-    <div id="content"></div>
-    <script src="/dist/main.bundle.js"></script>
-</body>
-
+    <body>
+        <button type="button" class="collapsible">Code Details</button>
+        <div class="toolbar">
+            <br />
+            <label for="container-package">Loaded code:</label>
+            <input
+                type="text"
+                id="container-package"
+                value="Loading..."
+                size="40"
+                title="Package ID currently loaded in container context"
+                disabled
+            />
+            <br />
+            <label for="proposed-version">Proposed version:</label>
+            <div>
+                <input
+                    type="text"
+                    id="proposed-version"
+                    placeholder="semantic version, e.g. 1.2.3"
+                    title="Semantic package version to propose in code upgrade"
+                    size="25"
+                />
+                <input
+                    id="increment-btn"
+                    type="button"
+                    value="+"
+                    title="Increment major version"
+                />
+                <input
+                    id="upgrade-btn"
+                    type="button"
+                    value="Upgrade"
+                    title="Upgrade container code via submitting new code proposal"
+                />
+            </div>
+            <br />
+            <input
+                id="reload-btn"
+                type="button"
+                value="Reload"
+                title="Reload container using proposed package version"
+            />
+            <br />
+        </div>
+        <div id="content"></div>
+        <script>
+            var expandBtn = document.getElementsByClassName("collapsible")[0];
+            expandBtn.addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                content.style.maxHeight = content.style.maxHeight
+                    ? null
+                    : content.scrollHeight + "px";
+            });
+        </script>
+        <script src="/dist/main.bundle.js"></script>
+    </body>
 </html>
