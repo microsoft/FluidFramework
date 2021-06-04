@@ -2,14 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
+import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
+import { TinyliciousClient } from "@fluid-experimental/tinylicious-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
-TinyliciousClient.init();
+const useFrs = process.env.USE_FRS === "true";
+
+const connectionConfig: FrsConnectionConfig = {
+    tenantId: "",
+    key: "",
+    orderer: "",
+    storage: "",
+};
+if (useFrs) {
+    FrsClient.init(connectionConfig);
+} else {
+    TinyliciousClient.init();
+}
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -37,9 +50,10 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
+    const client = useFrs ? FrsClient : TinyliciousClient;
     const [fluidContainer, containerServices] = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
