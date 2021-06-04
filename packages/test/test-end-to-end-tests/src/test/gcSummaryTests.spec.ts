@@ -84,7 +84,6 @@ describeNoCompat("Garbage Collection", (getTestObjectProvider) => {
          */
         function validateDataStoreInSummary(summary: ISummaryTree, dataStoreId: string, referenced: boolean) {
             let dataStoreTree: ISummaryTree | undefined;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
             for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
                 if (id === dataStoreId) {
