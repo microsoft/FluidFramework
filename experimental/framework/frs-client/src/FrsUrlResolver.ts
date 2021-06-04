@@ -6,7 +6,6 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { FrsConnectionConfig } from "./interfaces";
 
 // Implementation of a URL resolver to resolve documents stored using the FRS service
 // based off of the orderer and storage URLs provide. The token provider here can be a
@@ -14,20 +13,22 @@ import { FrsConnectionConfig } from "./interfaces";
 // ITokenProvider interface
 export class FrsUrlResolver implements IUrlResolver {
     constructor(
-        private readonly config: FrsConnectionConfig,
+        private readonly tenantId: string,
+        private readonly orderer: string,
+        private readonly storage: string,
         private readonly documentId: string,
         private readonly tokenProvider: ITokenProvider,
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const containerId = request.url.split("/")[0];
-        const token = (await this.tokenProvider.fetchOrdererToken(this.config.tenantId, this.documentId)).jwt;
-        const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${containerId}`;
+        const token = (await this.tokenProvider.fetchOrdererToken(this.tenantId, this.documentId)).jwt;
+        const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
-                deltaStorageUrl: `${this.config.orderer}/deltas/${this.config.tenantId}/${containerId}`,
-                ordererUrl: `${this.config.orderer}`,
-                storageUrl: `${this.config.storage}/repos/${this.config.tenantId}`,
+                deltaStorageUrl: `${this.orderer}/deltas/${this.tenantId}/${containerId}`,
+                ordererUrl: `${this.orderer}`,
+                storageUrl: `${this.storage}/repos/${this.tenantId}`,
             },
             id: containerId,
             tokens: { jwt: token },

@@ -94,7 +94,13 @@ export class FrsClientInstance {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-        const urlResolver = new FrsUrlResolver(this.connectionConfig, containerConfig.id, this.tokenProvider);
+        const urlResolver = new FrsUrlResolver(
+            this.connectionConfig.tenantId,
+            this.connectionConfig.orderer,
+            this.connectionConfig.storage,
+            containerConfig.id,
+            this.tokenProvider,
+        );
         return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,
