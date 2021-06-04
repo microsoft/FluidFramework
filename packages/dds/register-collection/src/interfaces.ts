@@ -31,7 +31,7 @@ export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
 }
 
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
-    (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void);
+    atomicChanged" | "versionChanged: [key: string, value: any, local: boolean];
 }
 
 /**

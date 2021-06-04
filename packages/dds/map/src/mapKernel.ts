@@ -6,7 +6,8 @@
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IEventEmitter, TypedEventEmitter } from "@fluidframework/runtime-utils";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -198,7 +199,7 @@ export class MapKernel implements IValueTypeCreator {
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
-        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
+        public readonly eventEmitter: IEventEmitter<ISharedMapEvents> = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
@@ -307,8 +308,7 @@ export class MapKernel implements IValueTypeCreator {
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }
@@ -551,7 +551,7 @@ export class MapKernel implements IValueTypeCreator {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+        this.eventEmitter.emit("valueChanged", event, local, op ?? null, this.eventEmitter);
     }
 
     /**
@@ -561,7 +561,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, op, this.eventEmitter);
+        this.eventEmitter.emit("clear", local, op ?? null, this.eventEmitter);
     }
 
     /**
@@ -576,7 +576,7 @@ export class MapKernel implements IValueTypeCreator {
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+            this.eventEmitter.emit("valueChanged", event, local, op ?? null, this.eventEmitter);
         }
         return successfullyRemoved;
     }
@@ -757,7 +757,7 @@ export class MapKernel implements IValueTypeCreator {
                         this.serializer);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
-                    this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
+                    this.eventEmitter.emit("valueChanged", event, local, message ?? null, this.eventEmitter);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
                     this.submitMessage(op, localOpMetadata);

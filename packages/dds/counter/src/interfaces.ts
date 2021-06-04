@@ -6,7 +6,7 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ISharedCounterEvents extends ISharedObjectEvents {
-    (event: "incremented", listener: (incrementAmount: number, newValue: number) => void);
+    incremented: [incrementAmount: number, newValue: number];
 }
 
 /**

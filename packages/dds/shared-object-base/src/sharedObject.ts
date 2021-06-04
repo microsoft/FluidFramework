@@ -17,20 +17,48 @@ import {
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelSummarizeResult,
+    IErrorEvents,
     IGarbageCollectionData,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
-import { ChildLogger, EventEmitterWithErrorHandling, logIfFalse } from "@fluidframework/telemetry-utils";
+import {
+    convertToSummaryTreeWithStats,
+    FluidSerializer,
+    IEventEmitter,
+    TypedEventEmitter,
+} from "@fluidframework/runtime-utils";
+import { ChildLogger, logIfFalse } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
+ * Event Emitter helper class
+ * Any exceptions thrown by listeners will be caught and raised through "error" event.
+ * Any exception thrown by "error" listeners will propagate to the caller.
+ */
+export class TypedEventEmitterWithErrorHandling<TEvent extends IErrorEvents> extends TypedEventEmitter<TEvent> {
+    public readonly emit: IEventEmitter<TEvent>["emit"] = (event, ...args) => {
+        try {
+            return super.emit(event, ...args as Parameters<IEventEmitter<TEvent>["emit"]>[1]);
+        } catch (error) {
+            // Some listener threw an error, we'll try emitting that error via the error event
+            // But not if we're already dealing with the error event, in that case just let the error be thrown
+            if (event === "error") {
+                throw error;
+            }
+
+            // Note: This will throw if no listeners are registered for the error event
+            return super.emit("error", error);
+        }
+    };
+}
+
+/**
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    extends TypedEventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     /**
      * @param obj - The thing to check if it is a SharedObject
      * @returns Returns true if the thing is a SharedObject
@@ -489,9 +517,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * For messages from a remote client, this will be undefined.
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        this.emit("pre-op", message, local, this);
+        this.emit<"pre-op", ISharedObjectEvents["pre-op"]>("pre-op", message, local, this);
         this.processCore(message, local, localOpMetadata);
-        this.emit("op", message, local, this);
+        this.emit<"op", ISharedObjectEvents["op"]>("op", message, local, this);
     }
 
     /**

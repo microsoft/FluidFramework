@@ -3,14 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import {
+    EventThis,
+    IChannelSummarizeResult,
+    IErrorEvents,
+    IEventProvider,
+    IGarbageCollectionData,
+} from "@fluidframework/runtime-definitions";
 
-export interface ISharedObjectEvents extends IErrorEvent {
-    (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
+export interface ISharedObjectEvents extends IErrorEvents {
+    ["pre-op"](
+        op: ISequencedDocumentMessage,
+        local: boolean,
+        target: EventThis,
+    ): EventThis;
+    op(
+        op: ISequencedDocumentMessage,
+        local: boolean,
+        target: EventThis,
+    ): EventThis;
 }
 
 /**

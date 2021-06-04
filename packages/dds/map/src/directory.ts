@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
@@ -19,6 +19,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
 import { debug } from "./debug";
@@ -341,7 +342,9 @@ export class DirectoryFactory {
  *
  * @sealed
  */
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
+export class SharedDirectory
+    extends SharedObject<ISharedDirectoryEvents>
+    implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
@@ -1189,7 +1192,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return;
         }
         this.clearExceptPendingKeys();
-        this.directory.emit("clear", local, op, this.directory);
+        this.directory.emit("clear", local, message, this.directory);
     }
 
     /**

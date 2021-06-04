@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObserver } from "./interfaces";
 
 /**
