@@ -24,7 +24,6 @@ export interface IValueChanged {
 
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
- * @alpha
  */
 export interface IValueOpEmitter {
     /**
