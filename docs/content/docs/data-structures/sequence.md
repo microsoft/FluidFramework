@@ -190,7 +190,7 @@ any JSON serializable object. Both DDSes support inserting, removing, and annota
 that is, each number or object -- will occupy a single position in the sequence. The length of the sequence is the count
 of content items in the sequence.
 
-An important note is that, unlike an array, positions are not guaranteed remain constant. The position of an item can
+An important note is that, unlike an array, positions are not guaranteed to remain constant. The position of an item can
 change as content is added or removed from the sequence. To track or pass a reference to a specific piece of content
 within the sequence you should find its segment via `segment = s.getContainingSegment(position)` and then use
 `pos = s.getPosition(segment)` to get its current position in the tree.
