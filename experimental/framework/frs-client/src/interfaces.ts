@@ -12,14 +12,24 @@ export interface FrsContainerConfig {
     logger?: ITelemetryBaseLogger;
 }
 
-export interface FrsConnectionConfig {
+interface FrsConnectionConfigBase {
     tenantId: string;
-    key: string;
     orderer: string;
     storage: string;
-    tokenProvider?: ITokenProvider
     user?: FrsMember;
 }
+
+interface FrsConnectionConfigWithKey extends FrsConnectionConfigBase {
+    key: string;
+    tokenProvider?: never;
+}
+
+interface FrsConnectionConfigWithTokenProvider extends FrsConnectionConfigBase {
+    key?: never;
+    tokenProvider: ITokenProvider
+}
+
+export type FrsConnectionConfig = FrsConnectionConfigWithKey | FrsConnectionConfigWithTokenProvider;
 
 /**
  * FrsContainerServices is returned by the FrsClient alongside a FluidContainer.

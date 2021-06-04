@@ -31,15 +31,15 @@ import { debug } from "./debug";
  */
 export class FrsClientInstance {
     public readonly documentServiceFactory: IDocumentServiceFactory;
-    public readonly user;
+    public readonly tokenProvider: ITokenProvider;
     constructor(private readonly connectionConfig: FrsConnectionConfig) {
-        this.user = this.connectionConfig.user
+        const user = this.connectionConfig.user
             ? { id: this.connectionConfig.user.userId, name: this.connectionConfig.user.userName }
             : generateUser();
-        const tokenProvider: ITokenProvider = connectionConfig.tokenProvider
-            ?? new InsecureTokenProvider(connectionConfig.key, this.user);
+        this.tokenProvider = connectionConfig.tokenProvider
+            ?? new InsecureTokenProvider(connectionConfig.key, user);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            tokenProvider,
+            this.tokenProvider,
         );
     }
 
@@ -94,7 +94,7 @@ export class FrsClientInstance {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-        const urlResolver = new FrsSimpleUrlResolver(this.connectionConfig, containerConfig.id);
+        const urlResolver = new FrsSimpleUrlResolver(this.connectionConfig, containerConfig.id, this.tokenProvider);
         return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,

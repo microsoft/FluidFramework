@@ -5,26 +5,19 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-client";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { FrsConnectionConfig } from "./interfaces";
 
 export class FrsSimpleUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: FrsConnectionConfig,
         private readonly documentId: string,
-        private readonly user?: IUser,
+        private readonly tokenProvider: ITokenProvider,
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const containerId = request.url.split("/")[0];
-        const token = generateToken(
-            this.config.tenantId,
-            this.documentId,
-            this.config.key,
-            [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            this.user,
-        );
+        const token = (await this.tokenProvider.fetchOrdererToken(this.config.tenantId, this.documentId)).jwt;
         const documentUrl = `${this.config.orderer}/${this.config.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
