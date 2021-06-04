@@ -23,7 +23,7 @@ import {
     FrsContainerServices,
 } from "./interfaces";
 import { FrsAudience } from "./FrsAudience";
-import { FrsSimpleUrlResolver } from "./FrsSimpleUrlResolver";
+import { FrsUrlResolver } from "./FrsUrlResolver";
 import { debug } from "./debug";
 
 /**
@@ -94,7 +94,7 @@ export class FrsClientInstance {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-        const urlResolver = new FrsSimpleUrlResolver(this.connectionConfig, containerConfig.id, this.tokenProvider);
+        const urlResolver = new FrsUrlResolver(this.connectionConfig, containerConfig.id, this.tokenProvider);
         return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,

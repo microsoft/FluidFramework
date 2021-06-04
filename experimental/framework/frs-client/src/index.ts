@@ -5,5 +5,5 @@
 
 export * from "./interfaces";
 export * from "./FrsAudience";
-export * from "./FrsSimpleUrlResolver";
+export * from "./FrsUrlResolver";
 export * from "./FrsClient";

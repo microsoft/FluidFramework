@@ -8,7 +8,11 @@ import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/d
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { FrsConnectionConfig } from "./interfaces";
 
-export class FrsSimpleUrlResolver implements IUrlResolver {
+// Implementation of a URL resolver to resolve documents stored using the FRS service
+// based off of the orderer and storage URLs provide. The token provider here can be a
+// InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
+// ITokenProvider interface
+export class FrsUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: FrsConnectionConfig,
         private readonly documentId: string,
