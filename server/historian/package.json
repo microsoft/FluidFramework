@@ -24,6 +24,8 @@
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
     "start": "node packages/historian/dist/www.js",
+    "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
+    "start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "test": "lerna run test --stream --no-bail --no-sort",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"

@@ -492,6 +492,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         if (cachedSnapshot === undefined) {
                             cachedSnapshot = await snapshotP;
                         }
+                        else {
+                            snapshotP.catch(() => {});
+                        }
 
                         method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
                     } else {

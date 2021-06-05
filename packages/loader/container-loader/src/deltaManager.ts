@@ -941,7 +941,7 @@ export class DeltaManager
     }
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
-        const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
+        const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
         this.enqueueMessages(messages, "opHandler");
     };
 
