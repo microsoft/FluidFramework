@@ -81,7 +81,7 @@ export class TestClientLogger {
                         c.getText(),
                         baseText,
                         // eslint-disable-next-line max-len
-                        `${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
+                        `\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
                 }
             });
     }

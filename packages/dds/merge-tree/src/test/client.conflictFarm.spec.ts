@@ -9,7 +9,7 @@ import {
     doOverRange,
     IConfigRange,
     IMergeTreeOperationRunnerConfig,
-    insertAtRefPos,
+    // insertAtRefPos,
     removeRange,
     runMergeTreeOperationRunner,
     TestOperation,
@@ -20,20 +20,21 @@ import { TestClient } from "./testClient";
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     minLength: IConfigRange;
     clients: IConfigRange;
+    timeoutMs?: number;
 }
 
-const allOpertaions: TestOperation[] = [
+const allOperations: TestOperation[] = [
     removeRange,
     annotateRange,
-    insertAtRefPos,
+    // insertAtRefPos,
 ];
 
 export const debugOptions: IConflictFarmConfig = {
     minLength: { min: 2, max: 2 },
     clients: { min: 3, max: 3 },
-    opsPerRoundRange: { min: 1, max: 100 },
-    rounds: 1000,
-    operations: allOpertaions,
+    opsPerRoundRange: { min: 4, max: 100 },
+    rounds: 10000,
+    operations: allOperations,
     incrementalLog: true,
     growthFunc: (input: number) => input + 1,
 };
@@ -43,22 +44,24 @@ export const defaultOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
-    operations: allOpertaions,
+    operations: allOperations,
+    timeoutMs: 30 * 1000,
     growthFunc: (input: number) => input * 2,
 };
 
 export const longOptions: IConflictFarmConfig = {
-    minLength: { min: 1, max: 512 },
+    minLength: { min: 1, max: 1 },
     clients: { min: 1, max: 32 },
     opsPerRoundRange: { min: 1, max: 512 },
     rounds: 32,
-    operations: allOpertaions,
+    operations: allOperations,
+    incrementalLog: true,
     growthFunc: (input: number) => input * 2,
 };
 
 describe("MergeTree.Client", () => {
     const opts =
-        defaultOptions;
+    defaultOptions;
     // debugOptions;
     // longOptions;
 
@@ -93,8 +96,6 @@ describe("MergeTree.Client", () => {
                     minLength,
                     opts);
             }
-        })
-
-            .timeout(30 * 1000);
+        }).timeout(opts.timeoutMs ?? 0);
     });
 });
