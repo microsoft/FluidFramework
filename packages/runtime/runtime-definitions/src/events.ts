@@ -6,6 +6,12 @@
 export const eventThis = Symbol("EventThis");
 export type EventThis = typeof eventThis;
 
+/**
+ * Supports an array type or function signature.
+ * Array types will use the literal types as-is.
+ * Function signatures will attempt to replace EventThis types with the
+ * implementor of IEventProvider's this type to support polymorphism.
+ */
 export type EventArgs<T, TThis> =
     T extends any[]
     ? T
