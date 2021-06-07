@@ -127,6 +127,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
                 // In future we will change the elected client.
                 // this.orderedClients.incrementCurrentClient();
+
+                this.hasLoggedTelemetry = true;
             }
         });
         this.summaryCollection.on(MessageType.SummaryAck, (op) => {
