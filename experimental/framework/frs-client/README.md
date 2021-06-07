@@ -34,7 +34,7 @@ FrsClient.init(config);
 
 A Container instance is a organizational unit within Fluid. Each Container instance has a connection to the defined Fluid Service and contains an independent collection of collaborative objects.
 
-Containers are created and identified by unique ids. Management and storage of these ideas are the responsibility of the developer.
+Containers are created and identified by unique IDs. Management and storage of these IDs are the responsibility of the developer.
 
 ## Using Fluid Containers
 
