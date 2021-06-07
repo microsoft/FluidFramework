@@ -5,19 +5,24 @@
 
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ValueType } from "@fluidframework/shared-object-base";
+import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-    ISerializableValue,
-    ISerializedValue,
-    IValueChanged,
-    ISharedMapEvents,
-} from "./interfaces";
 import {
     ILocalValue,
     LocalValueMaker,
     makeSerializable,
+    ValueTypeLocalValue,
 } from "./localValues";
+import {
+    ISerializableValue,
+    ISerializedValue,
+    IValueChanged,
+    IValueOpEmitter,
+    IValueType,
+    IValueTypeCreator,
+    IValueTypeOperationValue,
+    ISharedMapEvents,
+} from "./mapKernelInterfaces";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -46,6 +51,27 @@ interface IMapMessageHandler {
     submit(op: IMapOperation, localOpMetadata: unknown): void;
 
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
+}
+
+/**
+ * Describes an operation specific to a value type.
+ */
+export interface IMapValueTypeOperation {
+    /**
+     * String identifier of the operation type.
+     */
+    type: "act";
+
+    /**
+     * Map key being modified.
+     */
+    key: string;
+
+    /**
+     * Value of the operation, specific to the value type.
+     * @alpha
+     */
+    value: IValueTypeOperationValue;
 }
 
 /**
@@ -86,7 +112,7 @@ export interface IMapDeleteOperation {
 /**
  * Map key operations are one of several types.
  */
-export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
+export type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
 /**
  * Operation indicating the map should be cleared.
@@ -118,7 +144,7 @@ export interface IMapDataObjectSerialized {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernel {
+export class MapKernel implements IValueTypeCreator {
     /**
      * The number of key/value pairs stored in the map.
      */
@@ -171,10 +197,14 @@ export class MapKernel {
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
-        private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
+        valueTypes: Readonly<IValueType<any>[]>,
+        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
+        for (const type of valueTypes) {
+            this.localValueMaker.registerValueType(type);
+        }
     }
 
     /**
@@ -302,6 +332,7 @@ export class MapKernel {
      */
     public set(key: string, value: any) {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
+        // eslint-disable-next-line no-null/no-null
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
         }
@@ -332,6 +363,46 @@ export class MapKernel {
             value: serializableValue,
         };
         this.submitMapKeyMessage(op);
+    }
+
+    /**
+     * {@inheritDoc IValueTypeCreator.createValueType}
+     */
+    public createValueType(key: string, type: string, params: any) {
+        // Create a local value and serialize it.
+        const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+
+        // TODO ideally we could use makeSerialized in this case as well. But the interval
+        // collection has assumptions of attach being called prior. Given the IFluidSerializer it
+        // may be possible to remove custom value type serialization entirely.
+        const transformedValue = makeHandlesSerializable(
+            params,
+            this.serializer,
+            this.handle);
+
+        // Set the value locally.
+        this.setCore(
+            key,
+            localValue,
+            true,
+            undefined,
+        );
+
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
+            return this;
+        }
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
+        const op: IMapSetOperation = {
+            key,
+            type: "set",
+            value: serializableValue,
+        };
+        this.submitMapKeyMessage(op);
+        return this;
     }
 
     /**
@@ -542,7 +613,10 @@ export class MapKernel {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
             return this.localValueMaker.fromSerializable(serializable);
         } else {
-            throw new Error("Unknown local value type");
+            return this.localValueMaker.fromSerializableValueType(
+                serializable,
+                this.makeMapValueOpEmitter(key),
+            );
         }
     }
 
@@ -564,7 +638,7 @@ export class MapKernel {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    0x013 /* "Received out of order op when there is an unackd clear message" */);
+                    "Received out of order op when there is an unackd clear message");
             }
             // If we have an unack'd clear, we can ignore all ops.
             return false;
@@ -575,7 +649,7 @@ export class MapKernel {
             // and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
@@ -601,7 +675,7 @@ export class MapKernel {
                 process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
                         assert(localOpMetadata !== undefined,
-                            0x015 /* "pendingMessageId is missing from the local client's clear operation" */);
+                            "pendingMessageId is missing from the local client's clear operation");
                         const pendingMessageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === pendingMessageId) {
                             this.pendingClearMessageId = -1;
@@ -663,6 +737,37 @@ export class MapKernel {
                 },
             });
 
+        // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
+        // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
+        // stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
+        // watching for manipulations of that item.
+        messageHandlers.set(
+            "act",
+            {
+                process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
+                    // Local value might not exist if we deleted it
+                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    if (!localValue) {
+                        return;
+                    }
+
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    const previousValue = localValue.value;
+                    const translatedValue = parseHandles(
+                        op.value.value,
+                        this.serializer);
+                    handler.process(previousValue, translatedValue, local, message);
+                    const event: IValueChanged = { key: op.key, previousValue };
+                    this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
+                },
+                submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
+                    this.submitMessage(op, localOpMetadata);
+                },
+                getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
+                    assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);
+                },
+            });
+
         return messageHandlers;
     }
 
@@ -694,5 +799,37 @@ export class MapKernel {
     private submitMapKeyMessage(op: IMapKeyOperation): void {
         const pendingMessageId = this.getMapKeyMessageLocalMetadata(op);
         this.submitMessage(op, pendingMessageId);
+    }
+
+    /**
+     * Create an emitter for a value type to emit ops from the given key.
+     * @alpha
+     * @param key - The key of the map that the value type will be stored on
+     * @returns A value op emitter for the given key
+     */
+    private makeMapValueOpEmitter(key: string): IValueOpEmitter {
+        const emit = (opName: string, previousValue: any, params: any) => {
+            const translatedParams = makeHandlesSerializable(
+                params,
+                this.serializer,
+                this.handle);
+
+            const op: IMapValueTypeOperation = {
+                key,
+                type: "act",
+                value: {
+                    opName,
+                    value: translatedParams,
+                },
+            };
+            // Send the localOpMetadata as undefined because we don't care about the ack.
+            this.submitMessage(op, undefined /* localOpMetadata */);
+
+            const event: IValueChanged = { key, previousValue };
+            // eslint-disable-next-line no-null/no-null
+            this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
+        };
+
+        return { emit };
     }
 }
