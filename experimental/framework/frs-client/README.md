@@ -14,7 +14,7 @@ import { FrsClient } from "@fluid-experimental/frs-client";
 
 ## Initializing FrsClient
 
-Fluid requires a backing service to enable collaborative communication. The FrsClient instance will be instantitated against the FRS service.
+Fluid requires a backing service to enable collaborative communication. The FrsClient instance will be instantiated against the FRS service.
 
 In the example below we are connecting to the FRS service by providing the tenantId and key that is uniquely generated for us when onboarding to the service, and the orderer and storage servers we wish to connect to. We can also optionally pass in our own user details instead of having the client designate a random GUID and a token provider for authentication.
 
