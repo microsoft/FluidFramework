@@ -28,6 +28,9 @@ export class LocalReference implements ReferencePosition {
         public offset = 0,
         public refType = ReferenceType.Simple,
     ) {
+        if(offset < 0 || offset >= initSegment.cachedLength) {
+            throw new Error("Offset must be valid index of segment");
+        }
         this.segment = initSegment;
     }
 

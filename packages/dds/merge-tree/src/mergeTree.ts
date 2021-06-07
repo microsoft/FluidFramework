@@ -471,6 +471,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     isLeaf() {
+        if(this.cachedLength === 0) {
+            assert(this.cachedLength > 0, "zero length not allowed");
+        }
         return true;
     }
 
@@ -2050,7 +2053,7 @@ export class MergeTree {
             // Find the nearest 0 length seg we can insert over, as all other inserts
             // go near to far
             if (backLen === 0) {
-                if (this.breakTie(0, 0, backSeg, this.collabWindow.currentSeq, clientId, UnassignedSequenceNumber)) {
+                if (this.breakTie(0, backSeg, UnassignedSequenceNumber)) {
                     startSeg = backSeg;
                 }
                 return true;
@@ -2188,6 +2191,7 @@ export class MergeTree {
         // TODO: build tree from segs and insert all at once
         let insertPos = pos;
         for (const newSegment of newSegments) {
+            assert(newSegment.cachedLength > 0, "Zero length segment not allowed");
             segIsLocal = false;
             if (newSegment.cachedLength > 0) {
                 newSegment.seq = seq;
@@ -2243,8 +2247,7 @@ export class MergeTree {
 
     // Assume called only when pos == len
     private breakTie(
-        pos: number, len: number, node: IMergeNode, refSeq: number,
-        clientId: number, seq: number) {
+        pos: number, node: IMergeNode,  seq: number) {
         if (node.isLeaf()) {
             if (pos === 0) {
                 const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
@@ -2352,7 +2355,7 @@ export class MergeTree {
                 console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${_pos} ${segInfo}`);
             }
 
-            if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, len, child, refSeq, clientId, seq))) {
+            if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, child, seq))) {
                 // Found entry containing pos
                 found = true;
                 if (!child.isLeaf()) {

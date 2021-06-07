@@ -8,7 +8,7 @@ import random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { SegmentGroup } from "../mergeTree";
+import { ISegment, SegmentGroup } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -24,10 +24,23 @@ export const annotateRange: TestOperation =
 
 export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
-        const segOff = client.getContainingSegment(opStart);
-        if (segOff.segment) {
+        const segs: ISegment[] = [];
+        // gather all the segments in the range, including removed segments
+        client.mergeTree.walkAllSegments(client.mergeTree.root,(seg)=>{
+            const pos = client.getPosition(seg);
+            if(pos >= opStart) {
+                if(pos <= opEnd) {
+                    segs.push(seg);
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        });
+        if(segs.length > 0) {
+            const seg = random.pick(mt,segs);
             return client.insertAtReferencePositionLocal(
-                new LocalReference(client, segOff.segment, segOff.offset),
+                new LocalReference(client, seg, random.integer(0, seg.cachedLength - 1)(mt)),
                 TextSegment.make(client.longClientId.repeat(random.integer(1, 3)(mt))));
         }
     };
