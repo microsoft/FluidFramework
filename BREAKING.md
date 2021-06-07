@@ -1,6 +1,7 @@
 ## 0.41 Breaking changes
 
 - [Package renames](#0.41-package-renames)
+- [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
 - [Leadership API surface removed](#Leadership-API-surface-removed)
 
 ### 0.41 package renames
@@ -10,6 +11,9 @@ scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) pag
 the npm scopes.
 
 - `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
+
+### LoaderHeader.version could not be null
+`LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
 
 ### Leadership API surface removed
 In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned off by default.  In 0.41 it has now been removed.  If you still require leadership functionality, you can use a `TaskSubscription` in combination with an `AgentScheduler`.

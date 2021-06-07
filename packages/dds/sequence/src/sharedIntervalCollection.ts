@@ -6,9 +6,6 @@
 import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
-    MapKernel,
-} from "@fluidframework/map";
-import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -28,6 +25,7 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
