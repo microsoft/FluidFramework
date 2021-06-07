@@ -38,7 +38,7 @@ Containers are created and identified by unique IDs. Management and storage of t
 
 ## Using Fluid Containers
 
-Using the `FrsClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
+Using the `FrsClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
 
 ```javascript
 import { FrsClient } from "@fluid-experimental/frs-client";
