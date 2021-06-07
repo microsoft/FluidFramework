@@ -45,6 +45,7 @@ class TaskStats {
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
+    public readonly statusToRepeat: string[] = [];
     constructor(public readonly workerPool?: WorkerPool) { }
 };
 
@@ -173,6 +174,10 @@ export class BuildGraph {
 
     public get totalElapsedTime(): number {
         return this.buildContext.taskStats.leafExecTimeTotal;
+    }
+
+    public get statusToRepeat(): string {
+        return this.buildContext.statusToRepeat.join("\n");
     }
 
     private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {

@@ -127,6 +127,7 @@ async function main() {
             } else {
                 logStatus(`Build ${buildStatus}`);
             }
+            logStatus(buildGraph.statusToRepeat);
         }
     }
 
