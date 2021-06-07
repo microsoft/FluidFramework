@@ -69,7 +69,7 @@ const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 
 The most common way to use Fluid is through initial collaborative objects that are created when the Container is created.
 
-> Note: Collaborative objects are referred to as LoadableObjects within Fluid. LoadableObjects are specific to Fluid and expose a collaborative interface. DistributedDataStructures and DataObjects are types of LoadableObjects.
+**Note:** Collaborative objects are referred to as LoadableObjects within Fluid. LoadableObjects are specific to Fluid and expose a collaborative interface. DistributedDataStructures and DataObjects are types of LoadableObjects.
 
 `initialObjects` are loaded into memory when the Container is loaded and the developer can access them off the Container via the `initialObjects` property. The `initialObjects` property has the same signature as the Container schema.
 
