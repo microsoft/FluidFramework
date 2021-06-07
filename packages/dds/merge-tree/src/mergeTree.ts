@@ -471,9 +471,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     isLeaf() {
-        if(this.cachedLength === 0) {
-            assert(this.cachedLength > 0, "zero length not allowed");
-        }
         return true;
     }
 
@@ -2191,7 +2188,6 @@ export class MergeTree {
         // TODO: build tree from segs and insert all at once
         let insertPos = pos;
         for (const newSegment of newSegments) {
-            assert(newSegment.cachedLength > 0, "Zero length segment not allowed");
             segIsLocal = false;
             if (newSegment.cachedLength > 0) {
                 newSegment.seq = seq;
