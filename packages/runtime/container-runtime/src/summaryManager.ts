@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IDisposable,
+    IEvent,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
     IPromiseTimerResult,
     PromiseTimer,
+    TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
+    ILoader,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
@@ -23,14 +25,6 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
 import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
-
-const defaultInitialDelayMs = 5000;
-const opsToBypassInitialDelay = 4000;
-
-const defaultThrottleDelayWindowMs = 60 * 1000;
-const defaultThrottleMaxDelayMs = 30 * 1000;
-// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 enum SummaryManagerState {
     Off = 0,
@@ -48,7 +42,60 @@ type ShouldSummarizeState =
     | { shouldSummarize: true; shouldStart: boolean; }
     | { shouldSummarize: false; stopReason: StopReason; };
 
-export class SummaryManager extends EventEmitter implements IDisposable {
+export async function requestSummarizer(loader: ILoader, sequenceNumber: number): Promise<ISummarizer> {
+    // TODO eventually we may wish to spawn an execution context from which to run this
+    const request: IRequest = {
+        headers: {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                type: summarizerClientType,
+            },
+            [DriverHeader.summarizingClient]: true,
+            [LoaderHeader.reconnect]: false,
+            [LoaderHeader.sequenceNumber]: sequenceNumber,
+        },
+        url: "/_summarizer",
+    };
+
+    const response = await loader.request(request);
+
+    if (response.status !== 200
+        || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+        return Promise.reject(new Error("Invalid summarizer route"));
+    }
+
+    const rawFluidObject = response.value as IFluidObject;
+    const summarizer = rawFluidObject.ISummarizer;
+
+    if (!summarizer) {
+        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
+    }
+
+    return summarizer;
+}
+
+export interface ISummaryManagerEvents extends IEvent {
+    (event: "summarizer", listener: (clientId: string | undefined) => void): void;
+}
+export const defaultSummaryManagerConfig = {
+    summariesEnabled: true,
+    maxOpsSinceLastSummary: 3000,
+    initialDelayMs: 5000,
+    opsToBypassInitialDelay: 4000,
+    throttleDelayWindowMs: 60 * 1000,
+    throttleMaxDelayMs: 30 * 1000,
+    // increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
+    throttleDelayFn: (n: number) => 20 * (Math.pow(2, n) - 1),
+};
+export type SummaryManagerConfig = Readonly<typeof defaultSummaryManagerConfig>;
+export type DeltaManagerSequenceProvider = Pick<IContainerContext["deltaManager"],
+    "initialSequenceNumber" | "lastSequenceNumber">;
+export type SummaryManagerContainerContext = Pick<IContainerContext,
+    "raiseContainerWarning" | "clientDetails" | "clientId" | "connected" | "quorum" | "loader">
+    & { deltaManager: DeltaManagerSequenceProvider };
+
+export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly orderedClients: OrderedClientElection;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
@@ -60,11 +107,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
-    private readonly startThrottler = new Throttler(
-        defaultThrottleDelayWindowMs,
-        defaultThrottleMaxDelayMs,
-        defaultThrottleDelayFunction,
-    );
+    private readonly startThrottler: Throttler;
     private opsUntilFirstConnect = -1;
 
     public get summarizer() {
@@ -80,13 +123,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private hasSummarizersInQuorum: boolean;
     private hasLoggedTelemetry = false;
 
+    private readonly config: SummaryManagerConfig;
+
     constructor(
-        private readonly context: IContainerContext,
+        private readonly context: SummaryManagerContainerContext,
         private readonly summaryCollection: SummaryCollection,
-        private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly maxOpsSinceLastSummary: number,
-        initialDelayMs: number = defaultInitialDelayMs,
+        private readonly requestSummarizerFn: (loader: ILoader, sequenceNumber: number) => Promise<ISummarizer>,
+        config: Partial<SummaryManagerConfig>,
     ) {
         super();
 
@@ -94,6 +138,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             parentLogger,
             "SummaryManager",
             {all:{ clientId: () => this.latestClientId }});
+
+        this.config = { ...defaultSummaryManagerConfig, ...config };
+
+        this.startThrottler = new Throttler(
+            this.config.throttleDelayWindowMs,
+            this.config.throttleMaxDelayMs,
+            this.config.throttleDelayFn,
+        );
 
         this.connected = context.connected;
         if (this.connected) {
@@ -112,7 +164,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.summaryCollection.on("default", (op) => {
             const opsSinceLastAckForClient = op.sequenceNumber - this.lastSummaryAckSeqForClient;
             if (
-                opsSinceLastAckForClient > this.maxOpsSinceLastSummary
+                opsSinceLastAckForClient > this.config.maxOpsSinceLastSummary
                 && !this.hasLoggedTelemetry
                 && this.electedClientId !== undefined
             ) {
@@ -152,7 +204,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
         this.hasSummarizersInQuorum = this.orderedClients.getSummarizerCount() > 0;
 
-        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
+        this.initialDelayTimer = new PromiseTimer(this.config.initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
 
         this.refreshSummarizer();
@@ -174,11 +226,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.runningSummarizer.updateOnBehalfOf(clientId);
             }
         }
-    }
-
-    public on(event: "summarizer", listener: (clientId: string) => void): this;
-    public on(event: string, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     private updateConnected(connected: boolean, clientId?: string) {
@@ -259,7 +306,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private start() {
-        if (!this.summariesEnabled) {
+        if (!this.config.summariesEnabled) {
             // If we should never summarize, lock in disabled state
             this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
@@ -275,7 +322,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
-        if (delayMs >= defaultThrottleMaxDelayMs) {
+        if (delayMs >= this.config.throttleMaxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
             this.raiseContainerWarning(
                 createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false));
@@ -349,7 +396,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
 
         const shouldDelay = delayMs > 0;
-        const shouldInitialDelay = this.opsUntilFirstConnect < opsToBypassInitialDelay;
+        const shouldInitialDelay = this.opsUntilFirstConnect < this.config.opsToBypassInitialDelay;
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
@@ -357,38 +404,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             ]);
         }
 
-        const loader = this.context.loader;
-
-        // TODO eventually we may wish to spawn an execution context from which to run this
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: summarizerClientType,
-                },
-                [DriverHeader.summarizingClient]: true,
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-            },
-            url: "/_summarizer",
-        };
-
-        const response = await loader.request(request);
-
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
-            return Promise.reject(new Error("Invalid summarizer route"));
-        }
-
-        const rawFluidObject = response.value as IFluidObject;
-        const summarizer = rawFluidObject.ISummarizer;
-
-        if (!summarizer) {
-            return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
-        }
-
-        return summarizer;
+        return this.requestSummarizerFn(this.context.loader, this.context.deltaManager.lastSequenceNumber);
     }
 
     public dispose() {

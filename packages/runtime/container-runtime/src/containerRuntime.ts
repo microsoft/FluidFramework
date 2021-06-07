@@ -114,7 +114,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { requestSummarizer, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -935,10 +935,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager = new SummaryManager(
             context,
             this.summaryCollection,
-            this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            maxOpsSinceLastSummary,
-            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
+            requestSummarizer,
+            {
+                summariesEnabled: this.runtimeOptions.summaryOptions.generateSummaries,
+                maxOpsSinceLastSummary,
+                initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+            });
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
