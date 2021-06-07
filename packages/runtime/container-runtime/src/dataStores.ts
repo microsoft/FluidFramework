@@ -261,12 +261,6 @@ export class DataStores implements IDisposable {
     public get disposed() {return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
 
-    public updateLeader() {
-        for (const [, context] of this.contexts) {
-            context.updateLeader(this.runtime.leader);
-        }
-    }
-
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);

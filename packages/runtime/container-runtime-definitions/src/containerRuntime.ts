@@ -74,10 +74,6 @@ export interface IContainerRuntime extends
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     /**
