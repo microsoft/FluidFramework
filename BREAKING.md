@@ -12,7 +12,7 @@ the npm scopes.
 - `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
 
 ### LoaderHeader.version could not be null
-`LoaderHeader.version` in ILoader cann't be null as we always load from existing snapshot in `container.load()`;
+`LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
 
 ## 0.40 Breaking changes
 

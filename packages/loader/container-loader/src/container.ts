@@ -124,7 +124,7 @@ export interface IContainerLoadOptions {
     /**
      * Control which snapshot version to load from.  See IParsedUrl for detailed information.
      */
-    version?: string | undefined;
+    version: string | undefined;
     /**
      * Loads the Container in paused state if true, unpaused otherwise.
      */
