@@ -2029,18 +2029,24 @@ export class MergeTree {
         const refOffset = referencePosition.getOffset();
         const refSegLen = this.nodeLength(refSegment, this.collabWindow.currentSeq, clientId);
         let startSeg = refSegment;
-        if (refOffset !== 0 && refSegLen !== 0) {
+        // if the change isn't at a boundary, we need to split the segment
+        if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
             const splitSeg = this.splitLeafSegment(refSegment, refOffset);
             assert(!!splitSeg.next, 0x050 /* "Next segment changes are undefined!" */);
             this.insertChildNode(refSegment.parent!, splitSeg.next, refSegment.index + 1);
             rebalanceTree(splitSeg.next);
             startSeg = splitSeg.next;
         }
+        // walk back from the segment, to see if there is a previous tie break seg
         this.leftExcursion(startSeg, (backSeg) => {
             if (!backSeg.isLeaf()) {
                 return true;
             }
             const backLen = this.nodeLength(backSeg, this.collabWindow.currentSeq, clientId);
+            // ignore removed segments
+            if(backLen === undefined) {
+                return true;
+            }
             // Find the nearest 0 length seg we can insert over, as all other inserts
             // go near to far
             if (backLen === 0) {

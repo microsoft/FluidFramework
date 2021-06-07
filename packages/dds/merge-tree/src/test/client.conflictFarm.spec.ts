@@ -9,7 +9,7 @@ import {
     doOverRange,
     IConfigRange,
     IMergeTreeOperationRunnerConfig,
-    // insertAtRefPos,
+    insertAtRefPos,
     removeRange,
     runMergeTreeOperationRunner,
     TestOperation,
@@ -26,7 +26,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 const allOperations: TestOperation[] = [
     removeRange,
     annotateRange,
-    // insertAtRefPos,
+    insertAtRefPos,
 ];
 
 export const debugOptions: IConflictFarmConfig = {
