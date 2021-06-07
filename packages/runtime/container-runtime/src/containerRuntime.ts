@@ -1069,14 +1069,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             } else if (requestParser.pathParts.length > 0) {
                 /**
-                 * If this an external app request with "externalRequest" header, we need to return an error if the
-                 * data store being requested is marked as unreferenced as per the data store's initial summary.
+                 * If GC is enabled and this an external app request with "externalRequest" header, we need to return
+                 * an error if the data store being requested is marked as unreferenced as per the data store's initial
+                 * summary.
                  *
                  * This is a workaround to handle scenarios where a data store shared with an external app is deleted
                  * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
                  */
                 const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-                const dataStore = request.headers?.externalRequest
+                const dataStore = request.headers?.externalRequest && this.shouldRunGC
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
