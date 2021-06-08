@@ -6,6 +6,7 @@
 import {
     IDisposable,
     IEvent,
+    IEventProvider,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
@@ -23,10 +24,10 @@ import {
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
-import { SummaryCollection } from "./summaryCollection";
+import { ISummaryCollectionOpEvents } from "./summaryCollection";
 import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
 
-enum SummaryManagerState {
+export enum SummaryManagerState {
     Off = 0,
     Starting = 1,
     Running = 2,
@@ -118,6 +119,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         return this._disposed;
     }
 
+    public get currentState() { return this.state; }
+
     /** Used to calculate number of ops since last summary ack for the current elected client */
     private lastSummaryAckSeqForClient = 0;
     private hasSummarizersInQuorum: boolean;
@@ -127,7 +130,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
     constructor(
         private readonly context: SummaryManagerContainerContext,
-        private readonly summaryCollection: SummaryCollection,
+        private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
         parentLogger: ITelemetryLogger,
         private readonly requestSummarizerFn: (loader: ILoader, sequenceNumber: number) => Promise<ISummarizer>,
         config: Partial<SummaryManagerConfig>,
