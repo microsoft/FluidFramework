@@ -21,7 +21,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
+import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
