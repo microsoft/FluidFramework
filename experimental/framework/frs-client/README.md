@@ -23,6 +23,7 @@ import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 
 const config: FrsConnectionConfig = { 
     tenantId: "",
+    type: "key",
     key: "",
     orderer: "",
     storage: "",
