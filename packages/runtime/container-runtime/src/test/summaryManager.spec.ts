@@ -28,6 +28,8 @@ describe("Summary Manager", () => {
     const summaryCollection = new TypedEventEmitter<ISummaryCollectionOpEvents>();
     let summaryManager: SummaryManager;
 
+    const constantZeroThrottleFn = () => 0;
+
     // Fake DeltaManager sequences
     const deltaManager = {
         initialSequenceNumber: 0,
@@ -74,15 +76,16 @@ describe("Summary Manager", () => {
     let summarizer: TestSummarizer;
     let requestSequenceNumbers: number[] = [];
     let requestDeferred = new Deferred<void>();
-    async function requestSummarizer(loader: ILoader, sequenceNumber: number): Promise<ISummarizer> {
+    const requestSummarizer = async (loader: ILoader, sequenceNumber: number): Promise<ISummarizer> => {
         summarizer = new TestSummarizer();
         requestSequenceNumbers.push(sequenceNumber);
         requestDeferred = new Deferred();
         await requestDeferred.promise;
         return summarizer;
-    }
+    };
 
     function addClient(clientId: string, sequenceNumber: number, interactive = true) {
+        deltaManager.lastSequenceNumber = sequenceNumber;
         const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
         const c: Partial<ISequencedClient["client"]> = { details };
         const client: ISequencedClient = { client: c as ISequencedClient["client"], sequenceNumber };
@@ -126,7 +129,10 @@ describe("Summary Manager", () => {
         const prefix = message ? `${message} - ` : "";
         assert.strictEqual(requestSequenceNumbers.length, count, `${prefix}Unexpected request count`);
         if (latestSeq !== undefined) {
-            assert.strictEqual(requestSequenceNumbers[0], latestSeq, `${prefix}Unexpected latest request seq`);
+            assert.strictEqual(
+                requestSequenceNumbers[requestSequenceNumbers.length - 1],
+                latestSeq,
+                `${prefix}Unexpected latest request seq`);
         }
     }
 
@@ -137,110 +143,106 @@ describe("Summary Manager", () => {
         requestSequenceNumbers = [];
     });
 
-    describe("Startup", () => {
-        it("Should become summarizer at normal pace as only client", async () => {
-            const connector = createSummaryManager();
-            assertState(SummaryManagerState.Off, "should start off");
-            addClient(thisClientId, 1);
-            deltaManager.lastSequenceNumber = 1;
-            assertState(SummaryManagerState.Off, "in quorum but not yet connected");
-            connector.connect();
-            await flushPromises();
-            assertState(SummaryManagerState.Starting, "should request summarizer");
-            assertRequests(1, 1, "should have requested summarizer");
-            requestDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Running, "summarizer should be running");
-            connector.disconnect();
-            await flushPromises();
-            assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
-            summarizer.runDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
-        });
+    it("Should become summarizer at normal pace as only client", async () => {
+        const connector = createSummaryManager({ opsToBypassInitialDelay: 0 });
+        assertState(SummaryManagerState.Off, "should start off");
+        connector.connect();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "connected but not yet in quorum");
+        addClient(thisClientId, 1);
+        await flushPromises();
+        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertRequests(1, 1, "should have requested summarizer");
+        requestDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Running, "summarizer should be running");
+        connector.disconnect();
+        await flushPromises();
+        assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+        summarizer.runDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+    });
 
-        it("Should become summarizer after oldest client leaves", async () => {
-            const connector = createSummaryManager();
-            addClient("first", 1);
-            deltaManager.lastSequenceNumber = 1;
-            addClient(thisClientId, 2);
-            deltaManager.lastSequenceNumber = 2;
-            connector.connect();
-            await flushPromises();
-            assertState(SummaryManagerState.Off, "connected but not oldest client");
-            assertRequests(0, undefined, "no requests yet");
-            quorum.removeClient("first");
-            await flushPromises();
-            deltaManager.lastSequenceNumber = 3;
-            assertState(SummaryManagerState.Starting, "should request summarizer");
-            assertRequests(1, 3, "should have requested summarizer");
-            requestDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Running, "summarizer should be running");
-            quorum.removeClient(thisClientId);
-            deltaManager.lastSequenceNumber = 4;
-            await flushPromises();
-            assertState(SummaryManagerState.Stopping, "should be stopping after leaving quorum");
-            summarizer.runDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
-        });
+    it("Should become summarizer after oldest client leaves", async () => {
+        const connector = createSummaryManager({ opsToBypassInitialDelay: 0 });
+        addClient("first", 1);
+        connector.connect();
+        addClient(thisClientId, 2);
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "connected but not oldest client");
+        assertRequests(0, undefined, "no requests yet");
+        deltaManager.lastSequenceNumber = 3;
+        quorum.removeClient("first");
+        await flushPromises();
+        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertRequests(1, 3, "should have requested summarizer");
+        requestDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Running, "summarizer should be running");
+        deltaManager.lastSequenceNumber = 4;
+        quorum.removeClient(thisClientId);
+        await flushPromises();
+        assertState(SummaryManagerState.Stopping, "should be stopping after leaving quorum");
+        summarizer.runDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+    });
 
-        it("Should never become summarizer if explicitly disabled", async () => {
-            const connector = createSummaryManager({ summariesEnabled: false });
-            assertState(SummaryManagerState.Off, "should start off");
-            addClient(thisClientId, 1);
-            deltaManager.lastSequenceNumber = 1;
-            assertState(SummaryManagerState.Off, "in quorum but not yet connected");
-            connector.connect();
-            await flushPromises();
-            assertState(SummaryManagerState.Disabled, "should realize disabled and lock state");
-            requestDeferred.resolve();
-            connector.disconnect();
-            await flushPromises();
-            assertRequests(0, undefined, "never request when disabled");
-            assertState(SummaryManagerState.Disabled, "should remain in disabled state forever");
-        });
+    it("Should never become summarizer if explicitly disabled", async () => {
+        const connector = createSummaryManager({ opsToBypassInitialDelay: 0, summariesEnabled: false });
+        assertState(SummaryManagerState.Off, "should start off");
+        connector.connect();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "connected but not yet in quorum");
+        addClient(thisClientId, 1);
+        await flushPromises();
+        assertState(SummaryManagerState.Disabled, "should realize disabled and lock state");
+        requestDeferred.resolve();
+        connector.disconnect();
+        await flushPromises();
+        assertRequests(0, undefined, "never request when disabled");
+        assertState(SummaryManagerState.Disabled, "should remain in disabled state forever");
+    });
 
-        it("Should never become summarizer if it is a summarizer client", async () => {
-            const connector = createSummaryManager({}, false, false);
-            assertState(SummaryManagerState.Off, "should start off");
-            addClient(thisClientId, 1);
-            deltaManager.lastSequenceNumber = 1;
-            assertState(SummaryManagerState.Off, "in quorum but not yet connected");
-            connector.connect();
-            await flushPromises();
-            assertState(SummaryManagerState.Disabled, "should realize disabled and lock state");
-            requestDeferred.resolve();
-            connector.disconnect();
-            await flushPromises();
-            assertRequests(0, undefined, "never request when disabled");
-            assertState(SummaryManagerState.Disabled, "should remain in disabled state forever");
-        });
+    it("Should never become summarizer if it is a summarizer client", async () => {
+        const connector = createSummaryManager({ opsToBypassInitialDelay: 0 }, false, false);
+        assertState(SummaryManagerState.Off, "should start off");
+        connector.connect();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "connected but not yet in quorum");
+        addClient(thisClientId, 1);
+        await flushPromises();
+        assertState(SummaryManagerState.Disabled, "should realize disabled and lock state");
+        requestDeferred.resolve();
+        connector.disconnect();
+        await flushPromises();
+        assertRequests(0, undefined, "never request when disabled");
+        assertState(SummaryManagerState.Disabled, "should remain in disabled state forever");
+    });
 
-        it("Should restart if summarizer closes itself", async () => {
-            const connector = createSummaryManager({ initialDelayMs: 0 });
-            assertState(SummaryManagerState.Off, "should start off");
-            addClient(thisClientId, 1);
-            deltaManager.lastSequenceNumber = 1;
-            assertState(SummaryManagerState.Off, "in quorum but not yet connected");
-            connector.connect();
-            await flushPromises();
-            assertState(SummaryManagerState.Starting, "should request summarizer");
-            assertRequests(1, 1, "should have requested summarizer");
-            requestDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Running, "summarizer should be running");
-            deltaManager.lastSequenceNumber = 2;
-            // Simulate summarizer stopping itself
-            summarizer.stop();
-            summarizer.runDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Starting, "should restart itself");
-            assertRequests(2, 2, "should have requested a new summarizer");
-            requestDeferred.resolve();
-            await flushPromises();
-            assertState(SummaryManagerState.Running, "should be running new summarizer");
-        });
+    it("Should restart if summarizer closes itself", async () => {
+        const connector = createSummaryManager({ opsToBypassInitialDelay: 0, throttleDelayFn: constantZeroThrottleFn });
+        assertState(SummaryManagerState.Off, "should start off");
+        connector.connect();
+        await flushPromises();
+        assertState(SummaryManagerState.Off, "connected but not yet in quorum");
+        addClient(thisClientId, 1);
+        await flushPromises();
+        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertRequests(1, 1, "should have requested summarizer");
+        requestDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Running, "summarizer should be running");
+        deltaManager.lastSequenceNumber = 2;
+        // Simulate summarizer stopping itself
+        summarizer.stop();
+        summarizer.runDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Starting, "should restart itself");
+        assertRequests(2, 2, "should have requested a new summarizer");
+        requestDeferred.resolve();
+        await flushPromises();
+        assertState(SummaryManagerState.Running, "should be running new summarizer");
     });
 });

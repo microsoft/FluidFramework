@@ -943,11 +943,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
             });
 
-        if (this.connected) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(this.context.clientId!);
-        }
-
         this.deltaManager.on("readonly", (readonly: boolean) => {
             // we accumulate ops while being in read-only state.
             // once user gets write permissions and we have active connection, flush all pending ops.
