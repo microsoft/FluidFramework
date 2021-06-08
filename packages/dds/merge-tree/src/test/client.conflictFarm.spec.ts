@@ -5,7 +5,7 @@
 
 import random from "random-js";
 import {
-    annotateRange,
+    // annotateRange,
     doOverRange,
     IConfigRange,
     IMergeTreeOperationRunnerConfig,
@@ -26,7 +26,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 
 const allOperations: TestOperation[] = [
     removeRange,
-    annotateRange,
+    // annotateRange,
     insertAtRefPos,
 ];
 
@@ -41,7 +41,7 @@ export const debugOptions: IConflictFarmConfig = {
 };
 
 export const defaultOptions: IConflictFarmConfig = {
-    minLength: { min: 1, max: 512 },
+    minLength: { min: 1, max: 1 },
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,

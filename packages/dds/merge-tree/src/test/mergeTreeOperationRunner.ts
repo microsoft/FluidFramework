@@ -78,7 +78,12 @@ export function runMergeTreeOperationRunner(
     apply = applyMessages) {
     let seq = startingSeq;
 
-    const results: {seq:number, str: string}[] | undefined = resultsFilePath === undefined ? undefined : [];
+    let actualResults: {str: string, full: string}[] | undefined;
+    let expectedResults: {str: string, full: string}[] | undefined;
+    if(resultsFilePath !== undefined) {
+        actualResults = [];
+        expectedResults = JSON.parse(fs.readFileSync(resultsFilePath).toString());
+    }
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
@@ -100,13 +105,21 @@ export function runMergeTreeOperationRunner(
                 config.operations,
             );
             seq = apply(seq, messageData, clients, logger);
+            const str = logger.validate();
             // validate that all the clients match at the end of the round
-            results?.push({seq, str: logger.validate()});
+            actualResults?.push({str, full:logger.toString()});
+            const actual =  actualResults?.[actualResults.length - 1];
+            const expected = expectedResults?.[actualResults.length - 1];
+            if(actual.str !== expected.str) {
+                assert.notDeepStrictEqual(
+                    actual.full,
+                    expected.full);
+            }
         }
     });
 
     if(resultsFilePath !== undefined) {
-        fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined,  4));
+        fs.writeFileSync(resultsFilePath, JSON.stringify(actualResults, undefined,  4));
     }
 
     return seq;
