@@ -18,4 +18,3 @@
 export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
-export * from "./mapKernel";

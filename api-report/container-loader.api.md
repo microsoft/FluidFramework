@@ -268,7 +268,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
-    version?: string | null | undefined;
+    version: string | undefined;
 }
 
 // @public
