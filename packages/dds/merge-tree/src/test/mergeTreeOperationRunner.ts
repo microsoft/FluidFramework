@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
 import { LocalReference } from "../localReference";
@@ -73,8 +74,11 @@ export function runMergeTreeOperationRunner(
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
+    resultsFilePath?: string,
     apply = applyMessages) {
     let seq = startingSeq;
+
+    const results: string[] | undefined = resultsFilePath === undefined ? undefined : [];
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
@@ -97,9 +101,13 @@ export function runMergeTreeOperationRunner(
             );
             seq = apply(seq, messageData, clients, logger);
             // validate that all the clients match at the end of the round
-            logger.validate();
+            results?.push(logger.validate());
         }
     });
+
+    if(resultsFilePath !== undefined) {
+        fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined,  4));
+    }
 
     return seq;
 }
