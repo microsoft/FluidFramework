@@ -399,6 +399,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _attachState = AttachState.Detached;
 
     private readonly storageServiceAdapter: ContainerStorageAdapter;
+    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -652,6 +653,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storageServiceAdapter = new ContainerStorageAdapter(
             () => this.storageService,
             () => this.attachState,
+            this.storageBlobs,
         );
 
         const isDomAvailable = typeof document === "object" &&
