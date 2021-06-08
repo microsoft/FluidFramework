@@ -36,6 +36,7 @@ import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
+import winston from "winston";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
@@ -324,6 +325,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 type: SummarySnapshotType.Channel,
             };
 
-            return gitManager.createSummary(snapshotPayload).then((response) => response.id);
+            const id = gitManager.createSummary(snapshotPayload).then((response) => response.id);
+
+            winston.info(`[UPLOAD SUMMARY] Deli createSummaryWithLatestTerm. \nPayload: ${snapshotPayload} \nResponse Id: ${id}`);
+
+            return id;
     }
 }
