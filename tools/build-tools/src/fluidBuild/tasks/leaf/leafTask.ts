@@ -156,7 +156,7 @@ export abstract class LeafTask extends Task {
             const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${this.command} - ${elapsedTime.toFixed(3)}s`;
             logStatus(statusString);
             if (status === BuildResult.Failed) {
-                this.node.buildContext.statusToRepeat.push(statusString);
+                this.node.buildContext.failedTaskLines.push(statusString);
             }
             this.node.buildContext.taskStats.leafExecTimeTotal += elapsedTime;
         }

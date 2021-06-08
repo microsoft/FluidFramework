@@ -21,6 +21,11 @@ export enum BuildResult {
     Failed,
 };
 
+export interface BuildResult2 {
+    status: BuildResult,
+    description: string,
+}
+
 export function summarizeBuildResult(results: BuildResult[]) {
     let retResult = BuildResult.UpToDate;
     for (const result of results) {
@@ -45,7 +50,7 @@ class TaskStats {
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
-    public readonly statusToRepeat: string[] = [];
+    public readonly failedTaskLines: string[] = [];
     constructor(public readonly workerPool?: WorkerPool) { }
 };
 
@@ -176,8 +181,13 @@ export class BuildGraph {
         return this.buildContext.taskStats.leafExecTimeTotal;
     }
 
-    public get statusToRepeat(): string {
-        return this.buildContext.statusToRepeat.join("\n");
+    public get taskFailureSummary(): string {
+        if (this.buildContext.failedTaskLines.length === 0) {
+            return "";
+        }
+        const summaryLines = this.buildContext.failedTaskLines;
+        summaryLines.unshift(chalk.redBright("Failed Tasks:"));
+        return summaryLines.join("\n");
     }
 
     private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
