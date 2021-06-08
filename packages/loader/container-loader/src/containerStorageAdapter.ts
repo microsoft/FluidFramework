@@ -89,6 +89,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
         this.throwOnNotAttached("createBlob");
-        return this.createBlob(file);
+        return this.storageGetter().createBlob(file);
     }
 }
