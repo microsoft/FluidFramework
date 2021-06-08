@@ -62,7 +62,7 @@ async function orchestratorProcess(
         : await initialize(testDriver, seed);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
+    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
     console.log(`Container targeting with url: ${url }`);
     console.log("Seed: ", seedArg);
     console.log(`Selected test profile: ${profile.name}`);
@@ -78,11 +78,11 @@ async function orchestratorProcess(
             "--url", url,
             "--seed", seedArg,
         ];
-        if (args.debug) {
+        if (args.debug === true) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
-        if(args.verbose) {
+        if(args.verbose === true) {
             childArgs.push("--verbose");
             console.log(childArgs.join(" "));
         }
