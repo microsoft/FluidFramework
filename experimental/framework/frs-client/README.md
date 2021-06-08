@@ -2,7 +2,7 @@
 
 The frs-client package provides a simple and powerful way to consume collaborative Fluid data with the Frs service.
 
-This package is marked as experimental and currently under development. The API surface is currently under going drastic braking changes with no guarantees on compatibility.
+This package is marked as experimental and currently under development. The API surface is currently under going drastic breaking changes with no guarantees on compatibility.
 
 ## Using frs-client
 
