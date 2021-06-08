@@ -27,8 +27,6 @@ const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@flui
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
 const progressBars = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
-const videoPlayers = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/video-players");
 const images = import(
     /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection");
 
@@ -53,8 +51,6 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 

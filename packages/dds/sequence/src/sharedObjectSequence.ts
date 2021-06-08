@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes, Serializable } from "@fluidframework/datastore-definitions";
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
@@ -39,7 +39,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
         super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec);
     }
 
-    public getRange(start: number, end?: number) {
+    public getRange(start: number, end?: number): Serializable<T>[] {
         return this.getItems(start, end);
     }
 }

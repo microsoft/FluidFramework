@@ -5,7 +5,6 @@
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
@@ -25,8 +24,10 @@ import {
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
 import {
@@ -34,6 +35,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
+import { IValueChanged } from "./mapKernelInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -442,6 +445,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         };
 
         return tree;
+    }
+
+    /**
+     * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
+        // serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        if (this.intervalMapKernel.size > 0) {
+            this.intervalMapKernel.serialize(serializer);
+        }
+
+        this.client.serializeGCData(this.handle, serializer);
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
     }
 
     /**

@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import {
     AgentSchedulerFactory,
-    IAgentScheduler,
 } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -103,7 +102,6 @@ import {
     createRootSummarizerNodeWithGC,
     FluidSerializer,
     IRootSummarizerNodeWithGC,
-    requestFluidObject,
     RequestParser,
     create404Response,
     exceptionToResponse,
@@ -129,7 +127,7 @@ import {
     metadataBlobName,
     wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-import { SummaryCollection, SummaryCollectionOpActions } from "./summaryCollection";
+import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 
 export enum ContainerMessageType {
@@ -254,12 +252,11 @@ export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
     /**
-     * Control whether the ContainerRuntime includes AgentScheduler in its registry, whether an instance is created
-     * at _scheduler, and whether it subscribes to leadership.  This option will be removed in a future release, so it
-     * is recommended to opt-out in preparation for that change.  If you still require AgentScheduler and/or leader
-     * election, you should explicitly include AgentSchedulerFactory in the container registry, explicitly instantiate
-     * an instance of it using createRootDataStore, and explicitly register for leadership election using
-     * TaskSubscription.
+     * Control whether the ContainerRuntime includes AgentScheduler in its registry, and whether an instance is
+     * created at _scheduler.  This option will be removed in a future release, so it is recommended to opt-out
+     * in preparation for that change.  If you still require AgentScheduler, you should explicitly include
+     * AgentSchedulerFactory in the container registry and explicitly instantiate an instance of it using
+     * createRootDataStore.
      */
     addGlobalAgentSchedulerAndLeaderElection?: boolean;
 }
@@ -618,8 +615,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (!context.existing) {
                 await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
             }
-
-            runtime.subscribeToLeadership();
         }
 
         return runtime;
@@ -712,27 +707,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private needsFlush = false;
     private flushTrigger = false;
 
-    // Always matched IAgentScheduler.leader property
-    private _leader = false;
-
     private _connected: boolean;
 
     private paused: boolean = false;
 
     public get connected(): boolean {
         return this._connected;
-    }
-
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    public get leader(): boolean {
-        // The ContainerRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
-        console.warn("The ContainerRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedContainerRuntimeLeaderProperty" });
-        return this._leader;
     }
 
     public get summarizerClientId(): string | undefined {
@@ -811,8 +791,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             && !this.runtimeOptions.gcOptions.disableGC
         );
 
-        // Default to true (disabled) until a few versions have passed.
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? true;
+        // Default to false (enabled).
+        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -899,32 +879,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
         });
-        const defaultAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            if(sc.opsSinceLastAck > (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000)) {
+
+        this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const defaultAction = () => {
+            if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
                 // and register summary ack handler to re-register this handler
                 // after successful summary
-                opActions.default = undefined;
-                opActions.summaryAck = summaryAckAction;
+                this.summaryCollection.once(MessageType.SummaryAck, () => {
+                    this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                    // we've caught up, so re-register the default action to monitor for
+                    // falling behind, and unregister ourself
+                    this.summaryCollection.on("default", defaultAction);
+                });
+                this.summaryCollection.off("default", defaultAction);
             }
         };
-        const summaryAckAction = (op: ISequencedDocumentMessage,sc: SummaryCollection)=> {
-            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
-            // we've caught up, so re-register the default action to monitor for
-            // falling behind, and unregister ourself
-            opActions.default = defaultAction;
-            opActions.summaryAck = undefined;
-        };
-        const opActions: SummaryCollectionOpActions = {
-            default: defaultAction,
-        };
-
-        this.summaryCollection = new SummaryCollection(
-            this.deltaManager,
-            this.logger,
-            opActions,
-        );
+        this.summaryCollection.on("default", defaultAction);
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -941,8 +914,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
+            this.summaryCollection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
+            maxOpsSinceLastSummary,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
 
         if (this.connected) {
@@ -1069,14 +1044,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             } else if (requestParser.pathParts.length > 0) {
                 /**
-                 * If this an external app request with "externalRequest" header, we need to return an error if the
-                 * data store being requested is marked as unreferenced as per the data store's initial summary.
+                 * If GC is enabled and this an external app request with "externalRequest" header, we need to return
+                 * an error if the data store being requested is marked as unreferenced as per the data store's initial
+                 * summary.
                  *
                  * This is a workaround to handle scenarios where a data store shared with an external app is deleted
                  * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
                  */
                 const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-                const dataStore = request.headers?.externalRequest
+                const dataStore = request.headers?.externalRequest && this.shouldRunGC
                     ? await this.getDataStoreIfInitiallyReferenced(id, wait)
                     : await this.getDataStore(id, wait);
                 const subRequest = requestParser.createSubRequest(1);
@@ -2000,51 +1976,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
-    }
-
-    private subscribeToLeadership() {
-        if (this.context.clientDetails.capabilities.interactive) {
-            this.getScheduler().then((scheduler) => {
-                const LeaderTaskId = "leader";
-
-                // Each client expresses interest to be a leader.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                scheduler.pick(LeaderTaskId, async () => {
-                    assert(!this._leader, 0x134 /* "Client is already leader" */);
-                    this.updateLeader(true);
-                });
-
-                scheduler.on("lost", (key) => {
-                    if (key === LeaderTaskId) {
-                        assert(this._leader, 0x135 /* "Got leader key but client is not leader" */);
-                        this._leader = false;
-                        this.updateLeader(false);
-                    }
-                });
-            }).catch((err) => {
-                this.closeFn(CreateContainerError(err));
-            });
-        }
-    }
-
-    private async getScheduler(): Promise<IAgentScheduler> {
-        return requestFluidObject<IAgentScheduler>(
-            await this.getDataStore(agentSchedulerId, true),
-            "",
-        );
-    }
-
-    private updateLeader(leadership: boolean) {
-        this._leader = leadership;
-        if (this._leader) {
-            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active,
-                0x136 /* "Leader must either have undefined clientId or be connected with active delta manager!" */);
-            this.emit("leader");
-        } else {
-            this.emit("notleader");
-        }
-
-        this.dataStores.updateLeader();
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */

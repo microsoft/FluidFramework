@@ -37,6 +37,7 @@ export class TinyliciousClientInstance {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             serviceConnectionConfig?.port,
+            serviceConnectionConfig?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             tokenProvider,

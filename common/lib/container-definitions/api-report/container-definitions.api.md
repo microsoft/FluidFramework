@@ -373,7 +373,7 @@ export interface ILoaderHeader {
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 // @public (undocumented)

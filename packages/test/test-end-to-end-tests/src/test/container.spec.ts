@@ -89,7 +89,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
                 resolvedUrl: testResolved,
-                version: testRequest.headers?.[LoaderHeader.version],
+                version: testRequest.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: testRequest.headers?.[LoaderHeader.loadMode],
             },
         );
