@@ -20,12 +20,12 @@ interface FrsConnectionConfigBase {
 }
 
 interface FrsConnectionConfigWithKey extends FrsConnectionConfigBase {
+    type: "key";
     key: string;
-    tokenProvider?: never;
 }
 
 interface FrsConnectionConfigWithTokenProvider extends FrsConnectionConfigBase {
-    key?: never;
+    type: "tokenProvider";
     tokenProvider: ITokenProvider
 }
 

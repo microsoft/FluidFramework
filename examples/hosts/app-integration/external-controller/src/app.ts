@@ -14,6 +14,7 @@ const useFrs = process.env.FLUID_CLIENT === "frs";
 
 const connectionConfig: FrsConnectionConfig = {
     tenantId: "",
+    type: "key",
     key: "",
     orderer: "",
     storage: "",

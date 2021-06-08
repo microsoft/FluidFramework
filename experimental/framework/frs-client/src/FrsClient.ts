@@ -36,8 +36,9 @@ export class FrsClientInstance {
         const user = this.connectionConfig.user
             ? { id: this.connectionConfig.user.userId, name: this.connectionConfig.user.userName }
             : generateUser();
-        this.tokenProvider = connectionConfig.tokenProvider
-            ?? new InsecureTokenProvider(connectionConfig.key, user);
+        this.tokenProvider = connectionConfig.type === "tokenProvider"
+            ? connectionConfig.tokenProvider
+            : new InsecureTokenProvider(connectionConfig.key, user);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.tokenProvider,
         );
@@ -62,7 +63,7 @@ export class FrsClientInstance {
     ): Promise<[FluidContainer, FrsContainerServices]> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.resolve({ url: containerConfig.id });
-        if (container.existing === false) {
+        if (container.existing !== true) {
             throw new Error("Attempted to load a non-existing container");
         }
         return this.getFluidContainerAndServices(container);
