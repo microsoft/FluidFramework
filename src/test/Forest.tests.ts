@@ -116,6 +116,12 @@ describe('Forest', () => {
 		);
 	});
 
+	it('does not add trait when attaching empty range to empty trait', () => {
+		const forestWithAttach = oneNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, 0, []);
+		const newParent = forestWithAttach.get(parentId);
+		expect(newParent.traits.get(mainTraitLabel)).equals(undefined);
+	});
+
 	it('can correctly detach a range on a root node', () => {
 		expectSuccessfulDetach(threeLeafForest, parentId, mainTraitLabel, 1, 2);
 	});

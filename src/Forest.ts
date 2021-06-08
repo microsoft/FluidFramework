@@ -188,6 +188,12 @@ export class Forest {
 		const traits = new Map(parentNode.traits);
 		const trait = traits.get(label) ?? [];
 		assert(index <= trait.length, 'invalid attach index');
+
+		// If there is nothing to insert, return early.
+		// This is good for performance, but also avoids an edge case where an empty trait could be created (which is an error).
+		if (childIds.length === 0) {
+			return this;
+		}
 		const newChildren = [...trait.slice(0, index), ...childIds, ...trait.slice(index)];
 		traits.set(label, newChildren);
 		mutableNodes.set(parentId, { ...parentNode, traits });
