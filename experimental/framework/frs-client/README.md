@@ -44,7 +44,7 @@ Using the `FrsClient` object the developer can create and get Fluid containers. 
 import { FrsClient } from "@fluid-experimental/frs-client";
 
 await FrsClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const container = await FrsClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
 ## Defining Fluid Containers
@@ -62,7 +62,7 @@ const schema = {
     dynamicObjectTypes: [ /*...*/ ],
 }
 await FrsClient.createContainer({ id: "_unique-id_" }, schema);
-const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -82,7 +82,7 @@ const schema = {
 }
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
@@ -108,7 +108,7 @@ const schema = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);
