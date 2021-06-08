@@ -4,7 +4,7 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "strict": false,
+        "strict": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
