@@ -78,7 +78,7 @@ export function runMergeTreeOperationRunner(
     apply = applyMessages) {
     let seq = startingSeq;
 
-    const results: string[] | undefined = resultsFilePath === undefined ? undefined : [];
+    const results: {seq:number, str: string}[] | undefined = resultsFilePath === undefined ? undefined : [];
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
@@ -101,7 +101,7 @@ export function runMergeTreeOperationRunner(
             );
             seq = apply(seq, messageData, clients, logger);
             // validate that all the clients match at the end of the round
-            results?.push(logger.validate());
+            results?.push({seq, str: logger.validate()});
         }
     });
 

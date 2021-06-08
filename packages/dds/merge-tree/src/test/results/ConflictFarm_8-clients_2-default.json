@@ -1,66 +1,258 @@
 [
-    "B",
-    "BB",
-    "BBBBB",
-    "BBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBB",
-    "BBBBBB",
-    "BBBBBBBBB",
-    "BBB",
-    "BBBBBBB",
-    "BBBBB",
-    "BBBBBBBB",
-    "BBBBBBB",
-    "BBBBB",
-    "BBBBBBBBB",
-    "BBBBBBBBBBB",
-    "BBBBBBBBBBBB",
-    "BBBBBBBB",
-    "BBB",
-    "BBBBBBBBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBB",
-    "BBBBBB",
-    "BBBBBBBBBBB",
-    "BBBBBBBBB",
-    "BBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBB",
-    "BBBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBB",
-    "BBBBB",
-    "BBBBB",
-    "BBBBBBBBB",
-    "BBBBBBBBBBBBBB",
-    "BBBBBBBBB",
-    "BBBBBBBBBBB",
-    "BBBBBBBBBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBBBBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBBBBBBB",
-    "BBBBBBBBBBB",
-    "BBBBBBBBBBBBB",
-    "BBBBBBBBBBBBB",
-    "BBBB",
-    "BBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBB",
-    "BBBBBBBBBBBBB",
-    "BBBBBBBBBBBBBBBBBBBBBBBB",
-    "BBBBBBBB"
+    {
+        "seq": 1,
+        "str": "B"
+    },
+    {
+        "seq": 2,
+        "str": "BB"
+    },
+    {
+        "seq": 3,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 4,
+        "str": "BBBBBBB"
+    },
+    {
+        "seq": 5,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 6,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 7,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 8,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 10,
+        "str": "BBBBBB"
+    },
+    {
+        "seq": 12,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 14,
+        "str": "BBB"
+    },
+    {
+        "seq": 16,
+        "str": "BBBBBBB"
+    },
+    {
+        "seq": 18,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 20,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 22,
+        "str": "BBBBBBB"
+    },
+    {
+        "seq": 24,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 28,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 32,
+        "str": "BBBBBBBBBBB"
+    },
+    {
+        "seq": 36,
+        "str": "BBBBBBBBBBBB"
+    },
+    {
+        "seq": 40,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 44,
+        "str": "BBB"
+    },
+    {
+        "seq": 48,
+        "str": "BBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 52,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 56,
+        "str": "BBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 64,
+        "str": "BBBBBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 72,
+        "str": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 80,
+        "str": "BBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 88,
+        "str": "BBBBBBBBBBB"
+    },
+    {
+        "seq": 96,
+        "str": "BBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 104,
+        "str": "BBBBBBBBBBBB"
+    },
+    {
+        "seq": 112,
+        "str": "BBBBBB"
+    },
+    {
+        "seq": 120,
+        "str": "BBBBBBBBBBB"
+    },
+    {
+        "seq": 136,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 152,
+        "str": "BBBBBBB"
+    },
+    {
+        "seq": 168,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 184,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 200,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 216,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 232,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 248,
+        "str": "BBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 280,
+        "str": "BBBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 312,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 344,
+        "str": "BBBBB"
+    },
+    {
+        "seq": 376,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 408,
+        "str": "BBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 440,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 472,
+        "str": "BBBBBBBBBBB"
+    },
+    {
+        "seq": 504,
+        "str": "BBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 568,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 632,
+        "str": "BBBBBBBBB"
+    },
+    {
+        "seq": 696,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 760,
+        "str": "BBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 824,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 888,
+        "str": "BBBBBBBBBB"
+    },
+    {
+        "seq": 952,
+        "str": "BBBBBBBBBBB"
+    },
+    {
+        "seq": 1016,
+        "str": "BBBBBBBBBBBBB"
+    },
+    {
+        "seq": 1144,
+        "str": "BBBBBBBBBBBBB"
+    },
+    {
+        "seq": 1272,
+        "str": "BBBB"
+    },
+    {
+        "seq": 1400,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 1528,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 1656,
+        "str": "BBBBBBBB"
+    },
+    {
+        "seq": 1784,
+        "str": "BBBBBBBBBBBBB"
+    },
+    {
+        "seq": 1912,
+        "str": "BBBBBBBBBBBBBBBBBBBBBBBB"
+    },
+    {
+        "seq": 2040,
+        "str": "BBBBBBBB"
+    }
 ]

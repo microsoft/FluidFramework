@@ -1,66 +1,258 @@
 [
-    "DBBBCCCDBBBBBBBDDDDDDDDDDDCCCCCCCCCCCCBBBBBBBCCCCC",
-    "DBBBCCCDBBBBBFFFBBDDDDDDDDDDDCCCCCCCCCCCCBBBBBBBCCCCC",
-    "DB",
-    "GGDB",
-    "GGBDB",
-    "GGBDGGGB",
-    "GBGBDGGGB",
-    "GBGBDDGGGB",
-    "GBGBDDDDDBBGGGB",
-    "GBGFFFBDDDDDBBGGGDDDB",
-    "GBGFFFBDDDDDBBGGGDDB",
-    "GBGFFFBDDDDDBBBBGGGDDB",
-    "GBGFFFBDDDDDDB",
-    "GBGFFFBDDHDDDGDB",
-    "GBGFBDDHDDFDGDB",
-    "GBGFBDDHFFDDHHHFDGDB",
-    "GBGHHHFBDDHFGDHB",
-    "GBGHHHFBBBHB",
-    "GBGGGGFEEEHHHFBBBHDDB",
-    "BGEB",
-    "EBBGFFFEBFF",
-    "DDEBBGFFFEBEFFFHF",
-    "DDEBBGFFFEBECCF",
-    "DDEBBGFFFEFFFBBECDDCCCF",
-    "DDBGFFFEFFFFFBBECBBBB",
-    "DDBGFBBBBB",
-    "DDDDDBFFFFGFBBGGGHHBHHHBBBBBB",
-    "DDDDDBFGGGB",
-    "GGDDBBBDDEEDGGBFDDDGGCGBB",
-    "GGDCDBGGB",
-    "DGGDHHEEEEECBEDBBBBGCGB",
-    "DGCBGB",
-    "BBHDCCCFGGDEEEEEECHHDDDEEEBDDDGEEBFF",
-    "BBHEEDCGGFFFFFCF",
-    "BBHHCCCCCCDDDFFF",
-    "FFBBHHHHHCCCCCECBGGG",
-    "FFBBHHHCB",
-    "HHFEEECCFFFFBBCCCBBBBBBBHGGGDHHFFCEFFFBE",
-    "HHBBCCCHHBBBDDDFFFCCD",
-    "BBBBFDDDDEECCCD",
-    "BFFBBBHHHFFDDDDDBDDDBCCCCCCCCGCCCFFFE",
-    "FFFFFFFFFEEBHHEDDBBDDDGGBFFBFHE",
-    "CCGGBBFHHHHHGFFFGHCEDDDD",
-    "ECCCCFCCGEEEEEEEFFDDDBBBBCCHHH",
-    "GGDDDFEEBBBBGH",
-    "GGGHGGGHFCECCCEEEBBBDDDCBFFFEFEDDBBBFFFDDFF",
-    "BBBBBEGGDGGGGFFHHFCCC",
-    "EBEEEEEBHHHBEDDDDDBBBHHHEE",
-    "FFFCCCCEFFBCCHHHHDDDGEHHHGGGGGGGGGDFDDBBBHHEEC",
-    "FHHHCCCEEEHHHHHHHHBBBHHHHHHFFHEEBBBEEDDDFFGBBFC",
-    "FDDDBBBGGGCCCCCCCGGGEEEEEEEEEEEGGCCBBBDD",
-    "HHHCCHGFFFGGGFFEEEEEEDDDDDBBFFHH",
-    "DDDDDFFFHHHGGFFFFDGBFFFBCCEEEEEEEEEE",
-    "FDDDEEEEEGBBHHDDDDFFFHEEDDDEEGGGHHHCCCCCBB",
-    "EEEEEEHHHDDDDDDDDDGGBBBBBHHGGGBBBFFF",
-    "BBBDFGGEEEEFFEEEEDECCEEEE",
-    "GGGGGGHHHHHHHHHHHHHHHHHHHHHHEFFFCCCCCCEGGGGGGGGGGGEEEEFBBBBBDDDFFCCBCCCFDDDDDDF",
-    "GGGGBBBBBBBBBBFFFCCEEEEECCCCCCCHHHHHHHBBBBDDDDDDDDDDDDDGGG",
-    "DGCCDDDDCCCCCCCCCHHGGGGEEEGGGGFFFHHHHHHHHHBGGG",
-    "EEEDGFFBBBBBBBEEHHEEEEEEEEGGDDGGGGGFFFFFFFFFFFGFGGH",
-    "DDDDGGGGFFFBBBBBBBFFFGGFFFHHHHHEHHHHHHHHHBBCCCBBHCGGGGDDDDDFFFFFFFCCCGEEEEEEEEE",
-    "EDHHHHHCDEEEEEEFEEHHBDDHHHHHBBBGGGDDDGBBBBBFFFBBBHCCCCCCCCCCCCBBEEEE",
-    "EEGGGGGGGGGGGGHHHHFFFECEEEECCCCCCCCFFFFFBFFFDDDDDDDDDDDDDH",
-    "CGGGGGGGGGGFFFFFDCCCDHHHDEEEHHHEEEEEEEEFFCCCCBBGGD"
+    {
+        "seq": 4081,
+        "str": "DBBBCCCDBBBBBBBDDDDDDDDDDDCCCCCCCCCCCCBBBBBBBCCCCC"
+    },
+    {
+        "seq": 4082,
+        "str": "DBBBCCCDBBBBBFFFBBDDDDDDDDDDDCCCCCCCCCCCCBBBBBBBCCCCC"
+    },
+    {
+        "seq": 4083,
+        "str": "DB"
+    },
+    {
+        "seq": 4084,
+        "str": "GGDB"
+    },
+    {
+        "seq": 4085,
+        "str": "GGBDB"
+    },
+    {
+        "seq": 4086,
+        "str": "GGBDGGGB"
+    },
+    {
+        "seq": 4087,
+        "str": "GBGBDGGGB"
+    },
+    {
+        "seq": 4088,
+        "str": "GBGBDDGGGB"
+    },
+    {
+        "seq": 4090,
+        "str": "GBGBDDDDDBBGGGB"
+    },
+    {
+        "seq": 4092,
+        "str": "GBGFFFBDDDDDBBGGGDDDB"
+    },
+    {
+        "seq": 4094,
+        "str": "GBGFFFBDDDDDBBGGGDDB"
+    },
+    {
+        "seq": 4096,
+        "str": "GBGFFFBDDDDDBBBBGGGDDB"
+    },
+    {
+        "seq": 4098,
+        "str": "GBGFFFBDDDDDDB"
+    },
+    {
+        "seq": 4100,
+        "str": "GBGFFFBDDHDDDGDB"
+    },
+    {
+        "seq": 4102,
+        "str": "GBGFBDDHDDFDGDB"
+    },
+    {
+        "seq": 4104,
+        "str": "GBGFBDDHFFDDHHHFDGDB"
+    },
+    {
+        "seq": 4108,
+        "str": "GBGHHHFBDDHFGDHB"
+    },
+    {
+        "seq": 4112,
+        "str": "GBGHHHFBBBHB"
+    },
+    {
+        "seq": 4116,
+        "str": "GBGGGGFEEEHHHFBBBHDDB"
+    },
+    {
+        "seq": 4120,
+        "str": "BGEB"
+    },
+    {
+        "seq": 4124,
+        "str": "EBBGFFFEBFF"
+    },
+    {
+        "seq": 4128,
+        "str": "DDEBBGFFFEBEFFFHF"
+    },
+    {
+        "seq": 4132,
+        "str": "DDEBBGFFFEBECCF"
+    },
+    {
+        "seq": 4136,
+        "str": "DDEBBGFFFEFFFBBECDDCCCF"
+    },
+    {
+        "seq": 4144,
+        "str": "DDBGFFFEFFFFFBBECBBBB"
+    },
+    {
+        "seq": 4152,
+        "str": "DDBGFBBBBB"
+    },
+    {
+        "seq": 4160,
+        "str": "DDDDDBFFFFGFBBGGGHHBHHHBBBBBB"
+    },
+    {
+        "seq": 4168,
+        "str": "DDDDDBFGGGB"
+    },
+    {
+        "seq": 4176,
+        "str": "GGDDBBBDDEEDGGBFDDDGGCGBB"
+    },
+    {
+        "seq": 4184,
+        "str": "GGDCDBGGB"
+    },
+    {
+        "seq": 4192,
+        "str": "DGGDHHEEEEECBEDBBBBGCGB"
+    },
+    {
+        "seq": 4200,
+        "str": "DGCBGB"
+    },
+    {
+        "seq": 4216,
+        "str": "BBHDCCCFGGDEEEEEECHHDDDEEEBDDDGEEBFF"
+    },
+    {
+        "seq": 4232,
+        "str": "BBHEEDCGGFFFFFCF"
+    },
+    {
+        "seq": 4248,
+        "str": "BBHHCCCCCCDDDFFF"
+    },
+    {
+        "seq": 4264,
+        "str": "FFBBHHHHHCCCCCECBGGG"
+    },
+    {
+        "seq": 4280,
+        "str": "FFBBHHHCB"
+    },
+    {
+        "seq": 4296,
+        "str": "HHFEEECCFFFFBBCCCBBBBBBBHGGGDHHFFCEFFFBE"
+    },
+    {
+        "seq": 4312,
+        "str": "HHBBCCCHHBBBDDDFFFCCD"
+    },
+    {
+        "seq": 4328,
+        "str": "BBBBFDDDDEECCCD"
+    },
+    {
+        "seq": 4360,
+        "str": "BFFBBBHHHFFDDDDDBDDDBCCCCCCCCGCCCFFFE"
+    },
+    {
+        "seq": 4392,
+        "str": "FFFFFFFFFEEBHHEDDBBDDDGGBFFBFHE"
+    },
+    {
+        "seq": 4424,
+        "str": "CCGGBBFHHHHHGFFFGHCEDDDD"
+    },
+    {
+        "seq": 4456,
+        "str": "ECCCCFCCGEEEEEEEFFDDDBBBBCCHHH"
+    },
+    {
+        "seq": 4488,
+        "str": "GGDDDFEEBBBBGH"
+    },
+    {
+        "seq": 4520,
+        "str": "GGGHGGGHFCECCCEEEBBBDDDCBFFFEFEDDBBBFFFDDFF"
+    },
+    {
+        "seq": 4552,
+        "str": "BBBBBEGGDGGGGFFHHFCCC"
+    },
+    {
+        "seq": 4584,
+        "str": "EBEEEEEBHHHBEDDDDDBBBHHHEE"
+    },
+    {
+        "seq": 4648,
+        "str": "FFFCCCCEFFBCCHHHHDDDGEHHHGGGGGGGGGDFDDBBBHHEEC"
+    },
+    {
+        "seq": 4712,
+        "str": "FHHHCCCEEEHHHHHHHHBBBHHHHHHFFHEEBBBEEDDDFFGBBFC"
+    },
+    {
+        "seq": 4776,
+        "str": "FDDDBBBGGGCCCCCCCGGGEEEEEEEEEEEGGCCBBBDD"
+    },
+    {
+        "seq": 4840,
+        "str": "HHHCCHGFFFGGGFFEEEEEEDDDDDBBFFHH"
+    },
+    {
+        "seq": 4904,
+        "str": "DDDDDFFFHHHGGFFFFDGBFFFBCCEEEEEEEEEE"
+    },
+    {
+        "seq": 4968,
+        "str": "FDDDEEEEEGBBHHDDDDFFFHEEDDDEEGGGHHHCCCCCBB"
+    },
+    {
+        "seq": 5032,
+        "str": "EEEEEEHHHDDDDDDDDDGGBBBBBHHGGGBBBFFF"
+    },
+    {
+        "seq": 5096,
+        "str": "BBBDFGGEEEEFFEEEEDECCEEEE"
+    },
+    {
+        "seq": 5224,
+        "str": "GGGGGGHHHHHHHHHHHHHHHHHHHHHHEFFFCCCCCCEGGGGGGGGGGGEEEEFBBBBBDDDFFCCBCCCFDDDDDDF"
+    },
+    {
+        "seq": 5352,
+        "str": "GGGGBBBBBBBBBBFFFCCEEEEECCCCCCCHHHHHHHBBBBDDDDDDDDDDDDDGGG"
+    },
+    {
+        "seq": 5480,
+        "str": "DGCCDDDDCCCCCCCCCHHGGGGEEEGGGGFFFHHHHHHHHHBGGG"
+    },
+    {
+        "seq": 5608,
+        "str": "EEEDGFFBBBBBBBEEHHEEEEEEEEGGDDGGGGGFFFFFFFFFFFGFGGH"
+    },
+    {
+        "seq": 5736,
+        "str": "DDDDGGGGFFFBBBBBBBFFFGGFFFHHHHHEHHHHHHHHHBBCCCBBHCGGGGDDDDDFFFFFFFCCCGEEEEEEEEE"
+    },
+    {
+        "seq": 5864,
+        "str": "EDHHHHHCDEEEEEEFEEHHBDDHHHHHBBBGGGDDDGBBBBBFFFBBBHCCCCCCCCCCCCBBEEEE"
+    },
+    {
+        "seq": 5992,
+        "str": "EEGGGGGGGGGGGGHHHHFFFECEEEECCCCCCCCFFFFFBFFFDDDDDDDDDDDDDH"
+    },
+    {
+        "seq": 6120,
+        "str": "CGGGGGGGGGGFFFFFDCCCDHHHDEEEHHHEEEEEEEEFFCCCCBBGGD"
+    }
 ]
