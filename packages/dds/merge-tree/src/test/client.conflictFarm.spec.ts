@@ -20,10 +20,9 @@ import { TestClient } from "./testClient";
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     minLength: IConfigRange;
     clients: IConfigRange;
-    timeoutMs?: number;
 }
 
-const allOperations: TestOperation[] = [
+const allOpertaions: TestOperation[] = [
     removeRange,
     annotateRange,
     insertAtRefPos,
@@ -32,9 +31,9 @@ const allOperations: TestOperation[] = [
 export const debugOptions: IConflictFarmConfig = {
     minLength: { min: 2, max: 2 },
     clients: { min: 3, max: 3 },
-    opsPerRoundRange: { min: 4, max: 100 },
-    rounds: 10000,
-    operations: allOperations,
+    opsPerRoundRange: { min: 1, max: 100 },
+    rounds: 1000,
+    operations: allOpertaions,
     incrementalLog: true,
     growthFunc: (input: number) => input + 1,
 };
@@ -44,24 +43,22 @@ export const defaultOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
-    operations: allOperations,
-    timeoutMs: 30 * 1000,
+    operations: allOpertaions,
     growthFunc: (input: number) => input * 2,
 };
 
 export const longOptions: IConflictFarmConfig = {
-    minLength: { min: 1, max: 1 },
+    minLength: { min: 1, max: 512 },
     clients: { min: 1, max: 32 },
     opsPerRoundRange: { min: 1, max: 512 },
     rounds: 32,
-    operations: allOperations,
-    incrementalLog: true,
+    operations: allOpertaions,
     growthFunc: (input: number) => input * 2,
 };
 
 describe("MergeTree.Client", () => {
     const opts =
-    defaultOptions;
+        defaultOptions;
     // debugOptions;
     // longOptions;
 
@@ -96,6 +93,8 @@ describe("MergeTree.Client", () => {
                     minLength,
                     opts);
             }
-        }).timeout(opts.timeoutMs ?? 0);
+        })
+
+            .timeout(30 * 1000);
     });
 });
