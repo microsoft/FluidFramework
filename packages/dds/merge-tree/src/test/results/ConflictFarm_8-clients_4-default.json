@@ -189,70 +189,70 @@
     },
     {
         "seq": 2544,
-        "str": "BBBBBDDDDDCCCCCCD"
+        "str": "BBBBBBCCCBBBDDDCCCCCCDDDCCCC"
     },
     {
         "seq": 2608,
-        "str": "CBBCCCCCCCCCBBBBDDDDD"
+        "str": "DDDCCCCCCCCCCCBBBBBBBBBBBBDD"
     },
     {
         "seq": 2672,
-        "str": "CCCCCCDBCDBBBBBDDBBD"
+        "str": "DDDDDDDBBBBBBBDDDDDDDDDDCCCCCCCCDDDCCCCCCCCC"
     },
     {
         "seq": 2736,
-        "str": "CDDDDDDDDBBCCBBBBBBBBCCCCCC"
+        "str": "CBBBCDCCDDDD"
     },
     {
         "seq": 2800,
-        "str": "BBBBDCCCDDDDDDDCCBB"
+        "str": "BBCCBDDDBBBBBDC"
     },
     {
         "seq": 2864,
-        "str": "BBBBBBDBBBBBBBDDDDCCCCCCCCCCCCDDD"
+        "str": "DDDCDDDDBDDBBBBDCCCCCCBBBBBB"
     },
     {
         "seq": 2928,
-        "str": "BBBBBCCCCCDDCCCCCBBB"
+        "str": "CCCCCCCCCCBBDDDDDDDDDBBBBBBBBBBBBBBBD"
     },
     {
         "seq": 2992,
-        "str": "BBCCCCCCC"
+        "str": "CCCCCBBBBBBBBCDDDDDDDDDDC"
     },
     {
         "seq": 3056,
-        "str": "DDDDDDCCBBBBBBCCDDDDDDCCCCCCCCCCCCCCBD"
+        "str": "DDBBBBDDDDDDDDBBBBBBCCCCCCCCCCCCCCC"
     },
     {
         "seq": 3184,
-        "str": "DDBBBBBDDDDDCCCCCCDDDDDDDBB"
+        "str": "CCCCCCCCCDDDDDDDDDDDBBBBBBBBDB"
     },
     {
         "seq": 3312,
-        "str": "BBBBBBBBBBBBBBBBBBBCCCCCCDDCCCCDDDDDDDDCCCCCCCC"
+        "str": "BBBBBBBBBBBBCCCCCCCCCCCCCCCCCDDDD"
     },
     {
         "seq": 3440,
-        "str": "CCCBCCCBBBDDDDDDDDBBCCCCCCCCCCCB"
+        "str": "CCCCCCCCCBBBBBBBBBBBBBBDDDDD"
     },
     {
         "seq": 3568,
-        "str": "BBBBDDDDDDDDCCCCCCCCCCCCCCCCCCBBB"
+        "str": "DDDDDDDCCCCCBBBBBBBBBBBDCCCC"
     },
     {
         "seq": 3696,
-        "str": "BBBBDDDDBBBBBBBCCCCCCCCDDD"
+        "str": "CCCDDDBBBBBBBCCCCDDDDCCB"
     },
     {
         "seq": 3824,
-        "str": "CCCCDDDDDDDDCCCCCCCBBBBBB"
+        "str": "CCCCCCCCCCBBBBBBBCCCCCDDD"
     },
     {
         "seq": 3952,
-        "str": "DDDDDDDDDDDDDCCCCCCBBBBBBBBC"
+        "str": "DDDBDDDCCCDDBBBBBBBBBCCCCCCC"
     },
     {
         "seq": 4080,
-        "str": "DDDDBBDDDCCCCCCCCCCCCCCCBBBBBBBD"
+        "str": "BDDDDDDDDCCCCCCC"
     }
 ]

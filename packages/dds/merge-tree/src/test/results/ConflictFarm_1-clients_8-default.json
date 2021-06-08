@@ -1,258 +1,258 @@
 [
     {
         "seq": 4081,
-        "str": "CDDDDDDDDDDDDDDDDDDCCCBBBB"
+        "str": "CCCCBBDDDDDDDDD"
     },
     {
         "seq": 4082,
-        "str": "CDDDDDDDDDDDDDDDDDDCCCBBBB"
+        "str": "CCCCBBDDDDDDDDHHHD"
     },
     {
         "seq": 4083,
-        "str": "CDDDDDDDDDDDDDDDDGGGDDCCCBBBB"
+        "str": "CCCCBBDDDDDDDDHHHD"
     },
     {
         "seq": 4084,
-        "str": "CDDDDDDDDDDDDDDDDGGGD"
+        "str": "CDDDDDDDDHHHD"
     },
     {
         "seq": 4085,
-        "str": "CDDDDDDDDDDDDDDDDGGGD"
+        "str": "CDDDDDHD"
     },
     {
         "seq": 4086,
-        "str": "CDDDDDDDDDDDDDDGGGD"
+        "str": "CDDDDDH"
     },
     {
         "seq": 4087,
-        "str": "CDDDDDDDDD"
+        "str": "CDDDDDH"
     },
     {
         "seq": 4088,
-        "str": "CDDDDDDDD"
+        "str": "CDDDDDH"
     },
     {
         "seq": 4090,
-        "str": "CDDDDDFD"
+        "str": "CD"
     },
     {
         "seq": 4092,
-        "str": "CDDDEDDFD"
-    },
-    {
-        "seq": 4094,
-        "str": "CEDDFFD"
-    },
-    {
-        "seq": 4096,
-        "str": "CEDD"
-    },
-    {
-        "seq": 4098,
-        "str": "CEDCD"
-    },
-    {
-        "seq": 4100,
-        "str": "CEGGDCDD"
-    },
-    {
-        "seq": 4102,
-        "str": "CEGGDCGDD"
-    },
-    {
-        "seq": 4104,
-        "str": "CEGGDCGD"
-    },
-    {
-        "seq": 4108,
-        "str": "CG"
-    },
-    {
-        "seq": 4112,
         "str": "C"
     },
     {
+        "seq": 4094,
+        "str": "CEEE"
+    },
+    {
+        "seq": 4096,
+        "str": "CE"
+    },
+    {
+        "seq": 4098,
+        "str": "CGGGE"
+    },
+    {
+        "seq": 4100,
+        "str": "GGGFFFE"
+    },
+    {
+        "seq": 4102,
+        "str": "GGGCCFFFE"
+    },
+    {
+        "seq": 4104,
+        "str": "GGGCCFFFHHHE"
+    },
+    {
+        "seq": 4108,
+        "str": "GGGCCHHHE"
+    },
+    {
+        "seq": 4112,
+        "str": "GGGCGGHE"
+    },
+    {
         "seq": 4116,
-        "str": "BBB"
+        "str": "EEE"
     },
     {
         "seq": 4120,
-        "str": "B"
+        "str": "BBFF"
     },
     {
         "seq": 4124,
-        "str": "HHHC"
+        "str": "BBHH"
     },
     {
         "seq": 4128,
-        "str": ""
+        "str": "DDDBGHHHH"
     },
     {
         "seq": 4132,
-        "str": "BBBDDDEEG"
+        "str": "DDDBEEEGHH"
     },
     {
         "seq": 4136,
-        "str": "BCC"
+        "str": "DDDBEEEH"
     },
     {
         "seq": 4144,
-        "str": "BGGCCFBBH"
+        "str": "DDDDDHH"
     },
     {
         "seq": 4152,
-        "str": "BGGFFEEE"
+        "str": "DDDCC"
     },
     {
         "seq": 4160,
-        "str": "BGGEE"
+        "str": "E"
     },
     {
         "seq": 4168,
-        "str": "HBBB"
+        "str": "CCFBB"
     },
     {
         "seq": 4176,
-        "str": "HBBBBB"
+        "str": ""
     },
     {
         "seq": 4184,
-        "str": "FFHBEE"
+        "str": "GGGCDDDDFFF"
     },
     {
         "seq": 4192,
-        "str": "FFBBHEEEBE"
+        "str": "GGGGCC"
     },
     {
         "seq": 4200,
-        "str": "BDE"
+        "str": "GGGGCDC"
     },
     {
         "seq": 4216,
-        "str": "CCCCD"
+        "str": "FFFDCC"
     },
     {
         "seq": 4232,
-        "str": "BBEEEHHH"
+        "str": "CCFFFEFCCDDCGGG"
     },
     {
         "seq": 4248,
-        "str": "EDFFECCC"
+        "str": "CBBBHHH"
     },
     {
         "seq": 4264,
-        "str": "DCFFFFF"
+        "str": "CHHHFFFFFF"
     },
     {
         "seq": 4280,
-        "str": "FFCC"
+        "str": "E"
     },
     {
         "seq": 4296,
-        "str": "FBBHFDBBBBB"
+        "str": "HHHFFGECC"
     },
     {
         "seq": 4312,
-        "str": "FBBDHFB"
+        "str": "HHEHDDBBBFFFFF"
     },
     {
         "seq": 4328,
-        "str": "FFFBBBFFF"
+        "str": "HEEHEHDHHDBCCFFEEEFF"
     },
     {
         "seq": 4360,
-        "str": "FGCGBBB"
+        "str": "HEFFGDDDDDDCCDC"
     },
     {
         "seq": 4392,
-        "str": "GGGFDDDCCCCCFFDDDCCD"
+        "str": "EEHHHGGGGGFBBGGGHCCCCCC"
     },
     {
         "seq": 4424,
-        "str": "BBHHDDDEEFEEECCCGC"
+        "str": "GECCFFFFFCDDDDEE"
     },
     {
         "seq": 4456,
-        "str": "BDDDHHHHHHCC"
+        "str": "EGHHECCDDCCCCCCCDDDBBB"
     },
     {
         "seq": 4488,
-        "str": "EEBBCGGGCCCCCFFDDDDDHDD"
+        "str": "EBBBEBEEEBCCDDBDD"
     },
     {
         "seq": 4520,
-        "str": "EEBBEEBBBFFFGGGGGGDDD"
+        "str": "EFFFEEEDDDFGGGGCCCBBBCC"
     },
     {
         "seq": 4552,
-        "str": "EFEEEFBCCFFFDDCCCCCCCCCGHHHGGGEEEDDD"
+        "str": "BBHHHHHHCCCCCCCHHDCCCDH"
     },
     {
         "seq": 4584,
-        "str": "EDDDDDDDEGGEEHD"
+        "str": "BFHHHHHGGGEEECCCHHHBBB"
     },
     {
         "seq": 4648,
-        "str": "EEFFFBBBBBBCCBEBBBBDBB"
+        "str": "FFEEDDGGGGGGGGHHGGC"
     },
     {
         "seq": 4712,
-        "str": "CCHHGGFFFBBDDEHH"
+        "str": "BBHHFDBBBEEEHHHHEBBBBCCGG"
     },
     {
         "seq": 4776,
-        "str": "GGGGGEEBBHHHDCCCDDFFFF"
+        "str": "HHEBBBGGFFFFGGGGGBDCC"
     },
     {
         "seq": 4840,
-        "str": "HHFFFGCBBBECEEECCCCGGGFFCCCCGGGGC"
+        "str": "HHHHHHBEEEEDCCCCDDCCGFFGGFFGF"
     },
     {
         "seq": 4904,
-        "str": "HHHBBHHHHHHDDDDDDDFFFHHHDDDGG"
+        "str": "CEEEBBBBFFFHHFFDDFGHHHHDDDHEEDHHHHHH"
     },
     {
         "seq": 4968,
-        "str": "HHHHFCFFFDDEECFFFBDBB"
+        "str": "HHHCHHEEEEBBBBGGHHHHHGGGGFFHHHHHDDHHHH"
     },
     {
         "seq": 5032,
-        "str": "EEEEEBBBCCDFGGGGGFFFDDCHHHFCHHHDFFFFCC"
+        "str": "FFFFGDDDDDCCCCCGGHHHGGGHHHCG"
     },
     {
         "seq": 5096,
-        "str": "BBFDEFFFHHHBBFFFEEFFFGGGCC"
+        "str": "HHHHHHHHHHCCCFFFGGEEEFFFFFDDED"
     },
     {
         "seq": 5224,
-        "str": "FFFCCCCCCCCFHHHHHHHBEHHHHEEEEEBBDDDGD"
+        "str": "HHHEBFFFFFFFFFFFFDCGGGGGGGGF"
     },
     {
         "seq": 5352,
-        "str": "FFFFFFFFCHHG"
+        "str": "EEEEEEEEEDDDBCGCCCCCHHHHHHBBBBBBBBBBBBHHCCCBBB"
     },
     {
         "seq": 5480,
-        "str": "CCGDBBBBBBEEEBBBBBHHHBBBBBBBBBBBBBHHHHHHEEEEEEE"
+        "str": "GGGEEEFFCFFHHHHBBBBBBBBBBH"
     },
     {
         "seq": 5608,
-        "str": "GCCCCCCCDDDEEEEBBBHHFFFFF"
+        "str": "FFFFFFFFCCCBCCCCCCBBBBBBBEBBBBBBBBEEEEGGGEEEEEEEEEGGGGGGGGGGGGGHGHHH"
     },
     {
         "seq": 5736,
-        "str": "EEEEEEHHDDDGGGGGGGGGGGCCCBBBBBBBFFFBBBBBFFCCCFFFFFGGFFCC"
+        "str": "CCCCCCCGEEEFFDDBBEHHHHFFFFFBBBBBBEEE"
     },
     {
         "seq": 5864,
-        "str": "BCCDDDGGFGGGFFGGGFGGGFFFCCHHHBB"
+        "str": "FCCCBCCCCCBBBGGGGGGGGGGGE"
     },
     {
         "seq": 5992,
-        "str": "CCEFFFFFFFFFFHHHCCCDDDDDDCCBBBDDG"
+        "str": "FFEEGBBBBBBBBBBEEEEFFFFCCCGGFFBBCCDDDHHH"
     },
     {
         "seq": 6120,
-        "str": "DGEEEEEEEEEFFGGGCCCBBCHHHFFH"
+        "str": "FFGCCCCCCGGGGHHHDDDDDDBDDDBBBBB"
     }
 ]

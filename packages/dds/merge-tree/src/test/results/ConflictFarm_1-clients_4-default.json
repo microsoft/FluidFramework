@@ -157,102 +157,102 @@
     },
     {
         "seq": 2288,
-        "str": "C"
+        "str": "CCCCCCCCDCDCBB"
     },
     {
         "seq": 2320,
-        "str": "CCCCCBBDD"
+        "str": "CCCCCCBBDDB"
     },
     {
         "seq": 2352,
-        "str": "CCCCCCCCCCBB"
+        "str": "CCDDDDBBB"
     },
     {
         "seq": 2384,
-        "str": "CCCBBBBBBCBBBBBBCCCDD"
+        "str": "CBBBBBBBBDDDDDDDDDDDDDD"
     },
     {
         "seq": 2416,
-        "str": "CCCCCCCDDDDDDDDDBBD"
+        "str": "CCCCCCCDDDCCCBBBCCCDBBDDDD"
     },
     {
         "seq": 2448,
-        "str": "DDDCCCBBBBBBBCC"
+        "str": "CCCCDDCCCBBB"
     },
     {
         "seq": 2480,
-        "str": "DDDDDBCC"
+        "str": "CBBDDDDBBBCCDCDB"
     },
     {
         "seq": 2512,
-        "str": "DCCDDDDDCCCCCCCCCC"
+        "str": "CCBBDDDDBBBBBBB"
     },
     {
         "seq": 2544,
-        "str": "DCCDDDDDDCCCCCCCCCDBBBBBBBBBCCBBBBBBCCCCCCCC"
+        "str": "CBBBB"
     },
     {
         "seq": 2608,
-        "str": "DBBBBDBBBCCCCCCCC"
+        "str": "BBBBBBCCCCCCDDDDDDD"
     },
     {
         "seq": 2672,
-        "str": "DBBBBBCC"
+        "str": "DDDDDCC"
     },
     {
         "seq": 2736,
-        "str": "BBDDCCCCCCDDDDDDDB"
+        "str": "CCCCCCCDDDBBBBBBB"
     },
     {
         "seq": 2800,
-        "str": "CDCBBBBD"
+        "str": "BCCCDDDD"
     },
     {
         "seq": 2864,
-        "str": "CCCDDDD"
+        "str": "CDD"
     },
     {
         "seq": 2928,
-        "str": "CCCCCCCBBDDDDCCCCDDBBB"
+        "str": "DDDDDDCCCCCCCCCCCC"
     },
     {
         "seq": 2992,
-        "str": "BBBCBBBCC"
+        "str": "DDDDDDDDDDCCCCCBBBBCCCCCCCCCCC"
     },
     {
         "seq": 3056,
-        "str": "CCCDDDDDBBBB"
+        "str": "DDDDDDDBBBCCCCC"
     },
     {
         "seq": 3184,
-        "str": "BBDDDDDD"
+        "str": "CCCCBBBBBBBBBBBBBBBBBDDDDCCCCCCDDDDDD"
     },
     {
         "seq": 3312,
-        "str": "DDDCCCC"
+        "str": "BBBBBBBBBDDDDCCC"
     },
     {
         "seq": 3440,
-        "str": "BBBBBBDDDDDDDDBBBBBBCCCCCCCCCCCCCCC"
+        "str": "CCCBBDDDDDDDDDDDDDDDDDDDDDDDDDDD"
     },
     {
         "seq": 3568,
-        "str": "CDDDDDDDDDDBD"
+        "str": "BBDDDDDDDDDDDDDCCCCCCCCCCCCCCDDDD"
     },
     {
         "seq": 3696,
-        "str": "DDBBBBCCCCCCC"
+        "str": "CCCCCCCCCCCCDDDBBBBBBBBDDDDD"
     },
     {
         "seq": 3824,
-        "str": "BBCCCCCCCCCDDDDDDDDDDDDDDDD"
+        "str": "BBBBBBBBBBBBDDDDDDDDCCCC"
     },
     {
         "seq": 3952,
-        "str": "CCDDDDDDDDCCCCB"
+        "str": "DDCCCCCCCCBBBDDDDDDDDDDDBB"
     },
     {
         "seq": 4080,
-        "str": "CDDDDDDDDDDDDDDDDDDBBBB"
+        "str": "CCCCBBDDDDDDDDD"
     }
 ]
