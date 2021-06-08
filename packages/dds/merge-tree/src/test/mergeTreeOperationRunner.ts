@@ -67,6 +67,7 @@ export interface IMergeTreeOperationRunnerConfig {
     readonly incrementalLog?: boolean;
     readonly operations: readonly TestOperation[];
     growthFunc(input: number): number;
+    resultsFilePostfix?: string;
 }
 
 export interface ReplayGroup{
@@ -76,18 +77,17 @@ export interface ReplayGroup{
     seq: number;
 }
 
+export const replayResultsPath = `${__dirname}/../../src/test/results`;
+
 export function runMergeTreeOperationRunner(
     mt: random.Engine,
     startingSeq: number,
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
-    resultsFilePath?: string,
     apply = applyMessages) {
     let seq = startingSeq;
-
     const results: ReplayGroup[] = [];
-
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
         if (config.incrementalLog) {
@@ -100,6 +100,7 @@ export function runMergeTreeOperationRunner(
                 `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
             logger.log();
             const messageData = generateOperationMessagesForClients(
+                mt,
                 seq,
                 clients,
                 logger,
@@ -119,7 +120,9 @@ export function runMergeTreeOperationRunner(
         }
     });
 
-    if(resultsFilePath !== undefined) {
+    if(config.resultsFilePostfix !== undefined) {
+        const resultsFilePath =
+            `${replayResultsPath}/len_${minLength}-clients_${clients.length}-${config.resultsFilePostfix}`;
         fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined,  4));
     }
 
@@ -127,6 +130,7 @@ export function runMergeTreeOperationRunner(
 }
 
 export function generateOperationMessagesForClients(
+    mt: random.Engine,
     startingSeq: number,
     clients: readonly TestClient[],
     logger: TestClientLogger,
@@ -136,8 +140,6 @@ export function generateOperationMessagesForClients(
     const minimumSequenceNumber = startingSeq;
     let tempSeq = startingSeq * -1;
     const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
-    const mt = random.engines.mt19937();
-    mt.seedWithArray([startingSeq, clients.length, opsPerRound, minLength, operations.length]);
 
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops

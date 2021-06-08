@@ -4,15 +4,13 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
 import { createGroupOp } from "../opBuilder";
 import { TestClient } from "./testClient";
-import { ReplayGroup } from "./mergeTreeOperationRunner";
+import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner";
 import { TestClientLogger } from "./testClientLogger";
 
-const resultsPath = `${__dirname}/../../src/test/results`;
-
-describe.only("MergeTree.Client", () => {
-    for(const filePath of fs.readdirSync(resultsPath)) {
+describe("MergeTree.Client", () => {
+    for(const filePath of fs.readdirSync(replayResultsPath)) {
         it(`Replay ${filePath}`, async ()=>{
-            const file: ReplayGroup[] = JSON.parse(fs.readFileSync(`${resultsPath}/${filePath}`).toString());
+            const file: ReplayGroup[] = JSON.parse(fs.readFileSync(`${replayResultsPath}/${filePath}`).toString());
             const msgClients = new Map<string, {client: TestClient, msgs: ISequencedDocumentMessage[]}>();
             const originalClient = new TestClient();
             msgClients.set("A", {client: originalClient, msgs: []});

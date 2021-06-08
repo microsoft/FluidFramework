@@ -21,10 +21,9 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     minLength: IConfigRange;
     clients: IConfigRange;
     timeoutMs?: number;
-    recordedResultsFilePostfix?: string;
 }
 
-const allOpertaions: TestOperation[] = [
+const allOperations: TestOperation[] = [
     removeRange,
     annotateRange,
     insertAtRefPos,
@@ -35,7 +34,7 @@ export const debugOptions: IConflictFarmConfig = {
     clients: { min: 3, max: 3 },
     opsPerRoundRange: { min: 1, max: 100 },
     rounds: 1000,
-    operations: allOpertaions,
+    operations: allOperations,
     incrementalLog: true,
     growthFunc: (input: number) => input + 1,
 };
@@ -45,9 +44,9 @@ export const defaultOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
-    operations: allOpertaions,
+    operations: allOperations,
     growthFunc: (input: number) => input * 2,
-    // recordedResultsFilePostfix: "default.json",
+    // resultsFilePostfix: "default-conflict-farm-0.40.json",
 };
 
 export const longOptions: IConflictFarmConfig = {
@@ -55,7 +54,7 @@ export const longOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 32 },
     opsPerRoundRange: { min: 1, max: 512 },
     rounds: 32,
-    operations: allOpertaions,
+    operations: allOperations,
     growthFunc: (input: number) => input * 2,
 };
 
@@ -95,10 +94,6 @@ describe("MergeTree.Client", () => {
                     clients,
                     minLength,
                     opts,
-                    opts.recordedResultsFilePostfix !== undefined
-                        // eslint-disable-next-line max-len
-                        ? `${__dirname}/../../src/test/results/ConflictFarm_${minLength}-clients_${clients.length}-${opts.recordedResultsFilePostfix}`
-                        : undefined,
                 );
             }
         })
