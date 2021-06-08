@@ -20,7 +20,6 @@ import { TestClient } from "./testClient";
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     minLength: IConfigRange;
     clients: IConfigRange;
-    timeoutMs?: number;
 }
 
 const allOperations: TestOperation[] = [
@@ -97,7 +96,6 @@ describe("MergeTree.Client", () => {
                 );
             }
         })
-
-        .timeout(opts.timeoutMs ?? 0);
+        .timeout(30 * 10000);
     });
 });

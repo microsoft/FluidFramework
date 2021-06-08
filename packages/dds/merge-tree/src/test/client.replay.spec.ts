@@ -58,6 +58,7 @@ describe("MergeTree.Client", () => {
                 const result = logger.validate();
                 assert.strictEqual(result, group.resultText, "Result text not as expected");
             }
-        });
+        })
+        .timeout(30 * 10000);
     }
 });
