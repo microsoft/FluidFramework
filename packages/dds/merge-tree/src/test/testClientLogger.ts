@@ -84,6 +84,7 @@ export class TestClientLogger {
                         `${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
                 }
             });
+        return baseText;
     }
 
     public toString() {

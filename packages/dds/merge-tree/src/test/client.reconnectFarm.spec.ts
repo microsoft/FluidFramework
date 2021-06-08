@@ -98,6 +98,7 @@ describe("MergeTree.Client", () => {
                 clients,
                 opts.minLength,
                 opts,
+                undefined,
                 applyMessagesWithReconnect);
         })
             .timeout(30 * 1000);
