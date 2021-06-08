@@ -127,7 +127,7 @@ async function main() {
             } else {
                 logStatus(`Build ${buildStatus}`);
             }
-            failureSummary = `\n${buildGraph.taskFailureSummary}`;
+            failureSummary = buildGraph.taskFailureSummary;
         }
     }
 
@@ -137,7 +137,9 @@ async function main() {
 
     logStatus(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s`);
 
-    logStatus(failureSummary);
+    if (failureSummary !== "") {
+        logStatus(`\n${failureSummary}`);
+    }
 }
 
 function buildResultString(buildResult: BuildResult) {

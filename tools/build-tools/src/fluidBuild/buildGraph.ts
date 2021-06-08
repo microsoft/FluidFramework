@@ -188,7 +188,7 @@ export class BuildGraph {
         const summaryLines = this.buildContext.failedTaskLines;
         summaryLines.unshift(chalk.redBright("Failed Tasks:"));
         const notRunCount = this.buildContext.taskStats.leafTotalCount - this.buildContext.taskStats.leafUpToDateCount - this.buildContext.taskStats.leafBuiltCount;
-        summaryLines.push(chalk.yellow(`Unable to run ${notRunCount} tasks due to prior failures.`));
+        summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
         return summaryLines.join("\n");
     }
 
