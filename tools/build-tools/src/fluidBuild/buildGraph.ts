@@ -21,11 +21,6 @@ export enum BuildResult {
     Failed,
 };
 
-export interface BuildResult2 {
-    status: BuildResult,
-    description: string,
-}
-
 export function summarizeBuildResult(results: BuildResult[]) {
     let retResult = BuildResult.UpToDate;
     for (const result of results) {
@@ -186,8 +181,8 @@ export class BuildGraph {
             return "";
         }
         const summaryLines = this.buildContext.failedTaskLines;
-        summaryLines.unshift(chalk.redBright("Failed Tasks:"));
         const notRunCount = this.buildContext.taskStats.leafTotalCount - this.buildContext.taskStats.leafUpToDateCount - this.buildContext.taskStats.leafBuiltCount;
+        summaryLines.unshift(chalk.redBright("Failed Tasks:"));
         summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
         return summaryLines.join("\n");
     }
