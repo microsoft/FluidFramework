@@ -286,7 +286,7 @@ function addNodeReferences(
     }
     if (node.isLeaf()) {
         const segment = node;
-        if (mergeTree.localNetLength(segment) !== undefined) {
+        if (mergeTree.localNetLength(segment) ?? 0 > 0) {
             if (Marker.is(segment)) {
                 const markerId = segment.getId();
                 // Also in insertMarker but need for reload segs case
@@ -955,7 +955,7 @@ function rangeShift(
     offset: number | undefined, end: number | undefined, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         const seg = node;
-        if ((searchInfo.mergeTree.localNetLength(seg) !== undefined) && Marker.is(seg)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) ?? 0 > 0) && Marker.is(seg)) {
             if (seg.refType &
                 (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
                 applyLeafRangeMarker(seg, searchInfo);
@@ -989,7 +989,7 @@ function tileShift(
     offset: number | undefined, end: number | undefined, searchInfo: IReferenceSearchInfo) {
     if (node.isLeaf()) {
         const seg = node;
-        if ((searchInfo.mergeTree.localNetLength(seg) !== undefined) && Marker.is(seg)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
             if (seg.hasTileLabel(searchInfo.tileLabel)) {
                 searchInfo.tile = seg;
             }
@@ -1126,16 +1126,11 @@ export class MergeTree {
 
     localNetLength(segment: ISegment) {
         const removalInfo = this.getRemovalInfo(segment);
-        if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+        if (removalInfo.removedSeq !== undefined) {
             return 0;
+        } else {
+            return segment.cachedLength;
         }
-        if(removalInfo.removedSeq !== undefined) {
-            // this segment is a tombstone eligible for zamboni
-            // so should never be considered, as it may not exist
-            // on other client
-            return undefined;
-        }
-        return segment.cachedLength;
     }
 
     // TODO: remove id when segment removed
@@ -1277,7 +1272,7 @@ export class MergeTree {
                                 && prevSegment.canAppend(segment)
                                 && Properties.matchProperties(prevSegment.properties, segment.properties)
                                 && prevSegment.trackingCollection.matches(segment.trackingCollection)
-                                && this.localNetLength(segment) !== undefined;
+                                && this.localNetLength(segment) > 0;
 
                             if (canAppend) {
                                 if (MergeTree.traceAppend) {
@@ -1296,7 +1291,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) !== undefined) {
+                                if (this.localNetLength(segment) > 0) {
                                     prevSegment = segment;
                                 } else {
                                     prevSegment = undefined;
@@ -1649,7 +1644,6 @@ export class MergeTree {
                         && removalInfo.removedSeq !== UnassignedSequenceNumber) {
                         return undefined;
                     }
-
                     // Segment invisible to client at reference sequence number/branch id/client id of op
                     return 0;
                 }
@@ -1761,10 +1755,7 @@ export class MergeTree {
         const contains = actions && actions.contains;
         for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             const child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId);
-            if (len === undefined) {
-                continue;
-            }
+            const len = this.nodeLength(child, refSeq, clientId) ?? 0;
             if (((!contains) && (_pos < len)) || (contains && contains(child, _pos, refSeq, clientId, undefined, undefined, clientData))) {
                 // Found entry containing pos
                 if (!child.isLeaf()) {
@@ -1809,10 +1800,7 @@ export class MergeTree {
         const contains = actions && actions.contains;
         for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
             const child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId);
-            if(len === undefined) {
-                continue;
-            }
+            const len = this.nodeLength(child, refSeq, clientId) ?? 0;
             const segpos = _segEnd - len;
             if (((!contains) && (pos >= segpos)) ||
                 (contains && contains(child, pos, refSeq, clientId, undefined, undefined, clientData))) {
@@ -2242,10 +2230,14 @@ export class MergeTree {
     }
 
     // Assume called only when pos == len
-    private breakTie(
-        pos: number, node: IMergeNode,  seq: number) {
+    private breakTie(pos: number, node: IMergeNode,  seq: number) {
         if (node.isLeaf()) {
             if (pos === 0) {
+                // normalize the seq numbers
+                // if the new seg is local (UnassignedSequenceNumber) give it the highest possible
+                // seq for comparision, as it will get a seq higher than any other seq once sequences
+                // if the current seg is local (UnassignedSequenceNumber) give it the second highest
+                // possible seq, as the highest is reserved for the previous.
                 const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
                 const segSeq = node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
                 return newSeq > segSeq;
@@ -2335,6 +2327,8 @@ export class MergeTree {
             child = children[childIndex];
             const len = this.nodeLength(child, refSeq, clientId);
             if(len === undefined) {
+                // if the seg len in undefined, the segment
+                // will be removed, so should just be skipped for now
                 continue;
             }
             if (MergeTree.traceTraversal) {
@@ -2737,11 +2731,7 @@ export class MergeTree {
         }
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
-            const childLen = nodeTotalLength(this, child);
-            if(childLen === undefined) {
-                continue;
-            }
-            len += childLen;
+            len += nodeTotalLength(this, child) ?? 0;
             if (hierBlock) {
                 hierBlock.addNodeReferences(this, child);
             }
@@ -2851,10 +2841,7 @@ export class MergeTree {
             }
             if ((state.op === IncrementalExecOp.Go) && (state.childIndex < state.block.childCount)) {
                 const child = state.block.children[state.childIndex];
-                const len = this.nodeLength(child, state.refSeq, state.clientId);
-                if(len === undefined) {
-                    continue;
-                }
+                const len = this.nodeLength(child, state.refSeq, state.clientId) ?? 0;
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
                         // eslint-disable-next-line @typescript-eslint/dot-notation
@@ -2912,10 +2899,7 @@ export class MergeTree {
         const children = node.children;
         for (let childIndex = 0; childIndex < node.childCount; childIndex++) {
             const child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId);
-            if(len === undefined) {
-                continue;
-            }
+            const len = this.nodeLength(child, refSeq, clientId) ?? 0;
             if (MergeTree.traceTraversal) {
                 let segInfo: string;
                 if ((!child.isLeaf()) && this.collabWindow.collaborating) {
