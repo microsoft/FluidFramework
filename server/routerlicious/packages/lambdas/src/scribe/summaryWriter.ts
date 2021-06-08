@@ -30,6 +30,7 @@ import {
     IScribe,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
+import winston from "winston";
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
@@ -248,17 +249,17 @@ export class SummaryWriter implements ISummaryWriter {
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
 
-        let clientSummaryId;
+        let serviceSummaryId;
         if (this.singleSummaryUploadApi)
         {
-            clientSummaryId = await this.uploadUpdatedSnapshot(
+            serviceSummaryId = await this.uploadUpdatedSnapshot(
                 lastCommit.tree.sha,
                 logTailEntries,
                 serviceProtocolEntries);
         }
         else
         {
-            clientSummaryId = await this.uploadUpdatedSummary(
+            serviceSummaryId = await this.uploadUpdatedSummary(
                 lastCommit.tree.sha,
                 logTailEntries,
                 serviceProtocolEntries);
@@ -272,7 +273,7 @@ export class SummaryWriter implements ISummaryWriter {
             },
             message: `Service Summary @${op.sequenceNumber}`,
             parents: [lastCommit.sha],
-            tree: clientSummaryId,
+            tree: serviceSummaryId,
         };
 
         // Finally commit the service summary and update the ref.
@@ -382,7 +383,11 @@ export class SummaryWriter implements ISummaryWriter {
             type: SummarySnapshotType.Channel,
         };
 
-        return this.summaryStorage.createSummary(snapshotPayload).then((response) => response.id);
+        const id = this.summaryStorage.createSummary(snapshotPayload).then((response) => response.id);
+        const summaryType = protocolEntries !== undefined ? "clientSummary" : "serviceSummary";
+        winston.info(`[UPLOAD SUMMARY] Scribe ${summaryType}. \nPayload: ${snapshotPayload} \nResponse Id: ${id}`);
+
+        return id;
     }
 
     private async generateLogtailEntries(
