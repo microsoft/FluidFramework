@@ -37,6 +37,7 @@ import winston from "winston";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
+import winston from "winston";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
