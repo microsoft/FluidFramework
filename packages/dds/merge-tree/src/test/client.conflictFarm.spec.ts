@@ -20,8 +20,6 @@ import { TestClient } from "./testClient";
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     minLength: IConfigRange;
     clients: IConfigRange;
-    timeoutMs?: number;
-    recordedResultsFilePostfix?: string;
 }
 
 const allOpertaions: TestOperation[] = [
@@ -47,7 +45,6 @@ export const defaultOptions: IConflictFarmConfig = {
     rounds: 8,
     operations: allOpertaions,
     growthFunc: (input: number) => input * 2,
-    recordedResultsFilePostfix: "default.json",
 };
 
 export const longOptions: IConflictFarmConfig = {
@@ -94,15 +91,10 @@ describe("MergeTree.Client", () => {
                     seq,
                     clients,
                     minLength,
-                    opts,
-                    opts.recordedResultsFilePostfix !== undefined
-                        // eslint-disable-next-line max-len
-                        ? `${__dirname}/../../src/test/results/ConflictFarm_${minLength}-clients_${clients.length}-${opts.recordedResultsFilePostfix}`
-                        : undefined,
-                );
+                    opts);
             }
         })
 
-        .timeout(opts.timeoutMs ?? 0);
+            .timeout(30 * 1000);
     });
 });
