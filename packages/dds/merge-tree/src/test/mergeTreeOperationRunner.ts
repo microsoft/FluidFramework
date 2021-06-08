@@ -107,13 +107,13 @@ export function runMergeTreeOperationRunner(
             seq = apply(seq, messageData, clients, logger);
             const str = logger.validate();
             // validate that all the clients match at the end of the round
-            actualResults?.push({str, full:logger.toString()});
+            actualResults?.push({str, full: logger.toString()});
             const actual =  actualResults?.[actualResults.length - 1];
             const expected = expectedResults?.[actualResults.length - 1];
-            if(actual.str !== expected.str) {
-                assert.notDeepStrictEqual(
-                    actual.full,
-                    expected.full);
+            if(actual?.str !== expected?.str) {
+                assert.deepStrictEqual(
+                    actual?.full,
+                    expected?.full);
             }
         }
     });
