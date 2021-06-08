@@ -559,7 +559,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // pack & unpack aggregated blobs.
             // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
             // BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            if (context.storage) {
+            if (context.attachState === AttachState.Attached && context.storage !== undefined) {
                 const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
