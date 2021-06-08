@@ -18,6 +18,7 @@ import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import * as contract from "../contract";
 import { getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
@@ -49,14 +50,19 @@ export class RestGitService {
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         const defaultHeaders: OutgoingHttpHeaders = {
             "User-Agent": userAgent,
+            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
         };
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+
+        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
@@ -92,7 +98,7 @@ export class RestGitService {
 
     public async getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${this.getRepoPath()}/contents/${path}?${query}`);
+        return this.get(`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`);
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
@@ -148,9 +154,9 @@ export class RestGitService {
                 config: { enabled: true },
             };
             const params = encodeURIComponent(JSON.stringify(getRefParams));
-            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}?config=${params}`);
         }
-        return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
+        return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}`);
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
@@ -187,6 +193,14 @@ export class RestGitService {
         this.setCache(tree.sha, tree);
 
         return tree;
+    }
+
+    public async createSnapshot(snapshotParams: contract.ISummaryPayload): Promise<contract.ISnapshotResponse> {
+        const snapshotResponse = await this.post<contract.ISnapshotResponse>(
+            `/repos/fluid/git/summaries`,
+             snapshotParams);
+
+        return snapshotResponse;
     }
 
     public async getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
@@ -320,6 +334,11 @@ export class RestGitService {
         return this.restWrapper.patch<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
         }).catch(getRequestErrorTranslator(url, "PATCH"));
+    }
+
+    private getStorageRoutingHeaderValue()
+    {
+        return `${this.tenantId}:${this.documentId}`;
     }
 
     /**
