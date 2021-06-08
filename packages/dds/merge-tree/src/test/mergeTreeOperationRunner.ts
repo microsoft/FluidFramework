@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { SegmentGroup } from "../mergeTree";
+import { ISegment, SegmentGroup } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -24,11 +25,25 @@ export const annotateRange: TestOperation =
 
 export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
-        const segOff = client.getContainingSegment(opStart);
-        if (segOff.segment) {
+        const segs: ISegment[] = [];
+        // gather all the segments at the pos, including removed segments
+        client.mergeTree.walkAllSegments(client.mergeTree.root,(seg)=>{
+            const pos = client.getPosition(seg);
+            if(pos >= opStart) {
+                if(pos <= opStart) {
+                    segs.push(seg);
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        });
+        if(segs.length > 0) {
+            const text = client.longClientId.repeat(random.integer(1, 3)(mt));
+            const seg = random.pick(mt,segs);
             return client.insertAtReferencePositionLocal(
-                new LocalReference(client, segOff.segment, segOff.offset),
-                TextSegment.make(client.longClientId.repeat(random.integer(1, 3)(mt))));
+                new LocalReference(client, seg, random.integer(0, seg.cachedLength - 1)(mt)),
+                TextSegment.make(text));
         }
     };
 
@@ -54,14 +69,24 @@ export interface IMergeTreeOperationRunnerConfig {
     growthFunc(input: number): number;
 }
 
+export interface ReplayGroup{
+    msgs: ISequencedDocumentMessage[];
+    initialText: string;
+    resultText: string;
+    seq: number;
+}
+
 export function runMergeTreeOperationRunner(
     mt: random.Engine,
     startingSeq: number,
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
+    resultsFilePath?: string,
     apply = applyMessages) {
     let seq = startingSeq;
+
+    const results: ReplayGroup[] = [];
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
@@ -69,12 +94,12 @@ export function runMergeTreeOperationRunner(
             console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
         }
         for (let round = 0; round < config.rounds; round++) {
+            const initialText = clients[0].getText();
             const logger = new TestClientLogger(
                 clients,
                 `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
             logger.log();
             const messageData = generateOperationMessagesForClients(
-                mt,
                 seq,
                 clients,
                 logger,
@@ -82,17 +107,26 @@ export function runMergeTreeOperationRunner(
                 minLength,
                 config.operations,
             );
+            const msgs =  messageData.map((md)=>md[0]);
             seq = apply(seq, messageData, clients, logger);
-            // validate that all the clients match at the end of the round
-            logger.validate();
+            const resultText = logger.validate();
+            results.push({
+                initialText,
+                resultText,
+                msgs,
+                seq,
+            });
         }
     });
+
+    if(resultsFilePath !== undefined) {
+        fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined,  4));
+    }
 
     return seq;
 }
 
 export function generateOperationMessagesForClients(
-    mt: random.Engine,
     startingSeq: number,
     clients: readonly TestClient[],
     logger: TestClientLogger,
@@ -102,6 +136,9 @@ export function generateOperationMessagesForClients(
     const minimumSequenceNumber = startingSeq;
     let tempSeq = startingSeq * -1;
     const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
+    const mt = random.engines.mt19937();
+    mt.seedWithArray([startingSeq, clients.length, opsPerRound, minLength, operations.length]);
+
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops
         // and is our baseline
