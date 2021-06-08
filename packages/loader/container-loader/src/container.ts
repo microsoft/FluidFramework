@@ -105,6 +105,7 @@ import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
+import { ContainerStorageAdapter } from "./containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -397,6 +398,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
+    private readonly storageServiceAdapter: ContainerStorageAdapter;
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -647,6 +649,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.storageServiceAdapter = new ContainerStorageAdapter(
+            () => this.storageService,
+            () => this.attachState,
+        );
 
         const isDomAvailable = typeof document === "object" &&
             document !== null &&
@@ -940,8 +946,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args).catch(() => { });
     }
 
-    public get storage(): IDocumentStorageService | undefined {
-        return this._storageService;
+    public get storage(): IDocumentStorageService {
+        return this.storageServiceAdapter;
     }
 
     /**
