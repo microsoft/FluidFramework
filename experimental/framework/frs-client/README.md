@@ -67,13 +67,12 @@ const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 
 ## Using initial objects
 
-The most common way to use Fluid is through initial collaborative objects that are created when the Container is created.
+The most common way to use Fluid is through initial collaborative objects that are created when the Container is created. DistributedDataStructures and DataObjects are both supported types of collaborative objects.
 
-> Note: Collaborative objects are referred to as LoadableObjects within Fluid. LoadableObjects are specific to Fluid and expose a collaborative interface. DistributedDataStructures and DataObjects are types of LoadableObjects.
-
-`initialObjects` are loaded into memory when the Container is loaded and the developer can access them off the Container via the `initialObjects` property. The `initialObjects` property has the same signature as the Container schema.
+`initialObjects` are loaded into memory when the Container is loaded and the developer can access them via the Container's `initialObjects` property. The `initialObjects` property has the same signature as the Container schema.
 
 ```javascript
+// Define the keys and types of the initial list of collaborative objects. Here, we are using a SharedMap DDS on key "map1" and a KeyValueDataObject on key "pair1"
 const schema = {
     name: "my-container",
     initialObjects: {
@@ -82,9 +81,12 @@ const schema = {
     }
 }
 
+// Fetch back the container that had been created earlier with the same ID and schema
 const container = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
 
+// Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
+// Use the keys that we had set in the schema to load the individiual objects
 const map1 = initialObjects.map1;
 const pair1 = initialObjects["pair1"];
 ```

@@ -10,7 +10,7 @@ import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
-const useFrs = process.env.USE_FRS === "true";
+const useFrs = process.env.FLUID_CLIENT === "frs";
 
 const connectionConfig: FrsConnectionConfig = {
     tenantId: "",
