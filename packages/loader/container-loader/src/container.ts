@@ -655,7 +655,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (this.attachState !== AttachState.Attached) {
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
-                    })
+                    });
                     throw new Error("Real storage calls not allowed in Unattached container");
                 }
                 return this.storageService;
