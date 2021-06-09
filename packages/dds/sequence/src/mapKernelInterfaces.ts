@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { EventThis } from "@fluidframework/runtime-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -115,16 +115,17 @@ export interface IValueTypeCreator {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (
+    valueChanged(
         changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder) => void);
-    (event: "clear", listener: (
+        target: EventThis,
+    ): EventThis;
+    clear(
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder
-    ) => void);
+        target: EventThis,
+    ): EventThis;
 }
 
 /**
