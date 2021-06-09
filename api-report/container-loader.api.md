@@ -169,7 +169,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
 
 // @public
-export const defaultClient: IClient;
+export const defaultClient: Readonly<IClient>;
 
 // @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
