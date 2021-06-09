@@ -3,22 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    Container,
+    defaultClient,
+    Loader,
+} from "@fluidframework/container-loader";
+import {
+    IDocumentServiceFactory,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
 } from "@fluid-experimental/fluid-static";
-import {
-    IDocumentServiceFactory,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
@@ -98,12 +103,20 @@ export class TinyliciousClientInstance {
     ): Promise<Container> {
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
+        // Override the default client config to connect with write permissions
+        const clientOverride: IClient = {
+            ...defaultClient,
+            mode: "write",
+        };
 
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: tinyliciousContainerConfig.logger,
+            options: {
+                client: clientOverride,
+            },
         });
 
         let container: Container;

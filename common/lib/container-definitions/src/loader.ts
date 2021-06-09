@@ -12,6 +12,7 @@ import {
     IProvideFluidCodeDetailsComparer,
 } from "@fluidframework/core-interfaces";
 import {
+    IClient,
     IClientDetails,
     IDocumentMessage,
     IPendingProposal,
@@ -252,6 +253,11 @@ export type ILoaderOptions = {
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
     maxClientLeaveWaitTime?: number,
+
+    /**
+     * Sets a client configuration created containers will use instead of the default.
+     */
+     client?: IClient,
 };
 
 /**
