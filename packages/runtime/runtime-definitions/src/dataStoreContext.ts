@@ -61,14 +61,6 @@ export interface IContainerRuntimeBaseEvents {
     op: [op: ISequencedDocumentMessage];
     batchEnd: [error: any, op: ISequencedDocumentMessage];
     signal: [message: IInboundSignalMessage, local: boolean];
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    leader: [];
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    notleader: [];
 }
 
 /**
@@ -235,14 +227,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents {
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    leader: [];
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    notleader: [];
     attaching: [];
     attached: [];
 }
@@ -277,10 +261,6 @@ export interface IFluidDataStoreContext extends
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;

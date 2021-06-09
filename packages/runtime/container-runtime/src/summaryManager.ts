@@ -127,6 +127,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
                 // In future we will change the elected client.
                 // this.orderedClients.incrementCurrentClient();
+
+                this.hasLoggedTelemetry = true;
             }
         });
         this.summaryCollection.on(MessageType.SummaryAck, (op) => {
@@ -376,8 +378,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject(new Error("Invalid summarizer route"));
         }
 

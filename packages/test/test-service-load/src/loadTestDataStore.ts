@@ -47,20 +47,35 @@ class LoadTestDataStoreModel {
         root.set(taskManagerKey, TaskManager.create(runtime).handle);
     }
 
-    private static async waitForCatchup(runtime: IFluidDataStoreRuntime) {
+    private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
         if(runtime.deltaManager.active) {
             return;
         }
+
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
-        while(runtime.deltaManager.lastSequenceNumber < lastKnownSeq) {
-            await new Promise((resolve,reject)=>{
-                if(runtime.disposed) {
-                    reject(new Error("disposed"));
-                    return;
+
+        return new Promise<void>((resolve, reject) => {
+            if (runtime.disposed) {
+                reject(new Error("disposed"));
+            }
+
+            const opListener = () => {
+                if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
+                    runtime.deltaManager.off("op", opListener);
+                    runtime.off("dispose", disposeListener);
+                    resolve();
                 }
-                runtime.deltaManager.once("op", resolve);
-            });
-        }
+            };
+
+            const disposeListener = () => {
+                runtime.deltaManager.off("op", opListener);
+                runtime.off("dispose", disposeListener);
+                reject(new Error("disposed"));
+            };
+
+            runtime.deltaManager.on("op", opListener);
+            runtime.on("dispose", disposeListener);
+        });
     }
 
     /**

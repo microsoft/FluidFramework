@@ -31,14 +31,6 @@ import {
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents {
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    leader: [];
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    notleader: [];
     disconnected: [];
     dispose: [];
     attaching: [];

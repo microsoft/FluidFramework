@@ -35,7 +35,12 @@ interface CompatConfig {
     dataRuntime?: string | number,
 }
 
-function genConfig(compatVersion: number): CompatConfig[] {
+// N, N - 1, and N - 2
+const defaultVersions = [0, -1, -2];
+// we are currently supporting 0.39 long-term
+const LTSVersions = ["^0.39.0"];
+
+function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
         return [{
             name: `Non-Compat`,
@@ -107,6 +112,24 @@ function genConfig(compatVersion: number): CompatConfig[] {
     ];
 }
 
+const genLTSConfig = (compatVersion: number | string): CompatConfig[]  => {
+    return [
+        {
+            name: `compat LTS ${compatVersion} - old loader`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            loader: compatVersion,
+        },
+        {
+            name: `compat LTS ${compatVersion} - old loader + old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+            loader: compatVersion,
+        },
+    ];
+};
+
 /*
  * Parse the command line argument and environment variables.  Arguments take precedent.
  *   --compat <index> - choose a config to run (default: -1 for all)
@@ -167,7 +190,6 @@ nconf.argv({
         fluid: {
             test: {
                 compat: undefined,
-                compatVersion: [0, -1, -2],
                 driver: "local",
             },
         },
@@ -185,9 +207,18 @@ process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
 
 let configList: CompatConfig[] = [];
-compatVersions.forEach((value) => {
-    configList.push(...genConfig(value));
-});
+if (!compatVersions || compatVersions.length === 0) {
+    defaultVersions.forEach((value) => {
+        configList.push(...genConfig(value));
+    });
+    LTSVersions.forEach((value) => {
+        configList.push(...genLTSConfig(value));
+    });
+} else {
+    compatVersions.forEach((value) => {
+        configList.push(...genConfig(value));
+    });
+}
 
 if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind.includes(value.kind));

@@ -49,7 +49,6 @@ export class MockFluidDataStoreContext
     public clientId: string | undefined = uuid();
     public clientDetails: IClientDetails;
     public connected: boolean = true;
-    public leader: boolean;
     public baseSnapshot: ISnapshotTree | undefined;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public containerRuntime: IContainerRuntimeBase;

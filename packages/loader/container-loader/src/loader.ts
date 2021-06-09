@@ -71,7 +71,7 @@ export class RelativeLoader implements ILoader {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                         resolvedUrl: {...resolvedUrl},
-                        version: request.headers?.[LoaderHeader.version],
+                        version: request.headers?.[LoaderHeader.version] ?? undefined,
                         loadMode: request.headers?.[LoaderHeader.loadMode],
                     },
                 );
@@ -412,11 +412,6 @@ export class Loader implements IHostLoader {
         // If set in both query string and headers, use query string
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
-        // Version === null means not use any snapshot.
-        if (request.headers[LoaderHeader.version] === "null") {
-            request.headers[LoaderHeader.version] = null;
-        }
-
         const canCache = this.canCacheForRequest(request.headers);
         debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
@@ -437,7 +432,7 @@ export class Loader implements IHostLoader {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                 resolvedUrl: resolved,
-                version: request.headers?.[LoaderHeader.version],
+                version: request.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: request.headers?.[LoaderHeader.loadMode],
             },
             pendingLocalState,
