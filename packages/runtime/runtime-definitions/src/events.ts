@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export const eventThis = Symbol("EventThis");
+export declare const eventThis: unique symbol;
 export type EventThis = typeof eventThis;
 
 /**
