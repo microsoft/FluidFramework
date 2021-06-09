@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-    IDirectoryValueChanged,
+    IValueChanged,
     SharedMap,
 } from "@fluidframework/map";
 import {
@@ -98,7 +98,7 @@ export async function initializeState<
     // Define the synced state callback listener that will be responsible for triggering state updates on synced state
     // value changes
     const syncedStateCallback = (
-        change: IDirectoryValueChanged,
+        change: IValueChanged,
         local: boolean,
     ) => {
         const callback = syncedStateCallbackListener(
@@ -117,10 +117,7 @@ export async function initializeState<
 
     // Add the callback to the fluidObject's own synced state
     syncedState.addValueChangedListener(syncedStateCallback);
-    storedHandleMap.on("valueChanged", (
-        change: IDirectoryValueChanged,
-        local: boolean,
-    ) => {
+    storedHandleMap.on("valueChanged", (change, local) => {
         const handle = storedHandleMap.get<IFluidHandle>(change.key);
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (handle !== undefined && !state.fluidObjectMap?.has(handle.absolutePath)) {

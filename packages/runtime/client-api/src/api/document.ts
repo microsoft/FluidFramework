@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime, IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions";
 import {
     IDeltaManager, ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -20,7 +19,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { EventSubscribe, IEventProvider, IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
@@ -52,10 +51,34 @@ export function registerChaincodeRepo(repo: string) {
 export const getChaincodeRepo = (): string => chaincodeRepo;
 // End temporary calls
 
+export type EventForwarder<TEvents, TProvider extends IEventProvider<TEvents>> = {
+    [K in keyof IEventProvider<any>]: EventSubscribe<TEvents, TProvider>;
+};
+export class TypedEventForwarder<TEvents, TProvider extends IEventProvider<TEvents>>
+    implements EventForwarder<TEvents, TProvider> {
+    constructor(protected readonly eventProvider: TProvider) {}
+
+    public readonly on: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.on(event, listener);
+    public readonly off: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.off(event, listener);
+    public readonly once: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.once(event, listener);
+    public readonly addListener: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.addListener(event, listener);
+    public readonly removeListener: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.removeListener(event, listener);
+    public readonly prependListener: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.prependListener(event, listener);
+    public readonly prependOnceListener: EventSubscribe<TEvents, TProvider> = (event, listener) =>
+        this.eventProvider.prependOnceListener(event, listener);
+}
+
 /**
  * A document is a collection of shared types.
  */
-export class Document extends EventEmitter {
+export class Document
+    extends TypedEventForwarder<IFluidDataStoreRuntimeEvents, IFluidDataStoreRuntime> {
     public get clientId(): string {
         return this.runtime.clientId;
     }
@@ -90,17 +113,12 @@ export class Document extends EventEmitter {
      * Constructs a new document from the provided details
      */
     constructor(
-        public readonly runtime: FluidDataStoreRuntime,
+        public readonly runtime: IFluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
         private readonly root: ISharedMap,
         private readonly closeFn: () => void,
     ) {
-        super();
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.runtime.on(event, listener);
-        return this;
+        super(runtime);
     }
 
     /**

@@ -55,6 +55,7 @@
     "@fluidframework/container-runtime": "^0.41.0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/datastore": "^0.41.0",
+    "@fluidframework/datastore-definitions": "^0.41.0",
     "@fluidframework/driver-definitions": "^0.39.0",
     "@fluidframework/ink": "^0.41.0",
     "@fluidframework/map": "^0.41.0",
