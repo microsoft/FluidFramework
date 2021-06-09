@@ -57,7 +57,8 @@ export interface IColor {
 
 export interface IInkEvents extends ISharedObjectEvents {
     stylus: [operation: IStylusOperation];
-    clear: [];
+    clear: [operation: IClearOperation];
+    createStroke: [operation: ICreateStrokeOperation];
 }
 
 /**
