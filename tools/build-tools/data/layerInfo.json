@@ -154,12 +154,14 @@
                 "packages": [
                     "@fluid-experimental/get-container",
                     "@fluid-experimental/fluid-static",
+                    "@fluid-experimental/frs-client",
                     "@fluid-experimental/tinylicious-client"
                 ],
                 "deps": [
                     "Loader",
                     "Routerlicious-Driver",
                     "Server-Libs",
+                    "Server-Shared-Utils",
                     "Test"
                 ]
             },
