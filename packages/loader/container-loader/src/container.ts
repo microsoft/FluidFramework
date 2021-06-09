@@ -651,8 +651,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
         this.storage = new ContainerStorageAdapter(
-            () => this.storageService,
-            () => this.attachState,
+            () => {
+                if (this.attachState !== AttachState.Attached) {
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    })
+                    throw new Error("Real storage calls not allowed in Unattached container");
+                }
+                return this.storageService;
+            },
             this.storageBlobs,
         );
 
