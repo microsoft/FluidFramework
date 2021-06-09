@@ -439,8 +439,8 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     /**
-     * Updates protocol head to the new summary sequence number
      * Protocol head is the sequence number of the last summary
+     * This method updates the protocol head to the new summary sequence number
      * @param protocolHead The sequence number of the new summary
      */
     private async updateProtocolHead(protocolHead: number) {
