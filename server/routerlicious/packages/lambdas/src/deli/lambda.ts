@@ -303,7 +303,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         // Check if we should nack this message
         const nackMessages = this.nackMessages;
-        if (nackMessages) {
+        if (nackMessages && this.serviceConfiguration.deli.enableNackMessages) {
             let shouldNack = true;
 
             if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
