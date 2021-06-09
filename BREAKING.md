@@ -3,7 +3,7 @@
 - [Package renames](#0.41-package-renames)
 - [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
 - [Leadership API surface removed](#Leadership-API-surface-removed)
-- [IContainerContext storage API return type changed](#IContainerContext-storage-API-return-type-changed)
+- [IContainerContext and Container storage API return type changed](#IContainerContext-and-Container-storage-API-return-type-changed)
 
 ### 0.41 package renames
 
@@ -21,8 +21,8 @@ In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned of
 
 See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on how to use `TaskSubscription` to migrate away from leadership election.
 
-### IContainerContext storage API return type changed
-IContainerContext now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
+### IContainerContext and Container storage API return type changed
+IContainerContext and Container now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
 
 ## 0.40 Breaking changes
 
