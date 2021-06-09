@@ -559,7 +559,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // pack & unpack aggregated blobs.
             // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
             // BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            if (context.storage) {
+            if (context.attachState === AttachState.Attached) {
+                // IContainerContext storage api return type still has undefined in 0.39 package version.
+                // So once we release 0.40 container-defn package we can remove this check.
+                assert(context.storage !== undefined, "Attached state should have storage");
                 const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
@@ -590,9 +593,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return storage ?
-                    readAndParse<T>(storage, blobId) :
-                    readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+                if (context.attachState === AttachState.Attached) {
+                    // IContainerContext storage api return type still has undefined in 0.39 package version.
+                    // So once we release 0.40 container-defn package we can remove this check.
+                    assert(storage !== undefined, "Attached state should have storage");
+                    return readAndParse<T>(storage, blobId);
+                }
+                return readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
@@ -649,6 +656,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // This code is plain wrong. It lies that it never returns undefined!!!
         // All callers should be fixed, as this API is called in detached state of container when we have
         // no storage and it's passed down the stack without right typing.
+        // back-compat 0.40 NoStorageInDetachedMode. Also, IContainerContext storage api return type still
+        // has undefined in 0.39 package version.
+        // So once we release 0.40 container-defn package we can remove this check.
         if (!this._storage && this.context.storage) {
             // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
             this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);

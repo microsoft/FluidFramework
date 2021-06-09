@@ -174,7 +174,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)

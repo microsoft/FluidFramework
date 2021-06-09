@@ -158,7 +158,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
-    get storage(): IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
