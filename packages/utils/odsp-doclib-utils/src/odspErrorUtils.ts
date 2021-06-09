@@ -149,6 +149,19 @@ export function createOdspNetworkError(
     return error;
 }
 
+interface IFacetCodes {
+    facetCodes?: string[];
+ }
+
+ function parseFacetCodes(response: Response): string[] | undefined {
+    const stack = [];
+    let error = response.error;
+    while (error !== undefined) {
+        stack.push(error.code);
+        error = error.innerError;
+   }
+}
+
 /**
  * Throws network error - an object with a bunch of network related properties
  */
