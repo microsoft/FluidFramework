@@ -162,7 +162,7 @@ export enum ConnectionState {
  * through ILoaderOptions for all Containers created by a Loader, or just the `details` member
  * may be overridden for individual requests through ILoaderHeader or IContainerConfig.
  */
-export const defaultClient: IClient = {
+export const defaultClient: Readonly<IClient> = {
     details: {
         capabilities: { interactive: true },
     },
@@ -1526,7 +1526,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get client(): IClient {
         const client: IClient = this.options?.client !== undefined
             ? this.options.client
-            : defaultClient;
+            : { ...defaultClient };
 
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);
