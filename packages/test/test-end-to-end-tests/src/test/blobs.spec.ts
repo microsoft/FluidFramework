@@ -69,16 +69,20 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     it("loads from snapshot", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
-        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
-        // attach blob, wait for blob attach op, then take BlobManager snapshot
-        dataStore._root.set("my blob", blob);
-        await new Promise<void>((res, rej) => container1.on("op", (op) => {
+        const attachOpP = new Promise<void>((res, rej) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
             }
         }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+
+        // this will send the blob attach op on < 0.41 runtime (otherwise it's sent at time of upload)
+        dataStore._root.set("my blob", blob);
+        await attachOpP;
+
         const snapshot1 = (container1 as any).context.runtime.blobManager.snapshot();
 
         // wait for summarize, then summary ack so the next container will load from snapshot
