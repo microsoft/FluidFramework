@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IContainerContext,
     IDeltaManager,
     ILoader,
@@ -43,6 +42,7 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
+import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -50,7 +50,7 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
@@ -157,18 +157,22 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+    private readonly fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () => {
+        const loadCodeResult = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
             async () => this.codeLoader.load(this.codeDetails),
         );
 
-        return fluidModule;
+        const hasDetails = (result: IFluidModuleWithDetails | IFluidModule): result is IFluidModuleWithDetails => {
+            return typeof result === "object" && "details" in result;
+        };
+
+        return hasDetails(loadCodeResult) ? loadCodeResult : { module: loadCodeResult, details: this.codeDetails };
     });
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
+        private readonly codeLoader: ICodeDetailsLoader,
         public readonly codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
@@ -264,7 +268,8 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
+        const moduleWithDetails = await this.fluidModuleP;
+        const maybeCompareExport = moduleWithDetails.module.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
@@ -288,7 +293,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async load() {
-        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
+        const maybeFactory = (await this.fluidModuleP).module.fluidExport.IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }

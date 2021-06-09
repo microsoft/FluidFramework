@@ -6,20 +6,22 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    IFluidCodeDetails,
     IFluidObject,
+    IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
+    IFluidModule,
     IHostLoader,
     ILoader,
-    IPendingLocalState,
     ILoaderOptions,
+    IPendingLocalState,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -119,6 +121,29 @@ function createCachedResolver(resolver: IUrlResolver) {
 }
 
 /**
+ * Encapsulates a module entry point with its corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+    /** Code module to load. */
+    module: IFluidModule;
+    /** Code details associated with the module. */
+    details: IFluidCodeDetails;
+}
+
+/**
+ * Fluid code loader resolves a code module matching the requested code details in the container, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Loads the package specified by code details and returns a promise to its entry point exports.
+     */
+    load(
+        source: IFluidCodeDetails
+    ): Promise<IFluidModule | IFluidModuleWithDetails>;
+}
+
+/**
  * Services and properties necessary for creating a loader
  */
 export interface ILoaderProps {
@@ -138,7 +163,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -184,7 +209,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -224,7 +249,7 @@ export class Loader implements IHostLoader {
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
