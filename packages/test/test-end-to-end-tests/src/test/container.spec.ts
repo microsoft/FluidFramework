@@ -120,7 +120,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             assert.fail("Error expected");
         } catch (error) {
             const err = error as IGenericError;
-            success = err.error as boolean;
+            success = err.innerError as boolean;
         }
         assert.strictEqual(success, false);
     });
@@ -144,7 +144,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         } catch (error) {
             assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
             const genericError = error as IGenericError;
-            success = genericError.error as boolean;
+            success = genericError.innerError as boolean;
         }
         assert.strictEqual(success, false);
     });

@@ -16,14 +16,13 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 
 function messageFromError(error: any): string {
     if (typeof error?.message === "string") {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error.message;
+        return error.message as string;
     }
     return `${error}`;
 }
 
-const isValidLoggingError = (error: any): error is LoggingError => {
-    return typeof error?.errorType === "string" &&  LoggingError.is(error);
+const isValidLoggingError = (error: any): error is IErrorBase & LoggingError => {
+    return typeof error?.errorType === "string" && LoggingError.is(error);
 };
 
 const isRegularObject = (value: any): boolean => {
@@ -55,17 +54,20 @@ function extractLogSafeErrorProperties(error: any) {
 }
 
 /**
- * Generic error
+ * Create a wrapper for an error of unknown origin
+ * @param message - message from innerError (see function messageFromError)
+ * @param props - Properties pulled off the error that are safe to log
+ * @param innerError - intact error object we are wrapping. Should not be logged as-is
  */
 export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
     constructor(
-        errorMessage: string,
-        readonly error: any,
+        message: string,
         props?: ITelemetryProperties,
+        readonly innerError?: any,
     ) {
-        super(errorMessage, props);
+        super(message, props);
     }
 }
 
@@ -103,28 +105,30 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
 export function CreateProcessingError(
     error: any,
     message: ISequencedDocumentMessage | undefined,
-): ICriticalContainerError {
+): ICriticalContainerError & LoggingError {
     const info = message !== undefined
         ? extractSafePropertiesFromMessage(message)
         : undefined;
-    if (typeof error === "string") {
-        return new DataProcessingError(error, info);
-    } else if (!isRegularObject(error)) {
-        return new DataProcessingError(
-            "DataProcessingError without explicit message (needs review)",
-            { ...info, typeof: typeof error },
-        );
-    } else if (isValidLoggingError(error)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error as any;
-    } else {
+    if (isValidLoggingError(error)) {
+        //* Test this
+        if (info !== undefined) {
+            error.addTelemetryProperties(info);
+        }
+        return error;
+    } else if (isRegularObject(error)) {
         const safeProps = extractLogSafeErrorProperties(error);
 
         return new DataProcessingError(safeProps.message, {
             ...info,
             ...safeProps,
-            errorType: ContainerErrorType.dataProcessingError,
         });
+    } else if (typeof error === "string") {
+        return new DataProcessingError(error, info);
+    } else {
+        return new DataProcessingError(
+            "DataProcessingError without explicit message (needs review)",
+            { ...info, typeof: typeof error },
+        );
     }
 }
 
@@ -132,28 +136,25 @@ export function CreateProcessingError(
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function CreateContainerError(error: any): ICriticalContainerError {
+export function CreateContainerError(error: any): ICriticalContainerError & LoggingError {
     assert(error !== undefined, 0x0f5 /* "Missing error input" */);
 
-    if (typeof error === "object" && error !== null) {
-        const err = error;
-        if (isValidLoggingError(error)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return err;
-        }
-
+    if (isValidLoggingError(error)) {
+        return error;
+    } else if (isRegularObject(error)) {
         const {
             message,
             stack,
             errorType = `${error.errorType ?? ContainerErrorType.genericError}`,
         } = extractLogSafeErrorProperties(error);
 
-        return (new LoggingError(message, {
+        return new LoggingError(message, {
             errorType,
             stack,
-        }) as any) as IGenericError;
+        }) as ICriticalContainerError & LoggingError; // cast is fine since errorType is on there
     } else if (typeof error === "string") {
-        return new GenericError(error, new Error(error));
+        //* Test this
+        return new GenericError(error);
     } else {
         return new GenericError(messageFromError(error), error);
     }
