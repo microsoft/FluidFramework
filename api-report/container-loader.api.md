@@ -169,9 +169,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
 
 // @public
-export const defaultClient: Readonly<IClient>;
-
-// @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
     constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
     // (undocumented)
@@ -241,6 +238,9 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get version(): string;
 }
+
+// @public
+export const getDefaultClient: () => IClient;
 
 // @public (undocumented)
 export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree) => ISnapshotTree;

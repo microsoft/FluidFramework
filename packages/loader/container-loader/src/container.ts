@@ -162,14 +162,16 @@ export enum ConnectionState {
  * through ILoaderOptions for all Containers created by a Loader, or just the `details` member
  * may be overridden for individual requests through ILoaderHeader or IContainerConfig.
  */
-export const defaultClient: Readonly<IClient> = {
-    details: {
-        capabilities: { interactive: true },
-    },
-    mode: "read", // default reconnection mode on lost connection / connection error
-    permission: [],
-    scopes: [],
-    user: { id: "" },
+export const getDefaultClient = (): IClient => {
+    return {
+        details: {
+            capabilities: { interactive: true },
+        },
+        mode: "read", // default reconnection mode on lost connection / connection error
+        permission: [],
+        scopes: [],
+        user: { id: "" },
+    };
 };
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
@@ -1526,7 +1528,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get client(): IClient {
         const client: IClient = this.options?.client !== undefined
             ? this.options.client
-            : { ...defaultClient };
+            : getDefaultClient();
 
         if (this.clientDetailsOverride !== undefined) {
             merge(client.details, this.clientDetailsOverride);

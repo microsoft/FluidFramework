@@ -6,7 +6,7 @@
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     Container,
-    defaultClient,
+    getDefaultClient,
     Loader,
 } from "@fluidframework/container-loader";
 import {
@@ -105,7 +105,7 @@ export class TinyliciousClientInstance {
         const codeLoader = { load: async () => module };
         // Override the default client config to connect with write permissions
         const clientOverride: IClient = {
-            ...defaultClient,
+            ...getDefaultClient(),
             mode: "write",
         };
 
