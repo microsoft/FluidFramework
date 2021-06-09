@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
+import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     IFluidHandle,
@@ -613,5 +613,5 @@ export interface ISyncedState {
      * Add a listener to the synced state using a provided callback
      */
     addValueChangedListener: (
-        callback: (changed: IDirectoryValueChanged, local: boolean) => void) => void;
+        callback: (changed: IValueChanged, local: boolean) => void) => void;
 }
