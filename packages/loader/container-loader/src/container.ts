@@ -398,7 +398,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
-    private readonly storageServiceAdapter: ContainerStorageAdapter;
+    public readonly storage: IDocumentStorageService;
     private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
@@ -650,7 +650,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
-        this.storageServiceAdapter = new ContainerStorageAdapter(
+        this.storage = new ContainerStorageAdapter(
             () => this.storageService,
             () => this.attachState,
             this.storageBlobs,
@@ -946,10 +946,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
         this.connectToDeltaStream(args).catch(() => { });
-    }
-
-    public get storage(): IDocumentStorageService {
-        return this.storageServiceAdapter;
     }
 
     /**
