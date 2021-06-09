@@ -42,23 +42,22 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
  * Events notifying about addition, acquisition, release and completion of items
  */
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
-
     /**
      * Event fires when new item is added to the queue or
      * an item previously acquired is returned back to a queue (including client loosing connection)
      * @param newlyAdded - indicates if it's newly added item of previously acquired item
      */
-    (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
+    add: [value: T, newlyAdded: boolean];
     /**
      * Event fires when a client acquired an item
      * Fires both for locally acquired items, as well as items acquired by remote clients
      */
-    (event: "acquire", listener: (value: T, clientId?: string) => void): this;
+    acquire: [value: T, clientId?: string];
 
     /**
-     * "Complete event fires when a client completes an item.
+     * Event fires when a client completes an item.
      */
-    (event: "complete", listener: (value: T) => void): this;
+    complete: [value: T];
 
     /**
      * Event fires when locally acquired item is being released back to the queue.
@@ -67,7 +66,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
      * @param intentional - indicates whether release was intentional (result of returning
      * ConsensusResult.Release from callback) or it happened as result of lost connection.
      */
-    (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
+    localRelease: [value: T, intentional: boolean];
 }
 
 /**
