@@ -122,7 +122,7 @@ export class TinyliciousClientInstance {
             container = await loader.resolve({ url: tinyliciousContainerConfig.id });
             // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
             // new container here, where we expect this to be loading an existing container.
-            if (container.existing === undefined) {
+            if (container.existing !== true) {
                 throw new Error("Attempted to load a non-existing container");
             }
         }
