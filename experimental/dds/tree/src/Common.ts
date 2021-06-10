@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBag } from '@fluidframework/telemetry-utils';
 
 const defaultFailMessage = 'Assertion failed';
