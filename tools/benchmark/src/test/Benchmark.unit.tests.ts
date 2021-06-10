@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
-import { benchmark } from '../Runner';
-import { BenchmarkType, isParentProcess } from '../Configuration';
+import { expect } from "chai";
+import { benchmark } from "../Runner";
+import { BenchmarkType, isParentProcess } from "../Configuration";
 
-describe('`benchmark` function', () => {
-	describe('uses `before` and `after`', () => {
+describe("`benchmark` function", () => {
+	describe("uses `before` and `after`", () => {
 		let beforeHasBeenCalled = false;
 		let afterHasBeenCalled = false;
 		benchmark({
-			title: 'test',
+			title: "test",
 			before: async () =>
 				delay(1).then(() => {
 					beforeHasBeenCalled = true;
 				}),
 			benchmarkFn: () => {
-				expect(beforeHasBeenCalled).to.equal(true, 'before should be called before test body');
-				expect(afterHasBeenCalled).to.equal(false, 'after should not be called during test execution');
+				expect(beforeHasBeenCalled).to.equal(true, "before should be called before test body");
+				expect(afterHasBeenCalled).to.equal(false, "after should not be called during test execution");
 			},
 			after: async () =>
 				delay(1).then(() => {
@@ -32,7 +32,7 @@ describe('`benchmark` function', () => {
 			if (!isParentProcess) {
 				// If running with separate processes,
 				// this check must only be done in the child process (it will fail in the parent process)
-				expect(afterHasBeenCalled).to.equal(true, 'after should be called after test execution');
+				expect(afterHasBeenCalled).to.equal(true, "after should be called after test execution");
 			}
 		});
 	});
@@ -66,13 +66,11 @@ const dummyPromise = Promise.resolve();
  * @param callback - a callback that will get execute in the promise next cycle
  * @returns A promise for completion of the callback
  */
-async function nextTick(callback: () => void): Promise<void> {
-	return dummyPromise.then(callback);
-}
+const nextTick = async (callback: () => void): Promise<void> => dummyPromise.then(callback);
 
 /**
- * Waits for the provided duration in milliseconds. See {@link https://javascript.info/settimeout-setinterval | setTimeout}.
+ * Waits for the provided duration in milliseconds. See
+ * {@link https://javascript.info/settimeout-setinterval | setTimeout}.
  */
-async function delay(milliseconds: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
+const delay = async (milliseconds: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, milliseconds));

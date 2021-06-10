@@ -28,11 +28,11 @@ SOFTWARE.
 */
 
 /* eslint no-console: ["error", { allow: ["log"] }] */
-import * as path from 'path';
-import * as fs from 'fs';
-import Benchmark from 'benchmark';
-import Table from 'easy-table';
-import { bold, geometricMean, italicize, pad, prettyNumber, green, red, yellow } from './ReporterUtilities';
+import * as path from "path";
+import * as fs from "fs";
+import Benchmark from "benchmark";
+import Table from "easy-table";
+import { bold, geometricMean, italicize, pad, prettyNumber, green, red, yellow } from "./ReporterUtilities";
 
 interface BenchmarkResults {
 	table: Table;
@@ -57,7 +57,7 @@ export interface BenchmarkData {
 
 export const failedData: BenchmarkData = {
 	aborted: true,
-	error: { name: 'Aborted', message: 'Reason Unknown' },
+	error: { name: "Aborted", message: "Reason Unknown" },
 	count: 0,
 	cycles: 0,
 
@@ -113,7 +113,7 @@ export class BenchmarkReporter {
 	public constructor(outputDirectory?: string) {
 		// If changing this or the result file logic in general,
 		// be sure to update the glob used to look for output files in the perf pipeline.
-		this.outputDirectory = outputDirectory ?? path.join(__dirname, '.output');
+		this.outputDirectory = outputDirectory ?? path.join(__dirname, ".output");
 
 		if (!fs.existsSync(this.outputDirectory)) {
 			fs.mkdirSync(this.outputDirectory, { recursive: true });
@@ -121,7 +121,8 @@ export class BenchmarkReporter {
 	}
 
 	/**
-	 * Appends a prettified version of the results of a benchmark instance provided to the provided BenchmarkResults object.
+	 * Appends a prettified version of the results of a benchmark instance provided to the provided
+     * BenchmarkResults object.
 	 */
 	public recordTestResult(suiteName: string, testName: string, benchmarkInstance: BenchmarkData): void {
 		let results = this.inProgressSuites.get(suiteName);
@@ -134,18 +135,18 @@ export class BenchmarkReporter {
 
 		benchmarksMap.set(testName, benchmarkInstance);
 		if (benchmarkInstance.aborted) {
-			table.cell('status', `${pad(4)}${red('×')}`);
+			table.cell("status", `${pad(4)}${red("×")}`);
 		} else {
-			table.cell('status', `${pad(4)}${green('✔')}`);
+			table.cell("status", `${pad(4)}${green("✔")}`);
 		}
-		table.cell('name', italicize(testName));
+		table.cell("name", italicize(testName));
 		if (!benchmarkInstance.aborted) {
 			const numIterations: number = benchmarkInstance.stats.sample.length * benchmarkInstance.count;
-			table.cell('period (ns/op)', prettyNumber(1e9 * benchmarkInstance.times.period, 1), Table.padLeft);
-			table.cell('root mean error', `±${benchmarkInstance.stats.rme.toFixed(2)}%`, Table.padLeft);
-			table.cell('iterations', `${prettyNumber(numIterations, 0)}`, Table.padLeft);
-			table.cell('samples', benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
-			table.cell('total time (s)', benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);
+			table.cell("period (ns/op)", prettyNumber(1e9 * benchmarkInstance.times.period, 1), Table.padLeft);
+			table.cell("root mean error", `±${benchmarkInstance.stats.rme.toFixed(2)}%`, Table.padLeft);
+			table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
+			table.cell("samples", benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
+			table.cell("total time (s)", benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);
 		}
 		table.newRow();
 	}
@@ -153,14 +154,16 @@ export class BenchmarkReporter {
 	/**
 	 * Logs the benchmark results of a test suite and adds the information to the overall summary.
 	 * Calling this is optional since recordResultsSummary will call it automatically,
-	 * however if there are multiple suites with the same name, calling this explicitly can avoid getting them merged together.
+	 * however if there are multiple suites with the same name, calling this explicitly can avoid
+     * getting them merged together.
 	 * @param suiteName - the name of the suite. Used to group together related tests.
 	 */
 	public recordSuiteResults(suiteName: string): void {
 		const results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
 			// Omit tables for empty suites.
-			// Empty Suites are common due to nesting of suites (a suite that contains only suites is considered empty here),
+			// Empty Suites are common due to nesting of suites (a suite that contains only suites
+            // is considered empty here),
 			// so omitting them cleans up the output a lot.
 			// Additionally some statistics (ex: geometricMean) can not be computed for empty suites.
 			return;
@@ -196,24 +199,24 @@ export class BenchmarkReporter {
 		let statusSymbol: string;
 		switch (benchmarksMap.size) {
 			case countSuccessful:
-				statusSymbol = green('✔');
+				statusSymbol = green("✔");
 				break;
 			case countFailure:
-				statusSymbol = red('×');
+				statusSymbol = red("×");
 				break;
 			default:
-				statusSymbol = yellow('!');
+				statusSymbol = yellow("!");
 		}
-		this.overallSummaryTable.cell('status', pad(4) + statusSymbol);
-		this.overallSummaryTable.cell('suite name', italicize(suiteName));
+		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
+		this.overallSummaryTable.cell("suite name", italicize(suiteName));
 		const geometricMeanString: string = prettyNumber(geometricMean(benchmarkPeriodsSeconds) * 1e9, 1);
-		this.overallSummaryTable.cell('geometric mean (ns)', geometricMeanString, Table.padLeft);
+		this.overallSummaryTable.cell("geometric mean (ns)", geometricMeanString, Table.padLeft);
 		this.overallSummaryTable.cell(
-			'# of passed tests',
+			"# of passed tests",
 			`${countSuccessful} out of ${benchmarksMap.size}`,
-			Table.padLeft
+			Table.padLeft,
 		);
-		this.overallSummaryTable.cell('total time (s)', `${prettyNumber(sumRuntime, 1)}`, Table.padLeft);
+		this.overallSummaryTable.cell("total time (s)", `${prettyNumber(sumRuntime, 1)}`, Table.padLeft);
 		this.overallSummaryTable.newRow();
 
 		// Update accumulators for overall totals
@@ -233,29 +236,29 @@ export class BenchmarkReporter {
 		}
 
 		const countFailure: number = this.totalBenchmarkCount - this.totalSuccessfulBenchmarkCount;
-		this.overallSummaryTable.cell('suite name', 'total');
+		this.overallSummaryTable.cell("suite name", "total");
 		const totalGeometricMeanNanoseconds = geometricMean(this.allBenchmarkPeriodsSeconds) * 1e9;
 		let geometricMeanString: string = prettyNumber(totalGeometricMeanNanoseconds, 1);
 		if (countFailure > 0) {
 			geometricMeanString = `*${geometricMeanString}`;
 		}
-		this.overallSummaryTable.cell('geometric mean (ns)', geometricMeanString, Table.padLeft);
+		this.overallSummaryTable.cell("geometric mean (ns)", geometricMeanString, Table.padLeft);
 		this.overallSummaryTable.cell(
-			'# of passed tests',
+			"# of passed tests",
 			`${this.totalSuccessfulBenchmarkCount} out of ${this.totalBenchmarkCount}`,
-			Table.padLeft
+			Table.padLeft,
 		);
 		this.overallSummaryTable.cell(
-			'total time (s)',
+			"total time (s)",
 			`${prettyNumber(this.totalSumRuntimeSeconds, 1)}`,
-			Table.padLeft
+			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
-		console.log(`\n\n${bold('Overall summary')}`);
+		console.log(`\n\n${bold("Overall summary")}`);
 		console.log(`\n${this.overallSummaryTable.toString()}`);
 		if (countFailure > 0) {
 			console.log(
-				`* ${countFailure} benchmark${countFailure > 1 ? 's' : ''} failed. This will skew the geometric mean.`
+				`* ${countFailure} benchmark${countFailure > 1 ? "s" : ""} failed. This will skew the geometric mean.`,
 			);
 		}
 	}
@@ -263,18 +266,18 @@ export class BenchmarkReporter {
 	private writeCompletedBenchmarks(suiteName: string, benchmarks: Map<string, BenchmarkData>): string {
 		const outputFriendlyBenchmarks: unknown[] = [];
 		// Filter successful benchmarks and ready them for output to file
-		const successful = Benchmark.filter(Array.from(benchmarks.values()), 'successful');
+		const successful = Benchmark.filter(Array.from(benchmarks.values()), "successful");
 		benchmarks.forEach((value: BenchmarkData, key: string) => {
 			if (successful.includes(value)) {
 				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, value));
 			}
 		});
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
-		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, '_');
+		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
 		const outputContentString: string = JSON.stringify(
 			{ suiteName, benchmarks: outputFriendlyBenchmarks },
 			undefined,
-			4
+			4,
 		);
 
 		// If changing this or the result file logic in general,
@@ -291,7 +294,7 @@ export class BenchmarkReporter {
 	 */
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
-		benchmark: BenchmarkData
+		benchmark: BenchmarkData,
 	): Record<string, unknown> {
 		const obj = {
 			iterationsPerSecond: benchmark.hz,

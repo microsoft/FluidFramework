@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from 'chai';
+import { assert } from "chai";
 
 /**
  * Kinds of benchmarks.
@@ -14,7 +14,8 @@ import { assert } from 'chai';
  *
  * When comparing two versions looking for changes: run `Measurement` tests.
  *
- * When looking a a single version (ex: current master) and looking for places to optimize: run `Measurement` and `Perspective` tests.
+ * When looking a a single version (ex: current master) and looking for places to optimize:
+ * run `Measurement` and `Perspective` tests.
  *
  * When looking into a specific issue (either with performance or the performance tests):
  * use `.only` to restrict to the relevant tests and run all tests (`Perspective`, `Measurement` and `Diagnostic`).
@@ -29,21 +30,21 @@ export enum BenchmarkType {
 
 	/**
 	 * Tests that measure the actual performance of features.
-	 * These tests are the ones that should be optimized for to improve actual user experience, and thus should be used to
-	 * compare across versions to look for regressions and improvements.
+	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
+     * should be used to compare across versions to look for regressions and improvements.
 	 */
 	Measurement,
 
 	/**
 	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
 	 *
-	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are measuring what they
-	 * claim accurately.
+	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
+     * measuring what they claim accurately.
 	 *
 	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
 	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
-	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running generally,
-	 * can be marked as Diagnostic to enable skipping them unless they are specifically needed.
+	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
+     * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
 	 */
 	Diagnostic,
 
@@ -59,7 +60,7 @@ export enum BenchmarkType {
 export const benchmarkTypes: string[] = [];
 
 for (const type of Object.values(BenchmarkType)) {
-	if (typeof type === 'string') {
+	if (typeof type === "string") {
 		benchmarkTypes.push(type);
 	}
 }
@@ -96,18 +97,22 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
 	 */
 	title: string;
 
+    /* eslint-disable max-len */
+
 	/**
-	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is resolved. This
-	 * includes the event loop or processing other events. For example, a test which calls `setTimeout` in the body will always take at
-	 * least 4ms per operation due to timeout throttling:
+	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
+     * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
+     * in the body will always take at least 4ms per operation due to timeout throttling:
 	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
 	 */
 	benchmarkFnAsync: () => Promise<unknown>;
+
+    /* eslint-enable max-len */
 }
 
 /**
- * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type; you can see
- * more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
+ * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
  */
 export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
@@ -134,8 +139,8 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
 }
 
 /**
- * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take in an options object
- * extending this interface should use the corresponding `it.only` or `describe.only` variants
+ * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take in
+ * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants
  * @public
  */
 export interface MochaExclusiveOptions {
@@ -168,12 +173,12 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkArguments
+	args: BenchmarkArguments,
 ): { isAsync: true; benchmarkFn: () => Promise<unknown> } | { isAsync: false; benchmarkFn: () => void } {
 	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
-	assert(isSync !== isAsync, 'Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.');
+	assert(isSync !== isAsync, "Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.");
 	if (isSync) {
 		return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
 	}
@@ -184,11 +189,11 @@ export function validateBenchmarkArguments(
 /**
  * Determines if we are in a mode where we actually want to run benchmarks and output data.
  *
- * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be adjusted to run quickly
- * (ex: smaller iteration counts or data sizes).
+ * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be
+ * adjusted to run quickly (ex: smaller iteration counts or data sizes).
  * @public
  */
-export const isInPerformanceTestingMode = process.argv.includes('--perfMode');
+export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
 
 /**
  * If specified, the current process should not have performance tests run directly within it.
@@ -196,18 +201,19 @@ export const isInPerformanceTestingMode = process.argv.includes('--perfMode');
  * This has some overhead, but can reduce noise and cross test effects
  * (ex: tests performing very differently based on which tests ran before them due to different jitting).
  * This does not (and can not) remove all causes for effects of earlier tests on later ones.
- * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend for more precise data.
+ * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend
+ * for more precise data.
  */
-export const isParentProcess = process.argv.includes('--parentProcess');
+export const isParentProcess = process.argv.includes("--parentProcess");
 
 /**
  * --childProcess should only be used to indicate that a test run with parentProcess is running,
  * and the current process is a child process which it spawned to run a particular test.
  * This can be used to adjust how test results are reported such that the parent process can aggregate them correctly.
  */
-export const isChildProcess = process.argv.includes('--childProcess');
+export const isChildProcess = process.argv.includes("--childProcess");
 
 /**
  * Performance test suites are tagged with this to allow filtering to only performance tests.
  */
-export const performanceTestSuiteTag = '@Benchmark';
+export const performanceTestSuiteTag = "@Benchmark";

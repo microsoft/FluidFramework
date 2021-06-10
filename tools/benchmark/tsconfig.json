@@ -1,14 +1,15 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"exclude": ["dist", "node_modules"],
-	"compilerOptions": {
-		"composite": true,
-		"downlevelIteration": true,
-		"esModuleInterop": true,
-		"noUnusedLocals": false,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"types": ["mocha", "node"]
-	},
-	"include": ["src/**/*"]
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "composite": true,
+        "types": [ "mocha", "node" ]
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "src/test/**/*"
+    ]
 }

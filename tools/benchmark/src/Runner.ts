@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import Benchmark from 'benchmark';
-import { assert } from 'chai';
-import { Test } from 'mocha';
+import Benchmark from "benchmark";
+import { assert } from "chai";
+import { Test } from "mocha";
 import {
 	BenchmarkType,
 	BenchmarkArguments,
@@ -14,8 +14,8 @@ import {
 	isParentProcess,
 	isInPerformanceTestingMode,
 	performanceTestSuiteTag,
-} from './Configuration';
-import { BenchmarkData } from './Reporter';
+} from "./Configuration";
+import { BenchmarkData } from "./Reporter";
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
@@ -64,11 +64,11 @@ export function benchmark(args: BenchmarkArguments): Test {
 			// - --childProcess flag added (so data will be returned via stdout as json)
 
 			const childArgs = [...process.argv];
-			const processFlagIndex = childArgs.indexOf('--parentProcess');
-			childArgs[processFlagIndex] = '--childProcess';
+			const processFlagIndex = childArgs.indexOf("--parentProcess");
+			childArgs[processFlagIndex] = "--childProcess";
 
 			// Remove arguments for any existing test filters.
-			for (const flag of ['--grep', '--fgrep']) {
+			for (const flag of ["--grep", "--fgrep"]) {
 				const flagIndex = childArgs.indexOf(flag);
 				if (flagIndex > 0) {
 					// Remove the flag, and the argument after it (all these flags take one argument)
@@ -77,29 +77,29 @@ export function benchmark(args: BenchmarkArguments): Test {
 			}
 
 			// Add test filter so child process only run the current test.
-			childArgs.push('--fgrep', test.fullTitle());
+			childArgs.push("--fgrep", test.fullTitle());
 
 			// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-			const command = childArgs.shift() ?? assert.fail('there must be a command');
+			const command = childArgs.shift() ?? assert.fail("there must be a command");
 
 			// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-			const childProcess = await import('child_process');
-			const result = childProcess.spawnSync(command, childArgs, { encoding: 'utf8' });
+			const childProcess = await import("child_process");
+			const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
 
 			if (result.error) {
 				assert.fail(`Child process reported an error: ${result.error.message}`);
 			}
 
-			if (result.stderr !== '') {
+			if (result.stderr !== "") {
 				assert.fail(`Child process logged errors: ${result.stderr}`);
 			}
 
 			// Find the json blob in the child's output.
 			const output =
-				result.stdout.split('\n').find((s) => s.startsWith('{')) ??
+				result.stdout.split("\n").find((s) => s.startsWith("{")) ??
 				assert.fail(`child process must output a json blob. Got:\n${result.stdout}`);
 
-			test.emit('benchmark end', JSON.parse(output));
+			test.emit("benchmark end", JSON.parse(output));
 			return;
 		}
 
@@ -116,7 +116,8 @@ export function benchmark(args: BenchmarkArguments): Test {
 
 			let benchmarkFunction: (deferred: { resolve: Mocha.Done }) => void | Promise<unknown>;
 			if (isAsync) {
-				// We have to do a little translation because the Benchmark library expects callback-based asynchronicity.
+				// We have to do a little translation because the Benchmark library expects callback-based
+                // asynchronicity.
 				benchmarkFunction = async (deferred: { resolve: Mocha.Done }) => {
 					await argsBenchmarkFn();
 					deferred.resolve();
@@ -128,10 +129,11 @@ export function benchmark(args: BenchmarkArguments): Test {
 			await new Promise<void>((resolve) => {
 				const benchmarkInstance = new Benchmark(args.title, benchmarkFunction, benchmarkOptions);
 				// Run a garbage collection, if possible, before the test.
-				// This helps noise from allocations before the test (ex: from previous tests or startup) from impacting the test.
+				// This helps noise from allocations before the test (ex: from previous tests or startup) from
+                // impacting the test.
 				// TODO: determine why --expose-gc is not working when `isChildProcess`.
-				benchmarkInstance.on('start end', () => global?.gc?.());
-				benchmarkInstance.on('complete', async () => {
+				benchmarkInstance.on("start end", () => global?.gc?.());
+				benchmarkInstance.on("complete", async () => {
 					const stats: BenchmarkData = {
 						aborted: benchmarkInstance.aborted,
 						count: benchmarkInstance.count,
@@ -142,7 +144,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 						times: benchmarkInstance.times,
 					};
 
-					test.emit('benchmark end', stats);
+					test.emit("benchmark end", stats);
 
 					await afterBenchmark?.();
 					resolve();
