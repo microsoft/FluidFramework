@@ -551,7 +551,8 @@ const recursivelyVisitHierarchy = function(
             if (in_dataBindingTreeNode) {
               in_dataBindingTreeNode = in_dataBindingTreeNode.getNodeForTokenizedPath([id]);
             }
-            const subpath = (in_path === '/') ? '/' + id : in_path + '.' + id;
+            const typeidSplit = TypeIdHelper.extractContext(in_propertyElement.getProperty().getFullTypeid());
+            const subpath = (in_path === '/') ? '/' + id : typeidSplit.context !== 'single' ? in_path + `[${id}]` : in_path + '.' + id;
             _recursiveStep(child, subpath, in_tokenizedPath, in_dataBindingTreeNode);
             in_tokenizedPath.pop();
             in_dataBindingTreeNode = oldDataBindingTreeNode;

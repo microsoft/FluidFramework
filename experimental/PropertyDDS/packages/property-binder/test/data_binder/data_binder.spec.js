@@ -3776,6 +3776,64 @@ describe('DataBinder', function() {
       expect(childDataBinding.getProperty()).toEqual(childPset2);
       expect(childDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
     });
+    it('excludePrefix with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty.getId(), namedProperty);
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        excludePrefix: namedProperty.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
+    });
+
+    it('exactPath with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+  
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty1 = PropertyFactory.create(ChildTemplate.typeid);
+      const namedProperty2 = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty1.getId(), namedProperty1);
+      namedPropertyMap.insert(namedProperty2.getId(), namedProperty2);
+
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        exactPath: namedProperty1.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
+    });
+
+    it('includePrefix with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+    
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+  
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty1 = PropertyFactory.create(ChildTemplate.typeid);
+      const namedProperty2 = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty1.getId(), namedProperty1);
+      namedPropertyMap.insert(namedProperty2.getId(), namedProperty2);
+  
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        includePrefix: namedProperty1.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
+    });
 
     it('should only create an DataBinding when allowed by includePrefix', function() {
       // Register the base (Child) typeid
