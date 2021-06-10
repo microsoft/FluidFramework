@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 // eslint-disable-next-line max-len
-import { LoggingError, TelemetryLogger, isTaggedTelemetryPropertyValue, ITaggableTelemetryProperties } from "../logger";
+import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -14,7 +14,7 @@ describe("Logger", () => {
             function freshEvent(): ITelemetryBaseEvent {
                 return { category: "cat1", eventName: "event1" };
             }
-            function createILoggingError(props: ITaggableTelemetryProperties) {
+            function createILoggingError(props: ITelemetryProperties) {
                 return {...props, getTelemetryProperties: () => props };
             }
 
@@ -121,6 +121,13 @@ describe("Logger", () => {
                 TelemetryLogger.prepareErrorObject(event, error, true);
                 assert.strictEqual(typeof (event.stack), "string");
                 assert(!(event.stack as string).includes("boom"));
+            });
+        });
+        describe("TaggedTelemetryData", () => {
+            it("Ensure backwards compatibility", () => {
+                // The values of the enum should never change (even if the keys are renamed)
+                assert(TelemetryDataTag.PackageData === "PackageData" as TelemetryDataTag);
+                assert(TelemetryDataTag.UserData === "UserData" as TelemetryDataTag);
             });
         });
         describe("isTaggedTelemetryPropertyValue", () => {
