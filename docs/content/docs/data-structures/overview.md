@@ -1,5 +1,5 @@
 ---
-title: Overview of Distributed Data Structures
+title: Overview of distributed data structures
 menuPosition: 1
 ---
 
