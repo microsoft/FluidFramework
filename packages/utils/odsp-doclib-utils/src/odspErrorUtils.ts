@@ -149,9 +149,10 @@ export function createOdspNetworkError(
 
     error.online = OnlineStatus[isOnline()];
 
-    const facetCodes = parseFacetCodes(JSON.parse(responseText as string));
+    const facetCodes = responseText !== undefined ? parseFacetCodes(JSON.parse(responseText)) : undefined;
     const facetInfo: IFacetCodes = { facetCodes };
-    const props: ITelemetryProperties = { response: responseText, facetCode: facetCodes[0]};
+    const props: ITelemetryProperties = { response: responseText,
+        facetCode: facetCodes !== undefined ? facetCodes[0] : undefined};
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
