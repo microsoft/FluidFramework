@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerPropertyBag } from '@fluidframework/telemetry-utils';
 
 const defaultFailMessage = 'Assertion failed';
 
@@ -21,7 +22,7 @@ export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
 /**
  * Telemetry properties decorated on all SharedTree events.
  */
-export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
+export interface SharedTreeTelemetryProperties extends ITelemetryLoggerPropertyBag {
 	isSharedTreeEvent: true;
 }
 
