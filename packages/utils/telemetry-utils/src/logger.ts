@@ -100,7 +100,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         break;
                     default:
                         // If we encounter a tag we don't recognize
-                        // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
                         event[key] = "REDACTED (unknown tag)";
                         break;
@@ -483,7 +482,7 @@ export class PerformanceEvent {
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
  */
- export enum TelemetryDataTag {
+export enum TelemetryDataTag {
     /** Data containing terms from code packages that may have been dynamically loaded */
     PackageData = "PackageData",
     /** Personal data of a variety of classifications that pertains to the user */
