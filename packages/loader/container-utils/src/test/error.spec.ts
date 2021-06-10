@@ -98,6 +98,7 @@ describe("Errors", () => {
             const originalProps = {
                 message: "Inherited error message",
                 otherProperty: "Presumed PII-full property",
+                errorType: "specialErrorType",
             };
             const coercedError = CreateProcessingError(originalProps, undefined);
 

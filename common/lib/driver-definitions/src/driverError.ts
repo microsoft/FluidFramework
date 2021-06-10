@@ -109,7 +109,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
  */
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
-    DriverErrorType.genericError
+    DriverErrorType.genericError  //* seems unused
     | DriverErrorType.fileNotFoundOrAccessDeniedError
     | DriverErrorType.offlineError
     | DriverErrorType.unsupportedClientProtocolVersion

@@ -118,17 +118,20 @@ export function CreateProcessingError(
     } else if (isRegularObject(error)) {
         const safeProps = extractLogSafeErrorProperties(error);
 
+        //* Surprise! errorType from safeProps is overwritten
         return new DataProcessingError(safeProps.message, {
             ...info,
             ...safeProps,
         });
     } else if (typeof error === "string") {
-        return new DataProcessingError(error, info);
+        //* Test this unification/approach. I don't think the const string logged below is useful
+        return new DataProcessingError(messageFromError(error), info);
     } else {
-        return new DataProcessingError(
-            "DataProcessingError without explicit message (needs review)",
-            { ...info, typeof: typeof error },
-        );
+        return new DataProcessingError(messageFromError(error), { ...info, typeof: typeof error });
+        // return new DataProcessingError(
+        //     "DataProcessingError without explicit message (needs review)",
+        //     { ...info, typeof: typeof error },
+        // );
     }
 }
 
@@ -154,8 +157,8 @@ export function CreateContainerError(error: any): ICriticalContainerError & Logg
         }) as ICriticalContainerError & LoggingError; // cast is fine since errorType is on there
     } else if (typeof error === "string") {
         //* Test this
-        return new GenericError(error);
+        return new GenericError(messageFromError(error), { typeof: typeof error });
     } else {
-        return new GenericError(messageFromError(error), error);
+        return new GenericError(messageFromError(error), { typeof: typeof error });
     }
 }
