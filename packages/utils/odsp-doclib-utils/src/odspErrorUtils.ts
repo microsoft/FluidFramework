@@ -18,6 +18,7 @@ import {
 import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
+// import { assert } from "@fluidframework/common-utils";
 
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
@@ -63,6 +64,20 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     return additionalProps;
 }
 
+export interface IFacetCodes {
+    facetCodes?: string[];
+ }
+
+ function parseFacetCodes(response): string[] {
+    const stack: string[] = [];
+    let error = response.error;
+    while (error !== undefined) {
+        stack.push(error.code);
+        error = error.innerError;
+   }
+   return stack;
+}
+
 export function createOdspNetworkError(
     errorMessage: string,
     statusCode: number,
@@ -70,7 +85,7 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
 ): OdspError {
-    let error: OdspError & LoggingError;
+    let error: OdspError & LoggingError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
@@ -134,7 +149,8 @@ export function createOdspNetworkError(
 
     error.online = OnlineStatus[isOnline()];
 
-    const props: ITelemetryProperties = { response: responseText };
+    const facetCodes = parseFacetCodes(JSON.parse(responseText as string));
+    const props: ITelemetryProperties = { response: responseText, facetCode: facetCodes[0]};
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
@@ -146,20 +162,8 @@ export function createOdspNetworkError(
         }
     }
     error.addTelemetryProperties(props);
+    // assert(error.facetCodes === facetInfo.facetCodes, "facet codes are wrong");
     return error;
-}
-
-interface IFacetCodes {
-    facetCodes?: string[];
- }
-
- function parseFacetCodes(response: Response): string[] | undefined {
-    const stack = [];
-    let error = response.error;
-    while (error !== undefined) {
-        stack.push(error.code);
-        error = error.innerError;
-   }
 }
 
 /**

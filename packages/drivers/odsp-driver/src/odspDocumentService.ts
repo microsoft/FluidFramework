@@ -15,7 +15,7 @@ import {
     IDocumentServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
-import { fetchTokenErrorCode, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fetchTokenErrorCode, IFacetCodes, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -206,36 +206,21 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
-                const stack: any = [];
-                try {
-                    if(e !== undefined) {
-                        stack.push(e.code);
-                        if(e.response !== undefined) {
-                            stack.push(e.response.code);
-                            if(e.response.error !== undefined) {
-                                stack.push(e.response.error.code);
-                            }
+                const likelyFacetCodes = e as IFacetCodes;
+                if(likelyFacetCodes.facetCodes !== undefined) {
+                    for (const code of likelyFacetCodes.facetCodes) {
+                        switch (code) {
+                            case "sessionForbiddenOnPreservedFiles":
+                            case "sessionForbiddenOnModerationEnabledLibrary":
+                            case "sessionForbiddenOnRequireCheckout":
+                                // This document can only be opened in storage-only mode.
+                                // DeltaManager will recognize this error
+                                // and load without a delta stream connection.
+                                this._policies = {...this._policies,storageOnly: true};
+                                throw new DeltaStreamConnectionForbiddenError(code);
+                            default:
+                                continue;
                         }
-                    }
-                    else {
-                        stack.push(undefined);
-                    }
-                } catch (error) {
-                    throw e;
-                }
-                while(stack !== []) {
-                    const code = stack.pop();
-                    switch (code) {
-                        case "sessionForbiddenOnPreservedFiles":
-                        case "sessionForbiddenOnModerationEnabledLibrary":
-                        case "sessionForbiddenOnRequireCheckout":
-                            // This document can only be opened in storage-only mode.
-                            // DeltaManager will recognize this error
-                            // and load without a delta stream connection.
-                            this._policies = {...this._policies,storageOnly: true};
-                            throw new DeltaStreamConnectionForbiddenError(code);
-                        default:
-                            continue;
                     }
                 }
                 throw e;
