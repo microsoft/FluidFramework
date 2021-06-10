@@ -30,7 +30,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.30.0",
+    "@fluidframework/common-utils": "^0.31.0-27017",
     "@fluidframework/container-runtime": "^0.41.0",
     "@fluidframework/file-driver": "^0.41.0",
     "@fluidframework/merge-tree": "^0.41.0",
