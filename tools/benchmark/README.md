@@ -1,4 +1,4 @@
-# @fluid-experimental/benchmark
+# @fluid-tools/benchmark
 
 This package contains Benchmarking tools.
 Includes:
@@ -28,3 +28,9 @@ See `BenchmarkType` for more information.
 ## Artifacts
 
 [@fluid-experimental/benchmark](https://dev.azure.com/intentional/intent/_packaging?_a=package&feed=intentional-npm&package=%40intentional%2Fbenchmark&protocolType=Npm)
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
