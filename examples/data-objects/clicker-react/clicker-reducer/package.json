@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.41.0",
-    "@fluidframework/common-definitions": "^0.20.0",
+    "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/counter": "^0.41.0",
     "@fluidframework/react": "^0.41.0",
     "react": "^16.10.2",
