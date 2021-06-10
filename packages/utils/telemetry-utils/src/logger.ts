@@ -100,7 +100,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         break;
                     default:
                         // If we encounter a tag we don't recognize
-                        // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
                         event[key] = "REDACTED (unknown tag)";
                         break;
