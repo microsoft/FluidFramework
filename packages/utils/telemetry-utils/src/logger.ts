@@ -4,6 +4,8 @@
  */
 
 import {
+    ILoggingError,
+    ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryErrorEvent,
@@ -81,25 +83,22 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     ? taggableProp
                     : { value: taggableProp, tag: undefined };
                 switch (tag) {
-                    case undefined:
+                    case "":
                         // No tag means we can log plainly
                         event[key] = value;
                         break;
-                    case TelemetryDataTag.PackageData:
+                    case "PackageData":
                         // For Microsoft applications, PackageData is safe for now
                         // (we don't load 3P code in 1P apps)
                         // But this determination really belongs in the host layer
                         event[key] = value;
                         break;
-                    case TelemetryDataTag.UserData:
+                    case "UserData":
                         // Strip out anything tagged explicitly as PII.
                         // Alternate strategy would be to hash these props
                         event[key] = "REDACTED (UserData)";
                         break;
                     default:
-                        // This will help us keep this switch statement up to date
-                        (function(_: never) {})(tag);
-
                         // If we encounter a tag we don't recognize
                         // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
@@ -480,27 +479,6 @@ export class PerformanceEvent {
     }
 }
 
-// Note - these Telemetry types should move to common-definitions package
-
-/**
- * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
- * Please do not modify existing entries for backwards compatibility.
- */
-export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded */
-    PackageData = "PackageData",
-    /** Personal data of a variety of classifications that pertains to the user */
-    UserData = "UserData",
-}
-
-/**
- * A property to be logged to telemetry containing both the value and the tag
- */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: TelemetryDataTag
-}
-
 /**
  * Property bag containing a mix of value literals and wrapped values along with a tag
  */
@@ -515,13 +493,6 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
-/**
- * An error object that supports exporting its properties to be logged to telemetry
- */
-export interface ILoggingError extends Error {
-    /** Return all properties from this object that should be logged to telemetry */
-    getTelemetryProperties(): ITaggableTelemetryProperties;
-}
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
@@ -555,7 +526,7 @@ function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
 /**
  * Helper class for error tracking that can be used to log an error in telemetry.
  * The props passed in (and any set directly on the object after the fact) will be
- * logged in accordance with the given TelemetryDataTag, if present.
+ * logged in accordance with the given tag, if present.
  *
  * PLEASE take care to properly tag properties set on this object
  */
