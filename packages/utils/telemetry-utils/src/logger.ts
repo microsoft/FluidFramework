@@ -83,7 +83,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     ? taggableProp
                     : { value: taggableProp, tag: undefined };
                 switch (tag) {
-                    case "":
+                    case undefined:
                         // No tag means we can log plainly
                         event[key] = value;
                         break;
