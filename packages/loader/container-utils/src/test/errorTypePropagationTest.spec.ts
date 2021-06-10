@@ -32,7 +32,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 
         // Dangling error objects of any type will be ignored (see constructor):
         it("Send and receive a GenericError with a dangling error of any type.", () => {
-            const testError = new GenericError("genericError", "placeholder");
+            const testError = new GenericError("genericError", undefined /* props */, "placeholder");
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -44,7 +44,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
         it("Send and receive a GenericError with a dangling error of object type.", () => {
             const testErrorObj = new Error("some error");
-            const testError = new GenericError("genericError", testErrorObj);
+            const testError = new GenericError("genericError", undefined /* props */, testErrorObj);
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",

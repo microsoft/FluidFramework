@@ -65,7 +65,7 @@ export class GenericError extends LoggingError implements IGenericError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        readonly innerError?: any,
+        readonly error?: any,
     ) {
         super(message, props);
     }

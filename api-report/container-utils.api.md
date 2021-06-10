@@ -12,10 +12,10 @@ import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerError(error: any): ICriticalContainerError;
+export function CreateContainerError(error: any): ICriticalContainerError & LoggingError;
 
 // @public
-export function CreateProcessingError(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+export function CreateProcessingError(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError & LoggingError;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase {
@@ -47,9 +47,9 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError {
-    constructor(errorMessage: string, error: any, props?: ITelemetryProperties);
+    constructor(message: string, props?: ITelemetryProperties, error?: any);
     // (undocumented)
-    readonly error: any;
+    readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
 }
