@@ -39,7 +39,7 @@
     "@fluidframework/aqueduct": "^0.41.0",
     "@fluidframework/common-definitions": "^0.20.0",
     "@fluidframework/counter": "^0.41.0",
-    "@fluidframework/react": "^0.41.0",
+    "@fluid-experimental/react": "^0.41.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

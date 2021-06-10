@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/react",
+  "name": "@fluid-experimental/react",
   "version": "0.41.0",
   "description": "Base views and hooks for building Fluid React views",
   "homepage": "https://fluidframework.com",

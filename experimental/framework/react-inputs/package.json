@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/react-inputs",
+  "name": "@fluid-experimental/react-inputs",
   "version": "0.41.0",
   "description": "React support for the Aqueduct framework.",
   "homepage": "https://fluidframework.com",
