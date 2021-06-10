@@ -1,6 +1,8 @@
 ---
 title: Using the documentation system effectively
-menuPosition: 7
+menuPosition: 1
+aliases:
+  - "/docs/advanced/doc-system"
 ---
 
 <!-- markdownlint-disable MD036 -->

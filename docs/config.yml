@@ -70,9 +70,12 @@ menu:
   - identifier: "advanced"
     name: "Advanced"
     weight: -300
+  - identifier: "deep"
+    name: "The depths 🤿"
+    weight: -200
   - identifier: "DDS"
     name: "Data Structures"
-    weight: -200
+    weight: -100
 
 markup:
   goldmark:
