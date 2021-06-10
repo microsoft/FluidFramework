@@ -49,17 +49,17 @@ export const pad = (num: number, chr = " "): string => Array(num + 1).join(chr);
  * @public
  */
 export function prettyNumber(num: number, numDecimals = 3): string {
-	// Split the string to determine parts before and after the decimal
-	const split: string[] = num.toFixed(numDecimals).split(".");
-	// Show exponential if we have more than 9 digits before the decimal
-	if (split[0].length > 9) {
-		return num.toExponential(numDecimals);
-	}
-	// Add commas to the numbers before the decimal.
-	// Since this only ever runs on strings <= 9 characters, its not a performance problem problem.
-	// eslint-disable-next-line unicorn/no-unsafe-regex
-	split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
-	return split.join(".");
+    // Split the string to determine parts before and after the decimal
+    const split: string[] = num.toFixed(numDecimals).split(".");
+    // Show exponential if we have more than 9 digits before the decimal
+    if (split[0].length > 9) {
+        return num.toExponential(numDecimals);
+    }
+    // Add commas to the numbers before the decimal.
+    // Since this only ever runs on strings <= 9 characters, its not a performance problem problem.
+    // eslint-disable-next-line unicorn/no-unsafe-regex
+    split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+    return split.join(".");
 }
 
 /**
@@ -68,11 +68,11 @@ export function prettyNumber(num: number, numDecimals = 3): string {
  * @public
  */
 export function geometricMean(values: number[]): number {
-	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
-	let sum = 0;
-	for (const value of values) {
-		assert(value > 0, "invalid value in geometricMean");
-		sum += Math.log(value);
-	}
-	return Math.exp(sum / values.length);
+    // Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
+    let sum = 0;
+    for (const value of values) {
+        assert(value > 0, "invalid value in geometricMean");
+        sum += Math.log(value);
+    }
+    return Math.exp(sum / values.length);
 }
