@@ -480,6 +480,17 @@ export class PerformanceEvent {
 }
 
 /**
+ * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
+ * Please do not modify existing entries for backwards compatibility.
+ */
+ export enum TelemetryDataTag {
+    /** Data containing terms from code packages that may have been dynamically loaded */
+    PackageData = "PackageData",
+    /** Personal data of a variety of classifications that pertains to the user */
+    UserData = "UserData",
+}
+
+/**
  * Property bag containing a mix of value literals and wrapped values along with a tag
  */
 export interface ITaggableTelemetryProperties {
