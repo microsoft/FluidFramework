@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -18,7 +19,6 @@ import {
 import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
-// import { assert } from "@fluidframework/common-utils";
 
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
@@ -150,6 +150,7 @@ export function createOdspNetworkError(
     error.online = OnlineStatus[isOnline()];
 
     const facetCodes = parseFacetCodes(JSON.parse(responseText as string));
+    const facetInfo: IFacetCodes = { facetCodes };
     const props: ITelemetryProperties = { response: responseText, facetCode: facetCodes[0]};
     if (response) {
         props.responseType = response.type;
@@ -162,7 +163,7 @@ export function createOdspNetworkError(
         }
     }
     error.addTelemetryProperties(props);
-    // assert(error.facetCodes === facetInfo.facetCodes, "facet codes are wrong");
+    assert(error.facetCodes === facetInfo.facetCodes, "facet codes are wrong");
     return error;
 }
 
