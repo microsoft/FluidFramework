@@ -562,7 +562,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (context.attachState === AttachState.Attached) {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(context.storage !== undefined, "Attached state should have storage");
+                assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
                 const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
@@ -596,7 +596,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (context.attachState === AttachState.Attached) {
                     // IContainerContext storage api return type still has undefined in 0.39 package version.
                     // So once we release 0.40 container-defn package we can remove this check.
-                    assert(storage !== undefined, "Attached state should have storage");
+                    assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
                     return readAndParse<T>(storage, blobId);
                 }
                 return readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);

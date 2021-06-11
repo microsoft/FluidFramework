@@ -9,7 +9,8 @@ import {
     IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { LoggingError, ITaggableTelemetryProperties } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -37,7 +38,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
     }
@@ -68,7 +69,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         errorMessage: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
     }
@@ -79,7 +80,7 @@ export class NetworkErrorBasic<T> extends LoggingError {
         errorMessage: string,
         readonly errorType: T,
         readonly canRetry: boolean,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
     }
@@ -89,7 +90,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, errorType, false, props);
     }
@@ -99,7 +100,7 @@ export class RetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, errorType, true, props);
     }
@@ -115,7 +116,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
     constructor(
         errorMessage: string,
         readonly retryAfterSeconds: number,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
     }
@@ -128,7 +129,7 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterMs?: number,
-    props?: ITaggableTelemetryProperties) {
+    props?: ITelemetryProperties) {
     if (retryAfterMs !== undefined && canRetry) {
         return new ThrottlingError(errorMessage, retryAfterMs / 1000, props);
     }
