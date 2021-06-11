@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
+import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidObjectMap,
@@ -49,7 +49,7 @@ export const syncedStateCallbackListener = <
     ) => void,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
-) => (change: IDirectoryValueChanged, local: boolean) => {
+) => (change: IValueChanged, local: boolean) => {
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,

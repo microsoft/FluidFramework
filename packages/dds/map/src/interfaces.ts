@@ -145,7 +145,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
+        changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
