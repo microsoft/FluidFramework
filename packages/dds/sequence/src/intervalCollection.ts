@@ -341,21 +341,26 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             );
 
             if (start === undefined) {
-                // Only end position provided. Since the tree is not sorted by end position,
-                // walk the whole tree in the specified order, gathering intervals that match the end.
+                // Only end position provided. Walk subtrees of the endItervalTree.
+                const compareFn =
+                        (node: MergeTree.RBNode<TInterval, TInterval>) => {
+                            return transientInterval.compareEnd(node.key);
+                        };
+                const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
+                const continueRightFn = (cmpResult: number) => cmpResult >= 0;
+                const actionFn = (node: MergeTree.RBNode<TInterval, TInterval>) => {
+                    results.push(node.key);
+                };
+
                 if (iteratesForward) {
-                    this.intervalTree.map((interval: TInterval) => {
-                        if (transientInterval.compareEnd(interval) === 0) {
-                            results.push(interval);
-                        }
-                    });
+                    this.endIntervalTree.walkExactMatchesForward(
+                        compareFn, actionFn, continueLeftFn, continueRightFn,
+                    );
                 }
                 else {
-                    this.intervalTree.mapBackward((interval: TInterval) => {
-                        if (transientInterval.compareEnd(interval) === 0) {
-                            results.push(interval);
-                        }
-                    });
+                    this.endIntervalTree.walkExactMatchesBackward(
+                        compareFn, actionFn, continueLeftFn, continueRightFn,
+                    );
                 }
             }
             else {
@@ -462,7 +467,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => a.end.compare(b.end);
+const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => {
+    const endResult = a.compareEnd(b);
+    if (endResult === 0) {
+        return a.compareStart(b);
+    } else {
+        return endResult;
+    }
+};
 
 class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
