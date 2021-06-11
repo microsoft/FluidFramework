@@ -1,24 +1,22 @@
 name: "Pull Request Labeler"
 on:
-- pull_request_target
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  label_pr:
+  paths_label:
     runs-on: ubuntu-latest
+    name: Label based on file paths
     steps:
     - uses: actions/labeler@v3
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true # add/remove labels as modified paths in the PR change
-  label_external:
+  external_label:
     runs-on: ubuntu-latest
-    name: Apply labels
+    name: Label external PRs
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
-      # - name: Checkout
-      #   uses: actions/checkout@v2
-      - name: Apply labels
-        uses: tylerbutler/labelmaker-action@main
-        with:
-          token: "${{ github.token }}"
+    - uses: tylerbutler/labelmaker-action@main
+      with:
+        token: "${{ github.token }}"
+        sync: true
