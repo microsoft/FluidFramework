@@ -10,3 +10,15 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true # add/remove labels as modified paths in the PR change
+  label_external:
+    runs-on: ubuntu-latest
+    name: Apply labels
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      # - name: Checkout
+      #   uses: actions/checkout@v2
+      - name: Apply labels
+        uses: tylerbutler/labelmaker-action@main
+        with:
+          token: "${{ github.token }}"
