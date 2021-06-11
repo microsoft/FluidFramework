@@ -197,6 +197,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxAckWaitTime: 120000,
 };
 
+// This is the current version of garbage collection.
+const GCVersion = 1;
+
 export interface IGCRuntimeOptions {
     /* Flag that will disable garbage collection if set to true. */
     disableGC?: boolean;
@@ -751,8 +754,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly dataStores: DataStores;
 
-    // This is the source of truth for writing in the summary metadata blob.
-    private readonly summaryGCFeature: Required<IContainerRuntimeMetadata>["gcFeature"];
+    // The current GC version that this Container is running.
+    private readonly currentGCVersion = GCVersion;
+    // This is the version of GC data that is written in the summary.
+    private summaryGCVersion: Required<IContainerRuntimeMetadata>["gcFeature"];
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -765,8 +770,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
     // deleted as soon as GC runs.
     public get gcTestMode(): boolean {
-        return getLocalStorageFeatureGate(gcTestModeKey)
-            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+        return getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
     }
 
     private constructor(
@@ -789,15 +793,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCVersion = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
-        this.summaryGCFeature = prevSummaryGCFeature ??
-            (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
+        this.summaryGCVersion = prevSummaryGCVersion ??
+            (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
         // Can override with localStorage flag.
         this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
             // Must not be disabled permanently in summary.
-            (this.summaryGCFeature > 0)
+            (this.summaryGCVersion > 0)
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
@@ -1084,14 +1088,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get shouldWriteMetadata(): boolean {
         // We need the metadata blob if either isolated channels are enabled
         // or GC is enabled at the document level.
-        return !this.disableIsolatedChannels || (this.summaryGCFeature > 0);
+        return !this.disableIsolatedChannels || (this.summaryGCVersion > 0);
     }
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.summaryGCFeature, // retain value, this is unchangeable for now
+            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for nown
         };
     }
 
@@ -1551,12 +1555,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    public async collectGarbage(logger: ITelemetryLogger) {
+    public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false) {
         await PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData(this.runtimeOptions.gcOptions.runFullGC === true);
+                const gcData = await this.dataStores.getGCData(fullGC);
                 const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
                     gcData.gcNodes, [ "/" ],
                     this.logger,
@@ -1609,19 +1613,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
-        /** True to run garbage collection before summarizing */
-        runGC: boolean,
-        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-        fullTree?: boolean,
-        /** True to track the state for this summary in the SummarizerNodes */
-        trackState: boolean,
         /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
+        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+        fullTree?: boolean,
+        /** True to track the state for this summary in the SummarizerNodes; defaults to true */
+        trackState?: boolean,
+        /** True to run garbage collection before summarizing; defaults to true */
+        runGC?: boolean,
+        /** True to generate full GC data; defaults to false */
+        fullGC?: boolean,
     }): Promise<IChannelSummarizeResult> {
-        const { runGC, fullTree = false, trackState, summaryLogger } = options;
+        const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
-            await this.collectGarbage(summaryLogger);
+            await this.collectGarbage(summaryLogger, fullGC);
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
@@ -1692,14 +1698,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error: continueResult.error };
             }
 
+            // If the GC version that this container is loaded from differs from the current GC version that this
+            // container is running, we need to regenerate the GC data and run full summary. This is used to handle
+            // scenarios where we upgrade the GC version because we cannot trust the data from the previous GC version.
+            let forceRegenerateData = false;
+            if (this.summaryGCVersion !== this.currentGCVersion && this.summaryGCVersion > 0) {
+                forceRegenerateData = true;
+                // We will regenerate the GC data by running full GC as per the current GC version. Update the version
+                // of GC data written in the summary to the current GC version.
+                this.summaryGCVersion = this.currentGCVersion;
+            }
+
             const trace = Trace.start();
             let summarizeResult: IChannelSummarizeResult;
             try {
                 summarizeResult = await this.summarize({
-                    runGC: this.shouldRunGC,
-                    fullTree,
-                    trackState: true,
                     summaryLogger,
+                    fullTree: fullTree || forceRegenerateData,
+                    trackState: true,
+                    runGC: this.shouldRunGC,
+                    fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
                 });
             } catch (error) {
                 return { ...attemptData, error };
