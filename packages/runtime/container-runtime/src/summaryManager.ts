@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
+    delay,
     IPromiseTimerResult,
     PromiseTimer,
 } from "@fluidframework/common-utils";
@@ -355,7 +356,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+                shouldDelay ? delay(delayMs) : Promise.resolve(),
             ]);
         }
 

@@ -216,7 +216,8 @@
                 "dev": true,
                 "packages": [
                     "@fluidframework/build-common",
-                    "@fluidframework/eslint-config-fluid"
+                    "@fluidframework/eslint-config-fluid",
+                    "@fluid-tools/benchmark"
                 ]
             },
             "Tools": {
