@@ -1,2 +1,7 @@
+teams:
+  internal: ['Prague', 'PragueAdmin', 'FRS-Admin']
+
 labels:
-  externalPR: 'community-contribution'
+  externalPR: ['community-contribution']
+
+sync: true
