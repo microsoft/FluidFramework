@@ -17,6 +17,7 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 } from '../../generic';
+import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
 	createStableEdits,
 	LocalServerSharedTreeTestingComponents,
@@ -47,7 +48,7 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryTests<TSharedTree extends SharedTree>(
+export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
 	setUpLocalServerTestSharedTree: (
@@ -59,7 +60,7 @@ export function runSummaryTests<TSharedTree extends SharedTree>(
 
 		const testSerializer = new TestFluidSerializer();
 
-		let expectedTree: SharedTree;
+		let expectedTree: TSharedTree;
 		let testObjectProvider: TestObjectProvider;
 
 		const testSummaryFiles = fs.readdirSync(pathBase);

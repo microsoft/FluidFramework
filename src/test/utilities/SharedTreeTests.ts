@@ -26,6 +26,7 @@ import { Snapshot } from '../../Snapshot';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
+import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -65,7 +66,7 @@ const undoRedoOptions = {
  * Runs a test suite for operations on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
+export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {

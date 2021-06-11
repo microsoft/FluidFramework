@@ -4,6 +4,7 @@
  */
 
 import { assert, fail } from '../Common';
+import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
 import { Snapshot } from '../Snapshot';
 import { EditStatus } from './PersistedTypes';
 
@@ -15,6 +16,7 @@ export type EditingResult<TChange> =
 	| {
 			readonly status: EditStatus.Invalid | EditStatus.Malformed;
 			readonly changes: readonly TChange[];
+			readonly steps?: undefined;
 			readonly before: Snapshot;
 	  }
 	| ValidEditingResult<TChange>;
@@ -26,6 +28,7 @@ export type EditingResult<TChange> =
 export interface ValidEditingResult<TChange> {
 	readonly status: EditStatus.Applied;
 	readonly changes: readonly TChange[];
+	readonly steps: readonly { resolvedChange: TChange; after: Snapshot }[];
 	readonly before: Snapshot;
 	readonly after: Snapshot;
 }
@@ -48,6 +51,7 @@ export abstract class GenericTransaction<TChange> {
 	protected _view: Snapshot;
 	protected _status: EditStatus = EditStatus.Applied;
 	protected readonly changes: TChange[] = [];
+	protected readonly steps: ReconciliationChange<TChange>[] = [];
 	protected isOpen = true;
 
 	/**
@@ -82,6 +86,7 @@ export abstract class GenericTransaction<TChange> {
 				before: this.before,
 				after: this._view,
 				changes: this.changes,
+				steps: this.steps,
 			};
 		}
 		return {
@@ -100,33 +105,88 @@ export abstract class GenericTransaction<TChange> {
 	/**
 	 * A helper to apply a sequence of changes. Changes will be applied one after the other. If a change fails to apply,
 	 * the remaining changes in `changes` will be ignored.
-	 * @param changes - the sequence of changes to apply
+	 * @param changes - the sequence of changes to apply.
+	 * @param path - the reconciliation path for the first change.
 	 * @returns this
 	 */
-	public applyChanges(changes: Iterable<TChange>): this {
-		for (const change of changes) {
-			if (this.applyChange(change).status !== EditStatus.Applied) {
-				return this;
+	public applyChanges(changes: Iterable<TChange>, path: ReconciliationPath<TChange> = []): this {
+		const iter = changes[Symbol.iterator]();
+		const firstChange = iter.next().value;
+		let iterResult = iter.next();
+		if (iterResult.done === true) {
+			for (const change of changes) {
+				if (this.applyChange(change, path).status !== EditStatus.Applied) {
+					return this;
+				}
 			}
+			return this;
 		}
 
+		if (this.applyChange(firstChange, path).status !== EditStatus.Applied) {
+			return this;
+		}
+
+		const ongoingEdit = {
+			0: this.steps[this.steps.length - 1],
+			before: this.view,
+			after: this.view,
+			length: 1,
+		};
+
+		/**
+		 * We use a Proxy instead of `{ ...path, ...objectWithOngoingEdit }` to avoid eagerly demanding all parts of the path, which may
+		 * require extensive computation.
+		 */
+		const pathWithOngoingEdit = new Proxy(path, {
+			get: (
+				target: ReconciliationPath<TChange>,
+				prop: string
+			): ReconciliationPath<TChange>[number | 'length'] => {
+				if (prop === 'length') {
+					return target.length + 1;
+				}
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return prop === String(target.length) ? ongoingEdit : target[prop];
+			},
+		});
+
+		while (iterResult.done !== true) {
+			if (this.applyChange(iterResult.value, pathWithOngoingEdit).status !== EditStatus.Applied) {
+				return this;
+			}
+
+			ongoingEdit[ongoingEdit.length] = this.steps[this.steps.length - 1];
+			ongoingEdit.length += 1;
+			ongoingEdit.after = this.view;
+			iterResult = iter.next();
+		}
 		return this;
+	}
+
+	protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined {
+		return change;
 	}
 
 	/**
 	 * Attempt to apply the given change as part of this edit. This method should not be called if a previous change in this edit failed to
 	 * apply.
 	 * @param change - the change to apply
+	 * @param path - the reconciliation path for the change.
 	 * @returns this
 	 */
-	public applyChange(change: TChange): this {
+	public applyChange(change: TChange, path: ReconciliationPath<TChange> = []): this {
 		assert(this.isOpen, 'Editor must be open to apply changes.');
 		if (this.status !== EditStatus.Applied) {
 			fail('Cannot apply change to an edit unless all previous changes have applied');
 		}
-
+		const resolvedChange = this.tryResolveChange(change, path);
+		if (resolvedChange === undefined) {
+			this._status = EditStatus.Invalid;
+			return this;
+		}
 		this.changes.push(change);
-		this._status = this.dispatchChange(change);
+		this._status = this.dispatchChange(resolvedChange);
+		this.steps.push({ resolvedChange, after: this.view });
 		return this;
 	}
 

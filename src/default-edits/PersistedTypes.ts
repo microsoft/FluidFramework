@@ -214,7 +214,7 @@ export enum ConstraintEffect {
 	ValidRetry,
 }
 
-// Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
+// Note: Documentation of this constant is merged with documentation of the `Change` interface.
 /**
  * @public
  */
@@ -351,7 +351,7 @@ export interface StablePlace {
 
 /**
  * Specifies the range of nodes from `start` to `end` within a trait.
- * Valid iff start and end are valid and are within the same trait.
+ * Valid iff start and end are valid and are within the same trait and the start does not occur after the end in the trait.
  *
  * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
  * @example
@@ -433,11 +433,19 @@ export const StableRange = {
 	}),
 };
 
-function isNodeData(node: NodeData | NodeId): node is NodeData {
+/**
+ * @returns True iff the given `node` is of type NodeData.
+ * @internal
+ */
+export function isNodeData(node: NodeData | NodeId): node is NodeData {
 	return (node as NodeData).definition !== undefined && (node as NodeData).identifier !== undefined;
 }
 
-function getNodeId(node: NodeData | NodeId): NodeId {
+/**
+ * @returns The NodeId for a given node or its id.
+ * @internal
+ */
+export function getNodeId(node: NodeData | NodeId): NodeId {
 	if (isNodeData(node)) {
 		return node.identifier;
 	} else {
