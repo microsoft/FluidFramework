@@ -18,4 +18,4 @@ jobs:
     steps:
     - uses: tylerbutler/labelmaker-action@main
       with:
-        token: "${{ github.token }}"
+        token: "${{ secrets.GITHUB_TOKEN }}"
