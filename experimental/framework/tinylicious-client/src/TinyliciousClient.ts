@@ -136,7 +136,7 @@ export class TinyliciousClientInstance {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TinyliciousClient {
-    private static globalInstance: TinyliciousClientInstance | undefined;
+    protected static globalInstance: TinyliciousClientInstance | undefined;
 
     static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (TinyliciousClient.globalInstance) {
@@ -144,6 +144,7 @@ export class TinyliciousClient {
                 `TinyliciousClient has already been initialized. Using existing instance of
                 TinyliciousClient instead.`,
             );
+            return;
         }
         TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,
