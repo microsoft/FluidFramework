@@ -19,4 +19,3 @@ jobs:
     - uses: tylerbutler/labelmaker-action@main
       with:
         token: "${{ github.token }}"
-        sync: true
