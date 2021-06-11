@@ -93,6 +93,17 @@ function testIntervalCollection(intervalCollection: IntervalCollection<SequenceI
     }
     assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with start position");
 
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+    tempArray = [];
+    tempArray[0] = intervalArray[2];
+    tempArray[1] = intervalArray[5];
+    tempArray[2] = intervalArray[8];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with end position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
+
     iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
     tempArray = [];
     tempArray[0] = intervalArray[7];
