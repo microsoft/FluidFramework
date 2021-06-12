@@ -2064,9 +2064,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
  * or reject if closed.
  */
 const waitForSeq = async (
-    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, any>,
+    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
     targetSeq: number,
 ): Promise<void> => new Promise<void>((accept, reject) => {
+    // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
 
     const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
