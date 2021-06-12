@@ -7,6 +7,9 @@ import { IClientConfiguration, INackContent, NackErrorType } from "@fluidframewo
 
 // Deli lambda configuration
 export interface IDeliServerConfiguration {
+    // Enables nack messages logic
+    enableNackMessages: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -108,6 +111,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         maxAckWaitTime: 600000,
     },
     deli: {
+        enableNackMessages: true,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,

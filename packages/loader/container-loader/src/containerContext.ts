@@ -139,7 +139,7 @@ export class ContainerContext implements IContainerContext {
         return this._baseSnapshot;
     }
 
-    public get storage(): IDocumentStorageService | undefined {
+    public get storage(): IDocumentStorageService {
         return this.container.storage;
     }
 

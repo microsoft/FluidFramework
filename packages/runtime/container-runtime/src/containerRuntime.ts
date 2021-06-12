@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import {
     AgentSchedulerFactory,
 } from "@fluidframework/agent-scheduler";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -70,7 +70,6 @@ import {
     ISummaryTree,
     ITree,
     MessageType,
-    IVersion,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -106,6 +105,7 @@ import {
     create404Response,
     exceptionToResponse,
     responseToException,
+    seqFromTree,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -559,7 +559,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // pack & unpack aggregated blobs.
             // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
             // BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            if (context.storage) {
+            if (context.attachState === AttachState.Attached) {
+                // IContainerContext storage api return type still has undefined in 0.39 package version.
+                // So once we release 0.40 container-defn package we can remove this check.
+                assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
                 const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
@@ -590,9 +593,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                return storage ?
-                    readAndParse<T>(storage, blobId) :
-                    readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+                if (context.attachState === AttachState.Attached) {
+                    // IContainerContext storage api return type still has undefined in 0.39 package version.
+                    // So once we release 0.40 container-defn package we can remove this check.
+                    assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
+                    return readAndParse<T>(storage, blobId);
+                }
+                return readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
@@ -649,6 +656,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // This code is plain wrong. It lies that it never returns undefined!!!
         // All callers should be fixed, as this API is called in detached state of container when we have
         // no storage and it's passed down the stack without right typing.
+        // back-compat 0.40 NoStorageInDetachedMode. Also, IContainerContext storage api return type still
+        // has undefined in 0.39 package version.
+        // So once we release 0.40 container-defn package we can remove this check.
         if (!this._storage && this.context.storage) {
             // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
             this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
@@ -1630,6 +1640,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
+        if (refreshLatestAck) {
+            const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
+                ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
+
+            if (latestSummaryRefSeq > this.deltaManager.lastSequenceNumber) {
+                // We need to catch up to the latest summary's reference sequence number before pausing.
+                await PerformanceEvent.timedExecAsync(
+                    summaryLogger,
+                    {
+                        eventName: "WaitingForSeq",
+                        lastSequenceNumber: this.deltaManager.lastSequenceNumber,
+                        targetSequenceNumber: latestSummaryRefSeq,
+                        lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
+                    },
+                    async () => waitForSeq(this.deltaManager, latestSummaryRefSeq),
+                    { start: true, end: true, cancel: "error" }, // definitely want start event
+                );
+            }
+        }
+
         const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
             `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
@@ -1689,16 +1719,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handle = await this.storage.uploadSummaryWithContext(
                 summarizeResult.summary,
                 summaryContext);
-
-            if (refreshLatestAck) {
-                const version = await this.getVersionFromStorage(this.id);
-                await this.refreshLatestSummaryAck(
-                    undefined,
-                    version.id,
-                    ChildLogger.create(summaryLogger, undefined, {all: { safeSummary: true }}),
-                    version,
-                );
-            }
 
             const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
@@ -1983,49 +2003,66 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         proposalHandle: string | undefined,
         ackHandle: string,
         summaryLogger: ITelemetryLogger,
-        version?: IVersion,
     ) {
-        const getSnapshot = async () => {
-            const perfEvent = PerformanceEvent.start(summaryLogger, {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                hasVersion: !!version, // expected in this case
-            });
-            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-            let snapshot: ISnapshotTree | undefined;
-            try {
-                const trace = Trace.start();
-
-                const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
-                stats.getVersionDuration = trace.trace().duration;
-
-                snapshot = await this.getSnapshotFromStorage(versionToUse);
-                stats.getSnapshotDuration = trace.trace().duration;
-            } catch (error) {
-                perfEvent.cancel(stats, error);
-                throw error;
-            }
-
-            perfEvent.end(stats);
-            return snapshot;
-        };
-
+        const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         await this.summarizerNode.refreshLatestSummary(
-                proposalHandle,
-                getSnapshot,
-                async <T>(id: string) => readAndParse<T>(this.storage, id),
-                summaryLogger,
-            );
-        }
-
-    private async getVersionFromStorage(versionId: string): Promise<IVersion> {
-        const versions = await this.storage.getVersions(versionId, 1);
-        assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-        return versions[0];
+            proposalHandle,
+            async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: false,
+            }),
+            readAndParseBlob,
+            summaryLogger,
+        );
     }
 
-    private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
-        const snapshot = await this.storage.getSnapshotTree(version);
-        assert(!!snapshot, 0x138 /* "Failed to get snapshot from storage" */);
+    /**
+     * Fetches the latest snapshot from storage and uses it to refresh SummarizerNode's
+     * internal state as it should be considered the latest summary ack.
+     * @param summaryLogger - logger to use when fetching snapshot from storage
+     * @returns downloaded snapshot's reference sequence number
+     */
+    private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
+        const snapshot = await this.fetchSnapshotFromStorage(this.id, summaryLogger, {
+            eventName: "RefreshLatestSummaryGetSnapshot",
+            fetchLatest: true,
+        });
+
+        const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
+
+        await this.summarizerNode.refreshLatestSummary(
+            undefined,
+            async () => snapshot,
+            readAndParseBlob,
+            summaryLogger,
+        );
+
+        return snapshotRefSeq;
+    }
+
+    private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+        const perfEvent = PerformanceEvent.start(logger, event);
+        const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+        let snapshot: ISnapshotTree;
+        try {
+            const trace = Trace.start();
+
+            const versions = await this.storage.getVersions(versionId, 1);
+            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+            stats.getVersionDuration = trace.trace().duration;
+
+            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+            stats.getSnapshotDuration = trace.trace().duration;
+
+            snapshot = maybeSnapshot;
+        } catch (error) {
+            perfEvent.cancel(stats, error);
+            throw error;
+        }
+
+        perfEvent.end(stats);
         return snapshot;
     }
 
@@ -2033,3 +2070,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.getLocalState();
     }
 }
+
+/**
+ * Wait for a specific sequence number. Promise should resolve when we reach that number,
+ * or reject if closed.
+ */
+const waitForSeq = async (
+    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
+    targetSeq: number,
+): Promise<void> => new Promise<void>((accept, reject) => {
+    // TODO: remove cast to any when actual event is determined
+    deltaManager.on("closed" as any, reject);
+
+    const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+        if (message.sequenceNumber >= targetSeq) {
+            accept();
+            deltaManager.off("op", handleOp);
+        }
+    };
+    deltaManager.on("op", handleOp);
+});

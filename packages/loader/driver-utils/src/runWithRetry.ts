@@ -5,11 +5,8 @@
 
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
-
-const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 
 export async function runWithRetry<T>(
     api: () => Promise<T>,

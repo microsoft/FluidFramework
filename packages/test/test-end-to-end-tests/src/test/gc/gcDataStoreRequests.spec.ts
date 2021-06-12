@@ -17,7 +17,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
+import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {

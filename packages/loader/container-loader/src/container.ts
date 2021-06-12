@@ -105,6 +105,7 @@ import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
+import { ContainerStorageAdapter } from "./containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -397,6 +398,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
+    public readonly storage: IDocumentStorageService;
+    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -647,6 +650,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.storage = new ContainerStorageAdapter(
+            () => {
+                if (this.attachState !== AttachState.Attached) {
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    });
+                    throw new Error("Real storage calls not allowed in Unattached container");
+                }
+                return this.storageService;
+            },
+            this.storageBlobs,
+        );
 
         const isDomAvailable = typeof document === "object" &&
             document !== null &&
@@ -938,10 +953,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
         this.connectToDeltaStream(args).catch(() => { });
-    }
-
-    public get storage(): IDocumentStorageService | undefined {
-        return this._storageService;
     }
 
     /**
