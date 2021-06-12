@@ -269,7 +269,7 @@ export class ContainerContext implements IContainerContext {
         }
 
         const moduleWithDetails = await this.fluidModuleP;
-        const maybeCompareExport = moduleWithDetails.module.fluidExport;
+        const maybeCompareExport = moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
@@ -284,7 +284,10 @@ export class ContainerContext implements IContainerContext {
         }
 
         for (const comparer of comparers) {
-            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
+            const satisfies = await comparer.satisfies(
+                moduleWithDetails.details ?? this.codeDetails,
+                constraintCodeDetails,
+            );
             if (satisfies === false) {
                 return false;
             }
@@ -293,7 +296,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async load() {
-        const maybeFactory = (await this.fluidModuleP).module.fluidExport.IRuntimeFactory;
+        const maybeFactory = (await this.fluidModuleP).module?.fluidExport?.IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
