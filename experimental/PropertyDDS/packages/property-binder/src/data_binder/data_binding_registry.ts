@@ -15,7 +15,7 @@ import { TypeIdHelper } from '@fluid-experimental/property-changeset';
  *
  * Common representations are data bindings (business objects) representing property sets, and UI or Graphics
  * representing data bindings.
- * @hidden
+ * @internal
  */
 class DataBindingRegistry {
 

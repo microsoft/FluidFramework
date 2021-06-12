@@ -6,13 +6,13 @@
  * @fileoverview Definition of the StringProperty class
  */
 
-  const ValueArrayProperty = require('./value_array_property').ValueArrayProperty;
-  const ArrayProperty = require('./array_property');
+  const {ValueArrayProperty} = require('./value_array_property');
+  const {ArrayProperty} = require('./array_property');
   const _ = require('lodash');
   const MSG = require('@fluid-experimental/property-common').constants.MSG;
   const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
   const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-  const BaseProperty = require('./base_property');
+  const { BaseProperty } = require('./base_property');
 
   var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 
@@ -67,9 +67,11 @@
   };
 
   StringProperty.prototype = Object.create(ValueArrayProperty.prototype);
-
+  /** @internal */
   StringProperty.prototype._typeid = 'String';
+  /** @internal */
   StringProperty.prototype._context = 'single';
+  /** @internal */
   StringProperty.prototype._noDirtyInBase = true;
 
   /**
@@ -84,7 +86,7 @@
    * Private helper function to update the internal dirty and pending changes
    *
    * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
-   * @private
+   * @internal
   */
   StringProperty.prototype._updateChanges = function(in_changeSet) {
     // we need to convert the format to allow the application of the changes
@@ -304,7 +306,7 @@
    *     this can result in an infinite loop
    *
    * @return {Object} The serialized representation of this property
-   * @private
+   * @internal
    */
   StringProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
                                                  in_dirtinessType, in_includeReferencedRepositories ) {
@@ -444,6 +446,7 @@
 
   /**
    * @inheritdoc
+   * @internal
    */
   StringProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
     // It is unfortunate, but because StringProperty derives from ArrayProperty, it can happen
@@ -478,7 +481,7 @@
   /**
    * Return a JSON representation of the property.
    * @return {object} A JSON representation of the property.
-   * @private
+   * @internal
    */
   StringProperty.prototype._toJson = function() {
     return {
@@ -637,4 +640,4 @@
     }
   );
 
-  module.exports = StringProperty;
+  module.exports = {StringProperty};

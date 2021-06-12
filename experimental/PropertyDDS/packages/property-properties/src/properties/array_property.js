@@ -5,8 +5,8 @@
 /**
  * @fileoverview Definition of the array property class
  */
-const BaseProperty = require('./base_property');
-const ContainerProperty = require('./container_property');
+const {BaseProperty} = require('./base_property');
+const {ContainerProperty} = require('./container_property');
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
 const ArrayChangeSetIterator = require('@fluid-experimental/property-changeset').ArrayChangeSetIterator;
 const deserializeNonPrimitiveArrayElements =
@@ -63,7 +63,6 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @constructor
  * @extends property-properties.ContainerProperty
  * @alias property-properties.ArrayProperty
- * @category Arrays
  */
 var ArrayProperty = function( in_params, in_scope ) {
   ContainerProperty.call( this, in_params );
@@ -379,7 +378,7 @@ ArrayProperty.prototype.getEntriesReadOnly = function() {
  * is overwritten by StringProperty
  *
  * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
- * @private
+ * @internal
  */
 ArrayProperty.prototype._updateChanges = function(in_changeSet) {
   var pendingChanges = this._getPendingChanges();
@@ -530,7 +529,7 @@ ArrayProperty.prototype.insertRange = function(in_offset, in_array) {
  * this is useful for batch changes
  * @param {number} in_offset target index
  * @param {Array<*>} in_array the array to be inserted
- * @private
+ * @internal
  */
 ArrayProperty.prototype._insertRangeWithoutDirtying = function(in_offset, in_array) {
   if (in_offset < 0 || in_offset > this.length || !_.isNumber(in_offset)) {
@@ -598,7 +597,7 @@ ArrayProperty.prototype.removeRange = function(in_offset, in_deleteCount) {
  * a primitive array, that any existing properties have their parent pointer cleared.
  * @param {number} in_offset target start index
  * @param {number} in_deleteCount number of elements to be deleted
- * @private
+ * @internal
  */
 ArrayProperty.prototype._clearRange = function(in_offset, in_deleteCount) {
   if (!this._isPrimitive) {
@@ -619,7 +618,7 @@ ArrayProperty.prototype._clearRange = function(in_offset, in_deleteCount) {
  * this is useful for batch changes
  * @param {number} in_offset target start index
  * @param {number} in_deleteCount number of elements to be deleted
- * @private
+ * @internal
  */
 ArrayProperty.prototype._removeRangeWithoutDirtying = function(in_offset, in_deleteCount) {
   this._clearRange(in_offset, in_deleteCount);
@@ -940,7 +939,7 @@ ArrayProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_di
  * Removes the dirtiness flag from this property
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
  *                                                                       will be removed
- * @private
+ * @internal
  */
 ArrayProperty.prototype._cleanDirty = function(in_flags) {
   // Invoke parent - cleans own dirty flag
@@ -991,7 +990,7 @@ ArrayProperty.prototype.cleanDirty = function(in_dirtinessType) {
  * @param {Array.<number>} in_segmentLengths - The lengths of the segments
  *
  * @return {Array.<Number>} List of the selected segments, given as indices of the segments
- * @private
+ * @internal
  */
 var _getLongestIncreasingSubsequenceSegments = function(in_segmentStarts, in_segmentLengths) {
   if (in_segmentStarts.length === 0) {
@@ -1508,7 +1507,7 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function(in_baseProper
  *
  *
  * @return {Object} The serialized representation of this property
- * @private
+ * @internal
  */
 ArrayProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
                                               in_dirtinessType, in_includeReferencedRepositories ) {
@@ -1599,7 +1598,7 @@ ArrayProperty.prototype._prettyPrintChildren = function(indent, printFct) {
 /**
  * Return a JSON representation of the array and its items.
  * @return {object} A JSON representation of the array and its items.
- * @private
+ * @internal
  */
 ArrayProperty.prototype._toJson = function() {
   var json = {
@@ -1641,6 +1640,7 @@ ArrayProperty.prototype.getFullTypeid = function(in_hideCollection) {
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
+ * @internal
  */
 ArrayProperty.prototype._dataArrayCreate = function(in_length) {
   // This really creates a generic array for custom type arrays. For primitive arrays, like
@@ -1728,7 +1728,7 @@ ArrayProperty.prototype._dataArraySetRange = function(in_position, in_range) {
  * @return {string|undefined} The guid representing the scope in which the
  * map belongs to. If there is a workspace scope return it, else return the scope of this array.
  * @override
- * @private
+ * @internal
  */
 ArrayProperty.prototype._getScope = function() {
   var scope = ContainerProperty.prototype._getScope.call(this);
@@ -1755,4 +1755,4 @@ Object.defineProperty(
 );
 
 
-module.exports = ArrayProperty;
+module.exports = {ArrayProperty};

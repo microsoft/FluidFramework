@@ -39,7 +39,7 @@ class StatelessDataBinding extends DataBinding {
   /**
    * @inheritdoc
    * @package
-   * @hidden
+   * @internal
    */
   static registerOnProperty() {
     console.error('registerOnProperty() not supported for stateless Bindings');
@@ -48,7 +48,7 @@ class StatelessDataBinding extends DataBinding {
   /**
    * @inheritdoc
    * @package
-   * @hidden
+   * @internal
    */
   static registerOnPath() {
     console.error('registerOnPath() not supported for stateless Bindings');
@@ -57,7 +57,7 @@ class StatelessDataBinding extends DataBinding {
   /**
    * @inheritdoc
    * @package
-   * @hidden
+   * @internal
    */
   static registerOnValues() {
     console.error('registerOnValues() not supported for stateless Bindings');
@@ -79,7 +79,7 @@ class StatelessDataBinding extends DataBinding {
    *
    * @param {BaseProperty} in_property - the property to use during the callback
    * @private
-   * @hidden
+   * @internal
    */
   _preCall(in_property) {
     this._property = in_property;
@@ -90,7 +90,7 @@ class StatelessDataBinding extends DataBinding {
    *
    * @param {LYNX.Property.BaseProperty} in_property - the property used during the callback
    * @private
-   * @hidden
+   * @internal
    */
   _postCall(in_property) {
     this._property = undefined;
@@ -101,7 +101,7 @@ class StatelessDataBinding extends DataBinding {
    * Will be called by the StatelessDataBindingWrapper.
    *
    * @private
-   * @hidden
+   * @internal
    * @param {LYNX.Property.BaseProperty} in_property - the property we just created
    * @param {Array.<LYNX.AppFramework.ModificationContext>} in_modificationContext - The modifications
    */
@@ -117,7 +117,7 @@ class StatelessDataBinding extends DataBinding {
    * Will be called by the StatelessDataBindingWrapper.
    *
    * @private
-   * @hidden
+   * @internal
    * @param {LYNX.Property.BaseProperty} in_property - the property we just created
    * @param {LYNX.AppFramework.ModificationContext} in_modificationContext - The modifications
    */
@@ -133,7 +133,7 @@ class StatelessDataBinding extends DataBinding {
    * Will be called by the StatelessDataBindingWrapper.
    *
    * @private
-   * @hidden
+   * @internal
    * @param {LYNX.Property.BaseProperty} in_property - the property we just created
    * @param {LYNX.AppFramework.ModificationContext} in_modificationContext - The modifications
    */
@@ -149,7 +149,7 @@ class StatelessDataBinding extends DataBinding {
    * Will be called by the StatelessDataBindingWrapper.
    *
    * @private
-   * @hidden
+   * @internal
    * @param {LYNX.Property.BaseProperty} in_property - the property we just created
    * @param {LYNX.AppFramework.RemovalContext} in_removalContext - The removal context
    */
@@ -165,7 +165,7 @@ class StatelessDataBinding extends DataBinding {
    * Will be called by the StatelessDataBindingWrapper.
    *
    * @private
-   * @hidden
+   * @internal
    * @param {LYNX.Property.BaseProperty} in_property - the property we just created
    * @param {LYNX.AppFramework.RemovalContext} in_removalContext - The removal context
    */

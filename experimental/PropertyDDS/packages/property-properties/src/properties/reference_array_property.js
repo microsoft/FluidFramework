@@ -5,16 +5,16 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const ValueArrayProperty = require('./value_array_property').ValueArrayProperty;
+const {ValueArrayProperty} = require('./value_array_property');
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
-const BaseProperty = require('./base_property');
+const { BaseProperty } = require('./base_property');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
 const _ = require('lodash');
-const ContainerProperty = require('./container_property');
-const ReferenceProperty = require('./reference_property');
+const {ContainerProperty} = require('./container_property');
+const {ReferenceProperty} = require('./reference_property');
 
 
 /**
@@ -32,7 +32,7 @@ var ReferenceArrayProperty = function( in_params) {
   ValueArrayProperty.call( this, in_params );
 };
 ReferenceArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
-
+/** @internal */
 ReferenceArrayProperty.prototype._typeid = 'Reference';
 
 /**
@@ -254,4 +254,4 @@ ReferenceArrayProperty._convertInputToPaths = function(in_array, in_callerName) 
   return arr;
 };
 
-module.exports = ReferenceArrayProperty;
+module.exports = {ReferenceArrayProperty};

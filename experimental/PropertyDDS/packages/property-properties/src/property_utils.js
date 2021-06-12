@@ -23,4 +23,4 @@ PropertyUtils.gatherProperties = function (in_rootProperty, in_predicate) {
     return gatheredProperties;
 };
 
-module.exports = PropertyUtils;
+module.exports = {PropertyUtils};

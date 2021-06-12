@@ -8,7 +8,7 @@
 
 const Int32Property = require('./int_properties').Int32Property;
 const _castFunctors = require('./primitive_type_casts');
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _ = require('lodash');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
@@ -33,8 +33,9 @@ var EnumProperty = function(in_params) {
   this._data = this._enumDictionary ? this._enumDictionary.defaultValue : 0;
 };
 EnumProperty.prototype = Object.create(Int32Property.prototype);
-
+/** @internal */
 EnumProperty.prototype._typeid = 'Enum';
+/** @internal */
 EnumProperty.prototype._castFunctor = _castFunctors.Int32;
 
 /**
@@ -117,4 +118,4 @@ EnumProperty.prototype.getValidEnumList = function() {
   return this._enumDictionary.enumEntriesById;
 };
 
-module.exports = EnumProperty;
+module.exports = {EnumProperty};

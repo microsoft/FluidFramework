@@ -60,3 +60,7 @@ experimental:
 - "@fluidframework/data-object-base"
 - "@fluidframework/react-inputs"
 - "@fluidframework/react"
+- "@fluid-experimental/property-dds"
+- "@fluid-experimental/property-binder"
+- "@fluid-experimental/property-properties"
+

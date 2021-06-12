@@ -27,16 +27,17 @@ import {
 import { concatTokenizedPath } from './data_binding_tree';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from '../internal/constants';
 import { PropertyElement } from '../internal/property_element';
+import {DataBinder} from './data_binder';
 
 /**
  * _globalVisitIndex is to avoid callbacks being called twice. This works around bugs in getChangesToTokenizedPaths
  * which may visit properties with multiple nested changes several times (LYNXDEV-5365)
- * @hidden
+ * @internal
  */
 let _globalVisitIndex = 0;
 
 /**
- * @hidden
+ * @internal
  */
 const validOptions = ['requireProperty', 'isDeferred'];
 
@@ -64,12 +65,16 @@ class DataBinding {
    * @constructor
    * @package
    * @hideconstructor
-   * @hidden
+   * @internal
    */
   constructor(in_params) {
+    /** @internal */
     this._property = in_params.property;
+    /** @internal */
     this._referenceCount = 0;
+    /** @internal */
     this._activationInfo = in_params.activationInfo;
+    /** @internal */
     this._referencePropertyTable = {};
   }
 
@@ -89,7 +94,7 @@ class DataBinding {
    * multiple paths, however they will only be created once.
    *
    * @return {Number} the new reference count
-   * @hidden
+   * @internal
    */
   _incReferenceCount() {
     return ++this._referenceCount;
@@ -99,7 +104,7 @@ class DataBinding {
    * Return the reference count on this databinding.
    *
    * @return {Number} the reference count
-   * @hidden
+   * @internal
    */
   _getReferenceCount() {
     return this._referenceCount;
@@ -110,7 +115,7 @@ class DataBinding {
    * multiple paths, however they will only be created once.
    *
    * @return {Number} the new reference count
-   * @hidden
+   * @internal
    */
   _decReferenceCount() {
     return --this._referenceCount;
@@ -156,7 +161,7 @@ class DataBinding {
    * @param {Boolean=} in_resolveReference - default true; if true, resolve the leaf reference if applicable
    * @return {BaseProperty|undefined} the property at the sub-path (or undefined).
    * @package
-   * @hidden
+   * @internal
    */
   getPropertyElementForTokenizedPath(in_tokenizedPath, in_resolveReference) {
     const element = new PropertyElement(this._property);
@@ -184,7 +189,7 @@ class DataBinding {
   /**
    * @param {ModificationContext} in_modificationContext - The modifications
    * @private
-   * @hidden
+   * @internal
    */
   _onPostCreate(in_modificationContext) {
   }
@@ -192,7 +197,7 @@ class DataBinding {
   /**
    * @param {ModificationContext} in_modificationContext - The modifications
    * @private
-   * @hidden
+   * @internal
    */
   _invokeInsertCallbacks(in_modificationContext) {
     if (this._registeredPaths) {
@@ -231,7 +236,7 @@ class DataBinding {
   /**
    * @param {ModificationContext} in_modificationContext - The modifications
    * @private
-   * @hidden
+   * @internal
    */
   _onPreModify(in_modificationContext) {
   }
@@ -252,7 +257,7 @@ class DataBinding {
   /**
    * @param {ModificationContext} in_modificationContext - The modifications
    * @private
-   * @hidden
+   * @internal
    */
   _onModify(in_modificationContext) {
   }
@@ -260,7 +265,7 @@ class DataBinding {
   /**
    * @param {ModificationContext} in_modificationContext - The modifications
    * @private
-   * @hidden
+   * @internal
    */
   _invokeModifyCallbacks(in_modificationContext) {
     if (this._registeredPaths) {
@@ -290,7 +295,7 @@ class DataBinding {
   /**
    * @param {RemovalContext} in_removalContext - The removal context
    * @private
-   * @hidden
+   * @internal
    */
   _onPreRemove(in_removalContext) {
     delete this._property; // The PropertyTree already deleted this, so we don't want dangling refs here
@@ -300,7 +305,7 @@ class DataBinding {
    * @param {string[]} in_tokenizedAbsolutePath - starting absolute path
    * @param {boolean} in_simulated - are we pretending something is being removed, or is it for realz?
    * @private
-   * @hidden
+   * @internal
    */
   _invokeRemoveCallbacks(in_tokenizedAbsolutePath, in_simulated) {
     if (this._registeredPaths) {
@@ -337,7 +342,7 @@ class DataBinding {
   /**
    * @param {RemovalContext} in_removalContext - The removal context
    * @private
-   * @hidden
+   * @internal
    */
   _onRemove(in_removalContext) {
   }
@@ -365,7 +370,7 @@ class DataBinding {
    *     of processing of the current ChangeSet. When registering retroactively, there is no changeset, and the handler
    *     should be invoked immediately.
    * @private
-   * @hidden
+   * @internal
    */
   _registerCallbacksForReferenceProperties(
     in_rootProperty,
@@ -429,7 +434,7 @@ class DataBinding {
    * @return {BaseProperty|undefined} the property at the end of the references, or undefined if there
    * is none
    *
-   * @hidden
+   * @internal
    */
   _dereferenceProperty(in_property) {
     while (in_property && TypeIdHelper.isReferenceTypeId(in_property.getTypeid())) {
@@ -464,7 +469,7 @@ class DataBinding {
    * @param {string} [in_referenceKey] - if provided, in_referenceProperty is assumed to be an array/map of references
    *     and this parameter is used as key to identify the exact reference.
    * @private
-   * @hidden
+   * @internal
    */
   _registerCallbacksForSingleReferenceProperty(
     in_tokenizedRegistrySubPath,
@@ -691,12 +696,12 @@ class DataBinding {
    * @param {Array.<String>} in_tokenizedFullPath -
    *     The full path from the data binding to this reference (including resolved previous references)
    * @param {string[]} in_tokenizedRegistrySubPath -
-   * @param {string} [in_referenceKey] - if provided, in_referenceProperty is assumed to be an array/map of references
+   * @param {string | undefined} in_referenceKey - if provided, in_referenceProperty is assumed to be an array/map of references
    *     and this parameter is used as key to identify the exact reference.
    * @param {ModificationContext|RemovalContext} in_modificationContext -
    *     The modifications / removal information for the reference
    * @private
-   * @hidden
+   * @internal
    */
   _referenceTargetChanged(
     in_registeredSubPaths,
@@ -823,7 +828,7 @@ class DataBinding {
    * @param {Array.<String>} in_tokenizedFullPath -
    *     The full path from the data binding to the current position (including resolved previous references)
    * @private
-   * @hidden
+   * @internal
    */
   _handleReferenceModifications(
     in_indirectionsAtRoot,
@@ -1030,7 +1035,7 @@ class DataBinding {
    * @param {Array.<String>} in_tokenizedFullPath -
    *     The full path from the Data Binding to the current position (including resolved previous references)
    * @private
-   * @hidden
+   * @internal
    */
   _handleModifications(
     in_modificationContext,
@@ -1148,7 +1153,7 @@ class DataBinding {
    * @param {Boolean} in_options.callRemovals - fire removal callbacks where appropriate. Otherwise, just tear down
    *     the handles
    * @private
-   * @hidden
+   * @internal
    */
   _handleRemovals(
     in_tokenizedAbsolutePath,
@@ -1177,7 +1182,7 @@ class DataBinding {
    * _handleRemovals a wee bit cleaner.
    *
    * @inheritdoc _handleRemovals
-   * @hidden
+   * @internal
    */
   _handleRemovalsInternal(
     in_tokenizedAbsolutePath,
@@ -1309,7 +1314,7 @@ class DataBinding {
    * @param {DataBinderHandle} [in_handle] - restrict the invocation to only registrations relating to in_handle
    *
    * @private
-   * @hidden
+   * @internal
    */
   _invokeInsertCallbacksForPaths(
     in_baseTokenizedPath,
@@ -1515,7 +1520,7 @@ class DataBinding {
    *
    * @return {DataBinderHandle} a handle to unregister this _registerOnPath with
    * @package
-   * @hidden
+   * @internal
    */
   _registerOnPath(
     in_dataBindingConstructor, in_path, in_operations, in_function, in_options = {}
@@ -1589,7 +1594,7 @@ class DataBinding {
    *     If true the callback will only be called if the corresponding Property exists, i.e. it won't be called for
    *     'remove' events. The default is false.
    * @package
-   * @hidden
+   * @internal
    */
   _registerOnProperty(
     in_dataBindingConstructor, in_path, in_operations, in_function, in_options
@@ -1731,7 +1736,7 @@ class DataBinding {
    * @param {Object} in_options Additional user specified options on how the callback should be registered.
    *
    * @private
-   * @hidden
+   * @internal
    */
   static _registerOnValues(in_path, in_events, in_callback, in_options = {}) {
     this.registerOnProperty(in_path, in_events, function(propertyOrKey, parent) {
@@ -1764,7 +1769,7 @@ class DataBinding {
    * @param {Object} in_options See {@link DataBinding.registerOnPath [options]} parameter
    *
    * @private
-   * @hidden
+   * @internal
    */
   static _handleBinding(in_register, in_path, in_events, in_callback, in_options = {}) {
     in_options = in_options || {};

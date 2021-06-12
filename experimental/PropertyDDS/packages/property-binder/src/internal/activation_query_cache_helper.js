@@ -15,7 +15,7 @@ import { getLocalOrRemoteSchema } from '../data_binder/internal_utils';
  * for the given binding type. If it finds a node property, it cannot conclude anything, and will conservatively
  * return 'true', that a binding may be encountered.
  *
- * @hidden
+ * @internal
  */
 export class ActivationQueryCacheHelper {
   /**

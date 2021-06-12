@@ -19,7 +19,7 @@ import _ from 'underscore';
  * @return {boolean} Has there already been an entry?
  * @alias insertInNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var insertInNestedObjects = function(in_object) {
   var currentObject = in_object;
@@ -49,7 +49,7 @@ var insertInNestedObjects = function(in_object) {
  * @return {boolean} Did an entry exist under the given path in a hierarchy
  * @alias existsInNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var existsInNestedObjects = function(in_object) {
   var currentObject = in_object;
@@ -75,7 +75,7 @@ var existsInNestedObjects = function(in_object) {
  * @return {Object|undefined} The entry at the given path in a hierarchy, or undefined if none
  * @alias getInNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var getInNestedObjects = function(in_object) {
   var currentObject = in_object;
@@ -102,7 +102,7 @@ var getInNestedObjects = function(in_object) {
  * @return {boolean} Did an entry exist under the given path in a hierarchy
  * @alias getInNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var getOrInsertDefaultInNestedObjects = function(in_object) {
   var currentObject = in_object;
@@ -130,7 +130,7 @@ var getOrInsertDefaultInNestedObjects = function(in_object) {
  * @param {...number}  in_path    - The path within the hierarchy
  * @alias deleteInNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var deleteInNestedObjects = function(in_object) {
   var currentObject = in_object;
@@ -174,7 +174,7 @@ var deleteInNestedObjects = function(in_object) {
  *                                              to fill up to in_levels keys.
  * @alias traverseNestedObjects
  * @package
- * @hidden
+ * @internal
  */
 var traverseNestedObjects = function(in_object, in_levels, in_invokeForHigherLevels, in_callback) {
   // We use a stack based traversal to avoid too many recursions

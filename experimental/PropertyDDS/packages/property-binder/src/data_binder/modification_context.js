@@ -43,7 +43,7 @@ class ModificationContext extends BaseContext {
    * @constructor
    * @package
    * @hideconstructor
-   * @hidden
+   * @internal
    */
   constructor(in_nestedChangeSet,
     in_operationType,
@@ -55,9 +55,13 @@ class ModificationContext extends BaseContext {
     in_boundToRef = false
   ) {
     super(in_operationType, in_context, in_path, in_baseDataBinding, in_nestedChangeSet, in_simulated);
+    /** @internal */
     this._relativeTokenizedPath = in_relativeTokenizedPath;
+    /** @internal */
     this._removedDataBindingPath = undefined;
+    /** @internal */
     this._propertyHint = undefined;
+    /** @internal */
     this._boundToRef = in_boundToRef;
   }
 
@@ -104,7 +108,7 @@ class ModificationContext extends BaseContext {
    *
    * @return {PropertyElement} a property element representing the property at the root of the modification
    *
-   * @hidden
+   * @internal
    */
   _getPropertyElement() {
     if (this._propertyHint) {
@@ -150,7 +154,7 @@ class ModificationContext extends BaseContext {
    *
    * @return {string}  the current path
    * @package
-   * @hidden
+   * @internal
    */
   _getRemovedDataBindingPath() {
     return this._removedDataBindingPath;
@@ -169,7 +173,7 @@ class ModificationContext extends BaseContext {
    * @param {Boolean} in_boundToRef - if true, the context refers to the reference, and not the referenced object
    * @return {ModificationContext} Modification context from traversal context
    * @package
-   * @hidden
+   * @internal
    */
   static _fromContext(in_traversalContext, in_baseDataBinding, in_relativeTokenizedPath, in_boundToRef) {
     return new ModificationContext(
@@ -190,7 +194,7 @@ class ModificationContext extends BaseContext {
    *
    * @param {BaseProperty} in_property - the Property that should be associated with this context.
    * @package
-   * @hidden
+   * @internal
    */
   _hintModifiedProperty(in_property) {
     this._propertyHint = in_property;
@@ -201,7 +205,7 @@ class ModificationContext extends BaseContext {
    *
    * @param {string} in_removedDataBindingPath - the suffix that should make the path unique
    * @package
-   * @hidden
+   * @internal
    */
   _setRemovedDataBindingPath(in_removedDataBindingPath) {
     this._removedDataBindingPath = in_removedDataBindingPath;
@@ -212,7 +216,7 @@ class ModificationContext extends BaseContext {
    *
    * @return {ModificationContext} the cloned context
    * @package
-   * @hidden
+   * @internal
    */
   _clone() {
     const clone = new ModificationContext(

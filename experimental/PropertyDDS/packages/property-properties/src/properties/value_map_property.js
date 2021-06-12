@@ -9,8 +9,8 @@
 const _ = require('lodash');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _castFunctors = require('./primitive_type_casts');
-const BaseProperty = require('./base_property');
-const MapProperty = require('./map_property');
+const { BaseProperty } = require('./base_property');
+const {MapProperty} = require('./map_property');
 const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
 const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
 const Int64Property = require('../properties/int_properties').Int64Property;
@@ -68,7 +68,7 @@ ValueMapProperty.prototype.getValues = function() {
 /**
  * Return a JSON representation of the map and its items.
  * @return {object} A JSON representation of the map and its items.
- * @private
+ * @internal
  */
 ValueMapProperty.prototype._toJson = function() {
   return {
@@ -204,7 +204,9 @@ var Float32MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Float32MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Float32MapProperty.prototype._typeid = 'Float32';
+/** @internal */
 Float32MapProperty.prototype._castFunctor = _castFunctors.Float32;
 
 /**
@@ -222,7 +224,9 @@ var Float64MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Float64MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Float64MapProperty.prototype._typeid = 'Float64';
+/** @internal */
 Float64MapProperty.prototype._castFunctor = _castFunctors.Float64;
 
 /**
@@ -240,7 +244,9 @@ var Uint32MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Uint32MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Uint32MapProperty.prototype._typeid = 'Uint32';
+/** @internal */
 Uint32MapProperty.prototype._castFunctor = _castFunctors.Uint32;
 
 /**
@@ -258,7 +264,9 @@ var Uint16MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Uint16MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Uint16MapProperty.prototype._typeid = 'Uint16';
+/** @internal */
 Uint16MapProperty.prototype._castFunctor = _castFunctors.Uint16;
 
 /**
@@ -276,7 +284,9 @@ var Uint8MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Uint8MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Uint8MapProperty.prototype._typeid = 'Uint8';
+/** @internal */
 Uint8MapProperty.prototype._castFunctor = _castFunctors.Uint8;
 
 /**
@@ -294,7 +304,9 @@ var Int32MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Int32MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Int32MapProperty.prototype._typeid = 'Int32';
+/** @internal */
 Int32MapProperty.prototype._castFunctor = _castFunctors.Int32;
 
 /**
@@ -383,7 +395,9 @@ var Int64MapProperty = function( in_params) {
   Integer64MapProperty.call( this, in_params );
 };
 Int64MapProperty.prototype = Object.create( Integer64MapProperty.prototype );
+/** @internal */
 Int64MapProperty.prototype._typeid = 'Int64';
+/** @internal */
 Int64MapProperty.prototype._castFunctor = _castFunctors.Int64;
 
 /**
@@ -413,7 +427,9 @@ var Uint64MapProperty = function( in_params) {
   Integer64MapProperty.call( this, in_params );
 };
 Uint64MapProperty.prototype = Object.create( Integer64MapProperty.prototype );
+/** @internal */
 Uint64MapProperty.prototype._typeid = 'Uint64';
+/** @internal */
 Uint64MapProperty.prototype._castFunctor = _castFunctors.Uint64;
 
 /**
@@ -443,7 +459,9 @@ var Int16MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Int16MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Int16MapProperty.prototype._typeid = 'Int16';
+/** @internal */
 Int16MapProperty.prototype._castFunctor = _castFunctors.Int16;
 
 /**
@@ -461,7 +479,9 @@ var Int8MapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 Int8MapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 Int8MapProperty.prototype._typeid = 'Int8';
+/** @internal */
 Int8MapProperty.prototype._castFunctor = _castFunctors.Int8;
 
 /**
@@ -479,7 +499,9 @@ var StringMapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 StringMapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 StringMapProperty.prototype._typeid = 'String';
+/** @internal */
 StringMapProperty.prototype._castFunctor = _castFunctors.String;
 
 /**
@@ -497,7 +519,9 @@ var BoolMapProperty = function( in_params) {
   ValueMapProperty.call( this, in_params );
 };
 BoolMapProperty.prototype = Object.create( ValueMapProperty.prototype );
+/** @internal */
 BoolMapProperty.prototype._typeid = 'Bool';
+/** @internal */
 BoolMapProperty.prototype._castFunctor = _castFunctors.Boolean;
 
 module.exports = {
