@@ -1640,10 +1640,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     summaryLogger,
                     {
                         eventName: "WaitingForSeq",
-                        startSequenceNumber: this.deltaManager.lastSequenceNumber,
+                        lastSequenceNumber: this.deltaManager.lastSequenceNumber,
                         targetSequenceNumber: latestSummaryRefSeq,
+                        lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
                     },
                     async () => waitForSeq(this.deltaManager, latestSummaryRefSeq),
+                    { start: true, end: true, cancel: "error" }, // definitely want start event
                 );
             }
         }
