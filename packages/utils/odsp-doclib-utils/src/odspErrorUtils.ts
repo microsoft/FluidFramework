@@ -68,9 +68,9 @@ export interface IFacetCodes {
     facetCodes?: string[];
  }
 
- function parseFacetCodes(response): string[] {
+ function parseFacetCodes(response: string): string[] {
     const stack: string[] = [];
-    let error = response.error;
+    let error = JSON.parse(response).error;
     while (error !== undefined) {
         stack.push(error.code);
         error = error.innerError;
@@ -84,7 +84,7 @@ export function createOdspNetworkError(
     retryAfterSeconds?: number,
     response?: Response,
     responseText?: string,
-): OdspError {
+): OdspError & LoggingError & IFacetCodes {
     let error: OdspError & LoggingError & IFacetCodes;
     switch (statusCode) {
         case 400:
@@ -149,8 +149,7 @@ export function createOdspNetworkError(
 
     error.online = OnlineStatus[isOnline()];
 
-    const facetCodes = responseText !== undefined ? parseFacetCodes(JSON.parse(responseText)) : undefined;
-    const facetInfo: IFacetCodes = { facetCodes };
+    const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
     const props: ITelemetryProperties = { response: responseText,
         facetCode: facetCodes !== undefined ? facetCodes[0] : undefined};
     if (response) {
@@ -164,7 +163,6 @@ export function createOdspNetworkError(
         }
     }
     error.addTelemetryProperties(props);
-    assert(error.facetCodes === facetInfo.facetCodes, "facet codes are wrong");
     return error;
 }
 
