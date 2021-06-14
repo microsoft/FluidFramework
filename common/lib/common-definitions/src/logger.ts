@@ -41,12 +41,10 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  */
 export interface ITelemetryBaseLogger {
     /**
-     * An optional boolean which indicates to the user of this interface that tags (i.e. `ITaggedTelemetryPropertyType`
-     * objects) are in use. Eventually this will be a required property, but this is a stopgap that allows older hosts
-     * to continue to pass through telemetry without trouble (this property will simply show up undefined), while our
-     * current logger implementation in `telmetry-utils` handles tags in a separate manner.
+     * Starting in the 0.21 release, implementations of ITelemetryBaseLogger are required to implement
+     * proper handling of tagged telemetry properties (the ITaggedTelemetryPropertyType case of ITelemetryPropertes)
      */
-    supportsTags?: true;
+    supportsTags: true;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -114,4 +112,20 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+}
+
+/**
+ * This namespace contains modified versions of other types in this package,
+ * to reflect the variety of versions of the code that we may encounter.
+ */
+ export namespace Compat {
+    /**
+     * Breaking changes accounted for:
+     * - 0.21 - supportsTags is now required v. optional in 0.20
+     */
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    export interface ITelemetryBaseLogger {
+        supportsTags?: true;
+        send(event: ITelemetryBaseEvent): void;
+    }
 }
