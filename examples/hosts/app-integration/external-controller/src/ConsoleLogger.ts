@@ -9,6 +9,8 @@ import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/commo
 // and gets hooked up to the Tinylicious container telemetry system.
 export class ConsoleLogger implements ITelemetryBaseLogger {
     constructor() {}
+    /** Log tagged data plainly to the user's console */
+    supportsTags: true = true;
     send(event: ITelemetryBaseEvent) {
         console.log("Custom telemetry object array: ".concat(JSON.stringify(event)));
     }

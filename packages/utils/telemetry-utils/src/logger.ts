@@ -7,14 +7,15 @@ import {
     ILoggingError,
     ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
     ITelemetryErrorEvent,
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
+    Compat,
 } from "@fluidframework/common-definitions";
+type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryLoggerPropertyBag {
@@ -31,6 +32,8 @@ export interface ITelemetryLoggerPropertyBags{
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLogger {
+    public supportsTags: true = true;
+
     public static readonly eventNamespaceSeparator = ":";
 
     public static formatTick(tick: number): number {
@@ -582,6 +585,7 @@ export class LoggingError extends Error implements ILoggingError {
  * It can be used in places where logger instance is required, but events should be not send over.
  */
  export class TelemetryUTLogger implements ITelemetryLogger {
+    public supportsTags: true = true;
     public send(event: ITelemetryBaseEvent): void {
     }
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {

@@ -146,7 +146,7 @@ function runLogViewerCorrectnessTests(
 
 describe('CachingLogViewer', () => {
 	function getMockLogger(callback?: (event: ITelemetryBaseEvent) => void): ITelemetryBaseLogger {
-		return { send: callback ?? noop };
+		return { supportsTags: true, send: callback ?? noop };
 	}
 
 	function getCachingLogViewer(

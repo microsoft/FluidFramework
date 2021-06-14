@@ -116,6 +116,8 @@ class ContainerContent {
  * Logger to catch errors in containers
  */
 class Logger implements ITelemetryBaseLogger {
+    /** Log tagged data plainly since this is a debugging tool */
+    public supportsTags: true = true;
     public constructor(
         private readonly containerDescription: string,
         private readonly errorHandler: (event: ITelemetryBaseEvent) => boolean) {

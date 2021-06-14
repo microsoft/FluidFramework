@@ -4,9 +4,10 @@
  */
 import {
     ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
     ITelemetryGenericEvent,
+    Compat,
 } from "@fluidframework/common-definitions";
+type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing

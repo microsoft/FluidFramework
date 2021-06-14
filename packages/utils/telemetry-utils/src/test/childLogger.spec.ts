@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, Compat } from "@fluidframework/common-definitions";
+type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
 import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
 

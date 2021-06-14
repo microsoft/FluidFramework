@@ -831,7 +831,7 @@ describe('SharedTree', () => {
 			const events: ITelemetryBaseEvent[] = [];
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 				initialTree: simpleTestTree,
-				logger: { send: (event) => events.push(event) },
+				logger: { supportsTags: true, send: (event) => events.push(event) },
 			});
 			// Invalid edit
 			tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));

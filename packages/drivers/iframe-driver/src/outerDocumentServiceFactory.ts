@@ -277,6 +277,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
     private getLogger(logger: ITelemetryLogger): ITelemetryBaseLogger {
         return {
+            supportsTags: logger.supportsTags,
             send: (event) => logger.send(event),
         };
     }
