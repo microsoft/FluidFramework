@@ -13,6 +13,7 @@ export interface TinyliciousContainerConfig {
 
 export interface TinyliciousConnectionConfig {
     port?: number;
+    domain?: string
 }
 
 /**

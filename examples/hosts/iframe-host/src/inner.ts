@@ -19,11 +19,7 @@ const containers: Map<string, Container> = new Map();
 
 async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "fluid/object"
-        )) {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
     const fluidObject = response.value as IFluidObject;

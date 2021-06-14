@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsJsonable, Jsonable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**
@@ -18,12 +18,12 @@ export interface ISharedSummaryBlock extends ISharedObject {
      * @param key - Key to retrieve from.
      * @returns The stored value, or undefined if the key is not set.
      */
-    get<T = Jsonable>(key: string): T;
+    get<T>(key: string): Jsonable<T>;
 
     /**
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at.
      * @param value - Jsonable type value to set.
      */
-    set<T>(key: string, value: AsJsonable<T>): void;
+    set<T>(key: string, value: Jsonable<T>): void;
 }

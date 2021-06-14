@@ -174,7 +174,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
@@ -373,7 +373,7 @@ export interface ILoaderHeader {
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 // @public (undocumented)

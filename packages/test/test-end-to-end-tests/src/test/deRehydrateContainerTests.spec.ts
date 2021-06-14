@@ -301,6 +301,31 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
+        it("Storage in detached container", async () => {
+            const { container } =
+                await createDetachedContainerAndGetRootDataStore();
+
+            const snapshotTree = container.serialize();
+            assert(container.storage !== undefined, "Storage should be present in detached container");
+            const response = await container.request({ url: "/" });
+            const defaultDataStore = response.value as TestFluidObject;
+            assert(defaultDataStore.context.storage !== undefined,
+                "Storage should be present in detached data store");
+            let success1: boolean | undefined;
+            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
+            assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
+
+            const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+            assert(container2.storage !== undefined, "Storage should be present in rehydrated container");
+            const response2 = await container2.request({ url: "/" });
+            const defaultDataStore2 = response2.value as TestFluidObject;
+            assert(defaultDataStore2.context.storage !== undefined,
+                "Storage should be present in rehydrated data store");
+            let success2: boolean | undefined;
+            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => success2 = false);
+            assert(success2 === false, "Snapshot fetch should not be allowed in rehydrated data store");
+        });
+
         it("Change contents of dds, then rehydrate and then check summary", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();

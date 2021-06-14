@@ -82,11 +82,7 @@ export class BaseHost {
     public async requestFluidObjectFromContainer(container: Container, url: string) {
         const response = await container.request({ url });
 
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "fluid/object"
-            )) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return undefined;
         }
 
@@ -97,11 +93,7 @@ export class BaseHost {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "fluid/object"
-            )) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return undefined;
         }
 

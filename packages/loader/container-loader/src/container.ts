@@ -107,6 +107,7 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
+import { ContainerStorageAdapter } from "./containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -124,9 +125,9 @@ export interface IContainerLoadOptions {
     clientDetailsOverride?: IClientDetails;
     resolvedUrl: IFluidResolvedUrl;
     /**
-     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     * Control which snapshot version to load from.  See IParsedUrl for detailed information.
      */
-    version?: string | null | undefined;
+    version: string | undefined;
     /**
      * Loads the Container in paused state if true, unpaused otherwise.
      */
@@ -399,6 +400,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
+    public readonly storage: IDocumentStorageService;
+    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -649,6 +652,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.storage = new ContainerStorageAdapter(
+            () => {
+                if (this.attachState !== AttachState.Attached) {
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    });
+                    throw new Error("Real storage calls not allowed in Unattached container");
+                }
+                return this.storageService;
+            },
+            this.storageBlobs,
+        );
 
         const isDomAvailable = typeof document === "object" &&
             document !== null &&
@@ -942,10 +957,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args).catch(() => { });
     }
 
-    public get storage(): IDocumentStorageService | undefined {
-        return this._storageService;
-    }
-
     /**
      * Raise non-critical error to host. Calling this API will not close container.
      * For critical errors, please call Container.close(error).
@@ -1114,13 +1125,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load container.
      *
      * @param specifiedVersion - one of the following
-     *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
     private async load(
-        specifiedVersion: string | null | undefined,
+        specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown)
     {
@@ -1152,7 +1162,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         await this.connectStorageService();
         this._attachState = AttachState.Attached;
 
-        // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
+        // Fetch specified snapshot.
         const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
@@ -1795,12 +1805,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - The specific version of the snapshot to retrieve
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
-    private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
+    private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        if (specifiedVersion === null) {
-            return {};
-        }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
         if (version === undefined && specifiedVersion !== undefined) {

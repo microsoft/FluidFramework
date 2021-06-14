@@ -3,7 +3,7 @@ title: Architecture
 menuPosition: 1
 ---
 
-The Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid service_.
+The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid service*.
 While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high level,
 identify the important lower level concepts, and discuss some of our key design decisions.
 
@@ -17,8 +17,8 @@ If you want to load a Fluid container on your app or website, you'll load the co
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
 A Fluid container includes state and app logic. It's a serverless app model with data persistence. It has at least one
-_Fluid object_, which encapsulates app logic. Fluid objects can have state, which is managed by _distributed data
-structures_ (DDSes).
+*Fluid object*, which encapsulates app logic. Fluid objects can have state, which is managed by *distributed data
+structures* (DDSes).
 
 DDSes are used to distribute state to clients. Instead of centralizing merge logic in the
 server, the server passes changes (aka operations or ops) to clients and the clients perform the merge.
@@ -72,8 +72,8 @@ resolver,** connects to the Fluid service using the **Fluid service driver**, an
 
 ![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
 
-The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
-is located. The Fluid service driver consumes this information.
+The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that
+service it is located. The Fluid service driver consumes this information.
 
 The **Fluid service driver** connects to the Fluid service, requests space on the server for new Fluid containers, and
 creates the three objects, **DeltaConnection**, **DeltaStorageService**, and **DocumentStorageService**, that the Fluid

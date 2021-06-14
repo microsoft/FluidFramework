@@ -5,7 +5,7 @@
 
 import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IHistorian } from "@fluidframework/server-services-client";
+import { IHistorian, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { TestDb } from "./testCollection";
@@ -140,6 +140,10 @@ export class TestHistorian implements IHistorian {
         const _id = commit.tree;
         await this.commits.insertOne({ _id, ...commit, value: commit });
         return this.getCommit(_id);
+    }
+
+    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        throw new Error("Not Supported");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluidframework/react-inputs";
+import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
