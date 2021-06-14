@@ -28,7 +28,7 @@
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "test:watch": "npm run test:jest -- --watch",
     "tsc": "tsc",
-    "webpack": "webpack"
+    "webpack": "webpack --color --display=errors-only"
   },
   "dependencies": {
     "@fluid-experimental/get-container": "^0.42.0",
