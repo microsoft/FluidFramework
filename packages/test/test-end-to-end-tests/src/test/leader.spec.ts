@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 async function ensureConnected(container: Container) {
     if (!container.connected) {
@@ -16,10 +16,18 @@ async function ensureConnected(container: Container) {
     }
 }
 
+async function getLeadershipSubscriptionForContainer(container: Container) {
+    const globalScheduler = await requestFluidObject<IAgentScheduler>(container, "_scheduler");
+    const taskSubscription = new TaskSubscription(globalScheduler, "leader");
+    taskSubscription.volunteer();
+    return taskSubscription;
+}
+
 describeFullCompat("Leader", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: Container;
     let dataObject1: ITestFluidObject;
+    let taskSubscription1: TaskSubscription;
     beforeEach(async () => {
         provider = getTestObjectProvider();
         container1 = await provider.makeTestContainer({
@@ -27,6 +35,7 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         }) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         await ensureConnected(container1);
+        taskSubscription1 = await getLeadershipSubscriptionForContainer(container1);
     });
     afterEach(() => {
         // Clean up all the listener
@@ -40,52 +49,57 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         assert(!container1.deltaManager.active);
 
         // shouldn't be a leader in view only mode
-        assert(!dataObject1.context.leader);
+        assert(!taskSubscription1.haveTask());
 
         const container2 = await provider.loadTestContainer({
             runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
         }) as Container;
         await ensureConnected(container2);
+        const taskSubscription2 = await getLeadershipSubscriptionForContainer(container2);
         await provider.ensureSynchronized();
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         assert(container2.deltaManager.active);
-        if (!dataObject2.context.leader) {
+        if (!taskSubscription2.haveTask()) {
             await timeoutPromise(
-                (resolve) => { dataObject2.context.once("leader", () => { resolve(); }); },
+                (resolve) => { taskSubscription2.once("gotTask", () => { resolve(); }); },
                 { durationMs: 4000 },
             );
         }
-        assert(dataObject2.context.leader);
+        assert(taskSubscription2.haveTask());
     });
 
-    interface ListenerConfig { dataObject: ITestFluidObject, name: string, leader: boolean, notleader: boolean }
-    const registeredListeners: [IFluidDataStoreRuntime, "leader" | "notleader", any][] = [];
-    function registerListener(target: IFluidDataStoreRuntime, name: "leader" | "notleader", handler: () => void) {
+    interface ListenerConfig { taskSubscription: TaskSubscription, name: string, gotTask: boolean, lostTask: boolean }
+    const registeredListeners: [TaskSubscription, "gotTask" | "lostTask", any][] = [];
+    function registerListener(target: TaskSubscription, name: "gotTask" | "lostTask", handler: () => void) {
         target.on(name, handler);
         registeredListeners.push([target, name, handler]);
     }
     const setupListener = (config: ListenerConfig) => {
-        registerListener(config.dataObject.runtime, "leader", () => {
-            assert(config.leader, `leader event not expected in ${config.name}`);
-            config.leader = false;
+        registerListener(config.taskSubscription, "gotTask", () => {
+            assert(config.gotTask, `gotTask event not expected in ${config.name}`);
+            config.gotTask = false;
         });
 
-        registerListener(config.dataObject.runtime, "notleader", () => {
-            assert(config.notleader, `notleader event not expected in ${config.name}`);
-            config.notleader = false;
+        registerListener(config.taskSubscription, "lostTask", () => {
+            assert(config.lostTask, `lostTask event not expected in ${config.name}`);
+            config.lostTask = false;
         });
     };
 
     const checkExpected = (config: ListenerConfig) => {
-        assert(!config.leader, `Missing leader event on ${config.name}`);
-        assert(!config.notleader, `Missing notleader event on ${config.name}`);
+        assert(!config.gotTask, `Missing leader event on ${config.name}`);
+        assert(!config.lostTask, `Missing lostTask event on ${config.name}`);
     };
 
     it("View to write mode", async () => {
-        const config = { dataObject: dataObject1, name: "dataObject1", leader: true, notleader: false };
+        const config = {
+            taskSubscription: taskSubscription1,
+            name: "taskSubscription1",
+            gotTask: true,
+            lostTask: false,
+        };
         setupListener(config);
 
         // write something to get out of view only mode and take leadership
@@ -93,7 +107,7 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         checkExpected(config);
-        assert(dataObject1.context.leader);
+        assert(taskSubscription1.haveTask());
     });
 
     it("force read only", async () => {
@@ -101,14 +115,19 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         dataObject1.root.set("blah", "blah");
         await provider.ensureSynchronized();
 
-        const config = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
+        const config = {
+            taskSubscription: taskSubscription1,
+            name: "taskSubscription1",
+            gotTask: false,
+            lostTask: true,
+        };
         setupListener(config);
 
         container1.forceReadonly(true);
         await provider.ensureSynchronized();
 
         checkExpected(config);
-        assert(!dataObject1.context.leader);
+        assert(!taskSubscription1.haveTask());
     });
 
     it("Events on close", async () => {
@@ -121,18 +140,28 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer({
             runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
         }) as Container;
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await ensureConnected(container2);
+        const taskSubscription2 = await getLeadershipSubscriptionForContainer(container2);
         await provider.ensureSynchronized();
 
-        assert(dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
+        assert(taskSubscription1.haveTask());
+        assert(!taskSubscription2.haveTask());
 
-        const config1 = { dataObject: dataObject1, name: "dataObject1", leader: false, notleader: true };
-        const config2 = { dataObject: dataObject2, name: "dataObject2", leader: true, notleader: false };
+        const config1 = {
+            taskSubscription: taskSubscription1,
+            name: "taskSubscription1",
+            gotTask: false,
+            lostTask: true,
+        };
+        const config2 = {
+            taskSubscription: taskSubscription2,
+            name: "taskSubscription2",
+            gotTask: true,
+            lostTask: false,
+        };
         setupListener(config1);
         setupListener(config2);
 
@@ -142,39 +171,49 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
 
         checkExpected(config1);
         checkExpected(config2);
-        assert(!dataObject1.context.leader);
-        assert(dataObject2.context.leader);
+        assert(!taskSubscription1.haveTask());
+        assert(taskSubscription2.haveTask());
     });
 
     it("Concurrent update", async () => {
         // write something to get out of view only mode and take leadership
         dataObject1.root.set("blah", "blah");
         await provider.ensureSynchronized();
-        assert(dataObject1.context.leader);
+        assert(taskSubscription1.haveTask());
 
         const container2 = await provider.loadTestContainer({
             runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
         }) as Container;
-        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         const container3 = await provider.loadTestContainer({
             runtimeOptions: { addGlobalAgentSchedulerAndLeaderElection: true },
         }) as Container;
-        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 
         // Currently, we load a container in write mode from the start. See issue #3304.
         // Once that is fix, this needs to change
         await Promise.all([ensureConnected(container2), ensureConnected(container3)]);
+        const taskSubscription2 = await getLeadershipSubscriptionForContainer(container2);
+        const taskSubscription3 = await getLeadershipSubscriptionForContainer(container3);
         await provider.ensureSynchronized();
 
-        assert(dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
-        assert(!dataObject3.context.leader);
+        assert(taskSubscription1.haveTask());
+        assert(!taskSubscription2.haveTask());
+        assert(!taskSubscription3.haveTask());
 
         await provider.opProcessingController.pauseProcessing();
 
-        const config2 = { dataObject: dataObject2, name: "dataObject2", leader: false, notleader: false };
-        const config3 = { dataObject: dataObject3, name: "dataObject3", leader: false, notleader: false };
+        const config2 = {
+            taskSubscription: taskSubscription2,
+            name: "taskSubscription2",
+            gotTask: false,
+            lostTask: false,
+        };
+        const config3 = {
+            taskSubscription: taskSubscription3,
+            name: "taskSubscription3",
+            gotTask: false,
+            lostTask: false,
+        };
         setupListener(config2);
         setupListener(config3);
 
@@ -184,24 +223,24 @@ describeFullCompat("Leader", (getTestObjectProvider) => {
         await provider.opProcessingController.processIncoming();
 
         // No one should be a leader yet
-        assert(!dataObject1.context.leader);
-        assert(!dataObject2.context.leader);
-        assert(!dataObject3.context.leader);
+        assert(!taskSubscription1.haveTask());
+        assert(!taskSubscription2.haveTask());
+        assert(!taskSubscription3.haveTask());
 
-        config2.leader = true;
-        config3.leader = true;
+        config2.gotTask = true;
+        config3.gotTask = true;
 
         await provider.ensureSynchronized();
-        assert((dataObject2.context.leader || dataObject3.context.leader) &&
-            (!dataObject2.context.leader || !dataObject3.context.leader),
+        assert((taskSubscription2.haveTask() || taskSubscription3.haveTask()) &&
+            (!taskSubscription2.haveTask() || !taskSubscription3.haveTask()),
             "only one container should be the leader");
 
-        if (dataObject2.context.leader) {
-            assert(config3.leader);
-            config3.leader = false;
-        } else if (dataObject3.context.leader) {
-            assert(config2.leader);
-            config2.leader = false;
+        if (taskSubscription2.haveTask()) {
+            assert(config3.gotTask);
+            config3.gotTask = false;
+        } else if (taskSubscription3.haveTask()) {
+            assert(config2.gotTask);
+            config2.gotTask = false;
         }
         checkExpected(config2);
         checkExpected(config3);
