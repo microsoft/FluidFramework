@@ -148,7 +148,7 @@ describe("PropertyTree", () => {
 
             it("Can commit with metadata, with empty changeset, behaviour is specified to true", async () => {
 				await opProcessingController.pauseProcessing();
-				sharedPropertyTree1.commit({someKey: "some data"});
+				sharedPropertyTree1.commit({someKey: "some data"}, true);
                 expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 
 				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
