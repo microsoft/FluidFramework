@@ -30,7 +30,6 @@ import {
     IThrottlingWarning,
     IPendingLocalState,
     ReadOnlyInfo,
-    ILoaderOptions,
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
@@ -100,7 +99,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
@@ -1347,11 +1346,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             storageService = new PrefetchDocumentStorageService(storageService);
         }
 
-        const disposableStorageService =
+        this._storageService =
             new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
 
-        this._storageService =
-            new ProtocolTreeStorageService(disposableStorageService, ()=>this.captureProtocolSummary());
+        if(this.options.summarizeProtocolTree === true) {
+            this._storageService =
+                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+        }
 
         // ensure we did not lose that policy in the process of wrapping
         assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
@@ -1714,15 +1715,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.RemoteHelp:
                 break;
             case MessageType.Summarize: {
-                // todo this is only needed for staging so the server
-                // know when the protocol tree is included
-                // this can be removed once all clients send
-                // protocol tree by default
-                const summary = contents as ISummaryContent;
-                if(summary.details === undefined) {
-                    summary.details = {};
+                if(this.options.summarizeProtocolTree) {
+                    // todo this is only needed for staging so the server
+                    // know when the protocol tree is included
+                    // this can be removed once all clients send
+                    // protocol tree by default
+                    const summary = contents as ISummaryContent;
+                    if(summary.details === undefined) {
+                        summary.details = {};
+                    }
+                    summary.details.includesProtocolTree = true;
                 }
-                summary.details.includesProtocolTree = true;
                 break;
             }
             default:
