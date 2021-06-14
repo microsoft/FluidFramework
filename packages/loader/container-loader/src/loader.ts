@@ -121,26 +121,25 @@ function createCachedResolver(resolver: IUrlResolver) {
 }
 
 /**
- * Encapsulates a module entry point with its corresponding code details.
+ * Encapsulates a module entry point with corresponding code details.
  */
  export interface IFluidModuleWithDetails {
     /** Code module to load. */
     module: IFluidModule;
-    /** Code details associated with the module. */
-    details: IFluidCodeDetails;
+    /** Optional. Code details associated with the module. */
+    details?: IFluidCodeDetails;
 }
 
 /**
  * Fluid code loader resolves a code module matching the requested code details in the container, such as
  * a package name and package version range.
  */
-export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+export interface ICodeDetailsLoader
+    extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
      * Loads the package specified by code details and returns a promise to its entry point exports.
      */
-    load(
-        source: IFluidCodeDetails
-    ): Promise<IFluidModule | IFluidModuleWithDetails>;
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -163,7 +162,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -209,7 +208,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers

@@ -6,7 +6,10 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IFluidObject } from "@fluidframework/core-interfaces";
+import {
+    IFluidCodeDetails,
+    IFluidObject,
+} from "@fluidframework/core-interfaces";
 import {
     IDocumentAttributes,
     IQuorum,
@@ -46,7 +49,9 @@ describe("ContainerContext Tests", () => {
         subLogger = DebugLogger.create("fluid:test");
     })();
 
-    const createTestContext = async (codeLoader: unknown /* ICodeDetailsLoader */) => {
+    const createTestContext = async (
+        codeLoader: unknown, /* ICodeDetailsLoader */
+    ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
             (sandbox.stub() as unknown) as IFluidObject,
@@ -74,10 +79,13 @@ describe("ContainerContext Tests", () => {
         sandbox.restore();
     });
 
-    it("Should load code without details", async () => {
+    it("Should load code using legacy loader", async () => {
         // Arrange
+        const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+
         const simpleCodeLoader = { load: async () => {} };
         const mockCodeLoader = sandbox.mock(simpleCodeLoader);
+        // emulate legacy ICodeLoader
         mockCodeLoader
             .expects("load")
             .once()
@@ -90,7 +98,6 @@ describe("ContainerContext Tests", () => {
         strict.ok(testContext);
         strict.ok((testContext as any).runtime);
 
-        const proposedCodeDetails = codeDetailsForVersion("2.0.0");
         const satisfies = await testContext.satisfies(proposedCodeDetails);
         strict.equal(
             satisfies,
@@ -100,15 +107,59 @@ describe("ContainerContext Tests", () => {
         mockCodeLoader.verify();
     });
 
-    it("Should load code with details", async () => {
+    it("Should load code without details", async () => {
         // Arrange
-        const moduleCodeDetails = codeDetailsForVersion("3.0.0");
+        const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+
         const codeDetailsLoader = {
             load: async () => {},
             get IFluidCodeDetailsComparer() {
                 return this;
             },
-            satisfies: async (candidate: IFluidCodeDetails, constraint: IFluidCodeDetails) => {},
+            satisfies: async (
+                candidate: IFluidCodeDetails,
+                constraint: IFluidCodeDetails,
+            ) => {},
+        };
+        const mockCodeLoader = sandbox.mock(codeDetailsLoader);
+        mockCodeLoader
+            .expects("load")
+            .once()
+            .resolves({
+                module: { fluidExport: mockRuntimeFactory },
+            });
+        mockCodeLoader
+            .expects("satisfies")
+            .once()
+            .withExactArgs(quorumCodeDetails, proposedCodeDetails)
+            .resolves(true);
+
+        // Act
+        const testContext = await createTestContext(codeDetailsLoader);
+
+        // Assert
+        strict.ok(testContext);
+        strict.ok((testContext as any).runtime);
+
+        const satisfies = await testContext.satisfies(proposedCodeDetails);
+        strict.ok(satisfies);
+        mockCodeLoader.verify();
+    });
+
+    it("Should load code with details", async () => {
+        // Arrange
+        const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+        const moduleCodeDetails = codeDetailsForVersion("3.0.0");
+
+        const codeDetailsLoader = {
+            load: async () => {},
+            get IFluidCodeDetailsComparer() {
+                return this;
+            },
+            satisfies: async (
+                candidate: IFluidCodeDetails,
+                constraint: IFluidCodeDetails,
+            ) => {},
         };
         const mockCodeLoader = sandbox.mock(codeDetailsLoader);
         mockCodeLoader
@@ -118,12 +169,6 @@ describe("ContainerContext Tests", () => {
                 module: { fluidExport: mockRuntimeFactory },
                 details: moduleCodeDetails,
             });
-
-        const testContext = await createTestContext(codeDetailsLoader);
-        strict.ok(testContext);
-        strict.ok((testContext as any).runtime);
-
-        const proposedCodeDetails = codeDetailsForVersion("2.0.0");
         mockCodeLoader
             .expects("satisfies")
             .once()
@@ -131,9 +176,13 @@ describe("ContainerContext Tests", () => {
             .resolves(true);
 
         // Act
-        const satisfies = await testContext.satisfies(proposedCodeDetails);
+        const testContext = await createTestContext(codeDetailsLoader);
 
         // Assert
+        strict.ok(testContext);
+        strict.ok((testContext as any).runtime);
+
+        const satisfies = await testContext.satisfies(proposedCodeDetails);
         strict.ok(satisfies);
         mockCodeLoader.verify();
     });

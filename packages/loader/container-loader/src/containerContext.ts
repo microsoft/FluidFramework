@@ -21,8 +21,8 @@ import {
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
-    IFluidModule,
     ILoaderOptions,
+    ICodeLoader,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -50,7 +50,7 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
-        codeLoader: ICodeDetailsLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
@@ -158,21 +158,27 @@ export class ContainerContext implements IContainerContext {
     }
 
     private readonly fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () => {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "CodeLoad" },
             async () => this.codeLoader.load(this.codeDetails),
         );
 
-        const hasDetails = (result: IFluidModuleWithDetails | IFluidModule): result is IFluidModuleWithDetails => {
-            return typeof result === "object" && "details" in result;
-        };
-
-        return hasDetails(loadCodeResult) ? loadCodeResult : { module: loadCodeResult, details: this.codeDetails };
+        if ("module" in loadCodeResult) {
+            const { module, details } = loadCodeResult;
+            return {
+                module,
+                details: details ?? this.codeDetails,
+            };
+        } else {
+            return { module: loadCodeResult, details: this.codeDetails };
+        }
     });
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeDetailsLoader,
+        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         public readonly codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,

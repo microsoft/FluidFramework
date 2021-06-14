@@ -246,7 +246,7 @@ export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot:
 
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
-    load(source: IFluidCodeDetails): Promise<IFluidModule | IFluidModuleWithDetails>;
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 // @public (undocumented)
@@ -288,13 +288,13 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 
 // @public
 export interface IFluidModuleWithDetails {
-    details: IFluidCodeDetails;
+    details?: IFluidCodeDetails;
     module: IFluidModule;
 }
 
 // @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeDetailsLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -305,7 +305,7 @@ export interface ILoaderProps {
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeDetailsLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
