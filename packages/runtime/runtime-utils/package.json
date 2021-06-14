@@ -57,11 +57,11 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.31.0-0",
+    "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/datastore-definitions": "^0.42.0",
     "@fluidframework/garbage-collector": "^0.42.0",
-    "@fluidframework/protocol-base": "^0.1026.0-0",
+    "@fluidframework/protocol-base": "^0.1026.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/runtime-definitions": "^0.42.0",
     "assert": "^2.0.0"
