@@ -157,7 +157,7 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(async () => {
+    private readonly fluidModuleP = new LazyPromise<Required<IFluidModuleWithDetails>>(async () => {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "CodeLoad" },
@@ -291,7 +291,7 @@ export class ContainerContext implements IContainerContext {
 
         for (const comparer of comparers) {
             const satisfies = await comparer.satisfies(
-                moduleWithDetails.details ?? this.codeDetails,
+                moduleWithDetails.details,
                 constraintCodeDetails,
             );
             if (satisfies === false) {
