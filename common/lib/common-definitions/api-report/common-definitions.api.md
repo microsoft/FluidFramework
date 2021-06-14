@@ -5,6 +5,16 @@
 ```ts
 
 // @public
+export namespace Compat {
+    export interface ITelemetryBaseLogger {
+        // (undocumented)
+        send(event: ITelemetryBaseEvent): void;
+        // (undocumented)
+        supportsTags?: true;
+    }
+}
+
+// @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @public (undocumented)
@@ -220,7 +230,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
-    supportsTags?: true;
+    supportsTags: true;
 }
 
 // @public

@@ -17,6 +17,8 @@ import {
  * It can be used in places where logger instance is required, but events should be not send over.
  */
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+    public supportsTags: true = true;
+
     /**
      * Send an event with the logger
      *
@@ -32,6 +34,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * It can be used in places where logger instance is required, but events should be not send over.
  */
 export class TelemetryNullLogger implements ITelemetryLogger {
+    public supportsTags: true = true;
+
     public send(event: ITelemetryBaseEvent): void {
     }
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {

@@ -10,6 +10,7 @@ import { pkgName } from "./packageVersion";
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
+    public supportsTags: true = true;
     send(event: ITelemetryBaseEvent) {
         if (this.testName !== undefined) {
             event.testName = this.testName;
@@ -27,6 +28,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         private testName?: string) {}
 }
 const nullLogger: ITelemetryBufferedLogger = {
+    supportsTags: true,
     send: () => {},
     flush: async () => {},
 };
