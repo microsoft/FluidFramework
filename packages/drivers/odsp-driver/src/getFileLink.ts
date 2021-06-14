@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PromiseCache } from "@fluidframework/common-utils";
+import { delay, PromiseCache } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -16,13 +16,6 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
-
-/**
- * returns a promise that resolves after timeMs
- */
-async function delay(timeMs: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
-}
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new PromiseCache<string, string | undefined>();

@@ -10,11 +10,12 @@
 const ValueProperty = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 const _ = require('lodash');
-const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const {
+  ConsoleUtils,
+  constants: { MSG },
+  Datastructures: { Uint64, Int64 }
+} = require('@fluid-experimental/property-common');
 
 /**
  * A primitive property for an signed 8 bit integer value.
@@ -216,7 +217,7 @@ Integer64Property.prototype._applyChangeset = function(in_changeSet, in_reportTo
  * @private
  */
 Integer64Property.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
-                                                   in_dirtinessType, in_includeReferencedRepositories) {
+  in_dirtinessType, in_includeReferencedRepositories) {
   if (in_dirtyOnly) {
     if (this._isDirty(in_dirtinessType)) {
       return [this._data.getValueLow(), this._data.getValueHigh()];
@@ -238,27 +239,7 @@ var BIT32 = 4294967296;
  * @return {string} A string representing the specified Integer64 object.
  */
 Integer64Property.prototype.toString = function(in_radix) {
-  var radix = in_radix || 10;
-  ConsoleUtils.assert(_.isNumber(radix), MSG.IN_RADIX_MUST_BE_NUMBER + in_radix);
-  if (radix < 2 || 36 < radix) {
-    throw new Error(MSG.BASE_OUT_OF_RANGE + radix);
-  }
-  var high = this.getValueHigh();
-  var low = this.getValueLow();
-  var result = '';
-  var sign = !(this._data instanceof Uint64) && (high & 0x80000000);
-  if (sign) {
-    high = ~high;
-    low = BIT32 - low;
-  }
-  do {
-    var mod = (high % radix) * BIT32 + low;
-    high = Math.floor(high / radix);
-    low = Math.floor(mod / radix);
-    result = (mod % radix).toString(radix) + result;
-  } while (high || low);
-
-  return sign ? '-' + result : result;
+  return this._data.toString(in_radix);
 };
 
 /**

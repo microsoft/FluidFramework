@@ -4,6 +4,8 @@
  */
 
 import {
+    ILoggingError,
+    ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryErrorEvent,
@@ -97,11 +99,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         event[key] = "REDACTED (UserData)";
                         break;
                     default:
-                        // This will help us keep this switch statement up to date
-                        (function(_: never) {})(tag);
-
                         // If we encounter a tag we don't recognize
-                        // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
                         event[key] = "REDACTED (unknown tag)";
                         break;
@@ -480,8 +478,6 @@ export class PerformanceEvent {
     }
 }
 
-// Note - these Telemetry types should move to common-definitions package
-
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
@@ -494,41 +490,19 @@ export enum TelemetryDataTag {
 }
 
 /**
- * A property to be logged to telemetry containing both the value and the tag
- */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: TelemetryDataTag
-}
-
-/**
- * Property bag containing a mix of value literals and wrapped values along with a tag
- */
-export interface ITaggableTelemetryProperties {
-    [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-}
-
-/**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
-/**
- * An error object that supports exporting its properties to be logged to telemetry
- */
-export interface ILoggingError extends Error {
-    /** Return all properties from this object that should be logged to telemetry */
-    getTelemetryProperties(): ITaggableTelemetryProperties;
-}
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
-    const props: ITaggableTelemetryProperties = {};
+function getValidTelemetryProps(obj: any): ITelemetryProperties {
+    const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
         const val = obj[key];
         switch (typeof val) {
@@ -555,7 +529,7 @@ function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
 /**
  * Helper class for error tracking that can be used to log an error in telemetry.
  * The props passed in (and any set directly on the object after the fact) will be
- * logged in accordance with the given TelemetryDataTag, if present.
+ * logged in accordance with the given tag, if present.
  *
  * PLEASE take care to properly tag properties set on this object
  */
@@ -572,7 +546,7 @@ export class LoggingError extends Error implements ILoggingError {
 
     constructor(
         message: string,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(message);
         if (props) {
@@ -583,14 +557,14 @@ export class LoggingError extends Error implements ILoggingError {
     /**
      * Add additional properties to be logged
      */
-    public addTelemetryProperties(props: ITaggableTelemetryProperties) {
+    public addTelemetryProperties(props: ITelemetryProperties) {
         Object.assign(this, props);
     }
 
     /**
      * Get all properties fit to be logged to telemetry for this error
      */
-    public getTelemetryProperties(): ITaggableTelemetryProperties {
+    public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this);
         // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
         // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
