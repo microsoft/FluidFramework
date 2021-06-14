@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, Compat } from "@fluidframework/common-definitions";
-type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
 
@@ -12,6 +11,7 @@ describe("ChildLogger", () => {
     it("Properties & Getters Propagate",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.testProperty !== true || event.testGetter !== true) {
                     throw new Error("expected testProperty and testGetter on event");
@@ -45,6 +45,7 @@ describe("ChildLogger", () => {
     it("Undefined initial Properties and Getter",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.testProperty !== true || event.testGetter !== true) {
                     throw new Error("expected testProperty and testGetter on event");
@@ -79,6 +80,7 @@ describe("ChildLogger", () => {
     it("Properties Are Combined",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.testProperty1 !== true || event.testProperty2 !== true) {
                     throw new Error("expected testProperty1 and testProperty2 on event");
@@ -117,6 +119,7 @@ describe("ChildLogger", () => {
     it("Getters Are Combined",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.testGetter1 !== true || event.testGetter2 !== true) {
                     throw new Error("expected testGetter1 and testGetter2 on event");
@@ -156,6 +159,7 @@ describe("ChildLogger", () => {
     it("Undefined initial namespace",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.eventName !== "test2:testEvent") {
                     throw new Error("expected combined namespace");
@@ -178,6 +182,7 @@ describe("ChildLogger", () => {
     it("Undefined second child namespace",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.eventName !== "test1:testEvent") {
                     throw new Error("expected combined namespace");
@@ -200,6 +205,7 @@ describe("ChildLogger", () => {
     it("Undefined namespace",()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
+            supportsTags: true,
             send(event: ITelemetryBaseEvent): void {
                 if (event.eventName !== "testEvent") {
                     throw new Error("expected combined namespace");

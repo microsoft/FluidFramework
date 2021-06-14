@@ -15,7 +15,6 @@ import {
     TelemetryEventPropertyType,
     Compat,
 } from "@fluidframework/common-definitions";
-type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryLoggerPropertyBag {
@@ -246,7 +245,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
-        baseLogger?: ITelemetryBaseLogger,
+        baseLogger?: Compat.ITelemetryBaseLogger,
         namespace?: string,
         properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
@@ -290,7 +289,7 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     private constructor(
-        protected readonly baseLogger: ITelemetryBaseLogger,
+        protected readonly baseLogger: Compat.ITelemetryBaseLogger,
         namespace?: string,
         properties?: ITelemetryLoggerPropertyBags) {
         super(namespace, properties);
@@ -312,7 +311,7 @@ export class ChildLogger extends TelemetryLogger {
  * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
-    protected loggers: ITelemetryBaseLogger[] = [];
+    protected loggers: Compat.ITelemetryBaseLogger[] = [];
 
     /**
      * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
@@ -330,7 +329,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      * Add logger to send all events to
      * @param logger - Logger to add
      */
-    public addLogger(logger?: ITelemetryBaseLogger) {
+    public addLogger(logger?: Compat.ITelemetryBaseLogger) {
         if (logger !== undefined && logger !== null) {
             this.loggers.push(logger);
         }
@@ -343,7 +342,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
-        this.loggers.forEach((logger: ITelemetryBaseLogger) => {
+        this.loggers.forEach((logger: Compat.ITelemetryBaseLogger) => {
             logger.send(newEvent);
         });
     }

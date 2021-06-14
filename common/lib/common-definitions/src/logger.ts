@@ -120,8 +120,11 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
  */
  export namespace Compat {
     /**
-     * Breaking changes accounted for:
-     * - 0.21 - supportsTags is now required v. optional in 0.20
+     * Interface to output telemetry events.
+     * Implemented by hosting app / loader
+     *
+     * Old versions accounted for:
+     * - supportsTags was optional in 0.20
      */
     // eslint-disable-next-line @typescript-eslint/no-shadow
     export interface ITelemetryBaseLogger {

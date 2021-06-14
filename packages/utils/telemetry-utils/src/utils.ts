@@ -7,7 +7,6 @@ import {
     ITelemetryGenericEvent,
     Compat,
 } from "@fluidframework/common-definitions";
-type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing
@@ -18,7 +17,7 @@ type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
  */
 export function logIfFalse(
     condition: any,
-    logger: ITelemetryBaseLogger,
+    logger: Compat.ITelemetryBaseLogger,
     event: string | ITelemetryGenericEvent,
 ): condition is true {
     if(condition) {

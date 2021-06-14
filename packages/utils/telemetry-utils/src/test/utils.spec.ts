@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent, Compat } from "@fluidframework/common-definitions";
-type ITelemetryBaseLogger = Compat.ITelemetryBaseLogger;
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {logIfFalse} from "../utils";
 
 class TestLogger implements ITelemetryBaseLogger {
+    public supportsTags: true = true;
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
     }
