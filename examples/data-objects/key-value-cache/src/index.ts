@@ -153,7 +153,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         return runtime;
     }
 
-    private async loadRuntime(context: any) {
+    private async loadRuntime(context: IStatelessContainerContext) {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[this.type, Promise.resolve(this)]]),

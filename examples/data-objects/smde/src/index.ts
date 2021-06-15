@@ -59,7 +59,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    private async loadRuntime(context: any) {
+    private async loadRuntime(context: IStatelessContainerContext) {
         const runtime = await ContainerRuntime.load(
             context,
             this.registry,

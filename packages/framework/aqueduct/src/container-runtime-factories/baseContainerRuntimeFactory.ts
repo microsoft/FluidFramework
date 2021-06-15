@@ -108,7 +108,7 @@ export class BaseContainerRuntimeFactory implements
         return runtime;
     }
 
-    private async loadRuntime(context: any) {
+    private async loadRuntime(context: IStatelessContainerContext) {
         const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
