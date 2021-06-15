@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
-    IStatelessContainerContext,
+    IContainerContext,
 } from "@fluidframework/container-runtime-definitions";
 import {
     RuntimeRequestHandler,
@@ -93,22 +93,22 @@ export class BaseContainerRuntimeFactory implements
         return runtime;
     }
 
-    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async initializeFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
         await this.containerInitializingFirstTime(runtime);
         await this.containerHasInitialized(runtime);
 
         return runtime;
     }
 
-    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async initializeFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
         await this.containerHasInitialized(runtime);
 
         return runtime;
     }
 
-    private async loadRuntime(context: IStatelessContainerContext) {
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
         const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
@@ -120,9 +120,10 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime.loadStateful(
             context,
             this.registryEntries,
+            existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 rootDataStoreRequestHandler),

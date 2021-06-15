@@ -7,7 +7,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
@@ -65,21 +64,22 @@ export class RuntimeFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
         await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
         return runtime;
     }
 
-    public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
         return runtime;
     }
 
-    private async loadRuntime(context: IStatelessContainerContext) {
-        const runtime = await ContainerRuntime.load(
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
+        const runtime = await ContainerRuntime.loadStateful(
             context,
             this.registry,
+            existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 rootDataStoreRequestHandler),

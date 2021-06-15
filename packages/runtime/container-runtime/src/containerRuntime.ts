@@ -534,14 +534,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Load the stores from a snapshot and returns the runtime.
+     *
      * @param context - Context of the container.
      * @param registry - Mapping to the stores.
      * @param requestHandlers - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
-    public static async load(
+    public static async loadStateful(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
+        existing: boolean | undefined,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
@@ -613,13 +615,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             combinedRuntimeOptions,
             containerScope,
             logger,
+            existing,
             requestHandler,
             storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
-            if (!context.existing) {
+            if (!existing) {
                 await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
             }
         }
@@ -627,13 +630,41 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return runtime;
     }
 
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     *
+     * @deprecated Please use {@link loadStateful}
+     *
+     * @param context - Context of the container.
+     * @param registry - Mapping to the stores.
+     * @param requestHandlers - Request handlers for the container runtime
+     * @param runtimeOptions - Additional options to be passed to the runtime
+     */
+    public static async load(
+        context: IContainerContext,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        runtimeOptions?: IContainerRuntimeOptions,
+        containerScope: IFluidObject = context.scope,
+    ): Promise<ContainerRuntime> {
+        return this.loadStateful(
+            context,
+            registryEntries,
+            context.existing,
+            requestHandler,
+            runtimeOptions,
+            containerScope);
+    }
+
     public get id(): string {
         return this.context.id;
     }
 
+    /**
+     * @deprecated
+     */
     public get existing(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.existing!;
+        return this.existing;
     }
 
     public get options(): ILoaderOptions {
@@ -779,6 +810,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
+        private readonly existing: boolean | undefined,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -788,7 +820,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCFeature = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
@@ -1352,7 +1384,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
         const registryPath =
             `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
+        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, this.existing());
     }
 
     public setFlushMode(mode: FlushMode): void {

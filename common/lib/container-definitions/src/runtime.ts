@@ -106,6 +106,9 @@ export interface IRuntime extends IDisposable {
  */
 export interface IContainerContext extends IDisposable {
     readonly id: string;
+    /**
+     * @deprecated
+     */
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly configuration: IFluidConfiguration;
@@ -150,8 +153,6 @@ export interface IContainerContext extends IDisposable {
     updateDirtyContainerState(dirty: boolean): void;
 }
 
-export type IStatelessContainerContext = Omit<IContainerContext, "existing">;
-
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
@@ -173,6 +174,6 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 
-    instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
-    instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFirstTime(context: IContainerContext): Promise<IRuntime>;
+    instantiateFromExisting(context: IContainerContext): Promise<IRuntime>;
 }

@@ -1807,13 +1807,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async instantiateContext(
         codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
-        contextFactory: (
-            codeDetails: IFluidCodeDetails,
-            snapshot: ISnapshotTree | undefined,
-            attributes: IDocumentAttributes,
-            loader: RelativeLoader,
-            localState: unknown
-        ) => Promise<ContainerContext>,
+        existing: boolean,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
@@ -1823,13 +1817,29 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
-        this._context = await contextFactory(
+        this._context = await ContainerContext.createOrLoad(
+            this,
+            this.scope,
+            this.codeLoader,
             codeDetails,
             snapshot,
             attributes,
-            // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-            // are set. Global requests will still go directly to the loader
+            new DeltaManagerProxy(this._deltaManager),
+            new QuorumProxy(this.protocolHandler.quorum),
+            // The relative loader will proxy requests to '/' to the loader itself
+            // assuming no non-cache flags are set.
+            // Global requests will still go directly to the loader
             new RelativeLoader(this, this.loader),
+            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
+            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+            (message) => this.submitSignal(message),
+            (error?: ICriticalContainerError) => this.close(error),
+            Container.version,
+            (dirty: boolean) => {
+                this._dirtyContainer = dirty;
+                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+            },
+            existing,
             pendingLocalState,
         );
 
@@ -1848,33 +1858,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         await this.instantiateContext(
             codeDetails,
             attributes,
-            async (
-                fluidCodeDetails: IFluidCodeDetails,
-                snapshotTree: ISnapshotTree | undefined,
-                documentAttributes: IDocumentAttributes,
-                relativeLoader: RelativeLoader,
-                localState: unknown,
-            ) => ContainerContext.instantiateFromExisting(
-                this,
-                this.scope,
-                this.codeLoader,
-                fluidCodeDetails,
-                snapshotTree,
-                documentAttributes,
-                new DeltaManagerProxy(this._deltaManager),
-                new QuorumProxy(this.protocolHandler.quorum),
-                relativeLoader,
-                (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-                (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
-                (message) => this.submitSignal(message),
-                (error?: ICriticalContainerError) => this.close(error),
-                Container.version,
-                (dirty: boolean) => {
-                    this._dirtyContainer = dirty;
-                    this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-                },
-                localState,
-            ),
+            true,
             snapshot,
             pendingLocalState,
         );
@@ -1892,33 +1876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         await this.instantiateContext(
             codeDetails,
             attributes,
-            async (
-                fluidCodeDetails: IFluidCodeDetails,
-                snapshotTree: ISnapshotTree | undefined,
-                documentAttributes: IDocumentAttributes,
-                relativeLoader: RelativeLoader,
-                localState: unknown,
-            ) => ContainerContext.instantiateFirstTime(
-                this,
-                this.scope,
-                this.codeLoader,
-                fluidCodeDetails,
-                snapshotTree,
-                documentAttributes,
-                new DeltaManagerProxy(this._deltaManager),
-                new QuorumProxy(this.protocolHandler.quorum),
-                relativeLoader,
-                (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-                (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
-                (message) => this.submitSignal(message),
-                (error?: ICriticalContainerError) => this.close(error),
-                Container.version,
-                (dirty: boolean) => {
-                    this._dirtyContainer = dirty;
-                    this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-                },
-                localState,
-            ),
+            false,
             snapshot,
         );
     }

@@ -159,6 +159,8 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    readonly loader: ILoader;
+    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -447,9 +449,9 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     // (undocumented)
-    initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
     // (undocumented)
-    initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
     // @deprecated
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }

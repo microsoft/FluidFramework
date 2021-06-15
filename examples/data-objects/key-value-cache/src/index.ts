@@ -14,7 +14,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -142,21 +141,22 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         return runtime;
     }
 
-    public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
         await runtime.createRootDataStore(this.type, this.defaultComponentId);
         return runtime;
     }
 
-    public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
         return runtime;
     }
 
-    private async loadRuntime(context: IStatelessContainerContext) {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
+        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
             context,
             new Map([[this.type, Promise.resolve(this)]]),
+            existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
                 rootDataStoreRequestHandler,

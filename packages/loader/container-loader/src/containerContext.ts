@@ -48,9 +48,6 @@ import { Container } from "./container";
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class ContainerContext implements IContainerContext {
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
@@ -67,6 +64,7 @@ export class ContainerContext implements IContainerContext {
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         updateDirtyContainerState: (dirty: boolean) => void,
+        existing: boolean,
         pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
@@ -85,86 +83,9 @@ export class ContainerContext implements IContainerContext {
             closeFn,
             version,
             updateDirtyContainerState,
+            existing,
             pendingLocalState);
-        await context.load();
-        return context;
-    }
-
-    public static async instantiateFirstTime(
-        container: Container,
-        scope: IFluidObject,
-        codeLoader: ICodeLoader,
-        codeDetails: IFluidCodeDetails,
-        baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
-        loader: ILoader,
-        raiseContainerWarning: (warning: ContainerWarning) => void,
-        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-        submitSignalFn: (contents: any) => void,
-        closeFn: (error?: ICriticalContainerError) => void,
-        version: string,
-        updateDirtyContainerState: (dirty: boolean) => void,
-        pendingLocalState?: unknown,
-    ): Promise<ContainerContext> {
-        const context = new ContainerContext(
-            container,
-            scope,
-            codeLoader,
-            codeDetails,
-            baseSnapshot,
-            attributes,
-            deltaManager,
-            quorum,
-            loader,
-            raiseContainerWarning,
-            submitFn,
-            submitSignalFn,
-            closeFn,
-            version,
-            updateDirtyContainerState,
-            pendingLocalState);
-        await context.initializeFirstTime();
-        return context;
-    }
-
-    public static async instantiateFromExisting(
-        container: Container,
-        scope: IFluidObject,
-        codeLoader: ICodeLoader,
-        codeDetails: IFluidCodeDetails,
-        baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
-        loader: ILoader,
-        raiseContainerWarning: (warning: ContainerWarning) => void,
-        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-        submitSignalFn: (contents: any) => void,
-        closeFn: (error?: ICriticalContainerError) => void,
-        version: string,
-        updateDirtyContainerState: (dirty: boolean) => void,
-        pendingLocalState?: unknown,
-    ): Promise<ContainerContext> {
-        const context = new ContainerContext(
-            container,
-            scope,
-            codeLoader,
-            codeDetails,
-            baseSnapshot,
-            attributes,
-            deltaManager,
-            quorum,
-            loader,
-            raiseContainerWarning,
-            submitFn,
-            submitSignalFn,
-            closeFn,
-            version,
-            updateDirtyContainerState,
-            pendingLocalState);
-        await context.initializeFromExisting();
+        await (existing ? context.initializeFromExisting() : context.initializeFirstTime());
         return context;
     }
 
@@ -182,8 +103,11 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
+    /**
+     * @deprecated
+     */
     public get existing(): boolean | undefined {
-        return this.container.existing;
+        return this.existing;
     }
 
     public get branch(): string {
@@ -263,6 +187,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
+        private readonly existing: boolean,
         public readonly pendingLocalState?: unknown,
 
     ) {
@@ -369,23 +294,14 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    private async load() {
-        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
-        if (maybeFactory === undefined) {
-            throw new Error(PackageNotFactoryError);
-        }
-
-        this._runtime = await maybeFactory.instantiateRuntime(this);
-    }
-
     private async initializeFromExisting() {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.initializeFromExisting(this);
+        this._runtime = await runtimeFactory.instantiateFirstTime(this);
     }
 
     private async initializeFirstTime() {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.initializeFirstTime(this);
+        this._runtime = await runtimeFactory.instantiateFirstTime(this);
     }
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {

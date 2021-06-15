@@ -7,7 +7,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
@@ -49,25 +48,26 @@ class ProseMirrorFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
         return runtime;
     }
 
-    public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context);
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
         return runtime;
     }
 
-    private async loadRuntime(context: IStatelessContainerContext) {
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);
 
-        const runtime = await ContainerRuntime.load(
+        const runtime = await ContainerRuntime.loadStateful(
             context,
             registry,
+            existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 rootDataStoreRequestHandler,
@@ -86,7 +86,7 @@ export const instantiateRuntime =
     (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateRuntime(context);
 export const instantiateFirstTime =
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.instantiateFirstTime(context);
+    (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateFirstTime(context);
 export const instantiateFromExisting =
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.instantiateFromExisting(context);
+    (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateFromExisting(context);

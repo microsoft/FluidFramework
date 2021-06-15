@@ -8,7 +8,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -66,8 +65,8 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
-            const runtime = await this.loadRuntime(context);
+        public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+            const runtime = await this.loadRuntime(context, false);
             await runtime.createRootDataStore(this.type, "default");
 
             // Test detached creation
@@ -77,8 +76,8 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
-            const runtime = await this.loadRuntime(context);
+        public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+            const runtime = await this.loadRuntime(context, true);
 
             // Validate we can load root data stores.
             // We should be able to load any data store that was created in initializeFirstTime!
@@ -87,18 +86,19 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        async loadRuntime(context: IStatelessContainerContext) {
+        async loadRuntime(context: IContainerContext, existing: boolean) {
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
                 defaultRouteRequestHandler("default"),
                 rootDataStoreRequestHandler);
 
-            const runtime = await containerRuntimeCtor.load(
+            const runtime = await containerRuntimeCtor.loadStateful(
                 context,
                 [
                     ["default", Promise.resolve(this.dataStoreFactory)],
                     [this.type, Promise.resolve(this.dataStoreFactory)],
                 ],
+                existing,
                 async (req, rt) => builder.handleRequest(req, rt),
                 this.runtimeOptions,
             );
