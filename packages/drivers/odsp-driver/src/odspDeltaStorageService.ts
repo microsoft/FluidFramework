@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
@@ -32,6 +32,7 @@ export class OdspDeltaStorageService {
     public async get(
         from: number,
         to: number,
+        telemetryProps: ITelemetryProperties,
     ): Promise<IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
@@ -68,7 +69,7 @@ export class OdspDeltaStorageService {
             }
 
             this.logger.sendPerformanceEvent({
-                eventName: "DeltaStorageOpsFetch",
+                eventName: "OpsFetch",
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 count: messages.length,
                 duration: response.duration, // this duration for single attempt!
@@ -76,6 +77,7 @@ export class OdspDeltaStorageService {
                 attempts: options.refresh ? 2 : 1,
                 from,
                 to,
+                ...telemetryProps,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
@@ -99,7 +101,10 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         private readonly logger: ITelemetryLogger,
         private readonly batchSize: number,
         private readonly concurrency: number,
-        private readonly getFromStorage: (from: number, to: number) => Promise<IDeltasFetchResult>,
+        private readonly getFromStorage: (
+            from: number,
+            to: number,
+            telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
         private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
     ) {
@@ -122,7 +127,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         let opsFromStorage = 0;
 
         const stream = requestOps(
-            async (from: number, to: number) => {
+            async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
                 if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
                     const messages = this.snapshotOps.filter((op) =>
                         op.sequenceNumber >= from && op.sequenceNumber < to);
@@ -152,7 +157,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                     return { messages: [], partialResult: false };
                 }
 
-                const ops = await this.getFromStorage(from, to);
+                const ops = await this.getFromStorage(from, to, telemetryProps);
                 opsFromStorage += ops.messages.length;
                 this.opsReceived(ops.messages);
                 return ops;

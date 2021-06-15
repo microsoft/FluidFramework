@@ -1,7 +1,50 @@
+## 0.42 Breaking changes
+
+- [Package renames](#0.42-package-renames)
+
+### 0.42 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+## 0.41 Breaking changes
+
+- [Package renames](#0.41-package-renames)
+- [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
+- [Leadership API surface removed](#Leadership-API-surface-removed)
+- [IContainerContext and Container storage API return type changed](#IContainerContext-and-Container-storage-API-return-type-changed)
+
+### 0.41 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### LoaderHeader.version could not be null
+`LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
+
+### Leadership API surface removed
+In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned off by default.  In 0.41 it has now been removed.  If you still require leadership functionality, you can use a `TaskSubscription` in combination with an `AgentScheduler`.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on how to use `TaskSubscription` to migrate away from leadership election.
+
+### IContainerContext and Container storage API return type changed
+IContainerContext and Container now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
+
 ## 0.40 Breaking changes
 
 - [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
 - [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
+- [IContainerRuntimeDirtyable removed](#IContainerRuntimeDirtyable-removed)
+- [Most RouterliciousDocumentServiceFactory params removed](#Most-RouterliciousDocumentServiceFactory-params-removed)
 
 ### AgentScheduler removed by default
 In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
@@ -10,6 +53,13 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
+
+### IContainerRuntimeDirtyable removed
+The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
+
+### Most RouterliciousDocumentServiceFactory params removed
+
+The `RouterliciousDocumentServiceFactory` constructor no longer accepts the following params: `useDocumentService2`, `disableCache`, `historianApi`, `gitCache`, and `credentials`. Please open an issue if these flags/params were important to your project so that they can be re-incorporated into the upcoming `IRouterliciousDriverPolicies` param.
 
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)

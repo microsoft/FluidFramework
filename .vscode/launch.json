@@ -33,33 +33,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Matrix Tests",
-            "cwd": "${workspaceFolder}/packages/dds/matrix",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "ts-node/register",
-                "-r",
-                "source-map-support/register",
-                "--no-timeouts",
-                // "test/**/matrix.spec.ts",
-                "test/**/matrix.undo.spec.ts",
-                // "test/**/matrix.stress.spec.ts",
-                // "test/**/sparsearray2d.spec.ts",
-                // "-f",
-                // "fail",
-                "--exit"
-            ],
-            "env": {
-                "TS_NODE_PROJECT": "tsconfig.json",
-            },
-            // "skipFiles": ["<node_internals>/**"],
-            "console": "integratedTerminal",
-            "smartStep": true,
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Mocha Tests",
             "cwd": "${workspaceFolder}/",
             "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
@@ -260,7 +233,8 @@
             "request": "launch",
             "name": "Debug Current Mocha Test",
             "env": {
-                // "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp
+                // "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
+                // "FLUID_TEST_VERBOSE": "1"
             },
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
             "windows": {
@@ -269,6 +243,10 @@
             "program": "${file}",
             "stopOnEntry": false,
             "args": [
+                "--require",
+                "source-map-support/register",
+                // "--fgrep",               // Uncomment to filter by test case name
+                // "<test case name>",
                 "--no-timeouts",
                 "--exit",
             ],

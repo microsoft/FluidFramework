@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -59,10 +59,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    (event: "leader" | "notleader", listener: () => void);
 }
 
 /**
@@ -73,7 +69,7 @@ export interface IContainerRuntimeBase extends
     IEventProvider<IContainerRuntimeBaseEvents>,
     IProvideFluidHandleContext {
 
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
 
     /**
@@ -217,7 +213,7 @@ export interface IFluidDataStoreChannel extends
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    resubmit(type: string, content: any, localOpMetadata: unknown);
+    reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
 }
@@ -229,10 +225,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    (event: "leader" | "notleader", listener: () => void);
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "attaching" | "attached", listener: () => void);
 }
@@ -267,14 +259,10 @@ export interface IFluidDataStoreContext extends
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
     /**
      * @deprecated 0.37 Containers created using a loader will make automatically it

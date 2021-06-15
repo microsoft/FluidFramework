@@ -17,7 +17,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     IDocumentStorageService,
-    DriverErrorType,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -36,7 +35,7 @@ import {
     IOdspSnapshotBlob,
     IVersionedValueWithEpoch,
 } from "./contracts";
-import { fetchLatestSnapshotCore, fetchSnapshot } from "./fetchSnapshot";
+import { fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
@@ -246,7 +245,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
-        assert(ops !== undefined, 0x0a6 /* "Input ops are undefined!" */);
         this._ops = ops;
     }
 
@@ -475,90 +473,68 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
-            return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                if (tokenFetchOptions.refresh) {
-                    // This is the most critical code path for boot.
-                    // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({
-                        eventName: "TreeLatest_SecondCall",
-                        hasClaims: !!tokenFetchOptions.claims,
-                        hasTenantId: !!tokenFetchOptions.tenantId,
-                    });
-                }
+            const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
+            const odspSnapshotCacheValue: ISnapshotCacheValue = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "ObtainSnapshot" },
+                async (event: PerformanceEvent) => {
+                    let cachedSnapshot: ISnapshotCacheValue | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotCacheValue | undefined> =
+                        this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
-                const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-                let cachedSnapshot: ISnapshotCacheValue | undefined;
-                // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-                if (tokenFetchOptions.refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
-                } else {
-                    cachedSnapshot = await PerformanceEvent.timedExecAsync(
-                        this.logger,
-                        { eventName: "ObtainSnapshot" },
-                        async (event: PerformanceEvent) => {
-                            const cachedSnapshotP: Promise<ISnapshotCacheValue | undefined> =
-                                this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
+                    let method: string;
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const snapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
-                            let method: string;
-                            if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
+                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        cachedSnapshot = promiseRaceWinner.value;
 
-                                const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
-                                cachedSnapshot = promiseRaceWinner.value;
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
+                        else {
+                            snapshotP.catch(() => {});
+                        }
 
-                                if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await snapshotP;
-                                }
+                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
 
-                                method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
-                            } else {
-                                // Note: There's a race condition here - another caller may come past the undefined check
-                                // while the first caller is awaiting later async code in this block.
+                        cachedSnapshot = await cachedSnapshotP;
 
-                                cachedSnapshot = await cachedSnapshotP;
+                        method = cachedSnapshot !== undefined ? "cache" : "network";
 
-                                method = cachedSnapshot !== undefined ? "cache" : "network";
-
-                                if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, undefined, tokenFetchOptions);
-                                }
-                            }
-                            event.end({ method });
-                            return cachedSnapshot;
-                        });
-                }
-
-                // Successful call, redirect future calls to getVersion only!
-                this.firstVersionCall = false;
-
-                const odspSnapshot: IOdspSnapshot = cachedSnapshot.snapshot;
-                this._snapshotSequenceNumber = cachedSnapshot.sequenceNumber;
-
-                const { trees, blobs, ops } = odspSnapshot;
-                // id should be undefined in case of just ops in snapshot.
-                let id: string | undefined;
-                if (trees) {
-                    this.initCommitCache(trees);
-                    // versionId is the id of the first tree
-                    if (trees.length > 0) {
-                        id = trees[0].id;
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
+                        }
                     }
-                }
-                if (blobs) {
-                    this.initBlobsCache(blobs);
-                }
+                    event.end({ method });
+                    return cachedSnapshot;
+                });
 
-                this.ops = ops;
-                return id ? [{ id, treeId: undefined! }] : [];
-            }).catch(async (error) => {
-                const errorType = error.errorType;
-                // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't have
-                // permissions for the file or it was deleted. So the user will again try to fetch from cache on any failure in future.
-                if (errorType === DriverErrorType.authorizationError || errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                    await this.cache.persistedCache.removeEntries();
+            // Successful call, redirect future calls to getVersion only!
+            this.firstVersionCall = false;
+
+            const odspSnapshot: IOdspSnapshot = odspSnapshotCacheValue.snapshot;
+            this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
+
+            const { trees, blobs, ops } = odspSnapshot;
+            // id should be undefined in case of just ops in snapshot.
+            let id: string | undefined;
+            if (trees) {
+                this.initCommitCache(trees);
+                // versionId is the id of the first tree
+                if (trees.length > 0) {
+                    id = trees[0].id;
                 }
-                throw error;
-            });
+            }
+            if (blobs) {
+                this.initBlobsCache(blobs);
+            }
+
+            this.ops = ops;
+            return id ? [{ id, treeId: undefined! }] : [];
         }
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -600,12 +576,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(
-        hostSnapshotOptions: ISnapshotOptions | undefined,
-        driverSnapshotOptions: ISnapshotOptions | undefined,
-        tokenFetchOptions: TokenFetchOptions,
-    ) {
-        const snapshotOptions: ISnapshotOptions = driverSnapshotOptions ?? {
+    private async fetchSnapshot(hostSnapshotOptions: ISnapshotOptions | undefined) {
+        const snapshotOptions: ISnapshotOptions = {
             mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
             timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
@@ -632,15 +604,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 valueWithEpoch.value,
             );
         };
+        const removeEntries = async () => this.cache.persistedCache.removeEntries();
         try {
-            const odspSnapshot = await fetchLatestSnapshotCore(
+            const odspSnapshot = await fetchSnapshotWithRedeem(
                 this.odspResolvedUrl,
                 this.getStorageToken,
-                tokenFetchOptions,
                 snapshotOptions,
                 this.logger,
                 snapshotDownloader,
-                putInCache);
+                putInCache,
+                removeEntries);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -655,14 +628,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     errorType,
                 });
                 const snapshotOptionsWithoutBlobs: ISnapshotOptions = { ...snapshotOptions, blobs: 0, mds: undefined, timeout: undefined };
-                const odspSnapshot = await fetchLatestSnapshotCore(
+                const odspSnapshot = await fetchSnapshotWithRedeem(
                     this.odspResolvedUrl,
                     this.getStorageToken,
-                    tokenFetchOptions,
                     snapshotOptionsWithoutBlobs,
                     this.logger,
                     snapshotDownloader,
-                    putInCache);
+                    putInCache,
+                    removeEntries);
                 return odspSnapshot;
             }
             throw error;

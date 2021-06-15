@@ -98,7 +98,6 @@ export class TestDocumentStorage implements IDocumentStorage {
         await gitManager.createRef(documentId, commit.sha);
 
         const deli: IDeliState = {
-            branchMap: undefined,
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
             logOffset: -1,

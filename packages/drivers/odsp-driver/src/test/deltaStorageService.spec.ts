@@ -86,7 +86,7 @@ describe("DeltaStorageService", () => {
 
         it("Should deserialize the delta feed response correctly", async () => {
             const { messages, partialResult } = await mockFetchOk(
-                async () => deltaStorageService.get(2, 8),
+                async () => deltaStorageService.get(2, 8, {}),
                 expectedDeltaFeedResponse,
             );
             assert(!partialResult, "partialResult === false");
@@ -142,7 +142,7 @@ describe("DeltaStorageService", () => {
 
         it("Should deserialize the delta feed response correctly", async () => {
             const { messages, partialResult } = await mockFetchOk(
-                async () => deltaStorageService.get(2, 8),
+                async () => deltaStorageService.get(2, 8, {}),
                 expectedDeltaFeedResponse,
             );
             assert(!partialResult, "partialResult === false");

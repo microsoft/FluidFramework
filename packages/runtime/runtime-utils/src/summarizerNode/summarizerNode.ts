@@ -21,6 +21,7 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
+import { ReadAndParseBlob, seqFromTree } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -31,8 +32,6 @@ import {
     ISummarizerNodeRootContract,
     parseSummaryForSubtrees,
     parseSummaryTreeForSubtrees,
-    ReadAndParseBlob,
-    seqFromTree,
     SummaryNode,
 } from "./summarizerNodeUtils";
 

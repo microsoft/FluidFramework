@@ -121,18 +121,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.dataStoreContext.connected;
     }
 
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    public get leader(): boolean {
-        // The FluidDataStoreRuntime.leader property and "leader"/"notleader" events are deprecated 0.38
-        console.warn("The FluidDataStoreRuntime.leader property and \"leader\"/\"notleader\" events are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedDataStoreRuntimeLeaderProperty" });
-        return this.dataStoreContext.leader;
-    }
-
     public get clientId(): string | undefined {
         return this.dataStoreContext.clientId;
     }
@@ -857,7 +845,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    public resubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+    public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         switch (type) {
@@ -867,7 +855,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
                     assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
-                    channelContext.resubmit(envelope.contents, localOpMetadata);
+                    channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
             case DataStoreMessageType.Attach:
@@ -911,12 +899,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-        this.dataStoreContext.on("leader", () => {
-            this.emit("leader");
-        });
-        this.dataStoreContext.on("notleader", () => {
-            this.emit("notleader");
-        });
         this.dataStoreContext.once("attaching", () => {
             assert(this.bindState !== BindState.NotBound,
                 0x186 /* "Data store attaching should not occur if it is not bound" */);

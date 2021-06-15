@@ -80,8 +80,15 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     // Locally generated proposals
     private readonly localProposals = new Map<number, Deferred<void>>();
 
+    /**
+     * Cached snapshot state
+     * The quorum consists of 3 properties: members, values, and proposals.
+     * Depending on the op being processed, some or none of those properties may change.
+     * Each property will be cached and the cache for each property will be cleared when an op causes a change.
+     */
+    private readonly snapshotCache: Partial<IQuorumSnapshot> = {};
+
     constructor(
-        private minimumSequenceNumber: number | undefined,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
@@ -111,20 +118,46 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         this.removeAllListeners();
     }
 
+    /**
+     * Snapshots the entire quorum
+     * @returns a quorum snapshot
+     */
     public snapshot(): IQuorumSnapshot {
-        const serializedProposals = Array.from(this.proposals).map(
+        this.snapshotCache.members ??= this.snapshotMembers();
+        this.snapshotCache.proposals ??= this.snapshotProposals();
+        this.snapshotCache.values ??= this.snapshotValues();
+
+        return {
+            ...this.snapshotCache as IQuorumSnapshot,
+        };
+    }
+
+    /**
+     * Snapshots quorum members
+     * @returns a deep cloned array of members
+     */
+    public snapshotMembers(): IQuorumSnapshot["members"] {
+        return cloneDeep(Array.from(this.members));
+    }
+
+    /**
+     * Snapshots quorum proposals
+     * @returns a deep cloned array of proposals
+     */
+    public snapshotProposals(): IQuorumSnapshot["proposals"] {
+        return Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
                 { sequenceNumber, key: proposal.key, value: proposal.value },
                 Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]]);
+    }
 
-        const snapshot = {
-            members: [...this.members],
-            proposals: serializedProposals,
-            values: [...this.values],
-        };
-
-        return cloneDeep(snapshot);
+    /**
+     * Snapshots quorum values
+     * @returns a deep cloned array of values
+     */
+    public snapshotValues(): IQuorumSnapshot["values"] {
+        return cloneDeep(Array.from(this.values));
     }
 
     /**
@@ -160,6 +193,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         assert(!this.members.has(clientId), 0x1ce /* `!this.members.has(${clientId})` */);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
+
+        // clear the members cache
+        this.snapshotCache.members = undefined;
     }
 
     /**
@@ -169,6 +205,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         assert(this.members.has(clientId), 0x1cf /* `this.members.has(${clientId})` */);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
+
+        // clear the members cache
+        this.snapshotCache.members = undefined;
     }
 
     /**
@@ -235,12 +274,15 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         if (local) {
             this.localProposals.delete(clientSequenceNumber);
         }
+
+        // clear the proposal cache
+        this.snapshotCache.proposals = undefined;
     }
 
     /**
      * Rejects the given proposal
      */
-    public rejectProposal(clientId: string, sequenceNumber: number): void {
+    public rejectProposal(clientId: string, sequenceNumber: number) {
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
@@ -251,10 +293,11 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
             proposal.addRejection(clientId);
         }
 
+        // clear the proposal cache
+        this.snapshotCache.proposals = undefined;
+
         // We will emit approval and rejection messages once the MSN advances past the sequence number of the
         // proposal. This will allow us to convey all clients who rejected the proposal.
-
-        return;
     }
 
     /**
@@ -264,22 +307,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * Returns true if immediate no-op is required.
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
-        const value = message.minimumSequenceNumber;
-        if (this.minimumSequenceNumber !== undefined) {
-            if (value < this.minimumSequenceNumber) {
-                this.emit("error", {
-                    currentValue: this.minimumSequenceNumber,
-                    eventName: "QuorumMinSeqNumberError",
-                    newValue: value,
-                });
-            }
-            if (value <= this.minimumSequenceNumber) {
-                return false;
-            }
-        }
-
-        this.minimumSequenceNumber = value;
         let immediateNoOp = false;
+
+        const msn = message.minimumSequenceNumber;
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
 
@@ -287,7 +317,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         // TODO this can be optimized if necessary to avoid the linear search+sort
         const completed: PendingProposal[] = [];
         for (const [sequenceNumber, proposal] of this.proposals) {
-            if (sequenceNumber <= this.minimumSequenceNumber) {
+            if (sequenceNumber <= msn) {
                 completed.push(proposal);
             }
         }
@@ -320,6 +350,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 this.values.set(committedProposal.key, committedProposal);
                 this.pendingCommit.set(committedProposal.key, committedProposal);
 
+                // clear the values cache
+                this.snapshotCache.values = undefined;
+
                 // Send no-op on approval to expedite commit
                 // accept means that all clients have seen the proposal and nobody has rejected it
                 // commit means that all clients have seen that the proposal was accepted by everyone
@@ -341,15 +374,21 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
             }
 
             this.proposals.delete(proposal.sequenceNumber);
+
+            // clear the proposals cache
+            this.snapshotCache.proposals = undefined;
         }
 
         // Move values to the committed stage and notify
         if (this.pendingCommit.size > 0) {
             Array.from(this.pendingCommit.values())
-                .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= value)
+                .filter((pendingCommit) => pendingCommit.approvalSequenceNumber <= msn)
                 .sort((a, b) => a.sequenceNumber - b.sequenceNumber)
                 .forEach((pendingCommit) => {
                     pendingCommit.commitSequenceNumber = message.sequenceNumber;
+
+                    // clear the values cache
+                    this.snapshotCache.values = undefined;
 
                     this.emit(
                         "commitProposal",

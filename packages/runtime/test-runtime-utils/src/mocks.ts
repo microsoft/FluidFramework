@@ -89,8 +89,8 @@ export class MockDeltaConnection implements IDeltaConnection {
         this.handler?.process(message, local, localOpMetadata);
     }
 
-    public resubmit(content: any, localOpMetadata: unknown) {
-        this.handler?.resubmit(content, localOpMetadata);
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        this.handler?.reSubmit(content, localOpMetadata);
     }
 }
 
@@ -387,7 +387,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public clientId: string | undefined = uuid();
     public readonly path = "";
     public readonly connected = true;
-    public readonly leader: boolean;
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
@@ -558,7 +557,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public raiseContainerWarning(warning: ContainerWarning): void { }
 
-    public resubmit(content: any, localOpMetadata: unknown) {
+    public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
 

@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     ISnapshotTree,
-    IDocumentAttributes,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryTree,
@@ -15,13 +14,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "../summaryUtils";
+import { ReadAndParseBlob } from "../utils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
 const maxDecodeDepth = 100;
-
-/** Reads a blob from storage and parses it from JSON. */
-export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 export interface ISummarizerNodeRootContract {
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
@@ -33,21 +30,6 @@ export interface ISummarizerNodeRootContract {
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
     ): Promise<void>;
-}
-
-/**
- * Fetches the sequence number of the snapshot tree by examining the protocol.
- * @param tree - snapshot tree to examine
- * @param readAndParseBlob - function to read blob contents from storage
- * and parse the result from JSON.
- */
-export async function seqFromTree(
-    tree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
-): Promise<number> {
-    const attributesHash = tree.trees[".protocol"].blobs.attributes;
-    const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
-    return attrib.sequenceNumber;
 }
 
 /** Path for nodes in a tree with escaped special characters */

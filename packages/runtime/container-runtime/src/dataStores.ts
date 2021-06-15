@@ -261,17 +261,11 @@ export class DataStores implements IDisposable {
     public get disposed() {return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
 
-    public updateLeader() {
-        for (const [, context] of this.contexts) {
-            context.updateLeader(this.runtime.leader);
-        }
-    }
-
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
-        context.resubmit(envelope.contents, localOpMetadata);
+        context.reSubmit(envelope.contents, localOpMetadata);
     }
 
     public async applyStashedOp(content: any): Promise<unknown> {
@@ -404,9 +398,11 @@ export class DataStores implements IDisposable {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                // be a path from the root.
-                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
+                    // be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                }
             }));
 
         // Get the outbound routes and add a GC node for this channel.

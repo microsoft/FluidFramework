@@ -17,13 +17,13 @@ import {
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ReadAndParseBlob,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -165,7 +165,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        this.gcData = cloneGCData(summarizeResult.gcData);
+        if (summarizeResult.gcData !== undefined) {
+            this.gcData = cloneGCData(summarizeResult.gcData);
+        }
         return summarizeResult;
     }
 
