@@ -87,7 +87,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        async loadRuntime(context: any) {
+        async loadRuntime(context: IStatelessContainerContext) {
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
                 defaultRouteRequestHandler("default"),
