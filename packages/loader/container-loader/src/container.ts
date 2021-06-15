@@ -1715,17 +1715,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.RemoteHelp:
                 break;
             case MessageType.Summarize: {
-                if(this._storageService instanceof ProtocolTreeStorageService) {
-                    // github #6451: this is only needed for staging so the server
-                    // know when the protocol tree is included
-                    // this can be removed once all clients send
-                    // protocol tree by default
-                    const summary = contents as ISummaryContent;
-                    if(summary.details === undefined) {
-                        summary.details = {};
-                    }
-                    summary.details.includesProtocolTree = true;
+                // github #6451: this is only needed for staging so the server
+                // know when the protocol tree is included
+                // this can be removed once all clients send
+                // protocol tree by default
+                const summary = contents as ISummaryContent;
+                if(summary.details === undefined) {
+                    summary.details = {};
                 }
+                summary.details.includesProtocolTree =
+                    this.options.summarizeProtocolTree === true;
                 break;
             }
             default:
