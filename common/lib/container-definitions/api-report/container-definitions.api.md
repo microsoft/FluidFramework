@@ -159,8 +159,6 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly loader: ILoader;
-    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -448,11 +446,19 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
+    // (undocumented)
+    initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
+    // (undocumented)
+    initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
+    // @deprecated
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
 // @public
 export const isFluidBrowserPackage: (maybePkg: any) => maybePkg is Readonly<IFluidBrowserPackage>;
+
+// @public (undocumented)
+export type IStatelessContainerContext = Omit<IContainerContext, "existing">;
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {

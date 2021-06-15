@@ -99,7 +99,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader } from "./loader";
+import { Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
@@ -1818,6 +1818,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
         }
 
+        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+        // are set. Global requests will still go directly to the loader
+        const loader = new RelativeLoader(this, this.loader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
