@@ -54,7 +54,7 @@
   "dependencies": {
     "@fluid-internal/replay-tool": "^0.42.0",
     "@fluidframework/cell": "^0.42.0",
-    "@fluidframework/common-utils": "^0.31.0-0",
+    "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/container-loader": "^0.42.0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/counter": "^0.42.0",
@@ -70,7 +70,7 @@
     "@fluidframework/register-collection": "^0.42.0",
     "@fluidframework/replay-driver": "^0.42.0",
     "@fluidframework/sequence": "^0.42.0",
-    "@fluidframework/server-local-server": "^0.1026.0-0",
+    "@fluidframework/server-local-server": "^0.1026.0",
     "@fluidframework/test-utils": "^0.42.0",
     "assert": "^2.0.0"
   },

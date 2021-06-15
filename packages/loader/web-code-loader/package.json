@@ -35,6 +35,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/protocol-definitions": "^0.1024.0",
     "@microsoft/api-extractor": "^7.13.1",
     "@types/isomorphic-fetch": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
