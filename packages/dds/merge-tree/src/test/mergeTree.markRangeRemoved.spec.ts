@@ -108,8 +108,6 @@ describe("MergeTree.markRangeRemoved", () => {
         assert.equal(client.getText(), "text");
     });
 
-    // Repro of issue #1213:
-    // https://github.com/microsoft/FluidFramework/issues/1214
     it("local and remote clients race to insert at position of removed segment", () => {
         // Note: This test constructs it's own TestClients to avoid being initialized with "hello world".
 
