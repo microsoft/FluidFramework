@@ -1716,7 +1716,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             case MessageType.Summarize: {
                 if(this._storageService instanceof ProtocolTreeStorageService) {
-                    // todo this is only needed for staging so the server
+                    // github #6451: this is only needed for staging so the server
                     // know when the protocol tree is included
                     // this can be removed once all clients send
                     // protocol tree by default
