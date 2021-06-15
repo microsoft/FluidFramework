@@ -57,7 +57,7 @@ function createEditLogWithHandles(
 		return handle;
 	});
 
-	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined);
+	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined, editsPerChunkOnEditLog);
 
 	return editLog;
 }
@@ -331,7 +331,10 @@ describe('EditLog', () => {
 
 		// Add a sequenced edit and check it's been added
 		const edit = newEdit([]);
-		log.addSequencedEdit(edit);
+		log.addSequencedEdit(edit, {
+			sequenceNumber: log.editsPerChunk,
+			referenceSequenceNumber: log.editsPerChunk - 1,
+		});
 
 		expect(log.getIdAtIndex(numberOfChunks * editsPerChunk)).to.equal(edit.id);
 	});
