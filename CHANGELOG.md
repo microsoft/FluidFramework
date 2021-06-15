@@ -1,5 +1,20 @@
 # Change Log
 
+## 1.1.1
+
+* improvement: update-package-dependencies
+  * Associated pull request: [31449](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31449)
+  * Commit: [b1f3a8901dc9ebec93189aba1e442faefe419037](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b1f3a8901dc9ebec93189aba1e442faefe419037)
+* feat: Anchor resolution
+  * Associated pull request: [30719](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30719)
+  * Commit: [1c75270f7779a8b28bdeece57a4a2705d24c3498](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1c75270f7779a8b28bdeece57a4a2705d24c3498)
+* test: add skipped tests to demonstrate bug #58052
+  * Associated pull request: [31111](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31111)
+  * Commit: [858fd8ef50a1a6160a2494f320e78673ff9ab540](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/858fd8ef50a1a6160a2494f320e78673ff9ab540)
+* merge: `releases/2021.06.2` into `master`
+  * Associated pull request: [31357](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31357)
+  * Commit: [8b08b0dec24b63c4f2fa66ffb1ce97b392f43afb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8b08b0dec24b63c4f2fa66ffb1ce97b392f43afb)
+
 ## 0.114.1
 
 * fix: Forest should not create empty traits when attaching nodes
