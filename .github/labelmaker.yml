@@ -1,5 +1,5 @@
 teams:
-  internal: ['Prague', 'PragueAdmin', 'FRS-Admin', 'FluidFramework-Admin', 'FluidFramework-Contributors']
+  internal: ['FluidFramework-Admin', 'FluidFramework-Contributors', 'FRS-Admin' ]
 
 labels:
   externalPRs: ['community-contribution']
