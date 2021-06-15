@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -68,14 +67,26 @@ export interface IFacetCodes {
     facetCodes?: string[];
  }
 
- function parseFacetCodes(response: string): string[] {
+export function parseFacetCodes(response: string): string[] {
     const stack: string[] = [];
-    let error = JSON.parse(response).error;
-    while (error !== undefined) {
-        stack.push(error.code);
-        error = error.innerError;
-   }
-   return stack;
+    let error;
+    try {
+        error = JSON.parse(response).error;
+    }
+    catch(e) {
+        return stack;
+    }
+
+    // eslint-disable-next-line no-null/no-null
+    if(typeof error === "object" && error !== null) {
+        while (error !== undefined) {
+            if (error.code !== undefined) {
+                stack.push(error.code);
+            }
+            error = error.innerError;
+        }
+    }
+    return stack;
 }
 
 export function createOdspNetworkError(
@@ -150,8 +161,9 @@ export function createOdspNetworkError(
     error.online = OnlineStatus[isOnline()];
 
     const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
-    const props: ITelemetryProperties = { response: responseText,
-        facetCode: facetCodes !== undefined ? facetCodes[0] : undefined};
+    error.facetCodes = facetCodes;
+
+    const props: ITelemetryProperties = { response: responseText};
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
