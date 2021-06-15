@@ -1715,7 +1715,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.RemoteHelp:
                 break;
             case MessageType.Summarize: {
-                if(this.options.summarizeProtocolTree) {
+                if(this._storageService instanceof ProtocolTreeStorageService) {
                     // todo this is only needed for staging so the server
                     // know when the protocol tree is included
                     // this can be removed once all clients send
