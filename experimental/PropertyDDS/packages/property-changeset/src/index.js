@@ -8,7 +8,8 @@ const TemplateSchema = require('./template_schema');
 const ChangeSet = require('./changeset');
 const Utils = require('./utils');
 const PathHelper = require('./path_helper');
-const ArrayChangeSetIterator = require('./changeset_operations/array_changeset_iterator')
+const ArrayChangeSetIterator = require('./changeset_operations/array_changeset_iterator');
+const { rebaseToRemoteChanges } = require('./rebase');
 
 module.exports = {
   TemplateSchema,
@@ -17,5 +18,6 @@ module.exports = {
   ChangeSet,
   Utils,
   PathHelper,
-  ArrayChangeSetIterator
+  ArrayChangeSetIterator,
+  rebaseToRemoteChanges
 };
