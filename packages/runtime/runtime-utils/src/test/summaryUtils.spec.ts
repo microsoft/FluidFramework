@@ -55,6 +55,7 @@ describe("Summary Utils", () => {
                         entries: [
                             new BlobTreeEntry("bu8", "test-u8"),
                             new BlobTreeEntry("b64", base64Content, "base64"),
+                            new TreeTreeEntry("tu", { entries: [], unreferenced: true}),
                         ],
                     }),
                     new BlobTreeEntry("b", "test-blob"),
@@ -62,6 +63,10 @@ describe("Summary Utils", () => {
                         id: "test-handle", entries: [
                             new BlobTreeEntry("ignore", "this-should-be-ignored"),
                         ],
+                    }),
+                    new TreeTreeEntry("unref", {
+                        entries: [],
+                        unreferenced: true,
                     }),
                 ],
             };
@@ -86,6 +91,8 @@ describe("Summary Utils", () => {
             assert.strictEqual(subBlobUtf8.content, "test-u8");
             const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
             assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
+            const subTreeUnref = assertSummaryTree(subTree.tree.tu);
+            assert.strictEqual(Object.keys(subTreeUnref.tree).length, 0, "There should be no entries in tu subtree");
         });
 
         it("Should convert correctly with fullTree enabled", () => {
@@ -107,6 +114,8 @@ describe("Summary Utils", () => {
             assert.strictEqual(subBlobUtf8.content, "test-u8");
             const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
             assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
+            const subUnrefTree = assertSummaryTree(subTree.tree.tu);
+            assert.strictEqual(Object.keys(subUnrefTree.tree).length, 0, "There should be no entries in tu subtree");
         });
 
         it("Should calculate summary data correctly", () => {
@@ -114,9 +123,23 @@ describe("Summary Utils", () => {
             // nodes should count
             assert.strictEqual(summaryResults.stats.blobNodeCount, 3);
             assert.strictEqual(summaryResults.stats.handleNodeCount, 1);
-            assert.strictEqual(summaryResults.stats.treeNodeCount, 2);
+            assert.strictEqual(summaryResults.stats.treeNodeCount, 4);
             assert.strictEqual(summaryResults.stats.totalBlobSize,
                 bufferLength + IsoBuffer.from("test-blob").byteLength + IsoBuffer.from("test-u8").byteLength);
+        });
+
+        it("should convert unreferenced state correctly", () => {
+            const summaryResults = convertToSummaryTree(inputTree);
+            const summaryTree = assertSummaryTree(summaryResults.summary);
+            assert.strictEqual(summaryTree.unreferenced, undefined, "The root summary tree should be referenced");
+
+            const subTreeT = assertSummaryTree(summaryTree.tree.t);
+            assert.strictEqual(subTreeT.unreferenced, undefined, "The t subtree should be referenced");
+            const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
+            assert.strictEqual(subTreeTUnrefTree.unreferenced, true, "The tu subtree of t should be referenced");
+
+            const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
+            assert.strictEqual(subTreeUnref.unreferenced, true, "The unref subtree should be unreferenced");
         });
     });
 
