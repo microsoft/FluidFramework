@@ -28,7 +28,7 @@ import { AttachState } from "./runtime";
 /**
  * Code loading interface
  *
- * @deprecated in favor of {@link ICodeDetailsLoader}
+ * @deprecated in favor of {@link @fluidframework/container-loader#ICodeDetailsLoader}
  */
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**

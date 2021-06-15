@@ -157,29 +157,15 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<Required<IFluidModuleWithDetails>>(async () => {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
+    public get codeDetails() { return this._codeDetails; }
 
-        if ("module" in loadCodeResult) {
-            const { module, details } = loadCodeResult;
-            return {
-                module,
-                details: details ?? this.codeDetails,
-            };
-        } else {
-            return { module: loadCodeResult, details: this.codeDetails };
-        }
-    });
+    private readonly _fluidModuleP: Promise<Required<IFluidModuleWithDetails>>;
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
-        public readonly codeDetails: IFluidCodeDetails,
+        private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -195,16 +181,10 @@ export class ContainerContext implements IContainerContext {
 
     ) {
         this.logger = container.subLogger;
+        this._fluidModuleP = new LazyPromise<Required<IFluidModuleWithDetails>>(
+            async () => this.loadCodeModule(_codeDetails),
+        );
         this.attachListener();
-    }
-
-    private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
-        this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
-        });
     }
 
     public dispose(error?: Error): void {
@@ -274,7 +254,7 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const moduleWithDetails = await this.fluidModuleP;
+        const moduleWithDetails = await this._fluidModuleP;
         const maybeCompareExport = moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
@@ -301,11 +281,40 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    // #region private
+    private attachListener() {
+        this.container.once("attaching", () => {
+            this._runtime?.setAttachState?.(AttachState.Attaching);
+        });
+        this.container.once("attached", () => {
+            this._runtime?.setAttachState?.(AttachState.Attached);
+        });
+    }
+
     private async load() {
-        const maybeFactory = (await this.fluidModuleP).module?.fluidExport?.IRuntimeFactory;
+        const maybeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
         this._runtime = await maybeFactory.instantiateRuntime(this);
     }
+
+    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
+        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(codeDetails),
+        );
+
+        if ("module" in loadCodeResult) {
+            const { module, details } = loadCodeResult;
+            return {
+                module,
+                details: details ?? codeDetails,
+            };
+        } else {
+            return { module: loadCodeResult, details: codeDetails };
+        }
+    }
+    // #endregion
 }

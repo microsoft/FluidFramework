@@ -288,7 +288,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 
 // @public
 export interface IFluidModuleWithDetails {
-    details?: IFluidCodeDetails;
+    details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
