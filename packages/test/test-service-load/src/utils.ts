@@ -68,7 +68,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<FileLogger>(async ()=>{
-    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger?.();
         assert(logger !== undefined, "Expected getTestLogger to return something");

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DataObject } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluidframework/react-inputs";
+import { CollaborativeTextArea } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";

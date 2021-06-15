@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
+    delay,
     IPromiseTimerResult,
     PromiseTimer,
 } from "@fluidframework/common-utils";
@@ -355,7 +356,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+                shouldDelay ? delay(delayMs) : Promise.resolve(),
             ]);
         }
 
@@ -378,8 +379,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject(new Error("Invalid summarizer route"));
         }
 
