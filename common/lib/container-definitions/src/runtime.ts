@@ -120,7 +120,6 @@ export interface IContainerContext extends IDisposable {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
-    readonly loader: ILoader;
     readonly logger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
@@ -150,6 +149,8 @@ export interface IContainerContext extends IDisposable {
     updateDirtyContainerState(dirty: boolean): void;
 }
 
+export type IStatelessContainerContext = Omit<IContainerContext, "existing">;
+
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
@@ -166,6 +167,11 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
+     *
+     * @deprecated Use initializeFirstTime/initializeFromExisting as appropriate
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+
+    initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
+    initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
 }

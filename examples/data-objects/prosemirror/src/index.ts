@@ -7,17 +7,20 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./prosemirror";
 
 const defaultComponent = smde.type;
+const defaultComponentId = "default";
 
 class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
@@ -26,8 +29,6 @@ class ProseMirrorFactory implements IRuntimeFactory {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);
-
-        const defaultComponentId = "default";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -47,11 +48,45 @@ class ProseMirrorFactory implements IRuntimeFactory {
 
         return runtime;
     }
+
+    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await runtime.createRootDataStore(defaultComponent, defaultComponentId);
+        return runtime;
+    }
+
+    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        return runtime;
+    }
+
+    private async loadRuntime(context: any) {
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
+            [defaultComponent, Promise.resolve(smde)],
+        ]);
+
+        const runtime = await ContainerRuntime.load(
+            context,
+            registry,
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                rootDataStoreRequestHandler,
+            ));
+
+        // Flush mode to manual to batch operations within a turn
+        runtime.setFlushMode(FlushMode.Manual);
+        return runtime;
+    }
 }
 
 export const fluidExport = new ProseMirrorFactory();
 
-// eslint-disable-next-line @typescript-eslint/promise-function-async, prefer-arrow/prefer-arrow-functions
-export function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
+export const instantiateRuntime =
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateRuntime(context);
+export const initializeFirstTime =
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.initializeFirstTime(context);
+export const initializeFromExisting =
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.initializeFromExisting(context);

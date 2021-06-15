@@ -11,11 +11,13 @@ import {
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
+    IStatelessContainerContext,
 } from "@fluidframework/container-runtime-definitions";
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
     innerRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -88,6 +90,47 @@ export class BaseContainerRuntimeFactory implements
         // This always gets called at the end of initialize on first time or from existing.
         await this.containerHasInitialized(runtime);
 
+        return runtime;
+    }
+
+    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await this.containerInitializingFirstTime(runtime);
+        await this.containerHasInitialized(runtime);
+
+        return runtime;
+    }
+
+    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await this.containerHasInitialized(runtime);
+
+        return runtime;
+    }
+
+    private async loadRuntime(context: any) {
+        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
+        const dc = new DependencyContainer(parentDependencyContainer);
+        for (const entry of Array.from(this.providerEntries)) {
+            dc.register(entry.type, entry.provider);
+        }
+
+        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
+        // which we will replace with the new one we just created.
+        const scope: any = context.scope;
+        scope.IFluidDependencySynthesizer = dc;
+
+        const runtime = await ContainerRuntime.load(
+            context,
+            this.registryEntries,
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers,
+                rootDataStoreRequestHandler),
+            this.runtimeOptions,
+            scope);
+
+        // we register the runtime so developers of providers can use it in the factory pattern.
+        dc.register(IContainerRuntime, runtime);
         return runtime;
     }
 

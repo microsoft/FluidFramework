@@ -12,6 +12,7 @@ import {
     IRuntimeFactory,
     IProxyLoaderFactory,
     ILoaderOptions,
+    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
@@ -100,6 +101,14 @@ class ProxyRuntime implements IRuntime {
 
 class ProxyChaincode implements IRuntimeFactory {
     async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        return new ProxyRuntime();
+    }
+
+    async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        return new ProxyRuntime();
+    }
+
+    async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
         return new ProxyRuntime();
     }
 

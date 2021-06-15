@@ -14,6 +14,7 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -27,6 +28,7 @@ import {
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
@@ -137,6 +139,29 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
             await runtime.createRootDataStore(this.type, this.defaultComponentId);
         }
 
+        return runtime;
+    }
+
+    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await runtime.createRootDataStore(this.type, this.defaultComponentId);
+        return runtime;
+    }
+
+    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        return runtime;
+    }
+
+    private async loadRuntime(context: any) {
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
+            context,
+            new Map([[this.type, Promise.resolve(this)]]),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(this.defaultComponentId),
+                rootDataStoreRequestHandler,
+            ),
+        );
         return runtime;
     }
 }

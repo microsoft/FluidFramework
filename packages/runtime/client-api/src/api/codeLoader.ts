@@ -11,6 +11,7 @@ import {
     IRuntime,
     IRuntimeFactory,
     IFluidModule,
+    IStatelessContainerContext,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -28,6 +29,7 @@ import * as sequence from "@fluidframework/sequence";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { create404Response } from "@fluidframework/runtime-utils";
@@ -127,6 +129,34 @@ export class ChaincodeFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
         }
+
+        return runtime;
+    }
+
+    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
+        return runtime;
+    }
+
+    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        return runtime;
+    }
+
+    private async loadRuntime(context: any) {
+        const chaincode = new Chaincode(context.closeFn);
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
+            context,
+            [
+                [chaincode.type, Promise.resolve(chaincode)],
+                ...this.registries,
+            ],
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(rootStoreId),
+                rootDataStoreRequestHandler,
+            ),
+            this.runtimeOptions);
 
         return runtime;
     }

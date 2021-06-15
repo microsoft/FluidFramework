@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IContainerContext,
+    IRuntime,
+    IRuntimeFactory,
+    `IStatelessContainerContext`,
+ } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
@@ -11,6 +16,7 @@ import {
     buildRuntimeRequestHandler,
     RuntimeRequestHandler,
     innerRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
@@ -56,6 +62,31 @@ export class RuntimeFactory implements IRuntimeFactory {
             await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
         }
 
+        return runtime;
+    }
+
+    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
+        return runtime;
+    }
+
+    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context);
+        return runtime;
+    }
+
+    private async loadRuntime(context: any) {
+        const runtime = await ContainerRuntime.load(
+            context,
+            this.registry,
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers,
+                rootDataStoreRequestHandler),
+        );
+
+        // Flush mode to manual to batch operations within a turn
+        runtime.setFlushMode(FlushMode.Manual);
         return runtime;
     }
 }

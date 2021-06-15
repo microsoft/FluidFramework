@@ -4,9 +4,18 @@
  */
 
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IContainerContext,
+    IRuntime,
+    IRuntimeFactory,
+    IStatelessContainerContext,
+} from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { innerRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import {
+    innerRequestHandler,
+    RuntimeRequestHandlerBuilder,
+    rootDataStoreRequestHandler,
+} from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
@@ -53,6 +62,46 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                 await runtime.getRootDataStore("default");
                 await runtime.getRootDataStore("default2");
             }
+
+            return runtime;
+        }
+
+        public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+            const runtime = await this.loadRuntime(context);
+            await runtime.createRootDataStore(this.type, "default");
+
+            // Test detached creation
+            const root2Context = runtime.createDetachedRootDataStore([this.type], "default2");
+            const root2Runtime = await this.dataStoreFactory.instantiateDataStore(root2Context);
+            await root2Context.attachRuntime(this.dataStoreFactory, root2Runtime);
+            return runtime;
+        }
+
+        public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+            const runtime = await this.loadRuntime(context);
+
+            // Validate we can load root data stores.
+            // We should be able to load any data store that was created in initializeFirstTime!
+            await runtime.getRootDataStore("default");
+            await runtime.getRootDataStore("default2");
+            return runtime;
+        }
+
+        async loadRuntime(context: any) {
+            const builder = new RuntimeRequestHandlerBuilder();
+            builder.pushHandler(
+                defaultRouteRequestHandler("default"),
+                rootDataStoreRequestHandler);
+
+            const runtime = await containerRuntimeCtor.load(
+                context,
+                [
+                    ["default", Promise.resolve(this.dataStoreFactory)],
+                    [this.type, Promise.resolve(this.dataStoreFactory)],
+                ],
+                async (req, rt) => builder.handleRequest(req, rt),
+                this.runtimeOptions,
+            );
 
             return runtime;
         }
