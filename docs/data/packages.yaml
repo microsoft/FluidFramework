@@ -28,6 +28,7 @@ libraries:
 - "@fluidframework/view-adapters"
 - "@fluidframework/view-interfaces"
 - "@fluidframework/request-handler"
+- "@fluidframework/data-object-base"
 hosts:
 - "@fluidframework/base-host"
 loader:
@@ -57,6 +58,9 @@ protocol:
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
 experimental:
-- "@fluidframework/data-object-base"
+- "@fluid-experimental/fluid-framework"
+- "@fluid-experimental/fluid-static"
+- "@fluid-experimental/tinylicious-client"
+- "@fluid-experimental/last-edited"
 - "@fluid-experimental/react-inputs"
 - "@fluid-experimental/react"
