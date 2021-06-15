@@ -7,8 +7,8 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    `IStatelessContainerContext`,
- } from "@fluidframework/container-definitions";
+    IStatelessContainerContext,
+} from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
