@@ -24,6 +24,7 @@ import {
     AttachState,
     IFluidModule,
     ILoaderOptions,
+    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -47,6 +48,9 @@ import { Container } from "./container";
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class ContainerContext implements IContainerContext {
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
@@ -83,6 +87,84 @@ export class ContainerContext implements IContainerContext {
             updateDirtyContainerState,
             pendingLocalState);
         await context.load();
+        return context;
+    }
+
+    public static async instantiateFirstTime(
+        container: Container,
+        scope: IFluidObject,
+        codeLoader: ICodeLoader,
+        codeDetails: IFluidCodeDetails,
+        baseSnapshot: ISnapshotTree | undefined,
+        attributes: IDocumentAttributes,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        quorum: IQuorum,
+        loader: ILoader,
+        raiseContainerWarning: (warning: ContainerWarning) => void,
+        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitSignalFn: (contents: any) => void,
+        closeFn: (error?: ICriticalContainerError) => void,
+        version: string,
+        updateDirtyContainerState: (dirty: boolean) => void,
+        pendingLocalState?: unknown,
+    ): Promise<ContainerContext> {
+        const context = new ContainerContext(
+            container,
+            scope,
+            codeLoader,
+            codeDetails,
+            baseSnapshot,
+            attributes,
+            deltaManager,
+            quorum,
+            loader,
+            raiseContainerWarning,
+            submitFn,
+            submitSignalFn,
+            closeFn,
+            version,
+            updateDirtyContainerState,
+            pendingLocalState);
+        await context.initializeFirstTime();
+        return context;
+    }
+
+    public static async instantiateFromExisting(
+        container: Container,
+        scope: IFluidObject,
+        codeLoader: ICodeLoader,
+        codeDetails: IFluidCodeDetails,
+        baseSnapshot: ISnapshotTree | undefined,
+        attributes: IDocumentAttributes,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        quorum: IQuorum,
+        loader: ILoader,
+        raiseContainerWarning: (warning: ContainerWarning) => void,
+        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitSignalFn: (contents: any) => void,
+        closeFn: (error?: ICriticalContainerError) => void,
+        version: string,
+        updateDirtyContainerState: (dirty: boolean) => void,
+        pendingLocalState?: unknown,
+    ): Promise<ContainerContext> {
+        const context = new ContainerContext(
+            container,
+            scope,
+            codeLoader,
+            codeDetails,
+            baseSnapshot,
+            attributes,
+            deltaManager,
+            quorum,
+            loader,
+            raiseContainerWarning,
+            submitFn,
+            submitSignalFn,
+            closeFn,
+            version,
+            updateDirtyContainerState,
+            pendingLocalState);
+        await context.initializeFromExisting();
         return context;
     }
 
@@ -292,6 +374,26 @@ export class ContainerContext implements IContainerContext {
         if (maybeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
+
         this._runtime = await maybeFactory.instantiateRuntime(this);
+    }
+
+    private async initializeFromExisting() {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await runtimeFactory.initializeFromExisting(this);
+    }
+
+    private async initializeFirstTime() {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await runtimeFactory.initializeFirstTime(this);
+    }
+
+    private async getRuntimeFactory(): Promise<IRuntimeFactory> {
+        const runtimeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
+        if (runtimeFactory === undefined) {
+            throw new Error(PackageNotFactoryError);
+        }
+
+        return runtimeFactory;
     }
 }

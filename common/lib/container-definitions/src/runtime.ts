@@ -169,10 +169,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
      *
-     * @deprecated Use initializeFirstTime/initializeFromExisting as appropriate
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 
-    initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
-    initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
 }

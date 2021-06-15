@@ -1213,12 +1213,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._existing = details.existing;
         }
 
-        // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
+        await this.createExistingContext(codeDetails, attributes, snapshot, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1806,44 +1804,80 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async loadContext(
+    private async instantiateContext(
         codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
+        contextFactory: (
+            codeDetails: IFluidCodeDetails,
+            snapshot: ISnapshotTree | undefined,
+            attributes: IDocumentAttributes,
+            loader: RelativeLoader,
+            localState: unknown
+        ) => Promise<ContainerContext>,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
-        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this, this.loader);
-        this._context = await ContainerContext.createOrLoad(
-            this,
-            this.scope,
-            this.codeLoader,
+        this._context = await contextFactory(
             codeDetails,
             snapshot,
             attributes,
-            new DeltaManagerProxy(this._deltaManager),
-            new QuorumProxy(this.protocolHandler.quorum),
-            loader,
-            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
-            (message) => this.submitSignal(message),
-            (error?: ICriticalContainerError) => this.close(error),
-            Container.version,
-            (dirty: boolean) => {
-                this._dirtyContainer = dirty;
-                this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-            },
+            // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+            // are set. Global requests will still go directly to the loader
+            new RelativeLoader(this, this.loader),
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    /**
+     * Instantiates an existing container context
+     */
+    private async createExistingContext(
+        codeDetails: IFluidCodeDetails,
+        attributes: IDocumentAttributes,
+        snapshot?: ISnapshotTree,
+        pendingLocalState?: unknown,
+    ) {
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            async (
+                fluidCodeDetails: IFluidCodeDetails,
+                snapshotTree: ISnapshotTree | undefined,
+                documentAttributes: IDocumentAttributes,
+                relativeLoader: RelativeLoader,
+                localState: unknown,
+            ) => ContainerContext.instantiateFromExisting(
+                this,
+                this.scope,
+                this.codeLoader,
+                fluidCodeDetails,
+                snapshotTree,
+                documentAttributes,
+                new DeltaManagerProxy(this._deltaManager),
+                new QuorumProxy(this.protocolHandler.quorum),
+                relativeLoader,
+                (warning: ContainerWarning) => this.raiseContainerWarning(warning),
+                (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+                (message) => this.submitSignal(message),
+                (error?: ICriticalContainerError) => this.close(error),
+                Container.version,
+                (dirty: boolean) => {
+                    this._dirtyContainer = dirty;
+                    this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+                },
+                localState,
+            ),
+            snapshot,
+            pendingLocalState,
+        );
     }
 
     /**
@@ -1855,7 +1889,38 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("pkg should be provided in create flow!!");
         }
 
-        await this.loadContext(codeDetails, attributes, snapshot);
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            async (
+                fluidCodeDetails: IFluidCodeDetails,
+                snapshotTree: ISnapshotTree | undefined,
+                documentAttributes: IDocumentAttributes,
+                relativeLoader: RelativeLoader,
+                localState: unknown,
+            ) => ContainerContext.instantiateFirstTime(
+                this,
+                this.scope,
+                this.codeLoader,
+                fluidCodeDetails,
+                snapshotTree,
+                documentAttributes,
+                new DeltaManagerProxy(this._deltaManager),
+                new QuorumProxy(this.protocolHandler.quorum),
+                relativeLoader,
+                (warning: ContainerWarning) => this.raiseContainerWarning(warning),
+                (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+                (message) => this.submitSignal(message),
+                (error?: ICriticalContainerError) => this.close(error),
+                Container.version,
+                (dirty: boolean) => {
+                    this._dirtyContainer = dirty;
+                    this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+                },
+                localState,
+            ),
+            snapshot,
+        );
     }
 
     // Please avoid calling it directly.

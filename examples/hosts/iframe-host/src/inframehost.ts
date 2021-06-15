@@ -104,11 +104,11 @@ class ProxyChaincode implements IRuntimeFactory {
         return new ProxyRuntime();
     }
 
-    async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+    async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
         return new ProxyRuntime();
     }
 
-    async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+    async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
         return new ProxyRuntime();
     }
 

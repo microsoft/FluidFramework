@@ -66,7 +66,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+        public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
             const runtime = await this.loadRuntime(context);
             await runtime.createRootDataStore(this.type, "default");
 
@@ -77,7 +77,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+        public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
             const runtime = await this.loadRuntime(context);
 
             // Validate we can load root data stores.

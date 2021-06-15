@@ -65,13 +65,13 @@ export class RuntimeFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+    public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context);
         await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
         return runtime;
     }
 
-    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+    public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context);
         return runtime;
     }

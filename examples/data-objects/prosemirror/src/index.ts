@@ -49,13 +49,13 @@ class ProseMirrorFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    public async initializeFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
+    public async instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context);
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
         return runtime;
     }
 
-    public async initializeFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
+    public async instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context);
         return runtime;
     }
@@ -84,9 +84,9 @@ export const fluidExport = new ProseMirrorFactory();
 export const instantiateRuntime =
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateRuntime(context);
-export const initializeFirstTime =
+export const instantiateFirstTime =
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.initializeFirstTime(context);
-export const initializeFromExisting =
+    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.instantiateFirstTime(context);
+export const instantiateFromExisting =
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.initializeFromExisting(context);
+    (context: IStatelessContainerContext): Promise<IRuntime> => fluidExport.instantiateFromExisting(context);
