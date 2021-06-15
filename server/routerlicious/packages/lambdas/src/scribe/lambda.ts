@@ -363,8 +363,10 @@ export class ScribeLambda implements IPartitionLambda {
             } catch (error) {
                 this.context.log?.error(`Protocol error ${error}`,
                     {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
                     });
             }
         }
