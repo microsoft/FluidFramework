@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { SomeLoggingError } from "@fluidframework/telemetry-utils";
 import { CreateContainerError, CreateProcessingError } from "../error";
 
 describe("Errors", () => {
@@ -32,10 +32,12 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for LoggingErrors", () => {
-            const originalError = new LoggingError("Inherited error message", {
-                errorType: "Demoted error type",
-                otherProperty: "Considered PII-free property",
-            });
+            const originalError = new SomeLoggingError(
+                "someErrorType",
+                "Inherited error message", {
+                    errorType: "Demoted error type",
+                    otherProperty: "Considered PII-free property",
+                });
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any === originalError);
@@ -98,7 +100,7 @@ describe("Errors", () => {
             const originalProps = {
                 message: "Inherited error message",
                 otherProperty: "Presumed PII-full property",
-                errorType: "specialErrorType",
+                errorType: "specialErrorType", // will be overwritten
             };
             const coercedError = CreateProcessingError(originalProps, undefined);
 

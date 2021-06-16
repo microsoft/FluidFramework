@@ -18,7 +18,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, LoggingError } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -54,6 +54,7 @@ import {
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
+    GenericError,
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
@@ -732,7 +733,7 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = new LoggingError("Op is sent in read-only document state", {
+            const error = new GenericError("Op is sent in read-only document state", {
                 errorType: ContainerErrorType.genericError,  //* use GenericError ctor?
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,

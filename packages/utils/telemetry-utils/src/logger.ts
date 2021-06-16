@@ -15,6 +15,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
+import { IErrorBase } from "@fluidframework/container-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryLoggerPropertyBag {
@@ -533,14 +534,18 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
-export class LoggingError extends Error implements ILoggingError {
+export abstract class LoggingError extends Error implements ILoggingError, IErrorBase {
+//* Try Omit<IErrorBase, sequenceNumber>
     private readonly __isFluidLoggingError__ = 1;
+
+    public abstract readonly errorType: string;
 
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
         return maybeLogger !== null
-            && typeof maybeLogger  === "object"
+            && typeof maybeLogger === "object"
             && typeof maybeLogger.message === "string"
+            && typeof maybeLogger.errorType === "string"
             && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
     }
 
@@ -574,6 +579,16 @@ export class LoggingError extends Error implements ILoggingError {
             message: this.message,
             ...taggableProps,
         };
+    }
+}
+
+export class SomeLoggingError extends LoggingError {
+    constructor(
+        public readonly errorType,
+        message: string,
+        props?: ITelemetryProperties,
+    ) {
+        super(message, props);
     }
 }
 

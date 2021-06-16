@@ -10,7 +10,7 @@ import {
     ICriticalContainerError,
     IErrorBase,
 } from "@fluidframework/container-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, SomeLoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -21,8 +21,8 @@ function messageFromError(error: any): string {
     return `${error}`;
 }
 
-const isValidLoggingError = (error: any): error is IErrorBase & LoggingError => {
-    return typeof error?.errorType === "string" && LoggingError.is(error);
+const isValidLoggingError = (error: any): error is LoggingError => {
+    return LoggingError.is(error);
 };
 
 const isRegularObject = (value: any): boolean => {
@@ -105,7 +105,7 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
 export function CreateProcessingError(
     error: any,
     message: ISequencedDocumentMessage | undefined,
-): ICriticalContainerError & LoggingError {
+): ICriticalContainerError {
     const info = message !== undefined
         ? extractSafePropertiesFromMessage(message)
         : undefined;
@@ -127,36 +127,37 @@ export function CreateProcessingError(
         //* Test this unification/approach. I don't think the const string logged below is useful
         return new DataProcessingError(messageFromError(error), info);
     } else {
-        return new DataProcessingError(messageFromError(error), { ...info, typeof: typeof error });
-        // return new DataProcessingError(
-        //     "DataProcessingError without explicit message (needs review)",
-        //     { ...info, typeof: typeof error },
-        // );
+        return new DataProcessingError(messageFromError(error), { ...info, typeofWrappedError: typeof error });
     }
 }
 
 /**
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
+ * @param props - Properties to include on the error object at runtime and when logged
  */
-export function CreateContainerError(error: any): ICriticalContainerError & LoggingError {
+export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError {
     assert(error !== undefined, 0x0f5 /* "Missing error input" */);
 
     if (isValidLoggingError(error)) {
+        if (props !== undefined) {
+        error.addTelemetryProperties(props);
+        }
         return error;
     } else if (isRegularObject(error)) {
         const {
             message,
             stack,
-            errorType = `${error.errorType ?? ContainerErrorType.genericError}`,
+            errorType,
         } = extractLogSafeErrorProperties(error);
 
-        return new LoggingError(message, {
-            errorType,
-            stack,
-        }) as ICriticalContainerError & LoggingError; // cast is fine since errorType is on there
+        return new SomeLoggingError(
+            errorType ?? ContainerErrorType.genericError,
+            message,
+            { stack },
+        );
     } else if (typeof error === "string") {
-        //* Test this
+        //* Test this and unify cases -- Even merge with above else-if block!
         return new GenericError(messageFromError(error), { typeof: typeof error });
     } else {
         return new GenericError(messageFromError(error), { typeof: typeof error });
