@@ -1,6 +1,6 @@
 ---
 title: Using the documentation system effectively
-menuPosition: 1
+menuPosition: 3
 aliases:
   - "/docs/advanced/doc-system"
 ---
