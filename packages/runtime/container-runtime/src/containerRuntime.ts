@@ -1377,6 +1377,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
         const registryPath =
             `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
+        // [TODO:andre4i]
+        // this event's `existing` property needs to be removed
         this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, this.existing);
     }
 
