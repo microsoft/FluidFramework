@@ -155,7 +155,7 @@ async function runnerProcess(
                 documentServiceFactory,
                 codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
                 logger,
-                options: loaderOptions,
+                options: loaderOptions[runConfig.runId % containerOptions.length],
             });
 
             const container = await loader.resolve({ url, headers });
@@ -170,9 +170,7 @@ async function runnerProcess(
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
-                await loggerP.then(
-                    async (l) => l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
-                throw error;
+                logger.sendErrorEvent({eventName: "RunnerFailed"}, error);
             } finally {
                 if (!container.closed) {
                     container.close();
