@@ -37,6 +37,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
+    LazyPromise,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -754,9 +755,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly dataStores: DataStores;
 
-    // The current GC version that this Container is running.
+    // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
-    // This is the version of GC data that is written in the summary.
+    // This is the version of GC data in the latest successful summary this client has seen.
     private summaryGCVersion: Required<IContainerRuntimeMetadata>["gcFeature"];
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
@@ -789,10 +790,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
-        /* gcFeature in metadata is introduced with v1 in the metadata blob. Force to 0/disallowed before that.
-         This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
-         runtimeOptions will only specify what to do if it has never been set before.
-         Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
+        /**
+          * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
+          * For existing documents, we get this value from the metadata blob.
+          * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
+          */
         const prevSummaryGCVersion = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCVersion = prevSummaryGCVersion ??
