@@ -107,7 +107,7 @@ export interface IRuntime extends IDisposable {
 export interface IContainerContext extends IDisposable {
     readonly id: string;
     /**
-     * @deprecated
+     * @deprecated This property will be removed in an upcoming release
      */
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;

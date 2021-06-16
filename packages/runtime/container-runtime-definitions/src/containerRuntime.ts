@@ -70,7 +70,7 @@ export interface IContainerRuntime extends
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
     /**
-     * @deprecated
+     * @deprecated This property will be removed in an upcoming release
      */
     readonly existing: boolean;
     readonly options: ILoaderOptions;

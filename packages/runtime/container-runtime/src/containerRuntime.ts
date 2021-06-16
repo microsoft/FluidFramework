@@ -633,7 +633,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      *
-     * @deprecated Please use {@link loadStateful}
+     * @deprecated Please use ContainerRuntime.loadStateful
      *
      * @param context - Context of the container.
      * @param registry - Mapping to the stores.
