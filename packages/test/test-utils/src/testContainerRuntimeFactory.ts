@@ -86,13 +86,13 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             return runtime;
         }
 
-        async loadRuntime(context: IContainerContext, existing: boolean) {
+        async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
                 defaultRouteRequestHandler("default"),
                 rootDataStoreRequestHandler);
 
-            const runtime = await containerRuntimeCtor.loadStateful(
+            const runtime: ContainerRuntime = await containerRuntimeCtor.loadStateful(
                 context,
                 [
                     ["default", Promise.resolve(this.dataStoreFactory)],

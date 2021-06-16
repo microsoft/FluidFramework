@@ -107,7 +107,7 @@ export class BaseContainerRuntimeFactory implements
         return runtime;
     }
 
-    private async loadRuntime(context: IContainerContext, existing: boolean) {
+    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
         const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
@@ -119,7 +119,7 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
             context,
             this.registryEntries,
             existing,

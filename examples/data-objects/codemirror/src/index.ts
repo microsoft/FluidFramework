@@ -58,8 +58,8 @@ class CodeMirrorFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    private async loadRuntime(context: IContainerContext, existing: boolean) {
-        const runtime = await ContainerRuntime.loadStateful(
+    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
             context,
             this.registry,
             existing,

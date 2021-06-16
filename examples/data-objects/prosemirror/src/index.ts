@@ -59,7 +59,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
         return runtime;
     }
 
-    private async loadRuntime(context: IContainerContext, existing: boolean) {
+    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);
