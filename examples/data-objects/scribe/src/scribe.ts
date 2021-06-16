@@ -450,6 +450,8 @@ export class Scribe
     }
 }
 
+const defaultComponentId = "default";
+
 class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/scribe";
     public readonly type = ScribeFactory.type;
@@ -457,16 +459,14 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
+    private readonly registry = new Map<string, Promise<IFluidDataStoreFactory>>([
+        [ScribeFactory.type, Promise.resolve(this)],
+    ]);
+
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [ScribeFactory.type, Promise.resolve(this)],
-        ]);
-
-        const defaultComponentId = "default";
-
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            this.registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
@@ -476,6 +476,30 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         if (!runtime.existing) {
             await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
         }
+
+        return runtime;
+    }
+
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
+        await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
+        return runtime;
+    }
+
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
+        return runtime;
+    }
+
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
+        const runtime = await ContainerRuntime.loadStateful(
+            context,
+            this.registry,
+            existing,
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                innerRequestHandler,
+            ));
 
         return runtime;
     }

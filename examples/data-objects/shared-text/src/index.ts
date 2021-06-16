@@ -48,7 +48,6 @@ const DefaultComponentName = "text";
 /* eslint-enable max-len */
 
 const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
@@ -87,6 +86,36 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
             await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
         }
+
+        return runtime;
+    }
+
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, false);
+        await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
+        await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
+        return runtime;
+    }
+
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await this.loadRuntime(context, true);
+        return runtime;
+    }
+
+    private async loadRuntime(context: IContainerContext, existing: boolean) {
+        const runtime = await ContainerRuntime.loadStateful(
+            context,
+            [
+                ...defaultRegistryEntries,
+                [SharedTextFactoryComponent.type, Promise.resolve(this)],
+                AgentSchedulerFactory.registryEntry,
+            ],
+            existing,
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(DefaultComponentName),
+                innerRequestHandler,
+            ),
+        );
 
         return runtime;
     }

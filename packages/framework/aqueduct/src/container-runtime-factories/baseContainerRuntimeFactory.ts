@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
-    IContainerContext,
 } from "@fluidframework/container-runtime-definitions";
 import {
     RuntimeRequestHandler,
@@ -93,7 +92,7 @@ export class BaseContainerRuntimeFactory implements
         return runtime;
     }
 
-    public async initializeFirstTime(context: IContainerContext): Promise<IRuntime> {
+    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context, false);
         await this.containerInitializingFirstTime(runtime);
         await this.containerHasInitialized(runtime);
@@ -101,7 +100,7 @@ export class BaseContainerRuntimeFactory implements
         return runtime;
     }
 
-    public async initializeFromExisting(context: IContainerContext): Promise<IRuntime> {
+    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context, true);
         await this.containerHasInitialized(runtime);
 
