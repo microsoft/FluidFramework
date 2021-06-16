@@ -208,7 +208,7 @@ export class OdspDocumentService implements IDocumentService {
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession).catch((e) => {
                 const likelyFacetCodes = e as IFacetCodes;
                 if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                    for (const code of likelyFacetCodes.facetCodes.reverse()) {
+                    for (const code of likelyFacetCodes.facetCodes) {
                         switch (code) {
                             case "sessionForbiddenOnPreservedFiles":
                             case "sessionForbiddenOnModerationEnabledLibrary":

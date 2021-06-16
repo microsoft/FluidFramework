@@ -18,8 +18,8 @@ describe("parseFacetCodes", () => {
     const text2 = '{"error":{"code":"a", "innerError":{"code":"b","innerError":{"code":"c"}}}}';
     const stack = parseFacetCodes(text);
     const stack2 = parseFacetCodes(text2);
-    assert.deepStrictEqual(stack,["a","b"]);
-    assert.deepStrictEqual(stack2,["a","b","c"]);
+    assert.deepStrictEqual(stack,["b","a"]);
+    assert.deepStrictEqual(stack2,["c","b","a"]);
     });
 
     it("can handle empty error", () => {

@@ -81,7 +81,7 @@ export function parseFacetCodes(response: string): string[] {
     if(typeof error === "object" && error !== null) {
         while (error !== undefined) {
             if (error.code !== undefined) {
-                stack.push(error.code);
+                stack.unshift(error.code);
             }
             error = error.innerError;
         }
@@ -163,7 +163,8 @@ export function createOdspNetworkError(
     const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
     error.facetCodes = facetCodes;
 
-    const props: ITelemetryProperties = { response: responseText};
+    const props: ITelemetryProperties = { response: responseText,
+        innerMostErrorCode: facetCodes !== undefined ? facetCodes[0] : undefined};
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
