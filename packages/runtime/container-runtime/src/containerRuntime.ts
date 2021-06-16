@@ -660,13 +660,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.id;
     }
 
-    /**
-     * @deprecated
-     */
-    public get existing(): boolean {
-        return this.existing;
-    }
-
     public get options(): ILoaderOptions {
         return this.context.options;
     }
@@ -810,7 +803,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
-        private readonly existing: boolean | undefined,
+        public readonly existing: boolean | undefined,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -1384,7 +1377,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
         const registryPath =
             `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, this.existing());
+        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, this.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {
