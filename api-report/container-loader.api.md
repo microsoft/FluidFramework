@@ -286,16 +286,16 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
-// @public (undocumented)
-export interface ILoaderOptions extends ILoaderOptions_2 {
-    // (undocumented)
-    summarizeProtocolTree?: true;
-}
-
 // @public
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
+}
+
+// @public (undocumented)
+export interface ILoaderOptions extends ILoaderOptions_2 {
+    // (undocumented)
+    summarizeProtocolTree?: true;
 }
 
 // @public
