@@ -159,7 +159,7 @@ export class ContainerContext implements IContainerContext {
 
     public get codeDetails() { return this._codeDetails; }
 
-    private readonly _fluidModuleP: Promise<Required<IFluidModuleWithDetails>>;
+    private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
@@ -181,7 +181,7 @@ export class ContainerContext implements IContainerContext {
 
     ) {
         this.logger = container.subLogger;
-        this._fluidModuleP = new LazyPromise<Required<IFluidModuleWithDetails>>(
+        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
