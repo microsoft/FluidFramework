@@ -7,6 +7,7 @@ import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { delay } from '@fluidframework/common-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
 import {
@@ -628,7 +629,7 @@ describe('SharedTree', () => {
 
 			// Just waiting for the ChunksEmitted event here isn't sufficient, as the SharedTree error
 			// will propagate in a separate promise chain.
-			await new Promise((resolve) => setTimeout(resolve, 0));
+			await delay(0);
 			expect(treeErrorEventWasInvoked).to.equal(true, 'SharedTree error was never raised');
 		});
 	});

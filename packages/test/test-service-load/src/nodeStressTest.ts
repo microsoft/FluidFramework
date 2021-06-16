@@ -62,9 +62,7 @@ async function orchestratorProcess(
         : await initialize(testDriver, seed);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
-    console.log(`Container targeting with url: ${url }`);
-    console.log("Seed: ", seedArg);
+    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -84,11 +82,11 @@ async function orchestratorProcess(
         }
         if(args.verbose === true) {
             childArgs.push("--verbose");
-            console.log(childArgs.join(" "));
         }
 
         runnerArgs.push(childArgs);
     }
+    console.log(runnerArgs[0].join(" "));
     try{
         await Promise.all(runnerArgs.map(async (childArgs)=>{
             const process = child_process.spawn(

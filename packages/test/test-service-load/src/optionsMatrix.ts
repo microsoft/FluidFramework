@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ILoaderOptions  } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    IContainerRuntimeOptions,
+    IGCRuntimeOptions,
+    ISummaryRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
 } from "@fluidframework/test-pairwise-generator";
+import { ILoaderOptions } from "@fluidframework/container-loader";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -18,10 +22,13 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     maxClientLeaveWaitTime: numberCases,
     noopCountFrequency: numberCases,
     noopTimeFrequency: numberCases,
+    summarizeProtocolTree: [undefined],
 };
 
-export const generateLoaderOptions = (seed: number)=>
-    generatePairwiseOptions<ILoaderOptions>(loaderOptionsMatrix, seed);
+export const generateLoaderOptions = (seed: number): ILoaderOptions[]=>
+    generatePairwiseOptions<ILoaderOptions>(
+        loaderOptionsMatrix,
+        seed);
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,

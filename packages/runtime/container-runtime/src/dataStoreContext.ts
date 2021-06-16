@@ -62,6 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -268,7 +269,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
-                this.channelDeferred?.reject(error);
+                this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
             });
         }
         return this.channelDeferred.promise;

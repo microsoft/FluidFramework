@@ -17,13 +17,13 @@ import {
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ReadAndParseBlob,
     SummaryNode,
 } from "./summarizerNodeUtils";
 

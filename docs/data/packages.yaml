@@ -58,5 +58,5 @@ protocol:
 - "@fluidframework/protocol-definitions"
 experimental:
 - "@fluidframework/data-object-base"
-- "@fluidframework/react-inputs"
-- "@fluidframework/react"
+- "@fluid-experimental/react-inputs"
+- "@fluid-experimental/react"
