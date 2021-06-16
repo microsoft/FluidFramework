@@ -3,6 +3,7 @@ title: Using the documentation system effectively
 menuPosition: 7
 ---
 
+<!-- markdownlint-disable MD036 -->
 
 The Fluid docs are built using [Hugo](https://gohugo.io/). It contains many of the features one would expect from a
 modern documentation system. Content is written in Markdown.
@@ -146,7 +147,7 @@ This is a warning
 
 {{< callout danger >}}
 
-This is a _dangerous_ warning
+This is a *dangerous* warning
 
 {{< /callout >}}
 
@@ -160,7 +161,7 @@ By default, each box's heading is the type. You can change this by providing a t
 ```markdown
 {{%/* callout note "A note about syntax" */%}}
 
-Markdown formatting _goes_ **here.**
+Markdown formatting *goes* **here.**
 
 {{%/* /callout */%}}
 ```
@@ -169,7 +170,7 @@ Markdown formatting _goes_ **here.**
 
 {{% callout note "A note about syntax" %}}
 
-Markdown formatting _goes_ **here.**
+Markdown formatting *goes* **here.**
 
 {{% /callout %}}
 
@@ -236,7 +237,7 @@ build time.
 
 **Input**
 
-```
+```golang
 {{% include file="content/docs/advanced/images/example.ditaa" safeHTML=true %}}
 ```
 

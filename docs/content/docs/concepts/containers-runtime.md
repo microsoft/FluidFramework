@@ -6,7 +6,7 @@ menuPosition: 5
 A **Fluid container** is a foundational concept for creating anything with the Fluid Framework. All of the sample Fluid
 applications use a Fluid container to manage the user experience, app logic, and app state.
 
-However, a Fluid container is _not_ a standalone application. A Fluid container is a _code-plus-data package_. A
+However, a Fluid container is *not* a standalone application. A Fluid container is a *code-plus-data package*. A
 container must be loaded by the Fluid loader and connected to a Fluid service.
 
 Because containers are such a core concept, we'll look at them from a few different angles.

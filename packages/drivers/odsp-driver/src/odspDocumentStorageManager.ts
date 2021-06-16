@@ -245,7 +245,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
-        assert(ops !== undefined, 0x0a6 /* "Input ops are undefined!" */);
         this._ops = ops;
     }
 
@@ -492,6 +491,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                         if (cachedSnapshot === undefined) {
                             cachedSnapshot = await snapshotP;
+                        }
+                        else {
+                            snapshotP.catch(() => {});
                         }
 
                         method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";

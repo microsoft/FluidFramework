@@ -6,9 +6,10 @@
 /* eslint-disable no-bitwise */
 
 import { EventEmitter } from "events";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
 
 export interface ISerializedInterval {
     sequenceNumber: number;

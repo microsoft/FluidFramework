@@ -97,7 +97,7 @@ const snapshotFileName = "header";
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
  * in response to a `set`, and `delete` will be emitted in response to a `delete`.
  */
-export class SharedCell<T extends Serializable = any> extends SharedObject<ISharedCellEvents<T>>
+export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     implements ISharedCell<T> {
     /**
      * Create a new shared cell
@@ -121,7 +121,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     /**
      * The data held by this cell.
      */
-    private data: T | undefined;
+    private data: Serializable<T> | undefined;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -149,14 +149,14 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     /**
      * {@inheritDoc ISharedCell.get}
      */
-    public get() {
+    public get(): Serializable<T> | undefined {
         return this.data;
     }
 
     /**
      * {@inheritDoc ISharedCell.set}
      */
-    public set(value: T) {
+    public set(value: Serializable<T>) {
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
@@ -309,7 +309,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         }
     }
 
-    private setCore(value: T) {
+    private setCore(value: Serializable<T>) {
         this.data = value;
         this.emit("valueChanged", value);
     }

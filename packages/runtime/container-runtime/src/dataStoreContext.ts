@@ -62,6 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -149,18 +150,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get connected(): boolean {
         return this._containerRuntime.connected;
-    }
-
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    public get leader(): boolean {
-        // The FluidDataStoreContext.leader property and "leader"/"notleader" events are deprecated 0.38
-        console.warn("The FluidDataStoreContext.leader property and \"leader\"/\"notleader\" events are deprecated, "
-            + "see BREAKING.md for more details and migration instructions");
-        // Disabling noisy telemetry until customers have had some time to migrate
-        // this.logger.sendErrorEvent({ eventName: "UsedDataStoreContextLeaderProperty" });
-        return this._containerRuntime.leader;
     }
 
     public get loader(): ILoader {
@@ -280,7 +269,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
-                this.channelDeferred?.reject(error);
+                this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
             });
         }
         return this.channelDeferred.promise;
@@ -554,22 +543,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public raiseContainerWarning(warning: ContainerWarning): void {
         this.containerRuntime.raiseContainerWarning(warning);
-    }
-
-    /**
-     * Updates the leader.
-     * @param leadership - Whether this client is the new leader or not.
-     */
-    public updateLeader(leadership: boolean) {
-        // Leader events are ignored if the store is not yet loaded
-        if (!this.loaded) {
-            return;
-        }
-        if (leadership) {
-            this.emit("leader");
-        } else {
-            this.emit("notleader");
-        }
     }
 
     protected bindRuntime(channel: IFluidDataStoreChannel) {
