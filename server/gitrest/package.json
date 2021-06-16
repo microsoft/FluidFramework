@@ -40,7 +40,7 @@
     "nodegit": "^0.26.1",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^2.4.4"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",
