@@ -37,7 +37,7 @@ export const bindUI = (
     packageDetails: IPackageIdentifierDetails,
 ) => {
     container.once("closed", (error) =>
-        window.alert(`🛑 Container is closed 🛑\n${error}`),
+        window.alert(`🛑 Container is closed\n${error}`),
     );
 
     const upgradeBtn = document.getElementById(
@@ -58,7 +58,7 @@ export const bindUI = (
         try {
             await container.proposeCodeDetails(details);
         } catch (error) {
-            window.alert(`🛑 Failed to upgrade container code 🛑\n${error}`);
+            window.alert(`🛑 Failed to upgrade container code\n${error}`);
         }
     };
 

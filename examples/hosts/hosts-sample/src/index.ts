@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IUser,
@@ -15,13 +14,10 @@ import {
 import {
     extractPackageIdentifierDetails,
     IPackageIdentifierDetails,
-    // SemVerCdnCodeResolver,
-    // WebCodeLoader,
-    // AllowList,
 } from "@fluidframework/web-code-loader";
 import { bindUI, setupUI } from "./codeDetailsView";
 import {
-    fauxPackageCodeLoaderForVersion,
+    getCodeLoaderForVersion,
     fauxPackageDetailsV1,
 } from "./fauxPackage";
 import { getFluidObjectAndRender, parsePackageName } from "./utils";
@@ -30,7 +26,6 @@ import { getFluidObjectAndRender, parsePackageName } from "./utils";
 const hostUrl = "http://localhost:7070";
 const ordererUrl = "http://localhost:7070";
 const storageUrl = "http://localhost:7070";
-// const npm = "http://localhost:4873";
 
 const defaultDocument = "example";
 const defaultPackage = "@fluid-example/faux-package@1.0.0";
@@ -92,20 +87,13 @@ export async function start(
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
-        codeLoader: fauxPackageCodeLoaderForVersion(packageDetails.version),
+        codeLoader: getCodeLoaderForVersion(packageDetails.version),
     });
 
     let container: Container | undefined;
     if (shouldCreateNewDocument) {
         // This flow is used to create a new container and then attach it to storage.
-        // const details: IFluidCodeDetails = {
-        //     config: {
-        //         [`@${parsedPackage.scope}:cdn`]: npm,
-        //     },
-        //     package: code,
-        // };
-        const details = fauxPackageDetailsV1;
-        container = await loader.createDetachedContainer(details);
+        container = await loader.createDetachedContainer(fauxPackageDetailsV1);
         try {
             await container.attach(
                 urlResolver.createCreateNewRequest(defaultDocument),
@@ -116,7 +104,7 @@ export async function start(
                 // will try to load an existing document with the same url
                 container = undefined;
             } else {
-                // unexpected error, re-throw
+                // unexpected error, bail out
                 throw error;
             }
         }
@@ -170,5 +158,5 @@ if (document.location.pathname === "/") {
 
     start(document.location.href, packageDetails, shouldCreateNewDocument)
         .then((container) => bindUI(container, packageDetails))
-        .catch((error) => window.alert(`🛑 Failed to open document 🛑\n${error}`));
+        .catch((error) => window.alert(`🛑 Failed to open document\n${error}`));
 }

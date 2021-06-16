@@ -17,10 +17,7 @@ import {
     IFluidCodeDetailsComparer,
     IFluidPackage,
 } from "@fluidframework/core-interfaces";
-import {
-    ICodeLoader,
-    IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader, IFluidModuleWithDetails } from "@fluidframework/container-loader";
 
 /** A placeholder data object used to render an HTML element when it is mounted by the host. */
 class FauxComponent extends DataObject implements IFluidHTMLView {
@@ -63,7 +60,7 @@ export const fauxPackageDetailsV1: IFluidCodeDetails = {
 };
 
 /** A factory method for a code loader emulating a package feed */
-export const fauxPackageCodeLoaderForVersion = (version: string = "1.0.0") => {
+export const getCodeLoaderForVersion = (version: string = "1.0.0") => {
     const fauxPackageDetailsLatest: IFluidCodeDetails = {
         package: {
             name: fauxPackageName,
@@ -84,23 +81,25 @@ export const fauxPackageCodeLoaderForVersion = (version: string = "1.0.0") => {
         new Map([FauxComponent.Factory.registryEntry]),
     );
 
-    return new (class implements ICodeLoader, IFluidCodeDetailsComparer {
+    return new (class implements ICodeDetailsLoader, IFluidCodeDetailsComparer {
         async load(
             source: IFluidCodeDetails,
         ): Promise<IFluidModuleWithDetails> {
             if (!isFauxPackage(source.package)) {
                 throw new Error("Unsupported package");
             }
-            const module = {
-                fluidExport,
+            if (
+                semver.lt(
+                    version, // candidate
+                    source.package.version as string, // constraint
+                )
+            ) {
+                throw new Error(`Unsupported document version [${source.package.version}]`);
+            }
+            return {
+                module: { fluidExport },
+                details: fauxPackageDetailsLatest,
             };
-            const details = semver.gte(
-                version, // candidate
-                source.package.version as string, // constraint
-            )
-                ? fauxPackageDetailsLatest
-                : source;
-            return { module, details };
         }
         get IFluidCodeDetailsComparer() {
             return this;
