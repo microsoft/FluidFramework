@@ -357,7 +357,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			}
 		} else {
 			const [cachedRevision, cachedSnapshot] =
-				this.sequencedSnapshotCache.getClosestEntry(revision) ?? fail('No preceding snapshot cached.');
+				this.sequencedSnapshotCache.getClosestEntry(revisionClamped) ?? fail('No preceding snapshot cached.');
 			startRevision = cachedRevision;
 			current = cachedSnapshot;
 		}
