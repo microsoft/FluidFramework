@@ -24,6 +24,10 @@ export interface ISummaryTreeWithStats {
     summary: ISummaryTree;
 }
 
+export interface ITopLevelSummaryStats extends ISummaryStats {
+    dataStoreCount: number;
+}
+
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
     /** The channel's garbage collection data */
     gcData: IGarbageCollectionData;
