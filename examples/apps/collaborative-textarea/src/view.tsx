@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { CollaborativeTextArea } from "@fluidframework/react-inputs";
+import { CollaborativeTextArea } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 
 interface CollaborativeTextProps {
