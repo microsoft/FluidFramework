@@ -150,4 +150,13 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
             assert.strictEqual(bufferToString(await props.blob.get(), "utf-8"), testString);
         }
     });
+
+    it("correctly handles simultaneous identical blob upload", async () => {
+        const container = await provider.makeTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blob = stringToBuffer("some different yet still random text", "utf-8");
+
+        // upload the blob twice and make sure nothing bad happens.
+        await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
+    });
 });

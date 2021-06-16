@@ -77,7 +77,9 @@ export class BlobManager {
         );
 
         // Note - server will de-dup blobs, so we might get existing blobId!
-        if (!this.blobIds.has(response.id)) {
+        if (this.pendingBlobIds.has(response.id)) {
+            await this.pendingBlobIds.get(response.id)?.promise;
+        } else if (!this.blobIds.has(response.id)) {
             this.pendingBlobIds.set(response.id, new Deferred<void>());
 
             // send blob attach op and wait until we see it to return the handle
@@ -88,7 +90,8 @@ export class BlobManager {
         return handle;
     }
 
-    public addBlobId(blobId: string) {
+    public processBlobAttachOp(blobId: string, local: boolean) {
+        assert(!local || this.pendingBlobIds.has(blobId), "local BlobAttach op with no pending blob");
         this.pendingBlobIds.get(blobId)?.resolve();
         this.pendingBlobIds.delete(blobId);
         this.blobIds.add(blobId);
@@ -113,7 +116,7 @@ export class BlobManager {
         if (blobsTree) {
             const values = Object.values(blobsTree.blobs);
             count = values.length;
-            values.map((entry) => this.addBlobId(entry));
+            values.map((entry) => this.blobIds.add(entry));
         }
         this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
