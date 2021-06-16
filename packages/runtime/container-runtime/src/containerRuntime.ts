@@ -543,7 +543,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public static async loadStateful(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
-        existing: boolean | undefined,
+        existing: boolean,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
@@ -650,7 +650,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.loadStateful(
             context,
             registryEntries,
-            context.existing,
+            context.existing === true,
             requestHandler,
             runtimeOptions,
             containerScope);
@@ -803,7 +803,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
-        public readonly existing: boolean | undefined,
+        public readonly existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {

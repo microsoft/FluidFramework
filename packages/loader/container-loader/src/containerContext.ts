@@ -103,13 +103,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
-    /**
-     * @deprecated
-     */
-    public get existing(): boolean | undefined {
-        return this.existing;
-    }
-
     public get branch(): string {
         return this.attributes.branch;
     }
@@ -187,7 +180,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
-        private readonly existing: boolean,
+        public readonly existing: boolean,
         public readonly pendingLocalState?: unknown,
 
     ) {

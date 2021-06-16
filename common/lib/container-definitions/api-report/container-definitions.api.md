@@ -151,7 +151,7 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -449,18 +449,15 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     // (undocumented)
-    instantiateFirstTime(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFirstTime(context: IContainerContext): Promise<IRuntime>;
     // (undocumented)
-    instantiateFromExisting(context: IStatelessContainerContext): Promise<IRuntime>;
+    instantiateFromExisting(context: IContainerContext): Promise<IRuntime>;
     // @deprecated
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
 // @public
 export const isFluidBrowserPackage: (maybePkg: any) => maybePkg is Readonly<IFluidBrowserPackage>;
-
-// @public (undocumented)
-export type IStatelessContainerContext = Omit<IContainerContext, "existing">;
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
