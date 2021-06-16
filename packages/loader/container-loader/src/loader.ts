@@ -19,7 +19,7 @@ import {
     IHostLoader,
     ILoader,
     IPendingLocalState,
-    ILoaderOptions,
+    ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -116,6 +116,10 @@ function createCachedResolver(resolver: IUrlResolver) {
         return resolveCache.get(request.url);
     };
     return cacheResolver;
+}
+
+export interface ILoaderOptions extends ILoaderOptions1{
+    summarizeProtocolTree?: true,
 }
 
 /**
