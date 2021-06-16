@@ -25,8 +25,6 @@ scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) pag
 the npm scopes.
 
 - `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
-- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
-- `@fluidframework/react` is renamed to `@fluid-experimental/react`
 
 ### LoaderHeader.version could not be null
 `LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
