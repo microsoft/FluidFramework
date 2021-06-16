@@ -1,3 +1,16 @@
+## 0.42 Breaking changes
+
+- [Package renames](#0.42-package-renames)
+
+### 0.42 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
 ## 0.41 Breaking changes
 
 - [Package renames](#0.41-package-renames)

@@ -335,7 +335,7 @@ export class LayerGraph {
                 }
             }
             if (!matched) {
-                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check`);
+                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check. Check that the package is listed in data/layerInfo.json.`);
             }
         }
     }
