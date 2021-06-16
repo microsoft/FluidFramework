@@ -55,6 +55,8 @@
     "@fluidframework/server-services-core": "^0.1028.0",
     "@types/semver": "^6.0.1",
     "async": "^3.2.0",
+    "axios": "^0.21.1",
+    "crypto-js": "^4.0.0",
     "double-ended-queue": "^2.1.0-0",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",

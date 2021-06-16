@@ -76,6 +76,12 @@ export interface IDocumentLambdaServerConfiguration {
     partitionActivityCheckInterval: number;
 }
 
+// Moira lambda configuration
+export interface IMoiraServerConfiguration {
+    // Enables Moira submission lambda
+    enable: boolean;
+}
+
 /**
  * Key value store of service configuration properties
  */
@@ -92,6 +98,9 @@ export interface IServerConfiguration {
 
     // Scribe lambda configuration
     scribe: IScribeServerConfiguration;
+
+    // Moira lambda configuration
+    moira: IMoiraServerConfiguration;
 
     // Document lambda configuration
     documentLambda: IDocumentLambdaServerConfiguration;
@@ -137,6 +146,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+    },
+    moira: {
+        enable: false,
     },
     documentLambda: {
         partitionActivityTimeout: 10 * 60 * 1000,
