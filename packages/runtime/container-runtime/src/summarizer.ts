@@ -92,7 +92,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
     static wrap(error: any, logged: boolean = false) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
-        return wrapError(error, undefined /* props */, newErrorFn);
+        return wrapError<SummarizingWarning>(error, newErrorFn);
     }
 }
 

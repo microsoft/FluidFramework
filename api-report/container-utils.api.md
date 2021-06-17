@@ -68,8 +68,8 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
 }
 
-// @public (undocumented)
-export function wrapError<T>(error: any, props: ITelemetryProperties | undefined, newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => T): T;
+// @public
+export function wrapError<T extends LoggingError>(error: any, newErrorFn: (m: string, p?: ITelemetryProperties) => T): T;
 
 
 // (No @packageDocumentation comment for this package)

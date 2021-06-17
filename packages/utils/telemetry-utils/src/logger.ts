@@ -66,11 +66,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         if (isILoggingError(error)) {
-            // First, copy over stack and error message directly
+            // First, copy over error message, stack, and errorType directly (overwrite if present on event)
             // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            const errorAsObject = error as Partial<Error>;
+            const errorAsObject = error as Partial<Error & IErrorBase>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
+            event.errorType = errorAsObject.errorType;
 
             // Then add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
@@ -107,10 +108,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 }
             }
         } else if (typeof error === "object" && error !== null) {
-            // Try to pull the stack and message off even if it's not an ILoggingError
-            const errorAsObject = error as Partial<Error>;
+            // Try to pull the message, stack and errorType off even if it's not an ILoggingError
+            const errorAsObject = error as Partial<Error & IErrorBase>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
+            event.errorType = errorAsObject.errorType;
         } else {
             event.error = error;
         }

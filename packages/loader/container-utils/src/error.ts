@@ -11,7 +11,7 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { LoggingError, SomeLoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, SomeLoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -87,7 +87,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
         const newErrorFn =
             (errMsg: string) =>
                 new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds);
-        return wrapError(error, undefined /* props */, newErrorFn);
+        return wrapError(error, newErrorFn);
     }
 }
 
@@ -114,23 +114,23 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     ): ICriticalContainerError {
         assert(error !== undefined, "Missing error input");
 
-        const info = message !== undefined
+        const messagePropsToLog = message !== undefined
             ? extractSafePropertiesFromMessage(message)
             : undefined;
 
         // Don't coerce if it's already a recognized LoggingError
         if (isValidLoggingError(error)) {
-            if (info !== undefined) {
-                error.addTelemetryProperties(info);
+            if (messagePropsToLog !== undefined) {
+                error.addTelemetryProperties(messagePropsToLog);
             }
             return error;
         }
 
         const newErrorFn =
             (errMsg: string, props?: ITelemetryProperties) =>
-                new DataProcessingError(errMsg, props);
+                new DataProcessingError(errMsg, { ...props, ...messagePropsToLog }); //* Check destructuring order
 
-        return wrapError(error, info, newErrorFn);
+        return wrapError(error, newErrorFn);
     }
 }
 
@@ -164,35 +164,39 @@ export function CreateContainerError(error: any, props?: ITelemetryProperties): 
         return error;
     }
 
+    const { errorType } = extractLogSafeErrorProperties(error);
     const newErrorFn =
-        (errMsg: string, props2?: ITelemetryProperties, errorType?: string) =>
+        (errMsg: string, props2?: ITelemetryProperties) =>
             new SomeLoggingError(
                 errorType ?? ContainerErrorType.genericError,
                 errMsg,
-                props2,
+                { ...props, ...props2 }, //* Check destructuring order
             );
 
-    return wrapError(error, props, newErrorFn);
+    return wrapError(error, newErrorFn);
 }
 
-export function wrapError<T>(
+/**
+ * This function allows us to take an unknown error object and extract certain known
+ * properties to be included in a new error object.
+ * The stack is preserved, along with any safe-to-log telemetry props.
+ * @param error - An existing error that was presumably caught, thrown from unknown origins
+ * @param newErrorFn - callback that will create a new error wrapping the given error
+ * @returns A new error object "wrapping" the given error
+ */
+export function wrapError<T extends LoggingError>(
     error: any,
-    props: ITelemetryProperties | undefined,
-    newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => T,
+    newErrorFn: (m: string, p?: ITelemetryProperties) => T,
 ): T {
     assert(error !== undefined, "Missing error input");
 
-    let allProps = props;
-    if (isValidLoggingError(error)) {
-        // All props are safe to pull in in this case
-        allProps = { ...props, ...error};
-    }
     const {
         message,
         stack,
-        errorType,
     } = extractLogSafeErrorProperties(error);
-    const newError = newErrorFn(message, allProps, errorType);
+    const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
+
+    const newError = newErrorFn(message, props);
     if (stack !== undefined) {
         Object.assign(newError, { stack });
     }
