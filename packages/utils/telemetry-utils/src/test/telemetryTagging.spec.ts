@@ -17,6 +17,7 @@ import {
     // MultiSinkLogger,
     TelemetryDataTag,
     LoggingError,
+    MultiSinkLogger,
 } from "../logger";
 
 const exampleTaggedTelemetryPropertyWithUserData: ITaggedTelemetryPropertyType = {
@@ -35,11 +36,11 @@ const exampleTelemetryEvent: ITelemetryGenericEvent = {
     category:"generic",
     eventName:"testEvent",
 };
-// const exampleTelemetryErrorEvent: ITelemetryBaseEvent = {
-//     category:"generic",
-//     eventName:"exampleErrorEvent",
-//     exampleTaggedTelemetryPropertyWithUserData,
-// };
+const exampleMysteryEvent: ITelemetryBaseEvent = {
+    category:"generic",
+    eventName:"testEvent",
+    mysteryProperty: exampleTaggedTelemetryPropertyWithMysteryTag,
+};
 
 describe("sendTelemetryEvent() properly handles sensitive data", () => {
     let sent = false;
@@ -96,69 +97,105 @@ describe("sendTelemetryEvent() properly handles sensitive data", () => {
     assert(sent, "event should be sent");
 });
 
-// describe("ChildLogger tag propagation", () => {
-//     it("Getters Are Combined",()=>{
-//         let sent = false;
-//         const logger: ITelemetryBaseLogger = {
-//             send(event: ITelemetryBaseEvent): void {
-//                 if (event.testGetter1 !== true || event.testGetter2 !== true) {
-//                     throw new Error("expected testGetter1 and testGetter2 on event");
-//                 }
-//                 if (event.eventName !== "test1:test2:testEvent") {
-//                     throw new Error("expected combined namespace");
-//                 }
-//                 sent = true;
-//             },
-//         };
-//         const childLogger1 = ChildLogger.create(
-//             logger,
-//             "test1",
-//             {
-//                 all:
-//                 {
-//                     testGetter1: ()=> true,
-//                 },
-//             },
-//         );
+describe("ChildLogger tag propagation", () => {
+    let sent = false;
+    // In this minimal base logger, no assumption about supportsTags is made as we are just trying to check what gets
+    // filtered up by the two child loggers:
+    const logger: ITelemetryBaseLogger = {
+        send(event: ITelemetryBaseEvent): void {
+            // if (event.testGetter2 === true && event.mysteryProperty !== true) {
+            //     throw new Error("expected childLogger2 to pass tagged object");
+            // }
+            if (event.testGetter1 === true && event.mysteryProperty !== "REDACTED (unknown tag)") {
+                throw new Error("expected mystery property to be redacted by cl1");
+            }
+            sent = true;
+        },
+    };
+    const childLogger1 = ChildLogger.create(
+        logger,
+        "test1",
+        {
+            all:
+            {
+                testGetter1: ()=> true,
+            },
+        },
+        undefined,
+    );
 
-//         const childLogger2 = ChildLogger.create(
-//             childLogger1,
-//             "test2",
-//             {
-//                 all:
-//                 {
-//                     testGetter2: ()=> true,
-//                 },
-//             },
-//         );
+    const childLogger2 = ChildLogger.create(
+        childLogger1,
+        "test2",
+        {
+            all:
+            {
+                testGetter2: ()=> true,
+            },
+        },
+        true,
+    );
 
-//         childLogger2.send({ category:"generic", eventName:"testEvent" });
-//         assert(sent, "event should be sent");
-//     });
+    childLogger2.send(exampleMysteryEvent);
+    assert(sent, "event should be sent");
+});
 
-//     it("Undefined second child namespace",()=>{
-//         let sent = false;
-//         const logger: ITelemetryBaseLogger = {
-//             send(event: ITelemetryBaseEvent): void {
-//                 if (event.eventName !== "test1:testEvent") {
-//                     throw new Error("expected combined namespace");
-//                 }
-//                 sent = true;
-//             },
-//         };
-//         const childLogger1 = ChildLogger.create(
-//             logger,
-//             "test1");
+describe("MultiSinkLogger tagging", () => {
+    let sent = false;
+    let count = 0;
+    const multiSinkLogger: MultiSinkLogger = new MultiSinkLogger("multiSinkTest");
+    const baseLogger: ITelemetryBaseLogger = {
+        send(event: ITelemetryBaseEvent): void {
+            count += 1;
+            if (event.testGetterTT && event.mysteryProperty !== "mysteryValue") {
+                throw new Error("expected clsTT to carry through tagged prop");
+            }
+            else if (event.testGetterTF && event.userProperty !== "REDACTED (unknown tag)") {
+                throw new Error("expected clsTF to redact tagged prop");
+            }
+            else if (event.testGetterTU && event.mysteryProperty !== "REDACTED (unknown tag)") {
+                throw new Error("expected clsTU to redact tagged prop");
+            }
+            if (count === 3) {
+                sent = true;
+            }
+        },
+    };
+    const childLoggerSupportsTagsTrue = ChildLogger.create(
+        baseLogger,
+        "clSupportsTagsTrue",
+        {
+            all:
+            {
+                testGetterTT: ()=> true,
+            },
+        },
+    );
+    const childLoggerSupportsTagsFalse = ChildLogger.create(
+        baseLogger,
+        "clSupportsTagsFalse",
+        {
+            all:
+            {
+                testGetterTF: ()=> true,
+            },
+        },
+    );
+    const childLoggerSupportsTagsUndefined = ChildLogger.create(
+        baseLogger,
+        "clSupportsTagsUndefined",
+        {
+            all:
+            {
+                testGetterTU: ()=> true,
+            },
+        },
+    );
+    multiSinkLogger.addLogger(childLoggerSupportsTagsTrue);
+    multiSinkLogger.addLogger(childLoggerSupportsTagsFalse);
+    multiSinkLogger.addLogger(childLoggerSupportsTagsUndefined);
+    multiSinkLogger.send(exampleMysteryEvent);
 
-//         sent = false;
-//         const childLogger2 = ChildLogger.create(
-//             childLogger1);
-
-//         childLogger2.send({ category:"generic", eventName:"testEvent" });
-//         assert(sent, "event should be sent");
-//     });
-// });
-
-// describe("MultiSinkLogger tagging", () => {
-
-// });
+    childLoggerSupportsTagsTrue.send(exampleMysteryEvent);
+    assert(sent, "event should be sent");
+});

@@ -346,6 +346,10 @@ export class ChildLogger extends TelemetryLogger {
 export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[] = [];
 
+    // Multi-sink is a special case where messages are meant to be routed to multiple loggers, which may have different
+    // permissions. It should then be permissive by default, and let
+    supportsTags: true | undefined = true;
+
     /**
      * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
      * @param namespace - Telemetry event name prefix to add to all events
@@ -379,6 +383,10 @@ export class MultiSinkLogger extends TelemetryLogger {
             // check logger.supportsTags
             logger.send(newEvent);
         });
+        //
+        if (this.supportsTags) {
+            // getValidTelemetryProps(event);
+        }
     }
 }
 
