@@ -225,9 +225,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
-        const newEvent: ITelemetryBaseEvent = {
-            ...event,
-        };
+        // const newEvent: ITelemetryBaseEvent = {
+        //     ...event,
+        // };
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
@@ -275,8 +275,7 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags,
-        supportsTags?: true | undefined): TelemetryLogger {
+        properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
@@ -308,15 +307,13 @@ export class ChildLogger extends TelemetryLogger {
                 baseLogger.baseLogger,
                 combinedNamespace,
                 combinedProperties,
-                supportsTags,
             );
         }
 
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
-            properties,
-            supportsTags);
+            properties);
     }
 
     private constructor(

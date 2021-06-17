@@ -36,12 +36,14 @@ const exampleTelemetryEvent: ITelemetryGenericEvent = {
     category:"generic",
     eventName:"testEvent",
 };
-const exampleMysteryEvent: ITelemetryBaseEvent = {
+const exampleMysteryEvent: ITelemetryGenericEvent = {
     category:"generic",
     eventName:"testEvent",
     mysteryProperty: exampleTaggedTelemetryPropertyWithMysteryTag,
 };
-
+const exampleMysteryError = {
+    mysteryProperty2: exampleTaggedTelemetryPropertyWithMysteryTag,
+};
 describe("sendTelemetryEvent() properly handles sensitive data", () => {
     let sent = false;
     let count = 0;
@@ -136,7 +138,7 @@ describe("ChildLogger tag propagation", () => {
         true,
     );
 
-    childLogger2.send(exampleMysteryEvent);
+    childLogger2.sendTelemetryEvent(exampleMysteryEvent, new LoggingError("foo", exampleMysteryError));
     assert(sent, "event should be sent");
 });
 
@@ -194,8 +196,8 @@ describe("MultiSinkLogger tagging", () => {
     multiSinkLogger.addLogger(childLoggerSupportsTagsTrue);
     multiSinkLogger.addLogger(childLoggerSupportsTagsFalse);
     multiSinkLogger.addLogger(childLoggerSupportsTagsUndefined);
-    multiSinkLogger.send(exampleMysteryEvent);
+    // multiSinkLogger.send(exampleMysteryEvent);
 
-    childLoggerSupportsTagsTrue.send(exampleMysteryEvent);
+    // childLoggerSupportsTagsTrue.send(exampleMysteryEvent);
     assert(sent, "event should be sent");
 });
