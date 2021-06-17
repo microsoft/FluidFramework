@@ -6,20 +6,22 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    IFluidCodeDetails,
     IFluidObject,
+    IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
+    IFluidModule,
     IHostLoader,
     ILoader,
     IPendingLocalState,
-    ILoaderOptions,
+    ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -118,6 +120,39 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
+export interface ILoaderOptions extends ILoaderOptions1{
+    summarizeProtocolTree?: true,
+}
+
+/**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+     module: IFluidModule;
+     /**
+      * Code details associated with the module. Represents a document schema this module supports.
+      * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+      * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+      */
+     details: IFluidCodeDetails;
+ }
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+    extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Load the code module (package) that is capable to interact with the document.
+     *
+     * @param source - Code proposal that articulates the current schema the document is written in.
+     * @returns - Code module entry point along with the code details associated with it.
+     */
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
 /**
  * Services and properties necessary for creating a loader
  */
@@ -138,7 +173,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -184,7 +219,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -224,7 +259,7 @@ export class Loader implements IHostLoader {
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,

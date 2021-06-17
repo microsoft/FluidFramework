@@ -203,6 +203,7 @@
                     "examples/",
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
+                    "experimental/PropertyDDS/services/",
                     "packages/agents/"
                 ],
                 "deps": [

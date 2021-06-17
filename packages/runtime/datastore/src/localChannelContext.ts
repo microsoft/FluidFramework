@@ -19,7 +19,7 @@ import {
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,
@@ -84,7 +84,9 @@ export class LocalChannelContext implements IChannelContext {
 
     public async getChannel(): Promise<IChannel> {
         if (this.channel === undefined) {
-            this.channel = await this.loadChannel();
+            this.channel = await this.loadChannel()
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                .catch((err)=>{throw CreateProcessingError(err, undefined);});
         }
         return this.channel;
     }
