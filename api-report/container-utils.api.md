@@ -9,13 +9,14 @@ import { IErrorBase } from '@fluidframework/container-definitions';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
 export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError;
 
 // @public
-export function CreateProcessingError(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+export const CreateProcessingError: typeof DataProcessingError.wrapIfUnknown;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase {
@@ -33,6 +34,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
+    // (undocumented)
+    static wrapIfUnknown(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
 }
 
 // @public (undocumented)
@@ -55,10 +58,18 @@ export class GenericError extends LoggingError implements IGenericError {
 }
 
 // @public (undocumented)
-export function GenericWrapperFn(errMsg: string, props?: ITelemetryProperties, et?: string): ICriticalContainerError;
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
+    constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
+    // (undocumented)
+    readonly errorType = ContainerErrorType.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+    // (undocumented)
+    static wrap(error: any, retryAfterSeconds: number): void;
+}
 
 // @public (undocumented)
-export function WrapError(error: any, props: ITelemetryProperties | undefined, newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => ICriticalContainerError, mode: boolean): ICriticalContainerError;
+export function WrapError(error: any, props: ITelemetryProperties | undefined, newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => ICriticalContainerError, respectExistingKnownError: boolean): ICriticalContainerError;
 
 
 // (No @packageDocumentation comment for this package)

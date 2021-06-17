@@ -534,8 +534,7 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
-export abstract class LoggingError extends Error implements ILoggingError, IErrorBase {
-//* Try Omit<IErrorBase, sequenceNumber>
+export abstract class LoggingError extends Error implements ILoggingError, Omit<IErrorBase, "sequenceNumber"> {
     private readonly __isFluidLoggingError__ = 1;
 
     public abstract readonly errorType: string;

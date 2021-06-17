@@ -55,6 +55,7 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     GenericError,
+    ThrottlingWarning,
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
@@ -927,17 +928,9 @@ export class DeltaManager
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delayMs;
 
-            // Add 'throttling' properties to an error with safely extracted properties:
-            const throttlingWarning: IThrottlingWarning = {
-                errorType: ContainerErrorType.throttlingError,
-                message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayMs / 1000,
-            };
-            const reconfiguredError: IThrottlingWarning = {
-                ...CreateContainerError(error),
-                ...throttlingWarning,
-            };
-            this.emit("throttled", reconfiguredError);
+            const throttlingWarning: IThrottlingWarning =
+                ThrottlingWarning.wrap(error, "Service busy/throttled", delayMs / 1000 /* retryAfterSeconds */);
+            this.emit("throttled", throttlingWarning);
         }
     }
 
