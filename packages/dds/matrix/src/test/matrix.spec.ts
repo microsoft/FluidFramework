@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
@@ -16,7 +15,7 @@ import {
     MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
@@ -59,7 +58,7 @@ describe("Matrix", () => {
 
         // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
-        async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+        async function summarize<T>(matrix: SharedMatrix<T>) {
             // Create a summary
             const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
@@ -81,7 +80,7 @@ describe("Matrix", () => {
             return matrix2;
         }
 
-        async function expect<T extends Serializable>(expected: readonly (readonly T[])[]) {
+        async function expect<T>(expected: readonly (readonly (MatrixItem<T>)[])[]) {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
@@ -695,6 +694,42 @@ describe("Matrix", () => {
             matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
 
             // Disconnect and reconnect the client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Verify that the 'setCells()' op targeted the original position of (0,0),
+            // not the current local position of (0,3).
+            await expect([
+                [undefined, undefined, undefined, "A"],
+            ]);
+        });
+
+        it("can resend 'setCell()' at correct position when multiple reconnects occur", async () => {
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+
+            await expect([[undefined]]);
+
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+            // Note: Inserting '3' helps expose incorrect range check logic that fails to
+            //       consider unallocated handles.  Consider the empty leading segment:
+            //
+            //           start  = -1  (unallocated)
+            //           length = 3
+            //           end    = -1 + 3 = 2
+            //
+            //       In which case, pass the empty segment into 'findReconnectionPostition()'.
+
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
+
+            // Disconnect and reconnect the client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Disconnect and reconnect the client a second time to catch bugs caused by not preserving
+            // the original 'localSeq' or caused by state mutations during reconnection.
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
 

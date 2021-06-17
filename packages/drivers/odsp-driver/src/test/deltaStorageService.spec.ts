@@ -32,9 +32,9 @@ describe("DeltaStorageService", () => {
             async (_refresh) => "?access_token=123",
             createUtEpochTracker(fileEntry, logger),
             logger);
-        const actualDeltaUrl = await deltaStorageService.buildUrl(3, 8);
+        const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
         // eslint-disable-next-line max-len
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
+        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
@@ -86,7 +86,7 @@ describe("DeltaStorageService", () => {
 
         it("Should deserialize the delta feed response correctly", async () => {
             const { messages, partialResult } = await mockFetchOk(
-                async () => deltaStorageService.get(2, 8),
+                async () => deltaStorageService.get(2, 8, {}),
                 expectedDeltaFeedResponse,
             );
             assert(!partialResult, "partialResult === false");
@@ -142,7 +142,7 @@ describe("DeltaStorageService", () => {
 
         it("Should deserialize the delta feed response correctly", async () => {
             const { messages, partialResult } = await mockFetchOk(
-                async () => deltaStorageService.get(2, 8),
+                async () => deltaStorageService.get(2, 8, {}),
                 expectedDeltaFeedResponse,
             );
             assert(!partialResult, "partialResult === false");

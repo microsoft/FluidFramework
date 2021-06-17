@@ -8,13 +8,13 @@ import {
     IConsumer,
     IQueuedMessage,
     IPartition,
+    IPartitionConfig,
     IPartitionWithEpoch,
     IPartitionLambdaFactory,
     ILogger,
     LambdaCloseType,
     IContextErrorData,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { Partition } from "./partition";
 
 /**
@@ -29,9 +29,8 @@ export class PartitionManager extends EventEmitter {
     private stopped = false;
 
     constructor(
-        private readonly factory: IPartitionLambdaFactory,
+        private readonly factory: IPartitionLambdaFactory<IPartitionConfig>,
         private readonly consumer: IConsumer,
-        private readonly config: Provider,
         private readonly logger?: ILogger) {
         super();
 
@@ -160,7 +159,6 @@ export class PartitionManager extends EventEmitter {
                 partition.leaderEpoch,
                 this.factory,
                 this.consumer,
-                this.config,
                 this.logger);
 
             // Listen for error events to know when the partition has stopped processing due to an error
@@ -169,10 +167,6 @@ export class PartitionManager extends EventEmitter {
                     return;
                 }
 
-                // For simplicity we will close the entire manager whenever any partition errors. In the case that the
-                // restart flag is false and there was an error we will eventually need a way to signify that a
-                // partition is 'poisoned'.
-                errorData.restart = true;
                 this.emit("error", error, errorData);
             });
 

@@ -1,7 +1,72 @@
+## 0.42 Breaking changes
+
+- [Package renames](#0.42-package-renames)
+
+### 0.42 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+## 0.41 Breaking changes
+
+- [Package renames](#0.41-package-renames)
+- [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
+- [Leadership API surface removed](#Leadership-API-surface-removed)
+- [IContainerContext and Container storage API return type changed](#IContainerContext-and-Container-storage-API-return-type-changed)
+
+### 0.41 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/last-edited-experimental` is renamed to `@fluid-experimental/last-edited`
+
+### LoaderHeader.version could not be null
+`LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
+
+### Leadership API surface removed
+In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned off by default.  In 0.41 it has now been removed.  If you still require leadership functionality, you can use a `TaskSubscription` in combination with an `AgentScheduler`.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on how to use `TaskSubscription` to migrate away from leadership election.
+
+### IContainerContext and Container storage API return type changed
+IContainerContext and Container now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
+
+## 0.40 Breaking changes
+
+- [AgentScheduler removed by default](#AgentScheduler-removed-by-default)
+- [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
+- [IContainerRuntimeDirtyable removed](#IContainerRuntimeDirtyable-removed)
+- [Most RouterliciousDocumentServiceFactory params removed](#Most-RouterliciousDocumentServiceFactory-params-removed)
+
+### AgentScheduler removed by default
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
+
+### ITelemetryProperties may be tagged for privacy purposes
+Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
+
+### IContainerRuntimeDirtyable removed
+The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
+
+### Most RouterliciousDocumentServiceFactory params removed
+
+The `RouterliciousDocumentServiceFactory` constructor no longer accepts the following params: `useDocumentService2`, `disableCache`, `historianApi`, `gitCache`, and `credentials`. Please open an issue if these flags/params were important to your project so that they can be re-incorporated into the upcoming `IRouterliciousDriverPolicies` param.
+
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)
 - [LoaderHeader.pause](#LoaderHeader.pause)
 - [ODSP driver definitions](#ODSP-driver-definitions)
+- [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
+- [fileOverwrittenInStorage](#fileOverwrittenInStorage)
+- [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
+- [ITelemetryBaseLogger now has a supportsTags property (not breaking)](#itelemetrybaselogger-now-has-a-supportstags-property-not-breaking)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
@@ -20,6 +85,15 @@ use
 A lot of definitions have been moved from @fluidframework/odsp-driver to @fluidframework/odsp-driver-definitions. This change is required in preparation for driver to be dynamically loaded by host.
 This new package contains all the dependencies of ODSP driver factory (like HostStoragePolicy, IPersistedCache, TokenFetcher) as well as outputs (OdspErrorType).
 @fluidframework/odsp-driver will continue to have defintions for non-factory functionality (like URI resolver, helper functionality to deal with sharing links, URI parsing, etc.)
+
+### ITelemetryLogger Remove redundant methods
+Remove deprecated `shipAssert` `debugAssert` `logException` `logGenericError` in favor of `sendErrorEvent` as they provide the same behavior and semantics as `sendErrorEvent`and in general are relatively unused. These methods were deprecated in 0.36.
+
+### fileOverwrittenInStorage
+Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.epochVersionMismatch`
+
+### absolutePath use in IFluidHandle is deprecated
+Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)
@@ -204,7 +278,6 @@ The option will be turned off by default in an upcoming release before being tur
 
 ### Removed containerUrl from IContainerLoadOptions and IContainerConfig
 Removed containerUrl from IContainerLoadOptions and IContainerConfig. This is no longer needed to route request.
->>>>>>> 0dc4cd31219a43e304b5b4139faa0ae6f0a5fce1
 
 ## 0.37 Breaking changes
 

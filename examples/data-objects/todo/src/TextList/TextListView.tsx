@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluidframework/react-inputs";
+import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
+import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";
 
 interface ITextListViewProps {
     textDirectory: IDirectory;
-    root: ISharedDirectory;
     createNewItem(): void;
 }
 
@@ -19,7 +18,7 @@ interface ITextListViewProps {
  * This is an example of using react hooks with listeners
  */
 export function TextListView(props: ITextListViewProps) {
-    const [sharedStrings, setSharedString] = useState<{ id: string, text: SharedString }[]>([]);
+    const [sharedStrings, setSharedStrings] = useState<{ id: string, text: SharedString }[]>([]);
     const sharedStringRef = useRef(sharedStrings);
 
     // We have a hook that we only want to run once. This will setup our listeners to modify our array of SharedStrings
@@ -47,16 +46,12 @@ export function TextListView(props: ITextListViewProps) {
             const currentItems = sharedStringRef.current.filter((x) => currentIds.includes(x.id));
             await Promise.all(sharedStringsP);
 
-            setSharedString([...currentItems, ...sharedStringList]);
+            setSharedStrings([...currentItems, ...sharedStringList]);
         };
 
-        props.root.on("valueChanged", (changed: IDirectoryValueChanged) => {
-            if (changed.path === props.textDirectory.absolutePath) {
-                // Every time we get a new event we will re-get all the SharedStrings
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                generateShareStringList();
-            }
-        });
+        // Every time we get a new event we will re-get all the SharedStrings
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        props.textDirectory.on("containedValueChanged", generateShareStringList);
 
         // We want to generate this list the first time we render this but we need to do it in an async way
         // eslint-disable-next-line @typescript-eslint/no-floating-promises

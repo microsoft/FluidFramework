@@ -15,6 +15,7 @@ import { ensurePackageInstalled } from "./testApi";
 enum CompatKind {
     None = "None",
     Loader = "Loader",
+    Driver = "Driver",
     ContainerRuntime = "ContainerRuntime",
     DataRuntime = "DataRuntime",
     LoaderAndContainerRuntime = "LoaderAndContainerRuntime",
@@ -29,11 +30,17 @@ interface CompatConfig {
     kind: CompatKind,
     compatVersion: number | string,
     loader?: string | number,
+    driver?: string | number,
     containerRuntime?: string | number,
     dataRuntime?: string | number,
 }
 
-function genConfig(compatVersion: number): CompatConfig[] {
+// N, N - 1, and N - 2
+const defaultVersions = [0, -1, -2];
+// we are currently supporting 0.39 long-term
+const LTSVersions = ["^0.39.0"];
+
+function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
         return [{
             name: `Non-Compat`,
@@ -42,35 +49,86 @@ function genConfig(compatVersion: number): CompatConfig[] {
         }];
     }
 
+    const allOld = {
+        loader: compatVersion,
+        driver: compatVersion,
+        containerRuntime: compatVersion,
+        dataRuntime: compatVersion,
+    };
+
     return [
         {
-            name: `compat N${compatVersion} - old loader + new runtime`,
+            name: `compat N${compatVersion} - old loader`,
             kind: CompatKind.Loader,
             compatVersion,
             loader: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new loader + old runtime`,
+            name: `compat N${compatVersion} - new loader`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
+            loader: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+        },
+        {
+            name: `compat N${compatVersion} - new driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            ...allOld,
+            driver: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old container runtime`,
             kind: CompatKind.ContainerRuntime,
             compatVersion,
             containerRuntime: compatVersion,
-            dataRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new container runtime + old data runtime`,
+            name: `compat N${compatVersion} - new container runtime`,
+            kind: CompatKind.ContainerRuntime,
+            compatVersion,
+            ...allOld,
+            containerRuntime: undefined,
+        },
+        {
+            name: `compat N${compatVersion} - old data runtime`,
             kind: CompatKind.DataRuntime,
             compatVersion,
             dataRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - old container runtime + new data runtime`,
+            name: `compat N${compatVersion} - new data runtime`,
             kind: CompatKind.LoaderAndContainerRuntime,
             compatVersion,
-            loader: compatVersion,
-            containerRuntime: compatVersion,
+            ...allOld,
+            dataRuntime: undefined,
         },
     ];
 }
+
+const genLTSConfig = (compatVersion: number | string): CompatConfig[]  => {
+    return [
+        {
+            name: `compat LTS ${compatVersion} - old loader`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            loader: compatVersion,
+        },
+        {
+            name: `compat LTS ${compatVersion} - old loader + old driver`,
+            kind: CompatKind.Loader,
+            compatVersion,
+            driver: compatVersion,
+            loader: compatVersion,
+        },
+    ];
+};
 
 /*
  * Parse the command line argument and environment variables.  Arguments take precedent.
@@ -132,7 +190,6 @@ nconf.argv({
         fluid: {
             test: {
                 compat: undefined,
-                compatVersion: [0, -1, -2],
                 driver: "local",
             },
         },
@@ -150,9 +207,18 @@ process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
 
 let configList: CompatConfig[] = [];
-compatVersions.forEach((value) => {
-    configList.push(...genConfig(value));
-});
+if (!compatVersions || compatVersions.length === 0) {
+    defaultVersions.forEach((value) => {
+        configList.push(...genConfig(value));
+    });
+    LTSVersions.forEach((value) => {
+        configList.push(...genLTSConfig(value));
+    });
+} else {
+    compatVersions.forEach((value) => {
+        configList.push(...genConfig(value));
+    });
+}
 
 if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind.includes(value.kind));
@@ -178,13 +244,13 @@ function describeCompat(
                 let resetAfterEach: boolean;
                 before(async () => {
                     provider = await getVersionedTestObjectProvider(
-                        config?.loader,
+                        config.loader,
                         {
                             type: driver,
-                            version: config?.loader,
+                            version: config.driver,
                         },
-                        config?.containerRuntime,
-                        config?.dataRuntime,
+                        config.containerRuntime,
+                        config.dataRuntime,
                     );
                 });
                 tests((reset: boolean = true) => {

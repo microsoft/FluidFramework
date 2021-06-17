@@ -4,6 +4,8 @@
  */
 
 import {
+    ILoggingError,
+    ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryErrorEvent,
@@ -97,11 +99,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         event[key] = "REDACTED (UserData)";
                         break;
                     default:
-                        // This will help us keep this switch statement up to date
-                        (function(_: never) {})(tag);
-
                         // If we encounter a tag we don't recognize
-                        // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
                         event[key] = "REDACTED (unknown tag)";
                         break;
@@ -194,55 +192,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         this.send(perfEvent);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Log generic error with the logger
-     *
-     * @param eventName - the name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    public logGenericError(eventName: string, error: any) {
-        this.sendErrorEvent({ eventName }, error);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-        this.sendErrorEvent({ ...event, isException: true }, exception);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-
-     * Log an debug assert with the logger
-     *
-     * @param condition - the condition to assert on
-     * @param event - the event to log if the condition fails
-     */
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        this.shipAssert(condition, event);
-    }
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Log an ship assert with the logger
-     *
-     * @param condition - the condition to assert on
-     * @param event - the event to log if the condition fails
-     */
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
-            realEvent.isAssert = true;
-            realEvent.stack = TelemetryLogger.getStack();
-            this.sendErrorEvent(realEvent);
-        }
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -426,10 +375,7 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = callback(perfEvent);
-            // Event might have been cancelled or ended in the callback
-            if (perfEvent.event) {
-                perfEvent.end();
-            }
+            perfEvent.autoEnd();
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
@@ -446,16 +392,15 @@ export class PerformanceEvent {
         const perfEvent = PerformanceEvent.start(logger, event, markers);
         try {
             const ret = await callback(perfEvent);
-            // Event might have been cancelled or ended in the callback
-            if (perfEvent.event) {
-                perfEvent.end();
-            }
+            perfEvent.autoEnd();
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
             throw error;
         }
     }
+
+    public get duration() { return performance.now() - this.startTime; }
 
     private event?: ITelemetryGenericEvent;
     private readonly startTime = performance.now();
@@ -464,7 +409,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = {start: true, end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
     ) {
         this.event = { ...event };
         if (this.markers.start) {
@@ -481,19 +426,28 @@ export class PerformanceEvent {
         this.reportEvent(eventNameSuffix, props);
     }
 
-    public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
-        if (this.markers.end) {
-            this.reportEvent(eventNameSuffix, props);
+    private autoEnd() {
+        // Event might have been cancelled or ended in the callback
+        if (this.event && this.markers.end) {
+            this.reportEvent("end");
         }
+        this.performanceEndMark();
+        this.event = undefined;
+    }
 
+    public end(props?: ITelemetryProperties): void {
+        this.reportEvent("end", props);
+        this.performanceEndMark();
+        this.event = undefined;
+    }
+
+    private performanceEndMark() {
         if (this.startMark && this.event) {
-            const endMark = `${this.event.eventName}-${eventNameSuffix}`;
+            const endMark = `${this.event.eventName}-end`;
             window.performance.mark(endMark);
             window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
             this.startMark = undefined;
         }
-
-        this.event = undefined;
     }
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
@@ -517,14 +471,12 @@ export class PerformanceEvent {
         const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
-            event.duration = performance.now() - this.startTime;
+            event.duration = this.duration;
         }
 
         this.logger.sendPerformanceEvent(event, error);
     }
 }
-
-// Note - these Telemetry types should move to common-definitions package
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -538,41 +490,19 @@ export enum TelemetryDataTag {
 }
 
 /**
- * A property to be logged to telemetry containing both the value and the tag
- */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: TelemetryDataTag
-}
-
-/**
- * Property bag containing a mix of value literals and wrapped values along with a tag
- */
-export interface ITaggableTelemetryProperties {
-    [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-}
-
-/**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
-/**
- * An error object that supports exporting its properties to be logged to telemetry
- */
-export interface ILoggingError extends Error {
-    /** Return all properties from this object that should be logged to telemetry */
-    getTelemetryProperties(): ITaggableTelemetryProperties;
-}
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
-    const props: ITaggableTelemetryProperties = {};
+function getValidTelemetryProps(obj: any): ITelemetryProperties {
+    const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
         const val = obj[key];
         switch (typeof val) {
@@ -599,14 +529,24 @@ function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
 /**
  * Helper class for error tracking that can be used to log an error in telemetry.
  * The props passed in (and any set directly on the object after the fact) will be
- * logged in accordance with the given TelemetryDataTag, if present.
+ * logged in accordance with the given tag, if present.
  *
  * PLEASE take care to properly tag properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
+    private readonly __isFluidLoggingError__ = 1;
+
+    public static is(obj: any): obj is LoggingError {
+        const maybeLogger = obj as Partial<LoggingError>;
+        return maybeLogger !== null
+            && typeof maybeLogger  === "object"
+            && typeof maybeLogger.message === "string"
+            && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
+    }
+
     constructor(
         message: string,
-        props?: ITaggableTelemetryProperties,
+        props?: ITelemetryProperties,
     ) {
         super(message);
         if (props) {
@@ -617,14 +557,14 @@ export class LoggingError extends Error implements ILoggingError {
     /**
      * Add additional properties to be logged
      */
-    public addTelemetryProperties(props: ITaggableTelemetryProperties) {
+    public addTelemetryProperties(props: ITelemetryProperties) {
         Object.assign(this, props);
     }
 
     /**
      * Get all properties fit to be logged to telemetry for this error
      */
-    public getTelemetryProperties(): ITaggableTelemetryProperties {
+    public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this);
         // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
         // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.

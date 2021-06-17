@@ -261,6 +261,7 @@ export class FluidPackageCheck {
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            const buildSuffix = (pkg.getScript("build:docs") && pkg.name.startsWith("@fluidframework")) ? " && npm run build:docs" : "";
             // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:commonjs")) {
@@ -331,14 +332,14 @@ export class FluidPackageCheck {
                 }
             }
 
-            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
+            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "", suffix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
+                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`) + suffix;
                 if (this.checkScript(pkg, scriptName, expected, fix)) {
                     fixed = true;
                 }
             }
-            check("build", build, true, buildPrefix);
+            check("build", build, true, buildPrefix, buildSuffix);
             if (buildCompile.length === 0) {
                 if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
                     fixed = true;

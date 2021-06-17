@@ -55,7 +55,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-        this.baseLogger?.send(event);
+        this.baseLogger?.send({...event, hostName: pkgName});
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
@@ -68,7 +68,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<FileLogger>(async ()=>{
-    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger?.();
         assert(logger !== undefined, "Expected getTestLogger to return something");

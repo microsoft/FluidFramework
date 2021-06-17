@@ -34,7 +34,7 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on 429 with retry-after", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 429, 5);
+            const error = createR11sNetworkError(message, 429, 5000);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
@@ -59,7 +59,7 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on anything else with retryAfter", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 400, 100);
+            const error = createR11sNetworkError(message, 400, 100000);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as any).retryAfterSeconds, 100);
@@ -105,7 +105,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 with retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 429, 5);
+                throwR11sNetworkError(message, 429, 5000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -142,7 +142,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 400, 200);
+                throwR11sNetworkError(message, 400, 200000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -206,7 +206,7 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 429,
                 message,
-                retryAfter: 5,
+                retryAfterMs: 5000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
@@ -237,7 +237,7 @@ describe("ErrorUtils", () => {
             const error = errorObjectFromSocketError({
                 code: 400,
                 message,
-                retryAfter: 300,
+                retryAfterMs: 300000,
             }, handler);
             assertExpectedMessage(error.message);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);

@@ -45,6 +45,7 @@ class TaskStats {
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
+    public readonly failedTaskLines: string[] = [];
     constructor(public readonly workerPool?: WorkerPool) { }
 };
 
@@ -173,6 +174,17 @@ export class BuildGraph {
 
     public get totalElapsedTime(): number {
         return this.buildContext.taskStats.leafExecTimeTotal;
+    }
+
+    public get taskFailureSummary(): string {
+        if (this.buildContext.failedTaskLines.length === 0) {
+            return "";
+        }
+        const summaryLines = this.buildContext.failedTaskLines;
+        const notRunCount = this.buildContext.taskStats.leafTotalCount - this.buildContext.taskStats.leafUpToDateCount - this.buildContext.taskStats.leafBuiltCount;
+        summaryLines.unshift(chalk.redBright("Failed Tasks:"));
+        summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
+        return summaryLines.join("\n");
     }
 
     private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {

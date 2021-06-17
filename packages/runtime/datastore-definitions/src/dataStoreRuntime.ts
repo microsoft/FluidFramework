@@ -27,10 +27,6 @@ import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidfra
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    (event: "leader" | "notleader", listener: () => void);
     (
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         event: "disconnected" | "dispose" | "attaching" | "attached",
@@ -73,7 +69,7 @@ export interface IFluidDataStoreRuntime extends
     readonly connected: boolean;
 
     /**
-     * @deprecated 0.37 Use the provideScopeLoader flag to make the loader
+     * @deprecated 0.37 Containers created using a loader will make automatically it
      * available through scope instead
      */
     readonly loader: ILoader;

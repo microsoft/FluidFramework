@@ -166,10 +166,7 @@ function main() {
     }
 
     // Generate and print the version to console
-    let version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
-    if (arg_test_build) {
-        version += "-test";
-    }
+    let version = arg_test_build ? `0.0.0-${arg_build_num}-test` : getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
     if (arg_release) {

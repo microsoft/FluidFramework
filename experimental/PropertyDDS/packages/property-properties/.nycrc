@@ -1,0 +1,12 @@
+{
+  "include": [
+    "property-properties/src/**/*.js",
+    "property-common/src/**/*.js",
+    "property-changeset/src/**/*.js"
+  ],
+  "exclude": [
+    "property-properties/test/**",
+    "property-common/test/**",
+    "property-changeset/test/**"
+  ]
+}

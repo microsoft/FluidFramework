@@ -5,13 +5,11 @@ nyc
 *.log
 .DS_Store
 
-# Rush: Temporary files
-common/temp
-
-# Rush: Incremental build state (must ignore, see 'rush build -h')
-package-deps.json
-
+# TypeScript incremental build cache
 *.tsbuildinfo
+
+# c8 code coverage temporary files
+/coverage/tmp/
 
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
@@ -21,3 +19,5 @@ bundleAnalysis
 
 # Misc pipeline artifacts
 artifacts
+
+docs/resources/_gen/

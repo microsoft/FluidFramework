@@ -49,6 +49,7 @@ async function orchestratorProcess(
     args: { testId?: string, debug?: true, verbose?: true, seed?: number },
 ) {
     const seed = args.seed ?? Date.now();
+    const seedArg = `0x${seed.toString(16)}`;
 
     const testDriver = await createTestDriver(
         driver,
@@ -61,8 +62,7 @@ async function orchestratorProcess(
         : await initialize(testDriver, seed);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
-    console.log(`Container targeting with url:\n${url }`);
+    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -74,19 +74,19 @@ async function orchestratorProcess(
             "--profile", profile.name,
             "--runId", i.toString(),
             "--url", url,
-            "--seed", `0x${seed.toString(16)}`,
+            "--seed", seedArg,
         ];
-        if (args.debug) {
+        if (args.debug === true) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
-        if(args.verbose) {
+        if(args.verbose === true) {
             childArgs.push("--verbose");
         }
 
-        console.log(childArgs.join(" "));
         runnerArgs.push(childArgs);
     }
+    console.log(runnerArgs[0].join(" "));
     try{
         await Promise.all(runnerArgs.map(async (childArgs)=>{
             const process = child_process.spawn(

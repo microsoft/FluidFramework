@@ -5,7 +5,7 @@
 
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
-    NetworkErrorBasic,
+    NonRetryableError,
     GenericNetworkError,
     createGenericNetworkError,
     AuthorizationError,
@@ -35,7 +35,7 @@ export interface IR11sSocketError {
      * Optional Retry-After time in seconds.
      * The client should wait this many seconds before retrying its request.
      */
-    retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 export interface IR11sError {
@@ -49,40 +49,40 @@ export type R11sError = DriverError | IR11sError;
 export function createR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterSeconds?: number,
+    retryAfterMs?: number,
 ): R11sError {
     switch (statusCode) {
         case undefined:
             // If a service is temporarily down or a browser resource limit is reached, Axios will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // error message, "Network Error".
-            return new GenericNetworkError(errorMessage, errorMessage === "Network Error", statusCode);
+            return new GenericNetworkError(errorMessage, errorMessage === "Network Error", { statusCode });
         case 401:
         case 403:
-            return new AuthorizationError(errorMessage, undefined, undefined, statusCode);
+            return new AuthorizationError(errorMessage, undefined, undefined, { statusCode });
         case 404:
-            return new NetworkErrorBasic(
-                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+            return new NonRetryableError(
+                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
-                errorMessage, true, retryAfterSeconds, statusCode);
+                errorMessage, true, retryAfterMs, { statusCode });
         case 500:
-            return new GenericNetworkError(errorMessage, true, statusCode);
+            return new GenericNetworkError(errorMessage, true, { statusCode });
         default:
             return createGenericNetworkError(
-                errorMessage, retryAfterSeconds !== undefined, retryAfterSeconds, statusCode);
+                errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
     }
 }
 
 export function throwR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterSeconds?: number,
+    retryAfterMs?: number,
 ): never {
     const networkError = createR11sNetworkError(
         errorMessage,
         statusCode,
-        retryAfterSeconds);
+        retryAfterMs);
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
@@ -96,6 +96,6 @@ export function errorObjectFromSocketError(socketError: IR11sSocketError, handle
     return createR11sNetworkError(
         message,
         socketError.code,
-        socketError.retryAfter,
+        socketError.retryAfterMs,
     );
 }

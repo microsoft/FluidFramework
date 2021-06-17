@@ -11,7 +11,7 @@ import {
     createGenericNetworkError,
     GenericNetworkError,
     isOnline,
-    NetworkErrorBasic,
+    RetryableError,
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
@@ -52,7 +52,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
         contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
-        isAfd: headers["x-msedge-ref"] !== undefined,
     };
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);
@@ -74,58 +73,63 @@ export function createOdspNetworkError(
     let error: OdspError & LoggingError;
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(errorMessage, false, statusCode);
+            error = new GenericNetworkError(errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
             const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
             const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-            error = new AuthorizationError(errorMessage, claims, tenantId, statusCode);
+            error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
             break;
         case 404:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
             break;
         case 406:
-            error = new NetworkErrorBasic(
-                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false, statusCode);
+            error = new NonRetryableError(
+                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
+            break;
+        case 410:
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(errorMessage, OdspErrorType.epochVersionMismatch, statusCode);
+            error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
         case 413:
-            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, true, statusCode);
+            error = new GenericNetworkError(errorMessage, true, { statusCode });
             break;
         case 501:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
             break;
         case 507:
-            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, { statusCode });
             break;
         case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.offlineError, { statusCode });
             break;
         case fetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true, statusCode);
+            error = new RetryableError(errorMessage, DriverErrorType.fetchFailure, { statusCode });
             break;
         case fetchIncorrectResponse:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false, statusCode);
+            // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
+            error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, statusCode);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
+            const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
+            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];

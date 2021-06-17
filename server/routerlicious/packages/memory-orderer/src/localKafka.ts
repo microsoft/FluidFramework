@@ -28,6 +28,10 @@ export class LocalKafka implements IProducer {
         return this.qeueue.length;
     }
 
+    public isConnected() {
+        return true;
+    }
+
     public subscribe(kafakaSubscriber: IKafkaSubscriber) {
         const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
         kafkaSubscription.on("processed", (queueOffset) => {
@@ -75,7 +79,7 @@ export class LocalKafka implements IProducer {
         }
 
         for (const subscription of this.subscriptions) {
-            subscription.process();
+            void subscription.process();
         }
     }
 

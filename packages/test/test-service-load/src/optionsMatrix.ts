@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ILoaderOptions  } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, IGCRuntimeOptions, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    IContainerRuntimeOptions,
+    IGCRuntimeOptions,
+    ISummaryRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import {
     booleanCases,
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluidframework/test-pairwise-generator";
+import { ILoaderOptions } from "@fluidframework/container-loader";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -18,10 +22,13 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     maxClientLeaveWaitTime: numberCases,
     noopCountFrequency: numberCases,
     noopTimeFrequency: numberCases,
+    summarizeProtocolTree: [undefined],
 };
 
-export const generateLoaderOptions = (seed: number)=>
-    generatePairwiseOptions<ILoaderOptions>(loaderOptionsMatrix, seed);
+export const generateLoaderOptions = (seed: number): ILoaderOptions[]=>
+    generatePairwiseOptions<ILoaderOptions>(
+        loaderOptionsMatrix,
+        seed);
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
@@ -32,17 +39,20 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 export function generateRuntimeOptions(seed: number) {
     const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
         disableIsolatedChannels: booleanCases,
-        generateSummaries: booleanCases,
+        generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
         summaryConfigOverrides:[undefined],
         maxOpsSinceLastSummary: numberCases,
     };
 
-    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+    // Using an Omit here such that when new options are added, it is required to either explicitly omit them from
+    // the stress test matrix or else define the options matrix.
+    type OptionsUnderTest = Omit<IContainerRuntimeOptions, "addGlobalAgentSchedulerAndLeaderElection">;
+
+    const runtimeOptionsMatrix: OptionsMatrix<OptionsUnderTest> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
-        addGlobalAgentSchedulerAndLeaderElection: [undefined],
     };
 
-    return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);
+    return generatePairwiseOptions<OptionsUnderTest>(runtimeOptionsMatrix, seed);
 }

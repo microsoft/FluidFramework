@@ -104,7 +104,6 @@ export class DocumentStorage implements IDocumentStorage {
         winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const deli: IDeliState = {
-            branchMap: undefined,
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
             logOffset: -1,
@@ -112,6 +111,7 @@ export class DocumentStorage implements IDocumentStorage {
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
+            nackMessages: undefined,
         };
 
         const scribe: IScribe = {
@@ -278,11 +278,11 @@ export class DocumentStorage implements IDocumentStorage {
             // TODO: Make the rest endpoint handle this case.
             const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
             const ops = JSON.parse(
-                            Buffer.from(
-                                opsContent.content,
-                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
-                            ).toString(),
-                        ) as ISequencedDocumentMessage[];
+                Buffer.from(
+                    opsContent.content,
+                    Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+                ).toString(),
+            ) as ISequencedDocumentMessage[];
             const dbOps = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,

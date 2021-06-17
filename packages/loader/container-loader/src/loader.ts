@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    IFluidCodeDetails,
     IFluidObject,
+    IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
+    IFluidModule,
     IHostLoader,
     ILoader,
     IPendingLocalState,
-    ILoaderOptions,
+    ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -50,12 +51,11 @@ function canUseCache(request: IRequest): boolean {
     return request.headers[LoaderHeader.cache] !== false;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader implements ILoader {
     constructor(
-        private readonly loader: ILoader,
         private readonly container: Container,
+        private readonly loader: ILoader | undefined,
     ) {
-        super();
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -73,7 +73,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                         resolvedUrl: {...resolvedUrl},
-                        version: request.headers?.[LoaderHeader.version],
+                        version: request.headers?.[LoaderHeader.version] ?? undefined,
                         loadMode: request.headers?.[LoaderHeader.loadMode],
                     },
                 );
@@ -81,6 +81,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             }
         }
 
+        if (this.loader === undefined) {
+            throw new Error("Cannot resolve external containers");
+        }
         return this.loader.resolve(request);
     }
 
@@ -88,6 +91,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         if (request.url.startsWith("/")) {
             const container = await this.resolve(request);
             return container.request(request);
+        }
+
+        if (this.loader === undefined) {
+            return {
+                status: 404,
+                value: "Cannot request external containers",
+                mimeType: "plain/text",
+            };
         }
         return this.loader.request(request);
     }
@@ -107,6 +118,39 @@ function createCachedResolver(resolver: IUrlResolver) {
         return resolveCache.get(request.url);
     };
     return cacheResolver;
+}
+
+export interface ILoaderOptions extends ILoaderOptions1{
+    summarizeProtocolTree?: true,
+}
+
+/**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+     module: IFluidModule;
+     /**
+      * Code details associated with the module. Represents a document schema this module supports.
+      * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+      * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+      */
+     details: IFluidCodeDetails;
+ }
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+    extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Load the code module (package) that is capable to interact with the document.
+     *
+     * @param source - Code proposal that articulates the current schema the document is written in.
+     * @returns - Code module entry point along with the code details associated with it.
+     */
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -129,7 +173,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -175,7 +219,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -204,7 +248,7 @@ export interface ILoaderServices {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -215,7 +259,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
@@ -234,10 +278,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     constructor(loaderProps: ILoaderProps) {
-        super();
-
         const scope = { ...loaderProps.scope };
-        if (loaderProps.options?.provideScopeLoader === true) {
+        if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
 
@@ -318,7 +360,7 @@ export class Loader extends EventEmitter implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => { console.error("Error during caching Container on the Loader", error); });
+        }).catch((error) => {});
     }
 
     private async resolveCore(
@@ -343,8 +385,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             }
         }
 
-        // parseUrl's id is expected to be of format "tenantId/docId"
-        const [, docId] = parsed.id.split("/");
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
         const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
@@ -357,7 +397,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -366,7 +405,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
-                    docId,
                     request,
                     resolvedAsFluid,
                     pendingLocalState?.pendingRuntimeState);
@@ -409,11 +447,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         // If set in both query string and headers, use query string
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
-        // Version === null means not use any snapshot.
-        if (request.headers[LoaderHeader.version] === "null") {
-            request.headers[LoaderHeader.version] = null;
-        }
-
         const canCache = this.canCacheForRequest(request.headers);
         debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
@@ -424,7 +457,6 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
-        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: unknown,
@@ -435,7 +467,7 @@ export class Loader extends EventEmitter implements IHostLoader {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
                 resolvedUrl: resolved,
-                version: request.headers?.[LoaderHeader.version],
+                version: request.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: request.headers?.[LoaderHeader.loadMode],
             },
             pendingLocalState,

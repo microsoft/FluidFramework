@@ -7,6 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
+    IDisposable,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
@@ -29,7 +30,6 @@ import {
     IThrottlingWarning,
     IPendingLocalState,
     ReadOnlyInfo,
-    ILoaderOptions,
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
@@ -42,6 +42,7 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -50,6 +51,8 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
+    canRetryOnError,
+    runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -80,6 +83,7 @@ import {
     ISummaryTree,
     IPendingProposal,
     SummaryType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -95,10 +99,14 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree, runWithRetry } from "./utils";
+import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
+import { ContainerStorageAdapter } from "./containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -116,9 +124,9 @@ export interface IContainerLoadOptions {
     clientDetailsOverride?: IClientDetails;
     resolvedUrl: IFluidResolvedUrl;
     /**
-     * Control whether to load from snapshot or ops.  See IParsedUrl for detailed information.
+     * Control which snapshot version to load from.  See IParsedUrl for detailed information.
      */
-    version?: string | null | undefined;
+    version: string | undefined;
     /**
      * Loads the Container in paused state if true, unpaused otherwise.
      */
@@ -311,8 +319,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: loadOptions.canReconnect,
             });
 
-        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
-            return new Promise<Container>((res, rej) => {
+        return PerformanceEvent.timedExecAsync(
+            container.logger,
+            { eventName: "Load" },
+            async (event) => new Promise<Container>((res, rej) => {
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -323,12 +333,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    // Depending where error happens, we can be attempting to connect to web socket
-                    // and continuously retrying (consider offline mode)
-                    // Host has no container to close, so it's prudent to do it here
-                    const error = err ?? CreateContainerError("Container closed without an error");
-                    container.close(error);
-                    rej(error);
+                    rej(err ?? CreateContainerError("Container closed without an error"));
                 };
                 container.on("closed", onClosed);
 
@@ -340,12 +345,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                        (error) => {
-                            const err = CreateContainerError(error);
-                            onClosed(err);
-                        });
-            });
-        });
+                    (error) => {
+                        const err = CreateContainerError(error);
+                        // Depending where error happens, we can be attempting to connect to web socket
+                        // and continuously retrying (consider offline mode)
+                        // Host has no container to close, so it's prudent to do it here
+                        container.close(error);
+                        onClosed(err);
+                    });
+            }),
+            { start: true, end: true, cancel: "generic" },
+        );
     }
 
     /**
@@ -389,9 +399,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
+    public readonly storage: IDocumentStorageService;
+    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
-    private _storageService: IDocumentStorageService | undefined;
-    private get storageService() {
+    private _storageService: IDocumentStorageService & IDisposable | undefined;
+    private get storageService(): IDocumentStorageService  {
         if (this._storageService === undefined) {
             throw new Error("Attempted to access storageService before it was defined");
         }
@@ -639,9 +651,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.storage = new ContainerStorageAdapter(
+            () => {
+                if (this.attachState !== AttachState.Attached) {
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    });
+                    throw new Error("Real storage calls not allowed in Unattached container");
+                }
+                return this.storageService;
+            },
+            this.storageBlobs,
+        );
 
+        const isDomAvailable = typeof document === "object" &&
+            document !== null &&
+            typeof document.addEventListener === "function" &&
+            document.addEventListener !== null;
         // keep track of last time page was visible for telemetry
-        if (typeof document === "object" && document !== null) {
+        if (isDomAvailable) {
             this.lastVisible = document.hidden ? performance.now() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
@@ -711,7 +739,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
 
-        this.service?.dispose();
+        this._storageService?.dispose();
+
+        // Notify storage about critical errors. They may be due to disconnect between client & server knowledge about
+        // file, like file being overwritten in storage, but client having stale local cache.
+        // Driver need to ensure all caches are cleared on critical errors
+        this.service?.dispose(error);
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -810,16 +843,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    this._deltaManager,
+                    (id: string) => this._deltaManager.refreshDelayInfo(id),
+                    (id: string, delayMs: number, error: any) =>
+                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
                     this.logger,
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            if (this._storageService === undefined) {
-                this._storageService = await this.getDocumentStorageService();
-            }
+            await this.connectStorageService();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
@@ -832,6 +865,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (!this.closed) {
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
+        } catch(error) {
+            if (!canRetryOnError(error)) {
+                this.close(error);
+            }
+            throw error;
         } finally {
             this.attachInProgress = false;
         }
@@ -916,10 +954,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
         this.connectToDeltaStream(args).catch(() => { });
-    }
-
-    public get storage(): IDocumentStorageService | undefined {
-        return this._storageService;
     }
 
     /**
@@ -1090,13 +1124,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load container.
      *
      * @param specifiedVersion - one of the following
-     *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
     private async load(
-        specifiedVersion: string | null | undefined,
+        specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown)
     {
@@ -1125,10 +1158,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             startConnectionP.catch((error) => { });
         }
 
-        this._storageService = await this.getDocumentStorageService();
+        await this.connectStorageService();
         this._attachState = AttachState.Attached;
 
-        // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
+        // Fetch specified snapshot.
         const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
@@ -1223,6 +1256,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
+        // Safety net: static version of Container.load() should have got this message through "closed" handler.
+        // But if that did not happen for some reason, fail load for sure.
+        // Otherwise we can get into situations where container is closed and does not try to connect to ordering
+        // service, but caller does not know that (callers do expect container to be not closed on successful path
+        // and listen only on "closed" event)
+        if (this.closed) {
+            throw new Error("Container was closed while load()");
+        }
+
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
@@ -1292,8 +1334,29 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
     }
 
-    private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        return this._deltaManager.connectToStorage();
+    private async connectStorageService(): Promise<void> {
+        if (this._storageService !== undefined) {
+            return;
+        }
+
+        assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
+        let storageService = await this.service.connectToStorage();
+        // Enable prefetching for the service unless it has a caching policy set otherwise:
+        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
+            storageService = new PrefetchDocumentStorageService(storageService);
+        }
+
+        this._storageService =
+            new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+
+        if(this.options.summarizeProtocolTree === true) {
+            this._storageService =
+                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+        }
+
+        // ensure we did not lose that policy in the process of wrapping
+        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
+            0x0e0 /* "lost minBlobSize policy" */);
     }
 
     private async getDocumentAttributes(
@@ -1391,26 +1454,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on("removeMember", (clientId) => {
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
-
-        // back compat for old containers where the code details
-        // we're delay added. All new creates should be detached
-        // and start with an initial code details.
-        if(getCodeProposal(protocol.quorum) === undefined) {
-            this.logger.sendTelemetryEvent({
-                eventName:"NoCodeProposal",
-            });
-            await new Promise<void>((resolve)=>{
-                const waitForCode = ()=>{
-                    if(getCodeProposal(protocol.quorum) !== undefined) {
-                        resolve();
-                    }
-                    protocol.quorum.off("approveProposal", waitForCode);
-                    this.off("closed", resolve);
-                };
-                protocol.quorum.on("approveProposal", waitForCode);
-                this.once("closed", resolve);
-            });
-        }
 
         protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
@@ -1543,10 +1586,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        deltaManager.once("submitOp", (message: IDocumentMessage) => {
-            this.connectionStateHandler.clientSentOps(this._deltaManager.connectionMode);
-        });
-
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.connectionStateHandler.receivedDisconnectEvent(reason);
@@ -1560,14 +1599,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
+        deltaManager.on("closed", (error?: ICriticalContainerError) => {
+            this.close(error);
+        });
+
         return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
-        });
-
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1674,8 +1713,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         switch (outboundMessageType) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
-            case MessageType.Summarize:
                 break;
+            case MessageType.Summarize: {
+                // github #6451: this is only needed for staging so the server
+                // know when the protocol tree is included
+                // this can be removed once all clients send
+                // protocol tree by default
+                const summary = contents as ISummaryContent;
+                if(summary.details === undefined) {
+                    summary.details = {};
+                }
+                summary.details.includesProtocolTree =
+                    this.options.summarizeProtocolTree === true;
+                break;
+            }
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
                 return -1;
@@ -1703,7 +1754,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 errorMsg = "messageClientIdMissingFromQuorum";
-            } else if (client?.shouldHaveLeft === true) {
+            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
                 errorMsg = "messageClientIdShouldHaveLeft";
             }
             if (errorMsg !== undefined) {
@@ -1756,12 +1807,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - The specific version of the snapshot to retrieve
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
-    private async fetchSnapshotTree(specifiedVersion: string | undefined | null):
+    private async fetchSnapshotTree(specifiedVersion: string | undefined):
         Promise<{snapshot?: ISnapshotTree; versionId?: string}>
     {
-        if (specifiedVersion === null) {
-            return {};
-        }
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
         if (version === undefined && specifiedVersion !== undefined) {
@@ -1791,7 +1839,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this.loader, this);
+        const loader = new RelativeLoader(this, this.loader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,

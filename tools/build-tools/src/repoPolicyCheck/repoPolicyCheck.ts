@@ -15,7 +15,7 @@ import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFil
 import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
 import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
 import { handler as fluidCaseHandler } from "./handlers/fluidCase";
-import { handler as lockfilesHandler } from "./handlers/lockfiles";
+import { handlers as lockfilesHandlers } from "./handlers/lockfiles";
 
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
@@ -59,7 +59,7 @@ const handlers: Handler[] = [
     ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
     fluidCaseHandler,
-    lockfilesHandler,
+    ...lockfilesHandlers,
     assertShortCodeHandler,
 ];
 
