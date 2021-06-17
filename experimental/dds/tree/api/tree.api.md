@@ -255,6 +255,8 @@ export class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<T
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
+    protected applyStashedOp(): void;
+    // (undocumented)
     get currentView(): Snapshot;
     // (undocumented)
     get edits(): OrderedEditSet<TChange>;
@@ -397,6 +399,8 @@ export interface OrderedEditSet<TChange> {
     getEditInSessionAtIndex(index: number): Edit<TChange>;
     // @internal (undocumented)
     getEditLogSummary(useHandles?: boolean): EditLogSummary<TChange>;
+    // (undocumented)
+    getIdAtIndex(index: number): EditId;
     // (undocumented)
     indexOf(editId: EditId): number;
     // (undocumented)

@@ -45,8 +45,3 @@ export class NodeIdGenerator {
 		return String(this.nextId++) as NodeId;
 	}
 }
-
-/** 'Encode' a scalar type */
-export function encodeScalar(x: string | number | boolean): Payload {
-	return { base64: x.toString(10) };
-}

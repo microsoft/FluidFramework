@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// Copyright (C) Microsoft Corporation. All rights reserved.
+
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditHandle, editsPerChunk } from '../EditLog';

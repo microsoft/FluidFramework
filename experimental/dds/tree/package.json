@@ -38,9 +38,8 @@
     "@fluidframework/protocol-definitions": "^0.1022.0",
     "@fluidframework/shared-object-base": "^0.39.0",
     "@fluidframework/telemetry-utils": "^0.39.0",
-    "@fluidframework/undo-redo": "^0.39.0",
     "@taylorsw04/sorted-btree": "1.4.1-optimizedDiff",
-    "buffer": "^6.0.2",
+    "buffer": "^6.0.3",
     "denque": "^1.5.0",
     "lru-cache": "^6.0.0",
     "uuid": "^8.3.1"
