@@ -16,6 +16,9 @@ import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerProperty
  * Implementation of debug logger
  */
 export class DebugLogger extends TelemetryLogger {
+    // A DebugLogger is meant to log most information, so it supports tags by default.
+    supportsTags: true | undefined = true;
+
     /**
      * Create debug logger - all events are output to debug npm library
      * @param namespace - Telemetry event name prefix to add to all events
