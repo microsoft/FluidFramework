@@ -1324,7 +1324,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.createDetachedContext(attributes, snapshotTree);
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        await this.createExistingContext(codeDetails, attributes, snapshotTree);
 
         this.loaded = true;
 
