@@ -4,13 +4,15 @@
  */
 
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { EditId } from '../Identifiers';
+import { EditId, NodeId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
-import { ChangeNode, Edit, EditNode, GenericSharedTree } from '../generic';
+import { Edit, BuildNode, fullHistorySummarizer, GenericSharedTree, NodeData, SharedTreeSummaryBase } from '../generic';
+import { OrderedEditSet } from '../EditLog';
 import { Change, Delete, Insert, Move, StableRange, StablePlace } from './PersistedTypes';
-import { SharedTreeFactory } from './Factory';
+import { SharedTreeFactory, SharedTreeFactoryNoHistory } from './Factory';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { Transaction } from './Transaction';
+import { noHistorySummarizer } from './Summary';
 
 /**
  * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
@@ -33,14 +35,14 @@ export class SharedTreeEditor {
 	 * @param node - Node to insert.
 	 * @param destination - StablePlace at which the insert should take place.
 	 */
-	public insert(node: EditNode, destination: StablePlace): EditId;
+	public insert(node: BuildNode, destination: StablePlace): EditId;
 	/**
 	 * Inserts nodes at a location.
 	 * @param nodes - Nodes to insert.
 	 * @param destination - StablePlace at which the insert should take place.
 	 */
-	public insert(nodes: EditNode[], destination: StablePlace): EditId;
-	public insert(nodeOrNodes: EditNode | EditNode[], destination: StablePlace): EditId {
+	public insert(nodes: BuildNode[], destination: StablePlace): EditId;
+	public insert(nodeOrNodes: BuildNode | BuildNode[], destination: StablePlace): EditId {
 		return this.tree.applyEdit(
 			...Insert.create(Array.isArray(nodeOrNodes) ? nodeOrNodes : [nodeOrNodes], destination)
 		);
@@ -51,15 +53,21 @@ export class SharedTreeEditor {
 	 * @param source - Node to move.
 	 * @param destination - StablePlace to which the node should be moved.
 	 */
-	public move(source: ChangeNode, destination: StablePlace): EditId;
+	public move(source: NodeData, destination: StablePlace): EditId;
+	/**
+	 * Moves a node to a specified location.
+	 * @param source - Node to move.
+	 * @param destination - StablePlace to which the node should be moved.
+	 */
+	public move(source: NodeId, destination: StablePlace): EditId;
 	/**
 	 * Moves a part of a trait to a specified location.
 	 * @param source - Portion of a trait to move.
 	 * @param destination - StablePlace to which the portion of the trait should be moved.
 	 */
 	public move(source: StableRange, destination: StablePlace): EditId;
-	public move(source: ChangeNode | StableRange, destination: StablePlace): EditId {
-		if (this.isNode(source)) {
+	public move(source: NodeData | NodeId | StableRange, destination: StablePlace): EditId {
+		if (!this.isStableRange(source)) {
 			return this.tree.applyEdit(...Move.create(StableRange.only(source), destination));
 		}
 
@@ -70,14 +78,19 @@ export class SharedTreeEditor {
 	 * Deletes a node.
 	 * @param target - Node to delete
 	 */
-	public delete(target: ChangeNode): EditId;
+	public delete(target: NodeData): EditId;
+	/**
+	 * Deletes a node.
+	 * @param target - Node to delete
+	 */
+	public delete(target: NodeId): EditId;
 	/**
 	 * Deletes a portion of a trait.
 	 * @param target - Range of nodes to delete, specified as a `StableRange`
 	 */
 	public delete(target: StableRange): EditId;
-	public delete(target: ChangeNode | StableRange): EditId {
-		if (this.isNode(target)) {
+	public delete(target: NodeData | NodeId | StableRange): EditId {
+		if (!this.isStableRange(target)) {
 			return this.tree.applyEdit(Delete.create(StableRange.only(target)));
 		}
 
@@ -93,8 +106,8 @@ export class SharedTreeEditor {
 		return this.tree.applyEdit(...HistoryEditFactory.revert(edit.changes, view));
 	}
 
-	private isNode(source: ChangeNode | StableRange): source is ChangeNode {
-		return (source as ChangeNode).definition !== undefined && (source as ChangeNode).identifier !== undefined;
+	private isStableRange(source: NodeData | NodeId | StableRange): source is StableRange {
+		return (source as StableRange).start !== undefined && (source as StableRange).end !== undefined;
 	}
 }
 
@@ -113,10 +126,11 @@ export class SharedTree extends GenericSharedTree<Change> {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @returns A factory that creates SharedTrees and loads them from storage.
+	 * @param historySummarizing - determines how history is summarized by the returned `SharedTree`.
+	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
+	public static getFactory(summarizeHistory = true): SharedTreeFactory {
+		return summarizeHistory ? new SharedTreeFactory() : new SharedTreeFactoryNoHistory();
 	}
 
 	/**
@@ -124,9 +138,15 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
+	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 */
-	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
-		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation);
+	public constructor(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		expensiveValidation = false,
+		summarizeHistory = true
+	) {
+		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation, summarizeHistory);
 	}
 
 	private _editor: SharedTreeEditor | undefined;
@@ -140,5 +160,15 @@ export class SharedTree extends GenericSharedTree<Change> {
 		}
 
 		return this._editor;
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.generateSummary}
+	 */
+	protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase {
+		if (!this.summarizeHistory) {
+			return noHistorySummarizer(editLog, this.currentView);
+		}
+		return fullHistorySummarizer(editLog, this.currentView);
 	}
 }

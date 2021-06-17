@@ -1,5 +1,187 @@
 # Change Log
 
+## 0.114.1
+
+* fix: Forest should not create empty traits when attaching nodes
+  * Associated pull request: [31307](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31307)
+  * Commit: [4af9c00eeb346751efac1df4f5d645cb4c2d0afd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4af9c00eeb346751efac1df4f5d645cb4c2d0afd)
+* style: Update `prettier` and run on code
+  * Associated pull request: [31104](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31104)
+  * Commit: [692c7c99528d196326eae8853463e7c7f607afb8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/692c7c99528d196326eae8853463e7c7f607afb8)
+* build: Pin version of `prettier` to prevent breaking update
+  * Associated pull request: [31151](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31151)
+  * Commit: [c47f4d4a112b3989856610fabe316c7fc4fa59d1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c47f4d4a112b3989856610fabe316c7fc4fa59d1)
+* fix: Limit the number of edits in an edit chunk
+  * Associated pull request: [31141](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31141)
+  * Commit: [87c333698b735e224d05e4059a0d4d61798745f8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/87c333698b735e224d05e4059a0d4d61798745f8)
+* merge: `releases/2021.06.1` into `master`
+  * Associated pull request: [31089](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31089)
+  * Commit: [81efc71ef46b9468293a75b219c5eb3275cfa81e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/81efc71ef46b9468293a75b219c5eb3275cfa81e)
+* refactor: SharedTree tests as reusable suites for other implementations to use
+  * Associated pull request: [31094](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31094)
+  * Commit: [24b113f2ee47b00523d640ecf661ac4eee0e6aad](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/24b113f2ee47b00523d640ecf661ac4eee0e6aad)
+
+## 0.109.0
+
+* improvement: reintroduce events for invalid/malformed SharedTree edits, use in tests
+  * Associated pull request: [30822](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30822)
+  * Commit: [de72f3656b83a4323210816c5056783796ff3262](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/de72f3656b83a4323210816c5056783796ff3262)
+* refactor: clarify mutability better in EditLog and related code
+  * Associated pull request: [30880](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30880)
+  * Commit: [051f8565ce3ea8899d7266ef7eb427509cc64ede](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/051f8565ce3ea8899d7266ef7eb427509cc64ede)
+
+## 0.107.2
+
+* Merge remote-tracking branch 'origin/releases/2021.05.3' into user/crmacomb/fix-chunks
+  * Commit: [4db8adcdb45db24d43ef1b7963a000af7fec40fd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4db8adcdb45db24d43ef1b7963a000af7fec40fd)
+* fix: Ensure empty traits are not created via Build, and fail better during duplicate IDs in snapshot creation
+  * Associated pull request: [30765](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30765)
+  * Commit: [c77b55148aeb8cc23b4b747ff2b0b7af816bdd5d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c77b55148aeb8cc23b4b747ff2b0b7af816bdd5d)
+* merge: `releases/2021.05.3` into `master`
+  * Associated pull request: [30776](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30776)
+  * Commit: [b3fc2f77c7e5a1caeb554650f6454992fc2d9da5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b3fc2f77c7e5a1caeb554650f6454992fc2d9da5)
+
+## 0.106.4
+
+* merge releases/2021.05.2
+  * Commit: [70ee75e33b1a2c3178d2efc56c90a96af17a6b69](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/70ee75e33b1a2c3178d2efc56c90a96af17a6b69)
+
+## 0.106.3
+
+* fix: add missing dep, fix misleading param name, and bad comment
+  * Associated pull request: [30740](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30740)
+  * Commit: [c051127170b64c7f733a88a3218274ad5f093754](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c051127170b64c7f733a88a3218274ad5f093754)
+* merge: releases/2021.05.2 to master
+  * Commit: [5858f5d24bda0187f6e32168e8ef75d388a0e72b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5858f5d24bda0187f6e32168e8ef75d388a0e72b)
+* build: update package versions
+  * Associated pull request: [30710](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30710)
+  * Commit: [295410f45818d319a5abd84a86715f514d97a662](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/295410f45818d319a5abd84a86715f514d97a662)
+* chore: Fix SharedTree test utility comment
+  * Associated pull request: [30608](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30608)
+  * Commit: [156dc2458fe5729a2cb5125922dc8cebd0247bcf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/156dc2458fe5729a2cb5125922dc8cebd0247bcf)
+* merge: `releases/2021.05.2` into `master`
+  * Associated pull request: [30535](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30535)
+  * Commit: [05bd7d07c3bbb529f67978861a76bc8faebaf0e3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/05bd7d07c3bbb529f67978861a76bc8faebaf0e3)
+
+## 0.104.2
+
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
+## 0.104.1
+
+* fix: Ignore empty traits when constructing Snapshots from ChangeNodes
+  * Associated pull request: [30723](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30723)
+  * Commit: [69018274a1cb6e9f2464771cb9568d59a8ae3cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/69018274a1cb6e9f2464771cb9568d59a8ae3cdd)
+
+## 0.104.0
+
+* remove: BREAKING CHANGE: remove most expired deprecated code
+  * Associated pull request: [30387](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30387)
+  * Commit: [bbe19b0e4afafc42493286eed5ca55b08554e3f2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bbe19b0e4afafc42493286eed5ca55b08554e3f2)
+* build: Update @fluidframework packages to 0.39.1
+  * Associated pull request: [30293](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30293)
+  * Commit: [4159056434b54e672ba473c4211cd5da13ff55cd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4159056434b54e672ba473c4211cd5da13ff55cd)
+* feat: add caching of `EditResult` to `CachingLogViewer`
+  * Associated pull request: [30376](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30376)
+  * Commit: [30f812c29fdaf377577a3f49122f32b30b4f6c38](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/30f812c29fdaf377577a3f49122f32b30b4f6c38)
+* refactor: BREAKING CHANGE: rename SharedTree `EditResult` to `EditStatus`
+  * Associated pull request: [30455](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30455)
+  * Commit: [3f0951e63bb609114bb0ebae9b3873aba4cbbcfc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3f0951e63bb609114bb0ebae9b3873aba4cbbcfc)
+* test: Catchup blobbing unit tests
+  * Associated pull request: [30203](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30203)
+  * Commit: [c828e2cd2f57385292230ff6bff5ff3f1ca91f84](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c828e2cd2f57385292230ff6bff5ff3f1ca91f84)
+* refactor: BREAKING CHANGE: remove generic parameters from forest
+  * Associated pull request: [30375](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30375)
+  * Commit: [ddc1328f1d915374a6f06981b4f3669f94568a30](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ddc1328f1d915374a6f06981b4f3669f94568a30)
+
+## 0.100.2
+
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
+## 0.100.1
+
+* build: Update dependencies
+  * Associated pull request: [30242](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30242)
+  * Commit: [9a599da14d1f08bb09e13c227853f4e0b0ebcdeb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9a599da14d1f08bb09e13c227853f4e0b0ebcdeb)
+* Merge remote-tracking branch 'origin/releases/2021.04.5' into user/crmacomb/merge4.5
+  * Commit: [aae47b3403a00b15f7995e236e18ead756591dfe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/aae47b3403a00b15f7995e236e18ead756591dfe)
+* chore: Remove dependency on custom b-tree package
+  * Associated pull request: [30187](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30187)
+  * Commit: [f48c2d155eb25fe27752eee77ced379e4e34644c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f48c2d155eb25fe27752eee77ced379e4e34644c)
+* merge: `releases/2021.04.5` into `master`
+  * Associated pull request: [30117](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30117)
+  * Commit: [0adc48540669cac605f054023fab717935609eb6](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0adc48540669cac605f054023fab717935609eb6)
+
+## 0.96.3
+
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
+## 0.96.2
+
+* Merge remote-tracking branch 'origin/releases/2021.04.4' into user/crmacomb/releaseupdate4.5
+  * Commit: [5b3afe17772c76d3222c9966f015b1566c7e467c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5b3afe17772c76d3222c9966f015b1566c7e467c)
+
+## 0.96.1
+
+* fix: Reduce frequency of edit chunk upload to prevent SPO throttling
+  * Associated pull request: [29935](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29935)
+  * Commit: [c406e2f4bac256d13f8007a9aad42961170b19f9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c406e2f4bac256d13f8007a9aad42961170b19f9)
+* refactor: BREAKING CHANGE: cleanup EditNode
+  * Associated pull request: [30040](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30040)
+  * Commit: [fb4ac3170caa9093f5d52b98fd12f972baf9ee70](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fb4ac3170caa9093f5d52b98fd12f972baf9ee70)
+* fix: BREAKING CHANGE: Expose factory for creating SharedTrees that do not preserve history in summary
+  * Associated pull request: [29909](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29909)
+  * Commit: [1e146f0f01ffc79af01164a9466cd9c1953d716b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1e146f0f01ffc79af01164a9466cd9c1953d716b)
+* docs: remove invalid @sealed on abstract class
+  * Associated pull request: [29904](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29904)
+  * Commit: [887c249e7defbebd9622c8906eb96d23818ecb6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/887c249e7defbebd9622c8906eb96d23818ecb6d)
+
+## 0.90.2
+
+* fix: add logger and error to editlog
+  * Associated pull request: [30804](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30804)
+  * Commit: [196df49a002eb0271a69a54968a355bfcc485d79](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/196df49a002eb0271a69a54968a355bfcc485d79)
+
+## 0.90.1
+
+_Version update only._
+
+## 0.90.0
+
+* refactor: BREAKING CHANGE: move benchmarking code into its own package
+  * Associated pull request: [29566](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29566)
+  * Commit: [3630a510a3c153c6f948155872210b176bfc990e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3630a510a3c153c6f948155872210b176bfc990e)
+* merge: `releases/2021.04.4` into `master`
+  * Associated pull request: [29823](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29823)
+  * Commit: [63e986504f887cf196eb1664b37184d9507c05fc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/63e986504f887cf196eb1664b37184d9507c05fc)
+* fix: Correctly use minimum sequence number in cache
+  * Associated pull request: [29789](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29789)
+  * Commit: [763796c99908653b98d6a5cdf2b0580d1be946cb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/763796c99908653b98d6a5cdf2b0580d1be946cb)
+* merge: `releases/2021.04.3` into `master`
+  * Associated pull request: [29739](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29739)
+  * Commit: [e36e5221d3bde2ee10af9abd013d204c32f26bc7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e36e5221d3bde2ee10af9abd013d204c32f26bc7)
+* refactor: move change-agnostic code to /generic folder
+  * Associated pull request: [29733](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29733)
+  * Commit: [027c414b9e91d45cd35ee9643af09f11248d9dba](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/027c414b9e91d45cd35ee9643af09f11248d9dba)
+
+## 0.85.1
+
+* fix: Correctly use minimum sequence number in cache
+  * Associated pull request: [29797](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/29797)
+  * Commit: [0e27b3c423570da27b2e2f10786a35bb481eb103](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0e27b3c423570da27b2e2f10786a35bb481eb103)
+
 ## 0.85.0
 
 * refactor: BREAKING CHANGE: separate shared-tree code into edit-specific and edit-agnostic classes and types

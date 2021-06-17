@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import {
 	setTrait,
 	Delete,
-	EditResult,
+	EditStatus,
 	Insert,
 	Move,
 	StableRange,
@@ -39,7 +39,7 @@ export function checkoutTests(
 	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change>>
 ): Mocha.Suite {
 	async function setUpTestCheckout(
-		options: SharedTreeTestingOptions = { localMode: true }
+		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
 	): Promise<{ checkout: Checkout<Change>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
@@ -103,7 +103,7 @@ export function checkoutTests(
 			checkout.openEdit();
 			// Is still valid after a valid edit
 			checkout.applyChanges(Delete.create(StableRange.only(left)));
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.abortEdit();
 
 			// The left node should still be there
@@ -115,18 +115,18 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Starts as valid
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is invalid after an invalid edit
 			expect(() => checkout.applyChanges(...Insert.create([left], StablePlace.after(left)))).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Invalid);
+			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 			checkout.abortEdit();
 
 			// Next edit is unaffected
 			checkout.openEdit();
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.closeEdit();
 		});
 
@@ -135,7 +135,7 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Starts as valid
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is malformed after a malformed edit
 			const malformedMove = Move.create(
@@ -148,19 +148,19 @@ export function checkoutTests(
 			expect(() => checkout.applyChanges(...malformedMove)).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Malformed);
+			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
 			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Malformed);
+			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			checkout.abortEdit();
 
 			// Next edit is unaffected
 			checkout.openEdit();
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.closeEdit();
 		});
 
@@ -191,11 +191,11 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Starts as valid
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is still valid after a valid edit
 			checkout.applyChanges(Delete.create(StableRange.only(left)));
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			checkout.closeEdit();
 		});
@@ -205,25 +205,25 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Starts as valid
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is invalid after an invalid edit
 			expect(() => checkout.applyChanges(...Insert.create([left], StablePlace.after(left)))).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Invalid);
+			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
 			// Is still invalid after a subsequent valid edit
 			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Invalid);
+			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
 			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
 
 			// Next edit is unaffected
 			checkout.openEdit();
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.closeEdit();
 		});
 
@@ -232,7 +232,7 @@ export function checkoutTests(
 
 			checkout.openEdit();
 			// Starts as valid
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is malformed after a malformed edit
 			const malformedMove = Move.create(
@@ -245,19 +245,19 @@ export function checkoutTests(
 			expect(() => checkout.applyChanges(...malformedMove)).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Malformed);
+			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
 			expect(() => checkout.applyChanges(Delete.create(StableRange.only(left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
-			expect(checkout.getEditStatus()).equals(EditResult.Malformed);
+			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
 
 			// Next edit is unaffected
 			checkout.openEdit();
-			expect(checkout.getEditStatus()).equals(EditResult.Applied);
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.closeEdit();
 		});
 
@@ -348,6 +348,7 @@ export function checkoutTests(
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
 			localMode: false,
+			allowInvalid: true,
 		};
 
 		it('emits ViewChange events for remote edits', async () => {
@@ -377,7 +378,7 @@ export function checkoutTests(
 		it('connected state with a remote SharedTree equates correctly during edits', async () => {
 			// Invalid edits are allowed here because this test creates edits concurrently in two trees,
 			// which after syncing, end up with one being invalid.
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions });
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, allowInvalid: true });
 			const { tree: secondTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
 				...secondTreeOptions,

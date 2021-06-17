@@ -159,13 +159,13 @@ export type ChangeNode = TreeNode<ChangeNode>;
  * These optimized formats should also be used within snapshots.
  * @public
  */
-export type EditNode = TreeNode<EditNode> | DetachedSequenceId;
+export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;
 
 /**
- * The result of an attempt to apply the changes in an Edit.
+ * The status code of an attempt to apply the changes in an Edit.
  * @public
  */
-export enum EditResult {
+export enum EditStatus {
 	/**
 	 * The edit contained one or more malformed changes (e.g. was missing required fields such as `id`),
 	 * or contained a sequence of changes that could not possibly be applied sequentially without error
@@ -187,8 +187,12 @@ export enum EditResult {
  * Types of ops handled by SharedTree.
  */
 export enum SharedTreeOpType {
+	/** An op that includes edit information. */
 	Edit,
+	/** Includes a Fluid handle that corresponds to an edit chunk. */
 	Handle,
+	/** An op that does not affect the tree's state. */
+	NoOp,
 }
 
 /**
@@ -213,5 +217,5 @@ export interface SharedTreeHandleOp extends SharedTreeOp {
 	/** The serialized handle to an uploaded edit chunk. */
 	editHandle: string;
 	/** The index of the first edit in the chunk that corresponds to the handle. */
-	chunkKey: number;
+	startRevision: number;
 }

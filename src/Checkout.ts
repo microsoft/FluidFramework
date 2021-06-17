@@ -13,7 +13,7 @@ import {
 	ValidEditingResult,
 	GenericTransaction,
 	Edit,
-	EditResult,
+	EditStatus,
 	EditCommittedHandler,
 	GenericSharedTree,
 	SharedTreeEvent,
@@ -76,7 +76,6 @@ export enum EditValidationResult {
  * Exceptions thrown during event handling will be emitted as error events, which are automatically surfaced as error events on the
  * `SharedTree` used at construction time.
  * @public
- * @sealed
  */
 export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
@@ -178,7 +177,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 		assert(currentEdit !== undefined, 'An edit is not open.');
 		this.currentEdit = undefined;
 		const editingResult = currentEdit.close();
-		assert(editingResult.result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid');
+		assert(editingResult.status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid');
 
 		const id: EditId = newEditId();
 
@@ -219,8 +218,8 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 */
 	public applyChanges(...changes: TChange[]): void {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { result } = this.currentEdit.applyChanges(changes);
-		assert(result === EditResult.Applied, 'Locally constructed edits must be well-formed and valid.');
+		const { status } = this.currentEdit.applyChanges(changes);
+		assert(status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid.');
 		this.emitChange();
 	}
 
@@ -247,25 +246,25 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 */
 	public rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid {
 		assert(this.currentEdit !== undefined, 'An edit is not open.');
-		assert(this.currentEdit.result === EditResult.Applied, 'Local edits should always be valid.');
+		assert(this.currentEdit.status === EditStatus.Applied, 'Local edits should always be valid.');
 		// When closed, the result might indicate Malformed due to unused detached entities.
 		// This is not an error, as the edit was still open and can still use those entities.
 		const priorResults = this.currentEdit.close();
 		const rebasedEdit = this.tree.transactionFactory(this.latestCommittedView).applyChanges(priorResults.changes);
 		assert(
-			rebasedEdit.result !== EditResult.Malformed,
+			rebasedEdit.status !== EditStatus.Malformed,
 			'Malformed changes should have been caught on original application.'
 		);
-		let result: EditValidationResult.Valid | EditValidationResult.Invalid;
-		if (rebasedEdit.result === EditResult.Invalid) {
-			result = EditValidationResult.Invalid;
+		let status: EditValidationResult.Valid | EditValidationResult.Invalid;
+		if (rebasedEdit.status === EditStatus.Invalid) {
+			status = EditValidationResult.Invalid;
 			this.currentEdit = undefined;
 		} else {
-			result = EditValidationResult.Valid;
+			status = EditValidationResult.Valid;
 			this.currentEdit = rebasedEdit;
 		}
 		this.emitChange();
-		return result;
+		return status;
 	}
 
 	/**
@@ -280,16 +279,16 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	}
 
 	/**
-	 * @returns the {@link EditResult} of the current edit.
+	 * @returns the {@link EditStatus} of the current edit.
 	 * Has no side effects.
 	 * Can only be called if an edit is open.
 	 */
-	public getEditStatus(): EditResult {
+	public getEditStatus(): EditStatus {
 		const { currentEdit } = this;
 		assert(currentEdit !== undefined, 'An edit is not open.');
 		// TODO: could this ever be anything other than 'Applied'
 		// TODO: shouldn't this be an EditValidationResult since 'Applied' does not indicate the edit has been applied?
-		return currentEdit.result;
+		return currentEdit.status;
 	}
 
 	/**
