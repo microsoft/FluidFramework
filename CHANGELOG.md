@@ -1,5 +1,18 @@
 # Change Log
 
+## 1.1.2
+
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [aefb5083a56e4b8cb883c6a2a066d3252858599a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/aefb5083a56e4b8cb883c6a2a066d3252858599a)
+* Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.2-into-2021.06.3
+  * Commit: [5e1186368b2af9df2f0f5a638339d93bd85c71e5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5e1186368b2af9df2f0f5a638339d93bd85c71e5)
+* merge: Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.1-into-2021.06.2
+  * Commit: [92cd6964b72c118b37c75cf263ff657718ad05d4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92cd6964b72c118b37c75cf263ff657718ad05d4)
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
+
 ## 1.1.1
 
 * improvement: update-package-dependencies
@@ -41,7 +54,7 @@
 * fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
   * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
   * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
-  
+
 ## 0.109.0
 
 * improvement: reintroduce events for invalid/malformed SharedTree edits, use in tests
