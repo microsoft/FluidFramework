@@ -15,8 +15,7 @@ import { MoiraLambda } from "./lambda";
 
 export class MoiraLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager) /* ,
-        private readonly opCollection: ICollection<any> ) */ {
+        private readonly mongoManager: MongoManager) {
         super();
     }
 
