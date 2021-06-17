@@ -370,7 +370,8 @@ class PropertyElement {
             this.becomeDereference();
           }
         }
-        if (this._property && this._property.has(token)) {
+        const key = PathHelper.tokenizePathString(token)[0];
+        if (this._property && this._property.has(key)) {
           if (this.isPrimitiveCollection()) {
             if (this._childToken !== undefined) {
               // We're currently representing an element of a string or number array, why
@@ -378,15 +379,15 @@ class PropertyElement {
               console.assert(!this.isReference());
               this.invalidate();
             } else if (this._property.getContext() === 'array') {
-              this._childToken = Number(token);
+              this._childToken = Number(key);
             } else {
-              this._childToken = String(token);
+              this._childToken = String(key);
             }
           } else {
             // We pass RESOLVE_NEVER so that we just get the child, without following
             // any references if the child is another reference.
             // Below, we will decide whether to dereference
-            this._property = this._property.get(token, RESOLVE_NEVER);
+            this._property = this._property.get(key, RESOLVE_NEVER);
           }
           if (this._property && options === RESOLVE_ALWAYS && nextToken !== '*' && this.isReference()) {
             this.becomeDereference();
