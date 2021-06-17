@@ -8,8 +8,8 @@ import {
     useSyncedCounter,
     useSyncedArray,
     useSyncedString,
-} from "@fluidframework/react";
-import { CollaborativeInput } from "@fluidframework/react-inputs";
+} from "@fluid-experimental/react";
+import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 import * as React from "react";
 import { getAuthorName } from "./utils";
