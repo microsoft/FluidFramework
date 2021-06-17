@@ -289,7 +289,7 @@ export class ContainerContext implements IContainerContext {
 
     private async initializeFromExisting() {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateFirstTime(this);
+        this._runtime = await runtimeFactory.instantiateFromExisting(this);
     }
 
     private async initializeFirstTime() {
