@@ -1,32 +1,26 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
-import { RedisClient } from "redis";
+import { Redis } from "ioredis";
+import * as winston from "winston";
 
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
  */
 export class RedisTenantCache {
-    private readonly setAsync;
-    private readonly getAsync;
-    private readonly existsAsync;
-    private readonly expire: any;
-
     constructor(
-        client: RedisClient,
+        private readonly client: Redis,
         private readonly expireInSeconds = 60 * 60 * 24,
         private readonly prefix = "tenant") {
-        this.setAsync = util.promisify(client.set.bind(client));
-        this.getAsync = util.promisify(client.get.bind(client));
-        this.existsAsync = util.promisify(client.exists.bind(client));
-        this.expire = util.promisify(client.expire.bind(client));
+        client.on("error", (error) => {
+            winston.error("Redis Tenant Cache Error:", error);
+        });
     }
 
     public async exists(item: string): Promise<boolean> {
-        const result = await this.existsAsync(this.getKey(item));
+        const result = await this.client.exists(this.getKey(item));
         return result >= 1;
     }
 
@@ -34,16 +28,17 @@ export class RedisTenantCache {
         key: string,
         value: string = "",
         expiresInSeconds: number = this.expireInSeconds): Promise<void> {
-        const result = await this.setAsync(this.getKey(key), value);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return result !== "OK" ?
-            Promise.reject(result) :
-            this.expire(this.getKey(key), expiresInSeconds);
+        const result = await this.client.set(this.getKey(key), value);
+        if (result !== "OK")
+        {
+            return Promise.reject(result);
+        }
+
+        await this.client.expire(this.getKey(key), expiresInSeconds);
     }
 
     public async get(key: string): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.getAsync(this.getKey(key));
+        return this.client.get(this.getKey(key));
     }
 
     /**
