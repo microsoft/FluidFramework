@@ -76,11 +76,15 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             const errorAsObject = error as Partial<Error>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
+            // console.log("yes, isloggingerror");
 
             // Then add any other telemetry properties from the LoggingError
             const errorProps = error.getTelemetryProperties();
+            // console.log(errorProps);
             for (const key of Object.keys(errorProps)) {
                 const prop = errorProps[key];
+                // console.log(`supportsTags?: ${supportsTags}`);
+                // console.log(`current prop: ${prop}`);
                 if (event[key] !== undefined) {
                     // Don't overwrite existing properties on the event
                     continue;
@@ -93,6 +97,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 //
                 // So, if `supportsTags` is set, just add the prop:
                 if (supportsTags) {
+                    // console.log("yes");
                     event[key] = prop;
                     continue;
                 }
@@ -116,6 +121,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     case TelemetryDataTag.UserData:
                         // Strip out anything tagged explicitly as PII.
                         // Alternate strategy would be to hash these props
+                        // console.log("userdata");
                         event[key] = "REDACTED (UserData)";
                         break;
                     default:

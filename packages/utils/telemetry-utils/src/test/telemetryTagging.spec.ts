@@ -23,6 +23,14 @@ const exampleTaggedTelemetryPropertyWithUserData: ITaggedTelemetryPropertyType =
     value: "password",
     tag: TelemetryDataTag.UserData,
 };
+const exampleTaggedTelemetryPropertyWithPackageData: ITaggedTelemetryPropertyType = {
+    value: "packageWithSomeCoolData",
+    tag: TelemetryDataTag.PackageData,
+};
+const exampleTaggedTelemetryPropertyWithMysteryTag: ITaggedTelemetryPropertyType = {
+    value: "mysteryValue",
+    tag: "MysteryTag",
+};
 const exampleTelemetryEvent: ITelemetryGenericEvent = {
     category:"generic",
     eventName:"testEvent",
@@ -33,20 +41,27 @@ const exampleTelemetryEvent: ITelemetryGenericEvent = {
 //     exampleTaggedTelemetryPropertyWithUserData,
 // };
 
-describe("sendTelemetryEvent() properly blocks tags", () => {
+describe("sendTelemetryEvent() properly handles sensitive data", () => {
     let sent = false;
+    let count = 0;
     const logger: ITelemetryBaseLogger = {
         send(event: ITelemetryBaseEvent): void {
-            if (event.testGetter !== true || event.testGetter2 !== true) {
-                throw new Error("expected testGetter1 and testGetter2 on event");
+            if (count === 0 && event.untagged !== "untagged") {
+                throw new Error("expected untagged property to be added");
             }
-            if (event.eventName !== "test:testEvent") {
-                throw new Error("expected combined namespace");
+            else if (count === 1 && event.packageProperty !== "packageWithSomeCoolData") {
+                throw new Error("PackageData not handled properly");
             }
-            if (event.loggingError !== "REDACTED (UserData)") {
+            else if (count === 2 && event.userProperty !== "REDACTED (UserData)") {
                 throw new Error("expected user data redaction");
             }
-            sent = true;
+            else if (count === 3 && event.mysteryProperty !== "REDACTED (unknown tag)") {
+                throw new Error("expected unrecognized tag to be redacted");
+            }
+            count += 1;
+            if (count === 3) {
+                sent = true;
+            }
         },
     };
     const childLogger = ChildLogger.create(
@@ -61,7 +76,22 @@ describe("sendTelemetryEvent() properly blocks tags", () => {
     );
     childLogger.sendTelemetryEvent(
         exampleTelemetryEvent,
-        new LoggingError("loggingError", { exampleTaggedTelemetryPropertyWithUserData }),
+        new LoggingError("untaggedLoggingError", { untagged : "untagged" }),
+    );
+    childLogger.sendTelemetryEvent(
+        exampleTelemetryEvent,
+        new LoggingError("packageDataLoggingError",
+            { packageProperty : exampleTaggedTelemetryPropertyWithPackageData }),
+    );
+    childLogger.sendTelemetryEvent(
+        exampleTelemetryEvent,
+        new LoggingError("userDataLoggingError",
+            { userProperty : exampleTaggedTelemetryPropertyWithUserData }),
+    );
+    childLogger.sendTelemetryEvent(
+        exampleTelemetryEvent,
+        new LoggingError("mysteryTagLoggingError",
+            { mysteryProperty : exampleTaggedTelemetryPropertyWithMysteryTag }),
     );
     assert(sent, "event should be sent");
 });
