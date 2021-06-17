@@ -45,6 +45,9 @@ export interface ITelemetryBaseLogger {
      * objects) are in use. Eventually this will be a required property, but this is a stopgap that allows older hosts
      * to continue to pass through telemetry without trouble (this property will simply show up undefined), while our
      * current logger implementation in `telmetry-utils` handles tags in a separate manner.
+     *
+     * Currently, Fluid logging infrastructure can either utilize supportsTags (i.e. performs the relevant boolean check
+     * while logging) if it is set or otherwise fall back on performing a manual check for certain canonical tags.
      */
     supportsTags?: true;
     send(event: ITelemetryBaseEvent): void;

@@ -62,8 +62,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - Event being logged
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
+     * @param supportsTags - Whether the event can have tagged properties (usually tied to the logger)
      */
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(
+        event: ITelemetryBaseEvent,
+        error: any,
+        fetchStack: boolean,
+        supportsTags?: boolean,
+    ) {
         if (isILoggingError(error)) {
             // First, copy over stack and error message directly
             // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
@@ -72,16 +78,30 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.error = errorAsObject.message;
 
             // Then add any other telemetry properties from the LoggingError
-            const taggableProps = error.getTelemetryProperties();
-            for (const key of Object.keys(taggableProps)) {
+            const errorProps = error.getTelemetryProperties();
+            for (const key of Object.keys(errorProps)) {
+                const prop = errorProps[key];
                 if (event[key] !== undefined) {
                     // Don't overwrite existing properties on the event
                     continue;
                 }
-                const taggableProp = taggableProps[key];
-                const { value, tag } = (typeof taggableProp === "object")
-                    ? taggableProp
-                    : { value: taggableProp, tag: undefined };
+
+                // New props not already on the event may either be tagged or untagged. Untagged props can just be
+                // directly copied over without fuss; tagged props can only be copied if policy 'supportsTags' is true.
+                // Currently, even in the case `supportsTags` is unset, we must still take care to strip away sensitive
+                // information that is marked by known tags.
+                //
+                // So, if `supportsTags` is set, just add the prop:
+                if (supportsTags) {
+                    event[key] = prop;
+                    continue;
+                }
+
+                // Otherwise, we handle the below cases in particular:
+                // Eventually supportsTags will always be set/true and this code will be removed:
+                const { value, tag } = (typeof prop === "object")
+                    ? prop
+                    : { value: prop, tag: undefined };
                 switch (tag) {
                     case undefined:
                         // No tag means we can log plainly
@@ -135,7 +155,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties?: ITelemetryLoggerPropertyBags) {
+        protected readonly properties?: ITelemetryLoggerPropertyBags,
+        public readonly supportsTags?: true | undefined) {
+        // supportsTags remains optional, but now all child classes of TelemetryLogger must handle it properly if set
     }
 
     /**
@@ -157,7 +179,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: event.category ?? (error === undefined ?  "generic" : "error"),
         };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
+            // For now, 'supportsTags' has type true | undefined for back-compat, so here we map undefined to false:
+            TelemetryLogger.prepareErrorObject(newEvent, error, false, this.supportsTags ?? false);
         }
         this.send(newEvent);
     }
@@ -206,6 +229,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
             properties.push(this.properties.all);
             if(includeErrorProps) {
+                //
                 properties.push(this.properties.error);
             }
             for(const props of properties) {
@@ -245,7 +269,8 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
+        properties?: ITelemetryLoggerPropertyBags,
+        supportsTags?: true | undefined): TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
@@ -277,20 +302,23 @@ export class ChildLogger extends TelemetryLogger {
                 baseLogger.baseLogger,
                 combinedNamespace,
                 combinedProperties,
+                supportsTags,
             );
         }
 
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
-            properties);
+            properties,
+            supportsTags);
     }
 
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags) {
-        super(namespace, properties);
+        properties?: ITelemetryLoggerPropertyBags,
+        supportsTags?: true | undefined) {
+        super(namespace, properties, supportsTags);
     }
 
     /**
@@ -299,6 +327,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
+        // check logger.supportsTags
         this.baseLogger.send(this.prepareEvent(event));
     }
 }
@@ -341,6 +370,7 @@ export class MultiSinkLogger extends TelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
+            // check logger.supportsTags
             logger.send(newEvent);
         });
     }
@@ -494,7 +524,7 @@ export enum TelemetryDataTag {
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
-}
+} // Q: could the first check instead be against taggedtelemetrytype itself?
 
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
