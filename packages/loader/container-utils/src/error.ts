@@ -83,11 +83,11 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
         super(message, props);
     }
 
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): ICriticalContainerError {
+    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning {
         const newErrorFn =
             (errMsg: string) =>
                 new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds);
-        return wrapError(error, undefined /* props */, newErrorFn, false /* respectExistingKnownError */);
+        return wrapError(error, undefined /* props */, newErrorFn);
     }
 }
 
@@ -108,19 +108,29 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         super(errorMessage, props);
     }
 
-    static wrapIfUnknown(
+    static wrapIfUnrecognized(
         error: any,
         message: ISequencedDocumentMessage | undefined,
     ): ICriticalContainerError {
-        const newErrorFn =
-            (errMsg: string, props?: ITelemetryProperties) =>
-                new DataProcessingError(errMsg, props);
+        assert(error !== undefined, "Missing error input");
 
         const info = message !== undefined
             ? extractSafePropertiesFromMessage(message)
             : undefined;
 
-        return wrapError(error, info, newErrorFn, true /* respectExistingKnownError */);
+        // Don't coerce if it's already a recognized LoggingError
+        if (isValidLoggingError(error)) {
+            if (info !== undefined) {
+                error.addTelemetryProperties(info);
+            }
+            return error;
+        }
+
+        const newErrorFn =
+            (errMsg: string, props?: ITelemetryProperties) =>
+                new DataProcessingError(errMsg, props);
+
+        return wrapError(error, info, newErrorFn);
     }
 }
 
@@ -137,7 +147,7 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
  * Conditionally coerce the throwable input into a DataProcessingError.
  * @param error - Throwable input to be converted.
  */
-export const CreateProcessingError = DataProcessingError.wrapIfUnknown;
+export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
 
 /**
  * Convert the error into one of the error types.
@@ -145,6 +155,15 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnknown;
  * @param props - Properties to include on the error object at runtime and when logged
  */
 export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError {
+    assert(error !== undefined, 0x0f5 /* "Missing error input" */);
+
+    if (isValidLoggingError(error)) {
+        if (props !== undefined) {
+            error.addTelemetryProperties(props);
+        }
+        return error;
+    }
+
     const newErrorFn =
         (errMsg: string, props2?: ITelemetryProperties, errorType?: string) =>
             new SomeLoggingError(
@@ -153,54 +172,30 @@ export function CreateContainerError(error: any, props?: ITelemetryProperties): 
                 props2,
             );
 
-    return wrapError(error, props, newErrorFn, true /* respectExistingKnownError */);
+    return wrapError(error, props, newErrorFn);
 }
 
-export function wrapError(
+export function wrapError<T>(
     error: any,
     props: ITelemetryProperties | undefined,
-    newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => ICriticalContainerError,
-    respectExistingKnownError: boolean,
-): ICriticalContainerError {
-    assert(error !== undefined, 0x0f5 /* "Missing error input" */);
+    newErrorFn: (m: string, p?: ITelemetryProperties, et?: string) => T,
+): T {
+    assert(error !== undefined, "Missing error input");
 
-    if (respectExistingKnownError) {
-        // Existing LoggingError is left as-is, unknown error is decomposed and passed to given fn
-        if (isValidLoggingError(error)) {
-            if (props !== undefined) {
-                error.addTelemetryProperties(props);
-            }
-            return error;
-        } else {
-            const {
-                message,
-                stack,
-                errorType,
-            } = extractLogSafeErrorProperties(error);
-            const newError = newErrorFn(message, props, errorType);
-            if (stack !== undefined) {
-                Object.assign(newError, { stack });
-            }
-
-            return newError;
-        }
-    } else {
-        // Even existing LoggingError is decomposed and passed to given fn
-        let allProps = props;
-        if (isValidLoggingError(error)) {
-            const wrappedErrorProps = error.getTelemetryProperties();
-            allProps = { ...props, ...wrappedErrorProps};
-        }
-        const {
-            message,
-            stack,
-            errorType,
-        } = extractLogSafeErrorProperties(error);
-        const newError = newErrorFn(message, allProps, errorType);
-        if (stack !== undefined) {
-            Object.assign(newError, { stack });
-        }
-
-        return newError;
+    let allProps = props;
+    if (isValidLoggingError(error)) {
+        // All props are safe to pull in in this case
+        allProps = { ...props, ...error};
     }
+    const {
+        message,
+        stack,
+        errorType,
+    } = extractLogSafeErrorProperties(error);
+    const newError = newErrorFn(message, allProps, errorType);
+    if (stack !== undefined) {
+        Object.assign(newError, { stack });
+    }
+
+    return newError;
 }

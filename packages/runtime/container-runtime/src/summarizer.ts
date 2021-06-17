@@ -22,7 +22,7 @@ import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import { WrapError } from "@fluidframework/container-utils";
+import { wrapError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -92,7 +92,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
     static wrap(error: any, logged: boolean = false) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
-        return WrapError(error, undefined /* props */, newErrorFn, false /* respectExistingKnownError */);
+        return wrapError(error, undefined /* props */, newErrorFn);
     }
 }
 
