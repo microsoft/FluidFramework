@@ -528,23 +528,25 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 			assert(oldLocalEditId === id, 'Causal ordering should be upheld');
 		}
 
-		// The starting revision of the target edit chunk to be returned.
+		// The starting revision for a newly created chunk.
 		const startRevision = this.numberOfSequencedEdits;
-		// The edits of the target edit chunk to be returned.
+		// The initial edits for a newly created chunk.
 		const edits: EditWithoutId<TChange>[] = [editWithoutId];
 
 		const lastPair = this.editChunks.nextLowerPair(undefined);
 		if (lastPair === undefined) {
 			this.editChunks.set(startRevision, { edits });
 		} else {
-			// Add to the last edit chunk if it has room, otherwise create a new chunk.
-			// If the chunk is undefined, this means a handle corresponding to a full chunk was received through a summary
-			// and so a new chunk should be created.
+			// Add to the last edit chunk if it has room and hasn't already been uploaded, otherwise create a new chunk.
+			// If the chunk has a corresponding handle, create a new chunk.
 			const { edits: lastEditChunk, handle } = lastPair[1];
-			if (lastEditChunk !== undefined && lastEditChunk.length < this.editsPerChunk) {
-				assert(handle === undefined, 'chunks which are modified must not already have been uploaded');
+			if (handle === undefined && lastEditChunk !== undefined && lastEditChunk.length < this.editsPerChunk) {
 				lastEditChunk.push(editWithoutId);
 			} else {
+				assert(
+					handle !== undefined || lastEditChunk !== undefined,
+					'An edit chunk must have either a handle or a list of edits.'
+				);
 				this.editChunks.set(startRevision, { edits });
 			}
 		}

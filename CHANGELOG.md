@@ -36,6 +36,12 @@
   * Associated pull request: [31094](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31094)
   * Commit: [24b113f2ee47b00523d640ecf661ac4eee0e6aad](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/24b113f2ee47b00523d640ecf661ac4eee0e6aad)
 
+## 0.109.1
+
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
+  
 ## 0.109.0
 
 * improvement: reintroduce events for invalid/malformed SharedTree edits, use in tests
