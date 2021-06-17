@@ -16,10 +16,7 @@ import {
     IPackageIdentifierDetails,
 } from "@fluidframework/web-code-loader";
 import { bindUI, setupUI } from "./codeDetailsView";
-import {
-    getCodeLoaderForVersion,
-    fauxPackageDetailsV1,
-} from "./fauxPackage";
+import { getCodeLoaderForPackage } from "./codeDetailsLoader";
 import { getFluidObjectAndRender, parsePackageName } from "./utils";
 
 // Tinylicious service endpoints
@@ -87,13 +84,15 @@ export async function start(
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
-        codeLoader: getCodeLoaderForVersion(packageDetails.version),
+        codeLoader: getCodeLoaderForPackage(packageDetails),
     });
 
     let container: Container | undefined;
     if (shouldCreateNewDocument) {
         // This flow is used to create a new container and then attach it to storage.
-        container = await loader.createDetachedContainer(fauxPackageDetailsV1);
+        container = await loader.createDetachedContainer({
+            package: packageDetails.fullId,
+        });
         try {
             await container.attach(
                 urlResolver.createCreateNewRequest(defaultDocument),
@@ -158,5 +157,5 @@ if (document.location.pathname === "/") {
 
     start(document.location.href, packageDetails, shouldCreateNewDocument)
         .then((container) => bindUI(container, packageDetails))
-        .catch((error) => window.alert(`🛑 Failed to open document\n${error}`));
+        .catch((error) => window.alert(`🛑 Failed to open document\n\n${error}`));
 }
