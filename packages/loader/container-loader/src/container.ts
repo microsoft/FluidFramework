@@ -42,7 +42,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -104,7 +103,6 @@ import { pkgVersion } from "./packageVersion";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { ContainerStorageAdapter } from "./containerStorageAdapter";
 
@@ -1340,11 +1338,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
-        let storageService = await this.service.connectToStorage();
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            storageService = new PrefetchDocumentStorageService(storageService);
-        }
+        const storageService = await this.service.connectToStorage();
 
         this._storageService =
             new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);

@@ -2,18 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable no-null/no-null */
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { canRetryOnError, DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
-import {
-    LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
-
-import { debug } from "./debug";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { canRetryOnError } from "./network";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
+    // BlobId -> blob prefetchCache cache
+    private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
+    private prefetchEnabled = true;
+
     public get policies() {
         const policies = this.internalStorageService.policies;
         if (policies) {
@@ -21,16 +23,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         }
     }
 
-    // BlobId -> blob prefetchCache cache
-    private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
-    private prefetchEnabled = true;
-
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.internalStorageService.getSnapshotTree(version);
         if (this.prefetchEnabled) {
-            // We don't care if the prefetch succeed
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            p.then((tree: ISnapshotTree | null | undefined) => {
+            // We don't care if the prefetch succeeds
+            void p.then((tree: ISnapshotTree | null | undefined) => {
                 if (tree === null || tree === undefined) { return; }
                 this.prefetchTree(tree);
             });
@@ -46,8 +43,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         this.prefetchCache.clear();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private cachedRead(blobId: string): Promise<ArrayBufferLike> {
+    private async cachedRead(blobId: string): Promise<ArrayBufferLike> {
         if (this.prefetchEnabled) {
             const prefetchedBlobP = this.prefetchCache.get(blobId);
             if (prefetchedBlobP !== undefined) {
@@ -70,9 +66,8 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         this.prefetchTreeCore(tree, secondary);
 
         for (const blob of secondary) {
-            // We don't care if the prefetch succeed
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.cachedRead(blob);
+            // We don't care if the prefetch succeeds
+            void this.cachedRead(blob);
         }
     }
 
@@ -81,9 +76,8 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
             const blob = tree.blobs[blobKey];
             if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 if (blob !== null) {
-                    // We don't care if the prefetch succeed
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.cachedRead(blob);
+                    // We don't care if the prefetch succeeds
+                    void this.cachedRead(blob);
                 }
             } else if (!blobKey.startsWith("deltas")) {
                 if (blob !== null) {
@@ -93,10 +87,9 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
         }
 
         for (const commit of Object.keys(tree.commits)) {
-            this.getVersions(tree.commits[commit], 1)
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
-                .catch((error) => debug("Ignored cached read error", error));
+            // We don't care if the prefetch succeeds
+            void this.getVersions(tree.commits[commit], 1)
+                .then(async (moduleCommit) => this.getSnapshotTree(moduleCommit[0]));
         }
 
         for (const subTree of Object.keys(tree.trees)) {
