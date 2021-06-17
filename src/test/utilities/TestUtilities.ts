@@ -30,7 +30,7 @@ import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation }
 import { SharedTreeDiagnosticEvent } from '../../generic/GenericSharedTree';
 
 /** Objects returned by setUpTestSharedTree */
-export interface SharedTreeTestingComponents {
+export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
 	/** The MockFluidDataStoreRuntime used to created the SharedTree. */
 	componentRuntime: MockFluidDataStoreRuntime;
 	/**
@@ -39,7 +39,7 @@ export interface SharedTreeTestingComponents {
 	 * */
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 	/** The SharedTree created and set up. */
-	tree: SharedTree;
+	tree: TSharedTree;
 }
 
 /** Options used to customize setUpTestSharedTree */

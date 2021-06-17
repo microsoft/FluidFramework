@@ -13,7 +13,7 @@ import { Payload } from '../generic';
 describe('SnapshotUtilities', () => {
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
-		const binder: IFluidHandle = ({ bind: () => void {} } as unknown) as IFluidHandle;
+		const binder: IFluidHandle = { bind: () => void {} } as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,
