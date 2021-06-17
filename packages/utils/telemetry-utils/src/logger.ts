@@ -264,6 +264,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {
+    // A ChildLogger is always assumed to support tags - the more interesting behavior happens in its base.
+    supportsTags: true | undefined = true;
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
