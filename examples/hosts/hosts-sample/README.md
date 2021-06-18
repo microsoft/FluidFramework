@@ -1,39 +1,62 @@
 # @fluid-internal/hosts-sample
 
-The Fluid loader is all that is needed to load any Fluid document. This example walks through all the steps to
-create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
-more detail on each line of the code.
+This example demonstrates how to host Fluid components in a web application.
+The Fluid loader is needed to load any Fluid document. The example walks through all the steps to
+create, initialize, and then make use of the loader in under 200 lines of code.
+And does so in a literate programming-like style to provide more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @fluidframework/base-host.
-These may be better starting options when integrating the loader into your own code. But this example will show all
-the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
-of code.
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- The getting started instructions are automatically generated.
+To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
 
-## Build steps
+## Getting Started
 
-Getting up and running is simple.
+You can run this example using the following steps:
 
-```bash
-npm install
-npm start
-```
+1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+   a. For an even faster build, you can add the package name to the build command, like this:
+   `npm run build:fast -- --nolint @fluid-internal/hosts-sample`
+1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
+1. Run `npm run start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
+ <!-- AUTO-GENERATED-CONTENT:END -->
 
-Then navigate to <http://localhost:8080.> This will redirect you to <http://localhost:8080/example> but you can change
-'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
-will be created.
+## Files
 
-## The Code
+#### index.html
 
-### Packages
+This is a scaffolded HTML page defining the application layout.
 
-The loader itself only requires two Fluid packages: `@fluidframework/container-definitions` and `@fluidframework/container-loader`.
+#### app.ts
 
-`@fluidframework/container-loader` contains the actual loader itself.
+This is the main file that starts running the web app. It fetches the container for the Fluid object the app is using and proceeds to render the object on the browser at localhost:8080, and uses the locally running Tinylicious server instance.
 
-`@fluidframework/container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
-These provide the bindings between the loader code itself and the documents loaded by the loader.
+#### codeDetailsLoader.ts
 
-### Creating the Loader
+This file contains an in-memory code loader emulating a Fluid package store.
+
+#### codeDetailsView.ts
+
+Contains methods and utilities to setup the user experience for showning active code details and making code upgrade proposals.
+
+#### fauxComponent.ts
+
+Contains a placeholder data object used to render an HTML element when it is mounted by the host.
+
+#### utils.ts
+
+Contains a collection of helper functions for the application.
+
+## Implementation Details
+
+### Dependencies
+
+The sample code requires following Fluid packages as dependencies:
+
+-   `@fluidframework/container-loader` contains the actual loader itself.
+-   `@fluidframework/core-interfaces` is a set of TypeScript interface definitions that provide bindings between the loader and the container loaded by the loader.
+-   `@fluidframework/routerlicious-driver` is needed to instantiate a Fluid driver used to connect to the Tinylicious server.
+
+### Creating Loader
 
 Creating a loader is a simple process
 
@@ -47,15 +70,16 @@ const loader = new Loader({
 });
 ```
 
-The loader takes in four parameters. The first is a set of host interfaces. These allow the loader to interact with
-the host for identity and access control related tasks like URL resolution. The second contains the driver factory.
-This allows the loader to communicate with the service hosting the Fluid document. The third parameter defines the
-code loader used to load the code defined in the Fluid document. And finally the last parameter is a set of options
-used during the actual load.
+The loader takes a loader options parameter allowing to customize its behavior, such as:
+
+-   `urlResolver` is used by the loader for resolving external urls into Fluid urls such that the container
+    specified by the external url can be loaded.
+-   `documentServiceFactory` takes the Fluid url provided by the resolved url and constucts all the necessary services for communication with the backend.
+-   `codeLoader` handles loading the necessary code for running a container once it is loaded.
 
 Each of these will be described in more detail in the sections that follow.
 
-#### Host Platform
+### Host Platform
 
 There are certain tasks that require the host's help to complete. These are defined via the host interfaces.
 
@@ -85,21 +109,12 @@ URL resolver would make an authenticated API call against a server API to receiv
 
 That warning out of the way let's dig in to the `IUrlResolver`.
 
-The `IUrlResolver` interface is defined as
-
-```typescript
-export interface IUrlResolver {
-    resolve(request: IRequest): Promise<IResolvedUrl>;
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-}
-```
-
-This simple interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
+The `IUrlResolver` interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
 `IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
-method we then parse a URL of this form into the associated fluid:// based URL.
+method we then parse a URL of this form into the associated `fluid://` schema based URL.
 
 To do so we first start by parsing the full URL and extracing the document ID out of the URL
 
@@ -111,7 +126,8 @@ const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 Once those are available we can construct the full Fluid url as
 
 ```typescript
-const documentUrl = `fluid://${new URL(this.ordererUrl).host}` +
+const documentUrl =
+    `fluid://${new URL(this.ordererUrl).host}` +
     `/${encodeURIComponent(this.tenantId)}` +
     parsedUrl.pathname;
 ```
@@ -120,10 +136,13 @@ We can then construct the final `IFluidResolvedUrl` by generating all the endpoi
 crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
 
 ```typescript
-const deltaStorageUrl =
-    `${this.ordererUrl}/deltas/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(documentId)}`;
+const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(
+    this.tenantId
+)}/${encodeURIComponent(documentId)}`;
 
-const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(this.tenantId)}`;
+const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(
+    this.tenantId
+)}`;
 
 const response: IFluidResolvedUrl = {
     endpoints: {
@@ -138,16 +157,17 @@ const response: IFluidResolvedUrl = {
 
 return response;
 ```
+
 It also defines an api, `getAbsoluteUrl` which takes 2 arguments, `resolvedUrl` and `relativeUrl`. It creates a url for
 the created container with any data store path given in the relative url.
 
 #### Drivers
 
-Similar to how the loader defers certain tasks to the host it also defers how to establish a connection to a Fluid
+Similar to how the loader delegates certain tasks to the host it also defers how to establish a connection to a Fluid
 service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
 define so long as code is provided that correctly implements the loader's driver interface.
 
-In this example the Routerlicious driver is used `@fluidframework/routerlicious-driver`. But drivers also exist to
+In this example the Routerlicious driver is used to communicate with a Tinylicious server. Other drivers also exist to
 talk to OneDrive/SharePoint.
 
 Creating this is simple
@@ -162,7 +182,7 @@ The driver factory is then passed to the loader. Internally the loader then bind
 host resolver to the associated driver.
 
 Although not fully utilized yet the protocol part of the Fluid URL is used to determine which driver to make use of -
-i.e. fluid-routerlicious:// would indicate the routerlicious driver/protocol should be used, while the fluid-spo://
+i.e. `fluid-routerlicious://` would indicate the routerlicious driver/protocol should be used, while the `fluid-spo://`
 would indicate the SharePoint driver is required.
 
 #### Code Loader
@@ -205,6 +225,7 @@ Once the loader has been created then actually creating a Fluid document is very
 const container = await loader.createDetachedContainer(codeDetails);
 await container.attach(request);
 ```
+
 In first line, we actually create an in-memory container without creating it on the actual storage. `codeDetails`
 is the code package to run for the container. It provides benefits like freaky fast container creation so that the
 user can start editing the container immediately and we don't have to propose code through the quorum.
@@ -236,7 +257,7 @@ if (response.status !== 200) {
 }
 ```
 
-A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
+A mime type is also provided with the request to distinguish the type of object. The most common thing you'll receive
 is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web
 model. But a document could also return different mime types like static images, videos, etc...
 
@@ -265,8 +286,12 @@ a feature detection pattern can be used to determine what capabilities are expos
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
 cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
-are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
+are testing for. The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
+
+### Proposing Code Upgrade
+
+blah
 
 ## Next Steps
 
@@ -278,3 +303,7 @@ Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/ma
 When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
 to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can
 also serve as a host for other Fluid content.
+
+There are other packages which provide simple APIs to make use of the loader. For example `@fluidframework/base-host`.
+These may be better starting options when integrating the loader into your own code. But this example will show all
+the steps needed to create and use the Fluid loader.
