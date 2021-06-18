@@ -55,8 +55,15 @@ export class BlobManager {
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
+        onceRuntimeDisposed: (fn: () => void) => void,
         private readonly logger: ITelemetryLogger,
-    ) { }
+    ) {
+        onceRuntimeDisposed(() => {
+            for (const promise of this.pendingBlobIds.values()) {
+                promise.reject(new Error("runtime disposed while blobAttach op in flight"));
+            }
+        });
+    }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), 0x11f /* "requesting unknown blobs" */);

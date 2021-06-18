@@ -12,7 +12,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -158,5 +158,31 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         // upload the blob twice and make sure nothing bad happens.
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
+    });
+});
+
+// this functionality was added in 0.42 and can be added to the compat-enabled
+// tests above when runtime version is bumped to 0.44
+describeNoCompat("blobs", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(async () => {
+        provider = getTestObjectProvider();
+    });
+
+    it("uploadBlob() rejects when runtime is disposed", async () => {
+        const container = await provider.makeTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        (container.deltaManager as any)._inbound.pause();
+
+        const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
+            if (op.contents.includes("blobAttach")) {
+                res();
+            }
+        }));
+        const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
+        await blobOpP;
+        container.close();
+        await assert.rejects(blobP, "promise returned by uploadBlob() did not reject when runtime was disposed");
     });
 });
