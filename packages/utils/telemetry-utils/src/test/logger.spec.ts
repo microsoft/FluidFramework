@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
-    SomeLoggingError,
+    LoggingError,
     TelemetryDataTag,
     TelemetryLogger,
     isTaggedTelemetryPropertyValue,
@@ -183,7 +183,7 @@ describe("Logger", () => {
             });
         });
         describe("LoggingError", () => {
-            function newLoggingError(message, props?) { return new SomeLoggingError("foo", message, props); }
+            function newLoggingError(message, props?) { return new LoggingError(message, props); }
             it("ctor props are assigned to the object", () => {
                 const loggingError = newLoggingError(
                     "myMessage",

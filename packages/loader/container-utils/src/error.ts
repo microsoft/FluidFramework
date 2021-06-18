@@ -11,7 +11,7 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError, SomeLoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -22,8 +22,8 @@ function messageFromError(error: any): string {
     return String(error);
 }
 
-const isValidLoggingError = (error: any): error is LoggingError => {
-    return LoggingError.is(error);
+const isValidLoggingError = (error: any): error is LoggingError & IErrorBase => {
+    return (typeof error?.errorType === "string") && LoggingError.is(error);
 };
 
 const isRegularObject = (value: any): boolean => {
@@ -165,10 +165,9 @@ export function CreateContainerError(error: any, props?: ITelemetryProperties): 
     const { errorType } = extractLogSafeErrorProperties(error);
     const newErrorFn =
         (errMsg: string, props2?: ITelemetryProperties) =>
-            new SomeLoggingError(
-                errorType ?? ContainerErrorType.genericError,
+            new GenericError(
                 errMsg,
-                { ...props, ...props2 },
+                { ...props, ...props2, wrappedErrorType: errorType },
             );
 
     return wrapError(error, newErrorFn);

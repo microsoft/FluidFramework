@@ -10,7 +10,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace } from "@fluidframework/common-utils";
-import { SomeLoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -563,8 +563,7 @@ export class Client {
             }
 
             if (invalidPositions.length > 0) {
-                throw new SomeLoggingError(
-                    undefined,
+                throw new LoggingError(
                     "RangeOutOfBounds",
                     {
                         UsageError: true,

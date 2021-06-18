@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { SomeLoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { CreateContainerError, CreateProcessingError } from "../error";
 
 describe("Errors", () => {
@@ -32,8 +32,7 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for LoggingErrors", () => {
-            const originalError = new SomeLoggingError(
-                "someErrorType",
+            const originalError = new LoggingError(
                 "Inherited error message", {
                     errorType: "Demoted error type",
                     otherProperty: "Considered PII-free property",

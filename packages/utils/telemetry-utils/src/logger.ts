@@ -15,7 +15,6 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { IErrorBase } from "@fluidframework/container-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 
 export interface ITelemetryLoggerPropertyBag {
@@ -68,10 +67,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (isILoggingError(error)) {
             // First, copy over error message, stack, and errorType directly (overwrite if present on event)
             // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            const errorAsObject = error as Partial<Error & IErrorBase>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
-            event.errorType = errorAsObject.errorType;
+            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
+            event.stack = error.stack;
+            event.error = error.message;
+            event.errorType = (error as any).errorType;
 
             // Then add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
@@ -108,11 +107,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 }
             }
         } else if (typeof error === "object" && error !== null) {
-            // Try to pull the message, stack and errorType off even if it's not an ILoggingError
-            const errorAsObject = error as Partial<Error & IErrorBase>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
-            event.errorType = errorAsObject.errorType;
+            // Pull the message, stack and errorType off even if it's not an ILoggingError
+            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
+            event.stack = error.stack;
+            event.error = error.message;
+            event.errorType = error.errorType;
         } else {
             event.error = error;
         }
@@ -536,17 +535,14 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
-export abstract class LoggingError extends Error implements ILoggingError, Omit<IErrorBase, "sequenceNumber"> {
+export class LoggingError extends Error implements ILoggingError {
     private readonly __isFluidLoggingError__ = 1;
-
-    public abstract readonly errorType: string;
 
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
         return maybeLogger !== null
             && typeof maybeLogger === "object"
             && typeof maybeLogger.message === "string"
-            && typeof maybeLogger.errorType === "string"
             && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
     }
 
@@ -580,16 +576,6 @@ export abstract class LoggingError extends Error implements ILoggingError, Omit<
             message: this.message,
             ...taggableProps,
         };
-    }
-}
-
-export class SomeLoggingError extends LoggingError {
-    constructor(
-        public readonly errorType,
-        message: string,
-        props?: ITelemetryProperties,
-    ) {
-        super(message, props);
     }
 }
 
