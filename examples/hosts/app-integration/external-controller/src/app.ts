@@ -52,10 +52,9 @@ async function start(): Promise<void> {
 
     // Get or create the document depending if we are running through the create new flow
     const client = useFrs ? FrsClient : TinyliciousClient;
-
     const [fluidContainer, containerServices] = createNew
-        ? Object.values(await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema))
-        : Object.values(await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema));
+        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
