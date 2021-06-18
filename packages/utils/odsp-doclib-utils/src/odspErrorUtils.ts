@@ -78,13 +78,11 @@ export function parseFacetCodes(response: string): string[] {
     }
 
     // eslint-disable-next-line no-null/no-null
-    if(typeof error === "object" && error !== null) {
-        while (error !== undefined) {
-            if (error.code !== undefined) {
-                stack.unshift(error.code);
-            }
-            error = error.innerError;
+    while (typeof error === "object" && error !== null) {
+        if (error.code !== undefined) {
+            stack.unshift(error.code);
         }
+        error = error.innerError;
     }
     return stack;
 }
