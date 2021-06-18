@@ -68,7 +68,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         event: ITelemetryBaseEvent,
         error: any,
         fetchStack: boolean,
-        supportsTags?: boolean,
     ) {
         if (isILoggingError(error)) {
             // First, copy over stack and error message directly
@@ -137,7 +136,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         };
         if (error !== undefined) {
             // For now, 'supportsTags' has type true | undefined for back-compat, so here we map undefined to false:
-            TelemetryLogger.prepareErrorObject(newEvent, error, false, this.supportsTags ?? false);
+            TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
         this.send(newEvent);
     }
@@ -183,7 +182,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         switch (tag) {
             case undefined:
                 // No tag means we can log plainly
-                event[propKey] = value;
             case TelemetryDataTag.PackageData:
                 // For Microsoft applications, PackageData is safe for now
                 // (we don't load 3P code in 1P apps)
