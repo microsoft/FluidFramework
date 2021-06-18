@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
     ContainerErrorType,
     IGenericError,
@@ -153,8 +152,6 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
  * @param props - Properties to include on the error object at runtime and when logged
  */
 export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError {
-    assert(error !== undefined, 0x0f5 /* "Missing error input" */);
-
     if (isValidLoggingError(error)) {
         if (props !== undefined) {
             error.addTelemetryProperties(props);
@@ -164,11 +161,20 @@ export function CreateContainerError(error: any, props?: ITelemetryProperties): 
 
     const { errorType } = extractLogSafeErrorProperties(error);
     const newErrorFn =
-        (errMsg: string, props2?: ITelemetryProperties) =>
-            new GenericError(
+        (errMsg: string, props2?: ITelemetryProperties) =>{
+            const newError = new GenericError(
                 errMsg,
-                { ...props, ...props2, wrappedErrorType: errorType },
+                { ...props, ...props2 },
+                error,
             );
+            if (errorType !== undefined) {
+                Object.assign(newError, { errorType });
+            }
+
+            // By clobbering newError.errorType, we can no longer properly call it a GenericError.
+            // It's still a LoggingError, and does have errorType so it's also IErrorBase
+            return newError as LoggingError & IErrorBase;
+        };
 
     return wrapError(error, newErrorFn);
 }
