@@ -13,7 +13,6 @@ import {
     IDeltaManagerEvents,
     IDeltaQueue,
     ICriticalContainerError,
-    ContainerErrorType,
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
