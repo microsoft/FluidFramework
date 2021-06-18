@@ -170,29 +170,31 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.send(perfEvent);
     }
 
-    protected redactTaggedUserData(event: ITelemetryBaseEvent, propKey: string) {
-        const prop = event[propKey];
-        const { value, tag } = isTaggedTelemetryPropertyValue(prop)
-            ? prop
-            : { value: prop, tag: undefined };
+    protected redactTaggedUserData(event: ITelemetryBaseEvent) {
+        for (const key of Object.keys(event)) {
+            const prop = event[key];
+            const { value, tag } = isTaggedTelemetryPropertyValue(prop)
+                ? prop
+                : { value: prop, tag: undefined };
 
-        switch (tag) {
-            case undefined:
-                // No tag means we can log plainly
-            case TelemetryDataTag.PackageData:
-                // For Microsoft applications, PackageData is safe for now
-                // (we don't load 3P code in 1P apps)
-                // But this determination really belongs in the host layer
-                event[propKey] = value;
-            case TelemetryDataTag.UserData:
-                // Strip out anything tagged explicitly as PII.
-                // Alternate strategy would be to hash these props
-                // console.log("userdata");
-                event[propKey] = "REDACTED (UserData)";
-            default:
-                // If we encounter a tag we don't recognize
-                // then we must assume we should scrub.
-                event[propKey] = "REDACTED (unknown tag)";
+            switch (tag) {
+                case undefined:
+                    // No tag means we can log plainly
+                case TelemetryDataTag.PackageData:
+                    // For Microsoft applications, PackageData is safe for now
+                    // (we don't load 3P code in 1P apps)
+                    // But this determination really belongs in the host layer
+                    event[key] = value;
+                case TelemetryDataTag.UserData:
+                    // Strip out anything tagged explicitly as PII.
+                    // Alternate strategy would be to hash these props
+                    // console.log("userdata");
+                    event[key] = "REDACTED (UserData)";
+                default:
+                    // If we encounter a tag we don't recognize
+                    // then we must assume we should scrub.
+                    event[key] = "REDACTED (unknown tag)";
+            }
         }
     }
 
@@ -227,11 +229,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             }
         }
 
-        // Do one more pass over the properties to handle any tagged information:
-        if (eventCanSupportTags === undefined || eventCanSupportTags === false) {
-            for (const key of Object.keys(newEvent)) {
-                this.redactTaggedUserData(newEvent, key);
-            }
+        // If tags are unsupported, do one more pass over all props to remove sensitive data:
+        if (eventCanSupportTags !== true) {
+            this.redactTaggedUserData(newEvent);
         }
         return newEvent;
     }
