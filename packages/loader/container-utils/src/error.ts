@@ -54,10 +54,7 @@ function extractLogSafeErrorProperties(error: any) {
 }
 
 /**
- * Create a wrapper for an error of unknown origin
- * @param message - message from innerError (see function messageFromError)
- * @param props - Properties pulled off the error that are safe to log
- * @param innerError - intact error object we are wrapping. Should not be logged as-is
+ * Generic wrapper for an unrecognized/uncategorized error object
  */
 export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
@@ -71,6 +68,9 @@ export class GenericError extends LoggingError implements IGenericError {
     }
 }
 
+/**
+ * Warning emitted when requests to storage are being throttled.
+ */
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
     readonly errorType = ContainerErrorType.throttlingError;
 
@@ -82,6 +82,10 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
         super(message, props);
     }
 
+    /**
+     * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
+     * and prefixing the wrapped error message with messagePrefix.
+     */
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning {
         const newErrorFn =
             (errMsg: string) =>
@@ -107,6 +111,12 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         super(errorMessage, props);
     }
 
+    /**
+     * Conditionally coerce the throwable input into a DataProcessingError.
+     * @param error - Throwable input to be converted.
+     * @param message - Sequenced message (op) to include info about via telemetry props
+     * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
+     */
     static wrapIfUnrecognized(
         error: any,
         message: ISequencedDocumentMessage | undefined,
@@ -142,14 +152,13 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
 
 /**
  * Conditionally coerce the throwable input into a DataProcessingError.
- * @param error - Throwable input to be converted.
  */
 export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
 
 /**
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
- * @param props - Properties to include on the error object at runtime and when logged
+ * @param props - Properties to include on the error for logging
  */
 export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError {
     if (isValidLoggingError(error)) {

@@ -5,12 +5,8 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-import {
-    LoggingError,
-    TelemetryDataTag,
-    TelemetryLogger,
-    isTaggedTelemetryPropertyValue,
- } from "../logger";
+// eslint-disable-next-line max-len
+import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -183,9 +179,8 @@ describe("Logger", () => {
             });
         });
         describe("LoggingError", () => {
-            function newLoggingError(message, props?) { return new LoggingError(message, props); }
             it("ctor props are assigned to the object", () => {
-                const loggingError = newLoggingError(
+                const loggingError = new LoggingError(
                     "myMessage",
                     { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: "PackageData" }});
                 const errorAsAny = loggingError as any;
@@ -196,7 +191,7 @@ describe("Logger", () => {
                 assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
             });
             it("getTelemetryProperties extracts all untagged ctor props", () => {
-                const loggingError = newLoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.message, "myMessage");
                 assert.strictEqual(typeof props.stack, "string");
@@ -206,7 +201,7 @@ describe("Logger", () => {
                 assert.strictEqual(props.p3, true);
             });
             it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
-                const loggingError = newLoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 (loggingError as any).p1 = "should be overwritten";
                 loggingError.addTelemetryProperties(
                     {p1: "one", p4: 4, p5: { value: 5, tag: "PackageData" }});
@@ -220,7 +215,7 @@ describe("Logger", () => {
                 assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "PackageData" });
             });
             it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
-                const loggingError = newLoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 loggingError.addTelemetryProperties({p1: "should be overwritten"});
                 const errorAsAny = loggingError as any;
                 errorAsAny.p1 = "one";
@@ -234,7 +229,7 @@ describe("Logger", () => {
                 assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
             });
             it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
-                const loggingError = newLoggingError("myMessage", { p1: 1, p2: "two", p3: true});
+                const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 const errorAsAny = loggingError as any;
                 errorAsAny.p1 = { one: 1 };
                 errorAsAny.p4 = null;
@@ -245,14 +240,14 @@ describe("Logger", () => {
                 assert.strictEqual(props.p5, "REDACTED (arbitrary object)");
             });
             it("addTelemetryProperties - overwrites base class Error fields (untagged)", () => {
-                const loggingError = newLoggingError("myMessage");
+                const loggingError = new LoggingError("myMessage");
                 const overwritingProps = { message: "surprise1", stack: "surprise2" };
                 loggingError.addTelemetryProperties(overwritingProps);
                 const props = loggingError.getTelemetryProperties();
                 assert.deepStrictEqual(props, overwritingProps);
             });
             it("addTelemetryProperties - overwrites base class Error fields (tagged)", () => {
-                const overwritingProps = newLoggingError("myMessage");
+                const overwritingProps = new LoggingError("myMessage");
                 const expectedProps = {
                     message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
                     stack: { value: "surprise2", tag: "PackageData" },

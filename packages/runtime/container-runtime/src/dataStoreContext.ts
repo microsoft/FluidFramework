@@ -61,8 +61,8 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { GenericError, CreateProcessingError } from "@fluidframework/container-utils";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -261,7 +261,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new GenericError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {

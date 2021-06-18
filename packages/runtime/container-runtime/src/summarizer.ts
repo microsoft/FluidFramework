@@ -669,8 +669,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         try {
             await this.runCore(onBehalfOf);
         } catch (error) {
-            const summarizingWarning = SummarizingWarning.wrap(error, false /* logged */);
-            this.emit("summarizingError", summarizingWarning);
+            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
             throw error;
         } finally {
             // Cleanup after running
