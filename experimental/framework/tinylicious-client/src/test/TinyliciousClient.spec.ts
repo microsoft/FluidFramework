@@ -175,15 +175,17 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const containerCreate = (await ResettableTinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
+        const containerCreate = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const createFluidContainer = containerCreate.fluidContainer;
         await new Promise<void>((resolve, reject) => {
-            containerCreate.on("connected", () => {
+            createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
-        const [containerGet] = await ResettableTinyliciousClient.getContainer(containerConfig, schema);
-        const map1Create = containerCreate.initialObjects.map1 as SharedMap;
-        const map1Get = containerGet.initialObjects.map1 as SharedMap;
+        const containerGet = await ResettableTinyliciousClient.getContainer(containerConfig, schema);
+        const getFluidContainer = containerGet.fluidContainer;
+        const map1Create = createFluidContainer.initialObjects.map1 as SharedMap;
+        const map1Get = getFluidContainer.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
     });
 
@@ -203,7 +205,7 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const [container] = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const container = (await ResettableTinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();
@@ -253,19 +255,20 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const [containerCreate] = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const containerCreate = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const createFluidContainer = containerCreate.fluidContainer;
         await new Promise<void>((resolve, reject) => {
-            containerCreate.on("connected", () => {
+            createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
 
-        const initialObjectsCreate = containerCreate.initialObjects;
+        const initialObjectsCreate = createFluidContainer.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
         map1Create.set("new-key", "new-value");
         const valueCreate = await map1Create.get("new-key");
 
-        const [containerGet] = await ResettableTinyliciousClient.getContainer(containerConfig, schema);
+        const containerGet = (await ResettableTinyliciousClient.getContainer(containerConfig, schema)).fluidContainer;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
@@ -288,7 +291,7 @@ describe("TinyliciousClient post-initialization", () => {
             },
             dynamicObjectTypes: [ SharedDirectory ],
         };
-        const [container] = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const container = (await ResettableTinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();
@@ -318,7 +321,7 @@ describe("TinyliciousClient post-initialization", () => {
             },
             dynamicObjectTypes: [ DiceRoller ],
         };
-        const [container] = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
+        const container = (await ResettableTinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();

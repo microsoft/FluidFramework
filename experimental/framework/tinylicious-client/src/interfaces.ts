@@ -32,8 +32,8 @@ export interface TinyliciousContainerServices {
 }
 
 export interface TinyliciousContainerAndServices {
-    fluidContainer?: FluidContainer;
-    containerServices?: TinyliciousContainerServices;
+    fluidContainer: FluidContainer;
+    containerServices: TinyliciousContainerServices;
 }
 
 /**
