@@ -370,7 +370,7 @@ class PropertyElement {
             this.becomeDereference();
           }
         }
-        const key = PathHelper.tokenizePathString(token)[0];
+        const key = PathHelper.unquotePathSegment(token);
         if (this._property && this._property.has(key)) {
           if (this.isPrimitiveCollection()) {
             if (this._childToken !== undefined) {

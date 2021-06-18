@@ -270,7 +270,8 @@ describe('Property element', function() {
 
     mymap.insert('"my.child.path"', 42);
     const propElem = new PropertyElement(mymap);
-    propElem.becomeChild('"my.child.path"');
+    // Now becomeChild expect a quoted/escaped paths instead of ids.
+    propElem.becomeChild('""my.child.path""');
     expect(propElem.isValid()).toEqual(true);
 
     expect(propElem.getValue()).toEqual(42);
