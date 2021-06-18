@@ -649,4 +649,13 @@ describe('Property element', function() {
     expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NO_LEAFS).getValue()).toEqual(42);
   });
 
+  it('getChild with special characters in tokenized path', function() {
+    const myData = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
+    workspace.root.insert('"/"', myData);
+
+    const propElem = new PropertyElement(workspace.root);
+    expect(propElem.getChild(['"/"', 'aString']).isValid()).toEqual(true);
+    expect(propElem.getChild(['"/"', 'aString', '/']).getProperty()).toEqual(workspace.root);
+  });
+
 });

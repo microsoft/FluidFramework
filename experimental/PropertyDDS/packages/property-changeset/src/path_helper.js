@@ -340,20 +340,21 @@ PathHelper.quotePathSegment = function(in_pathSegment) {
  * @return {string} unquoted path string
  */
  PathHelper.unquotePathSegment = function(in_quotedPathSegment) {
-    if (!in_quotedPathSegment || typeof in_quotedPathSegment !== 'string') {
-        return in_quotedPathSegment;
+    if (typeof in_quotedPathSegment !== 'string') {
+        throw new Error(`Expecting a string as a path: ${in_quotedPathSegment}`);
     }
 
-    // We remove double quotes: ;
     if (in_quotedPathSegment[0] === '"' && in_quotedPathSegment[in_quotedPathSegment.length - 1] === '"') {
-        in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
+
+          // We remove double quotes
+          in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
+
+          // Then we unescape escape symbols
+          in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, '\\');
+
+          // Then we unescape quotes
+          in_quotedPathSegment = in_quotedPathSegment.replace(/\\"/g, '"');
     }
-
-    // Then we unescape escape symbols
-    in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, '\\');
-
-    // Then we unescape quotes
-    in_quotedPathSegment = in_quotedPathSegment.replace(/\\"/g, '"');
 
     return in_quotedPathSegment;
   };

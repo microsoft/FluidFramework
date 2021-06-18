@@ -334,9 +334,15 @@ class PropertyElement {
       return this;
     }
 
-    if (typeof in_child === 'string' || typeof in_child === 'number') {
+    let isPathString = false;
+    if (typeof in_child === 'string') {
+      isPathString = true;
+    }
+
+    if (isPathString || typeof in_child === 'number') {
       in_child = [in_child];
     }
+
     const resolutionMode = in_options.referenceResolutionMode;
     // Determine how to resolve references before the last one
     const isAlways = (resolutionMode === undefined || resolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS);
@@ -370,7 +376,7 @@ class PropertyElement {
             this.becomeDereference();
           }
         }
-        const key = PathHelper.unquotePathSegment(token);
+        const key = !isPathString ? token : PathHelper.unquotePathSegment(token);
         if (this._property && this._property.has(key)) {
           if (this.isPrimitiveCollection()) {
             if (this._childToken !== undefined) {
