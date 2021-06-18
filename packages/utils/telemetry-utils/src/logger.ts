@@ -310,7 +310,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        this.baseLogger.send(this.prepareEvent(event, this.baseLogger.supportsTags ?? false));
+        this.baseLogger.send(this.prepareEvent(event, this.baseLogger.supportsTags ?? true));
     }
 }
 
