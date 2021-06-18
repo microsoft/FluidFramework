@@ -135,7 +135,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: event.category ?? (error === undefined ?  "generic" : "error"),
         };
         if (error !== undefined) {
-            // For now, 'supportsTags' has type true | undefined for back-compat, so here we map undefined to false:
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
         this.send(newEvent);
@@ -303,9 +302,8 @@ export class ChildLogger extends TelemetryLogger {
     private constructor(
         protected readonly baseLogger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: ITelemetryLoggerPropertyBags,
-        supportsTags?: true | undefined) {
-        super(namespace, properties, supportsTags);
+        properties?: ITelemetryLoggerPropertyBags) {
+        super(namespace, properties);
     }
 
     /**
@@ -314,7 +312,6 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        // check logger.supportsTags
         this.baseLogger.send(this.prepareEvent(event));
     }
 }
@@ -361,13 +358,8 @@ export class MultiSinkLogger extends TelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
-            // check logger.supportsTags
             logger.send(newEvent);
         });
-        //
-        if (this.supportsTags) {
-            // getValidTelemetryProps(event);
-        }
     }
 }
 
