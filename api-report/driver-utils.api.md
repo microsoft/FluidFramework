@@ -34,6 +34,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
@@ -141,6 +142,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     getVersions(versionId: string, count: number): Promise<IVersion[]>;
     // (undocumented)
     protected readonly internalStorageService: IDocumentStorageService;
+    set policies(policies: IDocumentStorageServicePolicies | undefined);
+    // (undocumented)
+    get policies(): IDocumentStorageServicePolicies | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -245,6 +249,21 @@ export class ParallelRequests<T> {
     // (undocumented)
     run(concurrency: number): Promise<void>;
     }
+
+// @public (undocumented)
+export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
+    // (undocumented)
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    // (undocumented)
+    get policies(): {
+        caching: LoaderCachingPolicy;
+        minBlobSize?: number | undefined;
+    } | undefined;
+    // (undocumented)
+    readBlob(blobId: string): Promise<ArrayBufferLike>;
+    // (undocumented)
+    stopPrefetch(): void;
+}
 
 // @public
 export class Queue<T> implements IStream<T> {
