@@ -109,6 +109,17 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     }
     assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
 
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+    tempArray = [];
+    tempArray[0] = intervalArray[2];
+    tempArray[1] = intervalArray[5];
+    tempArray[2] = intervalArray[8];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with start position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
+
     iterator = intervalCollection.CreateBackwardIteratorWithStartPosition(0);
     tempArray = [];
     tempArray[0] = intervalArray[2];
@@ -393,7 +404,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
             sharedString1.insertText(0, "012");
             const intervals1 = sharedString1.getIntervalCollection("intervals");
-            const intervalArray: SequenceInterval[] = [];
+            const intervalArray: any[] = [];
             let interval: SequenceInterval;
 
             intervalArray[0] = intervals1.add(0, 0, IntervalType.SlideOnRemove);
@@ -577,6 +588,43 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.notStrictEqual(interval2, undefined, "Interval missing from collection 2");
                 for (const interval of intervals2) {
                     assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
+                }
+
+                if (typeof(intervals1.change) === "function" &&
+                    typeof(intervals2.change) === "function") {
+                    // Conflicting changes
+                    intervals1.change(id1, 1, 2);
+                    intervals2.change(id1, 2, 1);
+
+                    await provider.ensureSynchronized();
+
+                    assert.strictEqual(interval1?.getIntervalId(), id1);
+                    assert.strictEqual(interval2?.getIntervalId(), id1);
+                    for (interval1 of intervals1) {
+                        const id = interval1.getIntervalId();
+                        if (id) {
+                            if (interval1.start.getOffset() !== intervals2.getIntervalById(id)?.start.getOffset()) {
+                                assert.fail();
+                            }
+                            assert.strictEqual(interval1.start.getOffset(),
+                                               intervals2.getIntervalById(id)?.start.getOffset(),
+                                               "Conflicting changes");
+                            assert.strictEqual(interval1.end.getOffset(),
+                                               intervals2.getIntervalById(id)?.end.getOffset(),
+                                               "Conflicting changes");
+                        }
+                    }
+                    for (interval2 of intervals2) {
+                        const id = interval2.getIntervalId();
+                        if (id) {
+                            assert.strictEqual(interval2.start.getOffset(),
+                                               intervals1.getIntervalById(id)?.start.getOffset(),
+                                               "Conflicting changes");
+                            assert.strictEqual(interval2.end.getOffset(),
+                                               intervals1.getIntervalById(id)?.end.getOffset(),
+                                               "Conflicting changes");
+                        }
+                    }
                 }
 
                 // Conflicting removes

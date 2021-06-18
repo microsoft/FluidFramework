@@ -347,8 +347,13 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
             const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
-            intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
-            intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            const interval0 = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            const interval1 = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+
+            if (typeof(intervalsBefore.change) === "function") {
+                intervalsBefore.change(interval0.getIntervalId(), 2, 3);
+                intervalsBefore.change(interval1.getIntervalId(), 0, 3);
+            }
 
             const snapshotTree = container.serialize();
 
@@ -365,11 +370,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             for (const interval of intervalsBefore) {
                 if (typeof(interval.getIntervalId) === "function") {
                     const id = interval.getIntervalId();
-                    assert.notStrictEqual(id ?? intervalsAfter.getIntervalById(id as unknown as string), undefined,
-                                        "Interval not present after rehydration");
-                    intervalsAfter.removeIntervalById(id as unknown as string);
-                    assert.strictEqual(intervalsAfter.getIntervalById(id as unknown as string), undefined,
-                                        "Interval not deleted");
+                    assert.strictEqual(typeof(id), "string");
+                    if (id) {
+                        assert.notStrictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not present after rehydration");
+                        intervalsAfter.removeIntervalById(id);
+                        assert.strictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not deleted");
+                    }
                 }
                 else {
                     intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
