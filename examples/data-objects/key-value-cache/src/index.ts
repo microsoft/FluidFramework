@@ -124,6 +124,9 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         return runtime;
     }
 
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,

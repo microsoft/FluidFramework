@@ -44,6 +44,9 @@ export class RuntimeFactory implements IRuntimeFactory {
 
     public get IRuntimeFactory() { return this; }
 
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,

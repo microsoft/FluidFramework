@@ -24,6 +24,9 @@ const defaultComponentId = "default";
 class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],

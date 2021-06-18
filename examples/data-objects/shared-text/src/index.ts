@@ -66,6 +66,8 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
 
     /**
      * Instantiates a new chaincode host
+     *
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(

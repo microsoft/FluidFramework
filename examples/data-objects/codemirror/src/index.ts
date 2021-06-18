@@ -28,6 +28,9 @@ class CodeMirrorFactory implements IRuntimeFactory {
         ["@fluid-example/smde", Promise.resolve(smde)],
     ]);
 
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,

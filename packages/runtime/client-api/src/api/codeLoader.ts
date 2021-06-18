@@ -109,6 +109,9 @@ export class ChaincodeFactory implements IRuntimeFactory {
         private readonly registries: NamedFluidDataStoreRegistryEntries) {
     }
 
+    /**
+     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
 
