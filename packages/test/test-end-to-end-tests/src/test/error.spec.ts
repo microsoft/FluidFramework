@@ -250,7 +250,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const text = "Sample text";
         const writeError = CreateContainerError(text);
         assertCustomPropertySupport(writeError);
-        assert.equal(writeError.errorType, DriverErrorType.genericError, "Error should be a writeError");
+        assert.equal(writeError.errorType, ContainerErrorType.genericError, "Error should be a writeError");
         assert.equal(writeError.message, text, "Text is preserved");
     });
 
