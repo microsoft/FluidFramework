@@ -448,9 +448,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    // (undocumented)
     instantiateFirstTime(context: IContainerContext): Promise<IRuntime>;
-    // (undocumented)
     instantiateFromExisting(context: IContainerContext): Promise<IRuntime>;
     // @deprecated
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
