@@ -80,6 +80,7 @@ export interface IDocumentLambdaServerConfiguration {
 export interface IMoiraServerConfiguration {
     // Enables Moira submission lambda
     enable: boolean;
+    endpoint: string;
 }
 
 /**
@@ -149,6 +150,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     moira: {
         enable: false,
+        endpoint: "",
     },
     documentLambda: {
         partitionActivityTimeout: 10 * 60 * 1000,

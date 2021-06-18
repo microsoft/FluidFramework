@@ -9,6 +9,7 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     SequencedOperationType,
 } from "@fluidframework/server-services-core";
 
@@ -21,8 +22,8 @@ export class MoiraLambda implements IPartitionLambda {
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
-        // private readonly opCollection: ICollection<any>,
-        protected context: IContext) {
+        protected context: IContext,
+        private readonly serviceConfiguration: IServiceConfiguration) {
     }
 
     public handler(message: IQueuedMessage) {
@@ -149,7 +150,7 @@ export class MoiraLambda implements IPartitionLambda {
 
     private async createBranch(branchGuid: string): Promise<string> {
         const rootCommitGuid = this.createDerivedGuid(branchGuid, "root");
-        const branchCreationResponse = await Axios.post("http://127.0.0.1:3070/branch", {
+        const branchCreationResponse = await Axios.post(`${this.serviceConfiguration.moira.endpoint}/branch`, {
             guid: branchGuid,
             rootCommitGuid,
             meta: {},
@@ -172,7 +173,7 @@ export class MoiraLambda implements IPartitionLambda {
         message: ISequencedOperationMessage,
     ) {
         const commitCreationResponse =
-            await Axios.post(`http://127.0.0.1:3070/branch/${branchGuid}/commit`, {
+            await Axios.post(`${this.serviceConfiguration.moira.endpoint}/${branchGuid}/commit`, {
                 guid: commitGuid,
                 branchGuid,
                 parentGuid,

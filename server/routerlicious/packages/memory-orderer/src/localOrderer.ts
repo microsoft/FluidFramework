@@ -293,7 +293,8 @@ export class LocalOrderer implements IOrderer {
                 this.deltasKafka,
                 this.setup,
                 this.moiraContext,
-                async (_, context) => new MoiraLambda(context));
+                async (_, context) => new MoiraLambda(context, this.serviceConfiguration),
+            );
         }
     }
 
