@@ -76,60 +76,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             const errorAsObject = error as Partial<Error>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            // console.log("yes, isloggingerror");
 
             // Then add any other telemetry properties from the LoggingError
             const errorProps = error.getTelemetryProperties();
-            // console.log(errorProps);
             for (const key of Object.keys(errorProps)) {
-                const prop = errorProps[key];
-                // console.log(`supportsTags?: ${supportsTags}`);
-                // console.log(`current prop: ${prop}`);
-                if (event[key] !== undefined) {
-                    // Don't overwrite existing properties on the event
-                    continue;
-                }
-
-                // New props not already on the event may either be tagged or untagged. Untagged props can just be
-                // directly copied over without fuss; tagged props can only be copied if policy 'supportsTags' is true.
-                // Currently, even in the case `supportsTags` is unset, we must still take care to strip away sensitive
-                // information that is marked by known tags.
-                //
-                // So, if `supportsTags` is set, just add the prop:
-                if (supportsTags) {
-                    // console.log("yes");
-                    event[key] = prop;
-                    continue;
-                }
-
-                // Otherwise, we handle the below cases in particular:
-                // Eventually supportsTags will always be set/true and this code will be removed:
-                const { value, tag } = (typeof prop === "object")
-                    ? prop
-                    : { value: prop, tag: undefined };
-                switch (tag) {
-                    case undefined:
-                        // No tag means we can log plainly
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.PackageData:
-                        // For Microsoft applications, PackageData is safe for now
-                        // (we don't load 3P code in 1P apps)
-                        // But this determination really belongs in the host layer
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.UserData:
-                        // Strip out anything tagged explicitly as PII.
-                        // Alternate strategy would be to hash these props
-                        // console.log("userdata");
-                        event[key] = "REDACTED (UserData)";
-                        break;
-                    default:
-                        // If we encounter a tag we don't recognize
-                        // then we must assume we should scrub.
-                        event[key] = "REDACTED (unknown tag)";
-                        break;
-                }
+                event[key] = errorProps[key];
             }
         } else if (typeof error === "object" && error !== null) {
             // Try to pull the stack and message off even if it's not an ILoggingError
@@ -223,11 +174,38 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.send(perfEvent);
     }
 
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
+    protected redactTaggedUserData(event: ITelemetryBaseEvent, propKey: string) {
+        const prop = event[propKey];
+        const { value, tag } = (typeof prop === "object")
+            ? prop
+            : { value: prop, tag: undefined };
+
+        switch (tag) {
+            case undefined:
+                // No tag means we can log plainly
+                event[propKey] = value;
+            case TelemetryDataTag.PackageData:
+                // For Microsoft applications, PackageData is safe for now
+                // (we don't load 3P code in 1P apps)
+                // But this determination really belongs in the host layer
+                event[propKey] = value;
+            case TelemetryDataTag.UserData:
+                // Strip out anything tagged explicitly as PII.
+                // Alternate strategy would be to hash these props
+                // console.log("userdata");
+                event[propKey] = "REDACTED (UserData)";
+            default:
+                // If we encounter a tag we don't recognize
+                // then we must assume we should scrub.
+                event[propKey] = "REDACTED (unknown tag)";
+        }
+    }
+
+    protected prepareEvent(event: ITelemetryBaseEvent, eventCanSupportTags?: boolean): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
-        // const newEvent: ITelemetryBaseEvent = {
-        //     ...event,
-        // };
+        const newEvent: ITelemetryBaseEvent = {
+             ...event,
+        };
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
@@ -235,7 +213,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
             properties.push(this.properties.all);
             if(includeErrorProps) {
-                //
                 properties.push(this.properties.error);
             }
             for(const props of properties) {
@@ -252,6 +229,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         }
                     }
                 }
+            }
+        }
+
+        // Do one more pass over the properties to handle any tagged information:
+        if (eventCanSupportTags === undefined || eventCanSupportTags === false) {
+            for (const key of Object.keys(newEvent)) {
+                this.redactTaggedUserData(newEvent, key);
             }
         }
         return newEvent;
