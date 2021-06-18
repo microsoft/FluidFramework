@@ -1610,14 +1610,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
     }
 
-    private help(tree): number {
+    /**
+     * @param tree a summary tree
+     * @returns count of datastores and dds's in the tree
+     */
+    private countDataStore(tree): number {
         let count = 0;
         if (tree !== undefined) {
             count += Object.keys(tree).length;
             for (const key of Object.keys(tree)) {
                 const subTree = tree[key].tree;
-                if (subTree[channelsTreeName] !== undefined) {
-                    count += this.help(subTree[channelsTreeName].tree);
+                if (subTree !== undefined && subTree[channelsTreeName] !== undefined) {
+                    count += this.countDataStore(subTree[channelsTreeName].tree);
                 }
             }
         }
@@ -1645,12 +1649,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
-
-        const x = summarizeResult.summary.tree;
-        const y = x[channelsTreeName] as ISummaryTree;
-        const z = Object.keys(y.tree).length;
-        console.log("length",z);
-        console.log("check",this.help(y.tree));
 
         return summarizeResult as IChannelSummarizeResult;
     }
@@ -1705,6 +1703,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 trackState: true,
                 summaryLogger,
             });
+
+            const summary = summarizeResult.summary.tree;
+            const summaryTree = summary[channelsTreeName] as ISummaryTree;
+
+            const count = this.countDataStore(summaryTree.tree);
+            summaryLogger.sendTelemetryEvent({eventName: "dataStoreCount"}, count);
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,
