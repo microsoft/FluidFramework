@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IContainerContext,
     IDeltaManager,
     ILoader,
@@ -22,9 +21,9 @@ import {
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
-    IFluidModule,
     ILoaderOptions,
     IRuntimeFactory,
+    ICodeLoader,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -44,6 +43,7 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
+import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -51,7 +51,7 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         attributes: IDocumentAttributes,
@@ -156,19 +156,15 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
+    public get codeDetails() { return this._codeDetails; }
 
-        return fluidModule;
-    });
+    private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
-        public readonly codeDetails: IFluidCodeDetails,
+        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -185,16 +181,10 @@ export class ContainerContext implements IContainerContext {
 
     ) {
         this.logger = container.subLogger;
+        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
+            async () => this.loadCodeModule(_codeDetails),
+        );
         this.attachListener();
-    }
-
-    private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
-        this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
-        });
     }
 
     public dispose(error?: Error): void {
@@ -264,7 +254,8 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
+        const moduleWithDetails = await this._fluidModuleP;
+        const maybeCompareExport = moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
@@ -279,7 +270,10 @@ export class ContainerContext implements IContainerContext {
         }
 
         for (const comparer of comparers) {
-            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
+            const satisfies = await comparer.satisfies(
+                moduleWithDetails.details,
+                constraintCodeDetails,
+            );
             if (satisfies === false) {
                 return false;
             }
@@ -287,6 +281,7 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    // #region private
     private async initializeFromExisting() {
         const runtimeFactory = await this.getRuntimeFactory();
         this._runtime = await runtimeFactory.instantiateFromExisting(this);
@@ -305,4 +300,32 @@ export class ContainerContext implements IContainerContext {
 
         return runtimeFactory;
     }
+
+    private attachListener() {
+        this.container.once("attaching", () => {
+            this._runtime?.setAttachState?.(AttachState.Attaching);
+        });
+        this.container.once("attached", () => {
+            this._runtime?.setAttachState?.(AttachState.Attached);
+        });
+    }
+
+    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
+        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(codeDetails),
+        );
+
+        if ("module" in loadCodeResult) {
+            const { module, details } = loadCodeResult;
+            return {
+                module,
+                details: details ?? codeDetails,
+            };
+        } else {
+            return { module: loadCodeResult, details: codeDetails };
+        }
+    }
+    // #endregion
 }

@@ -88,7 +88,7 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
