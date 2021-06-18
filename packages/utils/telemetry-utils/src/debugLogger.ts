@@ -84,7 +84,7 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent: ITelemetryProperties = this.prepareEvent(event);
+        const newEvent: ITelemetryProperties = this.prepareEvent(event, this.supportsTags ?? true);
         const isError = newEvent.category === "error";
         let logger = isError ? this.debugErr : this.debug;
 
