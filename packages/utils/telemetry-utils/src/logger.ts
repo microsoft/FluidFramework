@@ -31,6 +31,9 @@ export interface ITelemetryLoggerPropertyBags{
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLogger {
+    // supportsTags remains optional, but now all child classes of TelemetryLogger must handle it properly if set
+    abstract supportsTags?: true | undefined;
+
     public static readonly eventNamespaceSeparator = ":";
 
     public static formatTick(tick: number): number {
@@ -62,7 +65,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - Event being logged
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
-     * @param supportsTags - Whether the event can have tagged properties (usually tied to the logger)
      */
     public static prepareErrorObject(
         event: ITelemetryBaseEvent,
@@ -71,7 +73,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     ) {
         if (isILoggingError(error)) {
             // First, copy over stack and error message directly
-            // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
             const errorAsObject = error as Partial<Error>;
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
@@ -111,9 +112,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public constructor(
         protected readonly namespace?: string,
-        protected readonly properties?: ITelemetryLoggerPropertyBags,
-        public readonly supportsTags?: true | undefined) {
-        // supportsTags remains optional, but now all child classes of TelemetryLogger must handle it properly if set
+        protected readonly properties?: ITelemetryLoggerPropertyBags) {
     }
 
     /**
