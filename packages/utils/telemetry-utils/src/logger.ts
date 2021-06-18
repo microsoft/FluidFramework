@@ -509,7 +509,7 @@ export enum TelemetryDataTag {
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
-} // Q: could the first check instead be against taggedtelemetrytype itself?
+}
 
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
