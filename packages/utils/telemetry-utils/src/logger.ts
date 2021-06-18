@@ -354,9 +354,8 @@ export class MultiSinkLogger extends TelemetryLogger {
      * @param event - the event to send to all the registered logger
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent = this.prepareEvent(event, this.supportsTags ?? true);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
-            logger.send(newEvent);
+            logger.send(this.prepareEvent(event, logger.supportsTags ?? false));
         });
     }
 }
