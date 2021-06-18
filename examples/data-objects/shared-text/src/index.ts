@@ -18,6 +18,7 @@ import {
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import * as sharedTextComponent from "./component";
@@ -115,7 +116,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                innerRequestHandler,
+                rootDataStoreRequestHandler,
             ),
         );
 

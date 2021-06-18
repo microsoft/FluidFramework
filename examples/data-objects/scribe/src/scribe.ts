@@ -35,6 +35,7 @@ import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfac
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
+    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
@@ -501,7 +502,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
+                rootDataStoreRequestHandler,
             ));
 
         return runtime;
