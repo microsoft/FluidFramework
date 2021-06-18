@@ -23,7 +23,7 @@ export const formatVersion = '0.0.2';
  * The handler is invoked when saving a summary. It accepts a view of the current state of the tree, the sequenced edits known
  * to the SharedTree, and optional helpers for serializing the edit information.
  * @returns a summary of the supplied state.
- * @public
+ * @internal
  */
 export type SharedTreeSummarizer<TChange> = (
 	editLog: OrderedEditSet<TChange>,

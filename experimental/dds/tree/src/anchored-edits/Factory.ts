@@ -10,24 +10,24 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { SharedTree } from './SharedTree';
+import { SharedTreeWithAnchors } from './SharedTreeWithAnchors';
 
 /**
- * Factory for SharedTree.
+ * Factory for SharedTreeWithAnchors.
  * Includes history in the summary.
  * @public
  */
-export class SharedTreeFactory implements IChannelFactory {
+export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
 	 */
-	public static Type = 'SharedTree';
+	public static Type = 'SharedTreeWithAnchors';
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
 	 */
 	public static Attributes: IChannelAttributes = {
-		type: SharedTreeFactory.Type,
+		type: SharedTreeWithAnchorsFactory.Type,
 		snapshotFormatVersion: '0.1',
 		packageVersion: '0.1',
 	};
@@ -36,14 +36,14 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
 	 */
 	public get type(): string {
-		return SharedTreeFactory.Type;
+		return SharedTreeWithAnchorsFactory.Type;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
 	 */
 	public get attributes(): IChannelAttributes {
-		return SharedTreeFactory.Attributes;
+		return SharedTreeWithAnchorsFactory.Attributes;
 	}
 
 	/**
@@ -55,7 +55,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
 	): Promise<ISharedObject> {
-		const sharedTree = new SharedTree(runtime, id);
+		const sharedTree = new SharedTreeWithAnchors(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
 	}
@@ -65,8 +65,8 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param runtime - data store runtime that owns the new SharedTree
 	 * @param id - optional name for the SharedTree
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree {
-		const sharedTree = new SharedTree(runtime, id, expensiveValidation, this.includeHistoryInSummary());
+	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTreeWithAnchors {
+		const sharedTree = new SharedTreeWithAnchors(runtime, id, expensiveValidation, this.includeHistoryInSummary());
 		sharedTree.initializeLocal();
 		return sharedTree;
 	}
@@ -81,13 +81,13 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 /**
- * Factory for SharedTree.
+ * Factory for SharedTreeWithAnchors.
  * Does not include the history in the summary.
  * This is a workaround for lacking the ability to construct DDSs with custom parameters.
  * TODO:#54918: Clean up when DDS parameterization is supported.
  * @public
  */
-export class SharedTreeFactoryNoHistory extends SharedTreeFactory {
+export class SharedTreeWithAnchorsFactoryNoHistory extends SharedTreeWithAnchorsFactory {
 	protected includeHistoryInSummary(): boolean {
 		return false;
 	}
