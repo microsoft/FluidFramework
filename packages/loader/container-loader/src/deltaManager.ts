@@ -735,7 +735,6 @@ export class DeltaManager
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new GenericError("Op is sent in read-only document state", {
-                errorType: ContainerErrorType.genericError,  //* use GenericError ctor?
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,

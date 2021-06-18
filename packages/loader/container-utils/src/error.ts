@@ -126,7 +126,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
 
         const newErrorFn =
             (errMsg: string, props?: ITelemetryProperties) =>
-                new DataProcessingError(errMsg, { ...props, ...messagePropsToLog }); //* Check destructuring order
+                new DataProcessingError(errMsg, { ...props, ...messagePropsToLog });
 
         return wrapError(error, newErrorFn);
     }
@@ -168,7 +168,7 @@ export function CreateContainerError(error: any, props?: ITelemetryProperties): 
             new SomeLoggingError(
                 errorType ?? ContainerErrorType.genericError,
                 errMsg,
-                { ...props, ...props2 }, //* Check destructuring order
+                { ...props, ...props2 },
             );
 
     return wrapError(error, newErrorFn);
