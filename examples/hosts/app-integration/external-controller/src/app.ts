@@ -52,9 +52,6 @@ async function start(): Promise<void> {
 
     // Get or create the document depending if we are running through the create new flow
     const client = useFrs ? FrsClient : TinyliciousClient;
-    // const [fluidContainer, containerServices] = createNew
-    //     ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-    //     : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     const [fluidContainer, containerServices] = createNew
         ? Object.values(await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema))
