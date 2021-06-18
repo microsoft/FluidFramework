@@ -33,7 +33,8 @@ describe("TinyliciousClient", () => {
             },
         };
 
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
+        const {container} = await TinyliciousClient.createContainer(containerConfig, schema);
+        // const [container] = Object.values(await TinyliciousClient.createContainer(containerConfig, schema));
 
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {

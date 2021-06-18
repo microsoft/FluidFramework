@@ -23,6 +23,7 @@ import {
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     TinyliciousConnectionConfig,
+    TinyliciousContainerAndServices,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
 } from "./interfaces";
@@ -49,7 +50,7 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousContainerAndServices> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -64,7 +65,7 @@ export class TinyliciousClientInstance {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousContainerAndServices> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -78,11 +79,12 @@ export class TinyliciousClientInstance {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
+    ): Promise<TinyliciousContainerAndServices>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+        const tinyliciousContainerServices: TinyliciousContainerAndServices = {};
+        tinyliciousContainerServices.fluidContainer = new FluidContainer(container, rootDataObject);
+        tinyliciousContainerServices.containerServices = this.getContainerServices(container);
+        return tinyliciousContainerServices;
     }
 
     private getContainerServices(
@@ -155,7 +157,7 @@ export class TinyliciousClient {
     static async createContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousContainerAndServices> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to create a container",
@@ -170,7 +172,7 @@ export class TinyliciousClient {
     static async getContainer(
         serviceConfig: TinyliciousContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousContainerAndServices> {
         if (!TinyliciousClient.globalInstance) {
             throw new Error(
                 "TinyliciousClient has not been properly initialized before attempting to get a container",
