@@ -31,8 +31,7 @@ export interface ITelemetryLoggerPropertyBags{
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLogger {
-    // supportsTags remains optional, but now all child classes of TelemetryLogger must handle it properly if set
-    abstract supportsTags?: true | undefined;
+    abstract supportsTags: true | undefined;
 
     public static readonly eventNamespaceSeparator = ":";
 
@@ -173,7 +172,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected redactTaggedUserData(event: ITelemetryBaseEvent, propKey: string) {
         const prop = event[propKey];
-        const { value, tag } = (typeof prop === "object")
+        const { value, tag } = isTaggedTelemetryPropertyValue(prop)
             ? prop
             : { value: prop, tag: undefined };
 
