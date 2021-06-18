@@ -198,7 +198,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
     }
 
-    protected prepareEvent(event: ITelemetryBaseEvent, eventCanSupportTags?: boolean): ITelemetryBaseEvent {
+    protected prepareEvent(event: ITelemetryBaseEvent, eventCanSupportTags: boolean): ITelemetryBaseEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
         const newEvent: ITelemetryBaseEvent = {
              ...event,
@@ -310,7 +310,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        this.baseLogger.send(this.prepareEvent(event));
+        this.baseLogger.send(this.prepareEvent(event, this.baseLogger.supportsTags ?? false));
     }
 }
 
@@ -354,7 +354,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      * @param event - the event to send to all the registered logger
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent = this.prepareEvent(event);
+        const newEvent = this.prepareEvent(event, true);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
             logger.send(newEvent);
         });
