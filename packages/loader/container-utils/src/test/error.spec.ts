@@ -53,6 +53,7 @@ describe("Errors", () => {
                 Symbol("Unique"),
                 () => {},
                 [],
+                [1,2,3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
                 CreateProcessingError(value, undefined),
@@ -69,13 +70,6 @@ describe("Errors", () => {
                 coercedErrors.every(
                     (error) => typeof error.message === "string",
                 ),
-            );
-            assert(
-                coercedErrors.reduce(
-                    (messages, error) => messages.add(error.message),
-                    new Set(),
-                ).size === 1,
-                "All malformed inputs should generate a common error.message",
             );
             assert(
                 !originalMalformations.some(

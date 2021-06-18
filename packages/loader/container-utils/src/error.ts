@@ -19,7 +19,7 @@ function messageFromError(error: any): string {
     if (typeof error?.message === "string") {
         return error.message as string;
     }
-    return `${error}`;
+    return String(error);
 }
 
 const isValidLoggingError = (error: any): error is LoggingError => {
@@ -112,8 +112,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         error: any,
         message: ISequencedDocumentMessage | undefined,
     ): ICriticalContainerError {
-        assert(error !== undefined, "Missing error input");
-
         const messagePropsToLog = message !== undefined
             ? extractSafePropertiesFromMessage(message)
             : undefined;
@@ -188,8 +186,6 @@ export function wrapError<T extends LoggingError>(
     error: any,
     newErrorFn: (m: string, p?: ITelemetryProperties) => T,
 ): T {
-    assert(error !== undefined, "Missing error input");
-
     const {
         message,
         stack,

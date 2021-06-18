@@ -65,7 +65,6 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             };
             const testError = new GenericError(
                 "someGenericError",
-                undefined /* error */,
                 props,
             );
             // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
