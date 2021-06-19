@@ -34,7 +34,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    // (undocumented)
     static wrapIfUnrecognized(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
 }
 
@@ -57,14 +56,13 @@ export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 }
 
-// @public (undocumented)
+// @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
     constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-    // (undocumented)
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
 }
 
