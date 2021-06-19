@@ -26,6 +26,7 @@ export interface ISummaryTreeWithStats {
 
 export interface ITopLevelSummaryStats extends ISummaryStats {
     dataStoreCount: number;
+    unreferencedDataStoreCount: number;
 }
 
 export interface IChannelSummarizeResult extends ISummaryTreeWithStats {

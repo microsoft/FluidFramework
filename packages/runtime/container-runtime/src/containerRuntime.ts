@@ -85,6 +85,7 @@ import {
     IInboundSignalMessage,
     ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
+    ITopLevelSummaryStats,
     ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
@@ -159,7 +160,7 @@ export interface ContainerRuntimeMessage {
 }
 
 export interface IGeneratedSummaryData {
-    readonly summaryStats: ISummaryStats;
+    readonly summaryStats: ITopLevelSummaryStats | ISummaryStats;
     readonly generateDuration?: number;
 }
 
@@ -1611,23 +1612,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * @param tree a summary tree
-     * @returns count of datastores and dds's in the tree
-     */
-    private countDataStore(tree): number {
-        let count = 0;
-        if (tree !== undefined) {
-            count += Object.keys(tree).length;
-            for (const key of Object.keys(tree)) {
-                const subTree = tree[key].tree;
-                if (subTree !== undefined && subTree[channelsTreeName] !== undefined) {
-                    count += this.countDataStore(subTree[channelsTreeName].tree);
-                }
-            }
-        }
-        return count;
-    }
-    /**
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
@@ -1706,12 +1690,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const summary = summarizeResult.summary.tree;
             const summaryTree = summary[channelsTreeName] as ISummaryTree;
+            let all = 0;
+            let unreferenced = 0;
+            if (summaryTree.tree !== undefined) {
+                all = Object.keys(summaryTree.tree).length;
+                for(const key of Object.keys(summaryTree.tree)) {
+                    const dataStore = summaryTree.tree[key] as ISummaryTree;
+                    if (dataStore.unreferenced === true) {
+                        unreferenced ++;
+                    }
+                }
+            }
 
-            const count = this.countDataStore(summaryTree.tree);
-            summaryLogger.sendTelemetryEvent({eventName: "dataStoreCount"}, count);
+            const topLevelSummaryStat: ITopLevelSummaryStats = {
+                dataStoreCount: all,
+                unreferencedDataStoreCount: unreferenced,
+                blobNodeCount: summarizeResult.stats.blobNodeCount,
+                treeNodeCount: summarizeResult.stats.treeNodeCount,
+                handleNodeCount: summarizeResult.stats.handleNodeCount,
+                totalBlobSize: summarizeResult.stats.totalBlobSize,
+            };
 
             const generateData: IGeneratedSummaryData = {
-                summaryStats: summarizeResult.stats,
+                summaryStats: topLevelSummaryStat,
                 generateDuration: trace.trace().duration,
             };
 
