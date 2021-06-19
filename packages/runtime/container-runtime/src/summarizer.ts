@@ -566,7 +566,7 @@ export class RunningSummarizer implements IDisposable {
             timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
             safe: safe || undefined,
-        });
+        }, { start: true, end: true, cancel: "generic" });
 
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
@@ -580,8 +580,6 @@ export class RunningSummarizer implements IDisposable {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
         }
-
-        this.summarizeTimer.clear();
 
         if (!summaryData) {
             summarizingEvent.cancel();
