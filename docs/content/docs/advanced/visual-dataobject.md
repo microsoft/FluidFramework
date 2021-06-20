@@ -567,7 +567,7 @@ import {
   IFluidState,
   IViewState,
   FluidToViewMap,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";

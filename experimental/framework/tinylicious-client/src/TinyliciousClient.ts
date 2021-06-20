@@ -8,12 +8,14 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    RootDataObject,
 } from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
@@ -77,7 +79,7 @@ export class TinyliciousClientInstance {
     private async getFluidContainerAndServices(
         container: Container,
     ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
-        const rootDataObject = (await container.request({ url: "/" })).value;
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices = this.getContainerServices(container);
         return [fluidContainer, containerServices];
@@ -122,7 +124,7 @@ export class TinyliciousClientInstance {
             container = await loader.resolve({ url: tinyliciousContainerConfig.id });
             // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
             // new container here, where we expect this to be loading an existing container.
-            if (container.existing === undefined) {
+            if (container.existing !== true) {
                 throw new Error("Attempted to load a non-existing container");
             }
         }
@@ -136,7 +138,7 @@ export class TinyliciousClientInstance {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TinyliciousClient {
-    private static globalInstance: TinyliciousClientInstance | undefined;
+    protected static globalInstance: TinyliciousClientInstance | undefined;
 
     static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
         if (TinyliciousClient.globalInstance) {
@@ -144,6 +146,7 @@ export class TinyliciousClient {
                 `TinyliciousClient has already been initialized. Using existing instance of
                 TinyliciousClient instead.`,
             );
+            return;
         }
         TinyliciousClient.globalInstance = new TinyliciousClientInstance(
             serviceConnectionConfig,

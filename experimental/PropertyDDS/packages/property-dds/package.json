@@ -30,9 +30,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.42.0",
-    "@fluid-experimental/property-properties": "^0.42.0",
-    "@fluidframework/common-utils": "^0.31.0-0",
+    "@fluid-experimental/property-changeset": "^0.42.0-0",
+    "@fluid-experimental/property-properties": "^0.42.0-0",
+    "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.39.0",
     "@fluidframework/datastore-definitions": "^0.42.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
@@ -42,7 +42,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-experimental/property-common": "^0.42.0",
+    "@fluid-experimental/property-common": "^0.42.0-0",
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/container-definitions": "^0.39.0",
     "@fluidframework/driver-definitions": "^0.39.0",
@@ -51,7 +51,7 @@
     "@fluidframework/mocha-test-setup": "^0.42.0",
     "@fluidframework/runtime-utils": "^0.42.0",
     "@fluidframework/sequence": "^0.42.0",
-    "@fluidframework/server-local-server": "^0.1026.0-0",
+    "@fluidframework/server-local-server": "^0.1027.0-0",
     "@fluidframework/test-runtime-utils": "^0.42.0",
     "@fluidframework/test-utils": "^0.42.0",
     "@microsoft/api-extractor": "^7.13.1",

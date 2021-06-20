@@ -25,10 +25,6 @@ This can have significant overhead (the child process reruns mocha test discover
 The `benchmark` function tags its tests with `@Benchmark` as well as the benchmark type (for example `@Measurement`). These can be used to filter to just benchmarks using the mocha `--fgrep` option.
 See `BenchmarkType` for more information.
 
-## Artifacts
-
-[@fluid-experimental/benchmark](https://dev.azure.com/intentional/intent/_packaging?_a=package&feed=intentional-npm&package=%40intentional%2Fbenchmark&protocolType=Npm)
-
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
