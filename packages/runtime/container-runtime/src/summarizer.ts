@@ -103,13 +103,22 @@ export interface ISummarizerEvents extends IEvent {
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
     | "failToSummarize"
-    /** Highly unexpected error encountered while responding to a summary ack error. */
-    | "handleSummaryAckFatalError"
-    /** Summarizer client detected that its parent is no longer elected the summarizer. */
+    /**
+     * Summarizer client detected that its parent is no longer elected the summarizer.
+     * Normally, the parent client would realize it is disconnected first and call stop
+     * giving a "parentNotConnected" stop reason. If the summarizer client attempts to
+     * generate a summary and realizes at that moment that the parent is not elected,
+     * only then will it stop itself with this message.
+     */
     | "parentNoLongerSummarizer"
     /** Parent client reported that it is no longer connected. */
     | "parentNotConnected"
-    /** Parent client reported that it is no longer elected the summarizer. */
+    /**
+     * Parent client reported that it is no longer elected the summarizer.
+     * This is the normal flow; a disconnect will always trigger the parent
+     * client to no longer be elected as responsible for summaries. Then it
+     * tries to stop its spawned summarizer client.
+     */
     | "parentShouldNotSummarize"
     /** Parent client reported that it is disposed. */
     | "disposed";
@@ -123,6 +132,49 @@ export interface ISummarizer
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
 }
+
+type SummarizeReason =
+    /**
+     * Attempt to summarize after idle timeout has elapsed.
+     * Idle timer restarts whenever an op is received. So this
+     * triggers only after some amount of time has passed with
+     * no ops being received.
+     */
+    | "idle"
+    /**
+     * Attempt to summarize after a maximum time since last
+     * successful summary has passed. This measures time since
+     * last summary ack op was processed.
+     */
+    | "maxTime"
+    /**
+     * Attempt to summarize after a maximum number of ops have
+     * passed since the last successful summary. This compares
+     * op sequence numbers with the reference sequence number
+     * of the summarize op corresponding to the last summary
+     * ack op.
+     */
+    | "maxOps"
+    /**
+     * Special case to generate a summary immediately after starting.
+     * @deprecated
+     */
+    | "immediate"
+    /**
+     * Special case to generate a summary in response to a Save op.
+     * @deprecated
+     */
+    | `;${string}: ${string}`
+    /**
+     * Special case to attempt to summarize one last time before the
+     * summarizer client closes itself. This is to prevent cases where
+     * the summarizer client never gets a chance to summarize, because
+     * there are too many outstanding ops and/or parent client cannot
+     * stay connected long enough for summarizer client to catch up.
+     */
+    | "lastSummary"
+    /** Previous summary attempt failed, and we are retrying. */
+    | `retry${1 | 2}`;
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
@@ -187,7 +239,7 @@ class SummarizerHeuristics {
 
     public constructor(
         private readonly configuration: ISummaryConfiguration,
-        private readonly trySummarize: (reason: string) => void,
+        private readonly trySummarize: (reason: SummarizeReason) => void,
         /**
          * Last received op sequence number
          */
@@ -468,7 +520,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private trySummarize(reason: string): void {
+    private trySummarize(reason: SummarizeReason): void {
         if (this.summarizing !== undefined) {
             // We can't summarize if we are already
             this.tryWhileSummarizing = true;
@@ -484,14 +536,15 @@ export class RunningSummarizer implements IDisposable {
                 return;
             }
             // On nack or error, try again fetching latest from storage server
-            if (true === await this.summarize(reason, { refreshLatestAck: true, fullTree: false })) {
+            if (true === await this.summarize("retry1", { refreshLatestAck: true, fullTree: false })) {
                 return;
             }
             // On another failure, run the full tree
-            if (true === await this.summarize(reason, { refreshLatestAck: true, fullTree: true })) {
+            if (true === await this.summarize("retry2", { refreshLatestAck: true, fullTree: true })) {
                 return;
             }
             // If all 3 attempts failed, close the summarizer container
+            this.logger.sendErrorEvent({ eventName: "FailToSummarize" });
             this.internalsProvider.stop("failToSummarize");
         })().finally(() => {
             this.summarizing?.resolve();
@@ -513,7 +566,7 @@ export class RunningSummarizer implements IDisposable {
      * fullTree to generate tree without any summary handles even if unchanged
      */
     private async summarize(
-        reason: string,
+        reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
     ): Promise<boolean | undefined> {
         this.summarizeTimer.start();
@@ -583,17 +636,17 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private async generateSummaryWithLogging(
-        message: string,
+        reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
     ): Promise<GenerateSummaryData | undefined> {
         const { refreshLatestAck, fullTree } = options;
         const summarizingEvent = PerformanceEvent.start(this.logger, {
             eventName: "GenerateSummary",
-            message,
+            reason,
             timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
-            refreshLatestAck: refreshLatestAck || undefined,
-            fullTree: fullTree || undefined,
+            refreshLatestAck,
+            fullTree,
         });
 
         // Wait for generate/send summary
@@ -827,7 +880,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             // Raise error to parent container.
             this.emit("summarizingError", createSummarizingWarning("Summarizer: HandleSummaryAckFatalError", true));
 
-            this.stop("handleSummaryAckFatalError");
+            this.stop();
         });
 
         // Listen for ops
