@@ -1689,26 +1689,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
 
             const summary = summarizeResult.summary.tree;
-            const summaryTree = summary[channelsTreeName] as ISummaryTree;
-            let all = 0;
-            let unreferenced = 0;
-            if (summaryTree.tree !== undefined) {
-                all = Object.keys(summaryTree.tree).length;
-                for(const key of Object.keys(summaryTree.tree)) {
-                    const dataStore = summaryTree.tree[key] as ISummaryTree;
-                    if (dataStore.unreferenced === true) {
-                        unreferenced ++;
+            const summaryTree = summary[channelsTreeName];
+            let totalDataStoreCount = 0;
+            let unreferencedDataStoreCount = 0;
+            let handleCount = 0;
+            if (summaryTree.type === SummaryType.Tree) {
+                if (summaryTree.tree !== undefined) {
+                    totalDataStoreCount = Object.keys(summaryTree.tree).length;
+                    for(const key of Object.keys(summaryTree.tree)) {
+                        const dataStore = summaryTree.tree[key];
+                        if (dataStore.type === SummaryType.Tree && dataStore.unreferenced === true) {
+                            unreferencedDataStoreCount ++;
+                        }
+                        if (dataStore.type === SummaryType.Handle) {
+                            handleCount ++;
+                        }
                     }
                 }
             }
 
             const topLevelSummaryStat: ITopLevelSummaryStats = {
-                dataStoreCount: all,
-                unreferencedDataStoreCount: unreferenced,
-                blobNodeCount: summarizeResult.stats.blobNodeCount,
-                treeNodeCount: summarizeResult.stats.treeNodeCount,
-                handleNodeCount: summarizeResult.stats.handleNodeCount,
-                totalBlobSize: summarizeResult.stats.totalBlobSize,
+                ...summarizeResult.stats,
+                totalDataStoreCount,
+                unreferencedDataStoreCount,
+                totalSummarizedDataStoreCount: totalDataStoreCount - handleCount
             };
 
             const generateData: IGeneratedSummaryData = {
