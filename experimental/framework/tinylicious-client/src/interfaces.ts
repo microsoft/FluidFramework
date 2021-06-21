@@ -33,7 +33,7 @@ export interface TinyliciousContainerServices {
 
 export interface TinyliciousContainerAndServices {
     fluidContainer: FluidContainer;
-    containerServices?: TinyliciousContainerServices;
+    containerServices: TinyliciousContainerServices;
 }
 
 /**
