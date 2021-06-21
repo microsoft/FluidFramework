@@ -564,15 +564,15 @@ export class RunningSummarizer implements IDisposable {
         this.summarizing = new Deferred<void>();
 
         (async () => {
-            if (true === await this.summarize(reason, { refreshLatestAck: false, fullTree: false })) {
+            if (await this.summarize(reason, { refreshLatestAck: false, fullTree: false })) {
                 return;
             }
             // On nack or error, try again fetching latest from storage server
-            if (true === await this.summarize("retry1", { refreshLatestAck: true, fullTree: false })) {
+            if (await this.summarize("retry1", { refreshLatestAck: true, fullTree: false })) {
                 return;
             }
             // On another failure, run the full tree
-            if (true === await this.summarize("retry2", { refreshLatestAck: true, fullTree: true })) {
+            if (await this.summarize("retry2", { refreshLatestAck: true, fullTree: true })) {
                 return;
             }
             // If all 3 attempts failed, close the summarizer container
@@ -605,7 +605,7 @@ export class RunningSummarizer implements IDisposable {
         const { refreshLatestAck, fullTree } = options;
 
         const summarizeEvent = PerformanceEvent.start(this.logger, {
-            eventName: "summarize",
+            eventName: "Summarize",
             reason,
             refreshLatestAck,
             fullTree,
