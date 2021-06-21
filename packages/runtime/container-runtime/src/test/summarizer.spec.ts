@@ -122,7 +122,6 @@ describe("Runtime", () => {
                     },
                     0,
                     { refSequenceNumber: 0, summaryTime: Date.now() },
-                    false,
                     () => { },
                     summaryCollection,
                 );
