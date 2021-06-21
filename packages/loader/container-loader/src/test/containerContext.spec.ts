@@ -44,6 +44,12 @@ describe("ContainerContext Tests", () => {
         async instantiateRuntime() {
             return (sandbox.stub() as unknown) as IRuntime;
         }
+        async instantiateFirstTime() {
+            return this.instantiateRuntime();
+        }
+        async instantiateFromExisting() {
+            return this.instantiateRuntime();
+        }
         get IRuntimeFactory(): IRuntimeFactory {
             return this;
         }
@@ -55,6 +61,7 @@ describe("ContainerContext Tests", () => {
 
     const createTestContext = async (
         codeLoader: unknown, /* ICodeDetailsLoader */
+        existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
@@ -72,6 +79,7 @@ describe("ContainerContext Tests", () => {
             Sinon.fake(),
             Container.version,
             Sinon.fake(),
+            existing,
         );
     };
 
