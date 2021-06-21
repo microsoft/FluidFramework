@@ -242,7 +242,7 @@ describe('PathHelper', function() {
     it('should unquote simple strings', function() {
       expect(PathHelper.unquotePathSegment('"test"')).to.equal('test');
     });
-    
+
     it('should correctly unquote strings with a quotation mark', function() {
       expect(PathHelper.unquotePathSegment('"\\""')).to.equal('"');
     });
@@ -255,8 +255,8 @@ describe('PathHelper', function() {
         expect(PathHelper.unquotePathSegment('')).to.equal('');
     });
 
-    it('should ignore non strings', function() {
-        expect(PathHelper.unquotePathSegment(5)).to.equal(5);
+    it('should throw on non strings', function() {
+        expect(() => PathHelper.unquotePathSegment(5)).to.throw();
     });
 
     it('should work for paths with multiple occurrences of the test string', function() {
