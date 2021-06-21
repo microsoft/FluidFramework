@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { FluidContainer, IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
@@ -52,6 +52,11 @@ export interface FrsContainerServices {
  */
 export interface FrsMember extends IMember {
     userName: string;
+}
+
+export interface FrsContainerAndServices {
+    fluidContainer: FluidContainer;
+    containerServices: FrsContainerServices;
 }
 
 export type IFrsAudience = IServiceAudience<FrsMember>;
