@@ -42,6 +42,11 @@ describe("Dehydrate Container", () => {
                                 },
                             },
                         },
+                        "unref": {
+                            type: SummaryType.Tree,
+                            tree: {},
+                            unreferenced: true,
+                        },
                     },
                 },
             },
@@ -51,12 +56,33 @@ describe("Dehydrate Container", () => {
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,
             "2 protocol blobs should be there(4 mappings)");
+
+        // Validate the ".component" blob.
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
-        assert.strictEqual(JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId])),
-           "defaultDataStore", "Default data store should be there");
+        assert.strictEqual(
+            JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId])),
+           "defaultDataStore",
+           "The .component blob's content is incorrect",
+        );
+
+        // Validate "root" sub-tree.
         const rootAttributesBlobId = snapshotTree.trees.default.trees.root.blobs.attributes;
         assert.strictEqual(
             JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.trees.root.blobs[rootAttributesBlobId])),
-            "rootattributes", "Default data store root attributes should be there");
+            "rootattributes",
+            "The root sub-tree's content is incorrect",
+        );
+        assert.strictEqual(
+            snapshotTree.trees.default.trees.root.unreferenced,
+            undefined,
+            "The root sub-tree should not be marked as unreferenced",
+        );
+
+        // Validate "unref" sub-tree.
+        assert.strictEqual(
+            snapshotTree.trees.default.trees.unref.unreferenced,
+            true,
+            "The unref sub-tree should be marked as unreferenced",
+        );
     });
 });
