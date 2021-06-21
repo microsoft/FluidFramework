@@ -14,7 +14,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
-import { RunningSummarizer } from "../summarizer";
+import { RunningSummarizer, SummarizerStopReason } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {
@@ -92,35 +92,39 @@ describe("Runtime", () => {
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
-                    { generateSummary: async () => {
-                        runCount++;
+                    {
+                        generateSummary: async () => {
+                            runCount++;
 
-                        // immediate broadcast
-                        emitBroadcast();
+                            // immediate broadcast
+                            emitBroadcast();
 
-                        if (shouldDeferGenerateSummary) {
-                            deferGenerateSummary = new Deferred<void>();
-                            await deferGenerateSummary.promise;
-                        }
-                        return {
-                            referenceSequenceNumber: lastRefSeq,
-                            submitted: true,
-                            summaryStats: {
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
-                                totalDataStoreCount: 0,
-                                unreferencedDataStoreCount: 0,
-                                totalSummarizedDataStoreCount: 0,
-                            },
-                            handle: "test-handle",
-                            clientSequenceNumber: lastClientSeq,
-                        };
-                    } },
+                            if (shouldDeferGenerateSummary) {
+                                deferGenerateSummary = new Deferred<void>();
+                                await deferGenerateSummary.promise;
+                            }
+                            return {
+                                referenceSequenceNumber: lastRefSeq,
+                                submitted: true,
+                                summaryStats: {
+                                    treeNodeCount: 0,
+                                    blobNodeCount: 0,
+                                    handleNodeCount: 0,
+                                    totalBlobSize: 0,
+                                    totalDataStoreCount: 0,
+                                    unreferencedDataStoreCount: 0,
+                                    totalSummarizedDataStoreCount: 0,
+                                },
+                                handle: "test-handle",
+                                clientSequenceNumber: lastClientSeq,
+                            };
+                        },
+                        stop(reason?: SummarizerStopReason) {
+                            // do nothing
+                        },
+                    },
                     0,
                     { refSequenceNumber: 0, summaryTime: Date.now() },
-                    false,
                     () => { },
                     summaryCollection,
                 );
@@ -160,7 +164,7 @@ describe("Runtime", () => {
                     await emitNextOp(1);
                     assert.strictEqual(runCount, 1);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
 
@@ -172,15 +176,15 @@ describe("Runtime", () => {
                     await emitAck();
                     assert.strictEqual(runCount, 2);
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:SummaryAck", summaryGenTag: (runCount - 1) }, // ack for previous run
-                        { eventName: "Running:GenerateSummary_end", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_end", summaryGenTag: (runCount - 1) }, // ack for previous run
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
 
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
                     assert(!mockLogger.matchEvents([
-                        { eventName: "Running:SummaryAck" },
+                        { eventName: "Running:Summarize_end" },
                     ]), "No ack expected yet");
                 });
 
@@ -326,19 +330,18 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1, "Should run summarizer once");
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary_end",
-                            summaryGenTag: runCount, message: "maxOps" },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence 2");
 
                     assert(!mockLogger.matchEvents([
-                        { eventName: "Running:SummaryAck" },
+                        { eventName: "Running:Summarize_end" },
                     ]), "No ack expected yet");
 
                     // Now emit ack
                     await emitAck();
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:SummaryAck", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, reason: "maxOps" },
                     ]), "unexpected log sequence 3");
                 });
             });

@@ -172,7 +172,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
-    readonly reason: "disconnected";
+    readonly error: any;
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -864,6 +864,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (fn) => this.once("dispose", fn),
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
@@ -1308,7 +1309,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.addBlobId(message.metadata.blobId);
+                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
                     break;
                 default:
             }
@@ -1638,7 +1639,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {
@@ -1661,32 +1662,55 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
-        const message =
-            `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
-
         try {
             await this.deltaManager.inbound.pause();
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
+            const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
+
+            this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+
+            // Helper function to check whether we should still continue between each async step.
+            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+                // If summarizer loses connection it will never reconnect
+                if (!this.connected) {
+                    return { continue: false, error: "disconnected" };
+                }
+                // Ensure that lastSequenceNumber has not changed after pausing.
+                // We need the summary op's reference sequence number to match our summary sequence number,
+                // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
+                if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                return { continue: true };
+            };
+
+            const attemptData: Omit<IUnsubmittedSummaryData, "error"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
-            if (!this.connected) {
-                // If summarizer loses connection it will never reconnect
-                return { ...attemptData, reason: "disconnected" };
+            let continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, error: continueResult.error };
             }
 
             const trace = Trace.start();
-            const summarizeResult = await this.summarize({
-                runGC: this.shouldRunGC,
-                fullTree,
-                trackState: true,
-                summaryLogger,
-            });
+            let summarizeResult: IChannelSummarizeResult;
+            try {
+                summarizeResult = await this.summarize({
+                    runGC: this.shouldRunGC,
+                    fullTree,
+                    trackState: true,
+                    summaryLogger,
+                });
+            } catch (error) {
+                return { ...attemptData, error };
+            }
 
             const summary = summarizeResult.summary.tree;
             const summaryTree = summary[channelsTreeName];
@@ -1720,16 +1744,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 generateDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, error: continueResult.error };
             }
 
-            // Ensure that lastSequenceNumber has not changed after pausing
-            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
-            assert(
-                lastSequenceNumber === summaryRefSeqNum,
-                0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
-            );
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
@@ -1744,9 +1763,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 
-            const handle = await this.storage.uploadSummaryWithContext(
-                summarizeResult.summary,
-                summaryContext);
+            let handle: string;
+            try {
+                handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
+            } catch (error) {
+                return { ...attemptData, ...generateData, error };
+            }
 
             const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
@@ -1761,24 +1783,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 uploadDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, ...uploadData, error: continueResult.error };
             }
 
-            // We need the summary op's reference sequence number to match our summary sequence number
-            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
-            assert(
-                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
-                `lastSequenceNumber changed before the summary op could be submitted. `
-                + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
-            );
+            let clientSequenceNumber: number;
+            try {
+                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+            } catch (error) {
+                return { ...attemptData, ...generateData, ...uploadData, error };
+            }
 
-            const clientSequenceNumber =
-                this.submitSystemMessage(MessageType.Summarize, summaryMessage);
-
-            this.summarizerNode.completeSummary(handle);
-
-            return {
+            const submitData: ISubmittedSummaryData = {
                 ...attemptData,
                 ...generateData,
                 ...uploadData,
@@ -1786,6 +1803,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
             };
+
+            this.summarizerNode.completeSummary(handle);
+
+            return submitData;
         } finally {
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
@@ -1861,6 +1882,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        this.verifyNotClosed();
         return this.blobManager.createBlob(blob);
     }
 
