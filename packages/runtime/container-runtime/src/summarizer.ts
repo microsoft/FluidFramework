@@ -4,7 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    IDisposable,
+    IEvent,
+    IEventProvider,
+    ITelemetryLogger,
+    ITelemetryProperties,
+} from "@fluidframework/common-definitions";
 import {
     Deferred,
     PromiseTimer,
@@ -65,7 +71,7 @@ export interface IGenerateSummaryOptions {
 
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
-    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined>;
+    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
     refreshLatestSummaryAck(
@@ -157,12 +163,12 @@ type SummarizeReason =
     | "maxOps"
     /**
      * Special case to generate a summary immediately after starting.
-     * @deprecated
+     * @deprecated - only used in context reload hot swap, which was removed
      */
     | "immediate"
     /**
      * Special case to generate a summary in response to a Save op.
-     * @deprecated
+     * @deprecated - do not use save ops
      */
     | `;${string}: ${string}`
     /**
@@ -175,6 +181,31 @@ type SummarizeReason =
     | "lastSummary"
     /** Previous summary attempt failed, and we are retrying. */
     | `retry${1 | 2}`;
+
+interface ISummarizeError {
+    /**
+     * Error encountered while generating the summary tree, uploading
+     * it to storage, or submitting the op. It could be a result of
+     * the client becoming disconnected while generating or an actual error.
+     */
+    generateSummaryFailure: "Error while generating or submitting summary";
+    /**
+     * The summaryAckWaitTimeout time has elapsed before receiving the summarize op
+     * sent by this summarize attempt. It is expected to be broadcast quickly.
+     */
+    summaryOpWaitTimeout: "Timeout while waiting for summarize op broadcast";
+    /**
+     * The summaryAckWaitTimeout time has elapsed before receiving either a
+     * summaryAck or summaryNack op from the server in response to this
+     * summarize attempt. It is expected that the server should respond.
+     */
+    summaryAckWaitTimeout: "Timeout while waiting for summaryAck/summaryNack op";
+    /**
+     * The server responded with a summaryNack op, thus rejecting this
+     * summarize attempt.
+     */
+    summaryNack: "Server rejected summary via summaryNack op";
+}
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
@@ -474,7 +505,8 @@ export class RunningSummarizer implements IDisposable {
 
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
-            this.trySummarize(`;${op.clientId}: ${op.contents}`);
+            // TODO: cast is only required until TypeScript version 4.3
+            this.trySummarize(`;${op.clientId}: ${op.contents}` as `;${string}: ${string}`);
         } else {
             this.heuristics.run();
         }
@@ -568,28 +600,77 @@ export class RunningSummarizer implements IDisposable {
     private async summarize(
         reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): Promise<boolean | undefined> {
+    ): Promise<boolean> {
+        ++this.summarizeCount;
+        const { refreshLatestAck, fullTree } = options;
+
+        const summarizeEvent = PerformanceEvent.start(this.logger, {
+            eventName: "summarize",
+            reason,
+            refreshLatestAck,
+            fullTree,
+            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
+            timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
+        });
+        // Helper function to report failures and return.
+        const fail = <K extends keyof ISummarizeError>(
+            message: K,
+            description: ISummarizeError[K],
+            error?: any,
+            properties?: ITelemetryProperties,
+        ): false => {
+            this.raiseSummarizingError(description);
+            summarizeEvent.cancel({ ...properties, message }, error);
+            return false;
+        };
+
+        // Wait to generate and send summary
         this.summarizeTimer.start();
+        let summaryData: GenerateSummaryData | undefined;
+        try {
+            summaryData = await this.internalsProvider.generateSummary({
+                fullTree: this.immediateSummary || fullTree,
+                refreshLatestAck,
+                summaryLogger: this.logger,
+            });
+
+            const {
+                summaryStats,
+                referenceSequenceNumber,
+                ...summaryDataForTelemetry
+            } = summaryData;
+            // Use record type to prevent unexpected value types
+            const telemetryProps: Record<string, string | number | boolean | undefined> = {
+                ...summaryDataForTelemetry,
+                ...summaryStats,
+                refSequenceNumber: referenceSequenceNumber,
+                opsSinceLastAttempt: referenceSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
+                opsSinceLastSummary: referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
+            };
+            this.logger.sendTelemetryEvent({
+                eventName: "GenerateSummary",
+                ...telemetryProps,
+            });
+        } catch (error) {
+            return fail("generateSummaryFailure", "Error while generating or submitting summary", error);
+        } finally {
+            this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
+            this.summarizeTimer.clear();
+        }
+
+        if (!summaryData.submitted) {
+            // Did not send the summary op
+            return fail("generateSummaryFailure", "Error while generating or submitting summary", summaryData.error);
+        }
 
         try {
-            ++this.summarizeCount;
-
-            // Wait to generate and send summary
-            const summaryData = await this.generateSummaryWithLogging(reason, options);
-            this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
-            if (!summaryData || !summaryData.submitted) {
-                // Did not send the summary op
-                this.raiseSummarizingError("Error while generating or submitting summary");
-                return undefined;
-            }
-
             const pendingTimeoutP = this.pendingAckTimer.start().catch(() => undefined);
             const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
             // Wait for broadcast
             const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
             if (!checkNotTimeout(summaryOp)) {
-                return undefined;
+                return fail("summaryOpWaitTimeout", "Timeout while waiting for summarize op broadcast");
             }
             this.heuristics.lastAttempted.summarySequenceNumber = summaryOp.sequenceNumber;
             this.logger.sendTelemetryEvent({
@@ -603,89 +684,35 @@ export class RunningSummarizer implements IDisposable {
             // Wait for ack/nack
             const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
             if (!checkNotTimeout(ackNack)) {
-                return undefined;
+                return fail("summaryAckWaitTimeout", "Timeout while waiting for summaryAck/summaryNack op");
             }
-            this.logger.sendTelemetryEvent({
-                eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
-                category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
+            this.pendingAckTimer.clear();
+
+            // Update for success/failure
+            const telemetryProps: Record<string, number> = {
                 timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 sequenceNumber: ackNack.sequenceNumber,
                 summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
-                error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
-                handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
-            });
-
-            this.pendingAckTimer.clear();
-
-            // Update for success
+            };
             if (ackNack.type === MessageType.SummaryAck) {
                 this.heuristics.ackLastSent();
 
                 // since we need a full summary after context reload, we only clear this on ack
                 this.immediateSummary = false;
 
+                summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
                 return true;
             } else {
-                this.raiseSummarizingError("SummaryNack");
-                return false;
+                return fail(
+                    "summaryNack",
+                    "Server rejected summary via summaryNack op",
+                    ackNack.contents.errorMessage,
+                    telemetryProps,
+                );
             }
         } finally {
-            this.summarizeTimer.clear();
             this.pendingAckTimer.clear();
         }
-    }
-
-    private async generateSummaryWithLogging(
-        reason: SummarizeReason,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): Promise<GenerateSummaryData | undefined> {
-        const { refreshLatestAck, fullTree } = options;
-        const summarizingEvent = PerformanceEvent.start(this.logger, {
-            eventName: "GenerateSummary",
-            reason,
-            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
-            timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
-            refreshLatestAck,
-            fullTree,
-        });
-
-        // Wait for generate/send summary
-        let summaryData: GenerateSummaryData | undefined;
-        try {
-            summaryData = await this.internalsProvider.generateSummary({
-                fullTree: this.immediateSummary || fullTree,
-                refreshLatestAck,
-                summaryLogger: this.logger,
-            });
-        } catch (error) {
-            summarizingEvent.cancel({ category: "error" }, error);
-            return;
-        }
-
-        this.summarizeTimer.clear();
-
-        if (!summaryData) {
-            summarizingEvent.cancel();
-            return;
-        }
-
-        const telemetryProps: any = {
-            ...summaryData,
-            ...summaryData.summaryStats,
-            refSequenceNumber: summaryData.referenceSequenceNumber,
-            opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
-            opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
-        };
-        telemetryProps.summaryStats = undefined;
-        telemetryProps.referenceSequenceNumber = undefined;
-
-        if (summaryData.submitted) {
-            summarizingEvent.end(telemetryProps);
-        } else {
-            summarizingEvent.cancel(telemetryProps);
-        }
-
-        return summaryData;
     }
 
     private summarizeTimerHandler(time: number, count: number) {
@@ -921,15 +948,15 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     /** Implementation of SummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
+        const result = this.internalsProvider.generateSummary(options);
+
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer; a different client is, so we should stop ourself
             this.stop("parentNoLongerSummarizer");
-            return undefined;
         }
-
-        return this.internalsProvider.generateSummary(options);
+        return result;
     }
 
     private async handleSummaryAcks() {
