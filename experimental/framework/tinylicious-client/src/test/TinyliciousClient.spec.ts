@@ -182,8 +182,8 @@ describe("TinyliciousClient post-initialization", () => {
                 resolve();
             });
         });
-        const containerGet = await ResettableTinyliciousClient.getContainer(containerConfig, schema);
-        const getFluidContainer = containerGet.fluidContainer;
+        const getFluidContainer = (await ResettableTinyliciousClient.getContainer(containerConfig, schema))
+                                .fluidContainer;
         const map1Create = createFluidContainer.initialObjects.map1 as SharedMap;
         const map1Get = getFluidContainer.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
@@ -269,8 +269,8 @@ describe("TinyliciousClient post-initialization", () => {
         map1Create.set("new-key", "new-value");
         const valueCreate = await map1Create.get("new-key");
 
-        const containerGet = await ResettableTinyliciousClient.getContainer(containerConfig, schema);
-        const getFluidContainer = containerGet.fluidContainer;
+        const getFluidContainer = (await ResettableTinyliciousClient.getContainer(containerConfig, schema))
+                                .fluidContainer;
         const map1Get = getFluidContainer.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
