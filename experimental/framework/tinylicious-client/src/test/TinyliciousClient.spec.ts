@@ -175,8 +175,8 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const containerCreate = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
-        const createFluidContainer = containerCreate.fluidContainer;
+        const createFluidContainer = (await ResettableTinyliciousClient.createContainer(containerConfig, schema))
+                                .fluidContainer;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
@@ -205,14 +205,14 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const container = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
-        const createFluidContainer = container.fluidContainer;
+        const createFluidContainer = (await ResettableTinyliciousClient.createContainer(containerConfig, schema))
+                                    .fluidContainer;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
-        assert.notStrictEqual(container, undefined, "container is connected");
+        assert.notStrictEqual(createFluidContainer, undefined, "container is connected");
     });
 
     /**
@@ -256,8 +256,8 @@ describe("TinyliciousClient post-initialization", () => {
                 map1: SharedMap,
             },
         };
-        const containerCreate = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
-        const createFluidContainer = containerCreate.fluidContainer;
+        const createFluidContainer = (await ResettableTinyliciousClient.createContainer(containerConfig, schema))
+                                .fluidContainer;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
@@ -293,8 +293,8 @@ describe("TinyliciousClient post-initialization", () => {
             },
             dynamicObjectTypes: [ SharedDirectory ],
         };
-        const container = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
-        const createFluidContainer = container.fluidContainer;
+        const createFluidContainer = (await ResettableTinyliciousClient.createContainer(containerConfig, schema))
+                            .fluidContainer;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
@@ -324,8 +324,8 @@ describe("TinyliciousClient post-initialization", () => {
             },
             dynamicObjectTypes: [ DiceRoller ],
         };
-        const container = await ResettableTinyliciousClient.createContainer(containerConfig, schema);
-        const createFluidContainer = container.fluidContainer;
+        const createFluidContainer = (await ResettableTinyliciousClient.createContainer(containerConfig, schema))
+                            .fluidContainer;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
