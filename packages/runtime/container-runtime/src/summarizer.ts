@@ -258,7 +258,6 @@ export class RunningSummarizer implements IDisposable {
         internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
-        immediateSummary: boolean,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
     ): Promise<RunningSummarizer> {
@@ -271,18 +270,13 @@ export class RunningSummarizer implements IDisposable {
             internalsProvider,
             lastOpSeqNumber,
             firstAck,
-            immediateSummary,
             raiseSummarizingError,
             summaryCollection);
 
         await summarizer.waitStart();
 
         // Run the heuristics after starting
-        if (immediateSummary) {
-            summarizer.trySummarize("immediate");
-        } else {
-            summarizer.heuristics.run();
-        }
+        summarizer.heuristics.run();
         return summarizer;
     }
 
@@ -307,7 +301,6 @@ export class RunningSummarizer implements IDisposable {
         private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
-        private immediateSummary: boolean = false,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
     ) {
@@ -548,10 +541,6 @@ export class RunningSummarizer implements IDisposable {
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
-
-            // since we need a full summary after context reload, we only clear this on ack
-            this.immediateSummary = false;
-
             return true;
         } else {
             this.raiseSummarizingError("SummaryNack");
@@ -572,7 +561,7 @@ export class RunningSummarizer implements IDisposable {
         let summaryData: GenerateSummaryData | undefined;
         try {
             summaryData = await this.internalsProvider.generateSummary({
-                fullTree: this.immediateSummary || safe,
+                fullTree: safe,
                 refreshLatestAck: safe,
                 summaryLogger: this.logger,
             });
@@ -637,7 +626,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private runningSummarizer?: RunningSummarizer;
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
-    private immediateSummary: boolean = false;
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
@@ -780,7 +768,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
-            this.immediateSummary,
             (description: string) => {
                 if (!this._disposed) {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
@@ -789,8 +776,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection,
         );
         this.runningSummarizer = runningSummarizer;
-
-        this.immediateSummary = false;
 
         // Handle summary acks
         this.handleSummaryAcks().catch((error) => {
