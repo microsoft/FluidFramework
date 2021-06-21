@@ -86,7 +86,7 @@ import {
     ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
     ITopLevelSummaryStats,
-    ISummaryStats,
+    // ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
     IChannelSummarizeResult,
@@ -160,7 +160,7 @@ export interface ContainerRuntimeMessage {
 }
 
 export interface IGeneratedSummaryData {
-    readonly summaryStats: ITopLevelSummaryStats | ISummaryStats;
+    readonly summaryStats: ITopLevelSummaryStats;
     readonly generateDuration?: number;
 }
 
@@ -1712,7 +1712,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ...summarizeResult.stats,
                 totalDataStoreCount,
                 unreferencedDataStoreCount,
-                totalSummarizedDataStoreCount: totalDataStoreCount - handleCount
+                totalSummarizedDataStoreCount: totalDataStoreCount - handleCount,
             };
 
             const generateData: IGeneratedSummaryData = {
