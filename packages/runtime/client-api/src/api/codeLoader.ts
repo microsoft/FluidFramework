@@ -28,7 +28,6 @@ import * as sequence from "@fluidframework/sequence";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { create404Response } from "@fluidframework/runtime-utils";
@@ -113,26 +112,11 @@ export class ChaincodeFactory implements IRuntimeFactory {
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const chaincode = new Chaincode(context.closeFn);
-
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
-            context,
-            [
-                [chaincode.type, Promise.resolve(chaincode)],
-                ...this.registries,
-            ],
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(rootStoreId),
-                innerRequestHandler,
-            ),
-            this.runtimeOptions);
-
-        // On first boot create the base data store
-        if (!runtime.existing) {
-            await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -148,7 +132,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
         const chaincode = new Chaincode(context.closeFn);
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
                 [chaincode.type, Promise.resolve(chaincode)],
@@ -157,7 +141,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(rootStoreId),
-                rootDataStoreRequestHandler,
+                innerRequestHandler,
             ),
             this.runtimeOptions);
 

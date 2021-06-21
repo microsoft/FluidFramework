@@ -27,7 +27,6 @@ import {
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
@@ -128,20 +127,11 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
-            context,
-            new Map([[this.type, Promise.resolve(this)]]),
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(this.defaultComponentId),
-                innerRequestHandler,
-            ),
-        );
-
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(this.type, this.defaultComponentId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -156,13 +146,13 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     }
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[this.type, Promise.resolve(this)]]),
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                rootDataStoreRequestHandler,
+                innerRequestHandler,
             ),
         );
         return runtime;

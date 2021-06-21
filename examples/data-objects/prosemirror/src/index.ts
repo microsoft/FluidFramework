@@ -13,7 +13,6 @@ import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-defin
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./prosemirror";
@@ -28,27 +27,11 @@ class ProseMirrorFactory implements IRuntimeFactory {
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
-        ]);
-
-        const runtime = await ContainerRuntime.load(
-            context,
-            registry,
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
-            ));
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -67,13 +50,13 @@ class ProseMirrorFactory implements IRuntimeFactory {
             [defaultComponent, Promise.resolve(smde)],
         ]);
 
-        const runtime = await ContainerRuntime.loadStateful(
+        const runtime = await ContainerRuntime.load(
             context,
             registry,
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                rootDataStoreRequestHandler,
+                innerRequestHandler,
             ));
 
         // Flush mode to manual to batch operations within a turn

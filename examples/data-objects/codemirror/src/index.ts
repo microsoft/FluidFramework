@@ -12,7 +12,6 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
-    rootDataStoreRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
@@ -24,34 +23,21 @@ const defaultComponent = "@fluid-example/smde";
 
 class CodeMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
-    private readonly registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-        ["@fluid-example/smde", Promise.resolve(smde)],
-    ]);
 
     /**
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
-            context,
-            this.registry,
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler));
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await this.loadRuntime(context, false);
+
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
         return runtime;
     }
@@ -62,13 +48,17 @@ class CodeMirrorFactory implements IRuntimeFactory {
     }
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
+            ["@fluid-example/smde", Promise.resolve(smde)],
+        ]);
+
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            this.registry,
+            registry,
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                rootDataStoreRequestHandler));
+                innerRequestHandler));
 
         // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);

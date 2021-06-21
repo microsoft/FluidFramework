@@ -16,7 +16,6 @@ import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
     innerRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -58,38 +57,11 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
-        const dc = new DependencyContainer(parentDependencyContainer);
-        for (const entry of Array.from(this.providerEntries)) {
-            dc.register(entry.type, entry.provider);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
-        // which we will replace with the new one we just created.
-        const scope: any = context.scope;
-        scope.IFluidDependencySynthesizer = dc;
-
-        const runtime = await ContainerRuntime.load(
-            context,
-            this.registryEntries,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
-            this.runtimeOptions,
-            scope);
-
-        // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IContainerRuntime, runtime);
-
-        if (!runtime.existing) {
-            // If it's the first time through.
-            await this.containerInitializingFirstTime(runtime);
-        }
-
-        // This always gets called at the end of initialize on first time or from existing.
-        await this.containerHasInitialized(runtime);
-
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -119,13 +91,13 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                rootDataStoreRequestHandler),
+                innerRequestHandler),
             this.runtimeOptions,
             scope);
 

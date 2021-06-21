@@ -1215,7 +1215,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.createExistingContext(codeDetails, attributes, snapshot, pendingLocalState);
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            this._existing === true,
+            snapshot,
+            pendingLocalState,
+        );
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1324,7 +1330,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.createExistingContext(codeDetails, attributes, snapshotTree);
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            true,
+            snapshotTree,
+        );
 
         this.loaded = true;
 
@@ -1858,24 +1869,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.emit("contextChanged", codeDetails);
-    }
-
-    /**
-     * Instantiates an existing container context
-     */
-    private async createExistingContext(
-        codeDetails: IFluidCodeDetails,
-        attributes: IDocumentAttributes,
-        snapshot?: ISnapshotTree,
-        pendingLocalState?: unknown,
-    ) {
-        await this.instantiateContext(
-            codeDetails,
-            attributes,
-            true,
-            snapshot,
-            pendingLocalState,
-        );
     }
 
     /**

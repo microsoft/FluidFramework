@@ -18,7 +18,6 @@ import {
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import * as sharedTextComponent from "./component";
@@ -71,26 +70,11 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
-            context,
-            [
-                ...defaultRegistryEntries,
-                [SharedTextFactoryComponent.type, Promise.resolve(this)],
-                AgentSchedulerFactory.registryEntry,
-            ],
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(DefaultComponentName),
-                innerRequestHandler,
-            ),
-        );
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
-            await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -106,7 +90,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     }
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
                 ...defaultRegistryEntries,
@@ -116,7 +100,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
-                rootDataStoreRequestHandler,
+                innerRequestHandler,
             ),
         );
 

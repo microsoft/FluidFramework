@@ -15,7 +15,6 @@ import {
     buildRuntimeRequestHandler,
     RuntimeRequestHandler,
     innerRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
@@ -48,23 +47,11 @@ export class RuntimeFactory implements IRuntimeFactory {
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
-            context,
-            this.registry,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
-        );
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base data store
-        if (!runtime.existing && this.defaultStoreFactory.type) {
-            await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -79,13 +66,13 @@ export class RuntimeFactory implements IRuntimeFactory {
     }
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
             existing,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                rootDataStoreRequestHandler),
+                innerRequestHandler),
         );
 
         // Flush mode to manual to batch operations within a turn

@@ -35,7 +35,6 @@ import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfac
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
-    rootDataStoreRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
@@ -468,20 +467,11 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
      * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
-            context,
-            this.registry,
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
-            ));
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
+        if (context.existing === true) {
+            return this.instantiateFromExisting(context);
         }
 
-        return runtime;
+        return this.instantiateFirstTime(context);
     }
 
     public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
@@ -496,13 +486,13 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     }
 
     private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.loadStateful(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
             existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
-                rootDataStoreRequestHandler,
+                innerRequestHandler,
             ));
 
         return runtime;

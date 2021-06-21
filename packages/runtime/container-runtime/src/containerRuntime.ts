@@ -537,10 +537,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      *
      * @param context - Context of the container.
      * @param registry - Mapping to the stores.
+     * @param existing - Whether the context must be loaded from existing storage
      * @param requestHandlers - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
-    public static async loadStateful(
+    public static async load(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         existing: boolean,
@@ -628,32 +629,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         return runtime;
-    }
-
-    /**
-     * Load the stores from a snapshot and returns the runtime.
-     *
-     * @deprecated Please use ContainerRuntime.loadStateful
-     *
-     * @param context - Context of the container.
-     * @param registry - Mapping to the stores.
-     * @param requestHandlers - Request handlers for the container runtime
-     * @param runtimeOptions - Additional options to be passed to the runtime
-     */
-    public static async load(
-        context: IContainerContext,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IFluidObject = context.scope,
-    ): Promise<ContainerRuntime> {
-        return this.loadStateful(
-            context,
-            registryEntries,
-            context.existing === true,
-            requestHandler,
-            runtimeOptions,
-            containerScope);
     }
 
     public get id(): string {
@@ -803,7 +778,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
-        public readonly existing: boolean,
+        existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -1377,7 +1352,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
         const registryPath =
             `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, this.existing);
+        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath);
     }
 
     public setFlushMode(mode: FlushMode): void {

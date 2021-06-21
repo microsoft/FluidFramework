@@ -54,7 +54,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "localHelp", listener: (message: IHelpMessage) => void);
     (
         event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
+        listener: (dataStorePkgName: string, registryPath: string) => void,
     );
 }
 
@@ -69,10 +69,6 @@ export interface IContainerRuntime extends
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
-    /**
-     * @deprecated This property will be removed in an upcoming release
-     */
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
