@@ -70,15 +70,6 @@ export class FrsClientInstance {
         return this.getFluidContainerAndServices(container);
     }
 
-    // private async getFluidContainerAndServices(
-    //     container: Container,
-    // ): Promise<[FluidContainer, FrsContainerServices]> {
-    //     const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-    //     const fluidContainer = new FluidContainer(container, rootDataObject);
-    //     const containerServices = this.getContainerServices(container);
-    //     return [fluidContainer, containerServices];
-    // }
-
     private async getFluidContainerAndServices(
         container: Container,
     ): Promise<FrsContainerAndServices> {
