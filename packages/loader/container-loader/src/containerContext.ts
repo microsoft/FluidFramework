@@ -293,7 +293,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-        const runtimeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
+        const runtimeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
