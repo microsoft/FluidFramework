@@ -162,15 +162,10 @@ type SummarizeReason =
      */
     | "maxOps"
     /**
-     * Special case to generate a summary immediately after starting.
-     * @deprecated - only used in context reload hot swap, which was removed
-     */
-    | "immediate"
-    /**
      * Special case to generate a summary in response to a Save op.
      * @deprecated - do not use save ops
      */
-    | `;${string}: ${string}`
+    | `save;${string}: ${string}`
     /**
      * Special case to attempt to summarize one last time before the
      * summarizer client closes itself. This is to prevent cases where
@@ -182,30 +177,30 @@ type SummarizeReason =
     /** Previous summary attempt failed, and we are retrying. */
     | `retry${1 | 2}`;
 
-interface ISummarizeError {
+const summarizeErrors = {
     /**
      * Error encountered while generating the summary tree, uploading
      * it to storage, or submitting the op. It could be a result of
      * the client becoming disconnected while generating or an actual error.
      */
-    generateSummaryFailure: "Error while generating or submitting summary";
+    generateSummaryFailure: "Error while generating or submitting summary",
     /**
      * The summaryAckWaitTimeout time has elapsed before receiving the summarize op
      * sent by this summarize attempt. It is expected to be broadcast quickly.
      */
-    summaryOpWaitTimeout: "Timeout while waiting for summarize op broadcast";
+    summaryOpWaitTimeout: "Timeout while waiting for summarize op broadcast",
     /**
      * The summaryAckWaitTimeout time has elapsed before receiving either a
      * summaryAck or summaryNack op from the server in response to this
      * summarize attempt. It is expected that the server should respond.
      */
-    summaryAckWaitTimeout: "Timeout while waiting for summaryAck/summaryNack op";
+    summaryAckWaitTimeout: "Timeout while waiting for summaryAck/summaryNack op",
     /**
      * The server responded with a summaryNack op, thus rejecting this
      * summarize attempt.
      */
-    summaryNack: "Server rejected summary via summaryNack op";
-}
+    summaryNack: "Server rejected summary via summaryNack op",
+} as const;
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
@@ -499,7 +494,7 @@ export class RunningSummarizer implements IDisposable {
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
             // TODO: cast is only required until TypeScript version 4.3
-            this.trySummarize(`;${op.clientId}: ${op.contents}` as `;${string}: ${string}`);
+            this.trySummarize(`save;${op.clientId}: ${op.contents}` as `save;${string}: ${string}`);
         } else {
             this.heuristics.run();
         }
@@ -606,13 +601,12 @@ export class RunningSummarizer implements IDisposable {
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
         });
         // Helper function to report failures and return.
-        const fail = <K extends keyof ISummarizeError>(
-            message: K,
-            description: ISummarizeError[K],
+        const fail = (
+            message: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
         ): false => {
-            this.raiseSummarizingError(description);
+            this.raiseSummarizingError(summarizeErrors[message]);
             summarizeEvent.cancel({ ...properties, message }, error);
             return false;
         };
@@ -645,7 +639,7 @@ export class RunningSummarizer implements IDisposable {
                 ...telemetryProps,
             });
         } catch (error) {
-            return fail("generateSummaryFailure", "Error while generating or submitting summary", error);
+            return fail("generateSummaryFailure", error);
         } finally {
             this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
             this.summarizeTimer.clear();
@@ -653,7 +647,7 @@ export class RunningSummarizer implements IDisposable {
 
         if (!summaryData.submitted) {
             // Did not send the summary op
-            return fail("generateSummaryFailure", "Error while generating or submitting summary", summaryData.error);
+            return fail("generateSummaryFailure", summaryData.error);
         }
 
         try {
@@ -663,7 +657,7 @@ export class RunningSummarizer implements IDisposable {
             // Wait for broadcast
             const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
             if (!checkNotTimeout(summaryOp)) {
-                return fail("summaryOpWaitTimeout", "Timeout while waiting for summarize op broadcast");
+                return fail("summaryOpWaitTimeout");
             }
             this.heuristics.lastAttempted.summarySequenceNumber = summaryOp.sequenceNumber;
             this.logger.sendTelemetryEvent({
@@ -677,7 +671,7 @@ export class RunningSummarizer implements IDisposable {
             // Wait for ack/nack
             const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
             if (!checkNotTimeout(ackNack)) {
-                return fail("summaryAckWaitTimeout", "Timeout while waiting for summaryAck/summaryNack op");
+                return fail("summaryAckWaitTimeout");
             }
             this.pendingAckTimer.clear();
 
@@ -694,7 +688,6 @@ export class RunningSummarizer implements IDisposable {
             } else {
                 return fail(
                     "summaryNack",
-                    "Server rejected summary via summaryNack op",
                     ackNack.contents.errorMessage,
                     telemetryProps,
                 );
