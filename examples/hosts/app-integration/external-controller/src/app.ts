@@ -56,8 +56,9 @@ async function start(): Promise<void> {
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
-    const fluidContainer = containerAndServices.fluidContainer;
-    const containerServices = containerAndServices.containerServices;
+    // [fluidContainer, containerServices]
+    const { fluidContainer,containerServices } = { fluidContainer: containerAndServices.fluidContainer,
+        containerServices: containerAndServices.containerServices };
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
