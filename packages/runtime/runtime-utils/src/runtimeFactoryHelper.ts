@@ -9,8 +9,8 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 
-export abstract class RuntimeFactoryHelper<T = IRuntime> implements IRuntimeFactory {
-    public async getRuntime(context: IContainerContext, existing?: boolean): Promise<T> {
+export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
+    public async getRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const isLoaded = existing === true || context.existing === true;
         const runtime = await this.preInitialize(context, isLoaded);
 
@@ -24,8 +24,8 @@ export abstract class RuntimeFactoryHelper<T = IRuntime> implements IRuntimeFact
         return runtime;
     }
 
-    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<T>;
-    public async initializeFirstTime(runtime: T): Promise<void> {}
-    public async initializeFromExisting(runtime: T): Promise<void> {}
-    public async hasInitialized(runtime: T): Promise<void> {}
+    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+    public async initializeFirstTime(runtime: IRuntime): Promise<void> {}
+    public async initializeFromExisting(runtime: IRuntime): Promise<void> {}
+    public async hasInitialized(runtime: IRuntime): Promise<void> {}
 }

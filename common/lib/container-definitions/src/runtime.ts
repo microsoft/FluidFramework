@@ -7,6 +7,7 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-defini
 import {
     IFluidObject,
     IFluidConfiguration,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -151,6 +152,8 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
 
     updateDirtyContainerState(dirty: boolean): void;
+
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
