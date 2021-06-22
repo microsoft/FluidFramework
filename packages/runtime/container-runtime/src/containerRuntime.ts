@@ -1690,16 +1690,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const summary = summarizeResult.summary.tree;
             const summaryTree = summary[channelsTreeName];
-            let totalDataStoreCount = 0;
-            let unreferencedDataStoreCount = 0;
+            let dataStoreCount = 0;
+            let summarizedUnreferencedDataStoreCount = 0;
             let handleCount = 0;
             if (summaryTree.type === SummaryType.Tree) {
                 if (summaryTree.tree !== undefined) {
-                    totalDataStoreCount = Object.keys(summaryTree.tree).length;
+                    dataStoreCount = Object.keys(summaryTree.tree).length;
                     for(const key of Object.keys(summaryTree.tree)) {
                         const dataStore = summaryTree.tree[key];
                         if (dataStore.type === SummaryType.Tree && dataStore.unreferenced === true) {
-                            unreferencedDataStoreCount ++;
+                            summarizedUnreferencedDataStoreCount ++;
                         }
                         if (dataStore.type === SummaryType.Handle) {
                             handleCount ++;
@@ -1710,9 +1710,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const topLevelSummaryStat: ITopLevelSummaryStats = {
                 ...summarizeResult.stats,
-                totalDataStoreCount,
-                unreferencedDataStoreCount,
-                totalSummarizedDataStoreCount: totalDataStoreCount - handleCount,
+                dataStoreCount,
+                summarizedUnreferencedDataStoreCount,
+                summarizedDataStoreCount: dataStoreCount - handleCount,
             };
 
             const generateData: IGeneratedSummaryData = {
