@@ -9,7 +9,7 @@ import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 
 /**
  * This class represents blob (long string)
@@ -19,10 +19,12 @@ import { assert } from "@fluidframework/common-utils";
  * and loads blob.
  */
 export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
+    private attached: boolean = false;
+
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
-        return this.attachGraphCallback === undefined;
+        return this.attached;
     }
 
     public readonly absolutePath: string;
@@ -31,16 +33,12 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
         public get: () => Promise<any>,
-        private attachGraphCallback: undefined | (() => void),
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public attachGraph() {
-        if (this.attachGraphCallback) {
-            this.attachGraphCallback();
-            this.attachGraphCallback = undefined;
-        }
+        this.attached = true;
     }
 
     public bind(handle: IFluidHandle) {
@@ -50,15 +48,22 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 export class BlobManager {
     public static readonly basePath = "_blobs";
-    private readonly pendingBlobIds: Set<string> = new Set();
+    private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
     private readonly blobIds: Set<string> = new Set();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
+        onceRuntimeDisposed: (fn: () => void) => void,
         private readonly logger: ITelemetryLogger,
-    ) { }
+    ) {
+        onceRuntimeDisposed(() => {
+            for (const promise of this.pendingBlobIds.values()) {
+                promise.reject(new Error("runtime disposed while blobAttach op in flight"));
+            }
+        });
+    }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), 0x11f /* "requesting unknown blobs" */);
@@ -66,7 +71,6 @@ export class BlobManager {
             `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
             async () => this.getStorage().readBlob(blobId),
-            undefined,
         );
     }
 
@@ -77,20 +81,27 @@ export class BlobManager {
             `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
-            () => this.attachBlobCallback(response.id),
         );
 
         // Note - server will de-dup blobs, so we might get existing blobId!
-        if (!this.blobIds.has(response.id)) {
-            this.pendingBlobIds.add(response.id);
+        if (this.pendingBlobIds.has(response.id)) {
+            await this.pendingBlobIds.get(response.id)?.promise;
+        } else if (!this.blobIds.has(response.id)) {
+            this.pendingBlobIds.set(response.id, new Deferred<void>());
+
+            // send blob attach op and wait until we see it to return the handle
+            this.attachBlobCallback(response.id);
+            await this.pendingBlobIds.get(response.id)?.promise;
         }
 
         return handle;
     }
 
-    public addBlobId(blobId: string) {
-        this.blobIds.add(blobId);
+    public processBlobAttachOp(blobId: string, local: boolean) {
+        assert(!local || this.pendingBlobIds.has(blobId), "local BlobAttach op with no pending blob");
+        this.pendingBlobIds.get(blobId)?.resolve();
         this.pendingBlobIds.delete(blobId);
+        this.blobIds.add(blobId);
     }
 
     /**
@@ -112,7 +123,7 @@ export class BlobManager {
         if (blobsTree) {
             const values = Object.values(blobsTree.blobs);
             count = values.length;
-            values.map((entry) => this.addBlobId(entry));
+            values.map((entry) => this.blobIds.add(entry));
         }
         this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
