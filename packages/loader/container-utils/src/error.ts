@@ -60,10 +60,16 @@ function extractLogSafeErrorProperties(error: any) {
 export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
 
+    /**
+     * Create a new GenericError
+     * @param message - Error message
+     * @param error - inner error object
+     * @param props - Telemetry props to include when the error is logged
+     */
     constructor(
         message: string,
-        props?: ITelemetryProperties,
         readonly error?: any,
+        props?: ITelemetryProperties,
     ) {
         super(message, props);
     }
@@ -125,9 +131,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         const messagePropsToLog = message !== undefined
             ? extractSafePropertiesFromMessage(message)
             : undefined;
-        const newErrorFn =
-            (errMsg: string) =>
-                new DataProcessingError(errMsg);
+        const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
 
         // Don't coerce if it's already a recognized LoggingError
         const error = isValidLoggingError(originalError)
@@ -164,7 +168,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
     const newErrorFn =
         (errMsg: string) => {
             // Don't pass in props here, we want to add them last (see below)
-            const newError = new GenericError(errMsg, undefined /* props */, originalError);
+            const newError = new GenericError(errMsg, originalError);
 
             const { errorType } = extractLogSafeErrorProperties(originalError);
             if (errorType !== undefined) {

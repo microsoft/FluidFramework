@@ -19,7 +19,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 
     describe("Send and receive GenericError instances", () => {
         it("Send and receive a GenericError with no attached error.", () => {
-            const testError = new GenericError("genericError", undefined);
+            const testError = new GenericError("genericError");
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -32,7 +32,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 
         // Dangling error objects of any type will be ignored (see constructor):
         it("Send and receive a GenericError with a dangling error of any type.", () => {
-            const testError = new GenericError("genericError", undefined /* props */, "placeholder");
+            const testError = new GenericError("genericError", "placeholder");
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -44,7 +44,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
         it("Send and receive a GenericError with a dangling error of object type.", () => {
             const testErrorObj = new Error("some error");
-            const testError = new GenericError("genericError", undefined /* props */, testErrorObj);
+            const testError = new GenericError("genericError", testErrorObj);
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -56,7 +56,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
 
         it("Send and receive a GenericError using CreateContainerError", () => {
-            const props = {
+            const innerErrorObj = {
                 clientId: "clientId",
                 messageClientId: "messageClientId",
                 sequenceNumber: 0,
@@ -65,7 +65,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             };
             const testError = new GenericError(
                 "someGenericError",
-                props,
+                innerErrorObj,
             );
             // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
             const wrappedTestError = CreateContainerError(testError);
@@ -120,7 +120,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
     describe("Send errors using a ChildLogger", () => {
         it("Send and receive a GenericError.", () => {
             const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
-            const testError = new GenericError("genericError", undefined);
+            const testError = new GenericError("genericError");
             childLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "errorTypeTestNamespace:A",

@@ -53,7 +53,6 @@ import {
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
-    GenericError,
     ThrottlingWarning,
     CreateContainerError,
     CreateProcessingError,
@@ -733,13 +732,13 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = new GenericError("Op is sent in read-only document state", {
+            const error = CreateContainerError("Op is sent in read-only document state", {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
                 storageOnly: this.readOnlyInfo.storageOnly,
             });
-            this.close(CreateContainerError(error));
+            this.close(error);
             return -1;
         }
 

@@ -13,7 +13,7 @@ import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerError(error: any, props?: ITelemetryProperties): ICriticalContainerError;
+export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError;
 
 // @public
 export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
@@ -34,7 +34,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+    static wrapIfUnrecognized(originalError: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
 }
 
 // @public (undocumented)
@@ -49,7 +49,7 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError {
-    constructor(message: string, props?: ITelemetryProperties, error?: any);
+    constructor(message: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
@@ -67,7 +67,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
-export function wrapError<T extends LoggingError>(error: any, newErrorFn: (m: string, p?: ITelemetryProperties) => T): T;
+export function wrapError<T extends LoggingError>(error: any, newErrorFn: (m: string) => T): T;
 
 
 // (No @packageDocumentation comment for this package)
