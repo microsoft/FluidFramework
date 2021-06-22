@@ -23,7 +23,7 @@ import {
  */
 export class ContainerStorageAdapter implements IDocumentStorageService {
     constructor(
-        private readonly storageGetter: () => IDocumentStorageService,
+        private readonly storageGetter: (callName: string) => IDocumentStorageService,
         private readonly blobs: Map<string, ArrayBufferLike>,
     ) {
     }
@@ -32,17 +32,17 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         // back-compat 0.40 containerRuntime requests policies even in detached container if storage is present
         // and storage is always present in >=0.41.
         try {
-            return this.storageGetter().policies;
+            return this.storageGetter("policies").policies;
         } catch(e) {}
         return undefined;
     }
 
     public get repositoryUrl(): string {
-        return this.storageGetter().repositoryUrl;
+        return this.storageGetter("repositoryUrl").repositoryUrl;
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.storageGetter().getSnapshotTree(version);
+        return this.storageGetter("getSnapshotTree").getSnapshotTree(version);
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -50,26 +50,26 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         if (blob !== undefined) {
             return blob;
         }
-        return this.storageGetter().readBlob(id);
+        return this.storageGetter(("readBlob")).readBlob(id);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count);
+        return this.storageGetter("getVersions").getVersions(versionId, count);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.storageGetter().write(tree, parents, message, ref);
+        return this.storageGetter("write").write(tree, parents, message, ref);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return this.storageGetter().uploadSummaryWithContext(summary, context);
+        return this.storageGetter("uploadSummaryWithContext").uploadSummaryWithContext(summary, context);
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return this.storageGetter().downloadSummary(handle);
+        return this.storageGetter("downloadSummary").downloadSummary(handle);
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.storageGetter().createBlob(file);
+        return this.storageGetter("createBlob").createBlob(file);
     }
 }

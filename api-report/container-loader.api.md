@@ -168,7 +168,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 }
 
 // @public
-export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
+export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree, blobs: Map<string, ArrayBufferLike>): ISnapshotTree;
 
 // @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
@@ -242,7 +242,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
 }
 
 // @public (undocumented)
-export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree) => ISnapshotTree;
+export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree, blobs: Map<string, ArrayBufferLike>) => ISnapshotTree;
 
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {

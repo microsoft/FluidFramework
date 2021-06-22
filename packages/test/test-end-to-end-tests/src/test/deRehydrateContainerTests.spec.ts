@@ -154,8 +154,8 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree =
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -178,13 +178,13 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
             const snapshotTree1: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
             const snapshotTree2: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -218,7 +218,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
             const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -589,7 +589,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");

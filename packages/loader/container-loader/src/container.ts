@@ -159,7 +159,10 @@ export enum ConnectionState {
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+export const getSnapshotTreeFromSerializedContainer = (
+    detachedContainerSnapshot: ISummaryTree,
+    blobs: Map<string, ArrayBufferLike>,
+) => {
     const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
     const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
     assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
@@ -167,6 +170,7 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
     const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
         protocolSummaryTree,
         appSummaryTree,
+        blobs,
     );
     return snapshotTree;
 };
@@ -650,10 +654,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
         this.storage = new ContainerStorageAdapter(
-            () => {
+            (callName: string) => {
                 if (this.attachState !== AttachState.Attached) {
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
+                        callName,
                     });
                     throw new Error("Real storage calls not allowed in Unattached container");
                 }
@@ -1312,7 +1317,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        const blobs = new Map<string, ArrayBufferLike>();
+        const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot, blobs);
+        blobs.forEach((value, key) => {
+            this.storageBlobs.set(key, value);
+        });
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
