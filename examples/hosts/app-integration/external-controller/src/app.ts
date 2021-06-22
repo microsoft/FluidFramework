@@ -21,8 +21,6 @@ const connectionConfig: FrsConnectionConfig = {
 };
 if (useFrs) {
     FrsClient.init(connectionConfig);
-} else {
-    TinyliciousClient.init();
 }
 
 let createNew = false;
@@ -49,9 +47,10 @@ async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
+    const tinyliciousClient = new TinyliciousClient();
 
     // Get or create the document depending if we are running through the create new flow
-    const client = useFrs ? FrsClient : TinyliciousClient;
+    const client = useFrs ? FrsClient : tinyliciousClient;
     const [fluidContainer, containerServices] = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
