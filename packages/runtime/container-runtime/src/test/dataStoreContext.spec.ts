@@ -86,7 +86,6 @@ describe("Data Store Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
-                notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => { },
             } as ContainerRuntime;
         });
@@ -161,7 +160,6 @@ describe("Data Store Context Tests", () => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 containerRuntime = {
                     IFluidDataStoreRegistry: registryWithSubRegistries,
-                    notifyDataStoreInstantiated: (c) => { },
                     on: (event, listener) => { },
                 } as ContainerRuntime;
                 localDataStoreContext = new LocalFluidDataStoreContext(
@@ -309,7 +307,6 @@ describe("Data Store Context Tests", () => {
             return {
                 disableIsolatedChannels,
                 IFluidDataStoreRegistry: registry,
-                notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => { },
             } as ContainerRuntime;
         }

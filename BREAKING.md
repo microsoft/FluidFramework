@@ -1,6 +1,8 @@
 ## 0.42 Breaking changes
 
 - [Package renames](#0.42-package-renames)
+- [IContainerRuntime property removed](#IContainerRuntime-property-removed)
+- [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
 
 ### 0.42 package renames
 
@@ -10,6 +12,12 @@ the npm scopes.
 
 - `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
 - `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### IContainerRuntimeEvents changes
+- `fluidDataStoreInstantiated` has been removed from the interface and will no longer be emitted by the `ContainerRuntime`.
+
+### IContainerRuntime property removed
+- the `existing` property from `IContainerRuntime` has been removed.
 
 ## 0.41 Breaking changes
 
