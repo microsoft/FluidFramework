@@ -20,7 +20,7 @@ export interface ISummaryStats {
 }
 
 export interface ISummaryTreeWithStats {
-    stats: ISummaryStats;
+    stats: ITopLevelSummaryStats;
     summary: ISummaryTree;
 }
 
@@ -36,7 +36,7 @@ export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
 }
 
 export interface ISummarizeResult {
-    stats: ISummaryStats;
+    stats: ITopLevelSummaryStats;
     summary: SummaryTree;
 }
 

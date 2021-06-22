@@ -21,25 +21,32 @@ import {
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryStats,
+    ITopLevelSummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
  * Returns empty stats if called without args.
  * @param stats - stats to merge
  */
-export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
+export function mergeStats(...stats: ITopLevelSummaryStats[]): ITopLevelSummaryStats {
     const results = {
         treeNodeCount: 0,
         blobNodeCount: 0,
         handleNodeCount: 0,
         totalBlobSize: 0,
+        dataStoreCount: 0,
+        summarizedUnreferencedDataStoreCount: 0,
+        summarizedDataStoreCount: 0,
     };
     for (const stat of stats) {
         results.treeNodeCount += stat.treeNodeCount;
         results.blobNodeCount += stat.blobNodeCount;
         results.handleNodeCount += stat.handleNodeCount;
         results.totalBlobSize += stat.totalBlobSize;
+        results.dataStoreCount += stat.dataStoreCount;
+        results.summarizedUnreferencedDataStoreCount += stat.summarizedUnreferencedDataStoreCount;
+        results.summarizedDataStoreCount += stat.summarizedDataStoreCount;
     }
     return results;
 }
@@ -91,7 +98,7 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
     }
 }
 
-export function calculateStats(summary: ISummaryTree): ISummaryStats {
+export function calculateStats(summary: ISummaryTree): ITopLevelSummaryStats {
     const stats = mergeStats();
     calculateStatsCore(summary, stats);
     return stats;
@@ -122,7 +129,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         };
     }
 
-    public get stats(): Readonly<ISummaryStats> {
+    public get stats(): Readonly<ITopLevelSummaryStats> {
         return { ...this.summaryStats };
     }
 
@@ -132,7 +139,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     }
 
     private readonly summaryTree: { [path: string]: SummaryObject } = {};
-    private summaryStats: ISummaryStats;
+    private summaryStats: ITopLevelSummaryStats;
 
     public addBlob(key: string, content: string | Uint8Array): void {
         // Prevent cloning by directly referencing underlying private properties

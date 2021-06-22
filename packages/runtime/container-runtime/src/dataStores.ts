@@ -387,6 +387,10 @@ export class DataStores implements IDisposable {
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
 
+        let dataStoreCount = 0;
+        let summarizedUnreferencedDataStoreCount = 0;
+        let handleCount = 0;
+
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([_, context]) => {
@@ -396,6 +400,25 @@ export class DataStores implements IDisposable {
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
+                const summary = contextSummary.summary;
+                if(summary.type === SummaryType.Tree) {
+                    const summaryTree = summary.tree[channelsTreeName];
+                    if (summaryTree.type === SummaryType.Tree) {
+                        if (summaryTree.tree !== undefined) {
+                            dataStoreCount += Object.keys(summaryTree.tree).length;
+                            for(const key of Object.keys(summaryTree.tree)) {
+                                const dataStore = summaryTree.tree[key];
+                                if (dataStore.type === SummaryType.Tree && dataStore.unreferenced === true) {
+                                    summarizedUnreferencedDataStoreCount ++;
+                                }
+                                if (dataStore.type === SummaryType.Handle) {
+                                    handleCount ++;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
                 if (contextSummary.gcData !== undefined) {
@@ -404,6 +427,13 @@ export class DataStores implements IDisposable {
                     gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 }
             }));
+
+        summaryBuilder.getSummaryTree().stats = {
+             ...summaryBuilder.getSummaryTree().stats,
+             dataStoreCount,
+             summarizedUnreferencedDataStoreCount,
+             summarizedDataStoreCount: dataStoreCount - handleCount,
+        };
 
         // Get the outbound routes and add a GC node for this channel.
         gcDataBuilder.addNode("/", await this.getOutboundRoutes());

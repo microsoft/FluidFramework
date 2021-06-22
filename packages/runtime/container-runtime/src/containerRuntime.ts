@@ -1712,35 +1712,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error };
             }
 
-            const summary = summarizeResult.summary.tree;
-            const summaryTree = summary[channelsTreeName];
-            let dataStoreCount = 0;
-            let summarizedUnreferencedDataStoreCount = 0;
-            let handleCount = 0;
-            if (summaryTree.type === SummaryType.Tree) {
-                if (summaryTree.tree !== undefined) {
-                    dataStoreCount = Object.keys(summaryTree.tree).length;
-                    for(const key of Object.keys(summaryTree.tree)) {
-                        const dataStore = summaryTree.tree[key];
-                        if (dataStore.type === SummaryType.Tree && dataStore.unreferenced === true) {
-                            summarizedUnreferencedDataStoreCount ++;
-                        }
-                        if (dataStore.type === SummaryType.Handle) {
-                            handleCount ++;
-                        }
-                    }
-                }
-            }
-
-            const topLevelSummaryStat: ITopLevelSummaryStats = {
-                ...summarizeResult.stats,
-                dataStoreCount,
-                summarizedUnreferencedDataStoreCount,
-                summarizedDataStoreCount: dataStoreCount - handleCount,
-            };
-
             const generateData: IGeneratedSummaryData = {
-                summaryStats: topLevelSummaryStat,
+                summaryStats: summarizeResult.stats,
                 generateDuration: trace.trace().duration,
             };
 
