@@ -457,7 +457,6 @@ class ScribeFactory implements IFluidDataStoreFactory, RuntimeFactoryHelper {
     public readonly type = ScribeFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
-    public get IRuntimeFactory() { return this; }
 
     private readonly registry = new Map<string, Promise<IFluidDataStoreFactory>>([
         [ScribeFactory.type, Promise.resolve(this)],

@@ -34,7 +34,6 @@ export class BaseContainerRuntimeFactory implements
     IProvideFluidDataStoreRegistry,
     RuntimeFactoryHelper {
     public get IFluidDataStoreRegistry() { return this.registry; }
-    public get IRuntimeFactory() { return this; }
     private readonly registry: IFluidDataStoreRegistry;
 
     /**

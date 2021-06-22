@@ -18,8 +18,6 @@ const defaultComponentId = "default";
 const defaultComponent = "@fluid-example/smde";
 
 class SmdeContainerFactory implements RuntimeFactoryHelper {
-    public get IRuntimeFactory() { return this; }
-
     public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }

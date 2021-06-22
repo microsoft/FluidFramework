@@ -59,7 +59,6 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, RuntimeFacto
     public readonly type = SharedTextFactoryComponent.type;
 
     public get IFluidDataStoreFactory() { return this; }
-    public get IRuntimeFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         return sharedTextComponent.instantiateDataStore(context);

@@ -101,8 +101,6 @@ export class Chaincode implements IFluidDataStoreFactory {
 }
 
 export class ChaincodeFactory implements RuntimeFactoryHelper {
-    public get IRuntimeFactory() { return this; }
-
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly registries: NamedFluidDataStoreRegistryEntries) {

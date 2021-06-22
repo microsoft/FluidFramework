@@ -105,7 +105,6 @@ export class KeyValueFactoryComponent implements RuntimeFactoryHelper, IFluidDat
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
     private readonly defaultComponentId = "default";
-    public get IRuntimeFactory() { return this; }
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {

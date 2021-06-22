@@ -10,6 +10,8 @@ import {
 } from "@fluidframework/container-definitions";
 
 export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
+    public get IRuntimeFactory() { return this; }
+
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return this.getRuntime(context);
     }

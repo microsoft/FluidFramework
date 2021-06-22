@@ -41,8 +41,6 @@ export class RuntimeFactory implements RuntimeFactoryHelper {
                 (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 
-    public get IRuntimeFactory() { return this; }
-
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
     }

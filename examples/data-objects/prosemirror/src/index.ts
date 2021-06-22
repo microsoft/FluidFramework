@@ -21,8 +21,6 @@ const defaultComponent = smde.type;
 const defaultComponentId = "default";
 
 class ProseMirrorFactory implements RuntimeFactoryHelper {
-    public get IRuntimeFactory() { return this; }
-
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }

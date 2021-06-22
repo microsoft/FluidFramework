@@ -22,8 +22,6 @@ const defaultComponentId = "default";
 const defaultComponent = "@fluid-example/smde";
 
 class CodeMirrorFactory implements RuntimeFactoryHelper {
-    public get IRuntimeFactory() { return this; }
-
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }

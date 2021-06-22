@@ -18,8 +18,6 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
  */
 export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof ContainerRuntime) => {
     return class implements RuntimeFactoryHelper {
-        public get IRuntimeFactory() { return this; }
-
         constructor(
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
