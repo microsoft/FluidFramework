@@ -9,7 +9,6 @@ import {
     ICodeLoader,
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
@@ -32,6 +31,7 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const rootMapId = "root";
 const rootStoreId = "rootStore";
@@ -100,7 +100,7 @@ export class Chaincode implements IFluidDataStoreFactory {
     }
 }
 
-export class ChaincodeFactory implements IRuntimeFactory {
+export class ChaincodeFactory implements RuntimeFactoryHelper {
     public get IRuntimeFactory() { return this; }
 
     constructor(
@@ -108,29 +108,11 @@ export class ChaincodeFactory implements IRuntimeFactory {
         private readonly registries: NamedFluidDataStoreRegistryEntries) {
     }
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,

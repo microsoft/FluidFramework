@@ -285,21 +285,20 @@ export class ContainerContext implements IContainerContext {
 
     // back compat: 0.40 (see #3429)
     private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
-        return "instantiateFirstTime" in runtimeFactory
-            && "instantiateFromExisting" in runtimeFactory;
+        return "getRuntime" in runtimeFactory;
     }
 
     private async initializeFromExisting() {
         const runtimeFactory = await this.getRuntimeFactory();
         this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
-            runtimeFactory.instantiateFromExisting(this) :
+            runtimeFactory.getRuntime(this, true) :
             runtimeFactory.instantiateRuntime(this));
     }
 
     private async initializeFirstTime() {
         const runtimeFactory = await this.getRuntimeFactory();
         this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
-            runtimeFactory.instantiateFirstTime(this) :
+            runtimeFactory.getRuntime(this, false) :
             runtimeFactory.instantiateRuntime(this));
     }
 

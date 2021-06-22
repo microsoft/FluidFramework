@@ -13,7 +13,6 @@ import { mixinRequestHandler } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -30,6 +29,7 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
@@ -101,7 +101,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 }
 
-export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStoreFactory {
+export class KeyValueFactoryComponent implements RuntimeFactoryHelper, IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
     private readonly defaultComponentId = "default";
@@ -123,29 +123,11 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         return runtime;
     }
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(this.type, this.defaultComponentId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[this.type, Promise.resolve(this)]]),

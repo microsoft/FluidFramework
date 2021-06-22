@@ -152,8 +152,6 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
 
     updateDirtyContainerState(dirty: boolean): void;
-
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
@@ -173,7 +171,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
      *
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
+     * @deprecated Use getRuntime
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 
@@ -185,11 +183,11 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      *
      * This is the main entry point to the Container's business logic
      */
-    instantiateFirstTime(context: IContainerContext): Promise<IRuntime>;
+    instantiateFirstTime(context: IRuntime): Promise<void>;
 
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
      */
-    instantiateFromExisting(context: IContainerContext): Promise<IRuntime>;
+    instantiateFromExisting(context: IRuntime): Promise<void>;
 }

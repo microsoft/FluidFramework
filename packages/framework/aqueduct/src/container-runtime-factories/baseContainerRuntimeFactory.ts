@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
     FluidDataStoreRegistry,
@@ -23,6 +23,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
@@ -31,7 +32,7 @@ import { DependencyContainer, DependencyContainerRegistry } from "@fluidframewor
  */
 export class BaseContainerRuntimeFactory implements
     IProvideFluidDataStoreRegistry,
-    IRuntimeFactory {
+    RuntimeFactoryHelper {
     public get IFluidDataStoreRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
     private readonly registry: IFluidDataStoreRegistry;
@@ -51,35 +52,16 @@ export class BaseContainerRuntimeFactory implements
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/container-definitions#IRuntimeFactory.instantiateRuntime}
-     */
-    public async instantiateRuntime(
-        context: IContainerContext,
-    ): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await this.containerInitializingFirstTime(runtime);
         await this.containerHasInitialized(runtime);
-
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
+    public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
         await this.containerHasInitialized(runtime);
-
-        return runtime;
     }
 
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {

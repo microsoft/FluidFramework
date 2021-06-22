@@ -44,6 +44,9 @@ describe("ContainerContext Tests", () => {
         async instantiateRuntime() {
             return (sandbox.stub() as unknown) as IRuntime;
         }
+        async getRuntime() {
+            return this.instantiateRuntime();
+        }
         async instantiateFirstTime() {
             return this.instantiateRuntime();
         }

@@ -19,7 +19,6 @@ import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastor
 import {
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
@@ -37,6 +36,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -452,7 +452,7 @@ export class Scribe
 
 const defaultComponentId = "default";
 
-class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
+class ScribeFactory implements IFluidDataStoreFactory, RuntimeFactoryHelper {
     public static readonly type = "@fluid-example/scribe";
     public readonly type = ScribeFactory.type;
 
@@ -463,29 +463,11 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         [ScribeFactory.type, Promise.resolve(this)],
     ]);
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,

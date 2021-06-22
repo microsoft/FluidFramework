@@ -6,7 +6,6 @@
  import {
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
@@ -15,39 +14,21 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 import { fluidExport as smde } from "./codemirror";
 
 const defaultComponentId = "default";
 const defaultComponent = "@fluid-example/smde";
 
-class CodeMirrorFactory implements IRuntimeFactory {
+class CodeMirrorFactory implements RuntimeFactoryHelper {
     public get IRuntimeFactory() { return this; }
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
-
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             ["@fluid-example/smde", Promise.resolve(smde)],
         ]);

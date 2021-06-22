@@ -9,7 +9,6 @@ import {
     ICodeLoader,
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
     IProxyLoaderFactory,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -27,6 +26,7 @@ import {
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {
     /**
@@ -98,21 +98,9 @@ class ProxyRuntime implements IRuntime {
     }
 }
 
-class ProxyChaincode implements IRuntimeFactory {
-    async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+class ProxyChaincode implements RuntimeFactoryHelper {
+    public async preInitialize(_context: IContainerContext, _existing: boolean): Promise<IRuntime> {
         return new ProxyRuntime();
-    }
-
-    async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        return new ProxyRuntime();
-    }
-
-    async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        return new ProxyRuntime();
-    }
-
-    get IRuntimeFactory() {
-        return this;
     }
 }
 

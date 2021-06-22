@@ -6,7 +6,6 @@
 import {
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
@@ -21,10 +20,11 @@ import {
     IFluidDataStoreFactory,
     FlushMode,
 } from "@fluidframework/runtime-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
-export class RuntimeFactory implements IRuntimeFactory {
+export class RuntimeFactory implements RuntimeFactoryHelper {
     private readonly registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
@@ -43,29 +43,11 @@ export class RuntimeFactory implements IRuntimeFactory {
 
     public get IRuntimeFactory() { return this; }
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,

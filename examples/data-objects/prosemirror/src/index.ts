@@ -6,7 +6,6 @@
 import {
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
@@ -16,36 +15,19 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./prosemirror";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultComponent = smde.type;
 const defaultComponentId = "default";
 
-class ProseMirrorFactory implements IRuntimeFactory {
+class ProseMirrorFactory implements RuntimeFactoryHelper {
     public get IRuntimeFactory() { return this; }
 
-    /**
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);

@@ -8,7 +8,7 @@
 import "./publicpath";
 
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -20,6 +20,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -53,7 +54,7 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
+class SharedTextFactoryComponent implements IFluidDataStoreFactory, RuntimeFactoryHelper {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 
@@ -64,32 +65,12 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
         return sharedTextComponent.instantiateDataStore(context);
     }
 
-    /**
-     * Instantiates a new chaincode host
-     *
-     * @deprecated Use instantiateFirstTime/instantiateFromExisting as appropriate
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        if (context.existing === true) {
-            return this.instantiateFromExisting(context);
-        }
-
-        return this.instantiateFirstTime(context);
-    }
-
-    public async instantiateFirstTime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, false);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
         await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
-        return runtime;
     }
 
-    public async instantiateFromExisting(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await this.loadRuntime(context, true);
-        return runtime;
-    }
-
-    private async loadRuntime(context: IContainerContext, existing: boolean): Promise<ContainerRuntime> {
+    public async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
