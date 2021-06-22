@@ -13,7 +13,7 @@ import {
     SequencedOperationType,
 } from "@fluidframework/server-services-core";
 
-import { SHA1, enc } from "crypto-js";
+import shajs from "sha.js";
 import Axios from "axios";
 
 export class MoiraLambda implements IPartitionLambda {
@@ -91,13 +91,9 @@ export class MoiraLambda implements IPartitionLambda {
     }
 
     private createDerivedGuid(referenceGuid: string, identifier: string) {
-        const hexHash = enc.Hex.stringify(SHA1(`${referenceGuid}:${identifier}`));
-        return `
-            ${hexHash.substr(0, 8)}-
-            ${hexHash.substr(8, 4)}-
-            ${hexHash.substr(12, 4)}-
-            ${hexHash.substr(16, 4)}-
-            ${hexHash.substr(20, 12)}`;
+        const hexHash = shajs("sha1").update(`${referenceGuid}:${identifier}`).digest("hex");
+        return `${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
+            `${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`;
     }
 
     private async processMoiraCoreParallel(messages: ISequencedOperationMessage[]) {
@@ -150,7 +146,7 @@ export class MoiraLambda implements IPartitionLambda {
 
     private async createBranch(branchGuid: string): Promise<string> {
         const rootCommitGuid = this.createDerivedGuid(branchGuid, "root");
-        const branchCreationResponse = await Axios.post(`${this.serviceConfiguration.moira.endpoint}/branch`, {
+         const branchCreationResponse = await Axios.post(`${this.serviceConfiguration.moira.endpoint}/branch`, {
             guid: branchGuid,
             rootCommitGuid,
             meta: {},
@@ -158,9 +154,9 @@ export class MoiraLambda implements IPartitionLambda {
         });
 
         if (branchCreationResponse.status === 200) {
-            this.context.log?.info("Branch successfully created");
+            this.context.log?.info(`Branch with guid: ${branchGuid} created`);
         } else {
-            this.context.log?.error("Branch creation failed");
+            this.context.log?.error(`Branch with guid ${branchGuid} failed`);
         }
         return rootCommitGuid;
     }
@@ -172,24 +168,31 @@ export class MoiraLambda implements IPartitionLambda {
         opData: any,
         message: ISequencedOperationMessage,
     ) {
-        const commitCreationResponse =
-            await Axios.post(`${this.serviceConfiguration.moira.endpoint}/${branchGuid}/commit`, {
+        try {
+            const commitData = {
                 guid: commitGuid,
                 branchGuid,
                 parentGuid,
-                changeSet: JSON.stringify(opData.changeSet),
                 meta: {
                     remoteHeadGuid: opData.remoteHeadGuid,
                     localBranchStart: opData.localBranchStart,
                     sequenceNumber: message.operation.sequenceNumber,
                     minimumSequenceNumber: message.operation.minimumSequenceNumber,
                 },
-                rebase: true,
-            });
-        if (commitCreationResponse.status === 200) {
-            this.context.log?.info("Commit successfully created");
-        } else {
-            this.context.log?.error("Commit creation failed");
+            };
+            const commitCreationResponse =
+                await Axios.post(`${this.serviceConfiguration.moira.endpoint}/branch/${branchGuid}/commit`, {
+                    ...commitData,
+                    changeSet: JSON.stringify(opData.changeSet),
+                    rebase: true,
+                });
+            if (commitCreationResponse.status === 200) {
+                this.context.log?.info(`Commit created ${JSON.stringify(commitData)}`);
+            } else {
+                this.context.log?.error(`Commit failed ${JSON.stringify(commitData)}`);
+            }
+        } catch (e) {
+            this.context.log?.error(`Commit failed. ${e.message}`);
         }
     }
 }
