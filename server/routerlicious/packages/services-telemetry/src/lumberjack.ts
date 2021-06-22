@@ -72,9 +72,11 @@ export class Lumberjack {
     }
 
     /**
-    * For logs, we can use the caller information as a form of ID.
-    * In order to do that, we use NodeJS's CallSite to extract information
-    * such as filename, function name and number. For more info, see:
+    * For logs, we can use the caller information as a form of event name
+    * until we have a better solution. In order to do that, we use NodeJS's
+    * CallSite to extract information such as file name and function name.
+    * Caveat: function names do not work properly when using callbacks.
+    * For more info, see:
     * https://v8.dev/docs/stack-trace-api#customizing-stack-traces
     * @returns {string} filename and function separated by a colon
     */
@@ -84,8 +86,8 @@ export class Lumberjack {
         try {
             Error.prepareStackTrace = (_, structuredStackTrace) => {
                 const caller = structuredStackTrace[0];
-                const fileName = caller.getFileName() ?? "";
-                const functionName = caller.getFunctionName() ?? caller.getMethodName() ?? "";
+                const fileName = caller.getFileName() ?? "FilenameNotAvailable";
+                const functionName = caller.getFunctionName() ?? caller.getMethodName() ?? "FunctionNameNotAvailable";
                 return `${defaultPrefix}:${path.basename(fileName)}:${functionName}`;
             };
             const err = new Error();

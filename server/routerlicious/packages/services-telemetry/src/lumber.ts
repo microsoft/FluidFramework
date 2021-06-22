@@ -48,10 +48,16 @@ export class Lumber<T extends string = LumberEventName> {
     }
 
     public get latencyInMs(): number | undefined {
+        if (this._type === LumberType.Log) {
+            return undefined;
+        }
         return this._latencyInMs;
     }
 
     public get successful(): boolean | undefined {
+        if (this._type === LumberType.Log) {
+            return undefined;
+        }
         return this._successful;
     }
 
