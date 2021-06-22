@@ -8,7 +8,7 @@ import winston from "winston";
 
 // Lumberjack engine based on Winston. It processes the data
 // captured in a Lumber instance and sends it through Winston.
-export class WinstonLumberjack implements ILumberjackEngine {
+export class WinstonLumberjackEngine implements ILumberjackEngine {
     public emit(lumber: Lumber<string>) {
         const propObj: { [key: string]: any } = {};
         lumber.properties.forEach((value, key) => { propObj[key] = value; });

@@ -12,4 +12,4 @@ export * from "./logger";
 export * from "./port";
 export * from "./redisUtils";
 export * from "./throttlerMiddleware";
-export * from "./winstonLumberjack";
+export * from "./winstonLumberjackEngine";
