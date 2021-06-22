@@ -75,7 +75,6 @@ import {
 import {
     FlushMode,
     InboundAttachMessage,
-    IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
