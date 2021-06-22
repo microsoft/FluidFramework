@@ -31,11 +31,11 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
-describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
@@ -600,6 +600,11 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
     tests();
 
     // Run again with isolated channels disabled
-    disableIsolatedChannels = true;
-    describe("With isolated channels disabled", tests);
+    describe("With isolated channels disabled", () => {
+        before(() => {
+            disableIsolatedChannels = true;
+        });
+
+        tests();
+    });
 });
