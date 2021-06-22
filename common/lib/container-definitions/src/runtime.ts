@@ -174,6 +174,8 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 
+    getRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * Performs the appropriate initialization for a new runtime
