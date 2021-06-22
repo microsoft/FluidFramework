@@ -55,7 +55,7 @@ class SharedTreeAssertionError extends Error {
  * Object field order and object identity are not considered significant, and are ignored by this function.
  * (This is because they may not be preserved through roundtrip).
  *
- * For other information which fluid would lose on serialization round trip,
+ * For other information which Fluid would lose on serialization round trip,
  * behavior is unspecified other than this this function is reflective (all payloads are equal to themselves)
  * and commutative (argument order does not matter).
  *
@@ -133,7 +133,7 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 
 	// Fluid Serialization (like Json) orders object fields arbitrarily, so reordering fields is not considered considered a change.
 	// Therefor the keys arrays must be sorted here.
-	if (!(Array.isArray(a))) {
+	if (!Array.isArray(a)) {
 		aKeys.sort();
 		bKeys.sort();
 	}

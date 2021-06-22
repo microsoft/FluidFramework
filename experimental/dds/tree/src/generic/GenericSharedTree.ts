@@ -189,7 +189,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		runtime.on('connected', this.updateOldest);
 		runtime.on('disconnected', this.updateOldest);
 
-		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', { all: sharedTreeTelemetryProperties });
+		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary, this.processEditResult);
 
 		this.editLog = editLog;
