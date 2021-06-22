@@ -47,12 +47,8 @@ describe("ContainerContext Tests", () => {
         async getRuntime() {
             return this.instantiateRuntime();
         }
-        async instantiateFirstTime() {
-            return this.instantiateRuntime();
-        }
-        async instantiateFromExisting() {
-            return this.instantiateRuntime();
-        }
+        async instantiateFirstTime() { }
+        async instantiateFromExisting() { }
         get IRuntimeFactory(): IRuntimeFactory {
             return this;
         }
