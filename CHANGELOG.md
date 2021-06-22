@@ -1,5 +1,19 @@
 # Change Log
 
+## 1.2.2
+
+* fix: Write summary version 0.1.0 when an EditLog has handles not associated with in-memory edits
+  * Associated pull request: [31575](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31575)
+  * Commit: [cf5b46aff0ad987726f678ad119e96caa2c3c2eb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/cf5b46aff0ad987726f678ad119e96caa2c3c2eb)
+* merge: 'releases/2021.06.3' into 'master'
+  * Commit: [64a03d1d34c7ba15ed39e09b4cc79e64a65d49d9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/64a03d1d34c7ba15ed39e09b4cc79e64a65d49d9)
+* fix: avoid passing possible infinate revision into getClosestEntry
+  * Associated pull request: [31557](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31557)
+  * Commit: [36ffd64b12ddb2cafec790f45bb66ccd2d153949](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/36ffd64b12ddb2cafec790f45bb66ccd2d153949)
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [49c8ebc12722a7f5c0795af01349dc99c8418e9a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/49c8ebc12722a7f5c0795af01349dc99c8418e9a)
+
 ## 1.1.2
 
 * fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
