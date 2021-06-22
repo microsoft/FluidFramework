@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
+    Container,
     getSnapshotTreeFromSerializedContainer,
     Loader,
 } from "@fluidframework/container-loader";
@@ -139,6 +140,17 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         };
     };
 
+    const getSnapshotTreeFromSerializedSnapshot = (
+        container: Container,
+    ) => {
+        const { snapshotTree, blobs } =
+            getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+        return {
+            snapshotTree,
+            blobs,
+        };
+    };
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
         const documentId = createDocumentId();
@@ -154,8 +166,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
+            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -177,14 +188,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
+            const res1 = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree1 = res1.snapshotTree;
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const snapshotTree2: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
+            const res2 = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree2: ISnapshotTree = res2.snapshotTree;
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -217,8 +228,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
+            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -589,7 +599,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()), new Map());
+            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");

@@ -159,20 +159,16 @@ export enum ConnectionState {
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (
-    detachedContainerSnapshot: ISummaryTree,
-    blobs: Map<string, ArrayBufferLike>,
-) => {
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
     const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
     const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
     assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
         0x1e0 /* "Protocol and App summary trees should be present" */);
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
         protocolSummaryTree,
         appSummaryTree,
-        blobs,
     );
-    return snapshotTree;
+    return { snapshotTree, blobs };
 };
 
 /**
@@ -654,11 +650,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
         this.storage = new ContainerStorageAdapter(
-            (callName: string) => {
+            () => {
                 if (this.attachState !== AttachState.Attached) {
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
-                        callName,
                     });
                     throw new Error("Real storage calls not allowed in Unattached container");
                 }
@@ -1317,8 +1312,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const blobs = new Map<string, ArrayBufferLike>();
-        const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot, blobs);
+        const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         blobs.forEach((value, key) => {
             this.storageBlobs.set(key, value);
         });
