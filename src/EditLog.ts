@@ -616,8 +616,11 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 		// TODO:#49901: When writing format version 0.1.0, change to prefer sending the handle when not undefined.
 		// For now, no chunks are evicted so edits are sent as is to be aggregated during summary write.
 		return {
-			editChunks: this.editChunks.toArray().map(([startRevision, { edits }]) => {
-				return { startRevision, chunk: assertNotUndefined(edits) };
+			editChunks: this.editChunks.toArray().map(([startRevision, { edits, handle }]) => {
+				return {
+					startRevision,
+					chunk: edits ?? handle ?? fail('An edit chunk must have either a handle or a list of edits.'),
+				};
 			}),
 			editIds: this.sequencedEditIds,
 		};

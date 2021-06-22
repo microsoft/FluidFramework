@@ -14,7 +14,6 @@ import {
 	ChangeNode,
 	SharedTreeOpType,
 	SharedTreeEvent,
-	fullHistorySummarizer,
 	serialize,
 	newEdit,
 	EditStatus,
@@ -670,7 +669,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 				tree.editor.insert(newNode, StablePlace.before(left));
 				containerRuntimeFactory.processAllMessages();
-				const summary = tree.saveSummary() as ReturnType<typeof fullHistorySummarizer>;
+				const summary = tree.saveSummary() as SharedTreeSummary_0_0_2<Change>;
 				const sequencedEdits = assertNotUndefined(summary.sequencedEdits).slice();
 				sequencedEdits.push(sequencedEdits[0]);
 				const corruptedSummary = {

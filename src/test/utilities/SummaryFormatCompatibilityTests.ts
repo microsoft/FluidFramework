@@ -65,23 +65,22 @@ export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithA
 
 		const testSummaryFiles = fs.readdirSync(pathBase);
 
-		// Create and populate a map of the file names associated with their summary type
+		// Create and populate a map of the versions associated with their summary type
 		const summaryTypes = new Map<string, string[]>();
-		for (let fileName of testSummaryFiles) {
+		for (const fileName of testSummaryFiles) {
 			// Summary files should be named in the following format: `${summaryType}-${version}.json`
 			const fileNameRegularExpression = /(?<summaryType>[\w+-]*\w+)-(?<version>\d+\.\d\.\d).json/;
 			const match = fileNameRegularExpression.exec(fileName);
 
 			const matchGroups = match?.groups ?? fail(`invalid filename ${fileName}`);
 			const summaryType = matchGroups.summaryType;
-			fileName = `${matchGroups.summaryType}-${matchGroups.version}`;
 
 			let collection = summaryTypes.get(summaryType);
 			if (collection === undefined) {
 				collection = [];
 				summaryTypes.set(summaryType, collection);
 			}
-			collection.push(fileName);
+			collection.push(matchGroups.version);
 		}
 
 		// Resets the tree before each test
@@ -119,19 +118,44 @@ export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithA
 			expect(tree2.equals(expectedTree)).to.be.true;
 		};
 
-		for (const [summaryType, files] of summaryTypes.entries()) {
+		const versionComparator = (versionA: string, versionB: string): number => {
+			const versionASplit = versionA.split('.');
+			const versionBSplit = versionB.split('.');
+
+			assert(
+				versionASplit.length === versionBSplit.length && versionASplit.length === 3,
+				'Version numbers should follow semantic versioning.'
+			);
+
+			for (let i = 0; i < 3; ++i) {
+				const numberA = parseInt(versionASplit[i], 10);
+				const numberB = parseInt(versionBSplit[i], 10);
+
+				if (numberA > numberB) {
+					return 1;
+				}
+
+				if (numberA < numberB) {
+					return -1;
+				}
+			}
+
+			return 0;
+		};
+
+		for (const [summaryType, versions] of summaryTypes.entries()) {
 			it(`files of type '${summaryType}' with different format versions produce identical trees`, () => {
 				// Load the first summary file
-				const serializedSummary = fs.readFileSync(summaryFilePath(files[0]), 'utf8');
+				const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[0]}`), 'utf8');
 				const summary = deserialize(serializedSummary, testSerializer);
 				assert.typeOf(summary, 'object');
 				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
 				// Check every other summary file results in the same loaded tree
-				for (let i = 1; i < files.length; i++) {
+				for (let i = 1; i < versions.length; i++) {
 					const { tree } = setUpTestSharedTree();
 
-					const serializedSummary = fs.readFileSync(summaryFilePath(files[i]), 'utf8');
+					const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[i]}`), 'utf8');
 					const summary = deserialize(serializedSummary, testSerializer);
 					assert.typeOf(summary, 'object');
 					tree.loadSummary(summary as SharedTreeSummaryBase);
@@ -140,31 +164,43 @@ export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithA
 				}
 			});
 
-			for (const { version, summarizer } of supportedSummarizers) {
-				it(`format version ${version} can be written for ${summaryType} summary type`, async () => {
-					// Load the first summary file (the one with the oldest version)
-					const serializedSummary = fs.readFileSync(summaryFilePath(files.sort()[0]), 'utf8');
-					const summary = deserialize(serializedSummary, testSerializer);
-					assert.typeOf(summary, 'object');
+			// Check that clients with certain loaded versions can write their supported write versions.
+			const sortedVersions = versions.sort(versionComparator);
+			for (const [index, readVersion] of sortedVersions.entries()) {
+				// A client that has loaded an older version of a summary should be able to write newer versions
+				for (const writeVersion of sortedVersions.slice(index)) {
+					const summarizer = supportedSummarizers[writeVersion];
 
-					// Wait for the ops to to be submitted and processed across the containers.
-					await testObjectProvider.ensureSynchronized();
-					expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+					if (summarizer !== undefined) {
+						it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion} for ${summaryType} summary type`, async () => {
+							// Load the first summary file (the one with the oldest version)
+							const serializedSummary = fs.readFileSync(
+								summaryFilePath(`${summaryType}-${readVersion}`),
+								'utf8'
+							);
+							const summary = deserialize(serializedSummary, testSerializer);
+							assert.typeOf(summary, 'object');
 
-					await testObjectProvider.ensureSynchronized();
+							// Wait for the ops to to be submitted and processed across the containers.
+							await testObjectProvider.ensureSynchronized();
+							expectedTree.loadSummary(summary as SharedTreeSummaryBase);
 
-					// Write a new summary with the specified version
-					const newSummary = expectedTree.saveSerializedSummary({ summarizer });
+							await testObjectProvider.ensureSynchronized();
 
-					// Check the newly written summary is equivalent to its corresponding test summary file
-					const fileName = `${summaryType}-${version}`;
-					// Re-stringify the the JSON file to remove escaped characters
-					const expectedSummary = JSON.stringify(
-						JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
-					);
+							// Write a new summary with the specified version
+							const newSummary = expectedTree.saveSerializedSummary({ summarizer });
 
-					expect(newSummary).to.equal(expectedSummary);
-				});
+							// Check the newly written summary is equivalent to its corresponding test summary file
+							const fileName = `${summaryType}-${writeVersion}`;
+							// Re-stringify the the JSON file to remove escaped characters
+							const expectedSummary = JSON.stringify(
+								JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
+							);
+
+							expect(newSummary).to.equal(expectedSummary);
+						});
+					}
+				}
 			}
 		}
 
@@ -204,6 +240,26 @@ export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithA
 
 				validateSummaryRead('large-history-0.1.0');
 				validateSummaryWrite(fullHistorySummarizer_0_1_0);
+			});
+
+			it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
+				const serializedSummary = fs.readFileSync(summaryFilePath(`large-history-0.1.0`), 'utf8');
+				const summary = deserialize(serializedSummary, testSerializer);
+				assert.typeOf(summary, 'object');
+
+				// Wait for the ops to to be submitted and processed across the containers.
+				await testObjectProvider.ensureSynchronized();
+				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+
+				await testObjectProvider.ensureSynchronized();
+
+				// Write a new summary with the 0.0.2 summarizer
+				const newSummary = expectedTree.saveSerializedSummary({ summarizer: fullHistorySummarizer });
+
+				// Check the newly written summary is equivalent to the loaded summary
+				// Re-stringify the the JSON file to remove escaped characters
+				const expectedSummary = JSON.stringify(JSON.parse(serializedSummary));
+				expect(newSummary).to.equal(expectedSummary);
 			});
 		});
 	});

@@ -5,7 +5,7 @@
 
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { serializeHandles } from '@fluidframework/shared-object-base';
-import { assert, assertNotUndefined } from '../Common';
+import { assertNotUndefined } from '../Common';
 import { EditLogSummary, OrderedEditSet } from '../EditLog';
 import { Snapshot } from '../Snapshot';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
@@ -72,24 +72,29 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
 export function fullHistorySummarizer<TChange>(
 	editLog: OrderedEditSet<TChange>,
 	currentView: Snapshot
-): SharedTreeSummary_0_0_2<TChange> {
+): SharedTreeSummary_0_0_2<TChange> | SharedTreeSummary<TChange> {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
 	const sequencedEdits: Edit<TChange>[] = [];
 	let idIndex = 0;
+	let includesHandles = false;
 	editChunks.forEach(({ chunk }) => {
-		assert(
-			Array.isArray(chunk),
-			'Handles should not be included in the summary until format version 0.1.0 is being written.'
-		);
-
-		chunk.forEach(({ changes }) => {
-			sequencedEdits.push({
-				changes,
-				id: assertNotUndefined(editIds[idIndex++], 'Number of edits should match number of edit IDs.'),
+		if (Array.isArray(chunk)) {
+			chunk.forEach(({ changes }) => {
+				sequencedEdits.push({
+					changes,
+					id: assertNotUndefined(editIds[idIndex++], 'Number of edits should match number of edit IDs.'),
+				});
 			});
-		});
+		} else {
+			includesHandles = true;
+		}
 	});
+
+	// If the edit log includes handles without associated edits, we must write a summary version that supports handles.
+	if (includesHandles) {
+		return fullHistorySummarizer_0_1_0(editLog, currentView);
+	}
 
 	return {
 		currentTree: currentView.getChangeNodeTree(),
