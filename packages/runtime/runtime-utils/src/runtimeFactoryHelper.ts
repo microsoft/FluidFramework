@@ -10,6 +10,10 @@ import {
 } from "@fluidframework/container-definitions";
 
 export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
+    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        return this.getRuntime(context);
+    }
+
     public async getRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const isLoaded = existing === true || context.existing === true;
         const runtime = await this.preInitialize(context, isLoaded);
