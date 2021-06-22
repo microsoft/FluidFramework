@@ -2453,7 +2453,6 @@ describe('DataBinding.registerOnValues() should work for', function() {
     workspace.popNotificationDelayScope();
 
     expect(mapInsertSpy).toHaveBeenCalledTimes(2);
-    expect(mapInsertSpy).toHaveBeenCalledTimes(2);
     // Test first parameter (index or key)
     expect(mapInsertSpy.mock.calls[0][0]).toEqual('one');
     expect(mapInsertSpy.mock.calls[1][0]).toEqual('two');
@@ -2556,7 +2555,7 @@ describe('DataBinding.registerOnValues() should work for', function() {
     // Expect the insertion of map values to trigger onInsert messages
     workspace.root.insert('ArrayContainerTemplate', arrayPropertyParent);
 
-    ParentDataBinding.registerOnValues('arrayPrimitive', ['insert'], wholeArraySpy);
+    ParentDataBinding.registerOnValues('arrayPrimitive', ['insert', 'modify'], wholeArraySpy);
 
     // Register the base (Child) typeid
     dataBinder.register('BINDING', ArrayContainerTemplate.typeid, ParentDataBinding);
@@ -2564,8 +2563,16 @@ describe('DataBinding.registerOnValues() should work for', function() {
 
     expect(wholeArraySpy).toHaveBeenCalledTimes(1);
 
+    const arrayProperty = workspace.root.get(['ArrayContainerTemplate', 'arrayPrimitive']);
+
     // Test first parameter (collection values)
     expect(wholeArraySpy.mock.calls[0][0]).toEqual(['initial']);
+
+    arrayProperty.push('one');
+
+    // Test modify event
+    expect(wholeArraySpy).toHaveBeenCalledTimes(2);
+    expect(wholeArraySpy.mock.calls[1][0]).toEqual(['initial', 'one']);
 
     wholeArraySpy.mockClear();
   });
