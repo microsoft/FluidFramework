@@ -8,6 +8,9 @@ import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./resources";
 
+// Lumberjack is a telemetry manager class that allows the collection of metrics and logs
+// throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
+// by calling setupEngines() before Lumberjack can be used.
 export class Lumberjack {
     protected static _instance: Lumberjack | undefined = undefined;
     private readonly engineList: ILumberjackEngine[];
@@ -35,9 +38,9 @@ export class Lumberjack {
         this.isSetupCompleted = true;
     }
 
-    public newLumberMetric<T extends string = LumberEventName>(eventName: T, metadata: ITelemetryMetadata) {
+    public newLumberMetric<T extends string = LumberEventName>(eventName: T) {
         this.throwOnEmptyEngineList();
-        return new Lumber<T>(eventName, metadata, LumberType.Metric, this.engineList);
+        return new Lumber<T>(eventName, LumberType.Metric, this.engineList);
     }
 
     public log(
@@ -49,7 +52,7 @@ export class Lumberjack {
         exception?: Error | undefined,
     ) {
         this.throwOnEmptyEngineList();
-        const lumber = new Lumber<string>(this.getLogCallerInfo(), metadata, LumberType.Log, this.engineList);
+        const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this.engineList);
 
         if (properties) {
             if (properties instanceof Map) {
@@ -62,9 +65,9 @@ export class Lumberjack {
         }
 
         if (level === LogLevel.Warning || level === LogLevel.Error) {
-            lumber.error(message, statusCode, exception, level);
+            lumber.error(message, statusCode, metadata, exception, level);
         } else {
-            lumber.success(message, statusCode, level);
+            lumber.success(message, statusCode, metadata, level);
         }
     }
 

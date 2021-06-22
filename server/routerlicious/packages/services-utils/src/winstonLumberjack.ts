@@ -6,20 +6,21 @@
 import { ILumberjackEngine, LogLevel, Lumber, LumberType } from "@fluidframework/server-services-telemetry";
 import winston from "winston";
 
+// Lumberjack engine based on Winston. It processes the data
+// captured in a Lumber instance and sends it through Winston.
 export class WinstonLumberjack implements ILumberjackEngine {
-    public emit(lumber: Lumber) {
+    public emit(lumber: Lumber<string>) {
         const propObj: { [key: string]: any } = {};
         lumber.properties.forEach((value, key) => { propObj[key] = value; });
         const obj = {
-            timestamp: lumber.timestamp,
             eventName: lumber.eventName,
             metadata: lumber.metadata,
-            type: LumberType[lumber.type],
-            successful: lumber.successful,
-            message: lumber.message,
-            statusCode: lumber.statusCode,
-            latencyInMs: lumber.latencyInMs,
             properties: propObj,
+            type: LumberType[lumber.type],
+            timestamp: lumber.timestamp,
+            latencyInMs: lumber.latencyInMs,
+            successful: lumber.successful,
+            statusCode: lumber.statusCode,
             exception: lumber.exception,
         };
 

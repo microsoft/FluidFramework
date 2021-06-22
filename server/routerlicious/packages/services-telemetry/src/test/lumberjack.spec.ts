@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { sampleTelemetryMetadata, TestEngine, TestLumberjack } from "./lumberjackCommonTestUtils";
+import { TestEngine, TestLumberjack } from "./lumberjackCommonTestUtils";
 import { LumberEventName } from "../lumberEventNames";
 import assert from "assert";
 
@@ -16,9 +16,7 @@ describe("Lumberjack", () => {
         const engine = new TestEngine();
         TestLumberjack.instance.setupEngines([engine]);
         try {
-            TestLumberjack.instance.newLumberMetric(
-                LumberEventName.UnitTestEvent,
-                sampleTelemetryMetadata);
+            TestLumberjack.instance.newLumberMetric(LumberEventName.UnitTestEvent);
         } catch (err) {
             assert.fail("Lumberjack should have not failed to create Lumber as it has a non-empty engine list.");
         }
@@ -38,9 +36,7 @@ describe("Lumberjack", () => {
 
     it("Lumberjack should fail when trying to create a metric while having an empty engine list.", async () => {
         try {
-            TestLumberjack.instance.newLumberMetric(
-                LumberEventName.UnitTestEvent,
-                sampleTelemetryMetadata);
+            TestLumberjack.instance.newLumberMetric(LumberEventName.UnitTestEvent);
         } catch (err) {
             return;
         }

@@ -6,13 +6,18 @@
 import { LumberEventName } from "./lumberEventNames";
 import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./resources";
 
+// Lumber represents the telemetry data being captured, and it uses a list of
+// ILumberjackEngine to emit the data according to the engine implementation.
+// Lumber should be created through Lumberjack. Additional properties can be added through
+// addProperty(). Once the telemetry event is complete, the user must call either success()
+// or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
     private readonly _eventName: T;
     private readonly _properties: Map<string, any>;
     private readonly _timestamp: string;
     private readonly startTime: number;
-    private readonly _metadata: ITelemetryMetadata;
     private readonly _type: LumberType;
+    private _metadata: ITelemetryMetadata | undefined;
     private _latencyInMs: number | undefined;
     private _successful: boolean | undefined;
     private _message: string | undefined;
@@ -26,7 +31,7 @@ export class Lumber<T extends string = LumberEventName> {
         return this._eventName;
     }
 
-    public get metadata(): ITelemetryMetadata {
+    public get metadata(): ITelemetryMetadata | undefined {
         return this._metadata;
     }
 
@@ -68,11 +73,9 @@ export class Lumber<T extends string = LumberEventName> {
 
     constructor(
         eventName: T,
-        metadata: ITelemetryMetadata,
         type: LumberType,
         engineList: ILumberjackEngine[]) {
         this._eventName = eventName;
-        this._metadata = metadata;
         this._type = type;
         this.completed = false;
         this._properties = new Map<string, any>();
@@ -95,21 +98,24 @@ export class Lumber<T extends string = LumberEventName> {
     public success(
         message: string,
         statusCode: number | string | undefined,
+        metadata: ITelemetryMetadata,
         logLevel: LogLevel = LogLevel.Info) {
-        this.emit(message, statusCode, logLevel, true);
+        this.emit(message, statusCode, metadata, logLevel, true);
     }
 
     public error(
         message: string,
         statusCode: number | string | undefined,
+        metadata: ITelemetryMetadata,
         exception?: Error | undefined,
         logLevel: LogLevel = LogLevel.Error) {
-        this.emit(message, statusCode, logLevel, false, exception);
+        this.emit(message, statusCode, metadata, logLevel, false, exception);
     }
 
     private emit(
         message: string,
         statusCode: number | string | undefined,
+        metadata: ITelemetryMetadata,
         logLevel: LogLevel,
         successful: boolean,
         exception?: Error) {
@@ -119,10 +125,11 @@ export class Lumber<T extends string = LumberEventName> {
         }
 
         this._message = message;
-        this._logLevel = logLevel;
         if (statusCode) {
             this._statusCode = statusCode.toString();
         }
+        this._metadata = metadata;
+        this._logLevel = logLevel;
         this._successful = successful;
         this._exception = exception;
         this._latencyInMs = Date.now() - this.startTime;

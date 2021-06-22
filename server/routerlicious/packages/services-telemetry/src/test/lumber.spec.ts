@@ -29,14 +29,13 @@ describe("Lumber", () => {
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            sampleTelemetryMetadata,
             LumberType.Metric,
             [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
         Sinon.clock.tick(expectedLatency);
-        lumber.success(successMessage, statusCode);
+        lumber.success(successMessage, statusCode, sampleTelemetryMetadata);
 
         assert.strictEqual(lumber.successful, true);
         assert.strictEqual(lumber.message, successMessage);
@@ -54,14 +53,13 @@ describe("Lumber", () => {
         const error = new Error("SampleError");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            sampleTelemetryMetadata,
             LumberType.Metric,
             [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
         Sinon.clock.tick(expectedLatency);
-        lumber.error(errorMessage, statusCode, error);
+        lumber.error(errorMessage, statusCode, sampleTelemetryMetadata, error);
 
         assert.strictEqual(lumber.successful, false);
         assert.strictEqual(lumber.message, errorMessage);
@@ -76,7 +74,6 @@ describe("Lumber", () => {
         const value = "AdditionalPropertyValue";
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            sampleTelemetryMetadata,
             LumberType.Metric,
             []);
 
@@ -95,19 +92,18 @@ describe("Lumber", () => {
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            sampleTelemetryMetadata,
             LumberType.Metric,
             [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
         Sinon.clock.tick(expectedLatency);
-        lumber.success(successMessage, statusCode);
+        lumber.success(successMessage, statusCode, sampleTelemetryMetadata);
 
         assert.strictEqual(lumber.successful, true);
 
         try {
-            lumber.success(successMessage, statusCode);
+            lumber.success(successMessage, statusCode, sampleTelemetryMetadata);
         }
         catch (err) {
             assert.deepStrictEqual(engineStub.calledOnce, true);
