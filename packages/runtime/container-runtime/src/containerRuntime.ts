@@ -614,9 +614,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             combinedRuntimeOptions,
             containerScope,
             logger,
+            loadExisting,
             requestHandler,
-            storage,
-            loadExisting);
+            storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
@@ -776,11 +776,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
+        // The `existing` property  is to be removed after the state
+        // is refactored into IRuntimeFactory. See #3429
+        public readonly existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
-        // To be removed after the existing state is refactored into IRuntimeFactory
-        // See #3429
-        public readonly existing?: boolean,
     ) {
         super();
 
@@ -788,7 +788,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = existing === true ? gcFeature(metadata) : undefined;
+        const prevSummaryGCFeature = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
