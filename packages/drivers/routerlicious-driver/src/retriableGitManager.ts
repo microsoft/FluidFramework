@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type * as git from "@fluidframework/gitresources";
 import type * as protocol from "@fluidframework/protocol-definitions";
 import { IGitManager, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
