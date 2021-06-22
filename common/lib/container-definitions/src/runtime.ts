@@ -7,7 +7,6 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-defini
 import {
     IFluidObject,
     IFluidConfiguration,
-    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
