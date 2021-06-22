@@ -101,7 +101,9 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 }
 
-export class KeyValueFactoryComponent implements RuntimeFactoryHelper, IFluidDataStoreFactory {
+export class KeyValueFactoryComponent
+    extends RuntimeFactoryHelper
+    implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
     private readonly defaultComponentId = "default";

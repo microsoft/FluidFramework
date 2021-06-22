@@ -100,10 +100,11 @@ export class Chaincode implements IFluidDataStoreFactory {
     }
 }
 
-export class ChaincodeFactory implements RuntimeFactoryHelper {
+export class ChaincodeFactory extends RuntimeFactoryHelper {
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        super();
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

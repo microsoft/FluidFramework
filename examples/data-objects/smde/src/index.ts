@@ -17,8 +17,8 @@ import { fluidExport as smde } from "./smde";
 const defaultComponentId = "default";
 const defaultComponent = "@fluid-example/smde";
 
-class SmdeContainerFactory implements RuntimeFactoryHelper {
-    public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
+class SmdeContainerFactory extends RuntimeFactoryHelper {
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }
 

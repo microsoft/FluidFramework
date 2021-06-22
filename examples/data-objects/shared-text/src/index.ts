@@ -54,7 +54,7 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class SharedTextFactoryComponent implements IFluidDataStoreFactory, RuntimeFactoryHelper {
+class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 

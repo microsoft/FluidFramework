@@ -20,7 +20,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 const defaultComponent = smde.type;
 const defaultComponentId = "default";
 
-class ProseMirrorFactory implements RuntimeFactoryHelper {
+class ProseMirrorFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }

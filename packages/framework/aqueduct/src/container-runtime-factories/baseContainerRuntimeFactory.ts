@@ -30,9 +30,9 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
  */
-export class BaseContainerRuntimeFactory implements
-    IProvideFluidDataStoreRegistry,
-    RuntimeFactoryHelper {
+export class BaseContainerRuntimeFactory
+    extends RuntimeFactoryHelper
+    implements IProvideFluidDataStoreRegistry {
     public get IFluidDataStoreRegistry() { return this.registry; }
     private readonly registry: IFluidDataStoreRegistry;
 
@@ -48,6 +48,7 @@ export class BaseContainerRuntimeFactory implements
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
+        super();
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 

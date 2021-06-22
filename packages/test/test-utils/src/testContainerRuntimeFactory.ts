@@ -17,14 +17,16 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
  * Create a container runtime factory class that allows you to set runtime options
  */
 export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof ContainerRuntime) => {
-    return class implements RuntimeFactoryHelper {
+    return class extends RuntimeFactoryHelper {
         constructor(
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
             public runtimeOptions: IContainerRuntimeOptions = {
                 summaryOptions: { initialSummarizerDelayMs: 0 },
             },
-        ) { }
+        ) {
+            super();
+        }
 
         public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
             await runtime.createRootDataStore(this.type, "default");

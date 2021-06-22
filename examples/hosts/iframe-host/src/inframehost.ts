@@ -98,7 +98,7 @@ class ProxyRuntime implements IRuntime {
     }
 }
 
-class ProxyChaincode implements RuntimeFactoryHelper {
+class ProxyChaincode extends RuntimeFactoryHelper {
     public async preInitialize(_context: IContainerContext, _existing: boolean): Promise<IRuntime> {
         return new ProxyRuntime();
     }

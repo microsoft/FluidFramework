@@ -21,7 +21,7 @@ import { fluidExport as smde } from "./codemirror";
 const defaultComponentId = "default";
 const defaultComponent = "@fluid-example/smde";
 
-class CodeMirrorFactory implements RuntimeFactoryHelper {
+class CodeMirrorFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(defaultComponent, defaultComponentId);
     }

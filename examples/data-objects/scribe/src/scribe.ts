@@ -452,7 +452,7 @@ export class Scribe
 
 const defaultComponentId = "default";
 
-class ScribeFactory implements IFluidDataStoreFactory, RuntimeFactoryHelper {
+class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/scribe";
     public readonly type = ScribeFactory.type;
 
