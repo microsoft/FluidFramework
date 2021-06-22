@@ -166,7 +166,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
+            const { snapshotTree, blobs } = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -179,6 +179,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
                 "Min Seq # <= seq #");
 
+            // Check blobs contents for protocolAttributes
+            const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+            assert(blobs[protocolAttributesBlobId] !== undefined, "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
