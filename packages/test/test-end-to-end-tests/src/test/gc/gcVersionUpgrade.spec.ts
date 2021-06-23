@@ -200,7 +200,6 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
         ackedSummary.summaryOp.contents.handle,
         ackedSummary.summaryAck.contents.handle,
         logger,
-        ackedSummary.summaryOp.clientId,
     );
 
     beforeEach(async () => {

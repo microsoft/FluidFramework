@@ -78,7 +78,6 @@ export interface ISummarizerInternalsProvider {
         proposalHandle: string,
         ackHandle: string,
         summaryLogger: ITelemetryLogger,
-        clientId: string,
     ): Promise<void>;
 }
 
@@ -950,7 +949,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ack.summaryOp.contents.handle,
                     ack.summaryAck.contents.handle,
                     summaryLogger,
-                    ack.summaryOp.clientId,
                 );
             } catch (error) {
                 summaryLogger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);

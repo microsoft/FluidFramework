@@ -29,7 +29,7 @@ export interface ISummarizerNodeRootContract {
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void>;
+    ): Promise<boolean>;
 }
 
 /** Path for nodes in a tree with escaped special characters */

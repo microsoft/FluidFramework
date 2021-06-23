@@ -237,18 +237,24 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
+    /**
+     * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
+     * it becomes the latest summary. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * summary based off of that.
+     * @returns true if we had a corresponding pending summary, false otherwise.
+     */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void> {
+    ): Promise<boolean> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
             if (maybeSummaryNode !== undefined) {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
-                return;
+                return true;
             }
         }
 
@@ -262,6 +268,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             correlatedSummaryLogger,
             readAndParseBlob,
         );
+        return false;
     }
 
     protected refreshLatestSummaryFromPending(
