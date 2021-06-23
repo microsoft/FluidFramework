@@ -409,6 +409,9 @@ export class DataStores implements IDisposable {
                 }
                 dataStoreCount++;
 
+                contextSummary.stats.dataStoreCount = dataStoreCount;
+                contextSummary.stats.summarizedDataStoreCount = dataStoreCount - handleCount;
+                contextSummary.stats.summarizedUnreferencedDataStoreCount = summarizedUnreferencedDataStoreCount;
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
                 if (contextSummary.gcData !== undefined) {
@@ -417,13 +420,6 @@ export class DataStores implements IDisposable {
                     gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
                 }
             }));
-
-        summaryBuilder.getSummaryTree().stats = {
-             ...summaryBuilder.getSummaryTree().stats,
-             dataStoreCount,
-             summarizedUnreferencedDataStoreCount,
-             summarizedDataStoreCount: dataStoreCount - handleCount,
-        };
 
         // Get the outbound routes and add a GC node for this channel.
         gcDataBuilder.addNode("/", await this.getOutboundRoutes());
