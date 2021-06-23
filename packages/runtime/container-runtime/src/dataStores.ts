@@ -401,23 +401,13 @@ export class DataStores implements IDisposable {
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 const summary = contextSummary.summary;
-                assert(summary.type === SummaryType.Tree, "context summary is not a tree");
-                const summaryTree = summary.tree[channelsTreeName];
-                if (summaryTree !== undefined) {
-                    assert(summaryTree.type === SummaryType.Tree, "context summary[.channels] is not a tree");
-                    if (summaryTree.tree !== undefined) {
-                        dataStoreCount += Object.keys(summaryTree.tree).length;
-                        for(const key of Object.keys(summaryTree.tree)) {
-                            const dataStore = summaryTree.tree[key];
-                            if (dataStore.type === SummaryType.Tree && dataStore.unreferenced === true) {
-                                summarizedUnreferencedDataStoreCount++;
-                            }
-                            if (dataStore.type === SummaryType.Handle) {
-                                handleCount++;
-                            }
-                        }
-                    }
+                if (summary.type === SummaryType.Tree && summary.unreferenced === true) {
+                    summarizedUnreferencedDataStoreCount++;
                 }
+                if (summary.type === SummaryType.Handle) {
+                    handleCount++;
+                }
+                dataStoreCount++;
 
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
