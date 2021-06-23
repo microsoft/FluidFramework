@@ -56,9 +56,10 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                     ["default", Promise.resolve(this.dataStoreFactory)],
                     [this.type, Promise.resolve(this.dataStoreFactory)],
                 ],
-                existing,
                 async (req, rt) => builder.handleRequest(req, rt),
                 this.runtimeOptions,
+                undefined,
+                existing,
             );
 
             return runtime;
