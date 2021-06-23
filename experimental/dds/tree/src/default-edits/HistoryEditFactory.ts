@@ -6,7 +6,7 @@
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
 import { Snapshot, Side } from '../Snapshot';
-import { EditNode, TreeNode } from '../generic';
+import { BuildNode, TreeNode } from '../generic';
 import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { rangeFromStableRange } from './EditUtilities';
@@ -41,7 +41,7 @@ export function revert(changes: readonly Change[], before: Snapshot): Change[] {
 				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
 				builtNodes.set(
 					destination,
-					source.map((node) => (node as TreeNode<EditNode>).identifier)
+					source.map((node) => (node as TreeNode<BuildNode>).identifier)
 				);
 				break;
 			}

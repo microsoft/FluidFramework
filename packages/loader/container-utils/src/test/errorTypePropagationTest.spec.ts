@@ -19,7 +19,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 
     describe("Send and receive GenericError instances", () => {
         it("Send and receive a GenericError with no attached error.", () => {
-            const testError = new GenericError("genericError", undefined);
+            const testError = new GenericError("genericError");
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -121,7 +121,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
     describe("Send errors using a ChildLogger", () => {
         it("Send and receive a GenericError.", () => {
             const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
-            const testError = new GenericError("genericError", undefined);
+            const testError = new GenericError("genericError");
             childLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "errorTypeTestNamespace:A",
