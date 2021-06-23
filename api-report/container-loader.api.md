@@ -168,9 +168,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 }
 
 // @public
-export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
-
-// @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
     constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
     // (undocumented)
@@ -240,9 +237,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get version(): string;
 }
-
-// @public (undocumented)
-export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree) => ISnapshotTree;
 
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -320,17 +314,6 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public (undocumented)
-export interface IParsedUrl {
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    path: string;
-    // (undocumented)
-    query: string;
-    version: string | null | undefined;
-}
-
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
@@ -349,9 +332,6 @@ export class Loader implements IHostLoader {
     // (undocumented)
     readonly services: ILoaderServices;
 }
-
-// @public (undocumented)
-export function parseUrl(url: string): IParsedUrl | undefined;
 
 // @public (undocumented)
 export enum ReconnectMode {

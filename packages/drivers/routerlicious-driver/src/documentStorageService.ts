@@ -12,6 +12,7 @@ import {
     IDocumentStorageService,
     ISummaryContext,
     IDocumentStorageServicePolicies,
+    LoaderCachingPolicy,
  } from "@fluidframework/driver-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
@@ -24,32 +25,29 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { GitManager, ISummaryUploadManager, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { DocumentStorageServiceProxy, PrefetchDocumentStorageService } from "@fluidframework/driver-utils";
+import { RetriableGitManager } from "./retriableGitManager";
 
 /**
  * Document access to underlying storage for routerlicious driver.
  */
-export class DocumentStorageService implements IDocumentStorageService {
+class DocumentStorageServiceCore implements IDocumentStorageService {
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     private readonly blobsShaCache = new Map<string, string>();
     private readonly summaryUploadManager: ISummaryUploadManager;
-    private _logTailSha: string | undefined = undefined;
 
     public get repositoryUrl(): string {
         return "";
     }
 
-    public get logTailSha(): string | undefined {
-        return this._logTailSha;
-    }
-
     constructor(
-        public readonly id: string,
-        public manager: GitManager,
+        private readonly id: string,
+        private readonly manager: GitManager,
         private readonly logger: ITelemetryLogger,
-        public readonly policies?: IDocumentStorageServicePolicies) {
+        public readonly policies: IDocumentStorageServicePolicies = {}) {
         this.summaryUploadManager = new SummaryTreeUploadManager(
-            this.manager,
+            new RetriableGitManager(this.manager, this.logger),
             this.blobsShaCache,
             this.getPreviousFullSnapshot.bind(this),
         );
@@ -81,8 +79,6 @@ export class DocumentStorageService implements IDocumentStorageService {
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache);
-
-        this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
         return tree;
     }
 
@@ -181,5 +177,41 @@ export class DocumentStorageService implements IDocumentStorageService {
                     return this.getSnapshotTree(versions[0]);
                 })
             : undefined;
+    }
+}
+
+export class DocumentStorageService extends DocumentStorageServiceProxy {
+    private _logTailSha: string | undefined = undefined;
+
+    public get logTailSha(): string | undefined {
+        return this._logTailSha;
+    }
+
+    private static loadInternalDocumentStorageService(
+        id: string,
+        manager: GitManager,
+        logger: ITelemetryLogger,
+        policies: IDocumentStorageServicePolicies): IDocumentStorageService {
+        const storageService = new DocumentStorageServiceCore(id, manager, logger, policies);
+        if (policies.caching === LoaderCachingPolicy.Prefetch) {
+            return new PrefetchDocumentStorageService(storageService);
+        }
+        return storageService;
+    }
+
+    constructor(
+        public readonly id: string,
+        public manager: GitManager,
+        logger: ITelemetryLogger,
+        policies: IDocumentStorageServicePolicies = {}) {
+        super(DocumentStorageService.loadInternalDocumentStorageService(id, manager, logger, policies));
+    }
+
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
+        const tree = await this.internalStorageService.getSnapshotTree(version) as ISnapshotTreeEx | null;
+        if (tree !== null) {
+            this._logTailSha = ".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+        }
+        return tree;
     }
 }

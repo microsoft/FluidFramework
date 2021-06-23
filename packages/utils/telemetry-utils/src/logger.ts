@@ -65,11 +65,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         if (isILoggingError(error)) {
-            // First, copy over stack and error message directly
+            // First, copy over error message, stack, and errorType directly (overwrite if present on event)
             // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
+            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
+            event.stack = error.stack;
+            event.error = error.message;
+            event.errorType = (error as any).errorType;
 
             // Then add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
@@ -106,10 +107,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 }
             }
         } else if (typeof error === "object" && error !== null) {
-            // Try to pull the stack and message off even if it's not an ILoggingError
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
+            // Pull the message, stack and errorType off even if it's not an ILoggingError
+            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
+            event.stack = error.stack;
+            event.error = error.message;
+            event.errorType = error.errorType;
         } else {
             event.error = error;
         }
@@ -539,7 +541,7 @@ export class LoggingError extends Error implements ILoggingError {
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
         return maybeLogger !== null
-            && typeof maybeLogger  === "object"
+            && typeof maybeLogger === "object"
             && typeof maybeLogger.message === "string"
             && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
     }

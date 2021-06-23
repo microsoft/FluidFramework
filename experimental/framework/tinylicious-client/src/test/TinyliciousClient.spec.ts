@@ -114,7 +114,6 @@ describe("TinyliciousClient", () => {
 
         await assert.doesNotReject(
             containerAndServices,
-            undefined,
             "TinyliciousClient cannot create container and services successfully",
         );
     });
