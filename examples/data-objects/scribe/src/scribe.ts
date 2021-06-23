@@ -470,11 +470,13 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
-            existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ));
+            ),
+            undefined,
+            existing,
+        );
 
         return runtime;
     }

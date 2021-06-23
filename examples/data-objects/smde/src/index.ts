@@ -29,11 +29,13 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             registry,
-            existing,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ));
+            ),
+            undefined,
+            existing,
+        );
 
         // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
