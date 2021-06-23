@@ -54,6 +54,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
                 ...this.requestHandlers,
                 innerRequestHandler),
             undefined,
+            undefined,
             existing,
         );
 

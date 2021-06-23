@@ -137,6 +137,7 @@ export class KeyValueFactoryComponent
                 innerRequestHandler,
             ),
             undefined,
+            undefined,
             existing,
         );
         return runtime;

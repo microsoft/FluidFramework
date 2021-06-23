@@ -124,6 +124,7 @@ export class ChaincodeFactory extends RuntimeFactoryHelper {
                 innerRequestHandler,
             ),
             this.runtimeOptions,
+            undefined,
             existing,
         );
 

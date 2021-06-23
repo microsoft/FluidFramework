@@ -475,6 +475,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
                 innerRequestHandler,
             ),
             undefined,
+            undefined,
             existing,
         );
 

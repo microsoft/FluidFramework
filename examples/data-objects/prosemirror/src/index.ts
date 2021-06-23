@@ -38,6 +38,7 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
                 innerRequestHandler,
             ),
             undefined,
+            undefined,
             existing,
         );
 

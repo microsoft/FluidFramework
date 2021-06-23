@@ -39,6 +39,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
                 innerRequestHandler,
             ),
             undefined,
+            undefined,
             existing,
         );
 

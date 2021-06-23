@@ -82,6 +82,7 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
                 innerRequestHandler,
             ),
             undefined,
+            undefined,
             existing,
         );
 
