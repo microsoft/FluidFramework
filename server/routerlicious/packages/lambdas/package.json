@@ -56,13 +56,13 @@
     "@types/semver": "^6.0.1",
     "async": "^3.2.0",
     "axios": "^0.21.1",
-    "sha.js": "^2.4.11",
     "double-ended-queue": "^2.1.0-0",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.21",
     "nconf": "^0.11.0",
     "semver": "^6.3.0",
+    "sha.js": "^2.4.11",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
