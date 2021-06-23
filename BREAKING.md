@@ -1,6 +1,7 @@
 ## 0.42 Breaking changes
 
 - [Package renames](#0.42-package-renames)
+- [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
 
 ### 0.42 package renames
 
@@ -10,6 +11,9 @@ the npm scopes.
 
 - `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
 - `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
+These interface and apis are not supposed to be used outside the fluid framework repo. So stop exposing them.
 
 ## 0.41 Breaking changes
 
