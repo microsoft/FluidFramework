@@ -28,7 +28,7 @@ import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { wrapError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -94,6 +94,11 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
     constructor(errorMessage: string, readonly logged: boolean = false) {
         super(errorMessage);
+    }
+
+    static wrap(error: any, logged: boolean = false) {
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+        return wrapError<SummarizingWarning>(error, newErrorFn);
     }
 }
 
@@ -753,12 +758,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         try {
             await this.runCore(onBehalfOf);
         } catch (error) {
-            const err2: ISummarizingWarning = {
-                logged: false,
-                ...CreateContainerError(error),
-                errorType: summarizingError,
-            };
-            this.emit("summarizingError", err2);
+            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
             throw error;
         } finally {
             // Cleanup after running
