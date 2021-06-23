@@ -100,11 +100,11 @@ import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -156,20 +156,6 @@ export enum ConnectionState {
      */
     Connected,
 }
-
-// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
-// a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
-    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
-    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
-    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
-        0x1e0 /* "Protocol and App summary trees should be present" */);
-    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
-        protocolSummaryTree,
-        appSummaryTree,
-    );
-    return { snapshotTree, blobs };
-};
 
 /**
  * Waits until container connects to delta storage and gets up-to-date

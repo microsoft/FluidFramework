@@ -5,11 +5,7 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import {
-    Container,
-    getSnapshotTreeFromSerializedContainer,
-    Loader,
-} from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -33,6 +29,8 @@ import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 

@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 export interface IParsedUrl {
@@ -102,3 +102,17 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary, blobs);
     return { snapshotTree, blobs };
 }
+
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        0x1e0 /* "Protocol and App summary trees should be present" */);
+    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return { snapshotTree, blobs };
+};
