@@ -24,6 +24,7 @@ import {
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
+    channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
@@ -362,7 +363,11 @@ describe("Data Store Context Tests", () => {
                     const snapshotTree: ISnapshotTree = {
                         blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
                         commits: {},
-                        trees: {},
+                        trees: { [channelsTreeName]: {
+                            blobs: {},
+                            commits: {},
+                            trees: {},
+                        } },
                     };
 
                     remotedDataStoreContext = new RemotedFluidDataStoreContext(
