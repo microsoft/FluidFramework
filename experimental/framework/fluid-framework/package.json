@@ -28,7 +28,8 @@
     "@fluidframework/aqueduct": "^0.42.0",
     "@fluidframework/map": "^0.42.0",
     "@fluidframework/merge-tree": "^0.42.0",
-    "@fluidframework/sequence": "^0.42.0"
+    "@fluidframework/sequence": "^0.42.0",
+    "@fluid-experimental/fluid-static": "^0.42.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
