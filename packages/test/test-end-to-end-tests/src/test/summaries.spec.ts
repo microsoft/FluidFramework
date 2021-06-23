@@ -6,7 +6,7 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, ISummaryRuntimeOptions, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -25,20 +25,26 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
+const factory = new DataObjectFactory(TestDataObject.dataObjectName, TestDataObject, [
+    SharedMap.getFactory(),
+    SharedDirectory.getFactory(),
+    SharedMatrix.getFactory(),
+    SharedObjectSequence.getFactory(),
+], []);
+
 async function createContainer(
     provider: ITestObjectProvider,
     summaryOpt: Omit<ISummaryRuntimeOptions, "generateSummaries">,
 ): Promise<IContainer> {
-    const factory = new DataObjectFactory(TestDataObject.dataObjectName, TestDataObject, [
-        SharedMap.getFactory(),
-        SharedDirectory.getFactory(),
-        SharedMatrix.getFactory(),
-        SharedObjectSequence.getFactory(),
-    ], []);
-
     // Force generateSummaries to false.
-    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
-    summaryOptions.generateSummaries = false;
+    // const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
+    const runtimeOptions: IContainerRuntimeOptions = {
+
+            summaryOptions: { generateSummaries: false },
+
+            gcOptions: { gcAllowed: true },
+
+        };
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -48,7 +54,7 @@ async function createContainer(
         ],
         undefined,
         undefined,
-        { summaryOptions },
+         runtimeOptions ,
     );
 
     return provider.createContainer(runtimeFactory);
@@ -137,6 +143,18 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
         });
+
+        const dataStore = await factory.createInstance(containerRuntime);
+        await provider.ensureSynchronized();
+        defaultDataStore.getRoot().set("nonRootDS", dataStore.handle);
+
+        const summary1 = await containerRuntime.summarize({
+            runGC: true,
+            fullTree: false,
+            trackState: false,
+            summaryLogger: new TelemetryNullLogger(),
+        });
+        console.log(summary1);
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");

@@ -387,10 +387,6 @@ export class DataStores implements IDisposable {
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
 
-        let dataStoreCount = 0;
-        let summarizedUnreferencedDataStoreCount = 0;
-        let handleCount = 0;
-
         // Iterate over each store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([_, context]) => {
@@ -401,17 +397,12 @@ export class DataStores implements IDisposable {
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 const summary = contextSummary.summary;
-                if (summary.type === SummaryType.Tree && summary.unreferenced === true) {
-                    summarizedUnreferencedDataStoreCount++;
-                }
-                if (summary.type === SummaryType.Handle) {
-                    handleCount++;
-                }
-                dataStoreCount++;
 
-                contextSummary.stats.dataStoreCount = dataStoreCount;
-                contextSummary.stats.summarizedDataStoreCount = dataStoreCount - handleCount;
-                contextSummary.stats.summarizedUnreferencedDataStoreCount = summarizedUnreferencedDataStoreCount;
+                contextSummary.stats.dataStoreCount = 1;
+                contextSummary.stats.summarizedDataStoreCount = summary.type === SummaryType.Handle ? 0 : 1;
+                contextSummary.stats.summarizedUnreferencedDataStoreCount =
+                    summary.type === SummaryType.Tree && summary.unreferenced === true ? 1 : 0;
+
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
                 if (contextSummary.gcData !== undefined) {
