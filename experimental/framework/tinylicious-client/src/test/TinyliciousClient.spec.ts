@@ -41,7 +41,6 @@ describe("TinyliciousClient", () => {
 
         await assert.doesNotReject(
             containerAndServices,
-            () => {},
             "container cannot be created without specifying port number",
         );
     });
@@ -66,7 +65,6 @@ describe("TinyliciousClient", () => {
 
         await assert.doesNotReject(
             containerAndServices,
-            () => {},
             "container cannot be created with port number",
         );
     });
@@ -116,7 +114,7 @@ describe("TinyliciousClient", () => {
 
         await assert.doesNotReject(
             containerAndServices,
-            () => {},
+            undefined,
             "TinyliciousClient cannot create container and services successfully",
         );
     });
