@@ -26,7 +26,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -853,9 +853,12 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         let snapshot = this.snapshotTree;
         if (snapshot !== undefined) {
-            const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
-                this.storage,
-                snapshot.blobs[dataStoreAttributesBlobName]);
+            // Note: storage can be undefined in special case while detached.
+            const attributes = this.storage !== undefined
+                ? await readAndParse<ReadFluidDataStoreAttributes>(
+                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
+                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
+                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
 
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
