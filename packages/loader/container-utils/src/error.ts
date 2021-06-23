@@ -62,16 +62,16 @@ export class GenericError extends LoggingError implements IGenericError {
 
     /**
      * Create a new GenericError
-     * @param message - Error message
+     * @param errorMessage - Error message
      * @param error - inner error object
      * @param props - Telemetry props to include when the error is logged
      */
     constructor(
-        message: string,
+        errorMessage: string,
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
-        super(message, props);
+        super(errorMessage, props);
     }
 }
 

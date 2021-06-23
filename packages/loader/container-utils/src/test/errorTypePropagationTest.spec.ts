@@ -56,7 +56,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
 
         it("Send and receive a GenericError using CreateContainerError", () => {
-            const innerErrorObj = {
+            const props = {
                 clientId: "clientId",
                 messageClientId: "messageClientId",
                 sequenceNumber: 0,
@@ -65,7 +65,8 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             };
             const testError = new GenericError(
                 "someGenericError",
-                innerErrorObj,
+                undefined /* error */,
+                props,
             );
             // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
             const wrappedTestError = CreateContainerError(testError);

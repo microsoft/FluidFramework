@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { CreateContainerError, CreateProcessingError } from "../error";
 
 describe("Errors", () => {
@@ -21,6 +21,13 @@ describe("Errors", () => {
 
             // eslint-disable-next-line @typescript-eslint/dot-notation
             assert(testError["stack"] === originalError.stack);
+        });
+        it("Wrap LoggingError with no errorType", () => {
+            const loggingError = new LoggingError("hello", { foo: "bar" });
+            const testError = CreateContainerError(loggingError);
+
+            assert(testError.errorType === ContainerErrorType.genericError);
+            assert(isILoggingError(testError));
         });
     });
 
