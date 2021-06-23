@@ -726,7 +726,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 tree = tree.trees[channelsTreeName];
                 assert(
                     tree !== undefined,
-                    0x1f8 /* "isolated channels subtree should exist inremote datastore snapshot" */,
+                    0x1f8 /* "isolated channels subtree should exist in remote datastore snapshot" */,
                 );
             }
         }
