@@ -13,7 +13,7 @@ the npm scopes.
 - `@fluidframework/react` is renamed to `@fluid-experimental/react`
 
 ### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
-These interface and apis are not supposed to be used outside the fluid framework repo. So stop exposing them.
+These interface and apis are not supposed to be used outside the package. So stop exposing them.
 
 ## 0.41 Breaking changes
 
