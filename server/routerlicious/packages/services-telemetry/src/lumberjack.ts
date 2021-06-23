@@ -13,13 +13,10 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 // by calling setupEngines() before Lumberjack can be used.
 export class Lumberjack {
     protected static _instance: Lumberjack | undefined = undefined;
-    private readonly engineList: ILumberjackEngine[];
-    private isSetupCompleted: boolean;
+    private readonly engineList: ILumberjackEngine[] = [];
+    private isSetupCompleted: boolean = false;
 
-    protected constructor() {
-        this.engineList = [];
-        this.isSetupCompleted = false;
-    }
+    protected constructor() {}
 
     public static get instance() {
         if (!Lumberjack._instance) {
@@ -47,9 +44,9 @@ export class Lumberjack {
         message: string,
         metadata: ITelemetryMetadata,
         level: LogLevel,
-        properties?: Map<string, any> | Record<string, any> | undefined,
-        statusCode?: number | string | undefined,
-        exception?: Error | undefined,
+        properties?: Map<string, any> | Record<string, any>,
+        statusCode?: number | string,
+        exception?: Error,
     ) {
         this.throwOnEmptyEngineList();
         const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this.engineList);
@@ -58,9 +55,10 @@ export class Lumberjack {
             if (properties instanceof Map) {
                 properties.forEach((value: any, key: string) => { lumber.addProperty(key, value); });
             } else {
-                for (const [key, value] of Object.entries(properties)) {
-                    lumber.addProperty(key, value);
-                }
+                Object.entries(properties).forEach((entry) => {
+                    const [key, value] = entry;
+                    lumber.addProperty(key,value);
+                });
             }
         }
 

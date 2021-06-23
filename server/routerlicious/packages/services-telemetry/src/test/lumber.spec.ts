@@ -22,7 +22,7 @@ describe("Lumber", () => {
     });
 
     it("Creates and completes Lumber with success", async () => {
-        const expectedLatency = 100;
+        const expectedDuration = 100;
         const successMessage = "SuccessMessage";
         const statusCode = 200;
         const engine = new TestEngine();
@@ -34,18 +34,18 @@ describe("Lumber", () => {
 
         assert.strictEqual(lumber.successful, undefined);
 
-        Sinon.clock.tick(expectedLatency);
+        Sinon.clock.tick(expectedDuration);
         lumber.success(successMessage, statusCode, sampleTelemetryMetadata);
 
         assert.strictEqual(lumber.successful, true);
         assert.strictEqual(lumber.message, successMessage);
         assert.strictEqual(lumber.statusCode, statusCode.toString());
-        assert.strictEqual(lumber.latencyInMs, expectedLatency);
+        assert.strictEqual(lumber.durationInMs, expectedDuration);
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
 
     it("Creates and completes Lumber with failure", async () => {
-        const expectedLatency = 100;
+        const expectedDuration = 100;
         const errorMessage = "errorMessage";
         const statusCode = 400;
         const engine = new TestEngine();
@@ -58,14 +58,14 @@ describe("Lumber", () => {
 
         assert.strictEqual(lumber.successful, undefined);
 
-        Sinon.clock.tick(expectedLatency);
+        Sinon.clock.tick(expectedDuration);
         lumber.error(errorMessage, statusCode, sampleTelemetryMetadata, error);
 
         assert.strictEqual(lumber.successful, false);
         assert.strictEqual(lumber.message, errorMessage);
         assert.strictEqual(lumber.statusCode, statusCode.toString());
         assert.deepStrictEqual(lumber.exception, error);
-        assert.strictEqual(lumber.latencyInMs, expectedLatency);
+        assert.strictEqual(lumber.durationInMs, expectedDuration);
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
 
@@ -85,7 +85,6 @@ describe("Lumber", () => {
     });
 
     it("Makes sure we cannot complete an already completed Lumber", async () => {
-        const expectedLatency = 100;
         const successMessage = "SuccessMessage";
         const statusCode = 200;
         const engine = new TestEngine();
@@ -97,7 +96,6 @@ describe("Lumber", () => {
 
         assert.strictEqual(lumber.successful, undefined);
 
-        Sinon.clock.tick(expectedLatency);
         lumber.success(successMessage, statusCode, sampleTelemetryMetadata);
 
         assert.strictEqual(lumber.successful, true);

@@ -12,50 +12,31 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 // addProperty(). Once the telemetry event is complete, the user must call either success()
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
-    private readonly _eventName: T;
-    private readonly _properties: Map<string, any>;
-    private readonly _timestamp: string;
-    private readonly startTime: number;
-    private readonly _type: LumberType;
-    private _metadata: ITelemetryMetadata | undefined;
-    private _latencyInMs: number | undefined;
-    private _successful: boolean | undefined;
-    private _message: string | undefined;
-    private _statusCode: string | undefined;
-    private _exception: Error | undefined;
-    private _logLevel: LogLevel | undefined;
-    private completed: boolean;
-    private readonly engineList: ILumberjackEngine[];
-
-    public get eventName(): T {
-        return this._eventName;
-    }
+    public readonly properties = new Map<string, any>();
+    private readonly startTime = Date.now();
+    public readonly timestamp = new Date(this.startTime).toISOString();
+    private _metadata?: ITelemetryMetadata;
+    private _durationInMs?: number;
+    private _successful?: boolean;
+    private _message?: string;
+    private _statusCode?: string;
+    private _exception?: Error;
+    private _logLevel?: LogLevel;
+    private completed = false;
 
     public get metadata(): ITelemetryMetadata | undefined {
         return this._metadata;
     }
 
-    public get properties(): Map<string, any> {
-        return this._properties;
-    }
-
-    public get type(): LumberType {
-        return this._type;
-    }
-
-    public get timestamp(): string {
-        return this._timestamp;
-    }
-
-    public get latencyInMs(): number | undefined {
-        if (this._type === LumberType.Log) {
+    public get durationInMs(): number | undefined {
+        if (this.type === LumberType.Log) {
             return undefined;
         }
-        return this._latencyInMs;
+        return this._durationInMs;
     }
 
     public get successful(): boolean | undefined {
-        if (this._type === LumberType.Log) {
+        if (this.type === LumberType.Log) {
             return undefined;
         }
         return this._successful;
@@ -78,26 +59,12 @@ export class Lumber<T extends string = LumberEventName> {
     }
 
     constructor(
-        eventName: T,
-        type: LumberType,
-        engineList: ILumberjackEngine[]) {
-        this._eventName = eventName;
-        this._type = type;
-        this.completed = false;
-        this._properties = new Map<string, any>();
-        this.startTime = Date.now();
-        this._timestamp = new Date(this.startTime).toISOString();
-        this.engineList = engineList;
-        this._latencyInMs = undefined;
-        this._successful = undefined;
-        this._message = undefined;
-        this._statusCode = undefined;
-        this._exception = undefined;
-        this._logLevel = undefined;
-    }
+        public readonly eventName: T,
+        public readonly type: LumberType,
+        private readonly engineList: ILumberjackEngine[]) {}
 
     public addProperty(key: string, value: any): this {
-        this._properties.set(key, value);
+        this.properties.set(key, value);
         return this;
     }
 
@@ -138,7 +105,7 @@ export class Lumber<T extends string = LumberEventName> {
         this._logLevel = logLevel;
         this._successful = successful;
         this._exception = exception;
-        this._latencyInMs = Date.now() - this.startTime;
+        this._durationInMs = Date.now() - this.startTime;
 
         for (const engine of this.engineList) {
             engine.emit(this);
