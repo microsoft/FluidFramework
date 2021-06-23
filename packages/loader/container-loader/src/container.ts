@@ -652,10 +652,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
-                    this.logger.sendErrorEvent({
-                        eventName: "NoRealStorageInDetachedContainer",
-                    });
-                    throw new Error("Real storage calls not allowed in Unattached container");
+                    if (this.loader.services.detachedBlobStorage !== undefined) {
+                        return this.loader.services.detachedBlobStorage as IDocumentStorageService;
+                    } else {
+                        this.logger.sendErrorEvent({
+                            eventName: "NoRealStorageInDetachedContainer",
+                        });
+                        throw new Error("Real storage calls not allowed in Unattached container");
+                    }
                 }
                 return this.storageService;
             },

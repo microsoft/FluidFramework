@@ -33,7 +33,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ICreateBlobResponse, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -197,6 +197,8 @@ export interface ILoaderProps {
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
+
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
 /**
@@ -243,7 +245,14 @@ export interface ILoaderServices {
      * The logger downstream consumers should construct their loggers from
      */
     readonly subLogger: ITelemetryLogger;
+
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
+
+ export interface IDetachedBlobStorage {
+     createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse>;
+     readBlob(id: string): Promise<ArrayBufferLike>;
+ }
 
 /**
  * Manages Fluid resource loading
@@ -291,6 +300,7 @@ export class Loader implements IHostLoader {
             scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
+            detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
