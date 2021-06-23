@@ -116,7 +116,7 @@ export function configurableUrlResolver(resolversList: IUrlResolver[], request: 
 export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
-export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
+export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError {
@@ -212,7 +212,7 @@ export class MultiUrlResolver implements IUrlResolver {
     }
 
 // @public (undocumented)
-export class NetworkErrorBasic<T> extends LoggingError {
+export class NetworkErrorBasic<T extends string> extends LoggingError {
     constructor(errorMessage: string, errorType: T, canRetry: boolean, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry: boolean;
@@ -221,7 +221,7 @@ export class NetworkErrorBasic<T> extends LoggingError {
 }
 
 // @public (undocumented)
-export class NonRetryableError<T> extends NetworkErrorBasic<T> {
+export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(errorMessage: string, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;
@@ -291,7 +291,7 @@ export function readAndParseFromBlobs<T>(blobs: {
 export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
-export class RetryableError<T> extends NetworkErrorBasic<T> {
+export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(errorMessage: string, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;

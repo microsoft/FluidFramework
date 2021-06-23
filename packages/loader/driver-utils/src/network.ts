@@ -75,7 +75,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     }
 }
 
-export class NetworkErrorBasic<T> extends LoggingError {
+export class NetworkErrorBasic<T extends string> extends LoggingError {
     constructor(
         errorMessage: string,
         readonly errorType: T,
@@ -86,7 +86,7 @@ export class NetworkErrorBasic<T> extends LoggingError {
     }
 }
 
-export class NonRetryableError<T> extends NetworkErrorBasic<T> {
+export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
@@ -96,7 +96,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     }
 }
 
-export class RetryableError<T> extends NetworkErrorBasic<T> {
+export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
         readonly errorType: T,
