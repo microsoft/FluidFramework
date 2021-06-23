@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { fromUtf8ToBase64, bufferToString } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 export interface IParsedUrl {
@@ -45,6 +45,7 @@ export function parseUrl(url: string): IParsedUrl | undefined {
  */
 function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
+    blobs: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
     const treeNode = {
         blobs: {},
@@ -58,7 +59,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
+                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject, blobs);
                 break;
             }
             case SummaryType.Blob: {
@@ -89,7 +90,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 export function convertProtocolAndAppSummaryToSnapshotTree(
     protocolSummaryTree: ISummaryTree,
     appSummaryTree: ISummaryTree,
-): ISnapshotTree {
+) {
     // Shallow copy is fine, since we are doing a deep clone below.
     const combinedSummary: ISummaryTree = {
         type: SummaryType.Tree,
@@ -97,7 +98,7 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     };
 
     combinedSummary.tree[".protocol"] = protocolSummaryTree;
-
-    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
-    return snapshotTree;
+    const blobs = new Map<string, ArrayBufferLike>();
+    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary, blobs);
+    return { snapshotTree, blobs };
 }

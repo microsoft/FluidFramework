@@ -165,11 +165,11 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
     const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
     assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
         0x1e0 /* "Protocol and App summary trees should be present" */);
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
+    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
         protocolSummaryTree,
         appSummaryTree,
     );
-    return snapshotTree;
+    return { snapshotTree, blobs };
 };
 
 /**
@@ -1313,7 +1313,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        blobs.forEach((value, key) => {
+            this.storageBlobs.set(key, value);
+        });
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
