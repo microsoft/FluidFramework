@@ -29,11 +29,12 @@ import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
+    IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ICreateBlobResponse, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -198,6 +199,9 @@ export interface ILoaderProps {
      */
     readonly logger?: ITelemetryBaseLogger;
 
+    /**
+     * Blobs storage for detached containers.
+     */
     readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
@@ -246,13 +250,17 @@ export interface ILoaderServices {
      */
     readonly subLogger: ITelemetryLogger;
 
+    /**
+     * Blobs storage for detached containers.
+     */
     readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
- export interface IDetachedBlobStorage {
-     createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse>;
-     readBlob(id: string): Promise<ArrayBufferLike>;
- }
+/**
+ * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
+ * blobs in detached containers.
+ */
+ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
 
 /**
  * Manages Fluid resource loading

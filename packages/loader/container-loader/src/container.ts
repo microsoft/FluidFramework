@@ -103,7 +103,7 @@ import { pkgVersion } from "./packageVersion";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -639,13 +639,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             () => {
                 if (this.attachState !== AttachState.Attached) {
                     if (this.loader.services.detachedBlobStorage !== undefined) {
-                        return this.loader.services.detachedBlobStorage as IDocumentStorageService;
-                    } else {
-                        this.logger.sendErrorEvent({
-                            eventName: "NoRealStorageInDetachedContainer",
-                        });
-                        throw new Error("Real storage calls not allowed in Unattached container");
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
                     }
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    });
+                    throw new Error("Real storage calls not allowed in Unattached container");
                 }
                 return this.storageService;
             },
