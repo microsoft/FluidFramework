@@ -618,8 +618,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             loadExisting,
             requestHandler,
-            storage,
-            existing);
+            storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
