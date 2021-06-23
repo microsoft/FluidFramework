@@ -26,6 +26,7 @@ import {
 import { GitManager, ISummaryUploadManager, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DocumentStorageServiceProxy, PrefetchDocumentStorageService } from "@fluidframework/driver-utils";
+import { RetriableGitManager } from "./retriableGitManager";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -46,7 +47,7 @@ class DocumentStorageServiceCore implements IDocumentStorageService {
         private readonly logger: ITelemetryLogger,
         public readonly policies: IDocumentStorageServicePolicies = {}) {
         this.summaryUploadManager = new SummaryTreeUploadManager(
-            this.manager,
+            new RetriableGitManager(this.manager, this.logger),
             this.blobsShaCache,
             this.getPreviousFullSnapshot.bind(this),
         );

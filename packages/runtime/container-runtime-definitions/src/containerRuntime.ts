@@ -52,10 +52,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
-    (
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string) => void,
-    );
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
