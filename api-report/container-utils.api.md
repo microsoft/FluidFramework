@@ -49,7 +49,7 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError {
-    constructor(message: string, error?: any, props?: ITelemetryProperties);
+    constructor(errorMessage: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
