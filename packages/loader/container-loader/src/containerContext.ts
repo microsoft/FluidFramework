@@ -290,16 +290,16 @@ export class ContainerContext implements IContainerContext {
 
     private async initializeFromExisting() {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
-            runtimeFactory.getRuntime(this, true) :
-            runtimeFactory.instantiateRuntime(this));
+        this._runtime = await (this.isFactoryStateful(runtimeFactory)
+            ? runtimeFactory.getRuntime(this, true)
+            : runtimeFactory.instantiateRuntime(this));
     }
 
     private async initializeFirstTime() {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
-            runtimeFactory.getRuntime(this, false) :
-            runtimeFactory.instantiateRuntime(this));
+        this._runtime = await (this.isFactoryStateful(runtimeFactory)
+            ? runtimeFactory.getRuntime(this, false)
+            : runtimeFactory.instantiateRuntime(this));
     }
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
@@ -308,7 +308,7 @@ export class ContainerContext implements IContainerContext {
             throw new Error(PackageNotFactoryError);
         }
 
-        return runtimeFactory as IRuntimeFactory;
+        return runtimeFactory;
     }
 
     private attachListener() {
