@@ -414,9 +414,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
-        // If we are not referenced, update the summary tree to indicate that.
+        // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+        // size in the summary stats with the blobs size of this data store.
         if (!this.summarizerNode.isReferenced()) {
             summarizeResult.summary.unreferenced = true;
+            summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
         }
 
         return {
