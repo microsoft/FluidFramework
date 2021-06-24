@@ -9,6 +9,7 @@ import {
     IChannelAttributes,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { EventLiteral } from "@fluidframework/runtime-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
@@ -47,17 +48,17 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
      * an item previously acquired is returned back to a queue (including client loosing connection)
      * @param newlyAdded - indicates if it's newly added item of previously acquired item
      */
-    add: [value: T, newlyAdded: boolean];
+    add: [value: EventLiteral<T>, newlyAdded: boolean];
     /**
      * Event fires when a client acquired an item
      * Fires both for locally acquired items, as well as items acquired by remote clients
      */
-    acquire: [value: T, clientId?: string];
+    acquire: [value: EventLiteral<T>, clientId?: string];
 
     /**
      * Event fires when a client completes an item.
      */
-    complete: [value: T];
+    complete: [value: EventLiteral<T>];
 
     /**
      * Event fires when locally acquired item is being released back to the queue.
@@ -66,7 +67,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
      * @param intentional - indicates whether release was intentional (result of returning
      * ConsensusResult.Release from callback) or it happened as result of lost connection.
      */
-    localRelease: [value: T, intentional: boolean];
+    localRelease: [value: EventLiteral<T>, intentional: boolean];
 }
 
 /**

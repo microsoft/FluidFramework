@@ -9,6 +9,7 @@ import {
     IChannelAttributes,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { EventLiteral } from "@fluidframework/runtime-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
@@ -31,8 +32,8 @@ export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
 }
 
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
-    atomicChanged: [key: string, value: any, local: boolean];
-    versionChanged: [key: string, value: any, local: boolean];
+    atomicChanged: [key: string, value: EventLiteral<any>, local: boolean];
+    versionChanged: [key: string, value: EventLiteral<any>, local: boolean];
 }
 
 /**

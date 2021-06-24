@@ -108,12 +108,12 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents, IDirectoryE
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventProvider<ISharedDirectoryEvents>,
+        target: EventThis,
     ];
     clear: [
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventProvider<ISharedDirectoryEvents>,
+        target: EventThis,
     ];
 }
 
