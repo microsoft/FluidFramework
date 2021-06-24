@@ -281,6 +281,9 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 // @public
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+
+// @public
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -295,6 +298,7 @@ export interface ILoaderOptions extends ILoaderOptions_2 {
 // @public
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -306,6 +310,7 @@ export interface ILoaderProps {
 // @public
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
