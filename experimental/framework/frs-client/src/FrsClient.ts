@@ -63,9 +63,6 @@ export class FrsClientInstance {
     ): Promise<[FluidContainer, FrsContainerServices]> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.resolve({ url: containerConfig.id });
-        if (container.existing !== true) {
-            throw new Error("Attempted to load a non-existing container");
-        }
         return this.getFluidContainerAndServices(container);
     }
 

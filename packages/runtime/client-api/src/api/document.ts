@@ -262,9 +262,5 @@ export async function load(
         config: {},
     };
 
-    if (!container.existing) {
-        await initializeChaincode(container, codeDetails);
-    }
-
     return requestDocument(loader, container, url);
 }
