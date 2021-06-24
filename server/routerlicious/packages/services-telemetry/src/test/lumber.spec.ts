@@ -69,19 +69,83 @@ describe("Lumber", () => {
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
 
-    it("Adds properties to Lumber", async () => {
-        const key = "AdditionalPropertyKey";
-        const value = "AdditionalPropertyValue";
+    it("Adds individual properties to Lumber", async () => {
+        const key1 = "key1";
+        const value1 = "value1";
+        const key2 = "key2";
+        const value2 = "value2";
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
             []);
 
-        lumber.addProperty(key, value);
+        lumber.addProperty(key1, value1)
+              .addProperty(key2, value2);
+
+        assert.strictEqual(lumber.properties.size, 2);
+        assert.strictEqual(lumber.properties.has(key1), true);
+        assert.strictEqual(lumber.properties.get(key1), value1);
+        assert.strictEqual(lumber.properties.has(key2), true);
+        assert.strictEqual(lumber.properties.get(key2), value2);
+    });
+
+    it("Adds properties to Lumber in a batch, with no existing properties in Lumber", async () => {
+        const key1 = "key1";
+        const value1 = "value1";
+        const value2 = "value2";
+        const mapProperties = new Map<string, any>();
+        mapProperties.set(key1, value1);
+        const recordProperties = {
+            key2: value2,
+        };
+        const lumber = new Lumber(
+            LumberEventName.UnitTestEvent,
+            LumberType.Metric,
+            []);
+
+        lumber.addProperties(mapProperties);
+        assert.strictEqual(lumber.properties.size, 1);
+        assert.strictEqual(lumber.properties.has(key1), true);
+        assert.strictEqual(lumber.properties.get(key1), value1);
+
+        lumber.addProperties(recordProperties);
+        assert.strictEqual(lumber.properties.size, 2);
+        assert.strictEqual(lumber.properties.has("key2"), true);
+        assert.strictEqual(lumber.properties.get("key2"), value2);
+    });
+
+    it("Adds properties to Lumber in a batch, with existing properties in Lumber", async () => {
+        const key1 = "key1";
+        const value1 = "value1";
+        const value2 = "value2";
+        const key3 = "key3";
+        const value3 = "value3";
+        const originalMapProperties = new Map<string, any>();
+        originalMapProperties.set(key1, value1);
+        const recordProperties = {
+            key2: value2,
+        };
+        const extraMapProperties = new Map<string, any>();
+        extraMapProperties.set(key3, value3);
+
+        const lumber = new Lumber(
+            LumberEventName.UnitTestEvent,
+            LumberType.Metric,
+            [],
+            originalMapProperties);
 
         assert.strictEqual(lumber.properties.size, 1);
-        assert.strictEqual(lumber.properties.has(key), true);
-        assert.strictEqual(lumber.properties.get(key), value);
+        assert.strictEqual(lumber.properties.has(key1), true);
+        assert.strictEqual(lumber.properties.get(key1), value1);
+
+        lumber.addProperties(recordProperties)
+              .addProperties(extraMapProperties);
+
+              assert.strictEqual(lumber.properties.size, 3);
+        assert.strictEqual(lumber.properties.has("key2"), true);
+        assert.strictEqual(lumber.properties.get("key2"), value2);
+        assert.strictEqual(lumber.properties.has(key3), true);
+        assert.strictEqual(lumber.properties.get(key3), value3);
     });
 
     it("Makes sure we cannot complete an already completed Lumber", async () => {
