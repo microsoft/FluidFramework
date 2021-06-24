@@ -170,6 +170,6 @@ async function start(): Promise<void> {
 
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire event object.
 
-![ConsoleLogger_telemetry_in_action](../static/images/consoleLogger_in_action.png "ConsoleLogger_telemetry_in_action")
+![ConsoleLogger_telemetry_in_action](../../static/images/consoleLogger_in_action.png "ConsoleLogger_telemetry_in_action")
 
 
