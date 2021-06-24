@@ -46,7 +46,7 @@ export interface ITelemetryBaseLogger {
 ```
 
 - Supports Tags
-  -
+  - hello
 - `send()`
   - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions` package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's telemetry system to execute.
 
