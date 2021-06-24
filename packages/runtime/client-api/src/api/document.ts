@@ -27,8 +27,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
-
 // Registered services to use when loading a document
 let defaultDocumentServiceFactory: IDocumentServiceFactory;
 
