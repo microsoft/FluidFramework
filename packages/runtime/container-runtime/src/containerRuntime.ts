@@ -197,13 +197,18 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxAckWaitTime: 120000,
 };
 
-// This is the current version of garbage collection.
+/** This is the current version of garbage collection */
 const GCVersion = 1;
 
+/** The statistics of a garbage collection run */
 export interface IGCStats {
+    /** Total number of nodes in the GC graph */
     totalNodes: number;
+    /** Number of nodes that have been marked as deleted */
     deletedNodes: number;
+    /** Total number of data stores in the GC graph */
     totalDataStores: number;
+    /** Number of data stores that have been marked as deleted */
     deletedDataStores: number;
 }
 
