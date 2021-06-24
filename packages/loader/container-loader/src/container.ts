@@ -1203,9 +1203,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._protocolHandler = await protocolHandlerP;
 
+        const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
             this._existing === true,
             attributes,
+            codeDetails,
             snapshot,
             pendingLocalState,
         );
@@ -1295,7 +1297,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.instantiateContext(
+        await this.instantiateContextDetached(
             false, // existing
             attributes,
         );
@@ -1322,7 +1324,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.instantiateContext(
+        await this.instantiateContextDetached(
             true, // existing
             attributes,
             snapshotTree,
@@ -1820,7 +1822,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async instantiateContext(
+    private async instantiateContextDetached(
         existing: boolean,
         attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
@@ -1831,6 +1833,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("pkg should be provided in create flow!!");
         }
 
+        this.instantiateContext(
+            existing,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
+    }
+
+    private async instantiateContext(
+        existing: boolean,
+        attributes: IDocumentAttributes,
+        codeDetails: IFluidCodeDetails,
+        snapshot?: ISnapshotTree,
+        pendingLocalState?: unknown,
+    ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
