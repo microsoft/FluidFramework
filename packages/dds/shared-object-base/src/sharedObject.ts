@@ -40,7 +40,7 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 export class TypedEventEmitterWithErrorHandling<TEvent extends IErrorEvents> extends TypedEventEmitter<TEvent> {
     public readonly emit: IEventEmitter<TEvent>["emit"] = (event, ...args) => {
         try {
-            return super.emit(event, ...args as Parameters<IEventEmitter<TEvent>["emit"]>[1]);
+            return super.emit(event, ...args);
         } catch (error) {
             // Some listener threw an error, we'll try emitting that error via the error event
             // But not if we're already dealing with the error event, in that case just let the error be thrown
