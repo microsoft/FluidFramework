@@ -88,10 +88,10 @@ export class OrderedClientElection extends TypedEventEmitter<IOrderedClientElect
     private insertEligibleClient(clientId: string, sequenceNumber: number): IEligibleClient {
         // Normal case is adding the latest client, which will bypass loop.
         // Find where it belongs otherwise (this shouldn't happen, assert?).
-        assert(sequenceNumber > -1, "Negative client sequence number not allowed");
+        assert(sequenceNumber > -1, 0x1f6 /* "Negative client sequence number not allowed" */);
         let currClient = this.youngestClient;
         while (currClient.sequenceNumber > sequenceNumber) {
-            assert(currClient.olderClient !== undefined, "Previous client should always be defined");
+            assert(currClient.olderClient !== undefined, 0x1f7 /* "Previous client should always be defined" */);
             // what to do if currClient === this.currentClient
             currClient = currClient.olderClient;
         }

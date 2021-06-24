@@ -17,13 +17,13 @@ import {
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ReadAndParseBlob,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -120,15 +120,23 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadInitialGCSummaryDetails() {
-        // If referenceUsedRoutes is not undefined, don't do anything because we have already initialized.
-        if (this.referenceUsedRoutes === undefined) {
-            const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
-            this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        // If referenceUsedRoutes exists, don't do anything because we have already initialized.
+        if (this.referenceUsedRoutes !== undefined) {
+            return;
+        }
 
-            // If the GC details has GC data, initialize our GC data from it.
-            if (gcDetailsInInitialSummary.gcData !== undefined) {
-                this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
-            }
+        const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
+
+        // Possible re-entrancy. It's possible that referenceUsedRoutes was set while we were waiting to get the
+        // initial GC details.
+        if (this.referenceUsedRoutes !== undefined) {
+            return;
+        }
+
+        this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        // If the GC details has GC data, initialize our GC data from it.
+        if (gcDetailsInInitialSummary.gcData !== undefined) {
+            this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
     }
 

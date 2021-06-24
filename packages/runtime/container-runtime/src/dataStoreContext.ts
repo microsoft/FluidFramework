@@ -61,6 +61,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree, TypedEventEmitter } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -267,7 +268,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
-                this.channelDeferred?.reject(error);
+                this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
             });
         }
         return this.channelDeferred.promise;
@@ -588,9 +589,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
         }
-
-        // notify the runtime if they want to propagate up. Used for logging.
-        this._containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {

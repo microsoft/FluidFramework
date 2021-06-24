@@ -30,7 +30,6 @@ import {
     IThrottlingWarning,
     IPendingLocalState,
     ReadOnlyInfo,
-    ILoaderOptions,
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
@@ -43,7 +42,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -84,6 +82,7 @@ import {
     ISummaryTree,
     IPendingProposal,
     SummaryType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -99,12 +98,13 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
+import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
+import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -156,20 +156,6 @@ export enum ConnectionState {
      */
     Connected,
 }
-
-// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
-// a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
-    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
-    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
-    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
-        0x1e0 /* "Protocol and App summary trees should be present" */);
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
-        protocolSummaryTree,
-        appSummaryTree,
-    );
-    return snapshotTree;
-};
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -397,6 +383,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
+    public readonly storage: IDocumentStorageService;
+    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -647,6 +635,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
+        this.storage = new ContainerStorageAdapter(
+            () => {
+                if (this.attachState !== AttachState.Attached) {
+                    if (this.loader.services.detachedBlobStorage !== undefined) {
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
+                    }
+                    this.logger.sendErrorEvent({
+                        eventName: "NoRealStorageInDetachedContainer",
+                    });
+                    throw new Error("Real storage calls not allowed in Unattached container");
+                }
+                return this.storageService;
+            },
+            this.storageBlobs,
+        );
 
         const isDomAvailable = typeof document === "object" &&
             document !== null &&
@@ -938,10 +941,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
         this.connectToDeltaStream(args).catch(() => { });
-    }
-
-    public get storage(): IDocumentStorageService | undefined {
-        return this._storageService;
     }
 
     /**
@@ -1302,7 +1301,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        blobs.forEach((value, key) => {
+            this.storageBlobs.set(key, value);
+        });
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
@@ -1328,13 +1330,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
-        let storageService = await this.service.connectToStorage();
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            storageService = new PrefetchDocumentStorageService(storageService);
-        }
+        const storageService = await this.service.connectToStorage();
 
-        this._storageService = new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+        this._storageService =
+            new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+
+        if(this.options.summarizeProtocolTree === true) {
+            this._storageService =
+                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+        }
 
         // ensure we did not lose that policy in the process of wrapping
         assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
@@ -1695,8 +1699,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         switch (outboundMessageType) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
-            case MessageType.Summarize:
                 break;
+            case MessageType.Summarize: {
+                // github #6451: this is only needed for staging so the server
+                // know when the protocol tree is included
+                // this can be removed once all clients send
+                // protocol tree by default
+                const summary = contents as ISummaryContent;
+                if(summary.details === undefined) {
+                    summary.details = {};
+                }
+                summary.details.includesProtocolTree =
+                    this.options.summarizeProtocolTree === true;
+                break;
+            }
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
                 return -1;

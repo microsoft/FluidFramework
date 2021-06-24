@@ -55,7 +55,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     saved: [];
     connected: [clientId: string];
     localHelp: [message: IHelpMessage];
-    fluidDataStoreInstantiated: [dataStorePkgName: string, registryPath: string, createNew: boolean];
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
@@ -68,7 +67,6 @@ export interface IContainerRuntime extends
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;

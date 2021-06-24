@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
+    delay,
     IPromiseTimerResult,
     PromiseTimer,
 } from "@fluidframework/common-utils";
@@ -20,7 +21,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
 import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
 
@@ -43,7 +44,7 @@ enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
+type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize" | "disposed">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; shouldStart: boolean; }
     | { shouldSummarize: false; stopReason: StopReason; };
@@ -327,7 +328,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    private stop(reason: string) {
+    private stop(reason: SummarizerStopReason) {
         this.state = SummaryManagerState.Stopping;
 
         if (this.runningSummarizer) {
@@ -355,7 +356,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+                shouldDelay ? delay(delayMs) : Promise.resolve(),
             ]);
         }
 

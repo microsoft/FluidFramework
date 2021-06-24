@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFrsAudience } from "@fluid-experimental/frs-client";
 import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
 
@@ -44,7 +45,7 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
  * @param audience - Object that provides the list of current members and listeners for when the list changes
  * @param div - The div to render into
  */
-export function renderAudience(audience: ITinyliciousAudience, div: HTMLDivElement) {
+export function renderAudience(audience: ITinyliciousAudience | IFrsAudience, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     wrapperDiv.style.margin = "70px";
