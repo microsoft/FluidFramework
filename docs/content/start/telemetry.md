@@ -9,9 +9,9 @@ aliases:
 
 With thousands of developers using our framework to build their services and applications, telemetry is an essential part of maintaining and troubleshooting the health of the applications, so we are offering just that! We have integrated a way for the developers to set up a telemetry system by allowing them to create custom logging and handling logics to be passed in and called by our Fluid Framework telemetry pipeline.
 
-## ITelemetryBaseLogger Interface
+## ITelemetryBaseLogger interface
 
-The ITelemetryBaseLogger is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the `createContainer()` and `getContainer()` methods in `TinyliciousClient` as part of the `TinyliciousContainerConfig` type parameter.
+The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the `createContainer()` and `getContainer()` methods in `TinyliciousClient` as part of the `TinyliciousContainerConfig` type parameter.
 
 ```ts
 export interface TinyliciousContainerConfig {
@@ -28,9 +28,9 @@ public async createContainer(
 ```
 
 
-### Property and Method
+### Properties and methods
 
-The interface contains a supportTags property and a send() method as shown:
+The interface contains a `supportTags` property and a `send()` method as shown:
 
 ```ts
 export interface ITelemetryBaseLogger {
@@ -46,7 +46,7 @@ export interface ITelemetryBaseLogger {
 ```
 
 - Supports Tags
-  - hello
+  - These tags are generic strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (e.g. private customer data), then it would be worthwhile to "tag" the event with some identifier.
 - `send()`
   - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions` package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's telemetry system to execute.
 
@@ -54,7 +54,7 @@ export interface ITelemetryBaseLogger {
 
 Different levels of logging complexity can be achieved by adding other attributes to the object implementing the `ITelemetryBaseLogger` interface. For example, the `ITelemetryLogger` interface, also within the `@fluidframework/common-definitions` package, broke down telemetry events into different categories, allowing different logging logics for each category. However, it is imperative to ensure that the `send()` method is ultimately called since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
 
-## Telemetry Event (structure of the events - their schema/type)
+### ITelemetryBaseEvent interface
 
 A telemetry event is any errors, performance, and informational (non-error) related events. An event is captured and labeled within the `ITelemetryBaseEvent` parameter mentioned previously. The `ITelemetryBaseEvent` is also an interface and implements the `ITelemetryProperties` type. This interface is the base interface for logging telemetry statements, allowing the user to have any number of properties and will serialize it as a JSON payload. With that said, the interface has 2 properties defined already, `eventName` and `category`. These 2 properties are used by the telemetry system to label and define the telemetry event that has occurred.
 
@@ -79,7 +79,7 @@ Currently, there are 3 categories used by the telemetry system:
 - performance - used to track metrics, e.g. used by the summarizer to track how long it takes to do or load a summary (if it's takes too long then even though its a performance event it'll be considered an error).
 - generic - used as a catchall for events that are mostly harmless.
 
-## Event Name
+### Event name
 
 This property is currently used by the telemetry system to indicate the event in a more descriptive manner.
 
@@ -136,7 +136,7 @@ this.logger.sendTelemetryEvent({
 });
 ```
 
-### Code Example
+### Code example
 
 With the interface already hooked up to the container's telemetry system, it is easy for users to write a custom telemetry object by implementing the `ITelemetryBaseLogger` interface and defining the `send()` method. Below is an example custom telemetry logger, `ConsoleLogger`, that implements the `ITelemetryBaseLogger` interface. As the name suggest, the `ConsoleLogger` defined the `send()` method to stringify the entire event object and print it out.
 
