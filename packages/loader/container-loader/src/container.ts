@@ -103,7 +103,7 @@ import { pkgVersion } from "./packageVersion";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -638,6 +638,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
+                    if (this.loader.services.detachedBlobStorage !== undefined) {
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
+                    }
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
