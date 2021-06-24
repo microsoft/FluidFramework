@@ -1833,7 +1833,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("pkg should be provided in create flow!!");
         }
 
-        this.instantiateContext(
+        await this.instantiateContext(
             existing,
             attributes,
             codeDetails,
