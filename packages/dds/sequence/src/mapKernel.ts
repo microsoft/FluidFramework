@@ -6,7 +6,8 @@
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IEventEmitter, TypedEventEmitter } from "@fluidframework/runtime-utils";
 import {
     ILocalValue,
     LocalValueMaker,
@@ -198,7 +199,7 @@ export class MapKernel implements IValueTypeCreator {
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
-        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
+        public readonly eventEmitter: IEventEmitter<ISharedMapEvents> = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
@@ -307,8 +308,7 @@ export class MapKernel implements IValueTypeCreator {
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }

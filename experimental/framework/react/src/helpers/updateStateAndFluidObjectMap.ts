@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
+import { IValueChanged, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
@@ -48,7 +48,7 @@ export const updateStateAndFluidObjectMap = async <
     runtime: IFluidDataStoreRuntime,
     viewState: SV,
     setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,
-    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IValueChanged, local: boolean) => void,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ) =>

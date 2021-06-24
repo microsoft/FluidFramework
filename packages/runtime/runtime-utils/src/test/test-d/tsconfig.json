@@ -1,0 +1,15 @@
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "compilerOptions": {
+        "rootDir": "./",
+        "outDir": "../../../dist/test/test-d"
+    },
+    "include": [
+        "./**/*"
+    ],
+    "references": [
+        {
+            "path": "../../.."
+        }
+    ]
+}

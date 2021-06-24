@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorum } from "@fluidframework/protocol-definitions";
+import { IEventProvider } from "@fluidframework/runtime-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ITaskManagerEvents extends ISharedObjectEvents {
@@ -13,7 +13,8 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
      * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
      * ops, but instead only reflects the current state.
      */
-    (event: "assigned" | "lost", listener: (taskId: string) => void);
+    assigned: [taskId: string];
+    lost: [taskId: string];
 }
 
 /**
@@ -49,12 +50,11 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     queued(taskId: string): boolean;
 }
 
-export interface IOldestClientObservableEvents extends IEvent {
-    (event: "connected", listener: () => void);
+export interface IOldestClientObservableEvents {
+    connected: [];
     // Typescript won't convert IFluidDataStoreRuntime and ContainerRuntime if we unify these,
     // I believe this is because the "connected" event has a clientId arg in the runtimes.
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    (event: "disconnected", listener: () => void);
+    disconnected: [];
 }
 
 /**
@@ -75,8 +75,9 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     clientId: string | undefined;
 }
 
-export interface IOldestClientObserverEvents extends IEvent {
-    (event: "becameOldest" | "lostOldest", listener: () => void);
+export interface IOldestClientObserverEvents {
+    becameOldest: [];
+    lostOldest: [];
 }
 
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {

@@ -5,10 +5,11 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { EventLiteral } from "@fluidframework/runtime-definitions";
 
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: Serializable<T>) => void);
-    (event: "delete", listener: () => void);
+    valueChanged: [value: EventLiteral<Serializable<T>>];
+    delete: [];
 }
 
 /**

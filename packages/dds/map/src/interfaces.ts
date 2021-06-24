@@ -4,8 +4,8 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { EventThis, IEventProvider } from "@fluidframework/runtime-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -99,39 +99,29 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
 }
 
-export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (
+export interface IDirectoryEvents {
+    containedValueChanged: [changed: IValueChanged, local: boolean, target: EventThis];
+}
+
+export interface ISharedDirectoryEvents extends ISharedObjectEvents, IDirectoryEvents {
+    valueChanged: [
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder,
-    ) => void);
-    (event: "clear", listener: (
+        target: EventThis,
+    ];
+    clear: [
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder,
-    ) => void);
-}
-
-export interface IDirectoryEvents extends IEvent {
-    (event: "containedValueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        target: IEventThisPlaceHolder,
-    ) => void);
+        target: EventThis,
+    ];
 }
 
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends
-    ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
-    Omit<IDirectory, "on" | "once" | "off"> {
-    // The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
-    // https://github.com/microsoft/TypeScript/issues/31671
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    readonly [Symbol.toStringTag]: string;
-}
+export interface ISharedDirectory
+    extends ISharedObject<ISharedDirectoryEvents>, IDirectory {}
 
 /**
  * Type of "valueChanged" event parameter for SharedDirectory
@@ -144,16 +134,17 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (
+    valueChanged: [
         changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder) => void);
-    (event: "clear", listener: (
+        target: EventThis,
+    ];
+    clear: [
         local: boolean,
         op: ISequencedDocumentMessage | null,
-        target: IEventThisPlaceHolder
-    ) => void);
+        target: EventThis,
+    ];
 }
 
 /**

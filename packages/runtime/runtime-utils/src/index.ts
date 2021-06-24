@@ -11,4 +11,5 @@ export * from "./requestParser";
 export * from "./serializer";
 export * from "./summarizerNode";
 export * from "./summaryUtils";
+export * from "./typedEventEmitter";
 export * from "./utils";

@@ -26,8 +26,7 @@ import {
     ISharedObjectEvents,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { EventThis, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
 import {
@@ -43,12 +42,9 @@ import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 const snapshotFileName = "header";
 const contentPath = "content";
 
-export interface ISharedSegmentSequenceEvents
-    extends ISharedObjectEvents {
-
-    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
-    (event: "maintenance",
-        listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
+export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    sequenceDelta: [event: SequenceDeltaEvent, target: EventThis];
+    maintenance: [event: SequenceMaintenanceEvent, target: EventThis];
 }
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>

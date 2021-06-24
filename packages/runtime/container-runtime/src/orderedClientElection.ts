@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 
 export const summarizerClientType = "summarizer";
 
@@ -30,11 +30,11 @@ interface IEligibleClient extends ITrackedClient {
 
 type TrackedClient = IIneligibleClient | IEligibleClient;
 
-interface IOrderedClientElectionEvents extends IEvent {
+interface IOrderedClientElectionEvents {
     /** Event fires when the currently elected client changes. */
-    (event: "electedChange", listener: (client: ITrackedClient | undefined) => void);
+    electedChange: [client: ITrackedClient | undefined];
     /** Event fires when the number of summarizers changes. */
-    (event: "summarizerChange", listener: (summarizerCount: number) => void);
+    summarizerChange: [summarizerCount: number];
 }
 
 /**

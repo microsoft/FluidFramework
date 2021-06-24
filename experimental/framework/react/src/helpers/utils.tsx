@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
+import { IValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     FluidObjectMap,
@@ -30,12 +30,12 @@ export async function asyncForEach(
     callback: (
         handle: IFluidHandle,
         fluidObjectMap: FluidObjectMap,
-        syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+        syncedStateCallback: (change: IValueChanged, local: boolean) => void,
         refreshView: () => void,
         storedHandleMap: SharedMap,
     ) => Promise<void>,
     fluidObjectMap: FluidObjectMap,
-    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
 ): Promise<void> {
@@ -54,7 +54,7 @@ export const addFluidObject = async <
 >(
     handle: IFluidHandle,
     fluidObjectMap: FluidObjectMap,
-    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
 ): Promise<void> => {
@@ -82,7 +82,7 @@ export const addFluidObject = async <
             (fluidObject as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents !== undefined) {
             for (const event of value.listenedEvents) {
-                (fluidObject as SharedObject).on(event, refreshView);
+                (fluidObject as SharedObject).on(event as any, refreshView);
             }
         }
         value.fluidObject = fluidObject;

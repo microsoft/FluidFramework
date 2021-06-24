@@ -41,8 +41,14 @@ import {
     IDeltaHandler,
     IChannelStorageService,
     IChannelServices,
+    IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import {
+    FluidSerializer,
+    getNormalizedObjectStoragePathParts,
+    mergeStats,
+    TypedEventEmitter,
+} from "@fluidframework/runtime-utils";
 import {
     IChannelSummarizeResult,
     IFluidDataStoreChannel,
@@ -369,7 +375,8 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockFluidDataStoreRuntime extends EventEmitter
+export class MockFluidDataStoreRuntime
+    extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }

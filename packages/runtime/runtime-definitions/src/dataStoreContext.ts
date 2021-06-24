@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -38,6 +38,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "./summary";
+import { IEventProvider } from "./events";
 
 /**
  * Runtime flush mode handling
@@ -55,10 +56,11 @@ export enum FlushMode {
     Manual,
 }
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
-    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+export interface IContainerRuntimeBaseEvents {
+    batchBegin: [op: ISequencedDocumentMessage];
+    op: [op: ISequencedDocumentMessage];
+    batchEnd: [error: any, op: ISequencedDocumentMessage];
+    signal: [message: IInboundSignalMessage, local: boolean];
 }
 
 /**
@@ -224,9 +226,9 @@ export type CreateChildSummarizerNodeFn = (
     getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
 ) => ISummarizerNodeWithGC;
 
-export interface IFluidDataStoreContextEvents extends IEvent {
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    (event: "attaching" | "attached", listener: () => void);
+export interface IFluidDataStoreContextEvents {
+    attaching: [];
+    attached: [];
 }
 
 /**

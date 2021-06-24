@@ -6,7 +6,8 @@
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IEventEmitter, TypedEventEmitter } from "@fluidframework/runtime-utils";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -171,7 +172,7 @@ export class MapKernel {
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
-        private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
+        public readonly eventEmitter: IEventEmitter<ISharedMapEvents> = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
@@ -277,8 +278,7 @@ export class MapKernel {
         return new Promise<T>((resolve) => {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolve(this.get<T>(changed.key)!);
                     this.eventEmitter.removeListener("valueChanged", callback);
                 }
@@ -481,7 +481,7 @@ export class MapKernel {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+        this.eventEmitter.emit("valueChanged", event, local, op ?? null, this.eventEmitter);
     }
 
     /**
@@ -491,7 +491,7 @@ export class MapKernel {
      */
     private clearCore(local: boolean, op: ISequencedDocumentMessage | undefined): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, op, this.eventEmitter);
+        this.eventEmitter.emit("clear", local, op ?? null, this.eventEmitter);
     }
 
     /**
@@ -506,7 +506,7 @@ export class MapKernel {
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+            this.eventEmitter.emit("valueChanged", event, local, op ?? null, this.eventEmitter);
         }
         return successfullyRemoved;
     }

@@ -454,9 +454,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             clientQueue.push(clientId);
             const newLockHolder = clientQueue[0];
             this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-            // TODO remove, just for debugging
-            this.emit("changed");
         }
     }
 
@@ -477,9 +474,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
         const newLockHolder = clientQueue[0];
         this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
     }
 
     private removeClientFromAllQueues(clientId: string) {
@@ -500,8 +494,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 } else {
                     this.taskQueues.set(taskId, filteredClientQueue);
                 }
-                // TODO remove, just for debugging
-                this.emit("changed");
                 this.queueWatcher.emit("queueChange", taskId);
             }
         }

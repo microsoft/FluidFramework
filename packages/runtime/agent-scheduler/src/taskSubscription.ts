@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
 import { IAgentScheduler } from "./agent";
 
-export interface ITaskSubscriptionEvents extends IEvent {
-    (event: "gotTask" | "lostTask", listener: () => void);
+export interface ITaskSubscriptionEvents {
+    gotTask: [];
+    lostTask: [];
 }
 
 /**

@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { TypedEventEmitter } from "@fluidframework/runtime-utils";
+
+export interface IRateLimiterEvents {
+    done: [];
+}
 
 /**
  * The rate limiter is a simple class that will defer running an async action
  */
-export class RateLimiter extends EventEmitter {
+export class RateLimiter extends TypedEventEmitter<IRateLimiterEvents> {
     private pending = false;
     private dirty = false;
     private running = false;

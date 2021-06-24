@@ -117,10 +117,7 @@ export async function initializeState<
 
     // Add the callback to the fluidObject's own synced state
     syncedState.addValueChangedListener(syncedStateCallback);
-    storedHandleMap.on("valueChanged", (
-        change: IValueChanged,
-        local: boolean,
-    ) => {
+    storedHandleMap.on("valueChanged", (change, local) => {
         const handle = storedHandleMap.get<IFluidHandle>(change.key);
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (handle !== undefined && !state.fluidObjectMap?.has(handle.absolutePath)) {

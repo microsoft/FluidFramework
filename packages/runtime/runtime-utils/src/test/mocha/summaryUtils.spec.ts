@@ -24,7 +24,7 @@ import {
     convertSummaryTreeToITree,
     convertToSummaryTree,
     utf8ByteLength,
-} from "../summaryUtils";
+} from "../../summaryUtils";
 
 describe("Summary Utils", () => {
     function assertSummaryTree(obj: SummaryObject): ISummaryTree {
