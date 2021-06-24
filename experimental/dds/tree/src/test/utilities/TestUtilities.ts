@@ -285,7 +285,6 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory)]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
-			addGlobalAgentSchedulerAndLeaderElection: false,
 			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 
