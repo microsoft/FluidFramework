@@ -75,7 +75,6 @@ import {
 import {
     FlushMode,
     InboundAttachMessage,
-    IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -171,7 +170,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
-    readonly reason: "disconnected";
+    readonly error: any;
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -535,9 +534,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
-     * @param registry - Mapping to the stores.
-     * @param requestHandlers - Request handlers for the container runtime
+     * @param registryEntries - Mapping to the stores.
+     * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
      */
     public static async load(
         context: IContainerContext,
@@ -545,6 +545,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
+        existing?: boolean,
     ): Promise<ContainerRuntime> {
         const logger = ChildLogger.create(context.logger, undefined, {
             all: {
@@ -604,6 +605,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
@@ -613,13 +615,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             combinedRuntimeOptions,
             containerScope,
             logger,
+            loadExisting,
             requestHandler,
             storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
-            if (!context.existing) {
+            if (!loadExisting) {
                 await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
             }
         }
@@ -629,11 +632,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get id(): string {
         return this.context.id;
-    }
-
-    public get existing(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.existing!;
     }
 
     public get options(): ILoaderOptions {
@@ -779,6 +777,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
+        // The `existing` property  is to be removed after the state
+        // is refactored into IRuntimeFactory. See #3429
+        public readonly existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -788,7 +789,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCFeature = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
@@ -863,6 +864,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (fn) => this.once("dispose", fn),
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
@@ -1307,7 +1309,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.addBlobId(message.metadata.blobId);
+                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
                     break;
                 default:
             }
@@ -1346,13 +1348,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
         return (await this.dataStores.getDataStore(id, wait)).realize();
-    }
-
-    public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
-        const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
-        const registryPath =
-            `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -1637,7 +1632,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {
@@ -1660,48 +1655,66 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
-        const message =
-            `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
-
         try {
             await this.deltaManager.inbound.pause();
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
+            const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
+
+            this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+
+            // Helper function to check whether we should still continue between each async step.
+            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+                // If summarizer loses connection it will never reconnect
+                if (!this.connected) {
+                    return { continue: false, error: "disconnected" };
+                }
+                // Ensure that lastSequenceNumber has not changed after pausing.
+                // We need the summary op's reference sequence number to match our summary sequence number,
+                // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
+                if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                return { continue: true };
+            };
+
+            const attemptData: Omit<IUnsubmittedSummaryData, "error"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
-            if (!this.connected) {
-                // If summarizer loses connection it will never reconnect
-                return { ...attemptData, reason: "disconnected" };
+            let continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, error: continueResult.error };
             }
 
             const trace = Trace.start();
-            const summarizeResult = await this.summarize({
-                runGC: this.shouldRunGC,
-                fullTree,
-                trackState: true,
-                summaryLogger,
-            });
+            let summarizeResult: IChannelSummarizeResult;
+            try {
+                summarizeResult = await this.summarize({
+                    runGC: this.shouldRunGC,
+                    fullTree,
+                    trackState: true,
+                    summaryLogger,
+                });
+            } catch (error) {
+                return { ...attemptData, error };
+            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,
                 generateDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, error: continueResult.error };
             }
 
-            // Ensure that lastSequenceNumber has not changed after pausing
-            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
-            assert(
-                lastSequenceNumber === summaryRefSeqNum,
-                0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
-            );
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
@@ -1716,9 +1729,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 
-            const handle = await this.storage.uploadSummaryWithContext(
-                summarizeResult.summary,
-                summaryContext);
+            let handle: string;
+            try {
+                handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
+            } catch (error) {
+                return { ...attemptData, ...generateData, error };
+            }
 
             const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
@@ -1733,24 +1749,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 uploadDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, ...uploadData, error: continueResult.error };
             }
 
-            // We need the summary op's reference sequence number to match our summary sequence number
-            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
-            assert(
-                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
-                `lastSequenceNumber changed before the summary op could be submitted. `
-                + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
-            );
+            let clientSequenceNumber: number;
+            try {
+                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+            } catch (error) {
+                return { ...attemptData, ...generateData, ...uploadData, error };
+            }
 
-            const clientSequenceNumber =
-                this.submitSystemMessage(MessageType.Summarize, summaryMessage);
-
-            this.summarizerNode.completeSummary(handle);
-
-            return {
+            const submitData: ISubmittedSummaryData = {
                 ...attemptData,
                 ...generateData,
                 ...uploadData,
@@ -1758,6 +1769,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
             };
+
+            this.summarizerNode.completeSummary(handle);
+
+            return submitData;
         } finally {
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
@@ -1833,6 +1848,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        this.verifyNotClosed();
         return this.blobManager.createBlob(blob);
     }
 

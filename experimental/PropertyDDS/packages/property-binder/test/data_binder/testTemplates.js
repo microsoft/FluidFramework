@@ -118,6 +118,11 @@ const ArrayContainerTemplate = {
       context: 'array'
     },
     {
+      id: 'arrayPrimitive',
+      typeid: 'String',
+      context: 'array'
+    },
+    {
       id: 'nested',
       properties: [
         {

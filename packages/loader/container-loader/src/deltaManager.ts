@@ -13,12 +13,11 @@ import {
     IDeltaManagerEvents,
     IDeltaQueue,
     ICriticalContainerError,
-    ContainerErrorType,
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, LoggingError } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -54,6 +53,7 @@ import {
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
+    ThrottlingWarning,
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
@@ -732,14 +732,13 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = new LoggingError("Op is sent in read-only document state", {
-                errorType: ContainerErrorType.genericError,
+            const error = CreateContainerError("Op is sent in read-only document state", {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
                 storageOnly: this.readOnlyInfo.storageOnly,
             });
-            this.close(CreateContainerError(error));
+            this.close(error);
             return -1;
         }
 
@@ -926,17 +925,9 @@ export class DeltaManager
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delayMs;
 
-            // Add 'throttling' properties to an error with safely extracted properties:
-            const throttlingWarning: IThrottlingWarning = {
-                errorType: ContainerErrorType.throttlingError,
-                message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayMs / 1000,
-            };
-            const reconfiguredError: IThrottlingWarning = {
-                ...CreateContainerError(error),
-                ...throttlingWarning,
-            };
-            this.emit("throttled", reconfiguredError);
+            const throttlingWarning: IThrottlingWarning =
+                ThrottlingWarning.wrap(error, "Service busy/throttled", delayMs / 1000 /* retryAfterSeconds */);
+            this.emit("throttled", throttlingWarning);
         }
     }
 

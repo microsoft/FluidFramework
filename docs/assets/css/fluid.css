@@ -199,13 +199,13 @@ footer {
     font-size: 0.7em;
     line-height: 1.8;
     color: #fff;
-    background-color: #777;
+    background-color: #666;
     min-width: 55px;
     text-align: center;
 }
 
 .highlight-copy-btn:hover {
-    background-color: #666;
+    background-color: #333;
 }
 
 .screen-reader-text {
