@@ -32,7 +32,7 @@ function getAssertMessageParams(sourceFile: SourceFile): (StringLiteral | Numeri
     const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
     const messageArgs:(StringLiteral | NumericLiteral | TemplateLiteral)[] = []
     for(const call of calls){
-        if(call.getExpression().getText() === "assert"){
+        if(["assert", "fail"].includes(call.getExpression().getText())) {
             const args = call.getArguments();
             if(args.length >=1 && args[1] !== undefined){
                 const kind = args[1].getKind();
