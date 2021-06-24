@@ -71,7 +71,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 }
 ```
 
-## Category
+### Category
 
 Currently, there are 3 categories used by the telemetry system:
 
@@ -136,7 +136,7 @@ this.logger.sendTelemetryEvent({
 });
 ```
 
-### Code example
+## Code example
 
 With the interface already hooked up to the container's telemetry system, it is easy for users to write a custom telemetry object by implementing the `ITelemetryBaseLogger` interface and defining the `send()` method. Below is an example custom telemetry logger, `ConsoleLogger`, that implements the `ITelemetryBaseLogger` interface. As the name suggest, the `ConsoleLogger` defined the `send()` method to stringify the entire event object and print it out.
 
