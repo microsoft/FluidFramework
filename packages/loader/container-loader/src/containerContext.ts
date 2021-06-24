@@ -293,7 +293,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     /**
-     * TODO(andre4i) #3429
+     * #3429
      * Will be adjusted to branch on the `existing` parameter
      * and call the proper runtime factory initializer
      */

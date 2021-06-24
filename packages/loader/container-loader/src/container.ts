@@ -1203,11 +1203,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._protocolHandler = await protocolHandlerP;
 
-        const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            codeDetails,
-            attributes,
             this._existing === true,
+            attributes,
             snapshot,
             pendingLocalState,
         );
@@ -1297,7 +1295,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.createDetachedContext(attributes);
+        await this.instantiateContext(
+            false, // existing
+            attributes,
+        );
 
         this.propagateConnectionState();
 
@@ -1321,11 +1322,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            codeDetails,
+            true, // existing
             attributes,
-            true,
             snapshotTree,
         );
 
@@ -1822,12 +1821,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async instantiateContext(
-        codeDetails: IFluidCodeDetails,
-        attributes: IDocumentAttributes,
         existing: boolean,
+        attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
@@ -1861,23 +1864,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.emit("contextChanged", codeDetails);
-    }
-
-    /**
-     * Creates a new, unattached container context
-     */
-    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
-        }
-
-        await this.instantiateContext(
-            codeDetails,
-            attributes,
-            false,
-            snapshot,
-        );
     }
 
     // Please avoid calling it directly.
