@@ -200,6 +200,13 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
 // This is the current version of garbage collection.
 const GCVersion = 1;
 
+export interface IGCStats {
+    totalNodes: number;
+    deletedNodes: number;
+    totalDataStores: number;
+    deletedDataStores: number;
+}
+
 export interface IGCRuntimeOptions {
     /* Flag that will disable garbage collection if set to true. */
     disableGC?: boolean;
@@ -1567,9 +1574,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false) {
-        await PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
-            const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
+    /**
+     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * @returns the number of data stores that have been marked as unreferenced.
+     */
+    public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false): Promise<IGCStats> {
+        return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
+            let gcStats: IGCStats;
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData(fullGC);
@@ -1578,10 +1589,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.logger,
                 );
 
-                // Update stats to be reported in the peformance event.
-                gcStats.deletedGCNodes = deletedNodeIds.length;
-                gcStats.totalGCNodes = referencedNodeIds.length + gcStats.deletedGCNodes;
-
                 // Update our summarizer node's used routes. Updating used routes in summarizer node before
                 // summarizing is required and asserted by the the summarizer node. We are the root and are
                 // always referenced, so the used routes is only self-route (empty string).
@@ -1589,7 +1596,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                this.dataStores.updateUsedRoutes(usedRoutes);
+                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(usedRoutes);
+
+                // Update stats to be reported in the peformance event.
+                gcStats = {
+                    deletedNodes: deletedNodeIds.length,
+                    totalNodes: referencedNodeIds.length + deletedNodeIds.length,
+                    deletedDataStores: unusedDataStoreCount,
+                    totalDataStores: dataStoreCount,
+                };
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
                 // involving access to deleted data.
@@ -1597,10 +1612,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
-                event.cancel(gcStats, error);
+                event.cancel(undefined, error);
                 throw error;
             }
-            event.end(gcStats);
+            event.end({ ...gcStats });
+            return gcStats;
         });
     }
 
