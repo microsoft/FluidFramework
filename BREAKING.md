@@ -4,6 +4,7 @@
 - [IContainerRuntime property removed](#IContainerRuntime-property-removed)
 - [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
 - [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
+- [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
 
 ### 0.42 package renames
 
@@ -22,6 +23,11 @@ the npm scopes.
 
 ### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
 These interface and apis are not supposed to be used outside the package. So stop exposing them.
+
+### addGlobalAgentSchedulerAndLeaderElection removed
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag was turned off by default in 0.40.  In 0.42 the flag (and the functionality it enabled) has been removed.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
 
 ## 0.41 Breaking changes
 
