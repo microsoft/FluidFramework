@@ -54,7 +54,7 @@ export interface ITelemetryBaseLogger {
 
 Different levels of logging complexity can be achieved by adding other attributes to the object implementing the `ITelemetryBaseLogger` interface. For example, the `ITelemetryLogger` interface, also within the `@fluidframework/common-definitions` package, broke down telemetry events into different categories, allowing different logging logics for each category. However, it is imperative to ensure that the `send()` method is ultimately called since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
 
-### ITelemetryBaseEvent interface
+## ITelemetryBaseEvent interface
 
 A telemetry event is any errors, performance, and informational (non-error) related events. An event is captured and labeled within the `ITelemetryBaseEvent` parameter mentioned previously. The `ITelemetryBaseEvent` is also an interface and implements the `ITelemetryProperties` type. This interface is the base interface for logging telemetry statements, allowing the user to have any number of properties and will serialize it as a JSON payload. With that said, the interface has 2 properties defined already, `eventName` and `category`. These 2 properties are used by the telemetry system to label and define the telemetry event that has occurred.
 
