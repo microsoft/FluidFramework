@@ -655,7 +655,7 @@ describe('Property element', function() {
 
     const propElem = new PropertyElement(workspace.root);
     expect(propElem.getChild(['"/"', 'aString']).isValid()).toEqual(true);
-    expect(propElem.getChild(['"/"', 'aString', '/']).getProperty()).toEqual(workspace.root);
+    expect(propElem.getChild(['"/"', 'aString', '/']).isValid()).toEqual(false);
   });
 
 });
