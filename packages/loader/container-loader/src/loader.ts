@@ -29,6 +29,7 @@ import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
+    IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -197,6 +198,11 @@ export interface ILoaderProps {
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
 /**
@@ -243,7 +249,18 @@ export interface ILoaderServices {
      * The logger downstream consumers should construct their loggers from
      */
     readonly subLogger: ITelemetryLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
+
+/**
+ * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
+ * blobs in detached containers.
+ */
+ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
 
 /**
  * Manages Fluid resource loading
@@ -291,6 +308,7 @@ export class Loader implements IHostLoader {
             scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
+            detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
