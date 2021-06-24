@@ -45,7 +45,7 @@ export interface ITelemetryBaseLogger {
 }
 ```
 
-- Supports Tags
+- SupportsTags
   - These tags are generic strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (e.g. private customer data), then it would be worthwhile to "tag" the event with some identifier.
 - `send()`
   - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions` package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's telemetry system to execute.
@@ -79,7 +79,7 @@ Currently, there are 3 categories used by the telemetry system:
 - performance - used to track metrics, e.g. used by the summarizer to track how long it takes to do or load a summary (if it's takes too long then even though its a performance event it'll be considered an error).
 - generic - used as a catchall for events that are mostly harmless.
 
-### Event name
+### EventName
 
 This property is currently used by the telemetry system to indicate the event in a more descriptive manner.
 
