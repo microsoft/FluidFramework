@@ -55,6 +55,7 @@ describe("ContainerContext Tests", () => {
 
     const createTestContext = async (
         codeLoader: unknown, /* ICodeDetailsLoader */
+        existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
@@ -72,6 +73,7 @@ describe("ContainerContext Tests", () => {
             Sinon.fake(),
             Container.version,
             Sinon.fake(),
+            existing,
         );
     };
 
