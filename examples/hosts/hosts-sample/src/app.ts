@@ -25,6 +25,7 @@ const ordererUrl = "http://localhost:7070";
 const storageUrl = "http://localhost:7070";
 
 const defaultDocument = "example";
+const createNewHash = "#CreateNew";
 const defaultPackage = "@fluid-example/faux-package@1.0.0";
 
 // Use the application name as a tinylicious tenant ID
@@ -112,13 +113,21 @@ export async function start(
         console.log("waiting for the container to get connected");
         await new Promise<void>((resolve, reject) => {
             container?.once("connected", () => resolve());
-            container?.once("closed", (error) =>
-                reject(
-                    new Error(
-                        `Container closed unexpectedly. ${error?.message}`,
-                    ),
-                ),
-            );
+            container?.once("closed", (error) => {
+                if (error?.message === "ExistingContextDoesNotSatisfyIncomingProposal") {
+                    reject(
+                        new Error(
+                            `Loaded code is not compatible with the document schema.`,
+                        ),
+                    );
+                } else {
+                    reject(
+                        new Error(
+                            `Container closed unexpectedly. ${error?.message}`,
+                        ),
+                    );
+                }
+            });
         });
     }
 
@@ -134,12 +143,21 @@ export async function start(
     return container;
 }
 
-// Load the initial page based on the URL. If no document ID is specified default to one named example.
+// Parse the browser URL and load the app page.
+// The URL format:
+// ```
+// http://localhost:8080/[document-id][#CreateNew][?chaincode=package-id]
+// ```
+// , where
+// `document-id` - is a alphanumerical string representing the Fluid document ID.
+// `package-id` - is a Fluid code package name and version in the following format `@scope/package-name@semver`.
+// `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
 if (document.location.pathname === "/") {
-    window.location.href = `/${defaultDocument}?#CreateNew`;
+    // Use a default document ID when not specified by the user
+    window.location.href = `/${defaultDocument}?${createNewHash}`;
 } else {
     let shouldCreateNewDocument = false;
-    if (window.location.hash === "#CreateNew") {
+    if (window.location.hash === createNewHash) {
         shouldCreateNewDocument = true;
         window.location.hash = "";
     }

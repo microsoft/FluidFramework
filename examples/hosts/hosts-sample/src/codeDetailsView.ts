@@ -36,9 +36,17 @@ export const bindUI = (
     container: Container,
     packageDetails: IPackageIdentifierDetails,
 ) => {
-    container.once("closed", (error) =>
-        window.alert(`🛑 Container is closed\n\n${error}`),
-    );
+    container.once("closed", (error) => {
+        if (
+            error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
+        ) {
+            window.alert(
+                `🛑 Container is closed\n\nCurrent code is not compatible with the incoming proposal.`,
+            );
+        } else {
+            window.alert(`🛑 Container is closed\n\n${error}`);
+        }
+    });
 
     const upgradeBtn = document.getElementById(
         "upgrade-btn",
