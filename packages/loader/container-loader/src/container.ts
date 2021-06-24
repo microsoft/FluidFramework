@@ -1201,12 +1201,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._existing = details.existing;
         }
 
-        // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            this._existing === true,
+            snapshot,
+            pendingLocalState,
+        );
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1317,7 +1321,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.createDetachedContext(attributes, snapshotTree);
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            true,
+            snapshotTree,
+        );
 
         this.loaded = true;
 
@@ -1811,21 +1821,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async loadContext(
+    private async instantiateContext(
         codeDetails: IFluidCodeDetails,
         attributes: IDocumentAttributes,
+        existing: boolean,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
-        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-        // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this, this.loader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
@@ -1835,7 +1843,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
-            loader,
+            // The relative loader will proxy requests to '/' to the loader itself
+            // assuming no non-cache flags are set.
+            // Global requests will still go directly to the loader
+            new RelativeLoader(this, this.loader),
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
@@ -1845,6 +1856,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
+            existing,
             pendingLocalState,
         );
 
@@ -1860,7 +1872,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("pkg should be provided in create flow!!");
         }
 
-        await this.loadContext(codeDetails, attributes, snapshot);
+        await this.instantiateContext(
+            codeDetails,
+            attributes,
+            false,
+            snapshot,
+        );
     }
 
     // Please avoid calling it directly.

@@ -22,6 +22,7 @@ import {
     ContainerWarning,
     AttachState,
     ILoaderOptions,
+    IRuntimeFactory,
     ICodeLoader,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -63,6 +64,7 @@ export class ContainerContext implements IContainerContext {
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         updateDirtyContainerState: (dirty: boolean) => void,
+        existing: boolean,
         pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
@@ -81,8 +83,9 @@ export class ContainerContext implements IContainerContext {
             closeFn,
             version,
             updateDirtyContainerState,
+            existing,
             pendingLocalState);
-        await context.load();
+        await (existing ? context.initializeFromExisting() : context.initializeFirstTime());
         return context;
     }
 
@@ -98,10 +101,6 @@ export class ContainerContext implements IContainerContext {
 
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
-    }
-
-    public get existing(): boolean | undefined {
-        return this.container.existing;
     }
 
     public get branch(): string {
@@ -177,6 +176,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
+        public readonly existing: boolean,
         public readonly pendingLocalState?: unknown,
 
     ) {
@@ -282,6 +282,35 @@ export class ContainerContext implements IContainerContext {
     }
 
     // #region private
+
+    // back compat: 0.40 (see #3429)
+    private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
+        return "getRuntime" in runtimeFactory;
+    }
+
+    private async initializeFromExisting() {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
+            runtimeFactory.getRuntime(this, true) :
+            runtimeFactory.instantiateRuntime(this));
+    }
+
+    private async initializeFirstTime() {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await (this.isFactoryStateful(runtimeFactory) ?
+            runtimeFactory.getRuntime(this, false) :
+            runtimeFactory.instantiateRuntime(this));
+    }
+
+    private async getRuntimeFactory(): Promise<IRuntimeFactory> {
+        const runtimeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
+        if (runtimeFactory === undefined) {
+            throw new Error(PackageNotFactoryError);
+        }
+
+        return runtimeFactory;
+    }
+
     private attachListener() {
         this.container.once("attaching", () => {
             this._runtime?.setAttachState?.(AttachState.Attaching);
@@ -289,14 +318,6 @@ export class ContainerContext implements IContainerContext {
         this.container.once("attached", () => {
             this._runtime?.setAttachState?.(AttachState.Attached);
         });
-    }
-
-    private async load() {
-        const maybeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
-        if (maybeFactory === undefined) {
-            throw new Error(PackageNotFactoryError);
-        }
-        this._runtime = await maybeFactory.instantiateRuntime(this);
     }
 
     private async loadCodeModule(codeDetails: IFluidCodeDetails) {
