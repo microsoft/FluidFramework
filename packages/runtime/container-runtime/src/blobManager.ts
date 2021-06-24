@@ -10,6 +10,8 @@ import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 
 /**
  * This class represents blob (long string)
@@ -55,10 +57,10 @@ export class BlobManager {
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
-        onceRuntimeDisposed: (fn: () => void) => void,
+        private readonly runtime: IContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {
-        onceRuntimeDisposed(() => {
+        this.runtime.once("dispose", () => {
             for (const promise of this.pendingBlobIds.values()) {
                 promise.reject(new Error("runtime disposed while blobAttach op in flight"));
             }
@@ -82,6 +84,11 @@ export class BlobManager {
             this.routeContext,
             async () => this.getStorage().readBlob(response.id),
         );
+
+        if (this.runtime.attachState !== AttachState.Attached) {
+            this.blobIds.add(response.id);
+            return handle;
+        }
 
         // Note - server will de-dup blobs, so we might get existing blobId!
         if (this.pendingBlobIds.has(response.id)) {
