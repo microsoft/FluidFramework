@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -267,5 +268,14 @@ export async function loadContainer(
         logger,
     });
 
-    return loader.resolve({ url: resolved.url });
+    return loader.resolve(
+        {
+            url: resolved.url,
+            headers: {
+                [LoaderHeader.clientDetails]: {
+                    environment: "test-replay-tool",
+                    capabilities: { interactive: false },
+                },
+            },
+        });
 }

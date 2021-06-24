@@ -294,6 +294,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: unknown,
+        allowLegacy?: boolean,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -321,7 +322,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState)
+                container.load(version, mode, pendingLocalState, allowLegacy)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -1118,8 +1119,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown)
-    {
+        pendingLocalState?: unknown,
+        allowLegacy?: boolean,
+    ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1192,7 +1194,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else {
             //
             // THIS IS LEGACY PATH
+            // The code is maintained for the snapshot back compat tests
             //
+            assert(allowLegacy === true, "Snapshot should already exist");
+
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
             }

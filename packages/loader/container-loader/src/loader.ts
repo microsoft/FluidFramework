@@ -77,6 +77,8 @@ export class RelativeLoader implements ILoader {
                         version: request.headers?.[LoaderHeader.version] ?? undefined,
                         loadMode: request.headers?.[LoaderHeader.loadMode],
                     },
+                    undefined, // pendingLocalState
+                    request.headers?.[LoaderHeader.clientDetails]?.environment?.startsWith("test-"),
                 );
                 return container;
             }
