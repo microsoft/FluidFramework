@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventArgs, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
+import { EventArgs, EventLiteral, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
 import { expectAssignable, expectError, expectType } from 'tsd';
 import { IEventEmitter, TypedEventEmitter } from "../../..";
 
@@ -343,16 +343,28 @@ export function furtherTest(f: FurtherExtendedEmitter) {
 
 type Complex<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : number;
 interface IComplexEvents<T> {
-    maybe: [complex: Complex<T>];
-    maybeNot(complex: Complex<T>): void;
+    maybe: [
+        complex: EventLiteral<Complex<T>>,
+        thisOne: EventThis,
+        n: number,
+    ];
+    maybeNot(
+        complex: EventLiteral<Complex<T>>,
+        thisOne: EventThis,
+        n: number,
+    ): void;
 }
 export function checkComplex<T>(emitter: IEventEmitter<IComplexEvents<T>>, complex: Complex<T>) {
-    emitter.emit("maybe", complex);
-    expectError(emitter.emit("maybeNot", complex)); // doesn't work when checking against EventThis
-    emitter.on("maybe", (complex) => {
+    emitter.emit("maybe", complex, emitter, 1);
+    emitter.emit("maybeNot", complex, emitter, 2);
+    emitter.on("maybe", (complex, thisOne, n) => {
         expectType<Complex<T>>(complex);
+        expectType<IEventEmitter<IComplexEvents<T>>>(thisOne);
+        expectType<number>(n);
     });
-    emitter.on("maybeNot", (complex) => {
-        expectError<Complex<T>>(complex); // doesn't work when checking against EventThis
+    emitter.on("maybeNot", (complex, thisOne, n) => {
+        expectType<Complex<T>>(complex);
+        expectType<IEventEmitter<IComplexEvents<T>>>(thisOne);
+        expectType<number>(n);
     });
 }
