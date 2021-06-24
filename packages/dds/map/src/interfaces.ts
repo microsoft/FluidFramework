@@ -100,7 +100,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 export interface IDirectoryEvents {
-    containedValueChanged(changed: IValueChanged, local: boolean, target: EventThis): EventThis;
+    containedValueChanged: [changed: IValueChanged, local: boolean, target: EventThis];
 }
 
 export interface ISharedDirectoryEvents extends ISharedObjectEvents, IDirectoryEvents {
@@ -134,17 +134,17 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    valueChanged(
+    valueChanged: [
         changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: EventThis,
-    ): EventThis;
-    clear(
+    ];
+    clear: [
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: EventThis,
-    ): EventThis;
+    ];
 }
 
 /**

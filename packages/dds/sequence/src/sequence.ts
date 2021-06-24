@@ -43,8 +43,8 @@ const snapshotFileName = "header";
 const contentPath = "content";
 
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
-    sequenceDelta(event: SequenceDeltaEvent, target: EventThis): EventThis;
-    maintenance(event: SequenceMaintenanceEvent, target: EventThis): EventThis;
+    sequenceDelta: [event: SequenceDeltaEvent, target: EventThis];
+    maintenance: [event: SequenceMaintenanceEvent, target: EventThis];
 }
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>

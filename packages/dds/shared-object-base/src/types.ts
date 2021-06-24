@@ -14,16 +14,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvents {
-    ["pre-op"](
+    ["pre-op"]: [
         op: ISequencedDocumentMessage,
         local: boolean,
         target: EventThis,
-    ): EventThis;
-    op(
+    ];
+    op: [
         op: ISequencedDocumentMessage,
         local: boolean,
         target: EventThis,
-    ): EventThis;
+    ];
 }
 
 /**

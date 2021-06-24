@@ -115,17 +115,17 @@ export interface IValueTypeCreator {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    valueChanged(
+    valueChanged: [
         changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: EventThis,
-    ): EventThis;
-    clear(
+    ];
+    clear: [
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: EventThis,
-    ): EventThis;
+    ];
 }
 
 /**
