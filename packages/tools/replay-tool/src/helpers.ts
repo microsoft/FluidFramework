@@ -6,7 +6,6 @@
 import { strict } from "assert";
 import fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { assert } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
