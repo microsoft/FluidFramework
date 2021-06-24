@@ -539,13 +539,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * Flag indicating whether the document already existed at the time of load
-     */
-    public get existing(): boolean | undefined {
-        return this._existing;
-    }
-
-    /**
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
@@ -1167,8 +1160,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
+        let existing = true;
         if (snapshot !== undefined) {
-            this._existing = true;
             switch (loadMode.opsBeforeReturn) {
                 case undefined:
                     if (loadMode.deltaConnection !== "none") {
@@ -1203,14 +1196,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             const details = await startConnectionP;
-            this._existing = details.existing;
+            existing = details.existing;
         }
 
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            this._existing === true,
+            existing,
             attributes,
             codeDetails,
             snapshot,
@@ -1262,7 +1255,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return {
-            existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
         };
@@ -1291,9 +1283,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachDeltaManagerOpHandler(attributes);
 
-        // We know this is create detached flow without snapshot.
-        this._existing = false;
-
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
@@ -1320,9 +1309,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
-
-        // We know this is create detached flow with snapshot.
-        this._existing = true;
 
         // ...load in the existing quorum
         // Initialize the protocol handler

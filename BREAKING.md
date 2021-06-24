@@ -11,6 +11,7 @@
 - [IContainerRuntime property removed](#IContainerRuntime-property-removed)
 - [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
 - [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
+- [Property removed from the Container class](#Property-removed-from-the-Container-class)
 
 ### 0.42 package renames
 
@@ -26,6 +27,9 @@ the npm scopes.
 
 ### IContainerRuntime property removed
 - the `existing` property from `IContainerRuntime` has been removed.
+
+### Property removed from the Container class
+- the `existing` property from `Container` has been removed.
 
 ### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
 These interface and apis are not supposed to be used outside the package. So stop exposing them.
