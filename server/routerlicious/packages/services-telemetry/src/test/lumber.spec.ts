@@ -141,7 +141,7 @@ describe("Lumber", () => {
         lumber.addProperties(recordProperties)
               .addProperties(extraMapProperties);
 
-              assert.strictEqual(lumber.properties.size, 3);
+        assert.strictEqual(lumber.properties.size, 3);
         assert.strictEqual(lumber.properties.has("key2"), true);
         assert.strictEqual(lumber.properties.get("key2"), value2);
         assert.strictEqual(lumber.properties.has(key3), true);
