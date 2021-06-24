@@ -12,9 +12,9 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 // addProperty(). Once the telemetry event is complete, the user must call either success()
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
-    public readonly properties = new Map<string, any>();
     private readonly startTime = Date.now();
     public readonly timestamp = new Date(this.startTime).toISOString();
+    private  _properties = new Map<string, any>();
     private _metadata?: ITelemetryMetadata;
     private _durationInMs?: number;
     private _successful?: boolean;
@@ -23,6 +23,10 @@ export class Lumber<T extends string = LumberEventName> {
     private _exception?: Error;
     private _logLevel?: LogLevel;
     private completed = false;
+
+    public get properties(): Map<string, any> {
+        return this._properties;
+    }
 
     public get metadata(): ITelemetryMetadata | undefined {
         return this._metadata;
@@ -61,10 +65,31 @@ export class Lumber<T extends string = LumberEventName> {
     constructor(
         public readonly eventName: T,
         public readonly type: LumberType,
-        private readonly engineList: ILumberjackEngine[]) {}
+        private readonly engineList: ILumberjackEngine[],
+        properties?: Map<string, any> | Record<string, any>) {
+            if (properties) {
+                this.addProperties(properties);
+            }
+        }
 
     public addProperty(key: string, value: any): this {
-        this.properties.set(key, value);
+        this._properties.set(key, value);
+        return this;
+    }
+
+    public addProperties(properties: Map<string, any> | Record<string, any>): this {
+        if (properties instanceof Map) {
+            if (this._properties.size === 0) {
+                this._properties = properties;
+            } else {
+                properties.forEach((value: any, key: string) => { this.addProperty(key, value); });
+            }
+        } else {
+            Object.entries(properties).forEach((entry) => {
+                const [key, value] = entry;
+                this.addProperty(key,value);
+            });
+        }
         return this;
     }
 

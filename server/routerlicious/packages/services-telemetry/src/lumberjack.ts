@@ -35,9 +35,11 @@ export class Lumberjack {
         this.isSetupCompleted = true;
     }
 
-    public newLumberMetric<T extends string = LumberEventName>(eventName: T) {
+    public newLumberMetric<T extends string = LumberEventName>(
+        eventName: T,
+        properties?: Map<string, any> | Record<string, any>) {
         this.throwOnEmptyEngineList();
-        return new Lumber<T>(eventName, LumberType.Metric, this.engineList);
+        return new Lumber<T>(eventName, LumberType.Metric, this.engineList, properties);
     }
 
     public log(
@@ -46,21 +48,9 @@ export class Lumberjack {
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
         statusCode?: number | string,
-        exception?: Error,
-    ) {
+        exception?: Error) {
         this.throwOnEmptyEngineList();
-        const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this.engineList);
-
-        if (properties) {
-            if (properties instanceof Map) {
-                properties.forEach((value: any, key: string) => { lumber.addProperty(key, value); });
-            } else {
-                Object.entries(properties).forEach((entry) => {
-                    const [key, value] = entry;
-                    lumber.addProperty(key,value);
-                });
-            }
-        }
+        const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this.engineList, properties);
 
         if (level === LogLevel.Warning || level === LogLevel.Error) {
             lumber.error(message, statusCode, metadata, exception, level);
