@@ -1740,7 +1740,9 @@ class DataBinding {
       // then it value represent the index/key of the entry involved in the registered event.
       if (propertyOrKey instanceof BaseProperty ) {
         const property = propertyOrKey;
-        const values = propertyOrKey.isPrimitiveType() ? propertyOrKey.getValue() : propertyOrKey.getValues();
+        const values = (property.isPrimitiveType() && property.getContext() === 'single') ?
+          property.getValue():
+          property.getValues();
         in_callback.call(this, values);
       } else {
         const key = propertyOrKey;
