@@ -62,6 +62,46 @@ export interface IEventProvider<TEvents> {
     readonly prependOnceListener: EventSubscribe<TEvents, this>;
 }
 
+/** Gets the emit function signature from an event contract. */
+export type EventEmit<TEvents, TThis> = <
+    TKey extends keyof TEvents,
+    TArgs extends TEvents[TKey] = TEvents[TKey]
+>(
+    event: EventName<TEvents, TKey>,
+    ...args: EventArgs<TArgs, TThis>
+) => boolean;
+
+/** Contract which provides strongly typed event emitting.  */
+export interface IEventEmittable<TEvents> {
+    readonly emit: EventEmit<TEvents, this>;
+}
+
+/** Helper indicating possible types for an event's arguments. */
+export type TypedEvent = any[] | ((...args: any[]) => any);
+
+/** Helper indicating possible types for an event contract. */
+export type TypedEvents = Record<string | number, TypedEvent>;
+
+/**
+ * Helper to convert a single event arguments to all be literal types.
+ * Use EventLiterals<T> instead.
+ */
+export type SingleEventLiterals<T extends TypedEvent> = T extends any[]
+    ? { [K in keyof T]: EventLiteral<T[K]> }
+    : T extends (...args: infer A) => infer R
+    ? (...args: { [K in keyof A]: EventLiteral<A[K]> }) => R
+    : never;
+
+/**
+ * Helper to convert an events contract or single event arguments to all be literal types.
+ * This can be useful to wrap the type when EventThis is not being used.
+ */
+export type EventLiterals<T extends TypedEvent | TypedEvents> = T extends TypedEvent
+    ? SingleEventLiterals<T>
+    : T extends TypedEvents
+    ? { [K in keyof T]: SingleEventLiterals<T[K]> }
+    : never;
+
 /** Common error event contract for general errors. */
 export interface IErrorEvents {
     error: [error: any];

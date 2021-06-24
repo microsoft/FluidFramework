@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventArgs, EventLiteral, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
+import { EventArgs, EventLiteral, EventLiterals, EventThis, IErrorEvents, IEventProvider } from '@fluidframework/runtime-definitions';
 import { expectAssignable, expectError, expectType } from 'tsd';
 import { IEventEmitter, TypedEventEmitter } from "../../..";
 
@@ -51,14 +51,14 @@ class TestEmitter extends TypedEventEmitter<ITestEvents> {
 
         // Verify listener events
         this.on("newListener", (event, listener) => {
-            expectType<keyof ITestEvents>(event);
+            expectType<"error" | keyof ITestEvents>(event);
             expectAssignable<CallableFunction>(listener);
         });
         expectError(this.on("newListener", (event, listener, extra) => {
             // too many args
         }));
         this.on("removeListener", (event, listener) => {
-            expectType<keyof ITestEvents>(event);
+            expectType<"error" | keyof ITestEvents>(event);
             expectAssignable<CallableFunction>(listener);
         });
         expectError(this.on("removeListener", (event, listener, extra) => {
@@ -124,14 +124,14 @@ export function testConcreteTypes(emitter: TestEmitter) {
 
     // Verify listener events
     emitter.on("newListener", (event, listener) => {
-        expectType<keyof ITestEvents>(event);
+        expectType<"error" | keyof ITestEvents>(event);
         expectAssignable<CallableFunction>(listener);
     });
     expectError(emitter.on("newListener", (event, listener, extra) => {
         // too many args
     }));
     emitter.on("removeListener", (event, listener) => {
-        expectType<keyof ITestEvents>(event);
+        expectType<"error" | keyof ITestEvents>(event);
         expectAssignable<CallableFunction>(listener);
     });
     expectError(emitter.on("removeListener", (event, listener, extra) => {
@@ -224,6 +224,7 @@ interface IBaseEvents extends IErrorEvents {
 
 interface IExtendedEvents extends IBaseEvents {
     extended: [n: number];
+    many: EventLiterals<[x: number, a: string[], b?: boolean]>;
 }
 
 class ExtendableEmitter<T extends IBaseEvents> extends TypedEventEmitter<T> {
@@ -261,6 +262,8 @@ class ExtendableEmitter<T extends IBaseEvents> extends TypedEventEmitter<T> {
             expectAssignable<ExtendableEmitter<T>>(me);
             expectAssignable<this>(me);
         });
+        this.emit("error", "a" as unknown);
+        expectError(this.emit("error", 1, 2));
     }
 }
 
@@ -295,6 +298,7 @@ export function testExtendedTypes(emitter: ExtendableEmitter<IExtendedEvents>) {
         expectType<ExtendableEmitter<IExtendedEvents>>(me);
         expectType<typeof emitter>(me);
     });
+    emitter.emit("error", "s" as unknown);
 }
 
 export function testExtendableTypes<T extends IBaseEvents>(emitter: ExtendableEmitter<T>) {
@@ -339,6 +343,19 @@ export function furtherTest(f: FurtherExtendedEmitter) {
         expectType<FurtherExtendedEmitter>(me);
     });
     f.emit("testThis", f)
+    f.emit("error", "a" as unknown);
+    expectError(f.emit("error", 1, 2)); // too many args
+    f.on("error", (error) => {
+        expectType<any>(error);
+    })
+    expectError(f.on("error", (e1, e2) => {
+        // too many args
+    }));
+    f.on("newListener", (event, listener) => {
+        expectType<"error" | "extended" | "base" | "testThis" | "many">(event);
+        listener("x" as unknown);
+        listener(1, ["x", "y", "z"], false);
+    });
 }
 
 type Complex<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : number;
@@ -366,5 +383,99 @@ export function checkComplex<T>(emitter: IEventEmitter<IComplexEvents<T>>, compl
         expectType<Complex<T>>(complex);
         expectType<IEventEmitter<IComplexEvents<T>>>(thisOne);
         expectType<number>(n);
+    });
+}
+
+interface IEvents1<T> {
+    test: EventLiterals<[a: string, b: number, C?: { x: string }]>;
+    does: [me: EventThis, you: EventLiteral<T>];
+    error: [dog: { name: string }, count: number];
+}
+
+const emitter1 = new TypedEventEmitter<IEvents1<boolean>>();
+emitter1.emit("test", "x", 1);
+emitter1.emit("test", "1", 333, { x: "aaa" });
+emitter1.emit("does", emitter1, true);
+
+export function try1<T>(em: IEventEmitter<IEvents1<T>>, it: T) {
+    em.emit("test", "x", 1);
+    em.emit("test", "1", 333, { x: "aaa" });
+    em.emit("does", em, it);
+    em.listenerCount("does");
+    em.listeners("does").map((l) => l(em, it));
+    em.on("newListener", (e, l) => {
+        l("x", 1);
+    });
+    em.on("newListener", (e, l) => {
+        l(em, it);
+        if (e === "test") {
+            l(em, it);
+        } else if (e === "does") {
+            l(em, it);
+        }
+    });
+    em.on("removeListener", (e, l) => {
+        l(em, it);
+        if (e === "test") {
+            l(em, it);
+        } else if (e === "does") {
+            l(em, it);
+        } else if (e === "error") {
+            expectError(l("")); // ideally this would not error
+        }
+    });
+    em.on("error", (dog, count) => {
+        expectType<{ name: string }>(dog);
+        expectType<number>(count);
+    });
+    em.on("error", (e: any) => {
+        return 1;
+    });
+}
+
+interface IEvents2<T> {
+    test: EventLiterals<[a: string, b: number, C?: { x: string }]>;
+    does: [me: EventThis, you: EventLiteral<T>];
+}
+
+export function try2<T>(
+    it: T,
+    em: IEventEmitter<IEvents2<T>> = new TypedEventEmitter<IEvents2<T>>(),
+) {
+    em.emit("test", "x", 1);
+    em.emit("test", "1", 333, { x: "aaa" });
+    em.emit("does", em, it);
+    em.listenerCount("does");
+    em.listeners("does").map((l) => l(em, it));
+    em.on("newListener", (e, l) => {
+        l("x", 1);
+    });
+    em.on("newListener", (e, l) => {
+        l(em, it);
+        if (e === "test") {
+            l(em, it);
+        } else if (e === "does") {
+            l(em, it);
+        }
+    });
+    em.on("removeListener", (e, l) => {
+        l(em, it);
+        if (e === "test") {
+            l(em, it);
+        } else if (e === "does") {
+            l(em, it);
+        } else if (e === "error") {
+            l("" as unknown);
+        }
+    });
+    em.on("error", (e) => {
+        expectType<any>(e);
+    });
+    expectError(em.emit("error", 234));
+    em.on("error", (a) => false);
+    em.on("removeListener", (e, l) => {
+        if (e === "error") {
+            l("x" as unknown);
+        }
     });
 }
