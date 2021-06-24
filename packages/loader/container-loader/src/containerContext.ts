@@ -85,7 +85,7 @@ export class ContainerContext implements IContainerContext {
             updateDirtyContainerState,
             existing,
             pendingLocalState);
-        await (existing ? context.initializeFromExisting() : context.initializeFirstTime());
+        await context.instantiateRuntime(existing);
         return context;
     }
 
@@ -283,25 +283,6 @@ export class ContainerContext implements IContainerContext {
 
     // #region private
 
-    // back compat: 0.40 (see #3429)
-    private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
-        return "getRuntime" in runtimeFactory;
-    }
-
-    private async initializeFromExisting() {
-        const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await (this.isFactoryStateful(runtimeFactory)
-            ? runtimeFactory.getRuntime(this, true)
-            : runtimeFactory.instantiateRuntime(this));
-    }
-
-    private async initializeFirstTime() {
-        const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await (this.isFactoryStateful(runtimeFactory)
-            ? runtimeFactory.getRuntime(this, false)
-            : runtimeFactory.instantiateRuntime(this));
-    }
-
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
         const runtimeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
@@ -309,6 +290,18 @@ export class ContainerContext implements IContainerContext {
         }
 
         return runtimeFactory;
+    }
+
+    // back compat: 0.40 (see #3429)
+    private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
+        return "getRuntime" in runtimeFactory;
+    }
+
+    private async instantiateRuntime(existing: boolean) {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await (this.isFactoryStateful(runtimeFactory)
+            ? runtimeFactory.getRuntime(this, existing)
+            : runtimeFactory.instantiateRuntime(this));
     }
 
     private attachListener() {
