@@ -18,7 +18,7 @@ import {
 	PlaceAnchor,
 	NodeAnchor,
 } from './PersistedTypes';
-import { SharedTreeWithAnchorsFactory, SharedTreeWithAnchorsFactoryNoHistory } from './Factory';
+import { SharedTreeWithAnchorsFactory } from './Factory';
 import { TransactionWithAnchors } from './TransactionWithAnchors';
 
 /**
@@ -149,7 +149,7 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 	 * @returns A factory that creates `SharedTreeWithAnchors`s and loads them from storage.
 	 */
 	public static getFactory(summarizeHistory = true): SharedTreeWithAnchorsFactory {
-		return summarizeHistory ? new SharedTreeWithAnchorsFactory() : new SharedTreeWithAnchorsFactoryNoHistory();
+		return new SharedTreeWithAnchorsFactory({ summarizeHistory });
 	}
 
 	/**
@@ -192,9 +192,10 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 	 * {@inheritDoc GenericSharedTree.generateSummary}
 	 */
 	protected generateSummary(editLog: OrderedEditSet<AnchoredChange>): SharedTreeSummaryBase {
-		if (!this.summarizeHistory) {
-			return noHistorySummarizer(editLog, this.currentView);
+		if (this.summarizeHistory) {
+			return fullHistorySummarizer(editLog, this.currentView);
 		}
-		return fullHistorySummarizer(editLog, this.currentView);
+
+		return noHistorySummarizer(editLog, this.currentView);
 	}
 }

@@ -48,7 +48,7 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
+export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
 	setUpLocalServerTestSharedTree: (

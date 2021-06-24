@@ -6,8 +6,9 @@
 import BTree from 'sorted-btree';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
-import { Edit, EditWithoutId } from './generic';
+import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
 import { compareFiniteNumbers } from './SnapshotUtilities';
 
@@ -191,7 +192,7 @@ export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, 
  * May not contain more than one edit with the same ID.
  * @sealed
  */
-export class EditLog<TChange> implements OrderedEditSet<TChange> {
+export class EditLog<TChange> extends EventEmitterWithErrorHandling implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
 	private _minSequenceNumber = 0;
 
@@ -237,6 +238,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 		logger?: ITelemetryLogger,
 		editsPerChunk = 100
 	) {
+		super();
 		const { editChunks, editIds } = summary;
 		this.logger = logger;
 		this.editsPerChunk = editsPerChunk;
@@ -466,6 +468,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 			this.addKeyToCache(startRevision);
 		} else {
 			this.logger?.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
+			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		}
 	}
 

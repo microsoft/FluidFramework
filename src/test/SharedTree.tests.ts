@@ -6,9 +6,9 @@
 import { SharedTree } from '../default-edits';
 import { setUpTestSharedTree, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
-import { runSummaryTests } from './utilities/SummaryFormatCompatibilityTests';
+import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
 
 describe('SharedTree', () => {
 	runSharedTreeOperationsTests<SharedTree>('Operations', setUpTestSharedTree);
-	runSummaryTests<SharedTree>('Summary', setUpTestSharedTree, setUpLocalServerTestSharedTree);
+	runSummaryFormatCompatibilityTests<SharedTree>('Summary', setUpTestSharedTree, setUpLocalServerTestSharedTree);
 });

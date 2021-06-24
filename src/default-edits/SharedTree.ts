@@ -6,13 +6,22 @@
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId, NodeId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
-import { Edit, BuildNode, fullHistorySummarizer, GenericSharedTree, NodeData, SharedTreeSummaryBase } from '../generic';
+import {
+	Edit,
+	BuildNode,
+	fullHistorySummarizer,
+	GenericSharedTree,
+	NodeData,
+	SharedTreeSummaryBase,
+	fullHistorySummarizer_0_1_0,
+	SharedTreeSummaryWriteFormat,
+} from '../generic';
 import { OrderedEditSet } from '../EditLog';
 import { Change, Delete, Insert, Move, StableRange, StablePlace } from './PersistedTypes';
-import { SharedTreeFactory, SharedTreeFactoryNoHistory } from './Factory';
+import { SharedTreeFactory } from './Factory';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { Transaction } from './Transaction';
-import { noHistorySummarizer } from './Summary';
+import { noHistorySummarizer, noHistorySummarizer_0_1_0 } from './Summary';
 
 /**
  * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
@@ -126,11 +135,18 @@ export class SharedTree extends GenericSharedTree<Change> {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @param historySummarizing - determines how history is summarized by the returned `SharedTree`.
+	 * @param summarizeHistory - Determines how history is summarized by the returned `SharedTree`.
+	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	public static getFactory(summarizeHistory = true): SharedTreeFactory {
-		return summarizeHistory ? new SharedTreeFactory() : new SharedTreeFactoryNoHistory();
+	public static getFactory(
+		summarizeHistory = true,
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
+	): SharedTreeFactory {
+		return new SharedTreeFactory({
+			summarizeHistory,
+			writeSummaryFormat,
+		});
 	}
 
 	/**
@@ -144,9 +160,18 @@ export class SharedTree extends GenericSharedTree<Change> {
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		expensiveValidation = false,
-		summarizeHistory = true
+		summarizeHistory = true,
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
 	) {
-		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation, summarizeHistory);
+		super(
+			runtime,
+			id,
+			Transaction.factory,
+			SharedTreeFactory.Attributes,
+			expensiveValidation,
+			summarizeHistory,
+			writeSummaryFormat
+		);
 	}
 
 	private _editor: SharedTreeEditor | undefined;
@@ -166,9 +191,33 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * {@inheritDoc GenericSharedTree.generateSummary}
 	 */
 	protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase {
-		if (!this.summarizeHistory) {
-			return noHistorySummarizer(editLog, this.currentView);
+		const logUnsupportedVersion = () => {
+			this.logger?.sendErrorEvent({
+				eventName: 'UnsupportedSummaryWriteFormat',
+				formatVersion: this.writeSummaryFormat,
+			});
+		};
+
+		if (this.summarizeHistory) {
+			switch (this.writeSummaryFormat) {
+				case SharedTreeSummaryWriteFormat.Format_0_0_2:
+					return fullHistorySummarizer(editLog, this.currentView);
+				case SharedTreeSummaryWriteFormat.Format_0_1_0:
+					return fullHistorySummarizer_0_1_0(editLog, this.currentView);
+				default:
+					logUnsupportedVersion();
+					throw new Error(`Summary format ${this.writeSummaryFormat} not supported.`);
+			}
 		}
-		return fullHistorySummarizer(editLog, this.currentView);
+
+		switch (this.writeSummaryFormat) {
+			case SharedTreeSummaryWriteFormat.Format_0_0_2:
+				return noHistorySummarizer(editLog, this.currentView);
+			case SharedTreeSummaryWriteFormat.Format_0_1_0:
+				return noHistorySummarizer_0_1_0(editLog, this.currentView);
+			default:
+				logUnsupportedVersion();
+				throw new Error(`Summary format ${this.writeSummaryFormat} not supported.`);
+		}
 	}
 }

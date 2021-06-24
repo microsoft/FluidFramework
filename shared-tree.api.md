@@ -243,7 +243,7 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 
 // @public
 export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
@@ -284,7 +284,9 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     protected readonly summarizeHistory: boolean;
     // (undocumented)
     readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
-    }
+    // (undocumented)
+    protected readonly writeSummaryFormat: SharedTreeSummaryWriteFormat;
+}
 
 // @public
 export abstract class GenericTransaction<TChange> {
@@ -461,11 +463,11 @@ export interface SetValue {
 
 // @public @sealed
 export class SharedTree extends GenericSharedTree<Change> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat);
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     get editor(): SharedTreeEditor;
     protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
-    static getFactory(summarizeHistory?: boolean): SharedTreeFactory;
+    static getFactory(summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat): SharedTreeFactory;
 }
 
 // @public
@@ -476,7 +478,8 @@ export enum SharedTreeDiagnosticEvent {
     AppliedEdit = "appliedEdit",
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
     DroppedInvalidEdit = "droppedInvalidEdit",
-    DroppedMalformedEdit = "droppedMalformedEdit"
+    DroppedMalformedEdit = "droppedMalformedEdit",
+    UnexpectedHistoryChunk = "unexpectedHistoryChunk"
 }
 
 // @public
@@ -500,18 +503,24 @@ export enum SharedTreeEvent {
 
 // @public
 export class SharedTreeFactory implements IChannelFactory {
+    constructor(options?: SharedTreeFactoryOptions);
     // (undocumented)
     static Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree;
-    protected includeHistoryInSummary(): boolean;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedObject>;
     // (undocumented)
     static Type: string;
     // (undocumented)
     get type(): string;
+}
+
+// @public
+export interface SharedTreeFactoryOptions {
+    readonly summarizeHistory?: boolean;
+    readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "SharedTreeSummarizer" should be prefixed with an underscore because the declaration is marked as @internal
@@ -530,6 +539,12 @@ export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
 // @public
 export interface SharedTreeSummaryBase {
     readonly version: string;
+}
+
+// @public
+export enum SharedTreeSummaryWriteFormat {
+    Format_0_0_2 = "0.0.2",
+    Format_0_1_0 = "0.1.0"
 }
 
 // @public

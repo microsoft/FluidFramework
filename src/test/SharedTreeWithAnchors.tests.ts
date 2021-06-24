@@ -27,7 +27,7 @@ import {
 	setUpLocalServerTestSharedTreeWithAnchors,
 } from './utilities/TestUtilities';
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
-import { runSummaryTests } from './utilities/SummaryFormatCompatibilityTests';
+import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
 
 /**
  * This file contains tests that verify the behavior or anchors by checking how they are resolved in the face of concurrent edits.
@@ -348,7 +348,7 @@ const insertScenarios: TestScenario[] = [
 describe('SharedTreeWithAnchors', () => {
 	describe('Fulfills the SharedTree contract', () => {
 		runSharedTreeOperationsTests<SharedTreeWithAnchors>('SharedTree Operations', setUpTestSharedTreeWithAnchors);
-		runSummaryTests<SharedTreeWithAnchors>(
+		runSummaryFormatCompatibilityTests<SharedTreeWithAnchors>(
 			'SharedTree Summary',
 			setUpTestSharedTreeWithAnchors,
 			setUpLocalServerTestSharedTreeWithAnchors

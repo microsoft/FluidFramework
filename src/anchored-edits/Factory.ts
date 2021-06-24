@@ -13,6 +13,15 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { SharedTreeWithAnchors } from './SharedTreeWithAnchors';
 
 /**
+ * Options for configuring a SharedTreeWithAnchorsFactory.
+ * @public
+ */
+export interface SharedTreeWithAnchorsFactoryOptions {
+	/** If false, does not include history in summaries. */
+	readonly summarizeHistory?: boolean;
+}
+
+/**
  * Factory for SharedTreeWithAnchors.
  * Includes history in the summary.
  * @public
@@ -31,6 +40,11 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 		snapshotFormatVersion: '0.1',
 		packageVersion: '0.1',
 	};
+
+	/**
+	 * @param options - Options for configuring the SharedTreeWithAnchorsFactory
+	 */
+	constructor(private readonly options: SharedTreeWithAnchorsFactoryOptions = {}) {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -66,29 +80,8 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTreeWithAnchors {
-		const sharedTree = new SharedTreeWithAnchors(runtime, id, expensiveValidation, this.includeHistoryInSummary());
+		const sharedTree = new SharedTreeWithAnchors(runtime, id, expensiveValidation, this.options.summarizeHistory);
 		sharedTree.initializeLocal();
 		return sharedTree;
-	}
-
-	/**
-	 * Determines how the SharedTree will summarize the history.
-	 * This is a workaround for lacking the ability to construct DDSs with custom parameters.
-	 */
-	protected includeHistoryInSummary(): boolean {
-		return true;
-	}
-}
-
-/**
- * Factory for SharedTreeWithAnchors.
- * Does not include the history in the summary.
- * This is a workaround for lacking the ability to construct DDSs with custom parameters.
- * TODO:#54918: Clean up when DDS parameterization is supported.
- * @public
- */
-export class SharedTreeWithAnchorsFactoryNoHistory extends SharedTreeWithAnchorsFactory {
-	protected includeHistoryInSummary(): boolean {
-		return false;
 	}
 }

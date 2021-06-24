@@ -10,7 +10,19 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { SharedTreeSummaryWriteFormat } from '../generic';
 import { SharedTree } from './SharedTree';
+
+/**
+ * Options for configuring a SharedTreeFactory.
+ * @public
+ */
+export interface SharedTreeFactoryOptions {
+	/** If false, does not include history in summaries. */
+	readonly summarizeHistory?: boolean;
+	/** Determines the summary format version to write, 0.0.2 by default. */
+	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+}
 
 /**
  * Factory for SharedTree.
@@ -31,6 +43,11 @@ export class SharedTreeFactory implements IChannelFactory {
 		snapshotFormatVersion: '0.1',
 		packageVersion: '0.1',
 	};
+
+	/**
+	 * @param options - Options for configuring the SharedTreeFactory
+	 */
+	constructor(private readonly options: SharedTreeFactoryOptions = {}) {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -66,29 +83,14 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree {
-		const sharedTree = new SharedTree(runtime, id, expensiveValidation, this.includeHistoryInSummary());
+		const sharedTree = new SharedTree(
+			runtime,
+			id,
+			expensiveValidation,
+			this.options.summarizeHistory,
+			this.options.writeSummaryFormat
+		);
 		sharedTree.initializeLocal();
 		return sharedTree;
-	}
-
-	/**
-	 * Determines how the SharedTree will summarize the history.
-	 * This is a workaround for lacking the ability to construct DDSs with custom parameters.
-	 */
-	protected includeHistoryInSummary(): boolean {
-		return true;
-	}
-}
-
-/**
- * Factory for SharedTree.
- * Does not include the history in the summary.
- * This is a workaround for lacking the ability to construct DDSs with custom parameters.
- * TODO:#54918: Clean up when DDS parameterization is supported.
- * @public
- */
-export class SharedTreeFactoryNoHistory extends SharedTreeFactory {
-	protected includeHistoryInSummary(): boolean {
-		return false;
 	}
 }

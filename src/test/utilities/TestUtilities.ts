@@ -26,9 +26,17 @@ import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace } from '../../default-edits';
-import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
+import {
+	ChangeNode,
+	Edit,
+	GenericSharedTree,
+	newEdit,
+	NodeData,
+	SharedTreeDiagnosticEvent,
+	SharedTreeSummaryWriteFormat,
+	TraitLocation,
+} from '../../generic';
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
-import { SharedTreeDiagnosticEvent } from '../../generic/GenericSharedTree';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -241,6 +249,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	summarizeHistory?: boolean;
 	/**
+	 * If not set, summaries will be written in format 0.0.2.
+	 */
+	writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
@@ -274,13 +286,16 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
 >(
-	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
+	factoryGetter: (
+		summarizeHistory?: boolean,
+		writeSummaryFormat?: SharedTreeSummaryWriteFormat
+	) => TSharedTreeFactory,
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory } = options;
+	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat } = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory)]];
+	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory, writeSummaryFormat)]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			addGlobalAgentSchedulerAndLeaderElection: false,

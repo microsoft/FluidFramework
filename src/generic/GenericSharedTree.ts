@@ -95,6 +95,21 @@ export enum SharedTreeDiagnosticEvent {
 	 * and/or due to not caching the output of every edit.
 	 */
 	DroppedMalformedEdit = 'droppedMalformedEdit',
+	/**
+	 * A history chunk has been received that does not have a corresponding edit chunk on the edit log.
+	 */
+	UnexpectedHistoryChunk = 'unexpectedHistoryChunk',
+}
+
+/**
+ * Format versions that SharedTree supports writing.
+ * @public
+ */
+export enum SharedTreeSummaryWriteFormat {
+	/** Stores all edits in their raw format. */
+	Format_0_0_2 = '0.0.2',
+	/** Supports history virtualization. */
+	Format_0_1_0 = '0.1.0',
 }
 
 /**
@@ -166,6 +181,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - Enable expensive asserts.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
@@ -173,7 +189,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
-		protected readonly summarizeHistory = true
+		protected readonly summarizeHistory = true,
+		protected readonly writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
@@ -429,6 +446,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		const currentView = Snapshot.fromTree(currentTree);
 
 		const editLog = new EditLog(editHistory, this.logger);
+
+		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
+			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
+		});
+
 		const logViewer = new CachingLogViewer(
 			editLog,
 			Snapshot.fromTree(initialTree),

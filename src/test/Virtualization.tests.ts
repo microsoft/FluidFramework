@@ -11,7 +11,7 @@ import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
-import { SharedTreeDiagnosticEvent } from '../generic/GenericSharedTree';
+import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
 import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
@@ -38,11 +38,14 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
-	const processNewEditChunks = async (numberOfChunks = 1) => {
+	const addNewEditChunks = async (numberOfChunks = 1, additionalEdits = 0) => {
 		const expectedEdits: Edit<Change>[] = [];
 
 		// Add some edits to create a chunk with.
-		while (expectedEdits.length < (sharedTree.edits as EditLog<Change>).editsPerChunk * numberOfChunks) {
+		while (
+			expectedEdits.length <
+			(sharedTree.edits as EditLog<Change>).editsPerChunk * numberOfChunks + additionalEdits
+		) {
 			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
 			expectedEdits.push(edit);
 			sharedTree.processLocalEdit(edit);
@@ -55,7 +58,7 @@ describe('SharedTree history virtualization', () => {
 	};
 
 	it('can upload edit chunks and load chunks from handles', async () => {
-		const expectedEdits: Edit<Change>[] = await processNewEditChunks();
+		const expectedEdits: Edit<Change>[] = await addNewEditChunks();
 
 		const summary = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 
@@ -172,7 +175,7 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
-		await processNewEditChunks(4);
+		await addNewEditChunks(4);
 
 		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -206,7 +209,7 @@ describe('SharedTree history virtualization', () => {
 			fullHistorySummarizer_0_1_0(sharedTree3.edits, sharedTree3.currentView).editHistory?.editChunks.length
 		).to.equal(0);
 
-		await processNewEditChunks();
+		await addNewEditChunks();
 
 		// All shared trees should have the new handle
 		const sharedTreeSummary = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
@@ -228,5 +231,61 @@ describe('SharedTree history virtualization', () => {
 
 		expect(sharedTreeHandleRoute).to.equal(sharedTree2HandleRoute);
 		expect(sharedTree2HandleRoute).to.equal(sharedTree3HandleRoute);
+	});
+
+	it('does not cause misaligned chunks', async () => {
+		// Replace sharedTree with one that writes summary format 0.1.0
+		const testingComponents = await setUpLocalServerTestSharedTree({
+			summarizeHistory: true,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
+		});
+		sharedTree = testingComponents.tree;
+		testObjectProvider = testingComponents.testObjectProvider;
+
+		await addNewEditChunks(1, 50);
+
+		const summary = sharedTree.saveSummary();
+
+		// Connect another client
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
+			testObjectProvider,
+			summarizeHistory: true,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
+		});
+
+		let unexpectedHistoryChunk = false;
+		sharedTree2.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
+			unexpectedHistoryChunk = true;
+		});
+
+		sharedTree2.loadSummary(summary);
+
+		// Finish off the incomplete chunk
+		await addNewEditChunks();
+
+		expect(unexpectedHistoryChunk).to.be.false;
+	});
+
+	it('causes misaligned chunks for format version 0.0.2', async () => {
+		// Add enough edits for a chunk and a half
+		await addNewEditChunks(1, 50);
+
+		// Connect another client
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
+			testObjectProvider,
+			summarizeHistory: true,
+		});
+
+		let unexpectedHistoryChunk = false;
+		sharedTree2.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
+			unexpectedHistoryChunk = true;
+		});
+
+		sharedTree2.loadSummary(sharedTree.saveSummary());
+
+		// Finish off the incomplete chunk
+		await addNewEditChunks();
+
+		expect(unexpectedHistoryChunk).to.be.true;
 	});
 });

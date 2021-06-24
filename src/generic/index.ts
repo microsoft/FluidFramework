@@ -12,6 +12,7 @@ export {
 	GenericSharedTree,
 	SharedTreeEvent,
 	SharedTreeDiagnosticEvent,
+	SharedTreeSummaryWriteFormat,
 } from './GenericSharedTree';
 export {
 	Edit,

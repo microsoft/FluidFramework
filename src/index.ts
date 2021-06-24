@@ -52,6 +52,7 @@ export {
 	StablePlace,
 	StableRange,
 	SharedTreeFactory,
+	SharedTreeFactoryOptions,
 	revert,
 	setTrait,
 	validateStablePlace,
@@ -87,4 +88,5 @@ export {
 	SharedTreeSummarizer,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
+	SharedTreeSummaryWriteFormat,
 } from './generic';
