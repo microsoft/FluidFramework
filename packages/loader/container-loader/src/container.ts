@@ -1205,9 +1205,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            codeDetails,
-            attributes,
             this._existing === true,
+            attributes,
+            codeDetails,
             snapshot,
             pendingLocalState,
         );
@@ -1297,7 +1297,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.createDetachedContext(attributes);
+        await this.instantiateContextDetached(
+            false, // existing
+            attributes,
+        );
 
         this.propagateConnectionState();
 
@@ -1321,11 +1324,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.instantiateContext(
-            codeDetails,
+        await this.instantiateContextDetached(
+            true, // existing
             attributes,
-            true,
             snapshotTree,
         );
 
@@ -1821,10 +1822,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async instantiateContext(
-        codeDetails: IFluidCodeDetails,
-        attributes: IDocumentAttributes,
+    private async instantiateContextDetached(
         existing: boolean,
+        attributes: IDocumentAttributes,
+        snapshot?: ISnapshotTree,
+        pendingLocalState?: unknown,
+    ) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+
+        await this.instantiateContext(
+            existing,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
+    }
+
+    private async instantiateContext(
+        existing: boolean,
+        attributes: IDocumentAttributes,
+        codeDetails: IFluidCodeDetails,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
@@ -1861,23 +1882,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.emit("contextChanged", codeDetails);
-    }
-
-    /**
-     * Creates a new, unattached container context
-     */
-    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
-        }
-
-        await this.instantiateContext(
-            codeDetails,
-            attributes,
-            false,
-            snapshot,
-        );
     }
 
     // Please avoid calling it directly.

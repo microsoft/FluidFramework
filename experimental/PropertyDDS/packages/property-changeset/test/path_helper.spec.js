@@ -238,6 +238,34 @@ describe('PathHelper', function() {
   });
 
 
+  describe('unquotePathSegment', function() {
+    it('should unquote simple strings', function() {
+      expect(PathHelper.unquotePathSegment('"test"')).to.equal('test');
+    });
+
+    it('should correctly unquote strings with a quotation mark', function() {
+      expect(PathHelper.unquotePathSegment('"\\""')).to.equal('"');
+    });
+
+    it('should correctly unquote strings with a backslash', function() {
+      expect(PathHelper.unquotePathSegment('"\\\\"')).to.equal('\\');
+    });
+
+    it('should work with empty strings', function() {
+        expect(PathHelper.unquotePathSegment('')).to.equal('');
+    });
+
+    it('should throw on non strings', function() {
+        expect(() => PathHelper.unquotePathSegment(5)).to.throw();
+    });
+
+    it('should work for paths with multiple occurrences of the test string', function() {
+      expect(PathHelper.unquotePathSegment('"test\\"property\\""')).to.equal('test"property"');
+      expect(PathHelper.unquotePathSegment('"test\\\\property\\\\"')).to.equal('test\\property\\');
+      expect(PathHelper.unquotePathSegment('"test\\"\\\\property\\\\\\""')).to.equal('test"\\property\\"');
+    });
+  });
+
   describe('convertAbsolutePathToCanonical', function() {
     it('should remove leading /', function() {
       expect(PathHelper.convertAbsolutePathToCanonical('/a.b.c')).to.equal('a.b.c');
