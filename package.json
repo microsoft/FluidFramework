@@ -61,7 +61,7 @@
 		"@microsoft/api-extractor": "^7.16.1",
 		"@types/lru-cache": "^5.1.0",
 		"@types/socket.io-client": "^1.4.36",
-		"@typescript-eslint/parser": "^4.26.1",
+		"@typescript-eslint/parser": "^4.28.0",
 		"chai": "^4.3.4",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
