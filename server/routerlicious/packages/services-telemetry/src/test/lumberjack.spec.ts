@@ -39,7 +39,7 @@ describe("Lumberjack", () => {
         try {
             TestLumberjack.create([engine2]);
         } catch (err) {
-            assert.fail("Creating a custom Lumberjack instance should not have failed since global and custom instace each have their own engine list. ");
+            assert.fail("Creating a custom Lumberjack instance should not have failed since global and custom instances each have their own engine list. ");
         }
     });
 
