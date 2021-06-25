@@ -396,6 +396,7 @@ describe("PropertyTree", () => {
 					referenceGuid: "",
 					remoteHeadGuid: "",
 					localBranchStart: undefined,
+                    metadata: undefined,
 				},
 			];
 			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
@@ -407,6 +408,7 @@ describe("PropertyTree", () => {
 				remoteHeadGuid: "",
 				localBranchStart: undefined,
 				sequenceNumber: 1,
+                metadata: undefined,
 			};
 
 			const prundedData = SharedPropertyTree.prune(msn, remoteChanges, unrebasedRemoteChanges);
