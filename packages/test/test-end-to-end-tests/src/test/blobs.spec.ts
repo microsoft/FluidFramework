@@ -226,7 +226,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         await assert.rejects(
             container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            /attaching container with blobs is not yet implemented/,
+            "Error: 0x1fa",
         );
     });
 });
