@@ -1150,7 +1150,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
         const snapshot = this.blobManager.snapshot();
-        if (snapshot.entries.length) {
+
+        // Some storage (like git) doesn't allow empty tree, so we can omit it.
+        // and the blob manager can handle the tree not existing when loading
+        if (snapshot.entries.length !== 0) {
             const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
         }
