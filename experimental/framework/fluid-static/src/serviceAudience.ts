@@ -70,7 +70,7 @@ export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> i
     return this.getMemberByClientId(clientId);
   }
 
-  private getMemberByClientId(clientId: string): IMember | undefined {
+  public getMemberByClientId(clientId: string): IMember | undefined {
     // Fetch the user ID assoicated with this client ID from the runtime
     const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {

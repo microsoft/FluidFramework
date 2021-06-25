@@ -6,6 +6,7 @@
 import { IFrsAudience } from "@fluid-experimental/frs-client";
 import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
 import { IDiceRollerController } from "./controller";
+import { FocusTracker  } from "./FocusTracker";
 
 /**
  * Render an IDiceRollerController into a given div as a text character, with a button to roll it.
@@ -73,4 +74,23 @@ export function renderAudience(audience: ITinyliciousAudience | IFrsAudience, di
     audience.on("membersChanged", onAudienceChanged);
 
     wrapperDiv.appendChild(audienceDiv);
+}
+
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.style.textAlign = "left";
+    wrapperDiv.style.margin = "70px";
+    div.appendChild(wrapperDiv);
+
+    const focusDiv = document.createElement("div");
+    focusDiv.style.fontSize = "14px";
+
+    const onFocusChanged = () => {
+        focusDiv.innerHTML = focusTracker.getPresences().join("<br/>");
+    };
+
+    onFocusChanged();
+    focusTracker.on("focusChanged", onFocusChanged);
+
+    wrapperDiv.appendChild(focusDiv);
 }
