@@ -26,6 +26,12 @@ export class Lumberjack {
         return Lumberjack._instance;
     }
 
+    public static create(engines: ILumberjackEngine[]) {
+        const newInstance = new Lumberjack();
+        newInstance.setupEngines(engines);
+        return newInstance;
+    }
+
     public setupEngines(engines: ILumberjackEngine[]) {
         if (this.isSetupCompleted) {
             throw new Error("This Lumberjack was already setup with a list of engines.");

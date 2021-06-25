@@ -8,7 +8,7 @@ import Sinon from "sinon";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
 import { LumberType } from "../resources";
-import { sampleTelemetryMetadata, TestEngine } from "./lumberjackCommonTestUtils"
+import { sampleTelemetryMetadata, TestEngine1 } from "./lumberjackCommonTestUtils"
 
 
 describe("Lumber", () => {
@@ -25,7 +25,7 @@ describe("Lumber", () => {
         const expectedDuration = 100;
         const successMessage = "SuccessMessage";
         const statusCode = 200;
-        const engine = new TestEngine();
+        const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
@@ -48,7 +48,7 @@ describe("Lumber", () => {
         const expectedDuration = 100;
         const errorMessage = "errorMessage";
         const statusCode = 400;
-        const engine = new TestEngine();
+        const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const error = new Error("SampleError");
         const lumber = new Lumber(
@@ -151,7 +151,7 @@ describe("Lumber", () => {
     it("Makes sure we cannot complete an already completed Lumber", async () => {
         const successMessage = "SuccessMessage";
         const statusCode = 200;
-        const engine = new TestEngine();
+        const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,

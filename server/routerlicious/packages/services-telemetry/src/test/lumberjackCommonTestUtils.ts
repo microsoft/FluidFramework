@@ -23,7 +23,12 @@ export const sampleTelemetryMetadata: ITelemetryMetadata = {
     sequenceNumber: 1,
 };
 
-export class TestEngine implements ILumberjackEngine {
+export class TestEngine1 implements ILumberjackEngine {
+    public emit(lumber: Lumber) {
+    }
+}
+
+export class TestEngine2 implements ILumberjackEngine {
     public emit(lumber: Lumber) {
     }
 }
