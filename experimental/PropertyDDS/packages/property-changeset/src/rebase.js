@@ -129,8 +129,8 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
     .then(() => makePromise(getRebasedChanges(change.remoteHeadGuid)))
     .then((remoteChanges) => {
       const conflicts = [];
-      if (!_.isEqual(changesOnOtherLocalBranch.map((x) => x.guid),
-                     remoteChanges.map((x) => x.guid))) {
+      if (!_.isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
+                     remoteChanges.map((change) => change.guid))) {
         for (const remoteChange of remoteChanges) {
             let applyAfterMetaInformation =
             commitsOnOtherLocalBranch[remoteChange.guid] !== undefined

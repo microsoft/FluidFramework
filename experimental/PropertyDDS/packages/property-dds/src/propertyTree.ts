@@ -684,7 +684,7 @@ export class SharedPropertyTree extends SharedObject {
 			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
 		});
 
-		// Udate the the tip view
+		// Update the tip view
 		if (!this.tipView) {
             this.tipView = _.cloneDeep(this.remoteTipView);
             const changeSet = new ChangeSet(this.tipView);
