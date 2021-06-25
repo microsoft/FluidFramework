@@ -106,6 +106,9 @@ export interface IRuntime extends IDisposable {
  */
 export interface IContainerContext extends IDisposable {
     readonly id: string;
+    /**
+     * @deprecated This property will be removed in an upcoming release
+     */
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly configuration: IFluidConfiguration;
@@ -166,6 +169,12 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
+     *
      */
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+
+    /**
+     * Marker for an implementation supporting the `existing` flag
+     */
+    readonly stateful?: boolean;
 }
