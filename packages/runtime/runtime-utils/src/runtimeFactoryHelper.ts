@@ -27,8 +27,8 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
         return runtime;
     }
 
-    protected abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
-    protected async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
-    protected async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
-    protected async hasInitialized(runtime: IRuntime): Promise<void> {}
+    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+    public async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
+    public async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
+    public async hasInitialized(runtime: IRuntime): Promise<void> {}
 }
