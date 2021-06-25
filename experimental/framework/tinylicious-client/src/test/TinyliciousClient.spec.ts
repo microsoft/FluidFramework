@@ -6,8 +6,7 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { DiceRoller } from "@fluid-example/diceroller";
-import { SharedMap, SharedDirectory } from "@fluid-experimental/fluid-framework";
-import { ContainerSchema } from "@fluid-experimental/fluid-static";
+import { SharedMap, SharedDirectory, ContainerSchema } from "@fluid-experimental/fluid-framework";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,
