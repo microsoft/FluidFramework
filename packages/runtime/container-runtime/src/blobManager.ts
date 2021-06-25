@@ -98,7 +98,7 @@ export class BlobManager {
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {
-        assert(!local || this.pendingBlobIds.has(blobId), "local BlobAttach op with no pending blob");
+        assert(!local || this.pendingBlobIds.has(blobId), 0x1f8 /* "local BlobAttach op with no pending blob" */);
         this.pendingBlobIds.get(blobId)?.resolve();
         this.pendingBlobIds.delete(blobId);
         this.blobIds.add(blobId);
