@@ -225,19 +225,14 @@ export interface EditLogSummary<TChange> {
 // @public
 export enum EditStatus {
     Applied = 2,
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0
 }
 
 // @public
 export enum EditValidationResult {
-    // (undocumented)
     Invalid = 1,
-    // (undocumented)
     Malformed = 0,
-    // (undocumented)
     Valid = 2
 }
 
@@ -687,12 +682,14 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
     constructor(snapshot: Snapshot, nodeId: NodeId);
     // (undocumented)
     get definition(): Definition;
+    demandTree(): ChangeNode;
     // (undocumented)
     get identifier(): NodeId;
-    // (undocumented)
-    get node(): TreeNode<TreeNodeHandle>;
+    get node(): ChangeNode;
     // (undocumented)
     get payload(): Payload | undefined;
+    // (undocumented)
+    toString(): string;
     // (undocumented)
     get traits(): TraitMap<TreeNodeHandle>;
 }

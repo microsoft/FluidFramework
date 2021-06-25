@@ -590,9 +590,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
         }
-
-        // notify the runtime if they want to propagate up. Used for logging.
-        this._containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {

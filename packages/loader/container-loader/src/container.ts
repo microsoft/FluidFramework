@@ -103,7 +103,7 @@ import { pkgVersion } from "./packageVersion";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -638,6 +638,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
+                    if (this.loader.services.detachedBlobStorage !== undefined) {
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
+                    }
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
@@ -1198,12 +1201,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._existing = details.existing;
         }
 
-        // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
+        await this.instantiateContext(
+            this._existing === true,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1290,7 +1297,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.createDetachedContext(attributes);
+        await this.instantiateContextDetached(
+            false, // existing
+            attributes,
+        );
 
         this.propagateConnectionState();
 
@@ -1314,7 +1324,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.createDetachedContext(attributes, snapshotTree);
+        await this.instantiateContextDetached(
+            true, // existing
+            attributes,
+            snapshotTree,
+        );
 
         this.loaded = true;
 
@@ -1808,16 +1822,37 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async loadContext(
-        codeDetails: IFluidCodeDetails,
+    private async instantiateContextDetached(
+        existing: boolean,
         attributes: IDocumentAttributes,
+        snapshot?: ISnapshotTree,
+        pendingLocalState?: unknown,
+    ) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+
+        await this.instantiateContext(
+            existing,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
+    }
+
+    private async instantiateContext(
+        existing: boolean,
+        attributes: IDocumentAttributes,
+        codeDetails: IFluidCodeDetails,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1842,22 +1877,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
+            existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
-    }
-
-    /**
-     * Creates a new, unattached container context
-     */
-    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
-        }
-
-        await this.loadContext(codeDetails, attributes, snapshot);
     }
 
     // Please avoid calling it directly.

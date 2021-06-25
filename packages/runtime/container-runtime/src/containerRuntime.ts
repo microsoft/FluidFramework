@@ -75,7 +75,6 @@ import {
 import {
     FlushMode,
     InboundAttachMessage,
-    IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -535,9 +534,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
-     * @param registry - Mapping to the stores.
-     * @param requestHandlers - Request handlers for the container runtime
+     * @param registryEntries - Mapping to the stores.
+     * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
      */
     public static async load(
         context: IContainerContext,
@@ -545,6 +545,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
+        existing?: boolean,
     ): Promise<ContainerRuntime> {
         const logger = ChildLogger.create(context.logger, undefined, {
             all: {
@@ -604,6 +605,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
@@ -613,13 +615,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             combinedRuntimeOptions,
             containerScope,
             logger,
+            loadExisting,
             requestHandler,
             storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
-            if (!context.existing) {
+            if (!loadExisting) {
                 await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
             }
         }
@@ -629,11 +632,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get id(): string {
         return this.context.id;
-    }
-
-    public get existing(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.existing!;
     }
 
     public get options(): ILoaderOptions {
@@ -779,6 +777,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
+        // The `existing` property  is to be removed after the state
+        // is refactored into IRuntimeFactory. See #3429
+        public readonly existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -788,7 +789,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
          runtimeOptions will only specify what to do if it has never been set before.
          Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCFeature = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
         this.summaryGCFeature = prevSummaryGCFeature ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
@@ -1149,8 +1150,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
-        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        const snapshot = this.blobManager.snapshot();
+
+        // Some storage (like git) doesn't allow empty tree, so we can omit it.
+        // and the blob manager can handle the tree not existing when loading
+        if (snapshot.entries.length !== 0) {
+            const blobsTree = convertToSummaryTree(snapshot, false);
+            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        }
     }
 
     public async stop() {
@@ -1347,13 +1354,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
         return (await this.dataStores.getDataStore(id, wait)).realize();
-    }
-
-    public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
-        const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
-        const registryPath =
-            `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {

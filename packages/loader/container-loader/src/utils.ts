@@ -66,9 +66,10 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
-                blobs[blobId] = typeof summaryObject.content === "string" ?
+                const contentBuffer = typeof summaryObject.content === "string" ?
                     stringToBuffer(summaryObject.content, "utf8") : summaryObject.content;
-                treeNode.blobs[blobId] = bufferToString(blobs[blobId], "base64");
+                blobs.set(blobId, contentBuffer);
+                treeNode.blobs[blobId] = bufferToString(contentBuffer, "base64");
                 break;
             }
             case SummaryType.Handle:

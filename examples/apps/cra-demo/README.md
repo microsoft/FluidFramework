@@ -104,13 +104,13 @@ const getContainerId = () => {
 };
 ```
 
-### 3.b Initialize the service client
+### 3.b Instantiate a service client instance
 
-`TinyliciousClient` needs to be initialized before use and can take an optional configuration object to changes settings such as default port. Depending on your deploy target, you might initialize and use different client packages.
+`TinyliciousClient` instance needs to be instantiated before use and can take an optional configuration object to changes settings such as default port. Depending on your deploy target, you might create and use different client packages.
 
 ```js
 // add below getContainerId
-TinyliciousClient.init();
+const tinyliciousClient = new TinyliciousClient();
 ```
 
 ## 4. <a style="position: relative; top: 20px" name="init"></a> Get Fluid Data
@@ -124,7 +124,7 @@ The following `getFluidData` function utilizes the `getContainerId` to return a 
 
 Since this function is an async, we'll need to wait for the `initialObjects` to be returned. Once returned, each `initialObjects` key will point to a connected data structure as per defined in the schema.
 ```jsx
-// after the init()
+// after creating an instance
 const getFluidData = async () => {
     const { containerId, isNew } = getContainerId();
 
@@ -136,8 +136,8 @@ const getFluidData = async () => {
     };
 
     const fluidContainer = isNew
-        ? await TinyliciousClient.createContainer(serviceConfig, containerSchema)
-        : await TinyliciousClient.getContainer(serviceConfig, containerSchema);
+        ? await tinyliciousClient.createContainer(serviceConfig, containerSchema)
+        : await tinyliciousClient.getContainer(serviceConfig, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }
