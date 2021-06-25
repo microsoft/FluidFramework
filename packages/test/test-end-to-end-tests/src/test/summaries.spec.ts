@@ -40,7 +40,7 @@ async function createContainer(
     // const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
     const runtimeOptions: IContainerRuntimeOptions = {
 
-            summaryOptions: { generateSummaries: false },
+            summaryOptions: { ...summaryOpt, generateSummaries: false },
 
             gcOptions: { gcAllowed: true },
 
@@ -144,18 +144,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             summaryLogger: new TelemetryNullLogger(),
         });
 
-        const dataStore = await factory.createInstance(containerRuntime);
-        await provider.ensureSynchronized();
-        defaultDataStore.getRoot().set("nonRootDS", dataStore.handle);
-
-        const summary1 = await containerRuntime.summarize({
-            runGC: true,
-            fullTree: false,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
-        console.log(summary1);
-
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
         // .component, and .attributes blobs
@@ -194,5 +182,39 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         assert(gcNodeIds.includes("/"), "Expected root gc node.");
         assert(gcNodeIds.includes("/default"), "Expected default data store gc node.");
         assert(gcNodeIds.includes("/default/root"), "Expected default root DDS gc node.");
+    });
+
+    it("Should have correct stats with 2 datastores", async () => {
+        const container = await createContainer(provider, { disableIsolatedChannels: true });
+        const defaultDataStore = await requestFluidObject<TestDataObject>(container, defaultDataStoreId);
+        const containerRuntime = defaultDataStore.getContext().containerRuntime as ContainerRuntime;
+
+        const dataStore = await factory.createInstance(containerRuntime);
+
+        defaultDataStore.getRoot().set("nonRootDS", dataStore.handle);
+        defaultDataStore.getRoot().delete("nonRootDS");
+        await provider.ensureSynchronized();
+        const summary1 = await containerRuntime.summarize({
+            runGC: true,
+            fullTree: false,
+            trackState: false,
+            summaryLogger: new TelemetryNullLogger(),
+        });
+
+        const stats = summary1.stats;
+        // Validate stats
+        assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
+        // .metadata, .component, and .attributes blobs
+        assert(stats.blobNodeCount >= 3, `Stats expected at least 3 blob nodes, but had ${stats.blobNodeCount}.`);
+        // root node, data store .channels, default data store, dds .channels, and default root dds
+        assert(stats.treeNodeCount >= 5, `Stats expected at least 5 tree nodes, but had ${stats.treeNodeCount}.`);
+
+        assert(stats.dataStoreCount === 2, `stats expected 2 data stores, but had ${stats.dataStoreCount}.`);
+        assert(stats.summarizedDataStoreCount === 2,
+            `stats expected 2 data stores, but had ${stats.summarizedDataStoreCount}.`);
+        assert(stats.summarizedUnreferencedDataStoreCount === 1,
+            `stats expected 2 data stores, but had ${stats.dataStoreCount}.`);
+        // Validate summary
+        assert(!summary1.summary.unreferenced, "Root summary should be referenced.");
     });
 });
