@@ -5,12 +5,15 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
@@ -25,11 +28,31 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
+class MockDetachedBlobStorage implements IDetachedBlobStorage {
+    private readonly blobs = new Map<number, ArrayBufferLike>();
+    private blobCount = 0;
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        this.blobs.set(++this.blobCount, content);
+        return {
+            id: this.blobCount.toString(),
+            url: "",
+        };
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(parseInt(blobId, 10));
+        assert(blob);
+        return blob;
+    }
+}
+
 describeFullCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(async () => {
         provider = getTestObjectProvider();
     });
+
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
@@ -184,5 +207,26 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         await blobOpP;
         container.close();
         await assert.rejects(blobP, "promise returned by uploadBlob() did not reject when runtime was disposed");
+    });
+
+    it("works in detached container", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+
+        // make sure we are still detached
+        assert.strictEqual(container.attachState, AttachState.Detached);
+
+        await assert.rejects(
+            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
+            /attaching container with blobs is not yet implemented/,
+        );
     });
 });
