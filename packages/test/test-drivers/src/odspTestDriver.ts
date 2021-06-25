@@ -6,7 +6,10 @@
 import assert from "assert";
 import os from "os";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+    IDocumentServiceFactory,
+    IUrlResolver,
+ } from "@fluidframework/driver-definitions";
 import type { OdspResourceTokenFetchOptions, HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 import {
     OdspTokenConfig,
@@ -14,7 +17,11 @@ import {
     odspTokensCache,
     getMicrosoftConfiguration,
 } from "@fluidframework/tool-utils";
-import { getDriveId, getDriveItemByRootFileName, IClientConfig } from "@fluidframework/odsp-doclib-utils";
+import {
+    getDriveId,
+    getDriveItemByRootFileName,
+    IClientConfig,
+} from "@fluidframework/odsp-doclib-utils";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 
@@ -28,6 +35,7 @@ export interface IOdspTestLoginInfo {
     server: string;
     username: string;
     password: string;
+    inAutomation?: boolean;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IClientConfig;
@@ -42,13 +50,14 @@ export class OdspTestDriver implements ITestDriver {
     // Share the tokens and driverId across multiple instance of the test driver
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driverIdPCache = new Map<string, Promise<string>>();
-    private static async getDriveId(server: string, tokenConfig: TokenConfig): Promise<string> {
+    private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
+        const accessToken = await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig);
         return getDriveId(
             server,
             "",
             undefined,
-            { accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig) });
+            { accessToken});
     }
 
     public static async createFromEnv(
@@ -65,13 +74,23 @@ export class OdspTestDriver implements ITestDriver {
         const emailServer = username.substr(username.indexOf("@") + 1);
         const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
 
+        const directoryParts = [config?.directory];
+
+        // if we are in a azure dev ops build use the build id in the dir path
+        if (process.env.BUILD_BUILD_ID !== undefined) {
+            directoryParts.push(process.env.BUILD_BUILD_ID);
+        } else {
+            directoryParts.push(os.hostname());
+        }
+
         return this.create(
             {
                 username,
                 password: passwords[username],
                 server,
+                inAutomation: process.env.BUILD_BUILD_ID !== undefined,
             },
-            config?.directory ?? "",
+            directoryParts.filter((p)=>p).join("/"),
             api,
             config?.options,
         );
@@ -86,22 +105,14 @@ export class OdspTestDriver implements ITestDriver {
 
         let driveIdP = this.driverIdPCache.get(loginConfig.server);
         if (!driveIdP) {
-            driveIdP = this.getDriveId(loginConfig.server, tokenConfig);
+            driveIdP = this.getDriveIdFromConfig(loginConfig.server, tokenConfig);
         }
 
         const driveId = await driveIdP;
-        const directoryParts = [directory];
-
-        // if we are in a azure dev ops build use the build id in the dir path
-        if (process.env.BUILD_BUILD_ID !== undefined) {
-            directoryParts.push(process.env.BUILD_BUILD_ID);
-        } else {
-            directoryParts.push(os.hostname());
-        }
 
         const driverConfig: IOdspTestDriverConfig = {
             ...tokenConfig,
-            directory: directoryParts.join("/"),
+            directory,
             driveId,
             options,
         };
@@ -116,14 +127,37 @@ export class OdspTestDriver implements ITestDriver {
         options: OdspResourceTokenFetchOptions,
         config: IOdspTestLoginInfo & IClientConfig,
     ) {
-        // This function can handle token request for any multiple sites. Where the test driver is for a specific site.
-        const tokens = await this.odspTokenManager.getOdspTokens(
-            new URL(options.siteUrl).hostname,
+        const hostname = new URL(options.siteUrl).hostname;
+        try{
+            // This function can handle token request for any multiple sites.
+            // Where the test driver is for a specific site.
+            const tokens = await this.odspTokenManager.getOdspTokens(
+                new URL(options.siteUrl).hostname,
+                config,
+                passwordTokenConfig(config.username, config.password),
+                options.refresh,
+            );
+            return tokens.accessToken;
+        }catch(ex) {
+            if(config.inAutomation === true) {
+                throw ex;
+            }
+        }
+        const browserTokens = await this.odspTokenManager.getOdspTokens(
+            hostname,
             config,
-            passwordTokenConfig(config.username, config.password),
-            options.refresh,
+            {
+                type: "browserLogin",
+                navigator: (openUrl)=>{
+                    // eslint-disable-next-line max-len
+                    console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
+                    console.log(`"${openUrl}"`);
+                },
+            },
+            true,
+            true,
         );
-        return tokens.accessToken;
+        return browserTokens.accessToken;
     }
 
     public readonly type = "odsp";
