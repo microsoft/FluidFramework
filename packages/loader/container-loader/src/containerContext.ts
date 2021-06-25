@@ -300,8 +300,8 @@ export class ContainerContext implements IContainerContext {
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
         this._runtime = await (this.isFactoryStateful(runtimeFactory)
-            ? runtimeFactory.getRuntime(this, existing)
-            : runtimeFactory.getRuntime(this));
+            ? runtimeFactory.instantiateRuntime(this, existing)
+            : runtimeFactory.instantiateRuntime(this));
     }
 
     private attachListener() {
