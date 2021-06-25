@@ -12,13 +12,13 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setupEngines() before Lumberjack can be used.
 export class Lumberjack {
+    private readonly _engineList: ILumberjackEngine[] = [];
+    private _isSetupCompleted: boolean = false;
     protected static _instance: Lumberjack | undefined = undefined;
-    private readonly engineList: ILumberjackEngine[] = [];
-    private isSetupCompleted: boolean = false;
 
     protected constructor() {}
 
-    public static get instance() {
+    protected static get instance() {
         if (!Lumberjack._instance) {
             Lumberjack._instance = new Lumberjack();
         }
@@ -32,20 +32,40 @@ export class Lumberjack {
         return newInstance;
     }
 
+    public static setupEngines(engines: ILumberjackEngine[]) {
+        this.instance.setupEngines(engines);
+    }
+
+    public static newLumberMetric<T extends string = LumberEventName>(
+        eventName: T,
+        properties?: Map<string, any> | Record<string, any>) {
+        return this.instance.newLumberMetric<T>(eventName, properties);
+    }
+
+    public static log(
+        message: string,
+        metadata: ITelemetryMetadata,
+        level: LogLevel,
+        properties?: Map<string, any> | Record<string, any>,
+        statusCode?: number | string,
+        exception?: Error) {
+        this.instance.log(message, metadata, level, properties, statusCode, exception);
+    }
+
     public setupEngines(engines: ILumberjackEngine[]) {
-        if (this.isSetupCompleted) {
+        if (this._isSetupCompleted) {
             throw new Error("This Lumberjack was already setup with a list of engines.");
         }
 
-        this.engineList.push(...engines);
-        this.isSetupCompleted = true;
+        this._engineList.push(...engines);
+        this._isSetupCompleted = true;
     }
 
     public newLumberMetric<T extends string = LumberEventName>(
         eventName: T,
         properties?: Map<string, any> | Record<string, any>) {
         this.throwOnEmptyEngineList();
-        return new Lumber<T>(eventName, LumberType.Metric, this.engineList, properties);
+        return new Lumber<T>(eventName, LumberType.Metric, this._engineList, properties);
     }
 
     public log(
@@ -56,7 +76,7 @@ export class Lumberjack {
         statusCode?: number | string,
         exception?: Error) {
         this.throwOnEmptyEngineList();
-        const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this.engineList, properties);
+        const lumber = new Lumber<string>(this.getLogCallerInfo(), LumberType.Log, this._engineList, properties);
 
         if (level === LogLevel.Warning || level === LogLevel.Error) {
             lumber.error(message, statusCode, metadata, exception, level);
@@ -98,7 +118,7 @@ export class Lumberjack {
    }
 
     private throwOnEmptyEngineList() {
-        if (this.engineList.length === 0) {
+        if (this._engineList.length === 0) {
             throw new Error("No engine has been defined for Lumberjack yet. Please define an engine before using it.");
         }
     }

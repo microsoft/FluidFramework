@@ -48,6 +48,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/common-utils": "^0.31.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",

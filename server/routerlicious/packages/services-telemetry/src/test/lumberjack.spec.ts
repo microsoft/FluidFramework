@@ -14,9 +14,9 @@ describe("Lumberjack", () => {
 
     it("Sets up Lumberjack's global instance and creates a Lumber metric.", async () => {
         const engine = new TestEngine1();
-        TestLumberjack.instance.setupEngines([engine]);
+        TestLumberjack.setupEngines([engine]);
         try {
-            TestLumberjack.instance.newLumberMetric(LumberEventName.UnitTestEvent);
+            TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
         } catch (err) {
             assert.fail("Lumberjack should not have failed to create Lumber as it has a non-empty engine list.");
         }
@@ -35,7 +35,7 @@ describe("Lumberjack", () => {
     it("Setting up custom instance of Lumberjack should not interfere with the global instance.", async () => {
         const engine1 = new TestEngine1();
         const engine2 = new TestEngine2();
-        TestLumberjack.instance.setupEngines([engine1]);
+        TestLumberjack.setupEngines([engine1]);
         try {
             TestLumberjack.create([engine2]);
         } catch (err) {
@@ -46,9 +46,9 @@ describe("Lumberjack", () => {
     it("Lumberjack should fail when trying to set up engines more than once.", async () => {
         const engine1 = new TestEngine1();
         const engine2 = new TestEngine2();
-        TestLumberjack.instance.setupEngines([engine1]);
+        TestLumberjack.setupEngines([engine1]);
         try {
-            TestLumberjack.instance.setupEngines([engine2]);
+            TestLumberjack.setupEngines([engine2]);
         } catch (err) {
             return;
         }
@@ -58,7 +58,7 @@ describe("Lumberjack", () => {
 
     it("Lumberjack should fail when trying to create a metric while having an empty engine list.", async () => {
         try {
-            TestLumberjack.instance.newLumberMetric(LumberEventName.UnitTestEvent);
+            TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
         } catch (err) {
             return;
         }

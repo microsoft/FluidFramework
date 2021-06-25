@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
 import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./resources";
 
@@ -12,8 +13,7 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 // addProperty(). Once the telemetry event is complete, the user must call either success()
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
-    private readonly startTime = Date.now();
-    public readonly timestamp = new Date(this.startTime).toISOString();
+    private readonly _startTime = performance.now();
     private  _properties = new Map<string, any>();
     private _metadata?: ITelemetryMetadata;
     private _durationInMs?: number;
@@ -22,7 +22,8 @@ export class Lumber<T extends string = LumberEventName> {
     private _statusCode?: string;
     private _exception?: Error;
     private _logLevel?: LogLevel;
-    private completed = false;
+    private _completed = false;
+    public readonly timestamp = new Date(Date.now()).toISOString();
 
     public get properties(): Map<string, any> {
         return this._properties;
@@ -65,7 +66,7 @@ export class Lumber<T extends string = LumberEventName> {
     constructor(
         public readonly eventName: T,
         public readonly type: LumberType,
-        private readonly engineList: ILumberjackEngine[],
+        private readonly _engineList: ILumberjackEngine[],
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
                 this.addProperties(properties);
@@ -117,7 +118,7 @@ export class Lumber<T extends string = LumberEventName> {
         logLevel: LogLevel,
         successful: boolean,
         exception?: Error) {
-        if (this.completed) {
+        if (this._completed) {
             throw new Error(
                 `Trying to complete a Lumber telemetry operation ${this.eventName} that has alredy been completed.`);
         }
@@ -130,12 +131,12 @@ export class Lumber<T extends string = LumberEventName> {
         this._logLevel = logLevel;
         this._successful = successful;
         this._exception = exception;
-        this._durationInMs = Date.now() - this.startTime;
+        this._durationInMs = performance.now() - this._startTime;
 
-        for (const engine of this.engineList) {
+        for (const engine of this._engineList) {
             engine.emit(this);
         }
 
-        this.completed = true;
+        this._completed = true;
     }
 }
