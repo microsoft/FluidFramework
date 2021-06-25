@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ServiceAudience } from "@fluid-experimental/fluid-static";
+import { ServiceAudience } from "@fluid-experimental/fluid-framework";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IFrsAudience, FrsMember } from "./interfaces";
 

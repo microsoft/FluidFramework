@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ContainerSchema } from "@fluid-experimental/fluid-static";
+export * from "@fluid-experimental/fluid-static";
