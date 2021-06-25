@@ -92,24 +92,24 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
 
         if (relevantRemoteChanges.length > 0) {
             for (const c of relevantRemoteChanges) {
-            let changeset = c.changeSet;
-            let applyAfterMetaInformation;
+                let changeset = c.changeSet;
+                let applyAfterMetaInformation;
 
-            if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
-                const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
-                invertedChange._toInverseChangeSet();
-                invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
-                applyAfterMetaInformation = new Map();
-                const conflicts2 = [];
-                changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
-                rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
-                applyAfterMetaInformation,
-                });
+                if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
+                    const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+                    invertedChange._toInverseChangeSet();
+                    invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
+                    applyAfterMetaInformation = new Map();
+                    const conflicts2 = [];
+                    changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+                    rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
+                        applyAfterMetaInformation,
+                    });
 
-                rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
-                alreadyRebasedChanges.shift();
-            }
-            rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, { applyAfterMetaInformation });
+                    rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
+                    alreadyRebasedChanges.shift();
+                }
+                rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, { applyAfterMetaInformation });
             }
 
             // Now we have to rebase all changes from the remote local branch with respect to this base changeset
