@@ -174,7 +174,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
 
     /**
-     * Marker for the implementation supporting the `existing` flag
+     * Marker for an implementation supporting the `existing` flag
      */
     readonly stateful?: boolean;
 }
