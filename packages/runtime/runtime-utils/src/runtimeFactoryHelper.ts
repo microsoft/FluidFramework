@@ -11,12 +11,9 @@ import {
 
 export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
+    public get stateful(): boolean { return true; }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        return this.getRuntime(context);
-    }
-
-    public async getRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
+    public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const isLoaded = existing === true || context.existing === true;
         const runtime = await this.preInitialize(context, isLoaded);
 
@@ -30,8 +27,8 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
         return runtime;
     }
 
-    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
-    public async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
-    public async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
-    public async hasInitialized(runtime: IRuntime): Promise<void> {}
+    protected abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+    protected async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
+    protected async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
+    protected async hasInitialized(runtime: IRuntime): Promise<void> {}
 }

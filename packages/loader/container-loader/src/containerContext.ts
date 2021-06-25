@@ -294,7 +294,7 @@ export class ContainerContext implements IContainerContext {
 
     // back compat: 0.40 (see #3429)
     private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
-        return "getRuntime" in runtimeFactory;
+        return "stateful" in runtimeFactory;
     }
 
     private async instantiateRuntime(existing: boolean) {
