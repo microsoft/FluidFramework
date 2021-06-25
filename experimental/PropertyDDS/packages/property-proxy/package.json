@@ -27,8 +27,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.42.0-0",
-    "@fluid-experimental/property-properties": "^0.42.0-0"
+    "@fluid-experimental/property-changeset": "^0.42.0",
+    "@fluid-experimental/property-properties": "^0.42.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
