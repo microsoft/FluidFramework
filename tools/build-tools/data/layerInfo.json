@@ -153,16 +153,16 @@
                 "dev": true,
                 "packages": [
                     "@fluid-experimental/frs-client",
-                    "@fluid-experimental/tinylicious-client",
-                    "@fluid-experimental/get-container"
+                    "@fluid-experimental/get-container",
+                    "@fluid-experimental/tinylicious-client"                  
                 ],
                 "deps": [
+                    "Framework",
                     "Loader",
                     "Routerlicious-Driver",
                     "Server-Libs",
                     "Server-Shared-Utils",
-                    "Test",
-                    "Framework"
+                    "Test"                    
                 ]
             },
             "Runtime": {
