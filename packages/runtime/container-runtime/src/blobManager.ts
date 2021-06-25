@@ -53,6 +53,8 @@ export class BlobManager {
     private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
     private readonly blobIds: Set<string> = new Set();
 
+    public get blobCount() { return this.blobIds.size; }
+
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
@@ -85,7 +87,7 @@ export class BlobManager {
             async () => this.getStorage().readBlob(response.id),
         );
 
-        if (this.runtime.attachState !== AttachState.Attached) {
+        if (this.runtime.attachState === AttachState.Detached) {
             this.blobIds.add(response.id);
             return handle;
         }

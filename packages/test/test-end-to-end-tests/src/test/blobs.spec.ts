@@ -223,5 +223,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         // make sure we are still detached
         assert.strictEqual(container.attachState, AttachState.Detached);
+
+        await assert.rejects(
+            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
+            /attaching container with blobs is not yet implemented/,
+        );
     });
 });
