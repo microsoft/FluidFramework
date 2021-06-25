@@ -139,23 +139,23 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
 
             let changeset = remoteChange.changeSet;
             if (changesOnOtherLocalBranch[0] !== undefined && changesOnOtherLocalBranch[0].guid === remoteChange.guid) {
-            const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
-            invertedChange._toInverseChangeSet();
-            invertedChange.applyChangeSet(rebaseBaseChangeSet);
+                const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+                invertedChange._toInverseChangeSet();
+                invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
-            applyAfterMetaInformation = new Map();
-            changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
-            rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
+                applyAfterMetaInformation = new Map();
+                changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+                rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
-            // This is disabled for performance reasons. Only used during debugging
-            // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
-            //                 "Failed Rebase in rebaseToRemoteChanges");
-            rebaseBaseChangeSet = invertedChange;
-            changesOnOtherLocalBranch.shift();
+                // This is disabled for performance reasons. Only used during debugging
+                // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
+                //                 "Failed Rebase in rebaseToRemoteChanges");
+                rebaseBaseChangeSet = invertedChange;
+                changesOnOtherLocalBranch.shift();
             }
 
             rebaseBaseChangeSet.applyChangeSet(changeset, {
-            applyAfterMetaInformation,
+                applyAfterMetaInformation,
             });
         }
       }
