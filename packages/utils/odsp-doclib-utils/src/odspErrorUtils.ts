@@ -154,7 +154,7 @@ export function createOdspNetworkError(
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
-            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
+            error = createGenericNetworkError(errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];

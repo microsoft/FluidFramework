@@ -433,10 +433,6 @@ export class DocumentDeltaConnection
      * Error raising for socket.io issues
      */
     protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
-        // Note: we suspect the incoming error object is either:
-        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
         const errorObj = createGenericNetworkError(
             `socket.io:${handler}`,
             canRetry,
