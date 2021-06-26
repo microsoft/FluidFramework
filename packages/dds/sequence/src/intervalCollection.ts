@@ -641,7 +641,6 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 export class IntervalCollection<TInterval extends ISerializableInterval> extends EventEmitter {
     private savedSerializedIntervals?: ISerializedInterval[];
-    // private view: IntervalCollectionView<TInterval>;
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
     private client: MergeTree.Client;
@@ -760,9 +759,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     /**
      * @deprecated - IntervalCollectionView has been removed. Please refer to IntervalCollection directly.
      */
-    public getView(onDeserialize?: DeserializeCallback): IntervalCollection<TInterval> {
+    public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollection<TInterval>> {
         if (!this.attached) {
-            throw new Error("attachSequence must be called prior to retrieving the view");
+            return Promise.reject(new Error("attachSequence must be called prior to retrieving the view"));
         }
 
         // Attach custom deserializers if specified
