@@ -14,10 +14,10 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
     public readonly stateful: boolean = true;
 
     public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
-        const isLoaded = existing === true || context.existing === true;
-        const runtime = await this.preInitialize(context, isLoaded);
+        const fromExisting = existing === true || context.existing === true;
+        const runtime = await this.preInitialize(context, fromExisting);
 
-        if (isLoaded) {
+        if (fromExisting) {
             await this.instantiateFromExisting(runtime);
         } else {
             await this.instantiateFirstTime(runtime);
