@@ -243,7 +243,7 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 
 // @public
 export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
@@ -463,11 +463,11 @@ export interface SetValue {
 
 // @public @sealed
 export class SharedTree extends GenericSharedTree<Change> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     get editor(): SharedTreeEditor;
     protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
-    static getFactory(summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat): SharedTreeFactory;
+    static getFactory(summarizeHistory?: boolean, uploadEditChunks?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat): SharedTreeFactory;
 }
 
 // @public
@@ -479,6 +479,7 @@ export enum SharedTreeDiagnosticEvent {
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
     DroppedInvalidEdit = "droppedInvalidEdit",
     DroppedMalformedEdit = "droppedMalformedEdit",
+    EditChunkUploaded = "uploadedEditChunk",
     UnexpectedHistoryChunk = "unexpectedHistoryChunk"
 }
 
@@ -520,6 +521,7 @@ export class SharedTreeFactory implements IChannelFactory {
 // @public
 export interface SharedTreeFactoryOptions {
     readonly summarizeHistory?: boolean;
+    readonly uploadEditChunks?: boolean;
     readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
 }
 

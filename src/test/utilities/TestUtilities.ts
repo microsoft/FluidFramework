@@ -253,6 +253,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	writeSummaryFormat?: SharedTreeSummaryWriteFormat;
 	/**
+	 * If not set, will upload edit chunks when they are full.
+	 */
+	uploadEditChunks?: boolean;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
@@ -288,14 +292,25 @@ async function setUpLocalServerTestSharedTreeGeneric<
 >(
 	factoryGetter: (
 		summarizeHistory?: boolean,
+		uploadEditChunks?: boolean,
 		writeSummaryFormat?: SharedTreeSummaryWriteFormat
 	) => TSharedTreeFactory,
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat } = options;
+	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat, uploadEditChunks } =
+		options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory, writeSummaryFormat)]];
+	const registry: ChannelFactoryRegistry = [
+		[
+			treeId,
+			factoryGetter(
+				summarizeHistory,
+				uploadEditChunks === undefined ? true : uploadEditChunks,
+				writeSummaryFormat
+			),
+		],
+	];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			addGlobalAgentSchedulerAndLeaderElection: false,

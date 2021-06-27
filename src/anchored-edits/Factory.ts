@@ -19,6 +19,8 @@ import { SharedTreeWithAnchors } from './SharedTreeWithAnchors';
 export interface SharedTreeWithAnchorsFactoryOptions {
 	/** If false, does not include history in summaries. */
 	readonly summarizeHistory?: boolean;
+	/** If true, edit chunks are uploaded as blobs when they become full. */
+	readonly uploadEditChunks?: boolean;
 }
 
 /**
@@ -80,7 +82,13 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTreeWithAnchors {
-		const sharedTree = new SharedTreeWithAnchors(runtime, id, expensiveValidation, this.options.summarizeHistory);
+		const sharedTree = new SharedTreeWithAnchors(
+			runtime,
+			id,
+			expensiveValidation,
+			this.options.summarizeHistory,
+			this.options.uploadEditChunks
+		);
 		sharedTree.initializeLocal();
 		return sharedTree;
 	}

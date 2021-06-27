@@ -141,10 +141,12 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 */
 	public static getFactory(
 		summarizeHistory = true,
+		uploadEditChunks = false,
 		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
 	): SharedTreeFactory {
 		return new SharedTreeFactory({
 			summarizeHistory,
+			uploadEditChunks,
 			writeSummaryFormat,
 		});
 	}
@@ -155,13 +157,15 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
 	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		expensiveValidation = false,
 		summarizeHistory = true,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		uploadEditChunks = false
 	) {
 		super(
 			runtime,
@@ -170,7 +174,8 @@ export class SharedTree extends GenericSharedTree<Change> {
 			SharedTreeFactory.Attributes,
 			expensiveValidation,
 			summarizeHistory,
-			writeSummaryFormat
+			writeSummaryFormat,
+			uploadEditChunks
 		);
 	}
 

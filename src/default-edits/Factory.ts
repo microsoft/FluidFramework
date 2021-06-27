@@ -22,6 +22,8 @@ export interface SharedTreeFactoryOptions {
 	readonly summarizeHistory?: boolean;
 	/** Determines the summary format version to write, 0.0.2 by default. */
 	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/** If true, edit chunks are uploaded as blobs when they become full. */
+	readonly uploadEditChunks?: boolean;
 }
 
 /**
@@ -88,7 +90,8 @@ export class SharedTreeFactory implements IChannelFactory {
 			id,
 			expensiveValidation,
 			this.options.summarizeHistory,
-			this.options.writeSummaryFormat
+			this.options.writeSummaryFormat,
+			this.options.uploadEditChunks
 		);
 		sharedTree.initializeLocal();
 		return sharedTree;

@@ -75,6 +75,10 @@ export enum SharedTreeDiagnosticEvent {
 	 */
 	CatchUpBlobUploaded = 'uploadedCatchUpBlob',
 	/**
+	 * An edit chunk blob has been uploaded. This includes catchup blobs.
+	 */
+	EditChunkUploaded = 'uploadedEditChunk',
+	/**
 	 * A valid edit (local or remote) has been applied.
 	 * Passed the EditId of the applied edit.
 	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
@@ -182,6 +186,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * @param expensiveValidation - Enable expensive asserts.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
@@ -190,7 +195,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
-		protected readonly writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
+		protected readonly writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		private readonly uploadEditChunks = false
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
@@ -301,21 +307,35 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
 	private async uploadEditChunk(edits: readonly EditWithoutId<TChange>[], startRevision: number): Promise<void> {
-		try {
-			const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-			this.submitLocalMessage({
-				editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-				startRevision,
-				type: SharedTreeOpType.Handle,
-			});
-		} catch (error) {
-			// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
-			this.logger.sendErrorEvent(
-				{
-					eventName: 'EditChunkUploadFailure',
-				},
-				error
-			);
+		if (this.uploadEditChunks) {
+			// SPO attachment blob upload limit is set here:
+			// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=%2Fsts%2Fstsom%2FPrague%2FSPPragueProtocolConfig.cs&version=GBmaster&line=82&lineEnd=82&lineStartColumn=29&lineEndColumn=116&lineStyle=plain&_a=contents
+			// TODO:#59754: Create chunks based on data buffer size instead of number of edits
+			const blobUploadSizeLimit = 4194304;
+
+			try {
+				const buffer = IsoBuffer.from(JSON.stringify({ edits }));
+				const bufferSize = buffer.byteLength;
+				assert(
+					bufferSize <= blobUploadSizeLimit,
+					`Edit chunk size ${bufferSize} is larger than blob upload size limit of ${blobUploadSizeLimit} bytes.`
+				);
+				const editHandle = await this.runtime.uploadBlob(buffer);
+				this.submitLocalMessage({
+					editHandle: serializeHandles(editHandle, this.serializer, this.handle),
+					startRevision,
+					type: SharedTreeOpType.Handle,
+				});
+				this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
+			} catch (error) {
+				// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
+				this.logger.sendErrorEvent(
+					{
+						eventName: 'EditChunkUploadFailure',
+					},
+					error
+				);
+			}
 		}
 	}
 

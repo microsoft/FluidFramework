@@ -6,17 +6,19 @@
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditHandle, EditLog } from '../EditLog';
-import { Edit, EditWithoutId, newEdit, fullHistorySummarizer_0_1_0 } from '../generic';
+import { Edit, EditWithoutId, newEdit, fullHistorySummarizer_0_1_0, SharedTreeSummary } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
 import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
+import { EditId } from '../Identifiers';
 import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider;
+	let editChunksUploaded = 0;
 
 	// Create a summary used to test catchup blobbing
 	const summaryToCatchUp: SharedTreeSummary_0_0_2<Change> = {
@@ -31,11 +33,30 @@ describe('SharedTree history virtualization', () => {
 		});
 		sharedTree = testingComponents.tree;
 		testObjectProvider = testingComponents.testObjectProvider;
+
+		sharedTree.on(SharedTreeDiagnosticEvent.EditChunkUploaded, () => {
+			editChunksUploaded++;
+		});
 	});
 
 	afterEach(async () => {
 		testObjectProvider.reset();
+		editChunksUploaded = 0;
 	});
+
+	// Replace sharedTree with one that writes summary format 0.1.0
+	const useSharedTreeSummaryFormat_0_1_0 = async () => {
+		const testingComponents = await setUpLocalServerTestSharedTree({
+			summarizeHistory: true,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
+		});
+		sharedTree = testingComponents.tree;
+		testObjectProvider = testingComponents.testObjectProvider;
+
+		sharedTree.on(SharedTreeDiagnosticEvent.EditChunkUploaded, () => {
+			editChunksUploaded++;
+		});
+	};
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
 	const addNewEditChunks = async (numberOfChunks = 1, additionalEdits = 0) => {
@@ -51,6 +72,8 @@ describe('SharedTree history virtualization', () => {
 			sharedTree.processLocalEdit(edit);
 		}
 
+		// `ensureSynchronized` does not guarantee blob upload
+		await new Promise((resolve) => setImmediate(resolve));
 		// Wait for the ops to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
@@ -68,7 +91,9 @@ describe('SharedTree history virtualization', () => {
 		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
 
 		// Load a second tree using the summary
-		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({ testObjectProvider });
+		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
+			testObjectProvider,
+		});
 
 		sharedTree2.loadSummary(summary);
 
@@ -137,41 +162,13 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it("doesn't upload incomplete chunks", async () => {
-		const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
-		sharedTree.processLocalEdit(edit);
-
-		// Wait for the op to to be submitted and processed across the containers.
-		await testObjectProvider.ensureSynchronized();
-
-		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
-		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks.length).to.equal(1);
-
-		// The chunk given by the summary should be an array of length 1.
-		const { chunk } = editChunks[0];
-		expect(Array.isArray(chunk)).to.be.true;
-		expect((chunk as EditWithoutId<Change>[]).length).to.equal(1);
+		await addNewEditChunks(0, 50);
+		expect(editChunksUploaded).to.equal(0);
 	});
 
 	it('can upload full chunks with incomplete chunks in the edit log', async () => {
-		const expectedEdits: Edit<Change>[] = [];
-
-		// Add some edits to create a chunk with.
-		while (expectedEdits.length < (sharedTree.edits as EditLog<Change>).editsPerChunk + 10) {
-			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
-			expectedEdits.push(edit);
-			sharedTree.processLocalEdit(edit);
-		}
-
-		// Wait for the ops to to be submitted and processed across the containers.
-		await testObjectProvider.ensureSynchronized();
-
-		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);
-		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks.length).to.equal(2);
-		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
-		expect(Array.isArray(editChunks[1].chunk)).to.be.true;
-		expect((editChunks[1].chunk as EditWithoutId<Change>[]).length).to.equal(10);
+		await addNewEditChunks(1, 50);
+		expect(editChunksUploaded).to.equal(1);
 	});
 
 	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
@@ -234,14 +231,7 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not cause misaligned chunks', async () => {
-		// Replace sharedTree with one that writes summary format 0.1.0
-		const testingComponents = await setUpLocalServerTestSharedTree({
-			summarizeHistory: true,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
-		});
-		sharedTree = testingComponents.tree;
-		testObjectProvider = testingComponents.testObjectProvider;
-
+		await useSharedTreeSummaryFormat_0_1_0();
 		await addNewEditChunks(1, 50);
 
 		const summary = sharedTree.saveSummary();
@@ -287,5 +277,40 @@ describe('SharedTree history virtualization', () => {
 		await addNewEditChunks();
 
 		expect(unexpectedHistoryChunk).to.be.true;
+	});
+
+	it('does not upload blobs larger than 4MB', async () => {
+		await useSharedTreeSummaryFormat_0_1_0();
+		const numberOfEdits = 10000;
+		const edits: EditWithoutId<Change>[] = [];
+		const editIds: EditId[] = [];
+
+		// Add some edits to create a chunk with.
+		while (edits.length < numberOfEdits) {
+			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
+			edits.push({ changes: edit.changes });
+			editIds.push(edit.id);
+		}
+
+		const fakeSummary: SharedTreeSummary<Change> = {
+			version: '0.1.0',
+			currentTree: initialTree,
+			editHistory: {
+				editChunks: [
+					{
+						startRevision: 0,
+						chunk: edits,
+					},
+				],
+				editIds,
+			},
+		};
+
+		sharedTree.loadSummary(fakeSummary);
+
+		// `ensureSynchronized` does not guarantee blob upload
+		await new Promise((resolve) => setImmediate(resolve));
+		await testObjectProvider.ensureSynchronized();
+		expect(editChunksUploaded).to.equal(0);
 	});
 });
