@@ -21,7 +21,6 @@ export interface ISummaryStats {
 
 export interface ITopLevelSummaryStats extends ISummaryStats{
     dataStoreCount: number;
-    summarizedUnreferencedDataStoreCount: number;
     summarizedDataStoreCount: number;
 }
 

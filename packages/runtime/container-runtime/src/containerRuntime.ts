@@ -84,7 +84,6 @@ import {
     IInboundSignalMessage,
     ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
-    ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
     ITopLevelSummaryStats,
@@ -122,7 +121,6 @@ import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
-    dataStoreAttributesBlobName,
     gcFeature,
     IContainerRuntimeMetadata,
     metadataBlobName,
@@ -1633,32 +1631,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return summarizeResult as IChannelSummarizeResult;
     }
 
-    private count(tree: ISummaryTree, summaryStats: ISummaryStats): ITopLevelSummaryStats {
-        let summarizedDataStoreCount = 0;
-        let handleCount = 0;
-        let summarizedUnreferencedDataStoreCount = 0;
-        for (const key of Object.keys(tree.tree)) {
-            const maybeDataStore = tree.tree[key];
-            if (maybeDataStore.type === SummaryType.Tree &&
-                maybeDataStore.tree[dataStoreAttributesBlobName]?.type === SummaryType.Blob) {
-                summarizedDataStoreCount++;
-                if (maybeDataStore.unreferenced === true) {
-                    summarizedUnreferencedDataStoreCount++;
-                }
-            }
-            if (maybeDataStore.type === SummaryType.Handle) {
-                handleCount++;
-            }
-        }
-        const stats = {
-            dataStoreCount: summarizedDataStoreCount + handleCount,
-            summarizedDataStoreCount,
-            summarizedUnreferencedDataStoreCount,
-            ...summaryStats,
-        };
-        return stats;
-    }
-
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
     public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
@@ -1733,10 +1705,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error };
             }
 
-            const summary = summarizeResult.summary.tree;
-            const dataStoreTree = summary[channelsTreeName];
+            const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
+                summarizeResult.summary.tree[channelsTreeName];
             assert(dataStoreTree.type === SummaryType.Tree, "summary is not a tree");
-            const stats = this.count(dataStoreTree, summarizeResult.stats);
+            const handleCount = Object.values(dataStoreTree.tree).filter(
+                (value) => value.type === SummaryType.Handle).length;
+
+            const stats: ITopLevelSummaryStats = {
+                dataStoreCount: this.dataStores.size,
+                summarizedDataStoreCount: this.dataStores.size - handleCount,
+                ...summarizeResult.stats,
+            };
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: stats,
