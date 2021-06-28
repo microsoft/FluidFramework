@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { FluidContainer, IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { FluidContainer, IMember, IServiceAudience } from "@fluid-experimental/fluid-framework";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 export interface TinyliciousContainerConfig {
@@ -31,7 +30,7 @@ export interface TinyliciousContainerServices {
     audience: ITinyliciousAudience;
 }
 
-export interface TinyliciousContainerAndServices {
+export interface TinyliciousResources {
     fluidContainer: FluidContainer;
     containerServices: TinyliciousContainerServices;
 }

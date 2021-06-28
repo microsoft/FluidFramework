@@ -860,11 +860,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => {
-                assert(this.attachState !== AttachState.Detached, 0x123 /* "Blobs NYI in detached container mode" */);
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
-            (fn) => this.once("dispose", fn),
+            this,
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
@@ -1150,8 +1149,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
-        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        const snapshot = this.blobManager.snapshot();
+
+        // Some storage (like git) doesn't allow empty tree, so we can omit it.
+        // and the blob manager can handle the tree not existing when loading
+        if (snapshot.entries.length !== 0) {
+            const blobsTree = convertToSummaryTree(snapshot, false);
+            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        }
     }
 
     public async stop() {
@@ -1521,6 +1526,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        assert(this.blobManager.blobCount === 0, 0x1fa /* "attaching container with blobs is not yet implemented" */);
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
                 0x12d /* "Container Context should already be in attaching state" */);
