@@ -20,7 +20,38 @@ You can run this example using the following steps:
 1. Run `npm run start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
  <!-- AUTO-GENERATED-CONTENT:END -->
 
-## Files
+## Using Example
+Upon navigating to the example application home URL with no parameters, it will create a new document with an auto-generated ID and load it using the default package name and version. When loaded correctly a placeholder component will be rendered in the content `div` element.
+
+![Home Page](./images/home-page.png)
+
+The application URL has the following format:
+```
+http://localhost:8080/[document-id][?code=package-id][#CreateNew]
+```
+, where<br>
+`document-id` - is an alphanumerical string representing the unique Fluid document ID.<br>
+`package-id` - is a Fluid code package name and version in the following format `@<scope>/<name>@<version>`.<br>
+`#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.<br>
+
+The application also provides the code details panel allowing to load different code versions and propose code upgrades.
+
+![Code Details](./images/code-details.png)
+
+### Use Cases
+The example differentiates minor and major upgrades by responding differently to upgrade requests.
+
+### Minor Version Upgrade
+
+### Major Version Upgrade
+
+Safe Session Close & Force Upgrades
+Reliably apply hotfixes, and other required upgrades.
+minor upgrade, major upgrade, refreshing the DOM/view after upgrade
+
+## Implementation Details
+
+### Files
 
 #### index.html
 
@@ -45,8 +76,6 @@ Contains a placeholder data object used to render an HTML element when it is mou
 #### utils.ts
 
 Contains a collection of helper functions for the application.
-
-## Implementation Details
 
 ### Dependencies
 
@@ -284,11 +313,6 @@ The object contains attributes, such as a version range of code package, that ar
 Interpretation of these details is controlled by the host. Upgrades are also controlled by the host and can happen at any point in time
 An upgrade could result in non-compatible clients in a collaboration session being rejected and reloaded with new code.
 
-#### Use Cases
-
-Safe Session Close & Force Upgrades
-Reliably apply hotfixes, and other required upgrades.
-
 #### API
 Query a container to determine its version/release date
 
@@ -297,9 +321,6 @@ Tell the runtime to close the container if the container’s code version is out
 Compare versions
 
 Propose code details
-
-#### Sample Code
-TBD
 
 ## Next Steps
 

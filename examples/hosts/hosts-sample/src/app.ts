@@ -24,7 +24,7 @@ const hostUrl = "http://localhost:7070";
 const ordererUrl = "http://localhost:7070";
 const storageUrl = "http://localhost:7070";
 
-const defaultDocument = "example";
+// Default app URL params
 const createNewHash = "#CreateNew";
 const defaultPackage = "@fluid-example/faux-package@1.0.0";
 
@@ -44,12 +44,32 @@ const user = {
     name: "Test User", // Optional value that we included
 } as IUser;
 
-export async function start(
+// Parse the browser URL and load the app home page.
+// The URL format:
+// ```
+// http://localhost:8080/[document-id][?code=package-id][#CreateNew]
+// ```
+// , where
+// `document-id` - is an alphanumerical string representing the unique Fluid document ID.
+// `package-name` - is a Fluid code package name and version in the following format `@<scope>/<package-name>@<semver>`.
+// `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
+function parseAppUrl() {
+    // Create a new container with the specified ID when the hash param is provided
+    const isNew = window.location.hash === createNewHash;
+    window.location.hash = "";
+    const documentId = window.location.pathname.split("/")[1];
+    const packageName = parsePackageName(document.location, defaultPackage);
+    return { packageName, documentId, isNew };
+}
+
+// Create or load the Fluid container using specified document and package info and render the default component.
+async function start(
     url: string,
-    packageDetails: IPackageIdentifierDetails,
-    shouldCreateNewDocument: boolean,
+    containerId: string,
+    packageId: IPackageIdentifierDetails,
+    shouldCreateNew: boolean,
 ) {
-    // Create the InsecureUrlResolve so we can generate access tokens to connect to Fluid documents stored in our
+    // Create the InsecureUrlResolver so we can generate access tokens to connect to Fluid documents stored in our
     // tenant. Note that given we are storing the tenant secret in the clear on the client side this is a security
     // hole but it simplifies setting up this example. To make this clear we named it the InsecureUrlResolver. You would
     // not want to use this in a production environment and would want to protect the secret on your server. To give
@@ -65,45 +85,42 @@ export async function start(
 
     const tokenProvider = new InsecureTokenProvider(tenantKey, user);
 
-    // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
+    // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Tinylicious service.
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
         tokenProvider,
     );
 
     // The code loader provides the ability to load code packages that have been quorumed on and that represent
     // the code for the document.
-    const codeLoader = getCodeLoaderForPackage(packageDetails);
+    const codeLoader = getCodeLoaderForPackage(packageId);
 
-    // Finally with all the above objects created we can fully construct the loader
+    // Finally with all the above objects created we can construct the loader
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
     });
 
-    let container: Container | undefined;
-    if (shouldCreateNewDocument) {
-        // This flow is used to create a new container and then attach it to storage.
+    let container: Container;
+    if (shouldCreateNew) {
+        // This flow is used to create a new container and then attach it to the storage.
         container = await loader.createDetachedContainer({
-            package: packageDetails.fullId,
+            package: packageId.fullId,
         });
         try {
             await container.attach(
-                urlResolver.createCreateNewRequest(defaultDocument),
+                urlResolver.createCreateNewRequest(containerId),
             );
         } catch (error) {
             if (error.statusCode === 400) {
                 // error occurred during the attempt to create a new document
-                // we'll try to load an existing document with the same url below
-                container = undefined;
+                throw error;
             } else {
                 // unexpected error, bail out
                 throw error;
             }
         }
-    }
-
-    if (container === undefined) {
+    } else {
         // This flow is used to get the existing container.
         container = await loader.resolve({ url });
     }
@@ -143,30 +160,25 @@ export async function start(
     return container;
 }
 
-// Parse the browser URL and load the app page.
-// The URL format:
-// ```
-// http://localhost:8080/[document-id][#CreateNew][?chaincode=package-id]
-// ```
-// , where
-// `document-id` - is a alphanumerical string representing the Fluid document ID.
-// `package-id` - is a Fluid code package name and version in the following format `@scope/package-name@semver`.
-// `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
 if (document.location.pathname === "/") {
-    // Use a default document ID when not specified by the user
-    window.location.href = `/${defaultDocument}?${createNewHash}`;
+    // Redirect to create a new document with an auto-generated container ID
+    // when URL parameters were not specified by the user
+    const newContainerId = Date.now().toString();
+    window.location.href = `/${newContainerId}?code=${defaultPackage}#CreateNew`;
 } else {
-    let shouldCreateNewDocument = false;
-    if (window.location.hash === createNewHash) {
-        shouldCreateNewDocument = true;
-        window.location.hash = "";
-    }
+    const appParams = parseAppUrl();
+    const packageDetails = extractPackageIdentifierDetails(appParams.packageName);
 
-    const code = parsePackageName(document.location, defaultPackage);
-    const packageDetails = extractPackageIdentifierDetails(code);
     setupUI(packageDetails);
 
-    start(document.location.href, packageDetails, shouldCreateNewDocument)
+    start(
+        document.location.href,
+        appParams.documentId,
+        packageDetails,
+        appParams.isNew,
+    )
         .then((container) => bindUI(container, packageDetails))
-        .catch((error) => window.alert(`🛑 Failed to open document\n\n${error}`));
+        .catch((error) =>
+            window.alert(`🛑 Failed to open document\n\n${error}`),
+        );
 }

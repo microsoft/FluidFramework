@@ -43,5 +43,5 @@ export async function getFluidObjectAndRender(loader: Loader, container: Contain
 
 export function parsePackageName(url: Location, defaultPkg: string): string {
     const parsed = parse(url.search.substr(1));
-    return parsed.chaincode !== undefined ? parsed.chaincode as string : defaultPkg;
+    return parsed.code !== undefined ? parsed.code as string : defaultPkg;
 }

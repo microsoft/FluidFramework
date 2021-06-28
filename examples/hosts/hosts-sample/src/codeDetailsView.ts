@@ -26,7 +26,7 @@ export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
 
     const loadBtn = document.getElementById("reload-btn") as HTMLButtonElement;
     loadBtn.onclick = () => {
-        window.location.href = `${document.location.pathname}?chaincode=@${
+        window.location.href = `${document.location.pathname}?code=@${
             packageDetails.scope
         }/${packageDetails.name}@${proposedVersion.value ?? "1.0.0"}`;
     };
