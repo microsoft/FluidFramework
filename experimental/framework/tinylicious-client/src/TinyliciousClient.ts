@@ -83,8 +83,8 @@ export class TinyliciousClient {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
-        const tinyliciousContainerServices: TinyliciousResources = { fluidContainer, containerServices };
-        return tinyliciousContainerServices;
+        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
+        return tinyliciousResources;
     }
 
     private getContainerServices(

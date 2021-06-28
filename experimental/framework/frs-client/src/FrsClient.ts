@@ -19,9 +19,9 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { generateUser } from "@fluidframework/server-services-client";
 import {
     FrsConnectionConfig,
-    FrsResources,
     FrsContainerConfig,
     FrsContainerServices,
+    FrsResources,
 } from "./interfaces";
 import { FrsAudience } from "./FrsAudience";
 import { FrsUrlResolver } from "./FrsUrlResolver";
@@ -76,8 +76,8 @@ export class FrsClientInstance {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: FrsContainerServices = this.getContainerServices(container);
-        const FrsResources: FrsResources = { fluidContainer, containerServices };
-        return FrsResources;
+        const frsResources: FrsResources = { fluidContainer, containerServices };
+        return frsResources;
     }
 
     private getContainerServices(
