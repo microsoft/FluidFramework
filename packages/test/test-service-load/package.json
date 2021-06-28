@@ -81,6 +81,7 @@
     "@fluidframework/test-pairwise-generator": "^0.43.0",
     "@fluidframework/test-utils": "^0.43.0",
     "@fluidframework/tool-utils": "^0.43.0",
+    "applicationinsights": "^1.8.10",
     "commander": "^5.1.0",
     "random-js": "^1.0.8"
   },
