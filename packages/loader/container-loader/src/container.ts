@@ -111,6 +111,10 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+/**
+ * To be included in the `IClientDetails.environment` value for the `IRequest` header
+ * if the client must be able to create a container at load when a snapshot is not available.
+ */
 export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 export interface IContainerLoadOptions {
