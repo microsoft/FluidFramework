@@ -275,7 +275,7 @@ export async function loadContainer(
                 [LoaderHeader.clientDetails]: {
                     // #6346
                     // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
-                    // from @fluidframework/container-loader
+                    // from `@fluidframework/container-loader`
                     environment: `replay enable-legacy-create-on-load`,
                     capabilities: { interactive: false },
                 },
