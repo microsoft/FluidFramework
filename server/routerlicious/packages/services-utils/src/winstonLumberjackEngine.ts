@@ -14,7 +14,6 @@ export class WinstonLumberjackEngine implements ILumberjackEngine {
         lumber.properties.forEach((value, key) => { propObj[key] = value; });
         const obj = {
             eventName: lumber.eventName,
-            metadata: lumber.metadata,
             properties: propObj,
             type: LumberType[lumber.type],
             timestamp: lumber.timestamp,

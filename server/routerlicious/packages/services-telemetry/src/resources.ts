@@ -22,6 +22,15 @@ export interface ILumberjackEngine {
     emit(lumber: Lumber<string>): void;
 }
 
+export interface ILumberjackSchemaValidationResult {
+    validationPassed: boolean;
+    validationFailedForProperties: string[];
+}
+
+export interface ILumberjackSchemaValidator {
+    validate(props: Map<string, any>): ILumberjackSchemaValidationResult;
+}
+
 // We explicitly make the types of ITelemetryMetadata properties include "undefined"
 // to make those properties mandatory. Making the property "string | undefined" instead
 // of making them optional forces the user to explicitly provide the property as "undefined"

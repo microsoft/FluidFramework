@@ -5,7 +5,7 @@
 
 import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
-import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./resources";
+import { LogLevel, LumberType, ILumberjackEngine, ILumberjackSchemaValidator } from "./resources";
 
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
@@ -15,7 +15,6 @@ import { LogLevel, LumberType, ITelemetryMetadata, ILumberjackEngine } from "./r
 export class Lumber<T extends string = LumberEventName> {
     private readonly _startTime = performance.now();
     private  _properties = new Map<string, any>();
-    private _metadata?: ITelemetryMetadata;
     private _durationInMs?: number;
     private _successful?: boolean;
     private _message?: string;
@@ -27,10 +26,6 @@ export class Lumber<T extends string = LumberEventName> {
 
     public get properties(): Map<string, any> {
         return this._properties;
-    }
-
-    public get metadata(): ITelemetryMetadata | undefined {
-        return this._metadata;
     }
 
     public get durationInMs(): number | undefined {
@@ -67,6 +62,7 @@ export class Lumber<T extends string = LumberEventName> {
         public readonly eventName: T,
         public readonly type: LumberType,
         private readonly _engineList: ILumberjackEngine[],
+        private readonly _schemaValidator: ILumberjackSchemaValidator,
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
                 this.addProperties(properties);
@@ -97,24 +93,21 @@ export class Lumber<T extends string = LumberEventName> {
     public success(
         message: string,
         statusCode: number | string | undefined,
-        metadata: ITelemetryMetadata,
         logLevel: LogLevel = LogLevel.Info) {
-        this.emit(message, statusCode, metadata, logLevel, true);
+        this.emit(message, statusCode, logLevel, true);
     }
 
     public error(
         message: string,
         statusCode: number | string | undefined,
-        metadata: ITelemetryMetadata,
         exception?: Error | undefined,
         logLevel: LogLevel = LogLevel.Error) {
-        this.emit(message, statusCode, metadata, logLevel, false, exception);
+        this.emit(message, statusCode, logLevel, false, exception);
     }
 
     private emit(
         message: string,
         statusCode: number | string | undefined,
-        metadata: ITelemetryMetadata,
         logLevel: LogLevel,
         successful: boolean,
         exception?: Error) {
@@ -123,20 +116,23 @@ export class Lumber<T extends string = LumberEventName> {
                 `Trying to complete a Lumber telemetry operation ${this.eventName} that has alredy been completed.`);
         }
 
+        const validation = this._schemaValidator.validate(this.properties);
+
+        if (!validation.validationPassed) {
+            throw new Error(
+                `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}`);
+        }
+
         this._message = message;
         if (statusCode) {
             this._statusCode = statusCode.toString();
         }
-        this._metadata = metadata;
         this._logLevel = logLevel;
         this._successful = successful;
         this._exception = exception;
         this._durationInMs = performance.now() - this._startTime;
 
-        for (const engine of this._engineList) {
-            engine.emit(this);
-        }
-
+        this._engineList.forEach((engine) => engine.emit(this));
         this._completed = true;
     }
 }
