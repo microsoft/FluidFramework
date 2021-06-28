@@ -328,7 +328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState, loadOptions.noSnapshot)
+                container.load(version, mode, pendingLocalState, loadOptions.createOnLoad)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -1112,13 +1112,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - one of the following
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param pause - start the container in a paused state
+     * @param create - create the container when there is no snapshot.
      */
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown,
-        allowNoSnapshot?: boolean,
+        create?: boolean,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1194,7 +1194,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // THIS IS LEGACY PATH
             // The code is maintained for the snapshot back compat tests
             //
-            assert(allowNoSnapshot === true, "Snapshot should already exist");
+            assert(create === true, "Snapshot should already exist");
 
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
