@@ -9,7 +9,7 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "@fluid-experimental/fluid-framework";
+} from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
@@ -25,7 +25,7 @@ import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
-    TinyliciousResources,
+    TinyliciousContainerAndServices,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -50,7 +50,7 @@ export class TinyliciousClient {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
+    ): Promise<TinyliciousContainerAndServices> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -65,7 +65,7 @@ export class TinyliciousClient {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
+    ): Promise<TinyliciousContainerAndServices> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -79,11 +79,11 @@ export class TinyliciousClient {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<TinyliciousResources>  {
+    ): Promise<TinyliciousContainerAndServices>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
-        const tinyliciousContainerServices: TinyliciousResources = { fluidContainer, containerServices };
+        const tinyliciousContainerServices: TinyliciousContainerAndServices = { fluidContainer, containerServices };
         return tinyliciousContainerServices;
     }
 

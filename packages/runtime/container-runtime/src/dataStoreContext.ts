@@ -26,7 +26,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -722,7 +722,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
-                assert(tree !== undefined, "isolated channels subtree should exist in remote datastore snapshot");
             }
         }
 
@@ -849,21 +848,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.isRootDataStore !== undefined,
             0x153 /* "isRootDataStore should be available in local data store" */);
 
-        let snapshot = this.snapshotTree;
-        if (snapshot !== undefined) {
-            // Note: storage can be undefined in special case while detached.
-            const attributes = this.storage !== undefined
-                ? await readAndParse<ReadFluidDataStoreAttributes>(
-                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
-                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
-
-            if (hasIsolatedChannels(attributes)) {
-                snapshot = snapshot.trees[channelsTreeName];
-                assert(snapshot !== undefined, "isolated channels subtree should exist in local datastore snapshot");
-            }
-        }
-
+        const snapshot = this.disableIsolatedChannels
+            ? this.snapshotTree
+            : this.snapshotTree?.trees[channelsTreeName];
         return {
             pkg: this.pkg,
             snapshot,

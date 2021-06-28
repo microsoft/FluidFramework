@@ -152,17 +152,17 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluid-experimental/frs-client",
                     "@fluid-experimental/get-container",
-                    "@fluid-experimental/tinylicious-client"                  
+                    "@fluid-experimental/fluid-static",
+                    "@fluid-experimental/frs-client",
+                    "@fluid-experimental/tinylicious-client"
                 ],
                 "deps": [
-                    "Framework",
                     "Loader",
                     "Routerlicious-Driver",
                     "Server-Libs",
                     "Server-Shared-Utils",
-                    "Test"                    
+                    "Test"
                 ]
             },
             "Runtime": {
@@ -184,8 +184,7 @@
                 "packages": [
                     "@fluid-internal/client-api",
                     "@fluid-experimental/fluid-framework",
-                    "@fluid-experimental/data-objects",
-                    "@fluid-experimental/fluid-static"
+                    "@fluid-experimental/data-objects"
                 ],
                 "dirs": [
                     "experimental/framework/",

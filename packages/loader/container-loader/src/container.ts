@@ -1201,16 +1201,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._existing = details.existing;
         }
 
+        // LoadContext directly requires protocolHandler to be ready, and eventually calls
+        // instantiateRuntime which will want to know existing state.
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.instantiateContext(
-            this._existing === true,
-            attributes,
-            codeDetails,
-            snapshot,
-            pendingLocalState,
-        );
+        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1297,10 +1293,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.instantiateContextDetached(
-            false, // existing
-            attributes,
-        );
+        await this.createDetachedContext(attributes);
 
         this.propagateConnectionState();
 
@@ -1324,11 +1317,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.instantiateContextDetached(
-            true, // existing
-            attributes,
-            snapshotTree,
-        );
+        await this.createDetachedContext(attributes, snapshotTree);
 
         this.loaded = true;
 
@@ -1822,37 +1811,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async instantiateContextDetached(
-        existing: boolean,
-        attributes: IDocumentAttributes,
-        snapshot?: ISnapshotTree,
-        pendingLocalState?: unknown,
-    ) {
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
-        }
-
-        await this.instantiateContext(
-            existing,
-            attributes,
-            codeDetails,
-            snapshot,
-            pendingLocalState,
-        );
-    }
-
-    private async instantiateContext(
-        existing: boolean,
-        attributes: IDocumentAttributes,
+    private async loadContext(
         codeDetails: IFluidCodeDetails,
+        attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
         }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1877,11 +1845,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
-            existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
+    }
+
+    /**
+     * Creates a new, unattached container context
+     */
+    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+
+        await this.loadContext(codeDetails, attributes, snapshot);
     }
 
     // Please avoid calling it directly.

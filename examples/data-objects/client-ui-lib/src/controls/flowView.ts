@@ -1089,7 +1089,7 @@ function showBookmarks(
     if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
         const computedEnd = lineEnd;
         const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
-        const comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
+        const comments = flowView.commentsView.findOverlappingIntervals(lineStart, computedEnd);
         const lineText = flowView.sharedString.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
             showBookmark(flowView, undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
@@ -3007,9 +3007,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
+    public bookmarks: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
+    public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<IFluidObject, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
@@ -3187,6 +3188,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         childFlow.parentFlow = this;
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;
+        childFlow.commentsView = this.commentsView;
         childFlow.presenceSignal = this.presenceSignal;
         childFlow.presenceVector = this.presenceVector;
         childFlow.bookmarks = this.bookmarks;
@@ -4431,7 +4433,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public showCommentText() {
-        const overlappingComments = this.comments.findOverlappingIntervals(
+        const overlappingComments = this.commentsView.findOverlappingIntervals(
             this.cursor.pos,
             this.cursor.pos + 1);
 
@@ -5009,10 +5011,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             ]);
         }
 
-        this.bookmarks = this.sharedString.getIntervalCollection("bookmarks");
+        const bookmarksCollection = this.sharedString.getIntervalCollection("bookmarks");
+        this.bookmarks = await bookmarksCollection.getView();
 
-        // For examples of showing the API we do interval adds on the collection with comments.
+        // For examples of showing the API we do interval adds on the collection with comments. But use
+        // the view when doing bookmarks.
         this.comments = this.sharedString.getIntervalCollection("comments");
+        this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
             .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
