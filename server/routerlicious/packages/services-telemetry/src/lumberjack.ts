@@ -13,9 +13,9 @@ import { LogLevel, LumberType, ILumberjackEngine, ILumberjackSchemaValidator } f
 // by calling setupEngines() before Lumberjack can be used.
 export class Lumberjack {
     private readonly _engineList: ILumberjackEngine[] = [];
-    private _schemaValidator!: ILumberjackSchemaValidator;
+    private _schemaValidator: ILumberjackSchemaValidator | undefined;
     private _isSetupCompleted: boolean = false;
-    protected static _instance: Lumberjack | undefined = undefined;
+    protected static _instance: Lumberjack | undefined;
 
     protected constructor() {}
 
@@ -29,7 +29,7 @@ export class Lumberjack {
 
     public static create(
         engines: ILumberjackEngine[],
-        schemaValidator: ILumberjackSchemaValidator) {
+        schemaValidator?: ILumberjackSchemaValidator) {
         const newInstance = new Lumberjack();
         newInstance.setup(engines, schemaValidator);
         return newInstance;
@@ -37,7 +37,7 @@ export class Lumberjack {
 
     public static setup(
         engines: ILumberjackEngine[],
-        schemaValidator: ILumberjackSchemaValidator) {
+        schemaValidator?: ILumberjackSchemaValidator) {
         this.instance.setup(engines, schemaValidator);
     }
 
@@ -58,7 +58,7 @@ export class Lumberjack {
 
     public setup(
         engines: ILumberjackEngine[],
-        schemaValidator: ILumberjackSchemaValidator) {
+        schemaValidator?: ILumberjackSchemaValidator) {
         if (this._isSetupCompleted) {
             throw new Error("This Lumberjack was already setup with a list of engines and schema validator.");
         }

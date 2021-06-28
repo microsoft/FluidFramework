@@ -21,7 +21,7 @@ describe("Lumber", () => {
         Sinon.restore();
     });
 
-    it("Creates and completes Lumber with success.", async () => {
+    it("Creates and completes Lumber with success.", () => {
         const expectedDuration = 100;
         const successMessage = "SuccessMessage";
         const statusCode = 200;
@@ -30,8 +30,7 @@ describe("Lumber", () => {
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
-            [engine],
-            new TestSchemaValidator(true));
+            [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
@@ -45,7 +44,7 @@ describe("Lumber", () => {
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
 
-    it("Creates and completes Lumber with failure.", async () => {
+    it("Creates and completes Lumber with failure.", () => {
         const expectedDuration = 100;
         const errorMessage = "errorMessage";
         const statusCode = 400;
@@ -55,8 +54,7 @@ describe("Lumber", () => {
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
-            [engine],
-            new TestSchemaValidator(true));
+            [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
@@ -71,7 +69,7 @@ describe("Lumber", () => {
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
 
-    it("Adds individual properties to Lumber.", async () => {
+    it("Adds individual properties to Lumber.", () => {
         const key1 = "key1";
         const value1 = "value1";
         const key2 = "key2";
@@ -79,8 +77,7 @@ describe("Lumber", () => {
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
-            [],
-            new TestSchemaValidator(true));
+            []);
 
         lumber.addProperty(key1, value1)
               .addProperty(key2, value2);
@@ -92,7 +89,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.get(key2), value2);
     });
 
-    it("Adds properties to Lumber in a batch, with no existing properties in Lumber.", async () => {
+    it("Adds properties to Lumber in a batch, with no existing properties in Lumber.", () => {
         const key1 = "key1";
         const value1 = "value1";
         const value2 = "value2";
@@ -104,8 +101,7 @@ describe("Lumber", () => {
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
-            [],
-            new TestSchemaValidator(true));
+            []);
 
         lumber.addProperties(mapProperties);
         assert.strictEqual(lumber.properties.size, 1);
@@ -118,7 +114,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.get("key2"), value2);
     });
 
-    it("Adds properties to Lumber in a batch, with existing properties in Lumber.", async () => {
+    it("Adds properties to Lumber in a batch, with existing properties in Lumber.", () => {
         const key1 = "key1";
         const value1 = "value1";
         const value2 = "value2";
@@ -136,7 +132,7 @@ describe("Lumber", () => {
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
             [],
-            new TestSchemaValidator(true),
+            undefined,
             originalMapProperties);
 
         assert.strictEqual(lumber.properties.size, 1);
@@ -153,7 +149,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.get(key3), value3);
     });
 
-    it("Makes sure we cannot complete an already completed Lumber.", async () => {
+    it("Makes sure we cannot complete an already completed Lumber.", () => {
         const successMessage = "SuccessMessage";
         const statusCode = 200;
         const engine = new TestEngine1();
@@ -161,8 +157,7 @@ describe("Lumber", () => {
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
-            [engine],
-            new TestSchemaValidator(true));
+            [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
 
@@ -179,10 +174,31 @@ describe("Lumber", () => {
         }
 
         assert.fail("Lumber should not be allowed to complete more than once.");
-
     });
 
-    it("Makes sure we cannot complete Lumber if schema validation fails.", async () => {
+    it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
+        const successMessage = "SuccessMessage";
+        const statusCode = 200;
+        const engine = new TestEngine1();
+        const lumber = new Lumber(
+            LumberEventName.UnitTestEvent,
+            LumberType.Metric,
+            [engine],
+            new TestSchemaValidator(true)); // Setting this as true to force validation to succeed
+
+        assert.strictEqual(lumber.successful, undefined);
+
+        try {
+            lumber.success(successMessage, statusCode);
+        }
+        catch (err) {
+            return;
+        }
+
+        assert.fail("Lumber should not be allowed to complete if schema validation fails.");
+    });
+
+    it("Makes sure we cannot complete Lumber if schema validation fails.", () => {
         const successMessage = "SuccessMessage";
         const statusCode = 200;
         const engine = new TestEngine1();
@@ -202,6 +218,5 @@ describe("Lumber", () => {
         }
 
         assert.fail("Lumber should not be allowed to complete if schema validation fails.");
-
     });
 });

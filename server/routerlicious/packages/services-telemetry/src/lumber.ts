@@ -62,7 +62,7 @@ export class Lumber<T extends string = LumberEventName> {
         public readonly eventName: T,
         public readonly type: LumberType,
         private readonly _engineList: ILumberjackEngine[],
-        private readonly _schemaValidator: ILumberjackSchemaValidator,
+        private readonly _schemaValidator?: ILumberjackSchemaValidator,
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
                 this.addProperties(properties);
@@ -116,11 +116,13 @@ export class Lumber<T extends string = LumberEventName> {
                 `Trying to complete a Lumber telemetry operation ${this.eventName} that has alredy been completed.`);
         }
 
-        const validation = this._schemaValidator.validate(this.properties);
+        if (this._schemaValidator) {
+            const validation = this._schemaValidator.validate(this.properties);
 
-        if (!validation.validationPassed) {
-            throw new Error(
-                `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}`);
+            if (!validation.validationPassed) {
+                throw new Error(
+                    `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}`);
+            }
         }
 
         this._message = message;
