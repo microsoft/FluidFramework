@@ -29,9 +29,9 @@ import {
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
+ * TinyliciousClientInstance provides the ability to have a Fluid object backed by a Tinylicious service
  */
-export class TinyliciousClient {
+export class TinyliciousClientInstance {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
@@ -129,5 +129,57 @@ export class TinyliciousClient {
             }
         }
         return container;
+    }
+}
+
+/**
+ * TinyliciousClient static class with singular global instance that lets the developer define
+ * all Container interactions with the Tinylicious service
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class TinyliciousClient {
+    protected static globalInstance: TinyliciousClientInstance | undefined;
+
+    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
+        if (TinyliciousClient.globalInstance) {
+            console.log(
+                `TinyliciousClient has already been initialized. Using existing instance of
+                TinyliciousClient instead.`,
+            );
+            return;
+        }
+        TinyliciousClient.globalInstance = new TinyliciousClientInstance(
+            serviceConnectionConfig,
+        );
+    }
+
+    static async createContainer(
+        serviceConfig: TinyliciousContainerConfig,
+        objectConfig: ContainerSchema,
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+        if (!TinyliciousClient.globalInstance) {
+            throw new Error(
+                "TinyliciousClient has not been properly initialized before attempting to create a container",
+            );
+        }
+        return TinyliciousClient.globalInstance.createContainer(
+            serviceConfig,
+            objectConfig,
+        );
+    }
+
+    static async getContainer(
+        serviceConfig: TinyliciousContainerConfig,
+        objectConfig: ContainerSchema,
+    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+        if (!TinyliciousClient.globalInstance) {
+            throw new Error(
+                "TinyliciousClient has not been properly initialized before attempting to get a container",
+            );
+        }
+        return TinyliciousClient.globalInstance.getContainer(
+            serviceConfig,
+            objectConfig,
+        );
     }
 }

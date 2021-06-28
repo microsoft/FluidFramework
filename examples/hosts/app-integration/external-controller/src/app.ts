@@ -21,6 +21,8 @@ const connectionConfig: FrsConnectionConfig = {
 };
 if (useFrs) {
     FrsClient.init(connectionConfig);
+} else {
+    TinyliciousClient.init();
 }
 
 let createNew = false;
@@ -49,7 +51,7 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const client = useFrs ? FrsClient :  new TinyliciousClient();
+    const client = useFrs ? FrsClient : TinyliciousClient;
     const [fluidContainer, containerServices] = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);

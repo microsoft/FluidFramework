@@ -17,7 +17,7 @@ const getContainerId = () => {
     return { containerId, isNew };
 };
 
-const tinyliciousClient = new TinyliciousClient();
+TinyliciousClient.init();
 
 const getFluidData = async () => {
     const { containerId, isNew } = getContainerId();
@@ -30,8 +30,8 @@ const getFluidData = async () => {
     const serviceConfig = { id: containerId };
 
     const fluidContainer = isNew
-        ? await tinyliciousClient.createContainer(serviceConfig, containerSchema)
-        : await tinyliciousClient.getContainer(serviceConfig, containerSchema);
+        ? await TinyliciousClient.createContainer(serviceConfig, containerSchema)
+        : await TinyliciousClient.getContainer(serviceConfig, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }
