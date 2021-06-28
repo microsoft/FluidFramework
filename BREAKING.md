@@ -1,9 +1,24 @@
 ## 0.43 Breaking changes
 
 - [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
+- [Property removed from the Container class](#Property-removed-from-the-Container-class)
+- [The legacy way of creating containers has been deprecated](#The-legacy-way-of-creating-containers-has-been-deprecated)
+- [The legacy way of creating documents has been deprecated](#The-legacy-way-of-creating-documents-has-been-deprecated)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
+
+### Property removed from the Container class
+- the `existing` property from `Container` has been removed.
+
+### The legacy way of creating containers has been deprecated
+- When using `Container.load` to create a container as a fallback when the snapshot does not exist has been deprecated and is no longer supported.
+- Going forward, please use `Container.createDetached` to create a new container.
+- To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load`.
+
+### The legacy way of creating documents has been deprecated
+- The `load` function from `document.ts` will fail instead of creating a new document if the container does not exist.
+- Going forward, please use the `create` function to create a new document.
 
 ## 0.42 Breaking changes
 
@@ -11,7 +26,6 @@
 - [IContainerRuntime property removed](#IContainerRuntime-property-removed)
 - [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
 - [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
-- [Property removed from the Container class](#Property-removed-from-the-Container-class)
 
 ### 0.42 package renames
 
@@ -27,9 +41,6 @@ the npm scopes.
 
 ### IContainerRuntime property removed
 - the `existing` property from `IContainerRuntime` has been removed.
-
-### Property removed from the Container class
-- the `existing` property from `Container` has been removed.
 
 ### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
 These interface and apis are not supposed to be used outside the package. So stop exposing them.
