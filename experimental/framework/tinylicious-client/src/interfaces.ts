@@ -31,7 +31,7 @@ export interface TinyliciousContainerServices {
     audience: ITinyliciousAudience;
 }
 
-export interface TinyliciousContainerAndServices {
+export interface TinyliciousResources {
     fluidContainer: FluidContainer;
     containerServices: TinyliciousContainerServices;
 }

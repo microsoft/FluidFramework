@@ -19,7 +19,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { generateUser } from "@fluidframework/server-services-client";
 import {
     FrsConnectionConfig,
-    FrsContainerAndServices,
+    FrsResources,
     FrsContainerConfig,
     FrsContainerServices,
 } from "./interfaces";
@@ -48,7 +48,7 @@ export class FrsClientInstance {
     public async createContainer(
         containerConfig: FrsContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsContainerAndServices> {
+    ): Promise<FrsResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -61,7 +61,7 @@ export class FrsClientInstance {
     public async getContainer(
         containerConfig: FrsContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsContainerAndServices> {
+    ): Promise<FrsResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.resolve({ url: containerConfig.id });
         if (container.existing !== true) {
@@ -72,12 +72,12 @@ export class FrsClientInstance {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<FrsContainerAndServices> {
+    ): Promise<FrsResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: FrsContainerServices = this.getContainerServices(container);
-        const frsContainerAndServices: FrsContainerAndServices = { fluidContainer, containerServices };
-        return frsContainerAndServices;
+        const FrsResources: FrsResources = { fluidContainer, containerServices };
+        return FrsResources;
     }
 
     private getContainerServices(
@@ -137,7 +137,7 @@ export class FrsClient {
     static async createContainer(
         serviceConfig: FrsContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<FrsContainerAndServices> {
+    ): Promise<FrsResources> {
         if (!FrsClient.globalInstance) {
             throw new Error(
                 "FrsClient has not been properly initialized before attempting to create a container",
@@ -152,7 +152,7 @@ export class FrsClient {
     static async getContainer(
         serviceConfig: FrsContainerConfig,
         objectConfig: ContainerSchema,
-    ): Promise<FrsContainerAndServices> {
+    ): Promise<FrsResources> {
         if (!FrsClient.globalInstance) {
             throw new Error(
                 "FrsClient has not been properly initialized before attempting to get a container",

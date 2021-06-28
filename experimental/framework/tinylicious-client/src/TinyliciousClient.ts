@@ -25,7 +25,7 @@ import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
-    TinyliciousContainerAndServices,
+    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -50,7 +50,7 @@ export class TinyliciousClient {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousContainerAndServices> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -65,7 +65,7 @@ export class TinyliciousClient {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousContainerAndServices> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -79,11 +79,11 @@ export class TinyliciousClient {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<TinyliciousContainerAndServices>  {
+    ): Promise<TinyliciousResources>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
-        const tinyliciousContainerServices: TinyliciousContainerAndServices = { fluidContainer, containerServices };
+        const tinyliciousContainerServices: TinyliciousResources = { fluidContainer, containerServices };
         return tinyliciousContainerServices;
     }
 

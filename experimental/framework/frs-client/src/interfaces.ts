@@ -54,7 +54,7 @@ export interface FrsMember extends IMember {
     userName: string;
 }
 
-export interface FrsContainerAndServices {
+export interface FrsResources {
     fluidContainer: FluidContainer;
     containerServices: FrsContainerServices;
 }
