@@ -40,7 +40,7 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
-import { Container } from "./container";
+import { Container, LegacyCreateOnLoadEnvironmentKey } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
 
@@ -487,9 +487,12 @@ export class Loader implements IHostLoader {
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: request.headers?.[LoaderHeader.loadMode],
+                createOnLoad: request.headers
+                    ?.[LoaderHeader.clientDetails]
+                    ?.environment
+                    ?.includes(LegacyCreateOnLoadEnvironmentKey),
             },
             pendingLocalState,
-            request.headers?.[LoaderHeader.clientDetails]?.environment?.startsWith("test-"), // allowLegacy
         );
     }
 }

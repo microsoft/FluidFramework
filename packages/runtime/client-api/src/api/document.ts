@@ -180,7 +180,7 @@ export class Document extends EventEmitter {
 function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
     const responseP = loader.request({ url });
 
-    responseP.then(
+    void responseP.then(
         (response) => {
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 return;
@@ -188,9 +188,6 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
 
             // Check if the Fluid object is viewable
             deferred.resolve(response.value);
-        },
-        () => {
-            debug(`Request failure: ${url}}]`);
         });
 }
 
@@ -211,24 +208,63 @@ async function requestDocument(loader: Loader, container: Container, uri: string
 /**
  * Loads a specific version (commit) of the shared object
  */
-export async function load(
+export const load = async (
     url: string,
     urlResolver: IUrlResolver,
     options: ILoaderOptions = {},
     documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
+): Promise<Document> => createOrLoad(
+        url,
+        urlResolver,
+        options,
+        documentServiceFactory,
+        runtimeOptions,
+        false, // createNew
+    );
+
+export const create = async (
+    url: string,
+    urlResolver: IUrlResolver,
+    options: ILoaderOptions = {},
+    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
+): Promise<Document> => createOrLoad(
+        url,
+        urlResolver,
+        options,
+        documentServiceFactory,
+        runtimeOptions,
+        true, // createNew
+    );
+
+async function createOrLoad(
+    url: string,
+    urlResolver: IUrlResolver,
+    options: ILoaderOptions,
+    documentServiceFactory: IDocumentServiceFactory,
+    runtimeOptions: IContainerRuntimeOptions,
+    createNew: boolean,
 ): Promise<Document> {
     const codeLoader = new CodeLoader(runtimeOptions);
-
-    // Load the Fluid document
-    // For legacy purposes we currently fill in a default domain
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
         options,
     });
-    const container = await loader.resolve({ url });
+
+    let container: Container;
+
+    if (createNew) {
+        container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+        await container.attach({ url });
+    } else {
+        container = await loader.resolve({ url });
+    }
 
     return requestDocument(loader, container, url);
 }

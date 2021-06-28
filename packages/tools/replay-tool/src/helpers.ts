@@ -273,7 +273,10 @@ export async function loadContainer(
             url: resolved.url,
             headers: {
                 [LoaderHeader.clientDetails]: {
-                    environment: "test-replay-tool",
+                    // #6346
+                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
+                    // from @fluidframework/container-loader
+                    environment: `replay enable-legacy-create-on-load`,
                     capabilities: { interactive: false },
                 },
             },

@@ -111,6 +111,8 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
+
 export interface IContainerLoadOptions {
     /**
      * Disables the Container from reconnecting if false, allows reconnect otherwise.
@@ -129,6 +131,11 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     loadMode?: IContainerLoadMode;
+    /**
+     * Create the container on load, without an existing snapshot.
+     * Used only for supporting legacy scenarios.
+     */
+    createOnLoad?: boolean;
 }
 
 export interface IContainerConfig {
@@ -294,7 +301,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: unknown,
-        allowLegacy?: boolean,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -322,7 +328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState, allowLegacy)
+                container.load(version, mode, pendingLocalState, loadOptions.noSnapshot)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -1112,7 +1118,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown,
-        allowLegacy?: boolean,
+        allowNoSnapshot?: boolean,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1188,7 +1194,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // THIS IS LEGACY PATH
             // The code is maintained for the snapshot back compat tests
             //
-            assert(allowLegacy === true, "Snapshot should already exist");
+            assert(allowNoSnapshot === true, "Snapshot should already exist");
 
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
