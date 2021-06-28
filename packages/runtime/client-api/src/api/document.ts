@@ -25,7 +25,6 @@ import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
-import { debug } from "./debug";
 
 // Registered services to use when loading a document
 let defaultDocumentServiceFactory: IDocumentServiceFactory;
