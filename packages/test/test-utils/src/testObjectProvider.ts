@@ -4,7 +4,7 @@
  */
 
 import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { Container, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { Container, IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -29,7 +29,11 @@ export interface IOpProcessingController {
 }
 
 export interface ITestObjectProvider {
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions): IHostLoader;
+    createLoader(
+        packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+        options?: ILoaderOptions,
+        detachedBlobStorage?: IDetachedBlobStorage,
+    ): IHostLoader;
     createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
     loadContainer(
         entryPoint: fluidEntryPoint,
@@ -41,7 +45,7 @@ export interface ITestObjectProvider {
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader,
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
 
@@ -135,7 +139,11 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    public createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ILoaderOptions) {
+    public createLoader(
+        packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+        options?: ILoaderOptions,
+        detachedBlobStorage?: IDetachedBlobStorage,
+    ) {
         const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
@@ -143,6 +151,7 @@ export class TestObjectProvider {
             codeLoader,
             logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: this.driver.type } }),
             options,
+            detachedBlobStorage,
         });
         this._loaderContainerTracker.add(loader);
         return loader;
@@ -178,8 +187,12 @@ export class TestObjectProvider {
      * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
      * @param testContainerConfig - optional configuring the test Container
      */
-    public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
-        return this.createLoader([[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]]);
+    public makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage) {
+        return this.createLoader(
+            [[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
+            undefined,
+            detachedBlobStorage,
+        );
     }
 
     /**

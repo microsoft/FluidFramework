@@ -9,7 +9,7 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "@fluid-experimental/fluid-static";
+} from "@fluid-experimental/fluid-framework";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
