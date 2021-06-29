@@ -19,7 +19,7 @@ export interface ISummaryStats {
     totalBlobSize: number;
 }
 
-export interface ITopLevelSummaryStats extends ISummaryStats{
+export interface IGeneratedSummaryStats extends ISummaryStats{
     dataStoreCount: number;
     summarizedDataStoreCount: number;
 }

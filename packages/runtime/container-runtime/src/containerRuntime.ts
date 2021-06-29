@@ -86,7 +86,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    ITopLevelSummaryStats,
+    IGeneratedSummaryStats,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -158,7 +158,7 @@ export interface ContainerRuntimeMessage {
 }
 
 export interface IGeneratedSummaryData {
-    readonly summaryStats: ITopLevelSummaryStats;
+    readonly summaryStats: IGeneratedSummaryStats;
     readonly generateDuration?: number;
 }
 
@@ -1711,7 +1711,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
 
-            const stats: ITopLevelSummaryStats = {
+            const stats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
                 ...summarizeResult.stats,
