@@ -1585,7 +1585,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false): Promise<IGCStats> {
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
-            let gcStats: IGCStats;
+            const gcStats: {
+                deletedNodes?: number,
+                totalNodes?: number,
+                deletedDataStores?: number,
+                totalDataStores?: number,
+            } = {};
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData(fullGC);
@@ -1604,12 +1609,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(usedRoutes);
 
                 // Update stats to be reported in the peformance event.
-                gcStats = {
-                    deletedNodes: deletedNodeIds.length,
-                    totalNodes: referencedNodeIds.length + deletedNodeIds.length,
-                    deletedDataStores: unusedDataStoreCount,
-                    totalDataStores: dataStoreCount,
-                };
+                gcStats.deletedNodes = deletedNodeIds.length;
+                gcStats.totalNodes = referencedNodeIds.length + deletedNodeIds.length;
+                gcStats.deletedDataStores = unusedDataStoreCount;
+                gcStats.totalDataStores = dataStoreCount;
 
                 // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
                 // involving access to deleted data.
@@ -1617,11 +1620,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.deleteUnusedRoutes(deletedNodeIds);
                 }
             } catch (error) {
-                event.cancel(undefined, error);
+                event.cancel(gcStats, error);
                 throw error;
             }
-            event.end({ ...gcStats });
-            return gcStats;
+            event.end(gcStats);
+            return gcStats as IGCStats;
         });
     }
 
