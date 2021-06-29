@@ -234,6 +234,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			this.currentIsOldest = oldest;
 			if (oldest) {
 				this.emit('becameOldest');
+				this.logger.sendTelemetryEvent({ eventName: 'BecameOldestClient' });
 			} else {
 				this.emit('lostOldest');
 			}
@@ -445,6 +446,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 					};
 
 					this.submitLocalMessage(noop);
+					this.logger.sendTelemetryEvent({ eventName: 'NoOpSent' });
 				} else if (this.currentIsOldest) {
 					void this.uploadCatchUpBlobs();
 				}
