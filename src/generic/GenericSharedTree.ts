@@ -15,13 +15,18 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined, fail } from '../Common';
+import { assert, assertNotUndefined } from '../Common';
 import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
 import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
-import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
+import {
+	convertSummaryToReadFormat,
+	deserialize,
+	getSummaryStatistics,
+	readFormatVersion,
+} from '../SummaryBackCompatibility';
 import {
 	Edit,
 	SharedTreeOpType,
@@ -343,38 +348,45 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
 	 */
 	public snapshotCore(serializer: IFluidSerializer): ITree {
-		const tree: ITree = {
-			entries: [
-				{
-					mode: FileMode.File,
-					path: snapshotFileName,
-					type: TreeEntry[TreeEntry.Blob],
-					value: {
-						contents: this.saveSerializedSummary({ serializer }),
-						encoding: 'utf-8',
-					},
-				},
-			],
-		};
+		const summaryCreationPerformanceEvent = PerformanceEvent.start(this.logger, { eventName: 'SummaryCreation' });
 
-		return tree;
+		try {
+			const summary = this.saveSummary();
+			const summaryTelemetryInfo = getSummaryStatistics(summary);
+
+			const tree: ITree = {
+				entries: [
+					{
+						mode: FileMode.File,
+						path: snapshotFileName,
+						type: TreeEntry[TreeEntry.Blob],
+						value: {
+							contents: serialize(summary, serializer, this.handle),
+							encoding: 'utf-8',
+						},
+					},
+				],
+			};
+
+			summaryCreationPerformanceEvent.end({ ...summaryTelemetryInfo });
+
+			return tree;
+		} catch (error) {
+			summaryCreationPerformanceEvent.cancel({ eventName: 'SummaryCreationFailure' }, error);
+			throw error;
+		}
 	}
 
 	/**
-	 * Saves this SharedTree into a serialized summary.
+	 * Saves this SharedTree into a serialized summary. This is used for testing.
 	 *
 	 * @param options - Optional serializer and summarizer to use. If not passed in, SharedTree's serializer and summarizer are used.
 	 * @internal
 	 */
-	public saveSerializedSummary(options?: {
-		serializer?: IFluidSerializer;
-		summarizer?: SharedTreeSummarizer<TChange>;
-	}): string {
-		const { serializer, summarizer } = options || {};
-
+	public saveSerializedSummary(summarizer?: SharedTreeSummarizer<TChange>): string {
 		return serialize(
 			summarizer ? summarizer(this.editLog, this.currentView) : this.saveSummary(),
-			serializer || this.serializer,
+			this.serializer,
 			this.handle
 		);
 	}
@@ -459,9 +471,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		callback: EditStatusCallback
 	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
-		if (typeof convertedSummary === 'string') {
-			fail(convertedSummary);
-		}
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
 
@@ -532,14 +541,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			const blobData = bufferToString(newBlob, 'utf8');
 
 			const summary = deserialize(blobData, this.serializer);
-			if (typeof summary === 'string') {
-				fail(summary);
-			}
 			this.loadSummary(summary);
 
 			summaryLoadPerformanceEvent.end({ historySize: this.edits.length });
 		} catch (error) {
-			summaryLoadPerformanceEvent.cancel(undefined, error);
+			summaryLoadPerformanceEvent.cancel({ eventName: 'SummaryLoadFailure' }, error);
 			throw error;
 		}
 	}

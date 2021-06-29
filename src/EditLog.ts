@@ -172,6 +172,23 @@ function joinEditAndId<TChange>(id: EditId, edit: EditWithoutId<TChange>): Edit<
 }
 
 /**
+ * @param summary - The edit log summary to parse.
+ * @returns the number of handles saved to the provided edit log summary.
+ */
+export function getNumberOfHandlesFromEditLogSummary<TChange>(summary: EditLogSummary<TChange>): number {
+	const { editChunks } = summary;
+
+	let numberOfHandles = 0;
+	editChunks.forEach(({ chunk }) => {
+		if (!Array.isArray(chunk)) {
+			numberOfHandles++;
+		}
+	});
+
+	return numberOfHandles;
+}
+
+/**
  * The number of blobs to be loaded in memory at any time.
  * TODO:#49901: Change cache size once the virtualized history summary format is being written.
  * 		 This is so the summarizer doesn't have to reload every edit to generate summaries.
