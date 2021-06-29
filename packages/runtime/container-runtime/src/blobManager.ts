@@ -79,7 +79,10 @@ export class BlobManager {
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        assert(this.runtime.attachState !== AttachState.Attaching, "createBlob() while attaching not supported");
+        assert(
+            this.runtime.attachState !== AttachState.Attaching,
+            0x1f9 /* "createBlob() while attaching not supported" */,
+        );
         const response = await this.getStorage().createBlob(blob);
 
         const handle = new BlobHandle(
