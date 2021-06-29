@@ -95,51 +95,28 @@ export class BlobOnlyStorage implements IDocumentStorageService {
     }
 
     public get policies(): IDocumentStorageServicePolicies | undefined {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
+        return this.notCalled();
     }
 
     public get repositoryUrl(): string {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
+        return this.notCalled();
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
-    }
+    /* eslint-disable @typescript-eslint/unbound-method */
+    public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+    public getVersions: () => Promise<IVersion[]> = this.notCalled;
+    public write: () => Promise<IVersion> = this.notCalled;
+    public uploadSummaryWithContext: () => Promise<string> = this.notCalled;
+    public downloadSummary: () => Promise<ISummaryTree> = this.notCalled;
+    /* eslint-enable @typescript-eslint/unbound-method */
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
-    }
-
-    public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
-    }
-
-    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        this.logger.sendErrorEvent({
-            eventName: "NoRealStorageInDetachedContainer",
-        });
-        throw new Error("Real storage calls not allowed in Unattached container");
+    private notCalled(): never {
+        try {
+            // some browsers may not populate stack unless exception is thrown
+            throw new Error("BlobOnlyStorage not implemented method used");
+        } catch (err) {
+            this.logger.sendErrorEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
+            throw err;
+        }
     }
 }
