@@ -308,34 +308,28 @@ cast the object as an `IFluidObject`, and then access the property on the `IFlui
 are testing for. The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
 
-### Proposing Code Upgrade
+### Code Upgrade
 
-The code proposal is a mechanism used by the Fluid loader to ensure that only compatible clients can collaborate in each document.
+The code upgrade proposal is a mechanism used by the Fluid loader to ensure that only compatible clients can collaborate in each document.
 The code details object is provided by the host at the document creation time and written as a JSON payload associated with the document.
 The object contains attributes, such as a version range of code package, that are compatible with this document schema.
-Interpretation of these details is controlled by the host. Upgrades are also controlled by the host and can happen at any point in time
+Interpretation of these details is controlled by the host. Upgrades are also controlled by the host and can happen at any point in time.
 An upgrade could result in non-compatible clients in a collaboration session being rejected and reloaded with new code.
 
-#### API
-Query a container to determine its version/release date
+To support code upgrade scenarios, the container instance provides the following API:
+- Query a container to determine current loaded code details, via the `codeDetails` property.
+- Propose code details via the `proposeCodeDetails` method.
+- Observe new code proposals via the `codeDetailsProposed` event.
 
-Tell the runtime to close the container if the container’s code version is outside of policy
-
-Compare versions
-
-Propose code details
+In addition to that, the application may opt to supply a customized code loader designed to:
+- Compare code details.
+- Tell the runtime to close the container if the container’s code is outside of the policy.
 
 ## Next Steps
 
-And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
-setup as a host. And once done you gain full access to the power of the Fluid platform.
+And that's all that's needed to create or load Fluid documents. It's intended to be lightweight and easy to get
+set up as a host. And once done, you gain full access to the power of the Fluid platform.
 
-Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/main/tools/generator-fluid/README.md.
+For an example demonstrating configuration and usage of the Fluid loader inside the Node.js environment, refer to the [node-host](../node-host/README.md) example.
 
-When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
-to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can
-also serve as a host for other Fluid content.
-
-There are other packages which provide simple APIs to make use of the loader. For example `@fluidframework/base-host`.
-These may be better starting options when integrating the loader into your own code. But this example will show all
-the steps needed to create and use the Fluid loader.
+To explore further loader integration options into your code, refer to the [base-host](../../../packages/hosts/base-host/README.md) package.

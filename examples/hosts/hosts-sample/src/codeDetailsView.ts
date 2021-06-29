@@ -9,6 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 
 /**
  * Initial configuration for controls in the code details panel.
+ *
  * @param packageDetails - Fluid package name and version
  */
 export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
@@ -48,7 +49,8 @@ export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
 };
 
 /**
- * Configure the code details view with container specific logic
+ * Configure code details view controls powering the code upgrade functionality.
+ *
  * @param container - Loaded Fluid container
  * @param packageDetails - Current code package details
  */
@@ -56,6 +58,7 @@ export const bindUI = (
     container: Container,
     packageDetails: IPackageIdentifierDetails,
 ) => {
+    // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
             error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
@@ -84,6 +87,7 @@ export const bindUI = (
             config: {},
         };
         try {
+            // Submit a code proposal to the container
             await container.proposeCodeDetails(details);
         } catch (error) {
             window.alert(`🛑 Failed to upgrade container code\n\n${error}`);
@@ -105,6 +109,9 @@ export const bindUI = (
         }
     };
 
+    // Retrieve current code details loaded in the container.
     refreshLoadedCodeInfo(container.codeDetails);
+
+    // Subscribe to events triggered when new code details proposal is received.
     container.on("codeDetailsProposed", refreshLoadedCodeInfo);
 };
