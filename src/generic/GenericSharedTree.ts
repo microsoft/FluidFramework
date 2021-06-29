@@ -493,6 +493,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
 			await this.uploadEditChunk(chunk, startRevision);
 			this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
+			this.logger.sendTelemetryEvent({
+				eventName: 'CatchUpBlobUpload',
+				category: 'generic',
+				chunkSize: chunk.length,
+			});
 		}
 	}
 
