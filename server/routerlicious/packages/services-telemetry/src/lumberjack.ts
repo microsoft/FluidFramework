@@ -6,7 +6,13 @@
 import path from "path";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
-import { LogLevel, LumberType, ILumberjackEngine, ILumberjackSchemaValidator } from "./resources";
+import {
+    LogLevel,
+    LumberType,
+    ILumberjackEngine,
+    ILumberjackSchemaValidator,
+    handleError,
+} from "./resources";
 
 // Lumberjack is a telemetry manager class that allows the collection of metrics and logs
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
@@ -60,11 +66,19 @@ export class Lumberjack {
         engines: ILumberjackEngine[],
         schemaValidator?: ILumberjackSchemaValidator) {
         if (this._isSetupCompleted) {
-            throw new Error("This Lumberjack was already setup with a list of engines and schema validator.");
+            handleError(
+                LumberEventName.LumberjackError,
+                "This Lumberjack was already setup with a list of engines and schema validator.",
+                this._engineList);
+            return;
         }
 
         if (engines.length === 0) {
-            throw new Error("The provided engine list is empty. Please provide at list one LumberjackEngine.");
+            handleError(
+                LumberEventName.LumberjackError,
+                "The provided engine list is empty. Please provide at list one LumberjackEngine.",
+                this._engineList);
+            return;
         }
 
         this._engineList.push(...engines);
@@ -75,7 +89,7 @@ export class Lumberjack {
     public newLumberMetric<T extends string = LumberEventName>(
         eventName: T,
         properties?: Map<string, any> | Record<string, any>) {
-        this.throwOnIncompleteSetup();
+        this.errorOnIncompleteSetup();
         return new Lumber<T>(eventName, LumberType.Metric, this._engineList, this._schemaValidator, properties);
     }
 
@@ -85,7 +99,7 @@ export class Lumberjack {
         properties?: Map<string, any> | Record<string, any>,
         statusCode?: number | string,
         exception?: Error) {
-        this.throwOnIncompleteSetup();
+        this.errorOnIncompleteSetup();
         const lumber = new Lumber<string>(
             this.getLogCallerInfo(),
             LumberType.Log,
@@ -132,9 +146,13 @@ export class Lumberjack {
         }
    }
 
-    private throwOnIncompleteSetup() {
+    private errorOnIncompleteSetup() {
         if (!this._isSetupCompleted) {
-            throw new Error("Lumberjack has not been setup yet. It requires an engine list and a schema validator.");
+            handleError(
+                LumberEventName.LumberjackError,
+                "Lumberjack has not been setup yet. It requires an engine list and a schema validator.",
+                this._engineList);
+            return;
         }
     }
 }

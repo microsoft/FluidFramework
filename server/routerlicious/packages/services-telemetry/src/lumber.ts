@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
-import { LogLevel, LumberType, ILumberjackEngine, ILumberjackSchemaValidator } from "./resources";
+import {
+    LogLevel,
+    LumberType,
+    ILumberjackEngine,
+    ILumberjackSchemaValidator,
+    handleError,
+} from "./resources";
 
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
@@ -23,6 +30,7 @@ export class Lumber<T extends string = LumberEventName> {
     private _logLevel?: LogLevel;
     private _completed = false;
     public readonly timestamp = new Date(Date.now()).toISOString();
+    public readonly id = uuid();
 
     public get properties(): Map<string, any> {
         return this._properties;
@@ -94,13 +102,13 @@ export class Lumber<T extends string = LumberEventName> {
         message: string,
         statusCode: number | string | undefined,
         logLevel: LogLevel = LogLevel.Info) {
-        this.emit(message, statusCode, logLevel, true);
+        this.emit(message, statusCode, logLevel, true, undefined);
     }
 
     public error(
         message: string,
-        statusCode: number | string | undefined,
-        exception?: Error | undefined,
+        statusCode?: number | string,
+        exception?: Error,
         logLevel: LogLevel = LogLevel.Error) {
         this.emit(message, statusCode, logLevel, false, exception);
     }
@@ -110,18 +118,24 @@ export class Lumber<T extends string = LumberEventName> {
         statusCode: number | string | undefined,
         logLevel: LogLevel,
         successful: boolean,
-        exception?: Error) {
+        exception: Error | undefined) {
         if (this._completed) {
-            throw new Error(
-                `Trying to complete a Lumber telemetry operation ${this.eventName} that has alredy been completed.`);
+            handleError(
+                LumberEventName.LumberjackError,
+                `Trying to complete a Lumber telemetry operation that has alredy been completed.\
+                [eventName: ${this.eventName}][id: ${this.id}]`,
+                this._engineList);
+            return;
         }
 
         if (this._schemaValidator) {
             const validation = this._schemaValidator.validate(this.properties);
-
             if (!validation.validationPassed) {
-                throw new Error(
-                    `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}`);
+                handleError(
+                    LumberEventName.LumberjackSchemaValidationFailure,
+                    `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}.\
+                    [eventName: ${this.eventName}][id: ${this.id}]`,
+                    this._engineList);
             }
         }
 
