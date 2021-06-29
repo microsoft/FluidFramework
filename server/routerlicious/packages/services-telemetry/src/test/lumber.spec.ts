@@ -192,10 +192,8 @@ describe("Lumber", () => {
             lumber.success(successMessage, statusCode);
         }
         catch (err) {
-            return;
+            assert.fail("Lumber should have been allowed to complete if schema validation succeeded.");
         }
-
-        assert.fail("Lumber should not be allowed to complete if schema validation fails.");
     });
 
     it("Makes sure we cannot complete Lumber if schema validation fails.", () => {
