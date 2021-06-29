@@ -86,7 +86,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IGeneratedSummaryStats,
+    ISummaryStats,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -157,6 +157,10 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
+export interface IGeneratedSummaryStats extends ISummaryStats{
+    dataStoreCount: number;
+    summarizedDataStoreCount: number;
+}
 export interface IGeneratedSummaryData {
     readonly summaryStats: IGeneratedSummaryStats;
     readonly generateDuration?: number;
@@ -1705,6 +1709,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error };
             }
 
+            // counting data stores and summarized data stores
             const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
                 summarizeResult.summary.tree[channelsTreeName];
             assert(dataStoreTree.type === SummaryType.Tree, "summary is not a tree");

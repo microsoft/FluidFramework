@@ -19,11 +19,6 @@ export interface ISummaryStats {
     totalBlobSize: number;
 }
 
-export interface IGeneratedSummaryStats extends ISummaryStats{
-    dataStoreCount: number;
-    summarizedDataStoreCount: number;
-}
-
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
