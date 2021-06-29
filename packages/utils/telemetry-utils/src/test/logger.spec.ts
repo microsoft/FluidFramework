@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-// eslint-disable-next-line max-len
 import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
 
 describe("Logger", () => {

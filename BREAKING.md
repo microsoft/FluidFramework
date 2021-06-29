@@ -1,6 +1,16 @@
+## 0.43 Breaking changes
+
+- [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
+
+### TinyliciousClient no longer static
+`TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
+
 ## 0.42 Breaking changes
 
 - [Package renames](#0.42-package-renames)
+- [IContainerRuntime property removed](#IContainerRuntime-property-removed)
+- [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
+- [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
 
 ### 0.42 package renames
 
@@ -10,6 +20,15 @@ the npm scopes.
 
 - `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
 - `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### IContainerRuntimeEvents changes
+- `fluidDataStoreInstantiated` has been removed from the interface and will no longer be emitted by the `ContainerRuntime`.
+
+### IContainerRuntime property removed
+- the `existing` property from `IContainerRuntime` has been removed.
+
+### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
+These interface and apis are not supposed to be used outside the package. So stop exposing them.
 
 ## 0.41 Breaking changes
 

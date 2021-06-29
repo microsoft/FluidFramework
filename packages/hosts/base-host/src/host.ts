@@ -7,7 +7,7 @@ import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces
 import {
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
+import { Loader, Container, IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 
@@ -19,7 +19,9 @@ import { IBaseHostConfig } from "./hostConfig";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
+    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
+    detachedBlobStorage?: IDetachedBlobStorage,
+): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
 
@@ -32,6 +34,7 @@ async function createWebLoader(
     return new Loader({
         ...hostConfig,
         codeLoader,
+        detachedBlobStorage,
     });
 }
 
@@ -40,10 +43,12 @@ export class BaseHost {
     public constructor(
         hostConfig: IBaseHostConfig,
         seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
+        detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,
             seedPackages,
+            detachedBlobStorage,
         );
     }
 

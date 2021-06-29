@@ -168,9 +168,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 }
 
 // @public
-export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
-
-// @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
     constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
     // (undocumented)
@@ -241,9 +238,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     get version(): string;
 }
 
-// @public (undocumented)
-export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree) => ISnapshotTree;
-
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
@@ -287,6 +281,9 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 // @public
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+
+// @public
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -301,6 +298,7 @@ export interface ILoaderOptions extends ILoaderOptions_2 {
 // @public
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -312,23 +310,13 @@ export interface ILoaderProps {
 // @public
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
     readonly scope: IFluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
-}
-
-// @public (undocumented)
-export interface IParsedUrl {
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    path: string;
-    // (undocumented)
-    query: string;
-    version: string | null | undefined;
 }
 
 // @public
@@ -349,9 +337,6 @@ export class Loader implements IHostLoader {
     // (undocumented)
     readonly services: ILoaderServices;
 }
-
-// @public (undocumented)
-export function parseUrl(url: string): IParsedUrl | undefined;
 
 // @public (undocumented)
 export enum ReconnectMode {

@@ -11,6 +11,7 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
+	SharedTreeDiagnosticEvent,
 } from './GenericSharedTree';
 export {
 	Edit,
@@ -22,8 +23,8 @@ export {
 	NodeData,
 	TreeNode,
 	ChangeNode,
-	EditNode,
-	EditResult,
+	BuildNode,
+	EditStatus,
 	TraitLocation,
 	SharedTreeOpType,
 } from './PersistedTypes';

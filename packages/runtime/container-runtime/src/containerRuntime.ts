@@ -75,7 +75,6 @@ import {
 import {
     FlushMode,
     InboundAttachMessage,
-    IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -171,7 +170,7 @@ export interface IUploadedSummaryData {
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
     readonly referenceSequenceNumber: number;
     readonly submitted: false;
-    readonly reason: "disconnected";
+    readonly error: any;
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
@@ -197,6 +196,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Wait 2 minutes for summary ack
     maxAckWaitTime: 120000,
 };
+
+// This is the current version of garbage collection.
+const GCVersion = 1;
 
 export interface IGCRuntimeOptions {
     /* Flag that will disable garbage collection if set to true. */
@@ -535,9 +537,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
-     * @param registry - Mapping to the stores.
-     * @param requestHandlers - Request handlers for the container runtime
+     * @param registryEntries - Mapping to the stores.
+     * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
      */
     public static async load(
         context: IContainerContext,
@@ -545,6 +548,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject = context.scope,
+        existing?: boolean,
     ): Promise<ContainerRuntime> {
         const logger = ChildLogger.create(context.logger, undefined, {
             all: {
@@ -604,6 +608,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
@@ -613,13 +618,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             combinedRuntimeOptions,
             containerScope,
             logger,
+            loadExisting,
             requestHandler,
             storage);
 
         if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
             // Create all internal data stores if not already existing on storage or loaded a detached
             // container from snapshot(ex. draft mode).
-            if (!context.existing) {
+            if (!loadExisting) {
                 await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
             }
         }
@@ -629,11 +635,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get id(): string {
         return this.context.id;
-    }
-
-    public get existing(): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.existing!;
     }
 
     public get options(): ILoaderOptions {
@@ -753,8 +754,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly dataStores: DataStores;
 
-    // This is the source of truth for writing in the summary metadata blob.
-    private readonly summaryGCFeature: Required<IContainerRuntimeMetadata>["gcFeature"];
+    // The current GC version that this container is running.
+    private readonly currentGCVersion = GCVersion;
+    // This is the version of GC data in the latest successful summary this client has seen.
+    private summaryGCVersion: Required<IContainerRuntimeMetadata>["gcFeature"];
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -764,11 +767,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
+    // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
+    private get gcEnabled(): boolean {
+        return this.summaryGCVersion > 0;
+    }
+
     // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
     // deleted as soon as GC runs.
     public get gcTestMode(): boolean {
-        return getLocalStorageFeatureGate(gcTestModeKey)
-            ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+        return getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
     }
 
     private constructor(
@@ -779,24 +786,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
+        // The `existing` property  is to be removed after the state
+        // is refactored into IRuntimeFactory. See #3429
+        public readonly existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
         super();
 
-        /* gcFeature in metadata is introduced with v1 in the metadata blob. Force to 0/disallowed before that.
-         This will override the value in runtimeOptions if it is set (1 or 0). So setting it in
-         runtimeOptions will only specify what to do if it has never been set before.
-         Note that even leaving it undefined will force it to 0/disallowed if no metadata blob is written. */
-        const prevSummaryGCFeature = context.existing ? gcFeature(metadata) : undefined;
+        /**
+          * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
+          * For existing documents, we get this value from the metadata blob.
+          * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
+          */
+        const prevSummaryGCVersion = existing ? gcFeature(metadata) : undefined;
         // Default to false for now.
-        this.summaryGCFeature = prevSummaryGCFeature ??
-            (this.runtimeOptions.gcOptions.gcAllowed === true ? 1 : 0);
+        this.summaryGCVersion = prevSummaryGCVersion ??
+            (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
         // Can override with localStorage flag.
         this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
-            // Must not be disabled permanently in summary.
-            (this.summaryGCFeature > 0)
+            // GC must be enabled for the document.
+            this.gcEnabled
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
@@ -859,11 +870,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
             () => {
-                assert(this.attachState !== AttachState.Detached, 0x123 /* "Blobs NYI in detached container mode" */);
                 return this.storage;
             },
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
-            (fn) => this.once("dispose", fn),
+            this,
             this.logger,
         );
         this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
@@ -1083,14 +1093,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get shouldWriteMetadata(): boolean {
         // We need the metadata blob if either isolated channels are enabled
         // or GC is enabled at the document level.
-        return !this.disableIsolatedChannels || (this.summaryGCFeature > 0);
+        return !this.disableIsolatedChannels || this.gcEnabled;
     }
 
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.summaryGCFeature, // retain value, this is unchangeable for now
+            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for nown
         };
     }
 
@@ -1149,8 +1159,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
-        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        const snapshot = this.blobManager.snapshot();
+
+        // Some storage (like git) doesn't allow empty tree, so we can omit it.
+        // and the blob manager can handle the tree not existing when loading
+        if (snapshot.entries.length !== 0) {
+            const blobsTree = convertToSummaryTree(snapshot, false);
+            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        }
     }
 
     public async stop() {
@@ -1349,13 +1365,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return (await this.dataStores.getDataStore(id, wait)).realize();
     }
 
-    public notifyDataStoreInstantiated(context: IFluidDataStoreContext) {
-        const fluidDataStorePkgName = context.packagePath[context.packagePath.length - 1];
-        const registryPath =
-            `/${context.packagePath.slice(0, context.packagePath.length - 1).join("/")}`;
-        this.emit("fluidDataStoreInstantiated", fluidDataStorePkgName, registryPath, !context.existing);
-    }
-
     public setFlushMode(mode: FlushMode): void {
         if (mode === this._flushMode) {
             return;
@@ -1527,6 +1536,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        assert(this.blobManager.blobCount === 0, 0x1fa /* "attaching container with blobs is not yet implemented" */);
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
                 0x12d /* "Container Context should already be in attaching state" */);
@@ -1557,12 +1567,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.getAbsoluteUrl(relativeUrl);
     }
 
-    public async collectGarbage(logger: ITelemetryLogger) {
+    public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false) {
         await PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             const gcStats: { totalGCNodes?: number; deletedGCNodes?: number } = {};
             try {
                 // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData(this.runtimeOptions.gcOptions.runFullGC === true);
+                const gcData = await this.dataStores.getGCData(fullGC);
                 const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
                     gcData.gcNodes, [ "/" ],
                     this.logger,
@@ -1615,19 +1625,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Returns a summary of the runtime at the current sequence number.
      */
     public async summarize(options: {
-        /** True to run garbage collection before summarizing */
-        runGC: boolean,
-        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-        fullTree?: boolean,
-        /** True to track the state for this summary in the SummarizerNodes */
-        trackState: boolean,
         /** Logger to use for correlated summary events */
         summaryLogger: ITelemetryLogger,
+        /** True to generate the full tree with no handle reuse optimizations; defaults to false */
+        fullTree?: boolean,
+        /** True to track the state for this summary in the SummarizerNodes; defaults to true */
+        trackState?: boolean,
+        /** True to run garbage collection before summarizing; defaults to true */
+        runGC?: boolean,
+        /** True to generate full GC data; defaults to false */
+        fullGC?: boolean,
     }): Promise<IChannelSummarizeResult> {
-        const { runGC, fullTree = false, trackState, summaryLogger } = options;
+        const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
-            await this.collectGarbage(summaryLogger);
+            await this.collectGarbage(summaryLogger, fullGC);
         }
 
         const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
@@ -1638,7 +1650,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData | undefined> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {
@@ -1661,48 +1673,75 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
-        const message =
-            `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-        this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
-
         try {
             await this.deltaManager.inbound.pause();
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "reason"> = {
+            const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
+
+            this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+
+            // Helper function to check whether we should still continue between each async step.
+            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+                // If summarizer loses connection it will never reconnect
+                if (!this.connected) {
+                    return { continue: false, error: "disconnected" };
+                }
+                // Ensure that lastSequenceNumber has not changed after pausing.
+                // We need the summary op's reference sequence number to match our summary sequence number,
+                // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
+                if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                return { continue: true };
+            };
+
+            const attemptData: Omit<IUnsubmittedSummaryData, "error"> = {
                 referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
-            if (!this.connected) {
-                // If summarizer loses connection it will never reconnect
-                return { ...attemptData, reason: "disconnected" };
+            let continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, error: continueResult.error };
+            }
+
+            // If the GC version that this container is loaded from differs from the current GC version that this
+            // container is running, we need to regenerate the GC data and run full summary. This is used to handle
+            // scenarios where we upgrade the GC version because we cannot trust the data from the previous GC version.
+            let forceRegenerateData = false;
+            if (this.gcEnabled && this.summaryGCVersion !== this.currentGCVersion) {
+                forceRegenerateData = true;
             }
 
             const trace = Trace.start();
-            const summarizeResult = await this.summarize({
-                runGC: this.shouldRunGC,
-                fullTree,
-                trackState: true,
-                summaryLogger,
-            });
+            let summarizeResult: IChannelSummarizeResult;
+            try {
+                summarizeResult = await this.summarize({
+                    summaryLogger,
+                    fullTree: fullTree || forceRegenerateData,
+                    trackState: true,
+                    runGC: this.shouldRunGC,
+                    fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
+                });
+            } catch (error) {
+                return { ...attemptData, error };
+            }
 
             const generateData: IGeneratedSummaryData = {
                 summaryStats: summarizeResult.stats,
                 generateDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, error: continueResult.error };
             }
 
-            // Ensure that lastSequenceNumber has not changed after pausing
-            const lastSequenceNumber = this.deltaManager.lastSequenceNumber;
-            assert(
-                lastSequenceNumber === summaryRefSeqNum,
-                0x130 /* `lastSequenceNumber changed while paused. ${lastSequenceNumber} !== ${summaryRefSeqNum}` */,
-            );
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
@@ -1717,9 +1756,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
 
-            const handle = await this.storage.uploadSummaryWithContext(
-                summarizeResult.summary,
-                summaryContext);
+            let handle: string;
+            try {
+                handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
+            } catch (error) {
+                return { ...attemptData, ...generateData, error };
+            }
 
             const parent = summaryContext.ackHandle;
             const summaryMessage: ISummaryContent = {
@@ -1734,24 +1776,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 uploadDuration: trace.trace().duration,
             };
 
-            if (!this.connected) {
-                return { ...attemptData, ...generateData, ...uploadData, reason: "disconnected" };
+            continueResult = checkContinue();
+            if (!continueResult.continue) {
+                return { ...attemptData, ...generateData, ...uploadData, error: continueResult.error };
             }
 
-            // We need the summary op's reference sequence number to match our summary sequence number
-            // Otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes
-            assert(
-                this.deltaManager.lastSequenceNumber === summaryRefSeqNum,
-                `lastSequenceNumber changed before the summary op could be submitted. `
-                + `${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
-            );
+            let clientSequenceNumber: number;
+            try {
+                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+            } catch (error) {
+                return { ...attemptData, ...generateData, ...uploadData, error };
+            }
 
-            const clientSequenceNumber =
-                this.submitSystemMessage(MessageType.Summarize, summaryMessage);
-
-            this.summarizerNode.completeSummary(handle);
-
-            return {
+            const submitData: ISubmittedSummaryData = {
                 ...attemptData,
                 ...generateData,
                 ...uploadData,
@@ -1759,6 +1796,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
             };
+
+            this.summarizerNode.completeSummary(handle);
+
+            return submitData;
         } finally {
             // Cleanup wip summary in case of failure
             this.summarizerNode.clearSummary();
@@ -2007,7 +2048,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        await this.summarizerNode.refreshLatestSummary(
+        const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
@@ -2016,6 +2057,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             readAndParseBlob,
             summaryLogger,
         );
+
+        // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
+        if (this.gcEnabled && result.latestSummaryUpdated) {
+            // If the summary was tracked by this client, it was the one that generated the summary in the first place.
+            // Update the summaryGCVersion to the currentGCVersion of this client.
+            if (result.wasSummaryTracked) {
+                this.summaryGCVersion = this.currentGCVersion;
+                return;
+            }
+            // If the summary was not tracked by this client, update summaryGCVersion from the snapshot that was used
+            // to update the latest summary.
+            await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
+        }
     }
 
     /**
@@ -2033,14 +2087,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
 
-        await this.summarizerNode.refreshLatestSummary(
+        const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
             async () => snapshot,
             readAndParseBlob,
             summaryLogger,
         );
 
+        // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
+        if (this.gcEnabled && result.latestSummaryUpdated) {
+            // Since there is not proposal handle for this summary, it should not have been tracked.
+            assert(!result.wasSummaryTracked, "Summary without proposal handle should not have been tracked");
+            // Update summaryGCVersion from the snapshot that was used to update the latest summary.
+            await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
+        }
+
         return snapshotRefSeq;
+    }
+
+    /**
+     * Updates the summary GC version as per the metadata blob in given snapshot.
+     */
+    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
+        const metadataBlobId = snapshot.blobs[metadataBlobName];
+        if (metadataBlobId) {
+            const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
+            this.summaryGCVersion = gcFeature(metadata);
+        }
     }
 
     private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
