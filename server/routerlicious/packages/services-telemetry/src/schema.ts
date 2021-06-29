@@ -3,29 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ILumberjackSchemaValidator, ILumberjackSchemaValidationResult } from "./resources";
+import { ILumberjackSchemaValidator, ILumberjackSchemaValidationResult, SchemaProperties } from "./resources";
 
 export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchemaValidator {
     protected readonly validators = new Map<string, (propvalue: string) => boolean>();
 
-    // Validators
-    protected readonly idValidation = (propValue) => {
-        return (typeof propValue === "string")
-            && propValue.length > 0;
-    };
-
-    protected readonly seqNumberValidation = (propValue) => {
-        return (typeof propValue === "number")
-            && propValue >= -1;
-    };
-
     public validate(props: Map<string, any>): ILumberjackSchemaValidationResult {
         const validationFailedForProperties: string[] = [];
         this.validators.forEach((validator, keyName) => {
-            const propertyValue = props.get(keyName);
-            if (!validator(propertyValue)) {
-                validationFailedForProperties.push(keyName);
+            // Validation should pass if the required propery is included and satisfies the requirements.
+            if (props.has(keyName) && validator(props.get(keyName))) {
+                return;
             }
+
+            // Otherwise, validation should fail and the property name is added to the "failed" list.
+            validationFailedForProperties.push(keyName);
         });
 
         return {
@@ -33,17 +25,33 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
             validationFailedForProperties,
         };
     }
+
+    // Validators
+    protected readonly idValidation = (propValue) => {
+        return this.isUndefined(propValue)
+            || (this.checkType(propValue, "string") && propValue.length > 0);
+    };
+
+    protected readonly seqNumberValidation = (propValue) => {
+        return this.isUndefined(propValue)
+            || (this.checkType(propValue, "number") && propValue >= -1);
+    };
+
+    // Helpers
+    private isUndefined(propValue: any) {
+        return propValue === undefined;
+    }
+
+    private checkType(propValue: any, expectedType: string) {
+        return typeof propValue === expectedType;
+    }
 }
 
 export class RequestSchemaValidator extends BaseLumberjackSchemaValidator {
-    // Properties to be enforced in the schema
-    protected readonly tenantIdKey = "tenantId";
-    protected readonly documentIdKey = "documentId";
-
     constructor() {
         super();
-        this.validators.set(this.tenantIdKey, this.idValidation);
-        this.validators.set(this.documentIdKey, this.idValidation);
+        this.validators.set(SchemaProperties.tenantId, this.idValidation);
+        this.validators.set(SchemaProperties.documentId, this.idValidation);
     }
 
     validate(props: Map<string, any>): ILumberjackSchemaValidationResult {
@@ -52,16 +60,11 @@ export class RequestSchemaValidator extends BaseLumberjackSchemaValidator {
 }
 
 export class LambdaSchemaValidator extends RequestSchemaValidator {
-    // Properties to be enforced in the schema
-    protected readonly clientIdKey = "clientId";
-    protected readonly sequenceNumberKey = "sequenceNumber";
-    protected readonly clientSequenceNumberKey = "clientSequenceNumber";
-
     constructor() {
         super();
-        this.validators.set(this.clientIdKey, this.idValidation);
-        this.validators.set(this.sequenceNumberKey, this.seqNumberValidation);
-        this.validators.set(this.clientSequenceNumberKey, this.seqNumberValidation);
+        this.validators.set(SchemaProperties.clientId, this.idValidation);
+        this.validators.set(SchemaProperties.sequenceNumber, this.seqNumberValidation);
+        this.validators.set(SchemaProperties.clientSequenceNumber, this.seqNumberValidation);
     }
 
     validate(props: Map<string, any>): ILumberjackSchemaValidationResult {
