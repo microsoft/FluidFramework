@@ -15,19 +15,20 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
  * Wraps the given IDocumentStorageService to override the `uploadSummaryWithContext` method. It calls the
- * `uploadSummaryCb` whenever a summary is uploaded by the client.
+ * `uploadSummaryCb` whenever a summary is uploaded by the client. The summary context can be updated in the
+ * callback before it is uploaded to the server.
  */
 export function wrapDocumentStorageService(
     innerDocStorageService: IDocumentStorageService,
-    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => void,
+    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext,
 ) {
     const outerDocStorageService = Object.create(innerDocStorageService) as IDocumentStorageService;
     outerDocStorageService.uploadSummaryWithContext = async (
         summary: ISummaryTree,
         context: ISummaryContext,
     ): Promise<string> => {
-        uploadSummaryCb(summary, context);
-        return innerDocStorageService.uploadSummaryWithContext(summary, context);
+        const newContext = uploadSummaryCb(summary, context);
+        return innerDocStorageService.uploadSummaryWithContext(summary, newContext);
     };
     return outerDocStorageService;
 }
@@ -41,7 +42,7 @@ export function wrapDocumentStorageService(
  */
 export function wrapDocumentService(
     innerDocService: IDocumentService,
-    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => void,
+    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext,
 ) {
     const outerDocService = Object.create(innerDocService) as IDocumentService;
     outerDocService.connectToStorage = async (): Promise<IDocumentStorageService> => {
@@ -60,7 +61,7 @@ export function wrapDocumentService(
  */
 export function wrapDocumentServiceFactory(
     innerDocServiceFactory: IDocumentServiceFactory,
-    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => void,
+    uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext,
 ) {
     const outerDocServiceFactory = Object.create(innerDocServiceFactory) as IDocumentServiceFactory;
     outerDocServiceFactory.createDocumentService = async (

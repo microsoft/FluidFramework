@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
+import { IMember, IServiceAudience } from "@fluid-experimental/fluid-framework";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 

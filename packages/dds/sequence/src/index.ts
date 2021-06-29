@@ -11,7 +11,6 @@ export {
     ISerializedInterval,
     IntervalCollection,
     IntervalCollectionIterator,
-    IntervalCollectionView,
     SequenceInterval,
 } from "./intervalCollection";
 export {
