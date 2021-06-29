@@ -615,7 +615,12 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 				const [startRevision, chunk] = lastPair;
 				const edits = assertNotUndefined(chunk.edits);
 				if (edits.length === this.editLog.editsPerChunk) {
-					void this.uploadEditChunk(edits, startRevision);
+					void this.uploadEditChunk(edits, startRevision).then(() => {
+						this.logger.sendTelemetryEvent({
+							eventName: 'EditChunkUpload',
+							chunkSize: edits.length,
+						});
+					});
 				}
 			}
 		}
