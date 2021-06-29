@@ -19,6 +19,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { IntervalType } from "@fluidframework/merge-tree";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
@@ -344,7 +345,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const responseBefore = await container.request({ url: "/" });
             const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
+            const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
+            intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
 
             const snapshotTree = container.serialize();
 
@@ -353,10 +357,28 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const responseAfter = await container2.request({ url: "/" });
             const defaultComponentAfter = responseAfter.value as TestFluidObject;
             const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
+            const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
             assert.strictEqual(
                 JSON.stringify(sharedStringAfter.summarize()),
                 JSON.stringify(sharedStringBefore.summarize()),
                 "Summaries of shared string should match and contents should be same!!");
+            for (const interval of intervalsBefore) {
+                if (typeof(interval.getIntervalId) === "function") {
+                    const id = interval.getIntervalId();
+                    assert.notStrictEqual(id ?? intervalsAfter.getIntervalById(id as unknown as string), undefined,
+                                        "Interval not present after rehydration");
+                    intervalsAfter.removeIntervalById(id as unknown as string);
+                    assert.strictEqual(intervalsAfter.getIntervalById(id as unknown as string), undefined,
+                                        "Interval not deleted");
+                }
+                else {
+                    intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
+                }
+            }
+            for (const interval of intervalsAfter) {
+                assert.fail(
+                    `Unexpected interval after rehydration: ${interval.start.getOffset()}-${interval.end.getOffset()}`);
+            }
         });
 
         it("Rehydrate container from summary, change contents of dds and then check summary", async () => {
