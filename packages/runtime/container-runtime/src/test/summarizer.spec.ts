@@ -111,6 +111,7 @@ describe("Runtime", () => {
                                     blobNodeCount: 0,
                                     handleNodeCount: 0,
                                     totalBlobSize: 0,
+                                    unreferencedBlobSize: 0,
                                 },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
