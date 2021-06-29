@@ -12,7 +12,9 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 // Base class for providing audience information for sessions interacting with FluidContainer
 // This can be extended by different service-specific client packages to additional parameters to
 // the user and client details returned in IMember
-export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> implements IServiceAudience<IMember> {
+export class ServiceAudience
+  extends TypedEventEmitter<IServiceAudienceEvents<IMember>>
+  implements IServiceAudience<IMember> {
   protected readonly audience: IAudience;
 
   constructor(

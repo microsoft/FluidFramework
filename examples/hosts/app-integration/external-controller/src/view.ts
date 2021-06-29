@@ -86,7 +86,7 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
     focusDiv.style.fontSize = "14px";
 
     const onFocusChanged = () => {
-        focusDiv.innerHTML = focusTracker.getPresences().join("<br/>");
+        focusDiv.innerHTML = focusTracker.getPresencesString("</br>");
     };
 
     onFocusChanged();
