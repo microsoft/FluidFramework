@@ -144,64 +144,66 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		};
 
 		for (const [summaryType, versions] of summaryTypes.entries()) {
-			it(`files of type '${summaryType}' with different format versions produce identical trees`, () => {
-				// Load the first summary file
-				const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[0]}`), 'utf8');
-				const summary = deserialize(serializedSummary, testSerializer);
-				assert.typeOf(summary, 'object');
-				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
-
-				// Check every other summary file results in the same loaded tree
-				for (let i = 1; i < versions.length; i++) {
-					const { tree } = setUpTestSharedTree();
-
-					const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[i]}`), 'utf8');
+			describe(`summary type ${summaryType}`, () => {
+				it(`files of type '${summaryType}' with different format versions produce identical trees`, () => {
+					// Load the first summary file
+					const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[0]}`), 'utf8');
 					const summary = deserialize(serializedSummary, testSerializer);
 					assert.typeOf(summary, 'object');
-					tree.loadSummary(summary as SharedTreeSummaryBase);
-
-					expect(tree.equals(expectedTree)).to.be.true;
-				}
-			});
-
-			// Check that clients with certain loaded versions can write their supported write versions.
-			const sortedVersions = versions.sort(versionComparator);
-			for (const [index, readVersion] of sortedVersions.entries()) {
-				// A client that has loaded an older version of a summary should be able to write newer versions
-				for (const writeVersion of sortedVersions.slice(index)) {
-					const summarizer = supportedSummarizers[writeVersion];
-
-					if (summarizer !== undefined) {
-						it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion} for ${summaryType} summary type`, async () => {
-							// Load the first summary file (the one with the oldest version)
-							const serializedSummary = fs.readFileSync(
-								summaryFilePath(`${summaryType}-${readVersion}`),
-								'utf8'
-							);
-							const summary = deserialize(serializedSummary, testSerializer);
-							assert.typeOf(summary, 'object');
-
-							// Wait for the ops to to be submitted and processed across the containers.
-							await testObjectProvider.ensureSynchronized();
-							expectedTree.loadSummary(summary as SharedTreeSummaryBase);
-
-							await testObjectProvider.ensureSynchronized();
-
-							// Write a new summary with the specified version
-							const newSummary = expectedTree.saveSerializedSummary({ summarizer });
-
-							// Check the newly written summary is equivalent to its corresponding test summary file
-							const fileName = `${summaryType}-${writeVersion}`;
-							// Re-stringify the the JSON file to remove escaped characters
-							const expectedSummary = JSON.stringify(
-								JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
-							);
-
-							expect(newSummary).to.equal(expectedSummary);
-						});
+					expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+	
+					// Check every other summary file results in the same loaded tree
+					for (let i = 1; i < versions.length; i++) {
+						const { tree } = setUpTestSharedTree();
+	
+						const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[i]}`), 'utf8');
+						const summary = deserialize(serializedSummary, testSerializer);
+						assert.typeOf(summary, 'object');
+						tree.loadSummary(summary as SharedTreeSummaryBase);
+	
+						expect(tree.equals(expectedTree)).to.be.true;
 					}
-				}
-			}
+				});
+	
+				// Check that clients with certain loaded versions can write their supported write versions.
+				const sortedVersions = versions.sort(versionComparator);
+				for (const [index, readVersion] of sortedVersions.entries()) {
+					// A client that has loaded an older version of a summary should be able to write newer versions
+					for (const writeVersion of sortedVersions.slice(index)) {
+						const summarizerObj = supportedSummarizers.find(s => s.version === writeVersion);
+						if (summarizerObj !== undefined) {
+							const summarizer = summarizerObj.summarizer;
+							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion} for ${summaryType} summary type`, async () => {
+								// Load the first summary file (the one with the oldest version)
+								const serializedSummary = fs.readFileSync(
+									summaryFilePath(`${summaryType}-${readVersion}`),
+									'utf8'
+								);
+								const summary = deserialize(serializedSummary, testSerializer);
+								assert.typeOf(summary, 'object');
+	
+								// Wait for the ops to to be submitted and processed across the containers.
+								await testObjectProvider.ensureSynchronized();
+								expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+	
+								await testObjectProvider.ensureSynchronized();
+	
+								// Write a new summary with the specified version
+								const newSummary = expectedTree.saveSerializedSummary({ summarizer });
+	
+								// Check the newly written summary is equivalent to its corresponding test summary file
+								const fileName = `${summaryType}-${writeVersion}`;
+								// Re-stringify the the JSON file to remove escaped characters
+								const expectedSummary = JSON.stringify(
+									JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
+								);
+	
+								expect(newSummary).to.equal(expectedSummary);
+							});
+						}
+					}
+				}	
+			});
 		}
 
 		describe('version 0.0.2', () => {
