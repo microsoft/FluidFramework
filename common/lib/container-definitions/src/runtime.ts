@@ -148,6 +148,12 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
 
     updateDirtyContainerState(dirty: boolean): void;
+
+    /**
+     * This api is required whenever blob contents are to be read synchronously in detached container in rehydrate case
+     * @param blobId - Id of blob for which contents are fetched.
+     */
+    readBlobContentsSync(blobId: string): ArrayBufferLike;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
