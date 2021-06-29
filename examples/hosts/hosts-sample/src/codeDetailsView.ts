@@ -7,17 +7,32 @@ import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { Container } from "@fluidframework/container-loader";
 
+/**
+ * Initial configuration for controls in the code details panel.
+ * @param packageDetails - Fluid package name and version
+ */
 export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
     const proposedVersion = document.getElementById(
         "proposed-version",
     ) as HTMLInputElement;
     proposedVersion.value = packageDetails.version ?? "1.0.0";
 
-    const incrementBtn = document.getElementById(
-        "increment-btn",
+    const incrementMinorBtn = document.getElementById(
+        "increment-minor-btn",
     ) as HTMLButtonElement;
-    incrementBtn.onclick = () => {
-        const packageVersion = incrementBtn.previousElementSibling as HTMLInputElement;
+    incrementMinorBtn.onclick = () => {
+        const packageVersion = incrementMinorBtn.previousElementSibling as HTMLInputElement;
+        const version = semver.parse(packageVersion.value);
+        if (version) {
+            packageVersion.value = version.inc("minor").raw;
+        }
+    };
+
+    const incrementMajorBtn = document.getElementById(
+        "increment-major-btn",
+    ) as HTMLButtonElement;
+    incrementMajorBtn.onclick = () => {
+        const packageVersion = incrementMinorBtn.previousElementSibling as HTMLInputElement;
         const version = semver.parse(packageVersion.value);
         if (version) {
             packageVersion.value = version.inc("major").raw;
@@ -32,6 +47,11 @@ export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
     };
 };
 
+/**
+ * Configure the code details view with container specific logic
+ * @param container - Loaded Fluid container
+ * @param packageDetails - Current code package details
+ */
 export const bindUI = (
     container: Container,
     packageDetails: IPackageIdentifierDetails,
@@ -41,7 +61,7 @@ export const bindUI = (
             error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
         ) {
             window.alert(
-                `🛑 Container is closed\n\nCurrent code is not compatible with the incoming proposal.`,
+                `🛑 Container is closed\n\nCurrent code is not compatible with the upgrage proposal.`,
             );
         } else {
             window.alert(`🛑 Container is closed\n\n${error}`);

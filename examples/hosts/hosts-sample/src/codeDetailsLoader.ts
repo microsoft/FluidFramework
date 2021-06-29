@@ -44,12 +44,13 @@ class InMemoryCodeDetailsLoader
     ) {}
 
     /**
-     * The load module is called by the loader before instantiating a runtime.
+     * The load method is called by the Fluid loader prior to instantiating the runtime.
      *
      * @param source - Code details written in the quorum.
      * @returns - Module entry point along with the module's own code details.
      */
     async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        // Verify source code details match the current loaded code.
         const {
             name: sourcePackageName,
             version: sourcePackageVersion,
@@ -58,12 +59,18 @@ class InMemoryCodeDetailsLoader
             sourcePackageName !== this.packageName ||
             sourcePackageVersion === undefined
         ) {
-            throw new Error("Unsupported package");
+            // Raise an error when code details written in the document differ from
+            // the package supported by this code loader.
+            throw new Error("Source package details don't match the code loader.");
         }
-        // Can only load code for the document schema version identical or lower than the emulated package.
-        if (semver.lt(this.packageVersion, sourcePackageVersion)) {
+        // Can only load code for the document schema major version identical or lower than the emulated package.
+        if (
+            semver.diff(this.packageVersion, sourcePackageVersion) ===
+                "major" &&
+            semver.lt(this.packageVersion, sourcePackageVersion)
+        ) {
             throw new Error(
-                `Unsupported document version [${sourcePackageVersion}]`,
+                `The document version [${sourcePackageVersion}] is newer than loaded code.`,
             );
         }
         return {
@@ -103,7 +110,12 @@ class InMemoryCodeDetailsLoader
         ) {
             return false;
         }
-        return semver.gte(candidatePackage.version, constraintPackage.version);
+        // Only tolerate minor version difference
+        return (
+            semver.diff(candidatePackage.version, constraintPackage.version) !==
+                "major" ||
+            semver.gte(candidatePackage.version, constraintPackage.version)
+        );
     }
 
     /**

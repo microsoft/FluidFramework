@@ -38,16 +38,19 @@ The application also provides the code details panel allowing to load different 
 
 ![Code Details](./images/code-details.png)
 
-### Use Cases
-The example differentiates minor and major upgrades by responding differently to upgrade requests.
+The code loader implementation in the example differentiates minor and major upgrades by responding differently to upgrade requests.
+A minor non-breaking version upgrade is tolerated even when the upgrade proposal is newer than the loaded code.
+This approach allows applying hotfixes that do not alter the document schema.
+As opposed to a major version upgrade that would require forcefully closing all active sessions.
 
-### Minor Version Upgrade
+Consider the following scenario:
 
-### Major Version Upgrade
+1. Users A and B collaboratively edit the same document using the code version 1.0.0
+1. User A reload the document using a newer code version 2.0.0
+1. User A proposes the document code upgrade to the version 2.0.0
+1. When the code proposal is accepted, user B gets logged out as their container's got forcefully closed by the runtime.
 
-Safe Session Close & Force Upgrades
-Reliably apply hotfixes, and other required upgrades.
-minor upgrade, major upgrade, refreshing the DOM/view after upgrade
+![Code Details](./images/major-upgrade.gif)
 
 ## Implementation Details
 

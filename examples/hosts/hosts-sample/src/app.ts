@@ -107,19 +107,7 @@ async function start(
         container = await loader.createDetachedContainer({
             package: packageId.fullId,
         });
-        try {
-            await container.attach(
-                urlResolver.createCreateNewRequest(containerId),
-            );
-        } catch (error) {
-            if (error.statusCode === 400) {
-                // error occurred during the attempt to create a new document
-                throw error;
-            } else {
-                // unexpected error, bail out
-                throw error;
-            }
-        }
+        await container.attach(urlResolver.createCreateNewRequest(containerId));
     } else {
         // This flow is used to get the existing container.
         container = await loader.resolve({ url });
