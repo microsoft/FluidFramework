@@ -1,5 +1,37 @@
 # Change Log
 
+## 1.5.0
+
+* refactor: add more readonly in exported shared-tree interfaces
+  * Associated pull request: [31981](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31981)
+  * Commit: [a614ec5b6edd42edd80fb2d43522731ab2ac38c4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a614ec5b6edd42edd80fb2d43522731ab2ac38c4)
+* feat: Telemetry for SharedTree leader election
+  * Associated pull request: [31828](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31828)
+  * Commit: [0c9b94d02857bc49305cbf4a110e0b99b027bd8c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0c9b94d02857bc49305cbf4a110e0b99b027bd8c)
+* feat: EditChunk Blobbing Telemetry
+  * Associated pull request: [31837](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31837)
+  * Commit: [af90fe80a0ef2679a7d83c1328ccbcb31e727c20](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/af90fe80a0ef2679a7d83c1328ccbcb31e727c20)
+* feat: Summary Creation Telemetry
+  * Associated pull request: [31786](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31786)
+  * Commit: [2db951969c4d6dc40b92192c43028a56fe7bf9fe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2db951969c4d6dc40b92192c43028a56fe7bf9fe)
+* feat: Catchup Blobbing Telemetry
+  * Associated pull request: [31834](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31834)
+  * Commit: [49b17686fb3c2a5c0df78f25eeac56e85225bb90](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/49b17686fb3c2a5c0df78f25eeac56e85225bb90)
+* fix: SharedTreeFactory toggle for uploading edit chunks
+  * Associated pull request: [31876](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31876)
+  * Commit: [e9e807103917348e8846ab25f29fca422a87e1b9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e9e807103917348e8846ab25f29fca422a87e1b9)
+* build: Update dependencies and remove unused dependency
+  * Associated pull request: [31846](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31846)
+  * Commit: [92e93ec776000f1dadab117ac5fe716cfedd9023](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92e93ec776000f1dadab117ac5fe716cfedd9023)
+* merge: `releases/2021.06.4` into `master`
+  * Associated pull request: [31744](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31744)
+  * Commit: [72925f31b24e90801079119452b163ff8cd2ca1c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/72925f31b24e90801079119452b163ff8cd2ca1c)
+* feat: SharedTree factory for version that writes summary format 0.1.0
+  * Associated pull request: [31713](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31713)
+  * Commit: [2747f705cfab23da7f47abde4ecc38f59813111b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2747f705cfab23da7f47abde4ecc38f59813111b)
+* docs: Merged changes from wikiMaster
+  * Commit: [405c85ff3f6626c8a35a454d97862444127c54c1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/405c85ff3f6626c8a35a454d97862444127c54c1)
+
 ## 1.2.2
 
 * fix: Write summary version 0.1.0 when an EditLog has handles not associated with in-memory edits
