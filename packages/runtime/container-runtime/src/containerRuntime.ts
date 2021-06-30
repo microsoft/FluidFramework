@@ -121,6 +121,7 @@ import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
+    electedSummarizerBlobName,
     gcFeature,
     IContainerRuntimeMetadata,
     metadataBlobName,
@@ -128,7 +129,8 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
-import { OrderedClientElection } from "./orderedClientElection";
+import { ISerializedElection, loadOrderedClients } from "./orderedClientElection";
+import { SummarizerClientElection } from "./summarizerClientElection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -621,12 +623,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
+            electedSummarizerData,
             chunks,
             combinedRuntimeOptions,
             containerScope,
@@ -795,6 +799,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata | undefined,
+        electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
@@ -945,11 +950,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const { elections: [summarizerClientElection] } = loadOrderedClients(
+            this.logger,
+            this.context.deltaManager,
+            this.context.quorum,
+            [electedSummarizerData, SummarizerClientElection.isClientEligible],
+        );
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
             this.summaryCollection,
-            new OrderedClientElection(this.context.quorum),
+            summarizerClientElection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             maxOpsSinceLastSummary,
@@ -1173,6 +1184,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
+        const electedSummarizerContent = JSON.stringify(this.summaryManager.clientElection.serialize());
+        addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
+
         const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
