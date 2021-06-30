@@ -1,4 +1,25 @@
 # Change Log
+## 0.106.4
+
+* merge releases/2021.05.2
+  * Commit: [70ee75e33b1a2c3178d2efc56c90a96af17a6b69](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/70ee75e33b1a2c3178d2efc56c90a96af17a6b69)
+
+## 0.106.3
+
+* fix: add missing dep, fix misleading param name, and bad comment
+  * Associated pull request: [30740](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30740)
+  * Commit: [c051127170b64c7f733a88a3218274ad5f093754](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c051127170b64c7f733a88a3218274ad5f093754)
+* merge: releases/2021.05.2 to master
+  * Commit: [5858f5d24bda0187f6e32168e8ef75d388a0e72b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5858f5d24bda0187f6e32168e8ef75d388a0e72b)
+* build: update package versions
+  * Associated pull request: [30710](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30710)
+  * Commit: [295410f45818d319a5abd84a86715f514d97a662](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/295410f45818d319a5abd84a86715f514d97a662)
+* chore: Fix SharedTree test utility comment
+  * Associated pull request: [30608](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30608)
+  * Commit: [156dc2458fe5729a2cb5125922dc8cebd0247bcf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/156dc2458fe5729a2cb5125922dc8cebd0247bcf)
+* merge: `releases/2021.05.2` into `master`
+  * Associated pull request: [30535](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30535)
+  * Commit: [05bd7d07c3bbb529f67978861a76bc8faebaf0e3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/05bd7d07c3bbb529f67978861a76bc8faebaf0e3)
 
 ## 0.104.3
 
