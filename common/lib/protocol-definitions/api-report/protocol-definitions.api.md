@@ -343,8 +343,6 @@ export type ISequencedProposal = {
 // @public
 export interface IServerError {
     code: number;
-    // @deprecated
-    errorMessage?: string;
     message: string;
     retryAfter?: number;
 }
@@ -475,6 +473,8 @@ export interface ISummaryHandle {
 
 // @public
 export interface ISummaryNack extends IServerError {
+    // @deprecated
+    errorMessage?: string;
     summaryProposal: ISummaryProposal;
 }
 

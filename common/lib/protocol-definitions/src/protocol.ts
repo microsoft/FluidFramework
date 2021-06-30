@@ -227,13 +227,6 @@ export interface IServerError {
      * If specified, the client should wait this many seconds before retrying.8
      */
     retryAfter?: number;
-
-    /**
-     * Message describing the error.
-     * @deprecated - Use "message" instead. Clients should check for errorMessage ?? message.
-     * Once all servers & clients are all updated, we can remove that errorMessage property
-     */
-    errorMessage?: string;
 }
 
 /**
@@ -269,6 +262,13 @@ export interface ISummaryNack extends IServerError {
      * Information about the proposed summary op.
      */
     summaryProposal: ISummaryProposal;
+
+    /**
+     * Message describing the error.
+     * @deprecated - Use "message" instead. Clients should check for errorMessage ?? message.
+     * Once all servers & clients are all updated, we can remove that errorMessage property
+     */
+    errorMessage?: string;
 }
 
 /**
