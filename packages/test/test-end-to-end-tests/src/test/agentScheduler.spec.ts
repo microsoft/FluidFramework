@@ -221,16 +221,21 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
     });
 
     describe("State transitions", () => {
-        let container: Container;
-        let scheduler: IAgentScheduler;
+        let container1: Container;
+        let container2: Container;
+        let scheduler1: IAgentScheduler;
+        let scheduler2: IAgentScheduler;
 
         beforeEach(async () => {
-            container = await createContainer() as Container;
-            scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
+            container1 = await createContainer() as Container;
+            scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
+
+            container2 = await loadContainer() as Container;
+            scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
         });
 
         it("Tasks picked while in read mode are assigned after switching to write mode", async () => {
-            const taskSubscription = new TaskSubscription(scheduler, "task1");
+            const taskSubscription = new TaskSubscription(scheduler1, "task1");
             taskSubscription.volunteer();
 
             await provider.ensureSynchronized();
@@ -238,7 +243,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             // Since we start in read mode, we shouldn't be able to successfully get the task even after volunteering
             assert.strict(!taskSubscription.haveTask(), "Got task in read mode");
 
-            await forceWriteMode(scheduler);
+            await forceWriteMode(scheduler1);
 
             await provider.ensureSynchronized();
 
@@ -247,9 +252,9 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
         it("Tasks are released after forcing read mode", async () => {
             // Start in write mode
-            await forceWriteMode(scheduler);
+            await forceWriteMode(scheduler1);
 
-            const taskSubscription = new TaskSubscription(scheduler, "task1");
+            const taskSubscription = new TaskSubscription(scheduler1, "task1");
             taskSubscription.volunteer();
 
             await provider.ensureSynchronized();
@@ -258,10 +263,32 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
             assert.strict(taskSubscription.haveTask(), "Failed to get task in write mode");
 
             // Forcing readonly should cause us to drop the task
-            container.forceReadonly(true);
+            container1.forceReadonly(true);
             await provider.ensureSynchronized();
 
             assert.strict(!taskSubscription.haveTask(), "Still have task after forcing readonly");
+        });
+
+        it("Tasks are released after closing the container", async () => {
+            // Start in write mode
+            await forceWriteMode(scheduler1);
+            const taskSubscription1 = new TaskSubscription(scheduler1, "task1");
+            taskSubscription1.volunteer();
+            await provider.ensureSynchronized();
+
+            await forceWriteMode(scheduler2);
+            const taskSubscription2 = new TaskSubscription(scheduler2, "task1");
+            taskSubscription2.volunteer();
+            await provider.ensureSynchronized();
+
+            assert.strict(taskSubscription1.haveTask(), "Container 1 should have task");
+            assert.strict(!taskSubscription2.haveTask(), "Container 2 should not have task");
+
+            container1.close();
+            await provider.ensureSynchronized();
+
+            assert.strict(!taskSubscription1.haveTask(), "Container 1 should not have task");
+            assert.strict(taskSubscription2.haveTask(), "Container 2 should have task");
         });
     });
 });
