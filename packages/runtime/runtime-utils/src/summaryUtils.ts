@@ -269,23 +269,17 @@ export function convertSnapshotTreeToSummaryTree(
         0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
-    if ((snapshot as any).blobsContents !== undefined) {
-        for (const [path, id] of Object.entries(snapshot.blobs)) {
-            // 0.42 back-compat We still put contents in same blob for back-compat so need to add blob
-            // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
-            if (snapshot.blobs[id] !== undefined) {
-                const decoded = bufferToString((snapshot as any).blobsContents[id], "utf8");
-                builder.addBlob(path, decoded);
+    for (const [path, id] of Object.entries(snapshot.blobs)) {
+        // 0.42 back-compat We still put contents in same blob for back-compat so need to add blob
+        // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
+        if (snapshot.blobs[id] !== undefined) {
+            let decoded;
+            if ((snapshot as ISnapshotTreeWithBlobContents).blobsContents !== undefined) {
+                decoded = bufferToString((snapshot as any).blobsContents[id], "utf8");
+            } else {
+                decoded = fromBase64ToUtf8(snapshot.blobs[id]);
             }
-        }
-    } else {
-        for (const [key, value] of Object.entries(snapshot.blobs)) {
-            // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
-            // and we want to push blobPath to blobValue in tree entries.
-            if (snapshot.blobs[value] !== undefined) {
-                const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
-                builder.addBlob(key, decoded);
-            }
+            builder.addBlob(path, decoded);
         }
     }
 
