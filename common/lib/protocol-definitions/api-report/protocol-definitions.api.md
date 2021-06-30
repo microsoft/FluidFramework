@@ -202,10 +202,7 @@ export interface INack {
 }
 
 // @public
-export interface INackContent {
-    code: number;
-    message: string;
-    retryAfter?: number;
+export interface INackContent extends IServerError {
     type: NackErrorType;
 }
 
@@ -345,7 +342,11 @@ export type ISequencedProposal = {
 
 // @public
 export interface IServerError {
-    errorMessage: string;
+    code: number;
+    // @deprecated
+    errorMessage?: string;
+    message: string;
+    retryAfter?: number;
 }
 
 // @public (undocumented)
