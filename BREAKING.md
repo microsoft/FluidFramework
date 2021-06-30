@@ -1,9 +1,9 @@
 ## 0.43 Breaking changes
 
-- [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
+- [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
 
-### TinyliciousClient no longer static
-`TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
+### TinyliciousClient and FrsClient are no longer static
+`TinyliciousClient` and `FrsClient` global static properties are removed. Instead, object instantiation is now required.
 
 ## 0.42 Breaking changes
 

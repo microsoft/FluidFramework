@@ -10,6 +10,7 @@ import {
     FluidContainer,
     RootDataObject,
 } from "@fluid-experimental/fluid-framework";
+import { TinyliciousClient, TinyliciousResources } from "@fluid-experimental/tinylicious-client";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
@@ -19,21 +20,21 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { generateUser } from "@fluidframework/server-services-client";
 import {
     FrsConnectionConfig,
+    FrsConnectionCoreConfig,
     FrsContainerConfig,
     FrsContainerServices,
     FrsResources,
 } from "./interfaces";
 import { FrsAudience } from "./FrsAudience";
 import { FrsUrlResolver } from "./FrsUrlResolver";
-import { debug } from "./debug";
 
 /**
- * FrsClientInstance provides the ability to have a Fluid object backed by the FRS service
+ * Core class for the FrsClient that specifically focuses on its ability to communicate with the FRS service
  */
-export class FrsClientInstance {
+export class FrsClientCore {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly tokenProvider: ITokenProvider;
-    constructor(private readonly connectionConfig: FrsConnectionConfig) {
+    constructor(private readonly connectionConfig: FrsConnectionCoreConfig) {
         const user = this.connectionConfig.user
             ? { id: this.connectionConfig.user.userId, name: this.connectionConfig.user.userName }
             : generateUser();
@@ -114,53 +115,61 @@ export class FrsClientInstance {
 }
 
 /**
- * FrsClient static class with singular global instance that lets the developer define
- * all Container interactions with the Frs service
+ * FrsClient provides the ability to have a Fluid object backed by the FRS service or, when running with
+ * localMode enabled, have it be backed by Tinylicious locally
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class FrsClient {
-    private static globalInstance: FrsClientInstance | undefined;
+    private readonly clientInstance: FrsClientCore | TinyliciousClient;
 
-    static init(connectionConfig: FrsConnectionConfig) {
-        if (FrsClient.globalInstance) {
-            debug(
-                `FrsClient has already been initialized. Using existing instance of
-                FrsClient instead.`,
-            );
-            return;
+    constructor(private readonly connectionConfig: FrsConnectionConfig) {
+        if (connectionConfig.type === "localMode") {
+            this.clientInstance = new TinyliciousClient();
         }
-        FrsClient.globalInstance = new FrsClientInstance(
-            connectionConfig,
-        );
+        else {
+            this.clientInstance = new FrsClientCore(connectionConfig);
+        }
     }
 
-    static async createContainer(
+    public async createContainer(
         serviceConfig: FrsContainerConfig,
-        objectConfig: ContainerSchema,
+        containerSchema: ContainerSchema,
     ): Promise<FrsResources> {
-        if (!FrsClient.globalInstance) {
-            throw new Error(
-                "FrsClient has not been properly initialized before attempting to create a container",
-            );
+        if (this.connectionConfig.type === "localMode") {
+            const tinyliciousResources = await (this.clientInstance as TinyliciousClient).createContainer({
+                id: serviceConfig.id,
+                logger: serviceConfig.logger,
+            }, containerSchema);
+            return this.convertTinyliciousToFrsResources(tinyliciousResources);
+        } else {
+            return (this.clientInstance as FrsClientCore).createContainer(serviceConfig, containerSchema);
         }
-        return FrsClient.globalInstance.createContainer(
-            serviceConfig,
-            objectConfig,
-        );
     }
 
-    static async getContainer(
+    public async getContainer(
         serviceConfig: FrsContainerConfig,
-        objectConfig: ContainerSchema,
+        containerSchema: ContainerSchema,
     ): Promise<FrsResources> {
-        if (!FrsClient.globalInstance) {
-            throw new Error(
-                "FrsClient has not been properly initialized before attempting to get a container",
-            );
+        if (this.connectionConfig.type === "localMode") {
+            const tinyliciousResources = await (this.clientInstance as TinyliciousClient).getContainer({
+                id: serviceConfig.id,
+                logger: serviceConfig.logger,
+            }, containerSchema);
+            return this.convertTinyliciousToFrsResources(tinyliciousResources);
+        } else {
+            return (this.clientInstance as FrsClientCore).getContainer(serviceConfig, containerSchema);
         }
-        return FrsClient.globalInstance.getContainer(
-            serviceConfig,
-            objectConfig,
-        );
+    }
+
+    private convertTinyliciousToFrsResources(tinyliciousResources: TinyliciousResources): FrsResources {
+        return {
+            fluidContainer: tinyliciousResources.fluidContainer,
+            containerServices: {
+                /**
+                 * NOTE: If audience member types here begin to diverge for Tinylicious and FRS,
+                 * TSLint will throw an error and we can add in specific converters between the different member fields
+                 */
+                audience: tinyliciousResources.containerServices.audience,
+            },
+        };
     }
 }

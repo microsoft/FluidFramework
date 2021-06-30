@@ -6,16 +6,37 @@ This package is marked as experimental and currently under development. The API 
 
 ## Using frs-client
 
-The frs-client package has a `FrsClient` static class that allows you to interact with Fluid.
+The frs-client package has a `FrsClient` class that allows you to interact with Fluid.
 
 ```javascript
 import { FrsClient } from "@fluid-experimental/frs-client";
 ```
 
-## Initializing FrsClient
+## Instantiating FrsClient
 
-Fluid requires a backing service to enable collaborative communication. The FrsClient instance will be instantiated against the FRS service.
+Fluid requires a backing service to enable collaborative communication. The `FrsClient` supports both instantiating against a deployed FRS service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
 
+NOTE: You can use one instance of the `FrsClient` to create/fetch multiple containers from the same FRS service instance.
+
+### Backed Locally
+
+When running against Tinylicious, the `FrsClient` constructor just takes in two optional parameters, the domain and port that Tinylicious is running at. To run Tinylicious on the default values of `localhost:7070`, please enter the following into a terminal window:
+```
+npx tinylicous
+```
+Now, with our local service running in the background, we need to connect the application to it. For this, we just need to specify that we are running in local mode when instantiating our `FrsClient`
+
+```javascript
+import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
+
+const config: FrsConnectionConfig = { 
+    type: "localMode",
+    port: 7070, /** Optional */
+};
+const frsClient = new FrsClient(config);
+```
+
+### Backed by a Live FRS Instance
 In the example below we are connecting to the FRS service by providing the tenantId and key that is uniquely generated for us when onboarding to the service, and the orderer and storage servers we wish to connect to. We can also optionally pass in our own user details instead of having the client designate a random GUID and a token provider for authentication.
 
 ```javascript
@@ -28,7 +49,7 @@ const config: FrsConnectionConfig = {
     orderer: "",
     storage: "",
 };
-FrsClient.init(config);
+const frsClient = new FrsClient(config);
 ```
 
 ## Fluid Containers
@@ -44,9 +65,12 @@ Using the `FrsClient` object the developer can create and get Fluid containers. 
 ```javascript
 import { FrsClient } from "@fluid-experimental/frs-client";
 
-await FrsClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const frsClient = new FrsClient(config);
+await frsClient.createContainer( { id: "_unique-id_" }, /* schema */);
+const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
+
+NOTE: When using the `FrsClient` in `localMode`, all containers that have been created will be deleted when the instance of the Tinylicious service (not client), that was run from the terminal window is closed. However, any containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused between Tinylicious and FRS to fetch back the same container.
 
 ## Defining Fluid Containers
 
@@ -62,8 +86,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-await FrsClient.createContainer({ id: "_unique-id_" }, schema);
-const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const frsClient = new FrsClient(config);
+await frsClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -83,10 +108,10 @@ const schema = {
 }
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
-const initialObjects = container.initialObjects;
+const initialObjects = fluidContainer.initialObjects;
 // Use the keys that we had set in the schema to load the individiual objects
 const map1 = initialObjects.map1;
 const pair1 = initialObjects["pair1"];
@@ -109,7 +134,7 @@ const schema = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const [container, containerServices] = await FrsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluidContainer, IMember, IServiceAudience } from "@fluid-experimental/fluid-framework";
+import {
+    FluidContainer,
+    IMember,
+    IServiceAudience,
+} from "@fluid-experimental/fluid-framework";
+import { TinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
@@ -26,10 +31,20 @@ interface FrsConnectionConfigWithKey extends FrsConnectionConfigBase {
 
 interface FrsConnectionConfigWithTokenProvider extends FrsConnectionConfigBase {
     type: "tokenProvider";
-    tokenProvider: ITokenProvider
+    tokenProvider: ITokenProvider;
 }
 
-export type FrsConnectionConfig = FrsConnectionConfigWithKey | FrsConnectionConfigWithTokenProvider;
+interface FrsConnectionConfigWithLocalMode extends TinyliciousConnectionConfig {
+    type: "localMode";
+}
+
+export type FrsConnectionCoreConfig =
+    | FrsConnectionConfigWithKey
+    | FrsConnectionConfigWithTokenProvider;
+
+export type FrsConnectionConfig =
+    | FrsConnectionCoreConfig
+    | FrsConnectionConfigWithLocalMode;
 
 /**
  * FrsContainerServices is returned by the FrsClient alongside a FluidContainer.
