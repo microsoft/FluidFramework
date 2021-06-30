@@ -15,7 +15,6 @@ import {
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
-	SharedTreeSummaryBase,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
