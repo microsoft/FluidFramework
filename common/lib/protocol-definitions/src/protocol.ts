@@ -257,7 +257,7 @@ export interface ISummaryAck {
 /**
  * Contents of summary nack expected from the server.
  */
-export interface ISummaryNack extends IServerError {
+export interface ISummaryNack extends Partial<IServerError> {
     /**
      * Information about the proposed summary op.
      */
@@ -268,7 +268,7 @@ export interface ISummaryNack extends IServerError {
      * @deprecated - Use "message" instead. Clients should check for errorMessage ?? message.
      * Once all servers & clients are all updated, we can remove that errorMessage property
      */
-    errorMessage?: string;
+    errorMessage: string;
 }
 
 /**

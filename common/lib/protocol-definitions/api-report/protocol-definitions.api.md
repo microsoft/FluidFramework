@@ -472,9 +472,9 @@ export interface ISummaryHandle {
 }
 
 // @public
-export interface ISummaryNack extends IServerError {
+export interface ISummaryNack extends Partial<IServerError> {
     // @deprecated
-    errorMessage?: string;
+    errorMessage: string;
     summaryProposal: ISummaryProposal;
 }
 
