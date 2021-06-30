@@ -207,6 +207,7 @@ export interface ISummaryContent {
 
 /**
  * General errors returned from the server.
+ * May want to add error code or something similar in the future.
  */
 export interface IServerError {
     /**
