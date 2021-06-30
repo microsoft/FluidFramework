@@ -4,8 +4,8 @@
  */
 
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { ErrorString } from './Common';
-import { EditLog } from './EditLog';
+import { fail } from './Common';
+import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
 import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';
 
 /** The summary format version that is read by SharedTree. */
@@ -31,19 +31,20 @@ export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase 
  *
  * @param jsonSummary - The string to deserialize.
  * @param serializer - The serializer required to deserialize handles in the string.
- * @returns A SharedTree summary or an ErrorString if the summary could not be interpreted.
+ * @returns A SharedTree summary.
+ * @throws If the summary could not be interpreted.
  *
  */
-export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase | ErrorString {
+export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
 		summary = serializer.parse(jsonSummary);
 	} catch {
-		return 'Json syntax error in Summary';
+		fail('Json syntax error in Summary');
 	}
 
 	if (typeof summary !== 'object') {
-		return 'Summary is not an object';
+		fail('Summary is not an object');
 	}
 
 	const { version } = summary;
@@ -52,16 +53,14 @@ export function deserialize(jsonSummary: string, serializer: IFluidSerializer): 
 		return { version, ...summary };
 	}
 
-	return 'Missing fields on summary';
+	fail('Missing fields on summary');
 }
 
 /**
- * @returns SharedTreeSummary that can be used to initialize a SharedTree, or an ErrorString if the summary could not be converted.
- *
+ * @returns SharedTreeSummary that can be used to initialize a SharedTree.
+ * @throws If the summary could not be converted.
  */
-export function convertSummaryToReadFormat<TChange>(
-	summary: SharedTreeSummaryBase
-): SharedTreeSummary<TChange> | ErrorString {
+export function convertSummaryToReadFormat<TChange>(summary: SharedTreeSummaryBase): SharedTreeSummary<TChange> {
 	const { version } = summary;
 
 	if (version === readFormatVersion) {
@@ -69,7 +68,7 @@ export function convertSummaryToReadFormat<TChange>(
 
 		if (editHistory !== undefined) {
 			if (typeof editHistory !== 'object') {
-				return 'Edit history is not an object';
+				fail('Edit history is not an object');
 			}
 
 			const { editChunks, editIds } = editHistory;
@@ -101,8 +100,65 @@ export function convertSummaryToReadFormat<TChange>(
 			};
 		}
 	} else {
-		return 'Format version is not supported';
+		fail('Format version is not supported');
 	}
 
-	return 'Missing fields on summary';
+	fail('Missing fields on summary');
+}
+
+/**
+ * General statistics about summaries.
+ */
+export interface SummaryStatistics {
+	/** Format version the summary is written in. */
+	formatVersion: string;
+	/** Number of edits. */
+	historySize: number;
+	/** Number of edit chunks in the history. */
+	totalNumberOfChunks?: number;
+	/** Number of chunks in the summary that have handles stored. */
+	uploadedChunks?: number;
+}
+
+/**
+ * @returns SummaryStatistics.
+ * @throws If statistics could not be obtained from the summary.
+ */
+export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): SummaryStatistics {
+	const { version } = summary;
+
+	if (version === '0.1.0') {
+		const { editHistory } = summary as SharedTreeSummary<TChange>;
+
+		if (editHistory !== undefined) {
+			if (typeof editHistory !== 'object') {
+				fail('Edit history is not an object');
+			}
+
+			const { editChunks, editIds } = editHistory;
+
+			// TODO:#45414: Add more robust validation of the summary's fields. Even if they are present, they may be malformed.
+			if (editChunks !== undefined && editIds !== undefined) {
+				return {
+					formatVersion: version,
+					historySize: editIds.length,
+					totalNumberOfChunks: editChunks.length,
+					uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
+				};
+			}
+
+			fail('Missing fields on edit log summary');
+		}
+	} else if (version === '0.0.2') {
+		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2<TChange>;
+
+		return {
+			formatVersion: version,
+			historySize: sequencedEdits.length,
+		};
+	} else {
+		fail('Format version is not supported');
+	}
+
+	fail('Missing fields on summary');
 }

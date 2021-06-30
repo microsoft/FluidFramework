@@ -580,10 +580,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			const newNode = makeEmptyNode();
 			const testHandle = new TestFluidHandle();
 
-			it('returns false when given bad json input', () => {
-				assert.typeOf(deserialize('', testSerializer), 'string');
-				assert.typeOf(deserialize('~ malformed JSON ~', testSerializer), 'string');
-				assert.typeOf(deserialize('{ unrecognizedKey: 42 }', testSerializer), 'string');
+			it('throws error when given bad json input', () => {
+				assert.throws(() => deserialize('', testSerializer));
+				assert.throws(() => deserialize('~ malformed JSON ~', testSerializer));
+				assert.throws(() => deserialize('{ unrecognizedKey: 42 }', testSerializer));
 			});
 
 			it('correctly handles snapshots of default trees', () => {

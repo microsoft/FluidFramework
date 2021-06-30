@@ -10,7 +10,6 @@ import { TestObjectProvider } from '@fluidframework/test-utils';
 import { assertNotUndefined } from '../../Common';
 import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
-import { deserialize } from '../../SummaryBackCompatibility';
 import {
 	Edit,
 	fullHistorySummarizer,
@@ -18,6 +17,7 @@ import {
 	SharedTreeSummarizer,
 	SharedTreeSummaryBase,
 } from '../../generic';
+import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
 	LocalServerSharedTreeTestingComponents,
@@ -204,9 +204,22 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// with the new summary should all be equal.
 						expect(tree2.equals(expectedTree)).to.be.true;
 					});
+
+					it(`getTelemetryInfoFromSummary works for version ${version}`, () => {
+						const serializedSummary = summaryFileContents[version];
+						const summary = deserialize(serializedSummary, testSerializer);
+						const telemetryInfo = getSummaryStatistics(summary);
+						const expectedTelemetryInfo = {
+							formatVersion: version,
+							historySize: history.length === 0 ? 0 : history.length - 1,
+							totalNumberOfChunks: version === '0.0.2' ? undefined : history.length % 250,
+							uploadedChunks: version === '0.0.2' ? undefined : history.length % 250,
+						} as SummaryStatistics;
+						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
+					});
 				}
 
-				if (summaryType === 'large-history' || history.length > 200) {
+				if (summaryType === 'large-history' || history.length > 250) {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);

@@ -272,10 +272,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // (undocumented)
     protected registerCore(): void;
     // @internal
-    saveSerializedSummary(options?: {
-        serializer?: IFluidSerializer;
-        summarizer?: SharedTreeSummarizer<TChange>;
-    }): string;
+    saveSerializedSummary(summarizer?: SharedTreeSummarizer<TChange>): string;
     // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
