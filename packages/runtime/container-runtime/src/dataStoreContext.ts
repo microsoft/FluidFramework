@@ -394,7 +394,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Create attributes to be added to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
 
         let summarizeResult;
         try {
@@ -408,8 +407,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 error);
         }
         finally {
-            // Add attributes to result
-            addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
             let pathPartsForChildren: string[] | undefined;
 
             if (!this.disableIsolatedChannels) {
@@ -417,6 +414,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 wrapSummaryInChannelsTree(summarizeResult);
                 pathPartsForChildren = [channelsTreeName];
             }
+
+            // Add attributes to result
+            const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
+            addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
             // Add GC details to the summary.
             const gcDetails: IGarbageCollectionSummaryDetails = {
