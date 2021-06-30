@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
+import { bufferToString } from '@fluidframework/common-utils';
 import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
 import {
@@ -12,7 +12,7 @@ import {
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents, SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, fail } from '../Common';
@@ -258,12 +258,13 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 */
 	private async uploadEditChunk(edits: EditWithoutId<TChange>[], startRevision: number): Promise<void> {
 		try {
-			const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
-			this.submitLocalMessage({
-				editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-				startRevision,
-				type: SharedTreeOpType.Handle,
-			});
+			// TODO:#59965: Revert this change when merging back latest release branch into master
+			// const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
+			// this.submitLocalMessage({
+			// 	editHandle: serializeHandles(editHandle, this.serializer, this.handle),
+			// 	startRevision,
+			// 	type: SharedTreeOpType.Handle,
+			// });
 		} catch (error) {
 			// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
 			this.logger.sendErrorEvent(
@@ -381,7 +382,10 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	private createEditLogFromSummary(
 		summary: SharedTreeSummaryBase
-	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
+	): {
+		editLog: EditLog<TChange>;
+		cachingLogViewer: CachingLogViewer<TChange>;
+	} {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary);
