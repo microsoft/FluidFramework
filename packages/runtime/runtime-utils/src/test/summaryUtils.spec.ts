@@ -181,7 +181,8 @@ describe("Summary Utils", () => {
                     "blob-b": IsoBuffer.from("test-blob"),
                 },
                 blobs: {
-                    b: "blob-b",
+                    "b": "blob-b",
+                    "blob-b": IsoBuffer.from("test-blob").toString("base64"),
                 },
                 trees: {
                     t: {
@@ -190,8 +191,10 @@ describe("Summary Utils", () => {
                             "blob-b64": IsoBuffer.from("test-b64"),
                         },
                         blobs: {
-                            bu8: "blob-bu8",
-                            b64: "blob-b64",
+                            "bu8": "blob-bu8",
+                            "blob-bu8": IsoBuffer.from("test-u8").toString("base64"),
+                            "b64": "blob-b64",
+                            "blob-b64": IsoBuffer.from("test-b64").toString("base64"),
                         },
                         trees: {
                             tu: {
