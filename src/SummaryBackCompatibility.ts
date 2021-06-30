@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { fail } from './Common';
 import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
@@ -109,7 +110,7 @@ export function convertSummaryToReadFormat<TChange>(summary: SharedTreeSummaryBa
 /**
  * General statistics about summaries.
  */
-export interface SummaryStatistics {
+export interface SummaryStatistics extends ITelemetryProperties {
 	/** Format version the summary is written in. */
 	readonly formatVersion: string;
 	/** Number of edits. */

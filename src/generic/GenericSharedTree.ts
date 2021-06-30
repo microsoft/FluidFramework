@@ -353,7 +353,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 		try {
 			const summary = this.saveSummary();
-			const summaryTelemetryInfo = getSummaryStatistics(summary);
 
 			const tree: ITree = {
 				entries: [
@@ -369,8 +368,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 				],
 			};
 
-			summaryCreationPerformanceEvent.end({ ...summaryTelemetryInfo });
-
+			summaryCreationPerformanceEvent.end(getSummaryStatistics(summary));
 			return tree;
 		} catch (error) {
 			summaryCreationPerformanceEvent.cancel({ eventName: 'SummaryCreationFailure' }, error);
@@ -473,6 +471,15 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		callback: EditStatusCallback
 	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
+
+		if (summary.version !== convertedSummary.version) {
+			this.logger.sendTelemetryEvent({
+				eventName: 'SummaryConversion',
+				category: 'generic',
+				...getSummaryStatistics(convertedSummary),
+			});
+		}
+
 		const { editHistory, currentTree } = convertedSummary;
 		const currentView = Snapshot.fromTree(currentTree);
 
@@ -545,7 +552,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			const summary = deserialize(blobData, this.serializer);
 			this.loadSummary(summary);
 
-			summaryLoadPerformanceEvent.end({ historySize: this.edits.length });
+			summaryLoadPerformanceEvent.end(getSummaryStatistics(summary));
 		} catch (error) {
 			summaryLoadPerformanceEvent.cancel({ eventName: 'SummaryLoadFailure' }, error);
 			throw error;
