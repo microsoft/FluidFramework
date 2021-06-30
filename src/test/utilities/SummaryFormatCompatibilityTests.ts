@@ -10,12 +10,7 @@ import { TestObjectProvider } from '@fluidframework/test-utils';
 import { assertNotUndefined } from '../../Common';
 import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
-import {
-	Edit,
-	fullHistorySummarizer,
-	fullHistorySummarizer_0_1_0,
-	SharedTreeSummarizer,
-} from '../../generic';
+import { Edit, fullHistorySummarizer, fullHistorySummarizer_0_1_0, SharedTreeSummarizer } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
