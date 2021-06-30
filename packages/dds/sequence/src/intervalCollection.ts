@@ -90,7 +90,21 @@ export class Interval implements ISerializableInterval {
     public compare(b: Interval) {
         const startResult = this.compareStart(b);
         if (startResult === 0) {
-            return this.compareEnd(b);
+            const endResult = this.compareEnd(b);
+            if (endResult === 0) {
+                const thisId = this.getIntervalId();
+                if (thisId) {
+                    const bId = b.getIntervalId();
+                    if (bId) {
+                        return thisId > bId ? 1 : thisId < bId ? -1 : 0;
+                    }
+                    return 0;
+                }
+                return 0;
+            }
+            else {
+                return endResult;
+            }
         } else {
             return startResult;
         }
@@ -160,7 +174,21 @@ export class SequenceInterval implements ISerializableInterval {
     public compare(b: SequenceInterval) {
         const startResult = this.compareStart(b);
         if (startResult === 0) {
-            return this.compareEnd(b);
+            const endResult = this.compareEnd(b);
+            if (endResult === 0) {
+                const thisId = this.getIntervalId();
+                if (thisId) {
+                    const bId = b.getIntervalId();
+                    if (bId) {
+                        return thisId > bId ? 1 : thisId < bId ? -1 : 0;
+                    }
+                    return 0;
+                }
+                return 0;
+            }
+            else {
+                return endResult;
+            }
         } else {
             return startResult;
         }
@@ -483,7 +511,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return this.helpers.create(this.label, start, end, this.client, intervalType);
     }
 
-    // TODO: remove interval, handle duplicate intervals
     public addInterval(
         start: number,
         end: number,
@@ -727,7 +754,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     private client: MergeTree.Client;
 
     public get attached(): boolean {
-        // return !!this.view;
         return !!this.localCollection;
     }
 
@@ -849,10 +875,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     }
 
     public attachDeserializer(onDeserialize: DeserializeCallback): void {
-        this.attachDeserializerCore(onDeserialize);
-    }
-
-    private attachDeserializerCore(onDeserialize?: DeserializeCallback): void {
         // If no deserializer is specified can skip all processing work
         if (!onDeserialize) {
             return;
@@ -978,18 +1000,34 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 
     public map(fn: (interval: TInterval) => void) {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+
         this.localCollection.map(fn);
     }
 
     public previousInterval(pos: number): TInterval {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+
         return this.localCollection.previousInterval(pos);
     }
 
     public nextInterval(pos: number): TInterval {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+
         return this.localCollection.nextInterval(pos);
     }
 
