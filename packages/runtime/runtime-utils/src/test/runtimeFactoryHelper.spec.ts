@@ -21,13 +21,13 @@ class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
 
 describe("RuntimeFactoryHelper", () => {
     const sandbox: Sinon.SinonSandbox = Sinon.createSandbox();
-    const context = (sandbox.stub() as unknown) as IContainerContext;
-    const runtime = (sandbox.mock() as unknown) as IRuntime;
+    const context: Partial<IContainerContext> = {};
+    const runtime: Partial<IRuntime> = {};
     let helper: TestRuntimeFactoryHelper;
     let unit: Sinon.SinonMock;
 
     beforeEach(() => {
-        helper = new TestRuntimeFactoryHelper(runtime);
+        helper = new TestRuntimeFactoryHelper(runtime as IRuntime);
         unit = sandbox.mock(helper);
         unit.expects("preInitialize").once();
         unit.expects("hasInitialized").once();
@@ -40,7 +40,7 @@ describe("RuntimeFactoryHelper", () => {
     it("Instantiate from existing when existing flag is `true`", async () => {
         unit.expects("instantiateFirstTime").never();
         unit.expects("instantiateFromExisting").once();
-        await helper.instantiateRuntime(context, /* existing */ true);
+        await helper.instantiateRuntime(context as IContainerContext, /* existing */ true);
 
         unit.verify();
     });
@@ -48,7 +48,7 @@ describe("RuntimeFactoryHelper", () => {
     it("Instantiate from existing when existing flag is `false`", async () => {
         unit.expects("instantiateFirstTime").once();
         unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context, /* existing */ false);
+        await helper.instantiateRuntime(context as IContainerContext, /* existing */ false);
 
         unit.verify();
     });
@@ -56,7 +56,25 @@ describe("RuntimeFactoryHelper", () => {
     it("Instantiate from existing when existing flag is unset", async () => {
         unit.expects("instantiateFirstTime").once();
         unit.expects("instantiateFromExisting").never();
-        await helper.instantiateRuntime(context);
+        await helper.instantiateRuntime(context as IContainerContext);
+
+        unit.verify();
+    });
+
+    it("Instantiate from existing when existing flag is unset and context is existing", async () => {
+        const existingContext: Partial<IContainerContext> = { existing: true };
+        unit.expects("instantiateFirstTime").never();
+        unit.expects("instantiateFromExisting").once();
+        await helper.instantiateRuntime(existingContext as IContainerContext);
+
+        unit.verify();
+    });
+
+    it("Instantiate frome xisting when existing flag takes precedence over context", async () => {
+        const existingContext: Partial<IContainerContext> = { existing: false };
+        unit.expects("instantiateFirstTime").never();
+        unit.expects("instantiateFromExisting").once();
+        await helper.instantiateRuntime(existingContext as IContainerContext, /* existing */ true);
 
         unit.verify();
     });
