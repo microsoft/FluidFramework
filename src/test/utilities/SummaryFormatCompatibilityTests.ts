@@ -153,7 +153,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								await testObjectProvider.ensureSynchronized();
 	
 								// Write a new summary with the specified version
-								const newSummary = expectedTree.saveSerializedSummary({ summarizer });
+								const newSummary = expectedTree.saveSerializedSummary(summarizer);
 	
 								// Check the newly written summary is equivalent to its corresponding test summary file
 								// Re-stringify the the JSON file to remove escaped characters
@@ -211,10 +211,12 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const telemetryInfo = getSummaryStatistics(summary);
 						const expectedTelemetryInfo = {
 							formatVersion: version,
-							historySize: history.length === 0 ? 0 : history.length - 1,
-							totalNumberOfChunks: version === '0.0.2' ? undefined : history.length % 250,
-							uploadedChunks: version === '0.0.2' ? undefined : history.length % 250,
+							historySize: history.length
 						} as SummaryStatistics;
+						if (version !== '0.0.2') {
+							expectedTelemetryInfo.totalNumberOfChunks = Math.floor((history.length + 249) / 250);
+							expectedTelemetryInfo.uploadedChunks = Math.floor(history.length / 250);
+						}
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
 				}
@@ -232,7 +234,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						await testObjectProvider.ensureSynchronized();
 		
 						// Write a new summary with the 0.0.2 summarizer
-						const newSummary = expectedTree.saveSerializedSummary({ summarizer: fullHistorySummarizer });
+						const newSummary = expectedTree.saveSerializedSummary(fullHistorySummarizer);
 		
 						// Check the newly written summary is equivalent to the loaded summary
 						// Re-stringify the the JSON file to remove escaped characters
