@@ -144,8 +144,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		};
 
 		for (const [summaryType, versions] of summaryTypes.entries()) {
-			describe(`summary type ${summaryType}`, () => {
-				it(`files of type '${summaryType}' with different format versions produce identical trees`, () => {
+			describe(`document ${summaryType}`, () => {
+				it(`summaries with different format versions produce identical trees`, () => {
 					// Load the first summary file
 					const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[0]}`), 'utf8');
 					const summary = deserialize(serializedSummary, testSerializer);
@@ -173,7 +173,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const summarizerEntry = supportedSummarizers.find(entry => entry.version === writeVersion);
 						if (summarizerEntry !== undefined) {
 							const summarizer = summarizerEntry.summarizer;
-							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion} for ${summaryType} summary type`, async () => {
+							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion}`, async () => {
 								// Load the first summary file (the one with the oldest version)
 								const serializedSummary = fs.readFileSync(
 									summaryFilePath(`${summaryType}-${readVersion}`),
