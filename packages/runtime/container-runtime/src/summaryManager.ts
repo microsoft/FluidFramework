@@ -23,7 +23,8 @@ import { ISequencedClient, MessageType } from "@fluidframework/protocol-definiti
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
-import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
+import { ITrackedClient, OrderedClientElection, summarizerClientType } from "./orderedClientElection";
+import { Throttler } from "./throttler";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;

@@ -179,7 +179,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check blobs contents for protocolAttributes
             const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-            assert(blobs[protocolAttributesBlobId] !== undefined, "Blobs should contain attributes blob");
+            assert(blobs.get(protocolAttributesBlobId) !== undefined, "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");

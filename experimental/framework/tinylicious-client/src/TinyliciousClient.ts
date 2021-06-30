@@ -9,7 +9,7 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "@fluid-experimental/fluid-static";
+} from "@fluid-experimental/fluid-framework";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
@@ -25,13 +25,14 @@ import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
+    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClientInstance provides the ability to have a Fluid object backed by a Tinylicious service
+ * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
  */
-export class TinyliciousClientInstance {
+export class TinyliciousClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
@@ -49,7 +50,7 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -64,7 +65,7 @@ export class TinyliciousClientInstance {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -78,11 +79,12 @@ export class TinyliciousClientInstance {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
+    ): Promise<TinyliciousResources>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
+        const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
+        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
+        return tinyliciousResources;
     }
 
     private getContainerServices(
@@ -129,57 +131,5 @@ export class TinyliciousClientInstance {
             }
         }
         return container;
-    }
-}
-
-/**
- * TinyliciousClient static class with singular global instance that lets the developer define
- * all Container interactions with the Tinylicious service
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TinyliciousClient {
-    protected static globalInstance: TinyliciousClientInstance | undefined;
-
-    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
-        if (TinyliciousClient.globalInstance) {
-            console.log(
-                `TinyliciousClient has already been initialized. Using existing instance of
-                TinyliciousClient instead.`,
-            );
-            return;
-        }
-        TinyliciousClient.globalInstance = new TinyliciousClientInstance(
-            serviceConnectionConfig,
-        );
-    }
-
-    static async createContainer(
-        serviceConfig: TinyliciousContainerConfig,
-        objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
-        if (!TinyliciousClient.globalInstance) {
-            throw new Error(
-                "TinyliciousClient has not been properly initialized before attempting to create a container",
-            );
-        }
-        return TinyliciousClient.globalInstance.createContainer(
-            serviceConfig,
-            objectConfig,
-        );
-    }
-
-    static async getContainer(
-        serviceConfig: TinyliciousContainerConfig,
-        objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
-        if (!TinyliciousClient.globalInstance) {
-            throw new Error(
-                "TinyliciousClient has not been properly initialized before attempting to get a container",
-            );
-        }
-        return TinyliciousClient.globalInstance.getContainer(
-            serviceConfig,
-            objectConfig,
-        );
     }
 }
