@@ -7,13 +7,13 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { comparePayloads } from '../Common';
+import { comparePayloads, noop } from '../Common';
 import { Payload } from '../generic';
 
 describe('SnapshotUtilities', () => {
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
-		const binder: IFluidHandle = { bind: () => void {} } as unknown as IFluidHandle;
+		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,
@@ -172,15 +172,12 @@ describe('SnapshotUtilities', () => {
 		});
 
 		it('compares handles', () => {
+			// This is used instead of MockHandle so equal handles compare deeply equal.
 			function makeMockHandle(data: string): IFluidHandle {
-				const handleObject = { absolutePath: data, IFluidHandle: undefined as unknown };
+				// `/` prefix is needed to prevent serializing from modifying handle.
+				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
 				handleObject.IFluidHandle = handleObject;
-				const handle = handleObject as IFluidHandle;
-				// Handle gets modified by serializing. This is probably because handle is malformed.
-				// To avoid this being an issue, round trip it.
-				const serialized = serializer.stringify(handle, binder);
-				const finalHandle: IFluidHandle = serializer.parse(serialized);
-				return finalHandle;
+				return handleObject as IFluidHandle;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.
