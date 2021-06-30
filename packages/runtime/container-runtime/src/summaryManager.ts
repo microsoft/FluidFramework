@@ -93,7 +93,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        clientElection.on("shouldSummarizeStateChanged", () => this.refreshSummarizer());
+        clientElection.on("electedSummarizerChanged", () => this.refreshSummarizer());
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
