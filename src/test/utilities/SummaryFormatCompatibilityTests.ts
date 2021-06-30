@@ -198,14 +198,17 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const serializedSummary = summaryFileContents[version];
 						const summary = deserialize(serializedSummary, testSerializer);
 						const telemetryInfo = getSummaryStatistics(summary);
-						const expectedTelemetryInfo: SummaryStatistics = {
+						const expectedTelemetryInfo: SummaryStatistics = version === '0.0.2'
+						? {
 							formatVersion: version,
 							historySize: history.length,
-						};
-						if (version !== '0.0.2') {
-							expectedTelemetryInfo.totalNumberOfChunks = Math.floor((history.length + 249) / 250);
-							expectedTelemetryInfo.uploadedChunks = Math.floor(history.length / 250);
 						}
+						: {
+							formatVersion: version,
+							historySize: history.length,
+							totalNumberOfChunks = Math.floor((history.length + 249) / 250),
+							uploadedChunks = Math.floor(history.length / 250)
+						};
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
 				}
