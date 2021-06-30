@@ -8,7 +8,7 @@ import { createResponseError } from "../dataStoreHelpers";
 
 describe("createResponseError", () => {
     it("Strip URL query param ", () => {
-        const response = createResponseError(400, "", { url: "http://foo.com?a=b"});
-        assert.strictEqual(response.value, "http://foo.com");
+        const response = createResponseError(400, "SomeValue", { url: "http://foo.com?a=b"});
+        assert.strictEqual(response.value, "SomeValue: http://foo.com");
     });
 });
