@@ -60,10 +60,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             return value !== null && !Array.isArray(value) && typeof value === "object";
         };
 
-        const removeMessageFromStack = (stack: string, errorName: string) => {
+        const removeMessageFromStack = (stack: string, errorName?: string) => {
             const stackFrames = stack.split("\n");
-            stackFrames.shift(); // Remove "ErrorName: ErrorMessage"
-            stackFrames.unshift(errorName); // Add "ErrorName"
+            stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+            if (errorName !== undefined) {
+                stackFrames.unshift(errorName); // Add "[ErrorName]"
+            }
             return stackFrames.join("\n");
         };
 
@@ -83,7 +85,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             }
 
             if (typeof stack === "string") {
-                safeProps.stack = removeMessageFromStack(stack, name);
+                const errorName = (typeof name === "string") ? name : undefined;
+                safeProps.stack = removeMessageFromStack(stack, errorName);
             }
         }
 
@@ -101,8 +104,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         const { message, errorType, stack} = this.extractLogSafeErrorProperties(error);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
-        event.stack = { tag: TelemetryDataTag.PackageData, value: stack };
-        event.error = message;
+        event.stack = stack;
+        event.error = message; // Note that the error message goes on the 'error' field
         event.errorType = errorType;
 
         if (isILoggingError(error)) {
