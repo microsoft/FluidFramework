@@ -14,8 +14,8 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
 import { IOrderedClientElection } from "./orderedClientElection";
-import { Throttler } from "./throttler";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { Throttler } from "./throttler";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
