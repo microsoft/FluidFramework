@@ -26,7 +26,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -766,14 +766,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: Readonly<string[]>,
+        pkg: Readonly<string[]> | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        protected readonly isRootDataStore: boolean,
+        protected isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -845,24 +845,35 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined,
-            0x153 /* "isRootDataStore should be available in local data store" */);
-
         let snapshot = this.snapshotTree;
+        let attributes;
         if (snapshot !== undefined) {
-            // Note: storage can be undefined in special case while detached.
-            const attributes = this.storage !== undefined
-                ? await readAndParse<ReadFluidDataStoreAttributes>(
-                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
-                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
-
+            // Need to rip through snapshot.
+            attributes = await readAndParse<ReadFluidDataStoreAttributes>(
+                this.storage,
+                snapshot.blobs[dataStoreAttributesBlobName]);
+            // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+            // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
+            // However the feature of loading a detached container from snapshot, is added when the
+            // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
+            const formatVersion = getAttributesFormatVersion(attributes);
+            assert(formatVersion > 0,
+                0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
                 assert(snapshot !== undefined, "isolated channels subtree should exist in local datastore snapshot");
             }
+            if (this.pkg === undefined) {
+                this.pkg = JSON.parse(attributes.pkg) as string[];
+                // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                // roots in the document but they won't break.
+                this.isRootDataStore = attributes.isRootDataStore ?? true;
+            }
         }
+        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
+        assert(this.isRootDataStore !== undefined,
+            0x153 /* "isRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
@@ -886,14 +897,14 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
     constructor(
         id: string,
-        pkg: string[],
+        pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean,
+        isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */

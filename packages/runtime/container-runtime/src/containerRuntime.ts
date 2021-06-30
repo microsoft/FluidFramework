@@ -49,7 +49,6 @@ import {
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
-    readAndParseFromBlobs,
     BlobAggregationStorage,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -594,13 +593,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
             if (context.baseSnapshot && blobId) {
-                if (context.attachState === AttachState.Attached) {
-                    // IContainerContext storage api return type still has undefined in 0.39 package version.
-                    // So once we release 0.40 container-defn package we can remove this check.
-                    assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
-                    return readAndParse<T>(storage, blobId);
-                }
-                return readAndParseFromBlobs<T>(context.baseSnapshot.blobs, blobId);
+                assert(storage !== undefined, 0x1f5 /* "Should always have storage" */);
+                return readAndParse<T>(storage, blobId);
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];

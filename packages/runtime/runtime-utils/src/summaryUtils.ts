@@ -5,6 +5,7 @@
 
 import {
     assert,
+    bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
@@ -251,24 +252,40 @@ export function convertToSummaryTree(
     }
 }
 
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    blobsContents: {[path: string]: ArrayBufferLike},
+    trees: {[path: string]: ISnapshotTreeWithBlobContents},
+}
+
 /**
  * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
  * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
  */
 export function convertSnapshotTreeToSummaryTree(
-    snapshot: ISnapshotTree,
+    snapshot: ISnapshotTree | ISnapshotTreeWithBlobContents,
 ): ISummaryTreeWithStats {
     assert(Object.keys(snapshot.commits).length === 0,
         0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
-    for (const [key, value] of Object.entries(snapshot.blobs)) {
-        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
-        // and we want to push blobPath to blobValue in tree entries.
-        if (snapshot.blobs[value] !== undefined) {
-            const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
-            builder.addBlob(key, decoded);
+    if ((snapshot as any).blobsContents !== undefined) {
+        for (const [path, id] of Object.entries(snapshot.blobs)) {
+            // 0.42 back-compat We still put contents in same blob for back-compat so need to add blob
+            // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
+            if (snapshot.blobs[id] !== undefined) {
+                const decoded = bufferToString((snapshot as any).blobsContents[id], "utf8");
+                builder.addBlob(path, decoded);
+            }
+        }
+    } else {
+        for (const [key, value] of Object.entries(snapshot.blobs)) {
+            // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
+            // and we want to push blobPath to blobValue in tree entries.
+            if (snapshot.blobs[value] !== undefined) {
+                const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
+                builder.addBlob(key, decoded);
+            }
         }
     }
 

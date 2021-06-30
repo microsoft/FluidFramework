@@ -18,16 +18,27 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader";
+import { ISnapshotTreeWithBlobContents } from "./utils";
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService {
-    constructor(
-        private readonly storageGetter: () => IDocumentStorageService,
-        private readonly blobs: Map<string, ArrayBufferLike>,
-    ) {
+    private readonly blobContents: {[id: string]: ArrayBufferLike} = {};
+    constructor(private readonly storageGetter: () => IDocumentStorageService) {}
+
+    public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
+        this.getBlobContents(snapshotTree);
+    }
+
+    private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
+        for(const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+            this.blobContents[id] = value;
+        }
+        for(const [_, tree] of Object.entries(snapshotTree.trees)) {
+            this.getBlobContents(tree);
+        }
     }
 
     public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -48,7 +59,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        const blob = this.blobs.get(id);
+        const blob = this.blobContents[id];
         if (blob !== undefined) {
             return blob;
         }
