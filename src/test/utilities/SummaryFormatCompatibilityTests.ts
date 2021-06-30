@@ -170,9 +170,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				for (const [index, readVersion] of sortedVersions.entries()) {
 					// A client that has loaded an older version of a summary should be able to write newer versions
 					for (const writeVersion of sortedVersions.slice(index)) {
-						const summarizerObj = supportedSummarizers.find(s => s.version === writeVersion);
-						if (summarizerObj !== undefined) {
-							const summarizer = summarizerObj.summarizer;
+						const summarizerEntry = supportedSummarizers.find(entry => entry.version === writeVersion);
+						if (summarizerEntry !== undefined) {
+							const summarizer = summarizerEntry.summarizer;
 							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion} for ${summaryType} summary type`, async () => {
 								// Load the first summary file (the one with the oldest version)
 								const serializedSummary = fs.readFileSync(
@@ -209,30 +209,24 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				numEditsInType.set('small-history', 11);
 				numEditsInType.set('large-history', 251);
 
-				it(`version 0.0.2 can be read and written`, async () => {
-					createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
-						expectedTree.processLocalEdit(edit);
-					});
+				for (const [_index, version] of sortedVersions.entries()) {
+					it(`version ${version} can be read and written`, async () => {
+						createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+							expectedTree.processLocalEdit(edit);
+						});
+	
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
 
-					// Wait for the ops to to be submitted and processed across the containers.
-					await testObjectProvider.ensureSynchronized();
-	
-					validateSummaryRead(`${summaryType}-0.0.2`);
-					validateSummaryWrite(fullHistorySummarizer);
-				});
-				
-				it(`version 0.1.0 can be read and written`, async () => {
-					// Process an arbitrarily large number of stable edits
-					createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
-						expectedTree.processLocalEdit(edit);
+						const summarizerEntry = supportedSummarizers.find(entry => entry.version === version);
+						const summarizer = assertNotUndefined(summarizerEntry).summarizer;
+
+						validateSummaryRead(`${summaryType}-${version}`);
+						validateSummaryWrite(summarizer);
 					});
 	
-					// Wait for the ops to to be submitted and processed across the containers.
-					await testObjectProvider.ensureSynchronized();
-	
-					validateSummaryRead(`${summaryType}-0.1.0`);
-					validateSummaryWrite(fullHistorySummarizer_0_1_0);
-				});
+
+				}
 
 				if (summaryType === 'large-history') {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
