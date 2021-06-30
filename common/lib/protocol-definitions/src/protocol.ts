@@ -210,23 +210,9 @@ export interface ISummaryContent {
  */
 export interface IServerError {
     /**
-     * An error code number that represents the error. It will be a valid HTTP error code.
-     * 403 errors are non retryable.
-     * 400 errors are always immediately retriable.
-     * 429 errors are retriable or non retriable (depends on type field).
+     * Message describing the server error.
      */
-    code: number;
-
-    /**
-     * A message about the error for debugging/logging/telemetry purposes
-     */
-    message: string;
-
-    /**
-     * Optional Retry-After time in seconds.
-     * If specified, the client should wait this many seconds before retrying.8
-     */
-    retryAfter?: number;
+    errorMessage: string;
 }
 
 /**
@@ -257,7 +243,7 @@ export interface ISummaryAck {
 /**
  * Contents of summary nack expected from the server.
  */
-export interface ISummaryNack extends Partial<IServerError> {
+export interface ISummaryNack {
     /**
      * Information about the proposed summary op.
      */
@@ -265,10 +251,29 @@ export interface ISummaryNack extends Partial<IServerError> {
 
     /**
      * Message describing the error.
-     * @deprecated - Use "message" instead. Clients should check for errorMessage ?? message.
+     * @deprecated - Use "message" instead. Clients should check for message ?? errorMessage.
      * Once all servers & clients are all updated, we can remove that errorMessage property
      */
     errorMessage: string;
+
+    /**
+     * An error code number that represents the error. It will be a valid HTTP error code.
+     * 403 errors are non retryable.
+     * 400 errors are always immediately retriable.
+     * 429 errors are retriable or non retriable (depends on type field).
+     */
+    code: number;
+
+    /**
+     * A message about the error for debugging/logging/telemetry purposes
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds.
+     * If specified, the client should wait this many seconds before retrying.8
+     */
+    retryAfter?: number;
 }
 
 /**
@@ -299,11 +304,30 @@ export interface IQueueMessage {
 /**
  * Interface for nack content.
  */
-export interface INackContent extends IServerError {
+export interface INackContent {
+    /**
+     * An error code number that represents the error. It will be a valid HTTP error code.
+     * 403 errors are non retryable and client should acquire a new identity before reconnection.
+     * 400 errors are always immediately retriable
+     * 429 errors are retriable or non retriable (depends on type field).
+     */
+    code: number;
+
     /**
      * Type of the Nack.
      */
     type: NackErrorType;
+
+    /**
+     * A message about the nack for debugging/logging/telemetry purposes
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds
+     * If specified, the client should wait this many seconds before retrying
+     */
+    retryAfter?: number;
 }
 
 /**
