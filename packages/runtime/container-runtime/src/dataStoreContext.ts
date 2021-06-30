@@ -392,40 +392,53 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         await this.realize();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState);
-        let pathPartsForChildren: string[] | undefined;
-
-        if (!this.disableIsolatedChannels) {
-            // Wrap dds summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-            pathPartsForChildren = [channelsTreeName];
-        }
-
-        // Add data store's attributes to the summary.
+        // Create attributes to be added to the summary.
         const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
         const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
-        addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-        // Add GC details to the summary.
-        const gcDetails: IGarbageCollectionSummaryDetails = {
-            usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
-        };
-        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
-
-        // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
-        // size in the summary stats with the blobs size of this data store.
-        if (!this.summarizerNode.isReferenced()) {
-            summarizeResult.summary.unreferenced = true;
-            summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
+        let summarizeResult;
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            summarizeResult = await this.channel!.summarize(fullTree, trackState);
         }
+        catch (error) {
+            // Log helpful information (currently the package path) if there is a summary failure.
+            this.logger.sendErrorEvent(
+                { eventName: "failToSummarize", fluidDataStoreId: this.id, packagePath: JSON.stringify(pkg) },
+                error);
+        }
+        finally {
+            // Add attributes to result
+            addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+            let pathPartsForChildren: string[] | undefined;
 
-        return {
-            ...summarizeResult,
-            id: this.id,
-            pathPartsForChildren,
-        };
+            if (!this.disableIsolatedChannels) {
+                // Wrap dds summaries in .channels subtree.
+                wrapSummaryInChannelsTree(summarizeResult);
+                pathPartsForChildren = [channelsTreeName];
+            }
+
+            // Add GC details to the summary.
+            const gcDetails: IGarbageCollectionSummaryDetails = {
+                usedRoutes: this.summarizerNode.usedRoutes,
+                gcData: summarizeResult.gcData,
+            };
+            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+
+            // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+            // size in the summary stats with the blobs size of this data store.
+            if (!this.summarizerNode.isReferenced()) {
+                summarizeResult.summary.unreferenced = true;
+                summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, no-unsafe-finally
+            return {
+                ...summarizeResult,
+                id: this.id,
+                pathPartsForChildren,
+            };
+        }
     }
 
     /**
