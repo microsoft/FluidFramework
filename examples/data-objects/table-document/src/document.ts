@@ -70,7 +70,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
 
     public async getRange(label: string) {
         const intervals = this.matrix.getIntervalCollection(label);
-        const interval = (await intervals.getView()).nextInterval(0);
+        const interval = intervals.nextInterval(0);
         return new CellRange(interval, this.localRefToRowCol);
     }
 
