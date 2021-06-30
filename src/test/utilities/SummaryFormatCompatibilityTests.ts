@@ -157,7 +157,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 	
 								// Check the newly written summary is equivalent to its corresponding test summary file
 								// Re-stringify the the JSON file to remove escaped characters
-								const expectedSummary = summaryFileContents[writeVersion];
+								const expectedSummary = JSON.stringify(JSON.parse(summaryFileContents[writeVersion]));
 	
 								expect(newSummary).to.equal(expectedSummary);
 							});
@@ -206,7 +206,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 				}
 
-				if (summaryType === 'large-history') {
+				if (summaryType === 'large-history' || history.length > 200) {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
