@@ -115,8 +115,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					// Load the first summary file
 					const serializedSummary = summaryFileContents[versions[0]];
 					const summary = deserialize(serializedSummary, testSerializer);
-					assert.typeOf(summary, 'object');
-					expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+					expectedTree.loadSummary(summary);
 
 					// Check every other summary file results in the same loaded tree
 					for (let i = 1; i < versions.length; i++) {
@@ -124,8 +123,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 						const serializedSummary = summaryFileContents[versions[i]];
 						const summary = deserialize(serializedSummary, testSerializer);
-						assert.typeOf(summary, 'object');
-						tree.loadSummary(summary as SharedTreeSummaryBase);
+						tree.loadSummary(summary);
 
 						expect(tree.equals(expectedTree)).to.be.true;
 					}
@@ -143,11 +141,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Load the first summary file (the one with the oldest version)
 								const serializedSummary = summaryFileContents[readVersion];
 								const summary = deserialize(serializedSummary, testSerializer);
-								assert.typeOf(summary, 'object');
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+								expectedTree.loadSummary(summary);
 
 								await testObjectProvider.ensureSynchronized();
 
@@ -177,8 +174,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const summary = deserialize(serializedSummary, testSerializer);
 
 						const { tree } = setUpTestSharedTree();
-						assert.typeOf(summary, 'object');
-						tree.loadSummary(summary as SharedTreeSummaryBase);
+						tree.loadSummary(summary);
 
 						expect(tree.equals(expectedTree)).to.be.true;
 					});
@@ -224,11 +220,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
-						assert.typeOf(summary, 'object');
 
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
-						expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+						expectedTree.loadSummary(summary);
 
 						await testObjectProvider.ensureSynchronized();
 
