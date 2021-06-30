@@ -1,9 +1,14 @@
 ## 0.43 Breaking changes
 
 - [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
+- [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
+
+### Routerlicious Driver DeltaStorageService constructor changed
+
+`DeltaStorageService` from `@fluidframework/routerlicious-driver` now takes a `RestWrapper` as the second constructor parameter, rather than a TokenProvider.
 
 ## 0.42 Breaking changes
 
