@@ -28,7 +28,7 @@ describe("extractLogSafeErrorProperties", () => {
             assert.strictEqual(extractLogSafeErrorProperties({ message: "hello"}).message, "hello");
             assert.strictEqual(extractLogSafeErrorProperties({ message: 42}).message, "[object Object]");
             assert.strictEqual(extractLogSafeErrorProperties({ foo: 42}).message, "[object Object]");
-            assert.strictEqual(extractLogSafeErrorProperties([1,2,3]).message, "[object Object]");
+            assert.strictEqual(extractLogSafeErrorProperties([1,2,3]).message, "1,2,3");
             assert.strictEqual(extractLogSafeErrorProperties(null).message, "null");
         });
         it("extract errorType", () => {
