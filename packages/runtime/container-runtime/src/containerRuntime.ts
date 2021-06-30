@@ -959,12 +959,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.summaryCollection,
-            summarizerClientElection,
+            new SummarizerClientElection(
+                this.logger,
+                this.summaryCollection,
+                summarizerClientElection,
+                maxOpsSinceLastSummary,
+            ),
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            maxOpsSinceLastSummary,
-            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
+            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+        );
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

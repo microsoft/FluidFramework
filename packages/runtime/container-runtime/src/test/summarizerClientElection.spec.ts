@@ -52,8 +52,8 @@ describe("Summarizer Client Election", () => {
                 SummarizerClientElection.isClientEligible,
             ),
             maxOps,
-            () => refreshSummarizerCallCount++,
         );
+        election.on("shouldSummarizeStateChanged", () => refreshSummarizerCallCount++);
     }
     function defaultOp(opCount = 1) {
         currentSequenceNumber += opCount;
@@ -232,7 +232,7 @@ describe("Summarizer Client Election", () => {
             assertState("b", 8, "elected client leaving should reelect next oldest client");
         });
 
-        it("Should reelect when client not summarizing", () => {
+        it("Should not yet reelect when client not summarizing", () => {
             createElection([
                 ["s1", 1, false],
                 ["a", 2, true],
@@ -247,11 +247,11 @@ describe("Summarizer Client Election", () => {
 
             // Should elect next client at this point
             defaultOp();
-            assertState("b", maxOps + 8, "should reelect > max ops");
+            assertState("a", maxOps + 8, "should not yet reelect > max ops");
 
             // Next election should be undefined, which resets to first client
             defaultOp(maxOps);
-            assertState("b", maxOps + 8, "should not reelect <= max ops since baseline");
+            assertState("a", maxOps + 8, "should not reelect <= max ops since baseline");
             defaultOp();
             assertState("a", 2 * maxOps + 9, "should reelect back to oldest client");
         });
@@ -279,7 +279,7 @@ describe("Summarizer Client Election", () => {
 
             // Should elect next client at this point
             defaultOp();
-            assertState("b", 2 * maxOps + 9, "should reelect > max ops since summary ack");
+            assertState("a", 2 * maxOps + 9, "should not yet reelect > max ops since summary ack");
         });
     });
 });

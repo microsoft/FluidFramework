@@ -3,19 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { IOrderedClientElection, ISerializedElection, ITrackedClient } from "./orderedClientElection";
 import { ISummaryCollectionOpEvents } from "./summaryCollection";
 
 export const summarizerClientType = "summarizer";
 
+export interface ISummarizerClientElectionEvents extends IEvent {
+    (event: "electedSummarizerChanged", handler: () => void): void;
+}
+
 /**
  * This class encapsulates logic around tracking the elected summarizer client.
  * It will handle updated the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
- export class SummarizerClientElection {
+ export class SummarizerClientElection extends TypedEventEmitter<ISummarizerClientElectionEvents> {
     /**
      * Used to calculate number of ops since last summary ack for the current elected client.
      * This will be undefined if there is no elected summarizer, or no summary ack has been
@@ -33,8 +38,8 @@ export const summarizerClientType = "summarizer";
         private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
         public readonly clientElection: IOrderedClientElection,
         private readonly maxOpsSinceLastSummary: number,
-        private readonly refreshSummarizer: () => void,
     ) {
+        super();
         // On every inbound op, if enough ops pass without seeing a summary ack (per elected client),
         // elect a new client and log to telemetry.
         this.summaryCollection.on("default", ({ sequenceNumber }) => {
@@ -56,7 +61,6 @@ export const summarizerClientType = "summarizer";
                 this.logger.sendErrorEvent({
                     eventName: "ElectedClientNotSummarizing",
                     electedClientId,
-                    sequenceNumber,
                     lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                     electionSequenceNumber,
                     nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
@@ -98,7 +102,7 @@ export const summarizerClientType = "summarizer";
                 return;
             }
             // Election can trigger a change in SummaryManager state.
-            this.refreshSummarizer();
+            this.emit("electedSummarizerChanged");
         });
     }
 
