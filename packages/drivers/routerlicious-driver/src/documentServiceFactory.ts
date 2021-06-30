@@ -28,6 +28,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
     maxConcurrentStorageRequests: 100,
     maxConcurrentOrdererRequests: 100,
+    aggregateBlobsSmallerThanBytes: 2048,
 };
 
 /**
