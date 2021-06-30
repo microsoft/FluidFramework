@@ -262,12 +262,12 @@ export interface ISummaryNack {
      * 400 errors are always immediately retriable.
      * 429 errors are retriable or non retriable (depends on type field).
      */
-    code: number;
+    code?: number;
 
     /**
      * A message about the error for debugging/logging/telemetry purposes
      */
-    message: string;
+    message?: string;
 
     /**
      * Optional Retry-After time in seconds.
