@@ -27,9 +27,10 @@ export class RevisionValueCache<TValue> {
 	private readonly sortedEntries = new BTree<Revision, TValue>(undefined, compareFiniteNumbers);
 
 	/**
-	 * Least recently used cache of evictable entries.
+	 * Cache of most recently used evictable entries.
 	 * Subset of 'sortedValues` eligible for eviction:
 	 * All entries are also in `sortedValues`, and are removed from `sortedValues` when evicted from this cache.
+	 * Evicts least recently used entries.
 	 */
 	private readonly evictableRevisions: LRU<Revision, TValue>;
 
