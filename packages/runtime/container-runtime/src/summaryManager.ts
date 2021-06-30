@@ -23,7 +23,6 @@ import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
-import { OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
 
@@ -53,7 +52,6 @@ type ShouldSummarizeState =
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    public readonly clientElection: SummarizerClientElection;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private electedClientId?: string;
@@ -81,7 +79,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     constructor(
         private readonly context: IContainerContext,
         summaryCollection: SummaryCollection,
-        clientElection: OrderedClientElection,
+        private readonly clientElection: SummarizerClientElection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
         maxOpsSinceLastSummary: number,
@@ -108,13 +106,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        this.clientElection = new SummarizerClientElection(
-            this.logger,
-            summaryCollection,
-            clientElection,
-            maxOpsSinceLastSummary,
-            () => this.refreshSummarizer(),
-        );
+        clientElection.on("shouldSummarizeStateChanged", () => this.refreshSummarizer());
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();

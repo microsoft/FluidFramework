@@ -45,8 +45,8 @@ describe("Summarizer Client Election", () => {
             summaryCollectionEmitter,
             new OrderedClientElection(testQuorum),
             maxOps,
-            () => refreshSummarizerCallCount++,
         );
+        election.on("shouldSummarizeStateChanged", () => refreshSummarizerCallCount++);
     }
     function defaultOp(opCount = 1) {
         currentSequenceNumber += opCount;

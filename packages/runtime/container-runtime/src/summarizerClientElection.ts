@@ -3,22 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { OrderedClientElection, ITrackedClient } from "./orderedClientElection";
 import { ISummaryCollectionOpEvents } from "./summaryCollection";
 
 export const summarizerClientType = "summarizer";
 
+export interface ISummarizerClientElectionEvents extends IEvent {
+    // Will rename in later PR
+    (event: "shouldSummarizeStateChanged", handler: () => void): void;
+}
+
 /**
  * This class encapsulates logic around tracking the elected summarizer client.
  * It will handle updated the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
-export class SummarizerClientElection {
+export class SummarizerClientElection extends TypedEventEmitter<ISummarizerClientElectionEvents> {
     /** Used to calculate number of ops since last summary ack for the current elected client */
     private lastSummaryAckSeqForClient = 0;
-    private _hasSummarizersInQuorum: boolean;
+    private _hasAnySummarizersInQuorum: boolean;
     private hasLoggedTelemetry = false;
 
     public get electedClientId() {
@@ -26,7 +32,7 @@ export class SummarizerClientElection {
     }
 
     public get hasSummarizersInQuorum() {
-        return this._hasSummarizersInQuorum;
+        return this._hasAnySummarizersInQuorum;
     }
 
     constructor(
@@ -34,8 +40,8 @@ export class SummarizerClientElection {
         private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
         public readonly clientElection: OrderedClientElection,
         private readonly maxOpsSinceLastSummary: number,
-        private readonly refreshSummarizer: () => void,
     ) {
+        super();
         this.summaryCollection.on("default", (op) => {
             const opsSinceLastAckForClient = op.sequenceNumber - this.lastSummaryAckSeqForClient;
             if (
@@ -47,7 +53,6 @@ export class SummarizerClientElection {
                 this.logger.sendErrorEvent({
                     eventName: "ElectedClientNotSummarizing",
                     electedClientId: this.electedClientId,
-                    sequenceNumber: op.sequenceNumber,
                     lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                 });
 
@@ -64,10 +69,15 @@ export class SummarizerClientElection {
         });
 
         this.clientElection.on("summarizerChange", (summarizerCount) => {
-            const prev = this._hasSummarizersInQuorum;
-            this._hasSummarizersInQuorum = summarizerCount > 0;
-            if (prev !== this._hasSummarizersInQuorum) {
-                this.refreshSummarizer();
+            // Check if the number of summarizers in the quorum switches between zero
+            // and non-zero. That can indicate a change in whether we should summarize
+            // or not since we wait until the quorum no longer has any summarizers in
+            // the quorum before starting our own summarizer.
+            // Note this will be removed in a follow-up PR.
+            const previouslyHadAnySummarizersInQuorum = this._hasAnySummarizersInQuorum;
+            this._hasAnySummarizersInQuorum = summarizerCount > 0;
+            if (previouslyHadAnySummarizersInQuorum !== this._hasAnySummarizersInQuorum) {
+                this.emit("shouldSummarizeStateChanged");
             }
         });
         this.clientElection.on("electedChange", (client: ITrackedClient | undefined) => {
@@ -76,8 +86,8 @@ export class SummarizerClientElection {
                 // set to join seq
                 this.lastSummaryAckSeqForClient = client.sequenceNumber;
             }
-            this.refreshSummarizer();
+            this.emit("shouldSummarizeStateChanged");
         });
-        this._hasSummarizersInQuorum = this.clientElection.getSummarizerCount() > 0;
+        this._hasAnySummarizersInQuorum = this.clientElection.getSummarizerCount() > 0;
     }
 }
