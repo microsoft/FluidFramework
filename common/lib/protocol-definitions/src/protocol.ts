@@ -230,7 +230,8 @@ export interface IServerError {
 
     /**
      * Message describing the error.
-     * @deprecated - Use "message" instead.
+     * @deprecated - Use "message" instead. Clients should check for errorMessage ?? message.
+     * Once all servers & clients are all updated, we can remove that errorMessage property
      */
     errorMessage?: string;
 }
