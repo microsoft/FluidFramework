@@ -203,10 +203,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const serializedSummary = summaryFileContents[version];
 						const summary = deserialize(serializedSummary, testSerializer);
 						const telemetryInfo = getSummaryStatistics(summary);
-						const expectedTelemetryInfo = {
+						const expectedTelemetryInfo: SummaryStatistics = {
 							formatVersion: version,
 							historySize: history.length,
-						} as SummaryStatistics;
+						};
 						if (version !== '0.0.2') {
 							expectedTelemetryInfo.totalNumberOfChunks = Math.floor((history.length + 249) / 250);
 							expectedTelemetryInfo.uploadedChunks = Math.floor(history.length / 250);
