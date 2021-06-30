@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { fail } from '../../Common';
+import { assertNotUndefined, fail } from '../../Common';
 import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
@@ -202,67 +202,60 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							});
 						}
 					}
-				}	
+				}
+
+				const numEditsInType: Map<string, number> = new Map<string, number>();
+				numEditsInType.set('no-history', 0);
+				numEditsInType.set('small-history', 11);
+				numEditsInType.set('large-history', 251);
+
+				it(`version 0.0.2 can be read and written`, async () => {
+					createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+						expectedTree.processLocalEdit(edit);
+					});
+
+					// Wait for the ops to to be submitted and processed across the containers.
+					await testObjectProvider.ensureSynchronized();
+	
+					validateSummaryRead(`${summaryType}-0.0.2`);
+					validateSummaryWrite(fullHistorySummarizer);
+				});
+				
+				it(`version 0.1.0 can be read and written`, async () => {
+					// Process an arbitrarily large number of stable edits
+					createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+						expectedTree.processLocalEdit(edit);
+					});
+	
+					// Wait for the ops to to be submitted and processed across the containers.
+					await testObjectProvider.ensureSynchronized();
+	
+					validateSummaryRead(`${summaryType}-0.1.0`);
+					validateSummaryWrite(fullHistorySummarizer_0_1_0);
+				});
+
+				if (summaryType === 'large-history') {
+					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
+						const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-0.1.0`), 'utf8');
+						const summary = deserialize(serializedSummary, testSerializer);
+						assert.typeOf(summary, 'object');
+		
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
+						expectedTree.loadSummary(summary as SharedTreeSummaryBase);
+		
+						await testObjectProvider.ensureSynchronized();
+		
+						// Write a new summary with the 0.0.2 summarizer
+						const newSummary = expectedTree.saveSerializedSummary({ summarizer: fullHistorySummarizer });
+		
+						// Check the newly written summary is equivalent to the loaded summary
+						// Re-stringify the the JSON file to remove escaped characters
+						const expectedSummary = JSON.stringify(JSON.parse(serializedSummary));
+						expect(newSummary).to.equal(expectedSummary);
+					});
+				}
 			});
 		}
-
-		describe('version 0.0.2', () => {
-			it('can be read and written with no history', async () => {
-				validateSummaryRead('no-history-0.0.2');
-				validateSummaryWrite(fullHistorySummarizer);
-			});
-
-			it('can be read and written with small history', async () => {
-				createStableEdits(11).forEach((edit) => {
-					expectedTree.processLocalEdit(edit);
-				});
-
-				// Wait for the ops to to be submitted and processed across the containers.
-				await testObjectProvider.ensureSynchronized();
-
-				validateSummaryRead('small-history-0.0.2');
-				validateSummaryWrite(fullHistorySummarizer);
-			});
-		});
-
-		describe('version 0.1.0', () => {
-			it('can be read and written with no history', async () => {
-				validateSummaryRead('no-history-0.1.0');
-				validateSummaryWrite(fullHistorySummarizer_0_1_0);
-			});
-
-			it('can be read and written with large history', async () => {
-				// Process an arbitrarily large number of stable edits
-				createStableEdits(251).forEach((edit) => {
-					expectedTree.processLocalEdit(edit);
-				});
-
-				// Wait for the ops to to be submitted and processed across the containers.
-				await testObjectProvider.ensureSynchronized();
-
-				validateSummaryRead('large-history-0.1.0');
-				validateSummaryWrite(fullHistorySummarizer_0_1_0);
-			});
-
-			it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
-				const serializedSummary = fs.readFileSync(summaryFilePath(`large-history-0.1.0`), 'utf8');
-				const summary = deserialize(serializedSummary, testSerializer);
-				assert.typeOf(summary, 'object');
-
-				// Wait for the ops to to be submitted and processed across the containers.
-				await testObjectProvider.ensureSynchronized();
-				expectedTree.loadSummary(summary as SharedTreeSummaryBase);
-
-				await testObjectProvider.ensureSynchronized();
-
-				// Write a new summary with the 0.0.2 summarizer
-				const newSummary = expectedTree.saveSerializedSummary({ summarizer: fullHistorySummarizer });
-
-				// Check the newly written summary is equivalent to the loaded summary
-				// Re-stringify the the JSON file to remove escaped characters
-				const expectedSummary = JSON.stringify(JSON.parse(serializedSummary));
-				expect(newSummary).to.equal(expectedSummary);
-			});
-		});
 	});
 }
