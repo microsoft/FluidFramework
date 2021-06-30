@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { assertNotUndefined, fail } from '../../Common';
+import { assertNotUndefined } from '../../Common';
 import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
@@ -29,10 +29,10 @@ import { TestFluidSerializer } from './TestSerializer';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
-const pathBase = resolve(__dirname, '../../../src/test/summary-files/');
+const pathBase = resolve(__dirname, '../../../src/test/documents/');
 
-function summaryFilePath(summaryName: string): string {
-	return join(pathBase, `${summaryName}.json`);
+function summaryFilePath(documentName: string, summaryVersion: string): string {
+	return join(pathBase, documentName, `summary-${summaryVersion}.json`);
 }
 
 /**
@@ -63,24 +63,24 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		let expectedTree: TSharedTree;
 		let testObjectProvider: TestObjectProvider;
 
-		const testSummaryFiles = fs.readdirSync(pathBase);
-
 		// Create and populate a map of the versions associated with their summary type
 		const summaryTypes = new Map<string, string[]>();
-		for (const fileName of testSummaryFiles) {
-			// Summary files should be named in the following format: `${summaryType}-${version}.json`
-			const fileNameRegularExpression = /(?<summaryType>[\w+-]*\w+)-(?<version>\d+\.\d\.\d).json/;
-			const match = fileNameRegularExpression.exec(fileName);
-
-			const matchGroups = match?.groups ?? fail(`invalid filename ${fileName}`);
-			const summaryType = matchGroups.summaryType;
-
-			let collection = summaryTypes.get(summaryType);
-			if (collection === undefined) {
-				collection = [];
-				summaryTypes.set(summaryType, collection);
+		const documentFolders = fs.readdirSync(pathBase);
+		
+		for (const documentFolder of documentFolders) {
+			const documentFiles = fs.readdirSync(join(pathBase, documentFolder));
+			for (const documentFile of documentFiles) {
+				const fileNameRegularExpression = /summary-(?<version>\d+\.\d\.\d).json/;
+				const match = fileNameRegularExpression.exec(documentFile);
+				if (match && match.groups) {
+					let collection = summaryTypes.get(documentFolder);
+					if (collection === undefined) {
+						collection = [];
+						summaryTypes.set(documentFolder, collection);
+					}
+					collection.push(match.groups.version);
+				}
 			}
-			collection.push(matchGroups.version);
 		}
 
 		// Resets the tree before each test
@@ -96,58 +96,11 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			testObjectProvider.reset();
 		});
 
-		const validateSummaryRead = (fileName: string): void => {
-			const serializedSummary = fs.readFileSync(summaryFilePath(fileName), 'utf8');
-			const summary = deserialize(serializedSummary, testSerializer);
-
-			const { tree } = setUpTestSharedTree();
-			assert.typeOf(summary, 'object');
-			tree.loadSummary(summary as SharedTreeSummaryBase);
-
-			expect(tree.equals(expectedTree)).to.be.true;
-		};
-
-		const validateSummaryWrite = (summarizer: SharedTreeSummarizer<unknown>): void => {
-			// Save a new summary with the expected tree and use it to load a new SharedTree
-			const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
-			const { tree: tree2 } = setUpTestSharedTree();
-			tree2.loadSummary(newSummary);
-
-			// The expected tree, tree loaded with the existing summary, and the tree loaded
-			// with the new summary should all be equal.
-			expect(tree2.equals(expectedTree)).to.be.true;
-		};
-
-		const versionComparator = (versionA: string, versionB: string): number => {
-			const versionASplit = versionA.split('.');
-			const versionBSplit = versionB.split('.');
-
-			assert(
-				versionASplit.length === versionBSplit.length && versionASplit.length === 3,
-				'Version numbers should follow semantic versioning.'
-			);
-
-			for (let i = 0; i < 3; ++i) {
-				const numberA = parseInt(versionASplit[i], 10);
-				const numberB = parseInt(versionBSplit[i], 10);
-
-				if (numberA > numberB) {
-					return 1;
-				}
-
-				if (numberA < numberB) {
-					return -1;
-				}
-			}
-
-			return 0;
-		};
-
 		for (const [summaryType, versions] of summaryTypes.entries()) {
 			describe(`document ${summaryType}`, () => {
 				it(`summaries with different format versions produce identical trees`, () => {
 					// Load the first summary file
-					const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[0]}`), 'utf8');
+					const serializedSummary = fs.readFileSync(summaryFilePath(summaryType, versions[0]), 'utf8');
 					const summary = deserialize(serializedSummary, testSerializer);
 					assert.typeOf(summary, 'object');
 					expectedTree.loadSummary(summary as SharedTreeSummaryBase);
@@ -156,7 +109,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					for (let i = 1; i < versions.length; i++) {
 						const { tree } = setUpTestSharedTree();
 	
-						const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-${versions[i]}`), 'utf8');
+						const serializedSummary = fs.readFileSync(summaryFilePath(summaryType, versions[i]), 'utf8');
 						const summary = deserialize(serializedSummary, testSerializer);
 						assert.typeOf(summary, 'object');
 						tree.loadSummary(summary as SharedTreeSummaryBase);
@@ -176,7 +129,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion}`, async () => {
 								// Load the first summary file (the one with the oldest version)
 								const serializedSummary = fs.readFileSync(
-									summaryFilePath(`${summaryType}-${readVersion}`),
+									summaryFilePath(summaryType, readVersion),
 									'utf8'
 								);
 								const summary = deserialize(serializedSummary, testSerializer);
@@ -192,10 +145,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								const newSummary = expectedTree.saveSerializedSummary({ summarizer });
 	
 								// Check the newly written summary is equivalent to its corresponding test summary file
-								const fileName = `${summaryType}-${writeVersion}`;
 								// Re-stringify the the JSON file to remove escaped characters
 								const expectedSummary = JSON.stringify(
-									JSON.parse(fs.readFileSync(summaryFilePath(fileName), 'utf8'))
+									JSON.parse(fs.readFileSync(summaryFilePath(summaryType, writeVersion), 'utf8'))
 								);
 	
 								expect(newSummary).to.equal(expectedSummary);
@@ -210,7 +162,25 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				numEditsInType.set('large-history', 251);
 
 				for (const [_index, version] of sortedVersions.entries()) {
-					it(`version ${version} can be read and written`, async () => {
+					it(`version ${version} can be read`, async () => {
+						createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+							expectedTree.processLocalEdit(edit);
+						});
+	
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
+
+						const serializedSummary = fs.readFileSync(summaryFilePath(summaryType, version), 'utf8');
+						const summary = deserialize(serializedSummary, testSerializer);
+
+						const { tree } = setUpTestSharedTree();
+						assert.typeOf(summary, 'object');
+						tree.loadSummary(summary as SharedTreeSummaryBase);
+
+						expect(tree.equals(expectedTree)).to.be.true;
+					});
+	
+					it(`version ${version} can be written`, async () => {
 						createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
 							expectedTree.processLocalEdit(edit);
 						});
@@ -221,16 +191,20 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const summarizerEntry = supportedSummarizers.find(entry => entry.version === version);
 						const summarizer = assertNotUndefined(summarizerEntry).summarizer;
 
-						validateSummaryRead(`${summaryType}-${version}`);
-						validateSummaryWrite(summarizer);
-					});
-	
+						// Save a new summary with the expected tree and use it to load a new SharedTree
+						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
+						const { tree: tree2 } = setUpTestSharedTree();
+						tree2.loadSummary(newSummary);
 
+						// The expected tree, tree loaded with the existing summary, and the tree loaded
+						// with the new summary should all be equal.
+						expect(tree2.equals(expectedTree)).to.be.true;
+					});
 				}
 
 				if (summaryType === 'large-history') {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
-						const serializedSummary = fs.readFileSync(summaryFilePath(`${summaryType}-0.1.0`), 'utf8');
+						const serializedSummary = fs.readFileSync(summaryFilePath(summaryType, '0.1.0'), 'utf8');
 						const summary = deserialize(serializedSummary, testSerializer);
 						assert.typeOf(summary, 'object');
 		
@@ -253,3 +227,28 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		}
 	});
 }
+
+const versionComparator = (versionA: string, versionB: string): number => {
+	const versionASplit = versionA.split('.');
+	const versionBSplit = versionB.split('.');
+
+	assert(
+		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
+		'Version numbers should follow semantic versioning.'
+	);
+
+	for (let i = 0; i < 3; ++i) {
+		const numberA = parseInt(versionASplit[i], 10);
+		const numberB = parseInt(versionBSplit[i], 10);
+
+		if (numberA > numberB) {
+			return 1;
+		}
+
+		if (numberA < numberB) {
+			return -1;
+		}
+	}
+
+	return 0;
+};
