@@ -8,10 +8,11 @@ import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { assertNotUndefined } from '../../Common';
-import { SharedTree } from '../../default-edits';
+import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
 import {
+	Edit,
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
@@ -19,7 +20,6 @@ import {
 } from '../../generic';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
-	createStableEdits,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	SharedTreeTestingComponents,
@@ -33,6 +33,10 @@ const pathBase = resolve(__dirname, '../../../src/test/documents/');
 
 function summaryFilePath(documentName: string, summaryVersion: string): string {
 	return join(pathBase, documentName, `summary-${summaryVersion}.json`);
+}
+
+function historyFilePath(documentName: string): string {
+	return join(pathBase, documentName, `history.json`);
 }
 
 /**
@@ -163,10 +167,11 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 				for (const [_index, version] of sortedVersions.entries()) {
 					it(`version ${version} can be read`, async () => {
-						createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+						const edits = JSON.parse(fs.readFileSync(historyFilePath(summaryType), 'utf8')) as Edit<Change>[];
+						edits.forEach((edit) => {
 							expectedTree.processLocalEdit(edit);
 						});
-	
+						
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
 
@@ -181,7 +186,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 	
 					it(`version ${version} can be written`, async () => {
-						createStableEdits(assertNotUndefined(numEditsInType.get(summaryType))).forEach((edit) => {
+						const edits = JSON.parse(fs.readFileSync(historyFilePath(summaryType), 'utf8')) as Edit<Change>[];
+						edits.forEach((edit) => {
 							expectedTree.processLocalEdit(edit);
 						});
 	
