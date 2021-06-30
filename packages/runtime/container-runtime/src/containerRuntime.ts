@@ -128,6 +128,7 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
+import { OrderedClientElection } from "./orderedClientElection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -948,6 +949,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager = new SummaryManager(
             context,
             this.summaryCollection,
+            new OrderedClientElection(this.context.quorum),
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             maxOpsSinceLastSummary,
