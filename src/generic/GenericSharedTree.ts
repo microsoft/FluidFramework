@@ -127,11 +127,11 @@ export enum SharedTreeSummaryWriteFormat {
  */
 export interface EditCommittedEventArguments<TSharedTree> {
 	/** The ID of the edit committed. */
-	editId: EditId;
+	readonly editId: EditId;
 	/** Whether or not this is a local edit. */
-	local: boolean;
+	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	tree: TSharedTree;
+	readonly tree: TSharedTree;
 }
 
 /**

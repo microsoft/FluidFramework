@@ -45,14 +45,18 @@ export interface EvaluatedChange<TChange> {
  * Object that includes a function for resolving node anchors.
  */
 export interface HasNodeResolver {
-	nodeResolver: (node: NodeAnchor, before: Snapshot, path: ReconciliationPath<AnchoredChange>) => NodeId | undefined;
+	readonly nodeResolver: (
+		node: NodeAnchor,
+		before: Snapshot,
+		path: ReconciliationPath<AnchoredChange>
+	) => NodeId | undefined;
 }
 
 /**
  * Object that includes a function for resolving place anchors.
  */
 export interface HasPlaceResolver {
-	placeResolver: (
+	readonly placeResolver: (
 		range: PlaceAnchor,
 		before: Snapshot,
 		path: ReconciliationPath<AnchoredChange>
@@ -63,7 +67,7 @@ export interface HasPlaceResolver {
  * Object that includes a function for resolving range anchors.
  */
 export interface HasRangeResolver {
-	rangeResolver: (
+	readonly rangeResolver: (
 		range: RangeAnchor,
 		before: Snapshot,
 		path: ReconciliationPath<AnchoredChange>
@@ -74,7 +78,7 @@ export interface HasRangeResolver {
  * Object that includes a function for validating places.
  */
 export interface HasPlaceValidator {
-	placeValidator: (snapshot: Snapshot, place: StablePlace) => EditValidationResult;
+	readonly placeValidator: (snapshot: Snapshot, place: StablePlace) => EditValidationResult;
 }
 
 /**

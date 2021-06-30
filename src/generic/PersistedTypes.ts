@@ -199,14 +199,14 @@ export enum SharedTreeOpType {
  * Requirements for SharedTree ops.
  */
 export interface SharedTreeOp {
-	type: SharedTreeOpType;
+	readonly type: SharedTreeOpType;
 }
 
 /**
  * A SharedTree op that includes edit information.
  */
 export interface SharedTreeEditOp<TChange> extends SharedTreeOp {
-	edit: Edit<TChange>;
+	readonly edit: Edit<TChange>;
 }
 
 /**
@@ -215,7 +215,7 @@ export interface SharedTreeEditOp<TChange> extends SharedTreeOp {
  */
 export interface SharedTreeHandleOp extends SharedTreeOp {
 	/** The serialized handle to an uploaded edit chunk. */
-	editHandle: string;
+	readonly editHandle: string;
 	/** The index of the first edit in the chunk that corresponds to the handle. */
-	startRevision: number;
+	readonly startRevision: number;
 }

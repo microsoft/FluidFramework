@@ -24,7 +24,7 @@ export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
  * Telemetry properties decorated on all SharedTree events.
  */
 export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
-	isSharedTreeEvent: true;
+	readonly isSharedTreeEvent: true;
 }
 
 /**

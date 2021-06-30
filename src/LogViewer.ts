@@ -67,15 +67,15 @@ export interface SuccessfulEditCacheEntry<TChange> {
 	/**
 	 * The snapshot resulting from the edit.
 	 */
-	snapshot: Snapshot;
+	readonly snapshot: Snapshot;
 	/**
 	 * The status code for the edit that produced the snapshot.
 	 */
-	status: EditStatus.Applied;
+	readonly status: EditStatus.Applied;
 	/**
 	 * The resolved changes that were applied during the edit and their associated outcome.
 	 */
-	steps: readonly { resolvedChange: TChange; after: Snapshot }[];
+	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: Snapshot }[];
 }
 
 /**
@@ -89,7 +89,7 @@ export interface UnsuccessfulEditCacheEntry {
 	/**
 	 * The status code for the edit that produced the snapshot.
 	 */
-	status: EditStatus.Invalid | EditStatus.Malformed;
+	readonly status: EditStatus.Invalid | EditStatus.Malformed;
 }
 
 /**
@@ -100,8 +100,8 @@ export interface SummarizedEditResultCacheEntry {
 	/**
 	 * The snapshot resulting from the edit.
 	 */
-	snapshot: Snapshot;
-	status?: undefined;
+	readonly snapshot: Snapshot;
+	readonly status?: undefined;
 }
 
 /**

@@ -28,7 +28,7 @@ export type EditingResult<TChange> =
 export interface ValidEditingResult<TChange> {
 	readonly status: EditStatus.Applied;
 	readonly changes: readonly TChange[];
-	readonly steps: readonly { resolvedChange: TChange; after: Snapshot }[];
+	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: Snapshot }[];
 	readonly before: Snapshot;
 	readonly after: Snapshot;
 }

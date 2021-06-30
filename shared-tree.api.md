@@ -182,9 +182,9 @@ export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TCh
 
 // @public
 export interface EditCommittedEventArguments<TSharedTree> {
-    editId: EditId;
-    local: boolean;
-    tree: TSharedTree;
+    readonly editId: EditId;
+    readonly local: boolean;
+    readonly tree: TSharedTree;
 }
 
 // @public
@@ -734,8 +734,8 @@ export interface ValidEditingResult<TChange> {
     readonly status: EditStatus.Applied;
     // (undocumented)
     readonly steps: readonly {
-        resolvedChange: TChange;
-        after: Snapshot;
+        readonly resolvedChange: TChange;
+        readonly after: Snapshot;
     }[];
 }
 

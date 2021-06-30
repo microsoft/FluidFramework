@@ -111,13 +111,13 @@ export function convertSummaryToReadFormat<TChange>(summary: SharedTreeSummaryBa
  */
 export interface SummaryStatistics {
 	/** Format version the summary is written in. */
-	formatVersion: string;
+	readonly formatVersion: string;
 	/** Number of edits. */
-	historySize: number;
+	readonly historySize: number;
 	/** Number of edit chunks in the history. */
-	totalNumberOfChunks?: number;
+	readonly totalNumberOfChunks?: number;
 	/** Number of chunks in the summary that have handles stored. */
-	uploadedChunks?: number;
+	readonly uploadedChunks?: number;
 }
 
 /**
