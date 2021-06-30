@@ -160,11 +160,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					}
 				}
 
-				const numEditsInType: Map<string, number> = new Map<string, number>();
-				numEditsInType.set('no-history', 0);
-				numEditsInType.set('small-history', 11);
-				numEditsInType.set('large-history', 251);
-
 				for (const [_index, version] of sortedVersions.entries()) {
 					it(`version ${version} can be read`, async () => {
 						const edits = JSON.parse(fs.readFileSync(historyFilePath(summaryType), 'utf8')) as Edit<Change>[];
