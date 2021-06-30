@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.104.3
+
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+
 ## 0.104.2
 
 * Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
