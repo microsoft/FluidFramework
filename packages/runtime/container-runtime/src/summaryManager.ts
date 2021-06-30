@@ -67,7 +67,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     constructor(
         private readonly context: IContainerContext,
-        public readonly clientElection: SummarizerClientElection,
+        private readonly clientElection: SummarizerClientElection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,

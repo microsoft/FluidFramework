@@ -726,6 +726,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
+    private readonly summarizerClientElection: SummarizerClientElection;
     private readonly summaryManager: SummaryManager;
     private readonly summaryCollection: SummaryCollection;
 
@@ -956,15 +957,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.context.quorum,
             [electedSummarizerData, SummarizerClientElection.isClientEligible],
         );
+        this.summarizerClientElection = new SummarizerClientElection(
+            this.logger,
+            this.summaryCollection,
+            summarizerClientElection,
+            maxOpsSinceLastSummary,
+        );
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            new SummarizerClientElection(
-                this.logger,
-                this.summaryCollection,
-                summarizerClientElection,
-                maxOpsSinceLastSummary,
-            ),
+            this.summarizerClientElection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
@@ -1188,7 +1190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
-        const electedSummarizerContent = JSON.stringify(this.summaryManager.clientElection.serialize());
+        const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
         addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 
         const snapshot = this.blobManager.snapshot();
