@@ -292,16 +292,9 @@ export class ContainerContext implements IContainerContext {
         return runtimeFactory;
     }
 
-    // back compat: 0.40 (see #3429)
-    private isFactoryStateful(runtimeFactory: IRuntimeFactory): boolean {
-        return "stateful" in runtimeFactory;
-    }
-
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await (this.isFactoryStateful(runtimeFactory)
-            ? runtimeFactory.instantiateRuntime(this, existing)
-            : runtimeFactory.instantiateRuntime(this));
+        this._runtime = runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {
