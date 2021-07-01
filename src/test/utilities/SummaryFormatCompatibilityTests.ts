@@ -156,6 +156,26 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					}
 				}
 
+				for (const { summarizer, version } of supportedSummarizers) {
+					it(`version ${version} can be written`, async () => {
+						history.forEach((edit) => {
+							expectedTree.processLocalEdit(edit);
+						});
+
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
+
+						// Save a new summary with the expected tree and use it to load a new SharedTree
+						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
+						const { tree: tree2 } = setUpTestSharedTree();
+						tree2.loadSummary(newSummary);
+
+						// The expected tree, tree loaded with the existing summary, and the tree loaded
+						// with the new summary should all be equal.
+						expect(tree2.equals(expectedTree)).to.be.true;
+					});
+				}
+
 				for (const [_index, version] of sortedVersions.entries()) {
 					it(`version ${version} can be read`, async () => {
 						history.forEach((edit) => {
@@ -172,27 +192,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						tree.loadSummary(summary);
 
 						expect(tree.equals(expectedTree)).to.be.true;
-					});
-
-					it(`version ${version} can be written`, async () => {
-						history.forEach((edit) => {
-							expectedTree.processLocalEdit(edit);
-						});
-
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
-
-						const summarizerEntry = supportedSummarizers.find((entry) => entry.version === version);
-						const summarizer = assertNotUndefined(summarizerEntry).summarizer;
-
-						// Save a new summary with the expected tree and use it to load a new SharedTree
-						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
-						const { tree: tree2 } = setUpTestSharedTree();
-						tree2.loadSummary(newSummary);
-
-						// The expected tree, tree loaded with the existing summary, and the tree loaded
-						// with the new summary should all be equal.
-						expect(tree2.equals(expectedTree)).to.be.true;
 					});
 
 					it(`getTelemetryInfoFromSummary works for version ${version}`, () => {
