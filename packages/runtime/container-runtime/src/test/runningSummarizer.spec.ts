@@ -14,7 +14,8 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
-import { RunningSummarizer, SummarizerStopReason } from "../summarizer";
+import { RunningSummarizer } from "../runningSummarizer";
+import { SummarizerStopReason } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {

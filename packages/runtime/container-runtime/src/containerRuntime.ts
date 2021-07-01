@@ -4,9 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    AgentSchedulerFactory,
-} from "@fluidframework/agent-scheduler";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -128,6 +125,8 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
+import { OrderedClientElection } from "./orderedClientElection";
+import { SummarizerClientElection } from "./summarizerClientElection";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -269,14 +268,6 @@ export interface ISummaryRuntimeOptions {
 export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
-    /**
-     * Control whether the ContainerRuntime includes AgentScheduler in its registry, and whether an instance is
-     * created at _scheduler.  This option will be removed in a future release, so it is recommended to opt-out
-     * in preparation for that change.  If you still require AgentScheduler, you should explicitly include
-     * AgentSchedulerFactory in the container registry and explicitly instantiate an instance of it using
-     * createRootDataStore.
-     */
-    addGlobalAgentSchedulerAndLeaderElection?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -488,17 +479,12 @@ export class ScheduleManager {
     }
 }
 
+/**
+ * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
+ * special-case for document dirty state.  Ultimately we should have no special-cases from the
+ * ContainerRuntime's perspective.
+ */
 export const agentSchedulerId = "_scheduler";
-
-// Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
-    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
-        super([
-            ...namedEntries,
-            AgentSchedulerFactory.registryEntry,
-        ]);
-    }
-}
 
 /** This is a temporary helper function for parsing runtimeOptions in the old format. */
 function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions): IContainerRuntimeOptions | undefined {
@@ -519,16 +505,11 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
         disableGC: oldRuntimeOptions.disableGC,
         runFullGC: oldRuntimeOptions.runFullGC,
     };
-    const agentSchedulerOption: boolean | undefined = runtimeOptions?.addGlobalAgentSchedulerAndLeaderElection;
 
     const backCompatOptions: IContainerRuntimeOptions = {
         summaryOptions,
         gcOptions,
     };
-
-    if (agentSchedulerOption !== undefined) {
-        backCompatOptions.addGlobalAgentSchedulerAndLeaderElection = agentSchedulerOption;
-    }
 
     return backCompatOptions;
 }
@@ -595,20 +576,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
             summaryOptions: { generateSummaries: true },
             gcOptions: {},
-            addGlobalAgentSchedulerAndLeaderElection: false,
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
-        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
-            // ContainerRuntime with AgentScheduler built-in is deprecated 0.38
-            console.warn("ContainerRuntime with AgentScheduler built-in is deprecated, "
-                + "see BREAKING.md for more details and migration instructions");
-            // Disabling noisy telemetry until customers have had some time to migrate
-            // logger.sendErrorEvent({ eventName: "UsedAddGlobalAgentSchedulerAndLeaderElection" });
-        }
 
-        const registry = combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false
-            ? new ContainerRuntimeDataStoreRegistry(registryEntries)
-            : new FluidDataStoreRegistry(registryEntries);
+        const registry = new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
@@ -637,14 +608,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             requestHandler,
             storage);
-
-        if (combinedRuntimeOptions.addGlobalAgentSchedulerAndLeaderElection !== false) {
-            // Create all internal data stores if not already existing on storage or loaded a detached
-            // container from snapshot(ex. draft mode).
-            if (!loadExisting) {
-                await runtime.createRootDataStore(AgentSchedulerFactory.type, agentSchedulerId);
-            }
-        }
 
         return runtime;
     }
@@ -952,6 +915,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryManager = new SummaryManager(
             context,
             this.summaryCollection,
+            new SummarizerClientElection(
+                this.logger,
+                this.summaryCollection,
+                new OrderedClientElection(this.context.quorum),
+                maxOpsSinceLastSummary,
+            ),
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             maxOpsSinceLastSummary,
@@ -1521,6 +1490,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+        // For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
+        // Ultimately we should have no special-cases from the ContainerRuntime's perspective.
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
             if (attachMessage.id === agentSchedulerId) {
