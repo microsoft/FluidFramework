@@ -209,8 +209,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								: {
 										formatVersion: version,
 										historySize: history.length,
-										totalNumberOfChunks = Math.floor((history.length + 249) / 250),
-										uploadedChunks = Math.floor(history.length / 250),
+										totalNumberOfChunks: Math.floor((history.length + 249) / 250),
+										uploadedChunks: Math.floor(history.length / 250),
 								  };
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
