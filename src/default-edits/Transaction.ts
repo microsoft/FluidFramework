@@ -212,20 +212,22 @@ export class Transaction extends GenericTransaction<Change> {
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const children = node.traits[key];
-					const childIds: NodeId[] = [];
-					for (const child of children) {
-						if (isDetachedSequenceId(child)) {
-							const detachedIds = this.getDetachedNodeIds(child, onInvalidDetachedId);
-							if (detachedIds === undefined) {
-								return undefined;
+					if (children.length > 0) {
+						const childIds: NodeId[] = [];
+						for (const child of children) {
+							if (isDetachedSequenceId(child)) {
+								const detachedIds = this.getDetachedNodeIds(child, onInvalidDetachedId);
+								if (detachedIds === undefined) {
+									return undefined;
+								}
+								childIds.push(...detachedIds);
+							} else {
+								childIds.push(child.identifier);
+								unprocessed.push(child);
 							}
-							childIds.push(...detachedIds);
-						} else {
-							childIds.push(child.identifier);
-							unprocessed.push(child);
 						}
+						traits.set(key as TraitLabel, childIds);
 					}
-					traits.set(key as TraitLabel, childIds);
 				}
 			}
 			const newNode: SnapshotNode = {

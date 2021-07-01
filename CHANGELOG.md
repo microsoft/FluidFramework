@@ -1,4 +1,14 @@
 # Change Log
+## 0.107.2
+
+* Merge remote-tracking branch 'origin/releases/2021.05.3' into user/crmacomb/fix-chunks
+  * Commit: [4db8adcdb45db24d43ef1b7963a000af7fec40fd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4db8adcdb45db24d43ef1b7963a000af7fec40fd)
+* fix: Ensure empty traits are not created via Build, and fail better during duplicate IDs in snapshot creation
+  * Associated pull request: [30765](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30765)
+  * Commit: [c77b55148aeb8cc23b4b747ff2b0b7af816bdd5d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c77b55148aeb8cc23b4b747ff2b0b7af816bdd5d)
+* merge: `releases/2021.05.3` into `master`
+  * Associated pull request: [30776](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30776)
+  * Commit: [b3fc2f77c7e5a1caeb554650f6454992fc2d9da5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b3fc2f77c7e5a1caeb554650f6454992fc2d9da5)
 
 ## 0.106.5
 
