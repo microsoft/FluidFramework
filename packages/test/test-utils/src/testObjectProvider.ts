@@ -78,6 +78,7 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 }
 
+// new interface to help inject custom loggers to tests
 export interface ITestLoaderOptions extends ILoaderOptions {
     logger?: ITelemetryBaseLogger;
 }
@@ -149,18 +150,18 @@ export class TestObjectProvider {
         detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         const multiSinkLogger = new MultiSinkLogger();
-        if(options?.logger !== undefined) {
+        multiSinkLogger.addLogger(ChildLogger.create(getTestLogger?.(),
+            undefined, { all: { driverType: this.driver.type } }));
+        if (options?.logger !== undefined) {
             multiSinkLogger.addLogger(options.logger);
-            multiSinkLogger.addLogger(ChildLogger.create(getTestLogger?.(),
-                undefined, { all: { driverType: this.driver.type } }));
         }
+
         const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: options?.logger !== undefined ? multiSinkLogger :
-                ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: this.driver.type } }),
+            logger: multiSinkLogger,
             options,
             detachedBlobStorage,
         });
