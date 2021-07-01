@@ -7,7 +7,6 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { assertNotUndefined } from '../../Common';
 import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { Edit, fullHistorySummarizer, fullHistorySummarizer_0_1_0, SharedTreeSummarizer } from '../../generic';
