@@ -193,6 +193,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxOps: 1000,
 
     // Wait 2 minutes for summary ack
+    // this is less than maxSummarizeAckWaitTime
+    // the min of the two will be choosen
     maxAckWaitTime: 120000,
 };
 

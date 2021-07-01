@@ -20,7 +20,7 @@ import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
-const maxSummarizeAckWaitTime = 120000; // 2 minutes
+const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 2 minutes
 
 const minOpsForLastSummary = 50;
 
