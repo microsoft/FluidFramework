@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { EditHandle, editsPerChunk } from '../EditLog';
+import { EditHandle, EditLog } from '../EditLog';
 import { Edit, EditWithoutId, newEdit, fullHistorySummarizer_0_1_0 } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';
 import { assertNotUndefined } from '../Common';
@@ -43,7 +43,7 @@ describe.skip('SharedTree history virtualization', () => {
 		const expectedEdits: Edit<Change>[] = [];
 
 		// Add some edits to create a chunk with.
-		while (expectedEdits.length < editsPerChunk * numberOfChunks) {
+		while (expectedEdits.length < (sharedTree.edits as EditLog<Change>).editsPerChunk * numberOfChunks) {
 			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
 			expectedEdits.push(edit);
 			sharedTree.processLocalEdit(edit);
@@ -155,7 +155,7 @@ describe.skip('SharedTree history virtualization', () => {
 		const expectedEdits: Edit<Change>[] = [];
 
 		// Add some edits to create a chunk with.
-		while (expectedEdits.length < editsPerChunk + 10) {
+		while (expectedEdits.length < (sharedTree.edits as EditLog<Change>).editsPerChunk + 10) {
 			const edit = newEdit(setTrait(testTrait, [makeTestNode()]));
 			expectedEdits.push(edit);
 			sharedTree.processLocalEdit(edit);
@@ -181,7 +181,7 @@ describe.skip('SharedTree history virtualization', () => {
 
 		// Make sure each starting revision is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ startRevision, chunk }, index) => {
-			expect(startRevision).to.equal(index * editsPerChunk);
+			expect(startRevision).to.equal(index * (sharedTree.edits as EditLog<Change>).editsPerChunk);
 			expect(typeof (chunk as EditHandle).get).to.equal('function');
 		});
 	});

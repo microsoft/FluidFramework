@@ -16,7 +16,7 @@ import { ISharedObjectEvents, SharedObject } from '@fluidframework/shared-object
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, fail } from '../Common';
-import { editsPerChunk, EditLog, OrderedEditSet } from '../EditLog';
+import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
@@ -562,7 +562,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			if (lastPair !== undefined) {
 				const [startRevision, chunk] = lastPair;
 				const edits = assertNotUndefined(chunk.edits);
-				if (edits.length === editsPerChunk) {
+				if (edits.length === this.editLog.editsPerChunk) {
 					void this.uploadEditChunk(edits, startRevision);
 				}
 			}

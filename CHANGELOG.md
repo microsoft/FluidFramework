@@ -1,5 +1,34 @@
 # Change Log
 
+## 0.114.2
+
+* merge: Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.1-into-2021.06.2
+  * Commit: [92cd6964b72c118b37c75cf263ff657718ad05d4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92cd6964b72c118b37c75cf263ff657718ad05d4)
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
+
+## 0.114.1
+
+* fix: Forest should not create empty traits when attaching nodes
+  * Associated pull request: [31307](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31307)
+  * Commit: [4af9c00eeb346751efac1df4f5d645cb4c2d0afd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4af9c00eeb346751efac1df4f5d645cb4c2d0afd)
+* style: Update `prettier` and run on code
+  * Associated pull request: [31104](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31104)
+  * Commit: [692c7c99528d196326eae8853463e7c7f607afb8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/692c7c99528d196326eae8853463e7c7f607afb8)
+* build: Pin version of `prettier` to prevent breaking update
+  * Associated pull request: [31151](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31151)
+  * Commit: [c47f4d4a112b3989856610fabe316c7fc4fa59d1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c47f4d4a112b3989856610fabe316c7fc4fa59d1)
+* fix: Limit the number of edits in an edit chunk
+  * Associated pull request: [31141](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31141)
+  * Commit: [87c333698b735e224d05e4059a0d4d61798745f8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/87c333698b735e224d05e4059a0d4d61798745f8)
+* merge: `releases/2021.06.1` into `master`
+  * Associated pull request: [31089](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31089)
+  * Commit: [81efc71ef46b9468293a75b219c5eb3275cfa81e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/81efc71ef46b9468293a75b219c5eb3275cfa81e)
+* refactor: SharedTree tests as reusable suites for other implementations to use
+  * Associated pull request: [31094](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31094)
+  * Commit: [24b113f2ee47b00523d640ecf661ac4eee0e6aad](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/24b113f2ee47b00523d640ecf661ac4eee0e6aad)
+
 ## 0.109.2
 
 * merge: 'releases/2021.05.4' into 'releases/2021.06.1'
