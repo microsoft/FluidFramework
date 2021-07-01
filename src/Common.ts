@@ -197,6 +197,18 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
 /**
  * Asserts a value is not undefined, and returns the value.
  * Use when violations are logic errors in the program.
+ *
+ * When practical, prefer the pattern `x ?? fail('message')` over `assertNotUndefined(x, 'message')`.
+ * Using `?? fail` allows for message formatting without incurring the cost of formatting the message in the non failing case
+ * (ex:
+ * ```
+ * x ?? fail(`x should exist for ${y}`)
+ * ```
+ * ). Additionally the `?? fail` avoids an extra call/stack frame in the non failing case.
+ *
+ * Another pattern to prefer over `assertNotUndefined(x, 'message')` is `assert(x !== undefined)`.
+ * This pattern is preferred because it is more general (same approach works with typeof, instance of, comparison to other values etc.).
+ *
  * @param value - Value to assert against is non undefined.
  * @param message - Message to be printed if assertion fails.
  */

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from '../Common';
+import { assert, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
 import { GenericTransaction, BuildNode, EditStatus } from '../generic';
 import { Snapshot, SnapshotNode } from '../Snapshot';
@@ -97,7 +97,7 @@ export class Transaction extends GenericTransaction<Change> {
 
 		const view = this.view.addNodes(map.values());
 		this._view = view;
-		this.detached.set(change.destination, assertNotUndefined(newIds));
+		this.detached.set(change.destination, newIds ?? fail());
 		return EditStatus.Applied;
 	}
 
