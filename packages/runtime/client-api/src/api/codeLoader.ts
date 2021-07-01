@@ -29,9 +29,8 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const rootMapId = "root";
 const rootStoreId = "rootStore";
