@@ -14,8 +14,8 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { fluidExport as smde } from "./prosemirror";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { fluidExport as smde } from "./prosemirror";
 
 const defaultComponent = smde.type;
 const defaultComponentId = "default";
