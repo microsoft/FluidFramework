@@ -183,7 +183,7 @@ Edits are transactional so any invalid change in an edit will cause the entire e
 However, no combination of changes will cause the client to crash.
 Changes go through validation before they are applied and invalid changes are currently dropped.
 
-#### Example
+#### Change Rejection Example
 
 Assuming a tree with a single node, A, a client creates an edit, 1, that inserts a node after node A.
 At the same time another client creates an edit, 2, that deletes node A.
