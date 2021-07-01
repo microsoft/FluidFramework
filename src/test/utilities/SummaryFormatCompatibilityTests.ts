@@ -228,12 +228,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						await testObjectProvider.ensureSynchronized();
 
 						// Write a new summary with the 0.0.2 summarizer
-						const newSummary = expectedTree.saveSerializedSummary(fullHistorySummarizer);
+						const newSummary = JSON.parse(expectedTree.saveSerializedSummary(fullHistorySummarizer));
+						const expectedSummary = JSON.parse(serializedSummary);
 
-						// Check the newly written summary is equivalent to the loaded summary
-						// Re-stringify the the JSON file to remove escaped characters
-						const expectedSummary = JSON.stringify(JSON.parse(serializedSummary));
-						expect(newSummary).to.equal(expectedSummary);
+						expect(newSummary).to.deep.equal(expectedSummary);
 					});
 				}
 			});
