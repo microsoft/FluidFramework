@@ -11,7 +11,6 @@ import {
 
 export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
-    public readonly stateful: boolean = true;
 
     public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const fromExisting = existing === undefined

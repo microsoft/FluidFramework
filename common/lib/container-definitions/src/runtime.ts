@@ -171,9 +171,4 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * @param existing - whether to instantiate for the first time or from an existing context
      */
     instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
-
-    /**
-     * Marker for an implementation supporting the `existing` flag
-     */
-    readonly stateful?: boolean;
 }
