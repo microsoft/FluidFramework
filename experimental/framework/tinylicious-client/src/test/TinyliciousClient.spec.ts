@@ -134,13 +134,15 @@ describe("TinyliciousClient", () => {
                 map1: SharedMap,
             },
         };
-        const [containerCreate] = await tinyliciousClient.createContainer(containerConfig, schema);
+
+        const containerCreate = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
-        const [containerGet] = await tinyliciousClient.getContainer(containerConfig, schema);
+
+        const containerGet = (await tinyliciousClient.getContainer(containerConfig, schema)).fluidContainer;
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
@@ -187,7 +189,8 @@ describe("TinyliciousClient", () => {
                 map1: SharedMap,
             },
         };
-        const [containerCreate] = await tinyliciousClient.createContainer(containerConfig, schema);
+
+        const containerCreate = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
@@ -199,7 +202,7 @@ describe("TinyliciousClient", () => {
         map1Create.set("new-key", "new-value");
         const valueCreate = await map1Create.get("new-key");
 
-        const [containerGet] = await tinyliciousClient.getContainer(containerConfig, schema);
+        const containerGet = (await tinyliciousClient.getContainer(containerConfig, schema)).fluidContainer;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
@@ -222,7 +225,9 @@ describe("TinyliciousClient", () => {
             },
             dynamicObjectTypes: [ SharedDirectory ],
         };
-        const [container] = await tinyliciousClient.createContainer(containerConfig, schema);
+
+        const container = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
+
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();
@@ -252,14 +257,15 @@ describe("TinyliciousClient", () => {
             },
             dynamicObjectTypes: [ DiceRoller ],
         };
-        const [container] = await tinyliciousClient.createContainer(containerConfig, schema);
+
+        const createFluidContainer = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
+            createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
-        const map1 = container.initialObjects.map1 as SharedMap;
-        const newPair = await container.create(DiceRoller);
+        const map1 = createFluidContainer.initialObjects.map1 as SharedMap;
+        const newPair = await createFluidContainer.create(DiceRoller);
         map1.set("newpair-id", newPair.handle);
         const obj = await map1.get("newpair-id").get();
         assert.strictEqual(obj.runtime.documentId, documentId, "container added dynamic objects incorrectly");

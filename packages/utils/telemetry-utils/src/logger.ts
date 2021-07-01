@@ -55,6 +55,44 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
+    private static extractLogSafeErrorProperties(error: any) {
+        const isRegularObject = (value: any): boolean => {
+            return value !== null && !Array.isArray(value) && typeof value === "object";
+        };
+
+        const removeMessageFromStack = (stack: string, errorName?: string) => {
+            const stackFrames = stack.split("\n");
+            stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+            if (errorName !== undefined) {
+                stackFrames.unshift(errorName); // Add "[ErrorName]"
+            }
+            return stackFrames.join("\n");
+        };
+
+        const message = (typeof error?.message === "string")
+            ? error.message as string
+            : String(error);
+
+        const safeProps: { message: string; errorType?: string; stack?: string } = {
+            message,
+        };
+
+        if (isRegularObject(error)) {
+            const { errorType, stack, name } = error;
+
+            if (typeof errorType === "string") {
+                safeProps.errorType = errorType;
+            }
+
+            if (typeof stack === "string") {
+                const errorName = (typeof name === "string") ? name : undefined;
+                safeProps.stack = removeMessageFromStack(stack, errorName);
+            }
+        }
+
+        return safeProps;
+    }
+
     /**
      * Take an unknown error object and add the appropriate info from it to the event
      * NOTE - message and stack will be copied over from the error object,
@@ -64,15 +102,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        if (isILoggingError(error)) {
-            // First, copy over error message, stack, and errorType directly (overwrite if present on event)
-            // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
-            event.stack = error.stack;
-            event.error = error.message;
-            event.errorType = (error as any).errorType;
+        const { message, errorType, stack} = this.extractLogSafeErrorProperties(error);
+        // First, copy over error message, stack, and errorType directly (overwrite if present on event)
+        event.stack = stack;
+        event.error = message; // Note that the error message goes on the 'error' field
+        event.errorType = errorType;
 
-            // Then add any other telemetry properties from the LoggingError
+        if (isILoggingError(error)) {
+            // Add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
             for (const key of Object.keys(taggableProps)) {
                 if (event[key] !== undefined) {
@@ -106,14 +143,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         break;
                 }
             }
-        } else if (typeof error === "object" && error !== null) {
-            // Pull the message, stack and errorType off even if it's not an ILoggingError
-            // Note: For a safer implementation of this, see extractLogSafeErrorProperties in container-utils package
-            event.stack = error.stack;
-            event.error = error.message;
-            event.errorType = error.errorType;
-        } else {
-            event.error = error;
         }
 
         // Collect stack if we were not able to extract it from error
