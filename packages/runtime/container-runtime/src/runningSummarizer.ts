@@ -285,6 +285,7 @@ export class RunningSummarizer implements IDisposable {
             () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1));
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
+        // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
         const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
         this.pendingAckTimer = new PromiseTimer(
