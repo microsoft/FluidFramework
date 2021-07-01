@@ -193,6 +193,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxOps: 1000,
 
     // Wait 2 minutes for summary ack
+    // this is less than maxSummarizeAckWaitTime
+    // the min of the two will be chosen
     maxAckWaitTime: 120000,
 };
 
@@ -707,8 +709,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private get summaryConfiguration() {
         return  {
+            // the defaults
             ... DefaultSummaryConfiguration,
+            // the server provided values
             ... this.context?.serviceConfiguration?.summary,
+            // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
          };
     }
