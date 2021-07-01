@@ -42,6 +42,8 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
 	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
 ];
 
+const minEditsPerChunk = 100;
+
 /**
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
@@ -207,14 +209,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								: {
 										formatVersion: version,
 										historySize: history.length,
-										totalNumberOfChunks: Math.floor((history.length + 249) / 250),
-										uploadedChunks: Math.floor(history.length / 250),
+										totalNumberOfChunks: history.length > 0 ? 1 : 0,
+										uploadedChunks: history.length >= minEditsPerChunk ? 1 : 0,
 								  };
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
 				}
 
-				if (summaryType === 'large-history' || history.length > 250) {
+				if (summaryType === 'large-history' || history.length >= minEditsPerChunk) {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
