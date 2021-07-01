@@ -1,15 +1,9 @@
 ## 0.43 Breaking changes
 
 - [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
-- [supportsTags deprecated](#supports-Tags-deprecated)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
-
-### supportsTags deprecated
-We are deprecating use of supportsTags and instead going to handle tags directly at the interface of the runtime and
-`IContainerContext`. This will allow loggers downstream to be agnostic about whether messages have tags. However, note
-that this change will occur via a new release of `common-definitions` (not the client).
 
 ## 0.42 Breaking changes
 
