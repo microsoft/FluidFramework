@@ -27,23 +27,27 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
     }
 
     // Validators
-    protected readonly idValidation = (propValue) => {
+    protected readonly idValidation = (propValue: any) => {
         return this.isUndefined(propValue)
-            || (this.checkType(propValue, "string") && propValue.length > 0);
+            || (this.isString(propValue) && propValue.length > 0);
     };
 
-    protected readonly seqNumberValidation = (propValue) => {
+    protected readonly seqNumberValidation = (propValue: any) => {
         return this.isUndefined(propValue)
-            || (this.checkType(propValue, "number") && propValue >= -1);
+            || (this.isNumber(propValue) && propValue >= -1);
     };
 
     // Helpers
-    private isUndefined(propValue: any) {
+    private isUndefined(propValue: any): propValue is undefined {
         return propValue === undefined;
     }
 
-    private checkType(propValue: any, expectedType: string) {
-        return typeof propValue === expectedType;
+    private isNumber(propValue: any): propValue is number {
+        return typeof(propValue) === "number";
+    }
+
+    private isString(propValue: any): propValue is string {
+        return typeof(propValue) === "string";
     }
 }
 

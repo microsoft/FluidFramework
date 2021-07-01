@@ -16,8 +16,8 @@ import {
 
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
-// Lumber should be created through Lumberjack. Additional properties can be added through
-// addProperty(). Once the telemetry event is complete, the user must call either success()
+// Lumber should be created through Lumberjack. Additional properties can be set through
+// setProperty(). Once the telemetry event is complete, the user must call either success()
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
     private readonly _startTime = performance.now();
@@ -25,11 +25,10 @@ export class Lumber<T extends string = LumberEventName> {
     private _durationInMs?: number;
     private _successful?: boolean;
     private _message?: string;
-    private _statusCode?: string;
     private _exception?: Error;
     private _logLevel?: LogLevel;
     private _completed = false;
-    public readonly timestamp = new Date(Date.now()).toISOString();
+    public readonly timestamp = Date.now();
     public readonly id = uuid();
 
     public get properties(): Map<string, any> {
@@ -54,10 +53,6 @@ export class Lumber<T extends string = LumberEventName> {
         return this._message;
     }
 
-    public get statusCode(): string | undefined {
-        return this._statusCode;
-    }
-
     public get exception(): Error | undefined {
         return this._exception;
     }
@@ -73,26 +68,26 @@ export class Lumber<T extends string = LumberEventName> {
         private readonly _schemaValidator?: ILumberjackSchemaValidator,
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
-                this.addProperties(properties);
+                this.setProperties(properties);
             }
         }
 
-    public addProperty(key: string, value: any): this {
+    public setProperty(key: string, value: any): this {
         this._properties.set(key, value);
         return this;
     }
 
-    public addProperties(properties: Map<string, any> | Record<string, any>): this {
+    public setProperties(properties: Map<string, any> | Record<string, any>): this {
         if (properties instanceof Map) {
             if (this._properties.size === 0) {
                 this._properties = properties;
             } else {
-                properties.forEach((value: any, key: string) => { this.addProperty(key, value); });
+                properties.forEach((value: any, key: string) => { this.setProperty(key, value); });
             }
         } else {
             Object.entries(properties).forEach((entry) => {
                 const [key, value] = entry;
-                this.addProperty(key,value);
+                this.setProperty(key,value);
             });
         }
         return this;
@@ -100,22 +95,19 @@ export class Lumber<T extends string = LumberEventName> {
 
     public success(
         message: string,
-        statusCode: number | string | undefined,
         logLevel: LogLevel = LogLevel.Info) {
-        this.emit(message, statusCode, logLevel, true, undefined);
+        this.emit(message, logLevel, true, undefined);
     }
 
     public error(
         message: string,
-        statusCode?: number | string,
         exception?: Error,
         logLevel: LogLevel = LogLevel.Error) {
-        this.emit(message, statusCode, logLevel, false, exception);
+        this.emit(message, logLevel, false, exception);
     }
 
     private emit(
         message: string,
-        statusCode: number | string | undefined,
         logLevel: LogLevel,
         successful: boolean,
         exception: Error | undefined) {
@@ -140,9 +132,6 @@ export class Lumber<T extends string = LumberEventName> {
         }
 
         this._message = message;
-        if (statusCode) {
-            this._statusCode = statusCode.toString();
-        }
         this._logLevel = logLevel;
         this._successful = successful;
         this._exception = exception;

@@ -24,7 +24,6 @@ describe("Lumber", () => {
     it("Creates and completes Lumber with success.", () => {
         const expectedDuration = 100;
         const successMessage = "SuccessMessage";
-        const statusCode = 200;
         const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
@@ -35,11 +34,10 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.successful, undefined);
 
         Sinon.clock.tick(expectedDuration);
-        lumber.success(successMessage, statusCode);
+        lumber.success(successMessage);
 
         assert.strictEqual(lumber.successful, true);
         assert.strictEqual(lumber.message, successMessage);
-        assert.strictEqual(lumber.statusCode, statusCode.toString());
         assert.strictEqual(lumber.durationInMs, expectedDuration);
         assert.deepStrictEqual(engineStub.calledOnce, true);
     });
@@ -47,7 +45,6 @@ describe("Lumber", () => {
     it("Creates and completes Lumber with failure.", () => {
         const expectedDuration = 100;
         const errorMessage = "errorMessage";
-        const statusCode = 400;
         const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const error = new Error("SampleError");
@@ -59,11 +56,10 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.successful, undefined);
 
         Sinon.clock.tick(expectedDuration);
-        lumber.error(errorMessage, statusCode, error);
+        lumber.error(errorMessage, error);
 
         assert.strictEqual(lumber.successful, false);
         assert.strictEqual(lumber.message, errorMessage);
-        assert.strictEqual(lumber.statusCode, statusCode.toString());
         assert.deepStrictEqual(lumber.exception, error);
         assert.strictEqual(lumber.durationInMs, expectedDuration);
         assert.deepStrictEqual(engineStub.calledOnce, true);
@@ -79,8 +75,8 @@ describe("Lumber", () => {
             LumberType.Metric,
             []);
 
-        lumber.addProperty(key1, value1)
-              .addProperty(key2, value2);
+        lumber.setProperty(key1, value1)
+              .setProperty(key2, value2);
 
         assert.strictEqual(lumber.properties.size, 2);
         assert.strictEqual(lumber.properties.has(key1), true);
@@ -103,12 +99,12 @@ describe("Lumber", () => {
             LumberType.Metric,
             []);
 
-        lumber.addProperties(mapProperties);
+        lumber.setProperties(mapProperties);
         assert.strictEqual(lumber.properties.size, 1);
         assert.strictEqual(lumber.properties.has(key1), true);
         assert.strictEqual(lumber.properties.get(key1), value1);
 
-        lumber.addProperties(recordProperties);
+        lumber.setProperties(recordProperties);
         assert.strictEqual(lumber.properties.size, 2);
         assert.strictEqual(lumber.properties.has("key2"), true);
         assert.strictEqual(lumber.properties.get("key2"), value2);
@@ -139,8 +135,8 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.has(key1), true);
         assert.strictEqual(lumber.properties.get(key1), value1);
 
-        lumber.addProperties(recordProperties)
-              .addProperties(extraMapProperties);
+        lumber.setProperties(recordProperties)
+              .setProperties(extraMapProperties);
 
         assert.strictEqual(lumber.properties.size, 3);
         assert.strictEqual(lumber.properties.has("key2"), true);
@@ -151,7 +147,6 @@ describe("Lumber", () => {
 
     it("Makes sure we cannot complete an already completed Lumber.", () => {
         const successMessage = "SuccessMessage";
-        const statusCode = 200;
         const engine = new TestEngine1();
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
@@ -161,12 +156,12 @@ describe("Lumber", () => {
 
         assert.strictEqual(lumber.successful, undefined);
 
-        lumber.success(successMessage, statusCode);
+        lumber.success(successMessage);
 
         assert.strictEqual(lumber.successful, true);
 
         try {
-            lumber.success(successMessage, statusCode);
+            lumber.success(successMessage);
         }
         catch (err) {
             assert.deepStrictEqual(engineStub.calledOnce, true);
@@ -178,7 +173,6 @@ describe("Lumber", () => {
 
     it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
         const successMessage = "SuccessMessage";
-        const statusCode = 200;
         const engine = new TestEngine1();
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
@@ -189,7 +183,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.successful, undefined);
 
         try {
-            lumber.success(successMessage, statusCode);
+            lumber.success(successMessage);
         }
         catch (err) {
             assert.fail("Lumber should have been allowed to complete if schema validation succeeded.");
@@ -198,7 +192,6 @@ describe("Lumber", () => {
 
     it("Makes sure we cannot complete Lumber if schema validation fails.", () => {
         const successMessage = "SuccessMessage";
-        const statusCode = 200;
         const engine = new TestEngine1();
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
@@ -209,7 +202,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.successful, undefined);
 
         try {
-            lumber.success(successMessage, statusCode);
+            lumber.success(successMessage);
         }
         catch (err) {
             return;

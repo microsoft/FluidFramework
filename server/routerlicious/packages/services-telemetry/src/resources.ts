@@ -25,6 +25,7 @@ export enum SchemaProperties {
     clientId = "clientId",
     sequenceNumber = "sequenceNumber",
     clientSequenceNumber = "clientSequenceNumber",
+    statusCode = "statusCode",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

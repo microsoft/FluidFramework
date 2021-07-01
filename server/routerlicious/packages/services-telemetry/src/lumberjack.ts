@@ -58,9 +58,8 @@ export class Lumberjack {
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        statusCode?: number | string,
         exception?: Error) {
-        this.instance.log(message, level, properties, statusCode, exception);
+        this.instance.log(message, level, properties, exception);
     }
 
     public setup(
@@ -98,7 +97,6 @@ export class Lumberjack {
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        statusCode?: number | string,
         exception?: Error) {
         this.errorOnIncompleteSetup();
         const lumber = new Lumber<string>(
@@ -109,9 +107,9 @@ export class Lumberjack {
             properties);
 
         if (level === LogLevel.Warning || level === LogLevel.Error) {
-            lumber.error(message, statusCode, exception, level);
+            lumber.error(message, exception, level);
         } else {
-            lumber.success(message, statusCode, level);
+            lumber.success(message, level);
         }
     }
 

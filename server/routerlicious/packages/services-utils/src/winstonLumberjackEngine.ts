@@ -17,10 +17,9 @@ export class WinstonLumberjackEngine implements ILumberjackEngine {
             id: lumber.id,
             properties: propObj,
             type: LumberType[lumber.type],
-            timestamp: lumber.timestamp,
+            timestamp: new Date(lumber.timestamp).toISOString(),
             durationInMs: lumber.durationInMs,
             successful: lumber.successful,
-            statusCode: lumber.statusCode,
             exception: lumber.exception,
         };
 
