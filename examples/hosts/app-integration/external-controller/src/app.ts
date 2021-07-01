@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 import { SharedMap } from "@fluid-experimental/fluid-framework";
-import { ContainerSchema } from "@fluid-experimental/fluid-static";
 import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 import { TinyliciousClient } from "@fluid-experimental/tinylicious-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
-import { FocusTracker } from "./FocusTracker";
-import { renderAudience, renderDiceRoller, renderFocusPresence } from "./view";
+import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
@@ -36,13 +34,12 @@ document.title = containerId;
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
-export const containerSchema: ContainerSchema = {
+export const containerSchema = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
         map1: SharedMap,
         map2: SharedMap,
-        focusTracker: FocusTracker,
     },
 };
 
@@ -52,10 +49,14 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
+
     const client = useFrs ? FrsClient :  new TinyliciousClient();
-    const [fluidContainer, containerServices] = createNew
+    const clientResources = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+
+    const { fluidContainer,containerServices } = { fluidContainer: clientResources.fluidContainer,
+        containerServices: clientResources.containerServices };
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
@@ -84,10 +85,6 @@ async function start(): Promise<void> {
 
     // Render the audience information for the members currently in the session
     renderAudience(containerServices.audience, contentDiv);
-
-    const focusTracker = fluidContainer.initialObjects.focusTracker as FocusTracker;
-    focusTracker.audience = containerServices.audience;
-    renderFocusPresence(focusTracker, contentDiv);
 }
 
 start().catch((error) => console.error(error));
