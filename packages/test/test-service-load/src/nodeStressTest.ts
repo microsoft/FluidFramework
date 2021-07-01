@@ -6,7 +6,6 @@
 import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { booleanCases } from "../../test-pairwise-generator/dist";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -20,7 +19,7 @@ async function main() {
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
-        .option("-b, --browserAuth", "Enables browser auth")
+        .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -57,7 +56,8 @@ async function orchestratorProcess(
     const testDriver = await createTestDriver(
         driver,
         seed,
-        undefined);
+        undefined,
+        args.browserAuth);
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
