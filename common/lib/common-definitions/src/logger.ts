@@ -41,7 +41,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  */
 export interface ITelemetryBaseLogger {
     /**
-     * @deprecated
+     * @deprecated deprecated
      */
     supportsTags?: true;
     send(event: ITelemetryBaseEvent): void;
