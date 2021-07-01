@@ -1,5 +1,20 @@
 # Change Log
 
+## 0.109.1
+
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
+
+## 0.109.0
+
+* improvement: reintroduce events for invalid/malformed SharedTree edits, use in tests
+  * Associated pull request: [30822](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30822)
+  * Commit: [de72f3656b83a4323210816c5056783796ff3262](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/de72f3656b83a4323210816c5056783796ff3262)
+* refactor: clarify mutability better in EditLog and related code
+  * Associated pull request: [30880](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30880)
+  * Commit: [051f8565ce3ea8899d7266ef7eb427509cc64ede](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/051f8565ce3ea8899d7266ef7eb427509cc64ede)
+
 ## 0.107.3
 
 * merge: 'releases/2021.05.4' into 'releases/2021.05.3'

@@ -66,6 +66,7 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
+	SharedTreeDiagnosticEvent,
 	Edit,
 	newEdit,
 	EditWithoutId,

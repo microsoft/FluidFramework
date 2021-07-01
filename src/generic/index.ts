@@ -11,6 +11,7 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
+	SharedTreeDiagnosticEvent,
 } from './GenericSharedTree';
 export {
 	Edit,

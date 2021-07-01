@@ -20,7 +20,7 @@ import { editsPerChunk, EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { Snapshot } from '../Snapshot';
 import { initialTree } from '../InitialTree';
-import { CachingLogViewer, LogViewer } from '../LogViewer';
+import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
 import { convertSummaryToReadFormat, deserialize, readFormatVersion } from '../SummaryBackCompatibility';
 import {
 	Edit,
@@ -29,6 +29,7 @@ import {
 	SharedTreeHandleOp,
 	EditWithoutId,
 	SharedTreeOp,
+	EditStatus,
 } from './PersistedTypes';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { GenericTransaction } from './GenericTransaction';
@@ -73,6 +74,27 @@ export enum SharedTreeDiagnosticEvent {
 	 * A single catch up blob has been uploaded.
 	 */
 	CatchUpBlobUploaded = 'uploadedCatchUpBlob',
+	/**
+	 * A valid edit (local or remote) has been applied.
+	 * Passed the EditId of the applied edit.
+	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
+	 * and/or due to not caching the output of every edit.
+	 */
+	AppliedEdit = 'appliedEdit',
+	/**
+	 * An invalid edit (local or remote) has been dropped.
+	 * Passed the EditId of the dropped edit.
+	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
+	 * and/or due to not caching the output of every edit.
+	 */
+	DroppedInvalidEdit = 'droppedInvalidEdit',
+	/**
+	 * A malformed edit (local or remote) has been dropped.
+	 * Passed the EditId of the dropped edit.
+	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
+	 * and/or due to not caching the output of every edit.
+	 */
+	DroppedMalformedEdit = 'droppedMalformedEdit',
 }
 
 /**
@@ -133,6 +155,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
 
+	private readonly processEditResult = (editResult: EditStatus, editId: EditId): void => {
+		// TODO:#44859: Invalid results should be handled by the app
+		this.emit(GenericSharedTree.eventFromEditResult(editResult), editId);
+	};
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
@@ -163,7 +190,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		runtime.on('disconnected', this.updateOldest);
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary, this.processEditResult);
 
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
@@ -256,7 +283,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
-	private async uploadEditChunk(edits: EditWithoutId<TChange>[], startRevision: number): Promise<void> {
+	private async uploadEditChunk(edits: readonly EditWithoutId<TChange>[], startRevision: number): Promise<void> {
 		try {
 			// TODO:#59965: Revert this change when merging back latest release branch into master
 			// const editHandle = await this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify({ edits })));
@@ -349,7 +376,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(summary);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(summary, this.processEditResult);
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
 
@@ -380,12 +407,21 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		}
 	}
 
+	private static eventFromEditResult(editStatus: EditStatus): SharedTreeDiagnosticEvent {
+		switch (editStatus) {
+			case EditStatus.Applied:
+				return SharedTreeDiagnosticEvent.AppliedEdit;
+			case EditStatus.Invalid:
+				return SharedTreeDiagnosticEvent.DroppedInvalidEdit;
+			default:
+				return SharedTreeDiagnosticEvent.DroppedMalformedEdit;
+		}
+	}
+
 	private createEditLogFromSummary(
-		summary: SharedTreeSummaryBase
-	): {
-		editLog: EditLog<TChange>;
-		cachingLogViewer: CachingLogViewer<TChange>;
-	} {
+		summary: SharedTreeSummaryBase,
+		callback: EditStatusCallback
+	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
 		if (typeof convertedSummary === 'string') {
 			fail(convertedSummary);
@@ -400,7 +436,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			// TODO:#47830: Store multiple checkpoints in summary.
 			[[editLog.length, { snapshot: currentView }]],
 			this.expensiveValidation,
-			undefined,
+			callback,
 			this.logger,
 			this.transactionFactory,
 			0
