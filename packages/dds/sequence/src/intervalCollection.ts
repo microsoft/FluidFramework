@@ -328,10 +328,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.map(fn);
     }
 
-    public createLegacyId(start: number, end: number): string {
+    public createLegacyId(): string {
         // Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
         // without ID's.
-        return `${start}-${end}`;
+        return `legacy`;
     }
 
     public ensureSerializedId(serializedInterval: ISerializedInterval) {
@@ -341,7 +341,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             serializedInterval.properties = MergeTree.addProperties(
                 serializedInterval.properties,
                 {
-                    [reservedIntervalIdKey]: this.createLegacyId(serializedInterval.start, serializedInterval.end),
+                    [reservedIntervalIdKey]: this.createLegacyId(),
                 },
             );
         }
@@ -521,6 +521,25 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const intervals = this.intervalTree.intervals.keys();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return intervals.map((interval) => interval.serialize(client));
+    }
+
+    /**
+     * @deprecated - This method only exists to support the deprecated IntervalCollection.delete(start, end).
+     */
+    public getLegacyInterval(start: number, end: number): TInterval | undefined {
+        const transientInterval: TInterval = this.helpers.create(
+            "transient",
+            start,
+            end,
+            this.client,
+            MergeTree.IntervalType.Transient,
+        );
+
+        transientInterval.addProperties({
+            [reservedIntervalIdKey]: this.createLegacyId(),
+        });
+
+        return this.intervalTree.intervals.get(transientInterval)?.key;
     }
 }
 
@@ -761,20 +780,23 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
             throw new Error("attach must be called prior to adding intervals");
         }
 
-        let seq = 0;
-        if (this.client) {
-            seq = this.client.getCurrentSeq();
+        const interval: TInterval = this.localCollection.addInterval(start, end, intervalType, props);
+
+        if (interval) {
+            const serializedInterval = {
+                end,
+                intervalType,
+                properties: interval.properties,
+                sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+                start,
+            };
+            // Local ops get submitted to the server. Remote ops have the deserializer run.
+            this.emitter.emit("add", undefined, serializedInterval);
         }
 
-        const serializedInterval: ISerializedInterval = {
-            end,
-            intervalType,
-            properties: props,
-            sequenceNumber: seq,
-            start,
-        };
+        this.emit("addInterval", interval, true, undefined);
 
-        return this.addInternal(serializedInterval, true, undefined);
+        return interval;
     }
 
     /**
@@ -788,8 +810,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
             throw new Error("attach must be called prior to deleting intervals");
         }
 
-        const id = this.localCollection.createLegacyId(start, end);
-        this.removeIntervalById(id);
+        const interval = this.localCollection.getLegacyInterval(start, end);
+        if (interval) {
+            this.deleteExistingInterval(interval, true, undefined);
+        }
     }
 
     private deleteExistingInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage) {
@@ -867,11 +891,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
             throw new Error("attachSequence must be called");
         }
 
-        if (!local) {
-            this.localCollection.ensureSerializedId(serializedInterval);
-        }
+        this.localCollection.ensureSerializedId(serializedInterval);
 
-        const interval = this.localCollection.addInterval(
+        const interval: TInterval = this.localCollection.addInterval(
             serializedInterval.start,
             serializedInterval.end,
             serializedInterval.intervalType,
@@ -880,6 +902,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
+                // Review: Is this case possible?
                 this.emitter.emit("add", undefined, serializedInterval);
             } else {
                 if (this.onDeserialize) {
