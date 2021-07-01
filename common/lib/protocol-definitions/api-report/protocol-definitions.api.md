@@ -473,7 +473,12 @@ export interface ISummaryHandle {
 }
 
 // @public
-export interface ISummaryNack extends IServerError {
+export interface ISummaryNack {
+    code?: number;
+    // @deprecated
+    errorMessage: string;
+    message?: string;
+    retryAfter?: number;
     summaryProposal: ISummaryProposal;
 }
 
