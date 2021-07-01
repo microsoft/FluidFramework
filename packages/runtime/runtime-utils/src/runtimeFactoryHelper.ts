@@ -15,7 +15,7 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const fromExisting = existing === undefined
             ? context.existing === true
-            : existing === true;
+            : existing;
         const runtime = await this.preInitialize(context, fromExisting);
 
         if (fromExisting) {
