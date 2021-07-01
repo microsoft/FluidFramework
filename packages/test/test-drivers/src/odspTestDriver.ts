@@ -88,15 +88,6 @@ export class OdspTestDriver implements ITestDriver {
         const emailServer = username.substr(username.indexOf("@") + 1);
         const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
 
-        const directoryParts = [config?.directory];
-
-        // if we are in a azure dev ops build use the build id in the dir path
-        if (process.env.BUILD_BUILD_ID !== undefined) {
-            directoryParts.push(process.env.BUILD_BUILD_ID);
-        } else {
-            directoryParts.push(os.hostname());
-        }
-
         return this.create(
             {
                 username,
@@ -104,7 +95,7 @@ export class OdspTestDriver implements ITestDriver {
                 server,
                 inAutomation: process.env.BUILD_BUILD_ID !== undefined,
             },
-            directoryParts.filter((p)=>p).join("/"),
+            config?.directory ?? "",
             api,
             config?.options,
         );
@@ -123,10 +114,18 @@ export class OdspTestDriver implements ITestDriver {
         }
 
         const driveId = await driveIdP;
+        const directoryParts = [directory];
+
+        // if we are in a azure dev ops build use the build id in the dir path
+        if (process.env.BUILD_BUILD_ID !== undefined) {
+            directoryParts.push(process.env.BUILD_BUILD_ID);
+        } else {
+            directoryParts.push(os.hostname());
+        }
 
         const driverConfig: IOdspTestDriverConfig = {
             ...tokenConfig,
-            directory,
+            directory: directoryParts.join("/"),
             driveId,
             options,
         };
