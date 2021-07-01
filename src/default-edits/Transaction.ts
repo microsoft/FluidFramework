@@ -17,6 +17,7 @@ import {
 	validateStableRange,
 	isDetachedSequenceId,
 } from './EditUtilities';
+
 /**
  * A mutable transaction for applying sequences of changes to a Snapshot.
  * Allows viewing the intermediate states.

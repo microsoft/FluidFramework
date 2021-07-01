@@ -95,12 +95,48 @@ export interface EditHandle {
 	readonly get: () => Promise<ArrayBufferLike>;
 }
 
-interface SequencedOrderedEditId {
-	readonly isLocal: false;
-	readonly index: number;
+/**
+ * Server-provided metadata for edits that have been sequenced.
+ */
+export interface EditSequencingInfo {
+	/**
+	 * The server-assigned sequence number of the op.
+	 */
+	readonly sequenceNumber: number;
+	/**
+	 * Last known sequenced edit at the time this op was issued.
+	 */
+	readonly referenceSequenceNumber: number;
 }
 
-interface LocalOrderedEditId {
+/**
+ * Server-provided metadata for edits that have been sequenced.
+ */
+export interface MessageSequencingInfo extends EditSequencingInfo {
+	/**
+	 * Last sequenced edit that all clients are guaranteed to be aware of.
+	 * If not specified, then some clients have not seen any edits yet.
+	 */
+	readonly minimumSequenceNumber?: number;
+}
+
+/**
+ * Metadata for a sequenced edit.
+ */
+export interface SequencedOrderedEditId {
+	readonly isLocal: false;
+	readonly index: number;
+	/**
+	 * Information about the edit's relationship to other sequenced edits.
+	 * Undefined iff the edit was loaded from a summary.
+	 */
+	readonly sequenceInfo?: EditSequencingInfo;
+}
+
+/**
+ * Metadata for a local edit.
+ */
+export interface LocalOrderedEditId {
 	readonly isLocal: true;
 	readonly localSequence: number;
 }
@@ -116,7 +152,10 @@ interface EditChunk<TChange> {
  */
 export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
 
-type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
+/**
+ * Metadata for an edit.
+ */
+export type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
 
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
@@ -154,12 +193,14 @@ export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, 
  */
 export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	private localEditSequence = 0;
+	private _minSequenceNumber = 0;
 
 	private readonly sequencedEditIds: EditId[];
 	private readonly editChunks: BTree<number, EditChunk<TChange>>;
 	private readonly localEdits: Edit<TChange>[] = [];
 
 	private readonly loadedChunkCache: number[] = [];
+	private readonly indexOfFirstEditInSession: number;
 	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
@@ -171,6 +212,20 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	 * The number of edits associated with each blob.
 	 */
 	public readonly editsPerChunk: number;
+
+	/**
+	 * @returns The index of the earliest edit available through `getEditInSessionAtIndex`.
+	 */
+	public get earliestAvailableEditIndex(): number {
+		return this.maximumEvictableIndex + 1;
+	}
+
+	/**
+	 * @returns The sequence number of the latest edit known by all nodes.
+	 */
+	public get minSequenceNumber(): number {
+		return this._minSequenceNumber;
+	}
 
 	/**
 	 * Construct an `EditLog` using the given options.
@@ -204,7 +259,9 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 		});
 
 		this.sequencedEditIds = editIds.slice();
-		this.maximumEvictableIndex = this.numberOfSequencedEdits - 1;
+
+		this.indexOfFirstEditInSession = this.numberOfSequencedEdits;
+		this.maximumEvictableIndex = this.indexOfFirstEditInSession - 1;
 
 		this.sequencedEditIds.forEach((id, index) => {
 			const encounteredEditId = this.allEditIds.get(id);
@@ -281,6 +338,13 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	}
 
 	/**
+	 * @returns Edit metadata for the edit with the given `editId`.
+	 */
+	public getOrderedEditId(editId: EditId): OrderedEditId {
+		return assertNotUndefined(this.allEditIds.get(editId), 'All edits should exist in this map');
+	}
+
+	/**
 	 * {@inheritDoc @intentional/shared-tree#OrderedEditSet.getIndexOfId}
 	 */
 	public getIndexOfId(editId: EditId): number {
@@ -350,6 +414,7 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 			);
 		}
 
+		assert(index - this.numberOfSequencedEdits < this.localEdits.length, 'Edit to retrieve must be in the log.');
 		return this.localEdits[index - this.numberOfSequencedEdits];
 	}
 
@@ -408,15 +473,50 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 	 * Sequences all local edits.
 	 */
 	public sequenceLocalEdits(): void {
-		this.localEdits.slice().forEach((edit) => this.addSequencedEdit(edit));
+		this.localEdits.slice().forEach((edit) => this.addSequencedEditInternal(edit));
+	}
+
+	/**
+	 * Adds a sequenced (non-local) edit to the edit log.
+	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
+	 *
+	 */
+	public addSequencedEdit(edit: Edit<TChange>, message: MessageSequencingInfo): void {
+		this.addSequencedEditInternal(edit, message, message.minimumSequenceNumber);
 	}
 
 	/**
 	 * Adds a sequenced (non-local) edit to the edit log.
 	 * If the id of the supplied edit matches a local edit already present in the log, the local edit will be replaced.
 	 */
-	public addSequencedEdit(edit: Edit<TChange>): void {
+	private addSequencedEditInternal(
+		edit: Edit<TChange>,
+		info?: EditSequencingInfo,
+		minSequenceNumber: number = 0
+	): void {
 		const { id, editWithoutId } = separateEditAndId(edit);
+
+		assert(
+			minSequenceNumber >= this.minSequenceNumber,
+			'Sequenced edits should carry a monotonically increasing min number'
+		);
+		// The new minSequenceNumber indicates that no future edit will require information from edits with a smaller or equal seq number
+		// for its resolution.
+		this._minSequenceNumber = minSequenceNumber;
+		// TODO:#57176: Increment maximumEvictableIndex to reflect the fact we can now evict edits with a sequenceNumber lower or equal to
+		// it. Note that this will change the meaning of our 'InSession' APIs so we should make sure to rename them at the same time.
+		// The code might look like this:
+		// while (this.maximumEvictableIndex + 1 < this.indexOfFirstEditInSession) {
+		// 	const nextEdit = this.getEditInSessionAtIndex(this.maximumEvictableIndex + 1);
+		// 	const nextEditInfo = this.getOrderedEditId(nextEdit.id) as SequencedOrderedEditId;
+		// 	if (
+		// 		nextEditInfo.sequenceInfo !== undefined &&
+		// 		nextEditInfo.sequenceInfo.sequenceNumber > minSequenceNumber
+		// 	) {
+		// 		break;
+		// 	}
+		// 	++this.maximumEvictableIndex;
+		// }
 
 		// Remove the edit from local edits if it exists.
 		const encounteredEditId = this.allEditIds.get(id);
@@ -452,7 +552,11 @@ export class EditLog<TChange> implements OrderedEditSet<TChange> {
 		}
 
 		this.sequencedEditIds.push(id);
-		const sequencedEditId: SequencedOrderedEditId = { index: this.numberOfSequencedEdits - 1, isLocal: false };
+		const sequencedEditId: SequencedOrderedEditId = {
+			index: this.numberOfSequencedEdits - 1,
+			isLocal: false,
+			sequenceInfo: info,
+		};
 		this.allEditIds.set(id, sequencedEditId);
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 	}

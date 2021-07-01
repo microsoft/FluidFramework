@@ -90,7 +90,9 @@ export function convertSummaryToReadFormat<TChange>(
 
 			// This saves all of the edits in the summary as part of the first chunk.
 			const temporaryLog = new EditLog<TChange>(undefined, undefined, maxChunkSize);
-			sequencedEdits.forEach((edit) => temporaryLog.addSequencedEdit(edit));
+			sequencedEdits.forEach((edit) =>
+				temporaryLog.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 })
+			);
 
 			return {
 				currentTree,

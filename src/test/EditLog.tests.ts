@@ -57,7 +57,7 @@ function createEditLogWithHandles(
 		return handle;
 	});
 
-	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined);
+	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined, editsPerChunkOnEditLog);
 
 	return editLog;
 }
@@ -153,7 +153,7 @@ describe('EditLog', () => {
 		const log = new EditLog();
 
 		log.addLocalEdit(edit1);
-		log.addSequencedEdit(edit0);
+		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
 
 		// Sequenced edits should be iterated before local edits
 		const expectedEditIdStack = [id1, id0];
@@ -168,11 +168,11 @@ describe('EditLog', () => {
 	it('can add sequenced edits', () => {
 		const log = new EditLog();
 
-		log.addSequencedEdit(edit0);
+		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
 
-		log.addSequencedEdit(edit1);
+		log.addSequencedEdit(edit1, { sequenceNumber: 2, referenceSequenceNumber: 1 });
 		expect(log.numberOfSequencedEdits).to.equal(2);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
 		expect(log.length).to.equal(2);
@@ -191,12 +191,28 @@ describe('EditLog', () => {
 		expect(log.length).to.equal(2);
 	});
 
+	it('tracks the min sequence number of sequenced edits', () => {
+		const log = new EditLog();
+
+		expect(log.minSequenceNumber).equals(0);
+		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
+		expect(log.minSequenceNumber).equals(0);
+		log.addSequencedEdit(edit1, { sequenceNumber: 43, referenceSequenceNumber: 42, minimumSequenceNumber: 42 });
+		expect(log.minSequenceNumber).equals(42);
+		expect(() =>
+			log.addSequencedEdit('fake-edit' as unknown as Edit<unknown>, {
+				sequenceNumber: 44,
+				referenceSequenceNumber: 43,
+			})
+		).throws('min number');
+	});
+
 	it('detects causal ordering violations', () => {
 		const log = new EditLog();
 
 		log.addLocalEdit(edit0);
 		log.addLocalEdit(edit1);
-		expect(() => log.addSequencedEdit(edit1)).throws('ordering');
+		expect(() => log.addSequencedEdit(edit1, { sequenceNumber: 1, referenceSequenceNumber: 0 })).throws('ordering');
 	});
 
 	it('can sequence a local edit', async () => {
@@ -208,7 +224,7 @@ describe('EditLog', () => {
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain local edit.');
 
-		log.addSequencedEdit(edit0);
+		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
 		expect(log.length).to.equal(1);
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
@@ -219,8 +235,8 @@ describe('EditLog', () => {
 
 	it('Throws on duplicate sequenced edits', async () => {
 		const log = new EditLog();
-		log.addSequencedEdit(edit0);
-		expect(() => log.addSequencedEdit(edit0))
+		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
+		expect(() => log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 }))
 			.to.throw(Error)
 			.that.has.property('message')
 			.which.matches(/Duplicate/);
@@ -284,12 +300,15 @@ describe('EditLog', () => {
 
 		for (let i = 0; i < log.editsPerChunk; i++) {
 			const edit = newEdit([]);
-			log.addSequencedEdit(edit);
+			log.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
 			expect(log.getEditLogSummary().editChunks.length).to.be.equal(1);
 		}
 
 		const edit = newEdit([]);
-		log.addSequencedEdit(edit);
+		log.addSequencedEdit(edit, {
+			sequenceNumber: log.editsPerChunk,
+			referenceSequenceNumber: log.editsPerChunk - 1,
+		});
 		expect(log.getEditLogSummary().editChunks.length).to.be.equal(2);
 	});
 
@@ -312,7 +331,10 @@ describe('EditLog', () => {
 
 		// Add a sequenced edit and check it's been added
 		const edit = newEdit([]);
-		log.addSequencedEdit(edit);
+		log.addSequencedEdit(edit, {
+			sequenceNumber: log.editsPerChunk,
+			referenceSequenceNumber: log.editsPerChunk - 1,
+		});
 
 		expect(log.getIdAtIndex(numberOfChunks * editsPerChunk)).to.equal(edit.id);
 	});

@@ -25,8 +25,9 @@ import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../.
 import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { Snapshot } from '../../Snapshot';
-import { SharedTree, Change, setTrait, StablePlace } from '../../default-edits';
+import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace } from '../../default-edits';
 import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
+import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
 import { SharedTreeDiagnosticEvent } from '../../generic/GenericSharedTree';
 
 /** Objects returned by setUpTestSharedTree */
@@ -134,9 +135,24 @@ export const testTrait: TraitLocation = {
 };
 
 /** Sets up and returns an object of components useful for testing SharedTree. */
-export function setUpTestSharedTree(
+export function setUpTestSharedTree(options?: SharedTreeTestingOptions): SharedTreeTestingComponents {
+	return setUpTestSharedTreeGeneric(SharedTree.getFactory, options);
+}
+
+/** Sets up and returns an object of components useful for testing SharedTreeWithAnchors. */
+export function setUpTestSharedTreeWithAnchors(
+	options?: SharedTreeTestingOptions
+): SharedTreeTestingComponents<SharedTreeWithAnchors> {
+	return setUpTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
+}
+
+function setUpTestSharedTreeGeneric<
+	TSharedTree extends SharedTree | SharedTreeWithAnchors,
+	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
+>(
+	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
 	options: SharedTreeTestingOptions = { localMode: true }
-): SharedTreeTestingComponents {
+): SharedTreeTestingComponents<TSharedTree> {
 	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
@@ -154,8 +170,8 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const factory = SharedTree.getFactory(options.summarizeHistory ?? true);
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
+	const factory = factoryGetter(options.summarizeHistory);
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -239,10 +255,32 @@ export interface LocalServerSharedTreeTestingOptions {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
+	return setUpLocalServerTestSharedTreeGeneric(SharedTree.getFactory, options);
+}
+
+/**
+ * Sets up and returns an object of components useful for testing SharedTreeWithAnchors with a local server.
+ * Required for tests that involve the uploadBlob API.
+ *
+ * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
+ */
+export async function setUpLocalServerTestSharedTreeWithAnchors(
+	options: LocalServerSharedTreeTestingOptions
+): Promise<LocalServerSharedTreeTestingComponents<SharedTreeWithAnchors>> {
+	return setUpLocalServerTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
+}
+
+async function setUpLocalServerTestSharedTreeGeneric<
+	TSharedTree extends SharedTree | SharedTreeWithAnchors,
+	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
+>(
+	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
+	options: LocalServerSharedTreeTestingOptions
+): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
 	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory } = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, SharedTree.getFactory(summarizeHistory)]];
+	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory)]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			addGlobalAgentSchedulerAndLeaderElection: false,
@@ -262,7 +300,7 @@ export async function setUpLocalServerTestSharedTree(
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
+	const tree = await dataObject.getSharedObject<TSharedTree>(treeId);
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);

@@ -5,10 +5,12 @@
 
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
 import { Change, ConstraintEffect, Insert, StablePlace, StableRange, Transaction } from '../default-edits';
 import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
 import { Snapshot } from '../Snapshot';
+import { EditId } from '../Identifiers';
 import { assert, noop } from '../Common';
 import { newEdit, Edit, EditStatus } from '../generic';
 import {
@@ -22,6 +24,7 @@ import {
 	simpleTestTree,
 	simpleTreeSnapshot,
 } from './utilities/TestUtilities';
+import { MockTransaction } from './utilities/MockTransaction';
 
 const simpleTreeNoTraits = { ...simpleTestTree, traits: {} };
 const simpleSnapshotNoTraits = Snapshot.fromTree(simpleTreeNoTraits);
@@ -29,11 +32,14 @@ const simpleSnapshotNoTraits = Snapshot.fromTree(simpleTreeNoTraits);
 function getSimpleLog(numEdits: number = 2): EditLog<Change> {
 	const log = new EditLog<Change>();
 	for (let i = 0; i < numEdits; i++) {
-		if (i % 2 === 0) {
-			log.addSequencedEdit(newEdit(Insert.create([left], StablePlace.atStartOf(leftTraitLocation))));
-		} else {
-			log.addSequencedEdit(newEdit(Insert.create([right], StablePlace.atStartOf(rightTraitLocation))));
-		}
+		log.addSequencedEdit(
+			newEdit(
+				i % 2 === 0
+					? Insert.create([left], StablePlace.atStartOf(leftTraitLocation))
+					: Insert.create([right], StablePlace.atStartOf(rightTraitLocation))
+			),
+			{ sequenceNumber: i + 1, referenceSequenceNumber: i }
+		);
 	}
 	return log;
 }
@@ -101,7 +107,7 @@ function runLogViewerCorrectnessTests(
 				// Revisions are from [0, simpleLog.length], edits are at indices [0, simpleLog.length)
 				if (i < simpleLog.length) {
 					const edit = simpleLog.getEditInSessionAtIndex(i);
-					mutableLog.addSequencedEdit(edit);
+					mutableLog.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
 				}
 			}
 		});
@@ -128,17 +134,22 @@ function runLogViewerCorrectnessTests(
 			const viewer = viewerCreator(logWithLocalEdits, simpleSnapshotNoTraits);
 			expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 
+			let seqNumber = 1;
 			// Sequence the existing local edits and ensure viewer generates the correct snapshots
 			while (logWithLocalEdits.numberOfLocalEdits > 0) {
 				// Add a remote sequenced edit
 				logWithLocalEdits.addSequencedEdit(
-					newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation)))
+					newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(rightTraitLocation))),
+					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
+				++seqNumber;
 				expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 				// Sequence a local edit
 				logWithLocalEdits.addSequencedEdit(
-					logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
+					logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits),
+					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 				);
+				++seqNumber;
 				expectSnapshotsAreEqual(logWithLocalEdits, viewer);
 			}
 		});
@@ -229,7 +240,8 @@ describe('CachingLogViewer', () => {
 		const log = getSimpleLog(2);
 		// Add an invalid edit
 		log.addSequencedEdit(
-			newEdit([Change.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0)])
+			newEdit([Change.constraint(StableRange.only(left), ConstraintEffect.InvalidAndDiscard, undefined, 0)]),
+			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
 		let editsProcessed = 0;
 		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleSnapshotNoTraits, () => editsProcessed++);
@@ -320,10 +332,13 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).to.equal(1);
 
 		editsProcessed = 0;
+		let seqNumber = 1;
 		while (logWithLocalEdits.numberOfLocalEdits > 0) {
 			logWithLocalEdits.addSequencedEdit(
-				logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits)
+				logWithLocalEdits.getEditInSessionAtIndex(logWithLocalEdits.numberOfSequencedEdits),
+				{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
 			);
+			++seqNumber;
 			await viewer.getSnapshot(logWithLocalEdits.numberOfSequencedEdits); // get the latest (just added) sequenced edit
 			await viewer.getSnapshot(Number.POSITIVE_INFINITY); // get the last snapshot, which is a local revision
 			expect(editsProcessed).to.equal(0);
@@ -347,7 +362,8 @@ describe('CachingLogViewer', () => {
 		// Remote edit arrives
 		editsProcessed = 0;
 		logWithLocalEdits.addSequencedEdit(
-			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)))
+			newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))),
+			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
 		viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).to.equal(logWithLocalEdits.numberOfLocalEdits + 1);
@@ -370,6 +386,7 @@ describe('CachingLogViewer', () => {
 			changes: edit.changes,
 			before,
 			after: arbitrarySnapshot,
+			steps: [],
 		});
 		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([true]);
@@ -389,6 +406,7 @@ describe('CachingLogViewer', () => {
 			changes: edit.changes,
 			before: arbitrarySnapshot,
 			after: arbitrarySnapshot,
+			steps: [],
 		});
 		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false]);
@@ -409,6 +427,7 @@ describe('CachingLogViewer', () => {
 			changes: edit.changes,
 			before,
 			after: arbitrarySnapshot,
+			steps: [],
 		});
 		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false]);
@@ -434,6 +453,7 @@ describe('CachingLogViewer', () => {
 			changes: edit2.changes,
 			before,
 			after: arbitrarySnapshot,
+			steps: [],
 		});
 		const after = viewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
 		expect(editsProcessed).deep.equal([false, true]);
@@ -483,7 +503,7 @@ describe('CachingLogViewer', () => {
 			const edit = addInvalidEdit(log);
 			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(0, 'Invalid local edit should not log telemetry');
-			log.addSequencedEdit(edit);
+			log.addSequencedEdit(edit, { sequenceNumber: 3, referenceSequenceNumber: 2 });
 			await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(1);
 		});
@@ -496,13 +516,134 @@ describe('CachingLogViewer', () => {
 			expect(events.length).equals(0);
 			for (let i = 0; i < numEdits; i++) {
 				const localEdit = localEdits[i];
-				log.addSequencedEdit(localEdit);
+				log.addSequencedEdit(localEdit, { sequenceNumber: i + 1, referenceSequenceNumber: 1 });
 				await viewer.getSnapshot(Number.POSITIVE_INFINITY);
 				expect(events.length).equals(i + 1);
 				const currentEvent = events[i];
 				expect(currentEvent.category).equals('generic');
 				expect(currentEvent.eventName).equals('InvalidSharedTreeEdit');
 			}
+		});
+	});
+
+	describe('Sequencing', () => {
+		function addFakeEdit(
+			logViewer: CachingLogViewer<unknown>,
+			sequenceNumber: number,
+			referenceSequenceNumber?: number
+		): Edit<unknown> {
+			const id = String(sequenceNumber ?? uuidv4()) as EditId;
+			const fakeChange = id;
+			const edit = { changes: [fakeChange], id };
+			logViewer.log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: referenceSequenceNumber ?? sequenceNumber - 1,
+			});
+			return edit;
+		}
+
+		function minimalLogViewer(): CachingLogViewer<unknown> {
+			return new CachingLogViewer(
+				new EditLog(),
+				undefined,
+				[],
+				/* expensiveValidation */ true,
+				undefined,
+				getMockLogger(),
+				MockTransaction.factory
+			);
+		}
+
+		it('tracks the earliest sequenced edit in the session', () => {
+			const logViewer = minimalLogViewer();
+			expect(logViewer.earliestSequencedEditInSession()).undefined;
+
+			// Non-sequenced edit
+			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			expect(logViewer.earliestSequencedEditInSession()).undefined;
+
+			// First sequenced edit
+			const edit = addFakeEdit(logViewer, 123);
+			const expected = { edit, sequenceNumber: 123 };
+			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+
+			// Non-sequenced edit
+			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+
+			// Second sequenced edit
+			addFakeEdit(logViewer, 456);
+			expect(logViewer.earliestSequencedEditInSession()).deep.equals(expected);
+		});
+
+		it('can provide edit results for sequenced edits', () => {
+			const logViewer = minimalLogViewer();
+			expect(logViewer.getEditResultFromSequenceNumber(42)).undefined;
+
+			// Non-sequenced edit
+			logViewer.log.addLocalEdit({ id: uuidv4() as EditId, changes: [] });
+			expect(logViewer.getEditResultFromSequenceNumber(42)).undefined;
+
+			// First sequenced edit
+			const edit1 = addFakeEdit(logViewer, 123);
+			expect(logViewer.getEditResultFromSequenceNumber(42)).undefined;
+			const expected1 = {
+				id: edit1.id,
+			};
+			expect(logViewer.getEditResultFromSequenceNumber(123)).contains(expected1);
+			// Check that when no such sequence number exists, the closest earlier edit is returned
+			expect(logViewer.getEditResultFromSequenceNumber(124)).contains(expected1);
+
+			// Second sequenced edit
+			// Note that this edit is given a greater sequence number than simply incrementing after edit 1.
+			// This is deliberately done to simulate scenarios where a given DDS may not be sent all sequenced ops (because an other DDS
+			// might be receiving them).
+			const edit2 = addFakeEdit(logViewer, 456);
+			expect(logViewer.getEditResultFromSequenceNumber(123)).contains(expected1);
+			// Check that when no such sequence number exists, the closest earlier edit is returned
+			expect(logViewer.getEditResultFromSequenceNumber(124)).contains(expected1);
+			const expected2 = {
+				id: edit2.id,
+			};
+			expect(logViewer.getEditResultFromSequenceNumber(456)).contains(expected2);
+			// Check that when no such sequence number exists, the closest earlier edit is returned
+			expect(logViewer.getEditResultFromSequenceNumber(457)).contains(expected2);
+		});
+
+		it('can provide the reconciliation path for an edit', () => {
+			const logViewer = minimalLogViewer();
+
+			function expectReconciliationPath(edit: Edit<unknown>, path: Edit<unknown>[]) {
+				const actual = logViewer.reconciliationPathFromEdit(edit.id);
+				expect(actual.length).equals(path.length);
+				for (let i = 0; i < path.length; ++i) {
+					expect(actual[i].length).equals(1);
+					expect(actual[i][0].resolvedChange).equals(path[i].id);
+				}
+			}
+
+			// Non-sequenced edit
+			const nonSeqEdit = { id: uuidv4() as EditId, changes: [] };
+			logViewer.log.addLocalEdit(nonSeqEdit);
+			expectReconciliationPath(nonSeqEdit, []);
+
+			const edit1 = addFakeEdit(logViewer, 1001);
+			expectReconciliationPath(edit1, []);
+
+			// Note that this edit is given a greater sequence number than simply incrementing after edit 1.
+			// This is deliberately done to simulate scenarios where a given DDS may not be sent all sequenced ops (because an other DDS
+			// might be receiving them).
+			const edit2 = addFakeEdit(logViewer, 2001, 1001);
+			expectReconciliationPath(edit2, [edit1]);
+
+			const edit3 = addFakeEdit(logViewer, 3001, 2001);
+			expectReconciliationPath(edit3, [edit2]);
+
+			const edit4 = addFakeEdit(logViewer, 4001, 2500);
+			expectReconciliationPath(edit4, [edit2, edit3]);
+
+			const edit5 = addFakeEdit(logViewer, 5001, 500);
+			expectReconciliationPath(edit5, [edit1, edit2, edit3, edit4]);
 		});
 	});
 });

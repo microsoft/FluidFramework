@@ -17,13 +17,16 @@ import {
 	fullHistorySummarizer,
 	serialize,
 	newEdit,
+	EditStatus,
 } from '../../generic';
 import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree } from '../../default-edits';
+import { CachingLogViewer } from '../../LogViewer';
 import { EditLog } from '../../EditLog';
 import { Snapshot } from '../../Snapshot';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
+import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -63,7 +66,7 @@ const undoRedoOptions = {
  * Runs a test suite for operations on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
+export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | SharedTreeWithAnchors>(
 	title: string,
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
@@ -166,6 +169,46 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					// we don't expect this edit application to change anything
 					tree.applyEdit(buildChild, buildParent, buildParent2);
 				});
+			});
+
+			// TODO:#58052: Make this test pass.
+			it.skip('prevents setting the value of a node in a detached subtree', () => {
+				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+				const detachedNode = makeEmptyNode();
+				const detachedSequenceId = 0 as DetachedSequenceId;
+				const editId = tree.applyEdit(
+					Change.build([detachedNode], detachedSequenceId),
+					Change.setPayload(detachedNode.identifier, 42),
+					Change.insert(detachedSequenceId, StablePlace.before(left))
+				);
+				const logViewer = tree.logViewer as CachingLogViewer<Change>;
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(editId)).status).equals(
+					EditStatus.Invalid
+				);
+				tree.currentView.assertConsistent();
+			});
+
+			// TODO:#58052: Make this test pass.
+			it.skip('prevents inserting a node in a detached subtree through a local edit', () => {
+				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
+				const detachedNewNode = makeEmptyNode();
+				const detachedNewNodeSequenceId = 0 as DetachedSequenceId;
+				const detachedRightNodeSequenceId = 1 as DetachedSequenceId;
+				const editId = tree.applyEdit(
+					Change.build([detachedNewNode], detachedNewNodeSequenceId),
+					Change.detach(StableRange.only(right), detachedRightNodeSequenceId),
+					// This change attempts to insert a node under a detached node
+					Change.insert(
+						detachedNewNodeSequenceId,
+						StablePlace.atStartOf({ parent: right.identifier, label: 'foo' as TraitLabel })
+					),
+					Change.insert(detachedRightNodeSequenceId, StablePlace.before(left))
+				);
+				const logViewer = tree.logViewer as CachingLogViewer<Change>;
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(editId)).status).equals(
+					EditStatus.Invalid
+				);
+				tree.currentView.assertConsistent();
 			});
 
 			it('prevents deletion of the root', () => {
@@ -362,6 +405,57 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				secondTree.editor.delete(left);
 				containerRuntimeFactory.processAllMessages();
 				expect(tree.equals(secondTree)).to.be.true;
+			});
+
+			// TODO:#58052: Make this test pass.
+			it.skip('prevents inserting a node in a detached subtree as the result of merged edits', () => {
+				const rootId = 'root' as NodeId;
+				const parent1Id = 'parent1' as NodeId;
+				const parent2Id = 'parent2' as NodeId;
+				const childId = 'child' as NodeId;
+				const childTraitUnderParent2 = { parent: parent2Id, label: 'child' as TraitLabel };
+				const badTraitUnderChild = { parent: childId, label: 'whatever' as TraitLabel };
+				const initialTree = {
+					...makeEmptyNode(rootId),
+					traits: {
+						parents: [
+							{
+								...makeEmptyNode(parent1Id),
+								traits: { child: [makeEmptyNode(childId)] },
+							},
+							makeEmptyNode(parent2Id),
+						],
+					},
+				};
+				const { tree: tree1, containerRuntimeFactory } = setUpTestSharedTree({
+					...treeOptions,
+					initialTree,
+					allowInvalid: true,
+				});
+				const { tree: tree2 } = setUpTestSharedTree({
+					containerRuntimeFactory,
+					...secondTreeOptions,
+					allowInvalid: true,
+				});
+				containerRuntimeFactory.processAllMessages();
+
+				// Move the child under parent2
+				// This first edit should succeed locally and globally
+				const edit1Id = tree1.editor.move(childId, StablePlace.atStartOf(childTraitUnderParent2));
+
+				// Concurrently move parent2 under child
+				// This first edit should succeed locally but fail globally
+				const edit2Id = tree2.editor.move(parent2Id, StablePlace.atStartOf(badTraitUnderChild));
+
+				containerRuntimeFactory.processAllMessages();
+				const logViewer = tree1.logViewer as CachingLogViewer<Change>;
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1Id)).status).equals(
+					EditStatus.Applied
+				);
+				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit2Id)).status).equals(
+					EditStatus.Invalid
+				);
+				tree1.currentView.assertConsistent();
 			});
 
 			it('tolerates invalid inserts', () => {

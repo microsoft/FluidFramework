@@ -207,6 +207,7 @@ export type EditId = UuidString & {
 export type EditingResult<TChange> = {
     readonly status: EditStatus.Invalid | EditStatus.Malformed;
     readonly changes: readonly TChange[];
+    readonly steps?: undefined;
     readonly before: Snapshot;
 } | ValidEditingResult<TChange>;
 
@@ -288,8 +289,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 // @public
 export abstract class GenericTransaction<TChange> {
     constructor(view: Snapshot);
-    applyChange(change: TChange): this;
-    applyChanges(changes: Iterable<TChange>): this;
+    applyChange(change: TChange, path?: ReconciliationPath<TChange>): this;
+    applyChanges(changes: Iterable<TChange>, path?: ReconciliationPath<TChange>): this;
     // (undocumented)
     protected readonly before: Snapshot;
     // (undocumented)
@@ -303,6 +304,10 @@ export abstract class GenericTransaction<TChange> {
     get status(): EditStatus;
     // (undocumented)
     protected _status: EditStatus;
+    // (undocumented)
+    protected readonly steps: ReconciliationChange<TChange>[];
+    // (undocumented)
+    protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined;
     protected abstract validateOnClose(): EditStatus;
     get view(): Snapshot;
     // (undocumented)
@@ -415,6 +420,26 @@ export type PlaceIndex = number & {
 
 // @public
 export function rangeFromStableRange(snapshot: Snapshot, range: StableRange): SnapshotRange;
+
+// @public
+export interface ReconciliationChange<TChange> {
+    readonly after: Snapshot;
+    readonly resolvedChange: TChange;
+}
+
+// @public
+export interface ReconciliationEdit<TChange> {
+    readonly [index: number]: ReconciliationChange<TChange>;
+    readonly after: Snapshot;
+    readonly before: Snapshot;
+    readonly length: number;
+}
+
+// @public
+export interface ReconciliationPath<TChange> {
+    readonly [index: number]: ReconciliationEdit<TChange>;
+    readonly length: number;
+}
 
 // @public
 export function revert(changes: readonly Change[], before: Snapshot): Change[];
@@ -693,6 +718,11 @@ export interface ValidEditingResult<TChange> {
     readonly changes: readonly TChange[];
     // (undocumented)
     readonly status: EditStatus.Applied;
+    // (undocumented)
+    readonly steps: readonly {
+        resolvedChange: TChange;
+        after: Snapshot;
+    }[];
 }
 
 

@@ -516,7 +516,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			const stringEdit = JSON.stringify(semiSerializedEdit);
 			const parsedEdit = this.serializer.parse(stringEdit);
 			const edit = parsedEdit as Edit<TChange>;
-			this.processSequencedEdit(edit);
+			this.processSequencedEdit(edit, message);
 		}
 	}
 
@@ -534,7 +534,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		// Do nothing
 	}
 
-	private processSequencedEdit(edit: Edit<TChange>): void {
+	private processSequencedEdit(edit: Edit<TChange>, message: ISequencedDocumentMessage): void {
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
 
@@ -548,7 +548,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			return;
 		}
 
-		this.editLog.addSequencedEdit(edit);
+		this.editLog.addSequencedEdit(edit, message);
 		if (!wasLocalEdit) {
 			const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
 				editId,
