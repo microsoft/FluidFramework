@@ -97,9 +97,10 @@ describeNoCompat("GC unreferenced flag validation in snapshot", (getTestObjectPr
     /**
      * Callback that will be called by the document storage service whenever a summary is uploaded by the client.
      */
-    function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext) {
+    function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
         latestUploadedSummary = summaryTree;
         latestSummaryContext = context;
+        return context;
     }
 
     /**

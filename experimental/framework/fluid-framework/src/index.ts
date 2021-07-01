@@ -6,6 +6,7 @@
 /* eslint-disable import/export */
 
 export * from  "./aqueduct";
+export * from  "./fluidStatic";
 export * from  "./map";
 export * from  "./mergeTree";
 export * from  "./sequence";

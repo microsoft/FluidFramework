@@ -45,8 +45,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     }
 
     [Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {
-         return this._contexts.entries();
-     }
+        return this._contexts.entries();
+    }
+
+    public get size(): number {
+        return this._contexts.size;
+    }
 
     public get disposed() { return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
