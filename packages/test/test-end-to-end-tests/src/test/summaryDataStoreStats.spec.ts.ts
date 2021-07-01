@@ -14,7 +14,7 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, ITestLoaderOptions } from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
@@ -70,6 +70,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;
     let summaryCollection: SummaryCollection;
+    let mockLogger: MockLogger;
 
     /**
      * Waits for a summary with the current state of the document (including all in-flight changes). It basically
@@ -92,15 +93,13 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         }
     }
 
-    const mockLogger = new MockLogger();
-    const options: ITestLoaderOptions = { logger: mockLogger };
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory, options);
+    const createContainer = async (logger): Promise<IContainer> => provider.createContainer(runtimeFactory, { logger });
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
-
+        mockLogger = new MockLogger();
         // Create a Container for the first client.
-        mainContainer = await createContainer();
+        mainContainer = await createContainer(mockLogger);
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
