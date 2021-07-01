@@ -41,7 +41,9 @@ export function generateRuntimeOptions(seed: number) {
         disableIsolatedChannels: booleanCases,
         generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
-        summaryConfigOverrides: [undefined],
+        summaryConfigOverrides: [{
+            maxAckWaitTime: 10 * 60 * 1000,
+        }],
         maxOpsSinceLastSummary: numberCases,
     };
 
