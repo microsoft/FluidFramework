@@ -1760,9 +1760,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error };
             }
 
-            // counting data stores and summarized data stores
+            // Counting dataStores and handles
+            // Because handles are unchanged dataStores in the current logic,
+            // summarized dataStore count is total dataStore count minus handle count
             const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
                 summarizeResult.summary.tree[channelsTreeName];
+
             assert(dataStoreTree.type === SummaryType.Tree, "summary is not a tree");
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
