@@ -16,7 +16,8 @@ import {
 
 // Lumberjack is a telemetry manager class that allows the collection of metrics and logs
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
-// by calling setupEngines() before Lumberjack can be used.
+// by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
+// An optional ILumberjackSchemaValidator can be provided to validate the schema of the data.
 export class Lumberjack {
     private readonly _engineList: ILumberjackEngine[] = [];
     private _schemaValidator: ILumberjackSchemaValidator | undefined;
