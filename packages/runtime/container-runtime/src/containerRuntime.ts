@@ -160,6 +160,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats{
     dataStoreCount: number;
     summarizedDataStoreCount: number;
 }
+
 export interface IGeneratedSummaryData {
     readonly summaryStats: IGeneratedSummaryStats;
     readonly generateDuration?: number;

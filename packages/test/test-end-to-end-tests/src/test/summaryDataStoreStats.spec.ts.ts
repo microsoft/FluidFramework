@@ -84,9 +84,8 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     }
 
     function getGenerateSummaryEvent(sequenceNumber: number): ITelemetryBaseEvent | undefined {
-        const events = mockLogger.events;
-        for (const event of events) {
-            if(event.eventName === "fluid:telemetry:Summarizer:Running:GenerateSummary" &&
+        for (const event of mockLogger.events) {
+            if (event.eventName === "fluid:telemetry:Summarizer:Running:GenerateSummary" &&
                 event.refSequenceNumber ? event.refSequenceNumber >= sequenceNumber : false) {
                 return event;
             }
