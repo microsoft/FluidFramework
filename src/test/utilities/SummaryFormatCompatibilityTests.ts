@@ -148,7 +148,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Check the newly written summary is equivalent to its corresponding test summary file.
 								// This assumes the input file is normalized (that summarizing it produces an identical output).
 								// TODO: Add support for testing de-normalized files, such as files with empty traits.
-								// Re-stringify the the JSON file to remove escaped characters
 								const expectedSummary = JSON.parse(summaryFileContents[writeVersion]);
 
 								expect(newSummary).to.deep.equal(expectedSummary);
