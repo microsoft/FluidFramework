@@ -35,14 +35,6 @@ class TestDataObject extends DataObject {
     }
 }
 
-function getEvent(events: ITelemetryBaseEvent[], sequenceNumber: number): any {
-    for (const event of events) {
-        if(event.eventName === "fluid:telemetry:Summarizer:Running:GenerateSummary" &&
-            event.refSequenceNumber ? event.refSequenceNumber >= sequenceNumber : false) {
-            return event;
-        }
-    }
-}
 describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
@@ -83,14 +75,23 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     /**
      * Waits for a summary with the current state of the document (including all in-flight changes). It basically
      * synchronizes all containers and waits for a summary that contains the last processed sequence number.
-     * @returns the version of this summary. This version can be used to load a Container with the summary associated
-     * with it.
+     * @returns the sequence number of the summary
      */
      async function waitForSummary(): Promise<number> {
         await provider.ensureSynchronized();
-        const num = mainContainer.deltaManager.lastSequenceNumber;
-        await summaryCollection.waitSummaryAck(num);
-        return num;
+        const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
+        await summaryCollection.waitSummaryAck(sequenceNumber);
+        return sequenceNumber;
+    }
+
+    function getGenerateSummaryEvent(sequenceNumber: number): ITelemetryBaseEvent | undefined {
+        const events = mockLogger.events;
+        for (const event of events) {
+            if(event.eventName === "fluid:telemetry:Summarizer:Running:GenerateSummary" &&
+                event.refSequenceNumber ? event.refSequenceNumber >= sequenceNumber : false) {
+                return event;
+            }
+        }
     }
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
@@ -126,11 +127,10 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         // Wait for summary that contains the above set.
         const sequenceNumber = await waitForSummary();
 
-        const events = mockLogger.events;
-        const summaryEvent = getEvent(events, sequenceNumber);
-
-        assert(summaryEvent.dataStoreCount === 2, "wrong data store count");
-        assert(summaryEvent.summarizedDataStoreCount === 2, "summarized data store count is wrong");
+        const summaryEvent = getGenerateSummaryEvent(sequenceNumber);
+        assert(summaryEvent !== undefined, "generate summary event is undefined");
+        assert.strictEqual(summaryEvent.dataStoreCount, 2, "wrong data store count");
+        assert.strictEqual(summaryEvent.summarizedDataStoreCount, 2, "summarized data store count is wrong");
     });
 
     it("should generate correct summary stats with changed and unchanged data stores", async () => {
@@ -149,30 +149,31 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
         // Wait for summary that contains the above set.
         let sequenceNumber = await waitForSummary();
-        let summaryEvent = getEvent(mockLogger.events, sequenceNumber);
-
-        assert(summaryEvent.dataStoreCount === 6, "wrong data store count");
-        assert(summaryEvent.summarizedDataStoreCount === 6, "summarized data store count is wrong");
+        let summaryEvent = getGenerateSummaryEvent(sequenceNumber);
+        assert(summaryEvent !== undefined, "generate summary event is undefined");
+        assert.strictEqual(summaryEvent.dataStoreCount, 6, "wrong data store count");
+        assert.strictEqual(summaryEvent.summarizedDataStoreCount, 6, "summarized data store count is wrong");
 
         mainDataStore._root.delete("dataStore2");
 
         sequenceNumber = await waitForSummary();
-        summaryEvent = getEvent(mockLogger.events, sequenceNumber);
-
+        summaryEvent = getGenerateSummaryEvent(sequenceNumber);
+        assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
-        assert(summaryEvent.dataStoreCount === 6, "wrong data store count");
+        assert.strictEqual(summaryEvent.dataStoreCount, 6, "wrong data store count");
         // default and dataStore2
-        assert(summaryEvent.summarizedDataStoreCount === 2, "summarized data store count is wrong");
+        assert.strictEqual(summaryEvent.summarizedDataStoreCount, 2, "summarized data store count is wrong");
 
         mainDataStore._root.delete("dataStore3");
         mainDataStore._root.delete("dataStore4");
         mainDataStore._root.delete("dataStore5");
 
         sequenceNumber = await waitForSummary();
-        summaryEvent = getEvent(mockLogger.events, sequenceNumber);
+        summaryEvent = getGenerateSummaryEvent(sequenceNumber);
+        assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
-        assert(summaryEvent.dataStoreCount === 6, "wrong data store count");
+        assert.strictEqual(summaryEvent.dataStoreCount, 6, "wrong data store count");
         // all except dataStore2 and dataStore6
-        assert(summaryEvent.summarizedDataStoreCount === 4, "summarized data store count is wrong");
+        assert.strictEqual(summaryEvent.summarizedDataStoreCount, 4, "summarized data store count is wrong");
     });
 });
