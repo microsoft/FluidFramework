@@ -51,7 +51,7 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
-    const [fluidContainer, containerServices] = createNew
+    const { fluidContainer, containerServices } = createNew
         ? await client.createContainer({ id: containerId }, containerSchema)
         : await client.getContainer({ id: containerId }, containerSchema);
 

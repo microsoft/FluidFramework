@@ -8,8 +8,9 @@ import { IEvent } from "@fluidframework/common-definitions";
 import {
     DataObject,
     DataObjectFactory,
+    IMember,
+    IServiceAudience,
 } from "@fluid-experimental/fluid-framework";
-import { IMember, IServiceAudience } from "@fluid-experimental/fluid-static";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 export interface IFocusTrackerEvents extends IEvent {
