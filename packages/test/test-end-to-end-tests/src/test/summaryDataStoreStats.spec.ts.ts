@@ -14,13 +14,12 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, ITestLoaderOptions } from "@fluidframework/test-utils";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
-const _global: any = global;
 class TestDataObject extends DataObject {
     public get _root() {
         return this.root;
@@ -94,13 +93,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         }
     }
 
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
-
-    let mockLogger: MockLogger;
+    const mockLogger = new MockLogger();
+    const options: ITestLoaderOptions = { logger: mockLogger };
+    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory, options);
 
     beforeEach(async () => {
-        mockLogger = new MockLogger();
-        _global.getTestLogger = () => mockLogger;
         provider = getTestObjectProvider();
 
         // Create a Container for the first client.
