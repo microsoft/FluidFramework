@@ -111,12 +111,6 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
-/**
- * To be included in the `IClientDetails.environment` value for the `IRequest` header
- * if the client must be able to create a container at load when a snapshot is not available.
- */
-export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
-
 export interface IContainerLoadOptions {
     /**
      * Disables the Container from reconnecting if false, allows reconnect otherwise.
@@ -1116,13 +1110,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - one of the following
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param create - create the container when there is no snapshot.
+     * @param createIfNotExisting - create the container when there is no container to load.
      */
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown,
-        create?: boolean,
+        createIfNotExisting?: boolean,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1198,7 +1192,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // THIS IS LEGACY PATH
             // The code is maintained for the snapshot back compat tests
             //
-            assert(create === true, "Snapshot should already exist");
+            assert(createIfNotExisting === true, "Snapshot should already exist");
 
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
