@@ -52,12 +52,26 @@ export class OdspTestDriver implements ITestDriver {
     private static readonly driverIdPCache = new Map<string, Promise<string>>();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
-        const accessToken = await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig);
+        try{
+            return await getDriveId(server,"",undefined,
+                {
+                    accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
+                    refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+                });
+        }catch(ex) {
+            if(tokenConfig.inAutomation === true) {
+                throw ex;
+            }
+        }
+
+        // try browser re-auth
+        const browserConfig = {...tokenConfig, browserReauth: true};
         return getDriveId(
-            server,
-            "",
-            undefined,
-            { accessToken});
+            server,"",undefined,
+            {
+                accessToken: await this.getStorageToken({ siteUrl, refresh: false }, browserConfig),
+                refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, browserConfig),
+            });
     }
 
     public static async createFromEnv(
@@ -125,39 +139,34 @@ export class OdspTestDriver implements ITestDriver {
 
     private static async getStorageToken(
         options: OdspResourceTokenFetchOptions,
-        config: IOdspTestLoginInfo & IClientConfig,
+        config: IOdspTestLoginInfo & IClientConfig & {browserReauth?: boolean},
     ) {
         const hostname = new URL(options.siteUrl).hostname;
-        try{
-            // This function can handle token request for any multiple sites.
-            // Where the test driver is for a specific site.
-            const tokens = await this.odspTokenManager.getOdspTokens(
-                new URL(options.siteUrl).hostname,
+        if(config.browserReauth === true) {
+            await this.odspTokenManager.getOdspTokens(
+                hostname,
                 config,
-                passwordTokenConfig(config.username, config.password),
+                {
+                    type: "browserLogin",
+                    navigator: (openUrl)=>{
+                        // eslint-disable-next-line max-len
+                        console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
+                        console.log(`"${openUrl}"`);
+                    },
+                },
+                options.refresh,
                 options.refresh,
             );
-            return tokens.accessToken;
-        }catch(ex) {
-            if(config.inAutomation === true) {
-                throw ex;
-            }
         }
-        const browserTokens = await this.odspTokenManager.getOdspTokens(
-            hostname,
+        // This function can handle token request for any multiple sites.
+        // Where the test driver is for a specific site.
+        const tokens = await this.odspTokenManager.getOdspTokens(
+            new URL(options.siteUrl).hostname,
             config,
-            {
-                type: "browserLogin",
-                navigator: (openUrl)=>{
-                    // eslint-disable-next-line max-len
-                    console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
-                    console.log(`"${openUrl}"`);
-                },
-            },
-            true,
-            true,
+            passwordTokenConfig(config.username, config.password),
+            options.refresh,
         );
-        return browserTokens.accessToken;
+        return tokens.accessToken;
     }
 
     public readonly type = "odsp";
