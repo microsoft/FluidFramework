@@ -220,6 +220,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+    // @deprecated (undocumented)
     supportsTags?: true;
 }
 
