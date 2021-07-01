@@ -27,11 +27,13 @@
 		"eslint:fix": "eslint src --fix",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
+		"perf": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ./.mocharc.js --expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"test": "npm run test:mocha",
 		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ../../.mocharc.js --unhandled-rejections=strict",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {
+		"@fluid-tools/benchmark": "^0.40.27919",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^0.30.0",
 		"@fluidframework/container-definitions": "^0.39.4",
