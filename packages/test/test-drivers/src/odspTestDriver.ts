@@ -35,7 +35,7 @@ export interface IOdspTestLoginInfo {
     server: string;
     username: string;
     password: string;
-    inAutomation?: boolean;
+    supportsBrowserAuth?: boolean
 }
 
 type TokenConfig = IOdspTestLoginInfo & IClientConfig;
@@ -59,23 +59,21 @@ export class OdspTestDriver implements ITestDriver {
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
                 });
         }catch(ex) {
-            if(tokenConfig.inAutomation === true) {
+            if(tokenConfig.supportsBrowserAuth !== true) {
                 throw ex;
             }
         }
-
-        // try browser re-auth
-        const browserConfig = {...tokenConfig, browserReauth: true};
         return getDriveId(
             server,"",undefined,
             {
-                accessToken: await this.getStorageToken({ siteUrl, refresh: false }, browserConfig),
-                refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, browserConfig),
+                accessToken: await this.getStorageToken({ siteUrl, refresh: false, useBrowserAuth: true }, tokenConfig),
+                refreshTokenFn:
+                    async () => this.getStorageToken({ siteUrl, refresh: true, useBrowserAuth: true }, tokenConfig),
             });
     }
 
     public static async createFromEnv(
-        config?: { directory?: string, username?: string, options?: HostStoragePolicy },
+        config?: { directory?: string, username?: string, options?: HostStoragePolicy, supportsBrowserAuth?: boolean },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
         const loginAccounts = process.env.login__odsp__test__accounts;
@@ -93,7 +91,7 @@ export class OdspTestDriver implements ITestDriver {
                 username,
                 password: passwords[username],
                 server,
-                inAutomation: process.env.BUILD_BUILD_ID !== undefined,
+                supportsBrowserAuth: config?.supportsBrowserAuth,
             },
             config?.directory ?? "",
             api,
@@ -137,12 +135,12 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private static async getStorageToken(
-        options: OdspResourceTokenFetchOptions,
-        config: IOdspTestLoginInfo & IClientConfig & {browserReauth?: boolean},
+        options: OdspResourceTokenFetchOptions & {useBrowserAuth?: boolean},
+        config: IOdspTestLoginInfo & IClientConfig,
     ) {
         const hostname = new URL(options.siteUrl).hostname;
-        if(config.browserReauth === true) {
-            await this.odspTokenManager.getOdspTokens(
+        if(options.useBrowserAuth === true) {
+            const browserTokens = await this.odspTokenManager.getOdspTokens(
                 hostname,
                 config,
                 {
@@ -150,12 +148,14 @@ export class OdspTestDriver implements ITestDriver {
                     navigator: (openUrl)=>{
                         // eslint-disable-next-line max-len
                         console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
+                        // eslint-disable-next-line max-len
+                        console.log(`Additional account details may be available in the environment variable login__odsp__test__accounts`);
                         console.log(`"${openUrl}"`);
                     },
                 },
                 options.refresh,
-                options.refresh,
             );
+            return browserTokens.accessToken;
         }
         // This function can handle token request for any multiple sites.
         // Where the test driver is for a specific site.

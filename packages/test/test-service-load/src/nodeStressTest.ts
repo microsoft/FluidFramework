@@ -6,6 +6,7 @@
 import child_process from "child_process";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { booleanCases } from "../../test-pairwise-generator/dist";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
@@ -19,6 +20,7 @@ async function main() {
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
+        .option("-b, --browserAuth", "Enables browser auth")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -28,6 +30,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const verbose: true | undefined = commander.verbose;
     const seed: number | undefined = commander.seed;
+    const browserAuth: true | undefined = commander.browserAuth;
 
     const profile = getProfile(profileArg);
 
@@ -38,7 +41,7 @@ async function main() {
     await orchestratorProcess(
             driver,
             { ...profile, name: profileArg },
-            { testId, debug, verbose, seed });
+            { testId, debug, verbose, seed, browserAuth });
 }
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -46,7 +49,7 @@ async function main() {
 async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string },
-    args: { testId?: string, debug?: true, verbose?: true, seed?: number },
+    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
 ) {
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
