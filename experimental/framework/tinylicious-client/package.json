@@ -45,7 +45,6 @@
   },
   "devDependencies": {
     "@fluid-example/diceroller": "^0.43.0",
-    "@fluid-experimental/fluid-framework": "^0.42.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/assert": "^1.5.2",
     "@types/mocha": "^8.2.2",
