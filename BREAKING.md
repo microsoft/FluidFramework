@@ -23,7 +23,7 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 
 ### Creating new containers with Container.load has been deprecated
 - `Container.load` with inexistent files will fail instead of creating a new container. Going forward, please use `Container.createDetached` for this scenario.
-- To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load`.
+- To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load` (see `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader`).
 
 ### Changes to client-api
 - The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
