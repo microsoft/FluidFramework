@@ -8,11 +8,15 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
+export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
-    public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
+    public async instantiateRuntime(
+        context: IContainerContext,
+        existing?: boolean,
+    ): Promise<IRuntime & IContainerRuntime> {
         const fromExisting = existing === undefined
             ? context.existing === true
             : existing;
@@ -28,8 +32,8 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
         return runtime;
     }
 
-    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
-    public async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
-    public async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
-    public async hasInitialized(runtime: IRuntime): Promise<void> {}
+    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<T>;
+    public async instantiateFirstTime(_runtime: T): Promise<void> {}
+    public async instantiateFromExisting(_runtime: T): Promise<void> {}
+    public async hasInitialized(_runtime: T): Promise<void> {}
 }
