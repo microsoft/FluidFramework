@@ -13,12 +13,10 @@ import { convertBinaryFormatToOdspSnapshot } from "../compactToOdspSnapshotConve
 import { convertOdspSnapshotToCompactSnapshot } from "../odspSnapshotToCompactSnapshotConverter";
 
 const snapshotTree: ISnapshotTree = {
-    id: "id",
     blobs: {},
     commits: {},
     trees: {
         ".protocol": {
-                id: "id",
                 blobs: {
                 attributes: "bARADgIe4qmDjJl2l2zz12IM3",
                 quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
@@ -28,17 +26,14 @@ const snapshotTree: ISnapshotTree = {
                 trees: {},
         },
         ".app": {
-                id: "id",
                 blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
                 commits: {},
                 trees: {
                     ".channels": {
-                            id: "id",
                             blobs: {},
                             commits: {},
                             trees: {
                                 default: {
-                                        id: "id",
                                         blobs: {
                                             ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
                                             "gc": "bARDNMoBed+nKrsf04id52iUA",
@@ -46,18 +41,17 @@ const snapshotTree: ISnapshotTree = {
                                         commits: {},
                                         trees: {
                                             ".channels": {
-                                                id: "id",
                                                 blobs: {},
                                                 commits: {},
                                                 trees: {
-                                                    root: { id: "id", blobs: {}, commits: {}, trees: {} },
+                                                    root: { blobs: {}, commits: {}, trees: {} },
                                                 },
                                             },
                                         },
                                 },
                             },
                     },
-                    ".blobs": { id: "id", blobs: {}, commits: {}, trees: {} },
+                    ".blobs": { blobs: {}, commits: {}, trees: {} },
                 },
         },
     },
