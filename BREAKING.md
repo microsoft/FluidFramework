@@ -4,7 +4,7 @@
 - [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
 - [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
-- [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-container.load-has-been-deprecated)
+- [Creating new containers with `Container.load` has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
 - [Changes to client-api](#changes-to-client-api)
 
 ### TinyliciousClient no longer static
