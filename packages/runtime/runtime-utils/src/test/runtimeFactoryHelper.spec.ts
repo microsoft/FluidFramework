@@ -10,7 +10,7 @@ import { RuntimeFactoryHelper } from "../runtimeFactoryHelper";
 
 class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
     constructor(
-        private readonly runtime: IRuntime,
+        private readonly runtime: IRuntime & IContainerRuntime,
     ) {
         super();
     }
@@ -26,7 +26,7 @@ class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
 describe("RuntimeFactoryHelper", () => {
     const sandbox: Sinon.SinonSandbox = Sinon.createSandbox();
     const context: Partial<IContainerContext> = {};
-    const runtime: Partial<IRuntime> = {};
+    const runtime: Partial<IRuntime & IContainerRuntime> = {};
     let helper: TestRuntimeFactoryHelper;
     let unit: Sinon.SinonMock;
 
