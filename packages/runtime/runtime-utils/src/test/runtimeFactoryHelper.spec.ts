@@ -31,7 +31,7 @@ describe("RuntimeFactoryHelper", () => {
     let unit: Sinon.SinonMock;
 
     beforeEach(() => {
-        helper = new TestRuntimeFactoryHelper(runtime as IRuntime);
+        helper = new TestRuntimeFactoryHelper(runtime as IRuntime & IContainerRuntime);
         unit = sandbox.mock(helper);
         unit.expects("preInitialize").once();
         unit.expects("hasInitialized").once();
