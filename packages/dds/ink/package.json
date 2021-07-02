@@ -61,7 +61,6 @@
     "@fluidframework/driver-utils": "^0.43.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/shared-object-base": "^0.43.0",
-    "assert": "^2.0.0",
     "debug": "^4.1.1",
     "uuid": "^8.3.1"
   },
@@ -71,7 +70,6 @@
     "@fluidframework/mocha-test-setup": "^0.43.0",
     "@fluidframework/test-runtime-utils": "^0.43.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/assert": "^1.5.2",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
