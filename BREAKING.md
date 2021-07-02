@@ -4,14 +4,14 @@
 - [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
 - [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
-- [Creating new containers with `Container.load` has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
 - [Changes to client-api](#changes-to-client-api)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
 
 ### Property removed from the Container class
-- the `existing` property from `Container` has been removed.
+- the `existing` property from `Container` has been removed. The caller should differentiate on how the container has been created (`Container.load` vs `Container.createDetached`). See also [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated).
 
 ### Routerlicious Driver DeltaStorageService constructor changed
 `DeltaStorageService` from `@fluidframework/routerlicious-driver` now takes a `RestWrapper` as the second constructor parameter, rather than a TokenProvider.

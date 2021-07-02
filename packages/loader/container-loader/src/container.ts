@@ -132,6 +132,8 @@ export interface IContainerLoadOptions {
     /**
      * Create the container on load, without an existing snapshot.
      * Used only for supporting legacy scenarios.
+     *
+     * @deprecated - avoid using this flow, this property is only for temporarily supporting a legacy scenario.
      */
     createOnLoad?: boolean;
 }
@@ -1111,6 +1113,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
      * @param createIfNotExisting - create the container when there is no container to load.
+     *        Avoid using this flag, its goal is temporarily supporting a legacy scenario.
      */
     private async load(
         specifiedVersion: string | undefined,
