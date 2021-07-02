@@ -1195,7 +1195,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // THIS IS LEGACY PATH
             // The code is maintained for the snapshot back compat tests
             //
-            assert(createIfNotExisting === true, "Snapshot should already exist");
+            assert(createIfNotExisting === true, 0x1fb /* "Snapshot should already exist" */);
 
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
