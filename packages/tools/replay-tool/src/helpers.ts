@@ -112,6 +112,7 @@ class UnknownChannel implements IChannel {
                 blobNodeCount: 0,
                 handleNodeCount: 0,
                 totalBlobSize: 0,
+                unreferencedBlobSize: 0,
             },
             summary: {
                 type: SummaryType.Tree,

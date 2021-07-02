@@ -14,40 +14,43 @@ import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-function messageFromError(error: any): string {
-    if (typeof error?.message === "string") {
-        return error.message as string;
-    }
-    return String(error);
-}
-
 /** type guard to ensure it's a LoggingError and also implements IErrorBase */
 const isValidLoggingError = (error: any): error is LoggingError & IErrorBase => {
     return (typeof error?.errorType === "string") && LoggingError.is(error);
 };
 
-const isRegularObject = (value: any): boolean => {
-    return value !== null && !Array.isArray(value) && typeof value === "object";
-};
-
-// TODO: move this elsewhere and use in TelemetryLogger.prepareErrorObject
 function extractLogSafeErrorProperties(error: any) {
-    // Only get properties we know about.
-    // Grabbing all properties will expose PII in telemetry!
-    const message = messageFromError(error);
+    const isRegularObject = (value: any): boolean => {
+        return value !== null && !Array.isArray(value) && typeof value === "object";
+    };
+
+    const removeMessageFromStack = (stack: string, errorName?: string) => {
+        const stackFrames = stack.split("\n");
+        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+        if (errorName !== undefined) {
+            stackFrames.unshift(errorName); // Add "[ErrorName]"
+        }
+        return stackFrames.join("\n");
+    };
+
+    const message = (typeof error?.message === "string")
+        ? error.message as string
+        : String(error);
+
     const safeProps: { message: string; errorType?: string; stack?: string } = {
         message,
     };
 
     if (isRegularObject(error)) {
-        const { errorType, stack } = error;
+        const { errorType, stack, name } = error;
 
         if (typeof errorType === "string") {
             safeProps.errorType = errorType;
         }
 
         if (typeof stack === "string") {
-            safeProps.stack = stack;
+            const errorName = (typeof name === "string") ? name : undefined;
+            safeProps.stack = removeMessageFromStack(stack, errorName);
         }
     }
 

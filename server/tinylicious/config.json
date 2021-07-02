@@ -36,8 +36,12 @@
         "inMemory": true,
         "path": "/var/tmp/db"
     },
+    "moira": {
+        "enable": false,
+        "endpoint": "http://localhost:3070"
+    },
     "error": {
         "track": false,
-        "endpoint" : ""
+        "endpoint": ""
     }
 }

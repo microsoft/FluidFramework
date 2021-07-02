@@ -1,9 +1,11 @@
 ## 0.43 Breaking changes
 
 - [TinyliciousClient no longer static](#TinyliciousClient-no-longer-static)
+- [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
+- [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
-- [The legacy way of creating containers has been deprecated](#The-legacy-way-of-creating-containers-has-been-deprecated)
-- [The legacy way of creating documents has been deprecated](#The-legacy-way-of-creating-documents-has-been-deprecated)
+- [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-container.load-has-been-deprecated)
+- [Changes to client-api](#changes-to-client-api)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
@@ -11,14 +13,20 @@
 ### Property removed from the Container class
 - the `existing` property from `Container` has been removed.
 
-### The legacy way of creating containers has been deprecated
-- When using `Container.load` to create a container as a fallback when the snapshot does not exist has been deprecated and is no longer supported.
-- Going forward, please use `Container.createDetached` to create a new container.
+### Routerlicious Driver DeltaStorageService constructor changed
+`DeltaStorageService` from `@fluidframework/routerlicious-driver` now takes a `RestWrapper` as the second constructor parameter, rather than a TokenProvider.
+
+### addGlobalAgentSchedulerAndLeaderElection removed
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag was turned off by default in 0.40.  In 0.43 the flag (and the functionality it enabled) has been removed.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
+
+### Creating new containers with Container.load has been deprecated
+- `Container.load` with inexistent files will fail instead of creating a new container. Going forward, please use `Container.createDetached` for this scenario.
 - To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load`.
 
-### The legacy way of creating documents has been deprecated
-- The `load` function from `document.ts` will fail instead of creating a new document if the container does not exist.
-- Going forward, please use the `create` function to create a new document.
+### Changes to client-api
+- The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
 
 ## 0.42 Breaking changes
 
