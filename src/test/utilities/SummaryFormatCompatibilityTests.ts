@@ -36,7 +36,8 @@ function summaryFilePath(summaryName: string): string {
  */
 const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<unknown> }[] = [
 	{ version: '0.0.2', summarizer: fullHistorySummarizer },
-	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
+	// TODO:#59965: Revert this change when merging back latest release branch into master
+	// { version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
 ];
 
 /**

@@ -31,6 +31,30 @@
   * Commit: [2747f705cfab23da7f47abde4ecc38f59813111b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2747f705cfab23da7f47abde4ecc38f59813111b)
 * docs: Merged changes from wikiMaster
   * Commit: [405c85ff3f6626c8a35a454d97862444127c54c1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/405c85ff3f6626c8a35a454d97862444127c54c1)
+## 1.2.3
+
+* merge: 'releases/2021.06.3' into 'releases/2021.06.4'
+  * Commit: [c3d8ea6c21b459112e2c6d900374e9dffac8531f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3d8ea6c21b459112e2c6d900374e9dffac8531f)
+* merge: 'releases/2021.06.2' into 'releases/2021.06.3'
+  * Commit: [332833f2533d304e67338d57cf4aaa4e0e1a8f03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/332833f2533d304e67338d57cf4aaa4e0e1a8f03)
+* merge: 'releases/2021.06.1' into 'releases/2021.06.2'
+  * Commit: [125fa4fadc38d40c2e245bbea8bf72041a906d71](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/125fa4fadc38d40c2e245bbea8bf72041a906d71)
+* merge: 'releases/2021.05.4' into 'releases/2021.06.1'
+  * Commit: [4827fcc794c4e6f2cb97d436e46e0c4577a71c13](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4827fcc794c4e6f2cb97d436e46e0c4577a71c13)
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
 
 ## 1.2.2
 
@@ -46,6 +70,29 @@
   * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
   * Commit: [49c8ebc12722a7f5c0795af01349dc99c8418e9a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/49c8ebc12722a7f5c0795af01349dc99c8418e9a)
 
+## 1.1.3
+
+* merge: 'releases/2021.06.2' into 'releases/2021.06.3'
+  * Commit: [332833f2533d304e67338d57cf4aaa4e0e1a8f03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/332833f2533d304e67338d57cf4aaa4e0e1a8f03)
+* merge: 'releases/2021.06.1' into 'releases/2021.06.2'
+  * Commit: [125fa4fadc38d40c2e245bbea8bf72041a906d71](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/125fa4fadc38d40c2e245bbea8bf72041a906d71)
+* merge: 'releases/2021.05.4' into 'releases/2021.06.1'
+  * Commit: [4827fcc794c4e6f2cb97d436e46e0c4577a71c13](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4827fcc794c4e6f2cb97d436e46e0c4577a71c13)
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 1.1.2
 
 * fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
@@ -53,11 +100,6 @@
   * Commit: [aefb5083a56e4b8cb883c6a2a066d3252858599a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/aefb5083a56e4b8cb883c6a2a066d3252858599a)
 * Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.2-into-2021.06.3
   * Commit: [5e1186368b2af9df2f0f5a638339d93bd85c71e5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5e1186368b2af9df2f0f5a638339d93bd85c71e5)
-* merge: Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.1-into-2021.06.2
-  * Commit: [92cd6964b72c118b37c75cf263ff657718ad05d4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92cd6964b72c118b37c75cf263ff657718ad05d4)
-* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
-  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
-  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
 
 ## 1.1.1
 
@@ -73,6 +115,35 @@
 * merge: `releases/2021.06.2` into `master`
   * Associated pull request: [31357](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31357)
   * Commit: [8b08b0dec24b63c4f2fa66ffb1ce97b392f43afb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8b08b0dec24b63c4f2fa66ffb1ce97b392f43afb)
+
+## 0.114.3
+
+* merge: 'releases/2021.06.1' into 'releases/2021.06.2'
+  * Commit: [125fa4fadc38d40c2e245bbea8bf72041a906d71](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/125fa4fadc38d40c2e245bbea8bf72041a906d71)
+* merge: 'releases/2021.05.4' into 'releases/2021.06.1'
+  * Commit: [4827fcc794c4e6f2cb97d436e46e0c4577a71c13](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4827fcc794c4e6f2cb97d436e46e0c4577a71c13)
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
+## 0.114.2
+
+* merge: Merge remote-tracking branch 'origin/releases/2021.06.2' into user/jennle/merge-2021.06.1-into-2021.06.2
+  * Commit: [92cd6964b72c118b37c75cf263ff657718ad05d4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92cd6964b72c118b37c75cf263ff657718ad05d4)
+* fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
+  * Associated pull request: [31551](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31551)
+  * Commit: [8331f21342b4651d8e23638ba3a14766cbeb9cdb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8331f21342b4651d8e23638ba3a14766cbeb9cdb)
 
 ## 0.114.1
 
@@ -95,6 +166,25 @@
   * Associated pull request: [31094](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31094)
   * Commit: [24b113f2ee47b00523d640ecf661ac4eee0e6aad](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/24b113f2ee47b00523d640ecf661ac4eee0e6aad)
 
+## 0.109.2
+
+* merge: 'releases/2021.05.4' into 'releases/2021.06.1'
+  * Commit: [4827fcc794c4e6f2cb97d436e46e0c4577a71c13](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4827fcc794c4e6f2cb97d436e46e0c4577a71c13)
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.109.1
 
 * fix: Do not crash when detecting chunks uploaded with fewer edits than the current editsPerChunk
@@ -110,6 +200,23 @@
   * Associated pull request: [30880](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30880)
   * Commit: [051f8565ce3ea8899d7266ef7eb427509cc64ede](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/051f8565ce3ea8899d7266ef7eb427509cc64ede)
 
+## 0.107.3
+
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 0.107.2
 
 * Merge remote-tracking branch 'origin/releases/2021.05.3' into user/crmacomb/fix-chunks
@@ -120,6 +227,21 @@
 * merge: `releases/2021.05.3` into `master`
   * Associated pull request: [30776](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30776)
   * Commit: [b3fc2f77c7e5a1caeb554650f6454992fc2d9da5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b3fc2f77c7e5a1caeb554650f6454992fc2d9da5)
+
+## 0.106.5
+
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
 
 ## 0.106.4
 
@@ -142,6 +264,12 @@
 * merge: `releases/2021.05.2` into `master`
   * Associated pull request: [30535](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30535)
   * Commit: [05bd7d07c3bbb529f67978861a76bc8faebaf0e3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/05bd7d07c3bbb529f67978861a76bc8faebaf0e3)
+
+## 0.104.3
+
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
 
 ## 0.104.2
 

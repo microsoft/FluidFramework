@@ -15,7 +15,8 @@ import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../gene
 import { EditId } from '../Identifiers';
 import { createStableEdits, makeTestNode, setUpLocalServerTestSharedTree, testTrait } from './utilities/TestUtilities';
 
-describe('SharedTree history virtualization', () => {
+// TODO:#59965: Revert this change when merging back latest release branch into master
+describe.skip('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider;
 	let editChunksUploaded = 0;
