@@ -804,9 +804,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (this._attachState === AttachState.Detached) {
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
-                const appSummary: ISummaryTree = this.context.createSummary();
-                const protocolSummary = this.captureProtocolSummary();
-                this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+                if (!this.loader.services.detachedBlobStorage || this.loader.services.detachedBlobStorage.size === 0) {
+                    const appSummary: ISummaryTree = this.context.createSummary();
+                    const protocolSummary = this.captureProtocolSummary();
+                    this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+                }
 
                 // Set the state as attaching as we are starting the process of attaching container.
                 // This should be fired after taking the summary because it is the place where we are
@@ -815,17 +817,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._attachState = AttachState.Attaching;
                 this.emit("attaching");
             }
-            assert(!!this.cachedAttachSummary,
+            assert(!!this.cachedAttachSummary || this.loader.services.detachedBlobStorage?.size !== 0,
                 0x0d7 /* "Summary should be there either by this attach call or previous attach call!!" */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
-            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
-                        summary,
+                        this.cachedAttachSummary as unknown as ISummaryTree,
                         createNewResolvedUrl,
                         this.subLogger,
                     ),
@@ -841,8 +842,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             await this.connectStorageService();
 
-            // This we can probably just pass the storage service to the blob manager - although ideally
-            // there just isn't a blob manager
+            // upload blobs here (NYI)
+
+            // post summary here
+            if (this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0) {
+                if (this.cachedAttachSummary === undefined) {
+                    const appSummary: ISummaryTree = this.context.createSummary();
+                    const protocolSummary = this.captureProtocolSummary();
+                    this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+                }
+                const summary = this.cachedAttachSummary;
+
+                await this.storageService.uploadSummaryWithContext(summary, {
+                    referenceSequenceNumber: 0,
+                    ackHandle: undefined,
+                    proposalHandle: undefined,
+                });
+            }
+
+            assert(!this.loader.services.detachedBlobStorage || this.loader.services.detachedBlobStorage.size === 0,
+                "attaching container with blobs is not yet implemented");
             this._attachState = AttachState.Attached;
             this.emit("attached");
             this.cachedAttachSummary = undefined;

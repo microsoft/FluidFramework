@@ -46,6 +46,76 @@ export async function createNewFluidFile(
     getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
+    createNewSummary: ISummaryTree | undefined,
+    epochTracker: EpochTracker,
+): Promise<IOdspResolvedUrl> {
+    return createNewSummary === undefined
+        ? createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
+        : createNewFluidFileFromSummary(getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+}
+
+export async function createNewEmptyFluidFile(
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    newFileInfo: INewFileInfo,
+    logger: ITelemetryLogger,
+    epochTracker: EpochTracker,
+): Promise<IOdspResolvedUrl> {
+    // Check for valid filename before the request to create file is actually made.
+    if (isInvalidFileName(newFileInfo.filename)) {
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
+    }
+
+    const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+    // remove .fluid extension for empty files
+    const extensionlessFileName = newFileInfo.filename.endsWith(".fluid")
+        ? newFileInfo.filename.slice(0, newFileInfo.filename.length - 6)
+        : newFileInfo.filename;
+    const encodedFilename = encodeURIComponent(extensionlessFileName);
+    const initialUrl =
+        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
+        }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+
+    const itemId = await getWithRetryForTokenRefresh(async (options) => {
+        const storageToken = await getStorageToken(options, "CreateNewFile");
+
+        return PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "createNewFile" },
+            async (event) => {
+                const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
+                headers["Content-Type"] = "application/json";
+
+                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+                    url,
+                    {
+                        body: undefined,
+                        headers,
+                        method: "PUT",
+                    },
+                    "createFile");
+
+                const content = fetchResponse.content;
+                if (!content || !content.id) {
+                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                }
+                event.end({
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    ...fetchResponse.commonSpoHeaders,
+                });
+                return content.id;
+            },
+            { end: true, cancel: "error" });
+    });
+
+    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
+    const resolver = new OdspDriverUrlResolver();
+    return resolver.resolve({ url: odspUrl });
+}
+
+export async function createNewFluidFileFromSummary(
+    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    newFileInfo: INewFileInfo,
+    logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
     epochTracker: EpochTracker,
 ): Promise<IOdspResolvedUrl> {

@@ -92,7 +92,6 @@ export class BlobManager {
         );
 
         if (this.runtime.attachState === AttachState.Detached) {
-            this.blobIds.add(response.id);
             return handle;
         }
 
