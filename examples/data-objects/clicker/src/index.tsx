@@ -17,9 +17,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
-import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
 
 export const ClickerName = "Clicker";
@@ -36,9 +34,7 @@ export interface IClickerEvents extends IEvent {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends DataObject implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
+export class Clicker extends DataObject {
     private _counter: SharedCounter | undefined;
     private _taskManager: TaskManager | undefined;
 
@@ -61,22 +57,6 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         this.counter.on("incremented", () => { this.emit("incremented"); });
         this.setupAgent();
     }
-
-    // #region IFluidHTMLView
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(div: HTMLElement) {
-        // Get our counter object that we set in initialize and pass it in to the view.
-        ReactDOM.render(
-            <ClickerReactView counter={this.counter} />,
-            div,
-        );
-        return div;
-    }
-
-    // #endregion IFluidHTMLView
 
     public increment() {
         this.counter.increment(1);
@@ -124,15 +104,15 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 // ----- REACT STUFF -----
 
-interface ClickerProps {
+export interface ClickerProps {
     counter: SharedCounter;
 }
 
-interface ClickerState {
+export interface ClickerState {
     value: number;
 }
 
-class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
     constructor(props: ClickerProps) {
         super(props);
 
