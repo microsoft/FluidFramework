@@ -11,7 +11,6 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
@@ -487,18 +486,6 @@ const commands: IFlowViewCmd[] = [
             f.insertMath(false);
         },
         key: "insert math block",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.images);
-        },
-        key: "insert image",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.progressBars);
-        },
-        key: "insert progress bar",
     },
     {
         exec: (c, p, f) => {
@@ -3032,9 +3019,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    public images: IFluidObjectCollection;
-    public progressBars: IFluidObjectCollection;
-
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
     public services = new Map<string, any>();
@@ -4533,30 +4517,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         mathMarker.instance.enter(CursorDirection.Left);
     }
 
-    public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {
-        // TODO - we may want to have a shared component collection?
-        const instance = collection.createCollectionItem();
-        const loadable = instance.IFluidLoadable;
-
-        const props = {
-            crefTest: {
-                layout: { inline },
-                type: {
-                    name: "component",
-                } as IReferenceDocType,
-                url: loadable.handle,
-            },
-            leafId: loadable.handle,
-        };
-
-        if (!inline) {
-            this.insertParagraph(this.cursor.pos++);
-        }
-
-        const markerPos = this.cursor.pos;
-        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
     public insertList() {
         // eslint-disable-next-line max-len
         const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
@@ -4575,16 +4535,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private async openCollections() {
         const root = this.collabDocument.getRoot();
-
-        const [progressBars, math, images] = await Promise.all([
-            root.get<IFluidHandle>("progressBars").get(),
-            root.get<IFluidHandle<IMathCollection>>("math").get(),
-            root.get<IFluidHandle>("images").get(),
-        ]);
-
-        this.math = math;
-        this.progressBars = progressBars.IFluidObjectCollection;
-        this.images = images.IFluidObjectCollection;
+        this.math = await root.get<IFluidHandle<IMathCollection>>("math").get();
     }
 
     public copy() {

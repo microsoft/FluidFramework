@@ -73,7 +73,6 @@
     "@fluidframework/runtime-utils": "^0.43.0",
     "@fluidframework/synthesize": "^0.43.0",
     "@fluidframework/view-interfaces": "^0.43.0",
-    "assert": "^2.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -81,7 +80,6 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.43.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/assert": "^1.5.2",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

@@ -57,7 +57,6 @@
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/gitresources": "^0.1028.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "assert": "^2.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

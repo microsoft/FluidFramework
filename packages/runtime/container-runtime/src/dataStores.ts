@@ -383,6 +383,10 @@ export class DataStores implements IDisposable {
         return entries;
     }
 
+    public get size(): number {
+        return this.contexts.size;
+    }
+
     public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
