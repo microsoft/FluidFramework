@@ -4,10 +4,19 @@
  */
 
 import { TaskManager } from "@fluid-experimental/task-manager";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+    BaseContainerRuntimeFactory,
+    DataObject,
+    DataObjectFactory,
+    mountableViewRequestHandler,
+} from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -19,6 +28,10 @@ const counterKey = "counter";
 const taskManagerKey = "taskManager";
 
 const consoleLogTaskId = "ConsoleLog";
+
+export interface IClickerEvents extends IEvent {
+    (event: "incremented", listener: () => void);
+}
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -45,6 +58,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
         this._taskManager = await taskManagerHandle?.get();
 
+        this.counter.on("incremented", () => { this.emit("incremented"); });
         this.setupAgent();
     }
 
@@ -56,7 +70,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
     public render(div: HTMLElement) {
         // Get our counter object that we set in initialize and pass it in to the view.
         ReactDOM.render(
-            <CounterReactView counter={this.counter} />,
+            <ClickerReactView counter={this.counter} />,
             div,
         );
         return div;
@@ -64,7 +78,15 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
     // #endregion IFluidHTMLView
 
-    public setupAgent() {
+    public increment() {
+        this.counter.increment(1);
+    }
+
+    public get value() {
+        return this.counter.value;
+    }
+
+    private setupAgent() {
         this.taskManager.lockTask(consoleLogTaskId)
             .then(async () => {
                 console.log(`Picked`);
@@ -85,7 +107,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
             });
     }
 
-    private get counter() {
+    public get counter() {
         if (this._counter === undefined) {
             throw new Error("SharedCounter not initialized");
         }
@@ -102,16 +124,16 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 // ----- REACT STUFF -----
 
-interface CounterProps {
+interface ClickerProps {
     counter: SharedCounter;
 }
 
-interface CounterState {
+interface ClickerState {
     value: number;
 }
 
-class CounterReactView extends React.Component<CounterProps, CounterState> {
-    constructor(props: CounterProps) {
+class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+    constructor(props: ClickerProps) {
         super(props);
 
         this.state = {
@@ -146,4 +168,43 @@ export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefi
     {},
 );
 
-export const fluidExport = ClickerInstantiationFactory;
+const clickerComponentId = "clicker";
+
+const registryEntries = new Map([
+    ClickerInstantiationFactory.registryEntry,
+]);
+
+const defaultViewRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length === 0) {
+            const clickerRequest = RequestParser.create({
+                url: ``,
+                headers: request.headers,
+            });
+            const clicker = await requestFluidObject<Clicker>(
+                await runtime.getRootDataStore(clickerComponentId),
+                clickerRequest);
+            const viewResponse = (
+                <ClickerReactView counter={clicker.counter} />
+            );
+            return { status: 200, mimeType: "fluid/view", value: viewResponse };
+        }
+    };
+
+export class ClickerContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    constructor() {
+        // We'll use a MountableView so webpack-fluid-loader can display us,
+        // and add our default view request handler.
+        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
+    }
+
+    /**
+     * Since we're letting the container define the default view it will respond with, it must do whatever setup
+     * it requires to produce that default view.  We'll create a single Clicker.
+     */
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        await runtime.createRootDataStore(ClickerInstantiationFactory.type, clickerComponentId);
+    }
+}
+
+export const fluidExport = new ClickerContainerRuntimeFactory();
