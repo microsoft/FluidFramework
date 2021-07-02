@@ -16,7 +16,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     public async instantiateRuntime(
         context: IContainerContext,
         existing?: boolean,
-    ): Promise<IRuntime & IContainerRuntime> {
+    ): Promise<IRuntime> {
         const fromExisting = existing === undefined
             ? context.existing === true
             : existing;
@@ -32,7 +32,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
         return runtime;
     }
 
-    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<T>;
+    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
     public async instantiateFirstTime(_runtime: T): Promise<void> {}
     public async instantiateFromExisting(_runtime: T): Promise<void> {}
     public async hasInitialized(_runtime: T): Promise<void> {}
