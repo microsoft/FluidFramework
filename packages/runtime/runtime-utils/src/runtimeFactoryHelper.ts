@@ -8,16 +8,21 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
+export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
-    public readonly stateful: boolean = true;
 
-    public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
-        const isLoaded = existing === true || context.existing === true;
-        const runtime = await this.preInitialize(context, isLoaded);
+    public async instantiateRuntime(
+        context: IContainerContext,
+        existing?: boolean,
+    ): Promise<IRuntime> {
+        const fromExisting = existing === undefined
+            ? context.existing === true
+            : existing;
+        const runtime = await this.preInitialize(context, fromExisting);
 
-        if (isLoaded) {
+        if (fromExisting) {
             await this.instantiateFromExisting(runtime);
         } else {
             await this.instantiateFirstTime(runtime);
@@ -27,8 +32,8 @@ export abstract class RuntimeFactoryHelper implements IRuntimeFactory {
         return runtime;
     }
 
-    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime>;
-    public async instantiateFirstTime(runtime: IRuntime): Promise<void> {}
-    public async instantiateFromExisting(runtime: IRuntime): Promise<void> {}
-    public async hasInitialized(runtime: IRuntime): Promise<void> {}
+    public abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
+    public async instantiateFirstTime(_runtime: T): Promise<void> {}
+    public async instantiateFromExisting(_runtime: T): Promise<void> {}
+    public async hasInitialized(_runtime: T): Promise<void> {}
 }
