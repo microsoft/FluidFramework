@@ -146,13 +146,9 @@ export class SharedTextRunner
             this.rootView.set("text", newString.handle);
 
             const containerRuntime = this.context.containerRuntime;
-            const [math, images] = await Promise.all([
-                getHandle(containerRuntime.createDataStore("@fluid-example/math")),
-                getHandle(containerRuntime.createDataStore("@fluid-example/image-collection")),
-            ]);
+            const math = await getHandle(containerRuntime.createDataStore("@fluid-example/math"));
 
             this.rootView.set("math", math);
-            this.rootView.set("images", images);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
 

@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.43.0",
-    "@fluid-example/image-collection": "^0.43.0",
     "@fluid-example/intelligence-runner-agent": "^0.43.0",
     "@fluid-example/math": "^0.43.0",
     "@fluid-example/monaco": "^0.43.0",
