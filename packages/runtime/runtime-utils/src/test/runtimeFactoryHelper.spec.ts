@@ -4,6 +4,7 @@
  */
 
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import Sinon from "sinon";
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper";
 
@@ -14,7 +15,10 @@ class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
         super();
     }
 
-    public async preInitialize(_context: IContainerContext, _existing: boolean): Promise<IRuntime> {
+    public async preInitialize(
+        _context: IContainerContext,
+        _existing: boolean,
+    ): Promise<IRuntime & IContainerRuntime> {
         return this.runtime;
     }
 }
