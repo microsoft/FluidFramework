@@ -48,7 +48,7 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
 
         // Then render the clicker in our div
         if (this.clicker !== undefined) {
-            ReactDOM.render(<ClickerReactView counter={this.clicker.counter} />, fluidObjectDiv);
+            ReactDOM.render(<ClickerReactView clicker={this.clicker} />, fluidObjectDiv);
         }
     }
 }

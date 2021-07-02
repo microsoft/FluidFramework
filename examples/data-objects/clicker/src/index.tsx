@@ -34,7 +34,8 @@ export interface IClickerEvents extends IEvent {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends DataObject {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class Clicker extends DataObject<object, undefined, IClickerEvents> {
     private _counter: SharedCounter | undefined;
     private _taskManager: TaskManager | undefined;
 
@@ -87,7 +88,7 @@ export class Clicker extends DataObject {
             });
     }
 
-    public get counter() {
+    private get counter() {
         if (this._counter === undefined) {
             throw new Error("SharedCounter not initialized");
         }
@@ -105,7 +106,7 @@ export class Clicker extends DataObject {
 // ----- REACT STUFF -----
 
 export interface ClickerProps {
-    counter: SharedCounter;
+    clicker: Clicker;
 }
 
 export interface ClickerState {
@@ -117,13 +118,13 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
         super(props);
 
         this.state = {
-            value: this.props.counter.value,
+            value: this.props.clicker.value,
         };
     }
 
     componentDidMount() {
-        this.props.counter.on("incremented", (incrementValue: number, currentValue: number) => {
-            this.setState({ value: currentValue });
+        this.props.clicker.on("incremented", () => {
+            this.setState({ value: this.props.clicker.value });
         });
     }
 
@@ -133,7 +134,7 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
                     {this.state.value}
                 </span>
-                <button onClick={() => { this.props.counter.increment(1); }}>+</button>
+                <button onClick={() => { this.props.clicker.increment(); }}>+</button>
             </div>
         );
     }
@@ -141,7 +142,8 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, object, undefined, IClickerEvents>(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory(), TaskManager.getFactory()],
@@ -165,7 +167,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
                 await runtime.getRootDataStore(clickerComponentId),
                 clickerRequest);
             const viewResponse = (
-                <ClickerReactView counter={clicker.counter} />
+                <ClickerReactView clicker={clicker} />
             );
             return { status: 200, mimeType: "fluid/view", value: viewResponse };
         }
