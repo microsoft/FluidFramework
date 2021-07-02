@@ -81,9 +81,9 @@ import {
     IInboundSignalMessage,
     ISignalEnvelope,
     NamedFluidDataStoreRegistryEntries,
-    ISummaryStats,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
+    ISummaryStats,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -156,8 +156,13 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
+export interface IGeneratedSummaryStats extends ISummaryStats{
+    dataStoreCount: number;
+    summarizedDataStoreCount: number;
+}
+
 export interface IGeneratedSummaryData {
-    readonly summaryStats: ISummaryStats;
+    readonly summaryStats: IGeneratedSummaryStats;
     readonly generateDuration?: number;
 }
 
@@ -193,6 +198,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxOps: 1000,
 
     // Wait 2 minutes for summary ack
+    // this is less than maxSummarizeAckWaitTime
+    // the min of the two will be chosen
     maxAckWaitTime: 120000,
 };
 
@@ -707,8 +714,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private get summaryConfiguration() {
         return  {
+            // the defaults
             ... DefaultSummaryConfiguration,
+            // the server provided values
             ... this.context?.serviceConfiguration?.summary,
+            // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
          };
     }
@@ -1727,8 +1737,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { ...attemptData, error };
             }
 
+            // Counting dataStores and handles
+            // Because handles are unchanged dataStores in the current logic,
+            // summarized dataStore count is total dataStore count minus handle count
+            const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
+                summarizeResult.summary.tree[channelsTreeName];
+
+            assert(dataStoreTree.type === SummaryType.Tree, "summary is not a tree");
+            const handleCount = Object.values(dataStoreTree.tree).filter(
+                (value) => value.type === SummaryType.Handle).length;
+
+            const stats: IGeneratedSummaryStats = {
+                dataStoreCount: this.dataStores.size,
+                summarizedDataStoreCount: this.dataStores.size - handleCount,
+                ...summarizeResult.stats,
+            };
+
             const generateData: IGeneratedSummaryData = {
-                summaryStats: summarizeResult.stats,
+                summaryStats: stats,
                 generateDuration: trace.trace().duration,
             };
 

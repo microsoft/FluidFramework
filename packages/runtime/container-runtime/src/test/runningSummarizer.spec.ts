@@ -112,6 +112,8 @@ describe("Runtime", () => {
                                     blobNodeCount: 0,
                                     handleNodeCount: 0,
                                     totalBlobSize: 0,
+                                    dataStoreCount: 0,
+                                    summarizedDataStoreCount: 0,
                                     unreferencedBlobSize: 0,
                                 },
                                 handle: "test-handle",
