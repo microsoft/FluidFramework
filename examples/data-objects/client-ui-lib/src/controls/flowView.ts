@@ -496,12 +496,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.progressBars);
-        },
-        key: "insert progress bar",
-    },
-    {
-        exec: (c, p, f) => {
             (navigator as any).clipboard.readText().then((text) => {
                 // TODO bring back paste support
                 console.log(`Inserting ${text}`);
@@ -3033,7 +3027,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keydownHandler: (e: KeyboardEvent) => void;
 
     public images: IFluidObjectCollection;
-    public progressBars: IFluidObjectCollection;
 
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
@@ -4576,14 +4569,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private async openCollections() {
         const root = this.collabDocument.getRoot();
 
-        const [progressBars, math, images] = await Promise.all([
-            root.get<IFluidHandle>("progressBars").get(),
+        const [math, images] = await Promise.all([
             root.get<IFluidHandle<IMathCollection>>("math").get(),
             root.get<IFluidHandle>("images").get(),
         ]);
 
         this.math = math;
-        this.progressBars = progressBars.IFluidObjectCollection;
         this.images = images.IFluidObjectCollection;
     }
 
