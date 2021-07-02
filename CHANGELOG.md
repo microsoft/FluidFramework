@@ -1,5 +1,34 @@
 # Change Log
 
+## 1.5.1
+
+* feat: Re-enable edit chunk upload through SharedTree toggle
+  * Commit: [9c02f0fb3473899f6a728955989bccbf9e1a35ba](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9c02f0fb3473899f6a728955989bccbf9e1a35ba)
+* merge: 'releases/2021.06.4' into 'releases/2021.06.5'
+  * Commit: [9b3e732c2eb373814b9abb9ce74f7d7b26766873](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9b3e732c2eb373814b9abb9ce74f7d7b26766873)
+* merge: 'releases/2021.06.3' into 'releases/2021.06.4'
+  * Commit: [c3d8ea6c21b459112e2c6d900374e9dffac8531f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3d8ea6c21b459112e2c6d900374e9dffac8531f)
+* merge: 'releases/2021.06.2' into 'releases/2021.06.3'
+  * Commit: [332833f2533d304e67338d57cf4aaa4e0e1a8f03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/332833f2533d304e67338d57cf4aaa4e0e1a8f03)
+* merge: 'releases/2021.06.1' into 'releases/2021.06.2'
+  * Commit: [125fa4fadc38d40c2e245bbea8bf72041a906d71](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/125fa4fadc38d40c2e245bbea8bf72041a906d71)
+* merge: 'releases/2021.05.4' into 'releases/2021.06.1'
+  * Commit: [4827fcc794c4e6f2cb97d436e46e0c4577a71c13](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4827fcc794c4e6f2cb97d436e46e0c4577a71c13)
+* merge: 'releases/2021.05.4' into 'releases/2021.05.3'
+  * Commit: [33f4dd50fdee469b9697b2bb3c004308e79651ae](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/33f4dd50fdee469b9697b2bb3c004308e79651ae)
+* merge: 'releases/2021.05.3' into 'releases/2021.05.2'
+  * Commit: [f93d70316b0208b0a59dbc47bf116b8452263cdd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f93d70316b0208b0a59dbc47bf116b8452263cdd)
+* fix: Disable uploading edit chunks
+  * Associated pull request: [31976](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31976)
+  * Commit: [c3fe239509018f00429b572e1bdb2edb49c74854](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c3fe239509018f00429b572e1bdb2edb49c74854)
+* Merge remote-tracking branch 'origin/releases/2021.05.1' into user/crmacomb/2021.05.2-fix-chunks
+  * Commit: [d395168479ff0414a45d639c71fdb0f918f883f3](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d395168479ff0414a45d639c71fdb0f918f883f3)
+* Merge branch 'releases/2021.04.5' into user/crmacomb/2021.05.1-fix-chunks
+  * Commit: [975cb1e7fbd8fc15ab26f678477765b887601d03](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/975cb1e7fbd8fc15ab26f678477765b887601d03)
+* fix: fix error from unexpected history chunks causing crash when opening of some fluid documents
+  * Associated pull request: [30816](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/30816)
+  * Commit: [09f5bd824b97fe2806aef6b35af9345785447788](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/09f5bd824b97fe2806aef6b35af9345785447788)
+
 ## 1.5.0
 
 * refactor: add more readonly in exported shared-tree interfaces
@@ -31,6 +60,7 @@
   * Commit: [2747f705cfab23da7f47abde4ecc38f59813111b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2747f705cfab23da7f47abde4ecc38f59813111b)
 * docs: Merged changes from wikiMaster
   * Commit: [405c85ff3f6626c8a35a454d97862444127c54c1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/405c85ff3f6626c8a35a454d97862444127c54c1)
+
 ## 1.2.3
 
 * merge: 'releases/2021.06.3' into 'releases/2021.06.4'
