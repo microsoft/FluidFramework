@@ -19,6 +19,7 @@ import {
 	SharedTreeTestingOptions,
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
+import { EditLog } from '../../EditLog';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
@@ -41,8 +42,6 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
 	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
 ];
 
-const minEditsPerChunk = 100;
-
 /**
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
@@ -61,6 +60,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 		let expectedTree: TSharedTree;
 		let testObjectProvider: TestObjectProvider;
+		let editsPerChunk: number;
 
 		// Create and populate a map of the versions associated with their summary type
 		const summaryTypes = new Map<string, string[]>();
@@ -88,6 +88,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				setupEditId,
 			});
 			expectedTree = testingComponents.tree;
+			editsPerChunk = (expectedTree.edits as EditLog<Change>).editsPerChunk;
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 
@@ -209,13 +210,13 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 										formatVersion: version,
 										historySize: history.length,
 										totalNumberOfChunks: history.length > 0 ? 1 : 0,
-										uploadedChunks: history.length >= minEditsPerChunk ? 1 : 0,
+										uploadedChunks: history.length >= editsPerChunk ? 1 : 0,
 								  };
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
 				}
 
-				if (summaryType === 'large-history' || history.length >= minEditsPerChunk) {
+				if (summaryType === 'large-history' || history.length >= editsPerChunk) {
 					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
