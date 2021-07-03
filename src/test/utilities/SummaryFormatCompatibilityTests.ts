@@ -9,14 +9,7 @@ import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
-import {
-	Edit,
-	fullHistorySummarizer,
-	fullHistorySummarizer_0_1_0,
-	SharedTreeSummarizer,
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-} from '../../generic';
+import { Edit, fullHistorySummarizer, fullHistorySummarizer_0_1_0, SharedTreeSummarizer } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
@@ -26,7 +19,6 @@ import {
 	SharedTreeTestingOptions,
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
-import { EditLog } from '../../EditLog';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
@@ -49,6 +41,8 @@ const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<
 	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
 ];
 
+const minEditsPerChunk = 100;
+
 /**
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
@@ -67,9 +61,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 		let expectedTree: TSharedTree;
 		let testObjectProvider: TestObjectProvider;
-		let editsPerChunk: number;
 
-		// Create and populate a map of the versions associated with their summary type
+		// Map from document folder name to list of summary versions which have reference files.
 		const summaryTypes = new Map<string, string[]>();
 		const documentFolders = fs.readdirSync(pathBase);
 
@@ -95,7 +88,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				setupEditId,
 			});
 			expectedTree = testingComponents.tree;
-			editsPerChunk = (expectedTree.edits as EditLog<Change>).editsPerChunk;
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 
@@ -219,21 +211,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 										formatVersion: version,
 										historySize: history.length,
 										totalNumberOfChunks: history.length > 0 ? 1 : 0,
-										uploadedChunks: history.length >= editsPerChunk ? 1 : 0,
+										uploadedChunks: history.length >= minEditsPerChunk ? 1 : 0,
 								  };
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
 				}
 
-				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
-				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the
-				// summarizer is 0.0.2
-				if (
-					includesHandles(
-						deserialize(summaryFileContents['0.1.0'], testSerializer) as SharedTreeSummary<Change>
-					)
-				) {
-					it('since loaded summary includes handles, 0.1.0 is written by a client with a 0.0.2 summarizer', async () => {
+				if (summaryType === 'large-history' || history.length >= minEditsPerChunk) {
+					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
 
@@ -249,14 +234,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 						expect(newSummary).to.deep.equal(expectedSummary);
 					});
-				}
-
-				function includesHandles(summary: SharedTreeSummary<Change>): boolean {
-					if (summary.editHistory === undefined || summary.editHistory.editChunks === undefined) {
-						return false;
-					}
-					// An editChunk is a handle iff its "chunk" field is not an array
-					return summary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				}
 			});
 		}
