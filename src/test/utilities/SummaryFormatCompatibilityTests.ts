@@ -9,7 +9,7 @@ import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { Change, SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
-import { Edit, fullHistorySummarizer, fullHistorySummarizer_0_1_0, SharedTreeSummarizer } from '../../generic';
+import { Edit, fullHistorySummarizer, fullHistorySummarizer_0_1_0, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import {
@@ -218,23 +218,34 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 				}
 
-				if (summaryType === 'large-history' || history.length >= editsPerChunk) {
-					it('is written by a client with a 0.0.2 summarizer that has loaded version 0.1.0', async () => {
+				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
+				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the 
+				// summarizer is 0.0.2
+				if (includesHandles(deserialize(summaryFileContents['0.1.0'], testSerializer) as SharedTreeSummary<Change>)) {
+					it('since loaded summary includes handles, 0.1.0 is written by a client with a 0.0.2 summarizer', async () => {
 						const serializedSummary = summaryFileContents['0.1.0'];
 						const summary = deserialize(serializedSummary, testSerializer);
-
+	
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
 						expectedTree.loadSummary(summary);
-
+	
 						await testObjectProvider.ensureSynchronized();
-
+	
 						// Write a new summary with the 0.0.2 summarizer
 						const newSummary = JSON.parse(expectedTree.saveSerializedSummary(fullHistorySummarizer));
 						const expectedSummary = JSON.parse(serializedSummary);
-
+	
 						expect(newSummary).to.deep.equal(expectedSummary);
 					});
+				}
+
+				function includesHandles(summary: SharedTreeSummary<Change>): boolean {
+					if (summary.editHistory === undefined || summary.editHistory.editChunks === undefined) {
+						return false;
+					}
+					// An editChunk is a handle iff its "chunk" field is not an array
+					return summary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				}
 			});
 		}
