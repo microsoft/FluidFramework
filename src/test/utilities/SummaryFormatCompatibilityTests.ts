@@ -15,7 +15,6 @@ import {
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
 	SharedTreeSummary,
-	SharedTreeSummaryBase,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
@@ -27,18 +26,11 @@ import {
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
 import { EditLog } from '../../EditLog';
+import { assertNotUndefined } from '../../Common';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
 const pathBase = resolve(__dirname, '../../../src/test/documents/');
-
-function summaryFilePath(documentName: string, summaryVersion: string): string {
-	return join(pathBase, documentName, `summary-${summaryVersion}.json`);
-}
-
-function historyFilePath(documentName: string): string {
-	return join(pathBase, documentName, `history.json`);
-}
 
 /**
  * A version/summarizer pair must be specified for a write test to be generated.
@@ -69,26 +61,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		let testObjectProvider: TestObjectProvider;
 		let editsPerChunk: number;
 
-		// Create and populate a map of the versions associated with their summary type
-		const summaryTypes = new Map<string, string[]>();
-		const documentFolders = fs.readdirSync(pathBase);
-
-		for (const documentFolder of documentFolders) {
-			const documentFiles = fs.readdirSync(join(pathBase, documentFolder));
-			for (const documentFile of documentFiles) {
-				const fileNameRegularExpression = /summary-(?<version>\d+\.\d\.\d).json/;
-				const match = fileNameRegularExpression.exec(documentFile);
-				if (match && match.groups) {
-					let collection = summaryTypes.get(documentFolder);
-					if (collection === undefined) {
-						collection = [];
-						summaryTypes.set(documentFolder, collection);
-					}
-					collection.push(match.groups.version);
-				}
-			}
-		}
-
 		// Resets the tree before each test
 		beforeEach(async () => {
 			const testingComponents = await setUpLocalServerTestSharedTree({
@@ -103,28 +75,39 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			testObjectProvider.reset();
 		});
 
-		for (const [summaryType, versions] of summaryTypes.entries()) {
-			// prefetch summaries
+		const documentFolders = fs.readdirSync(pathBase);
+
+		for (const document of documentFolders) {
 			const summaryFileContents = new Map<string, string>();
-			for (const version of versions) {
-				summaryFileContents[version] = fs.readFileSync(summaryFilePath(summaryType, version), 'utf8');
+			let historyOrUndefined: Edit<Change>[] | undefined;
+
+			const documentFiles = fs.readdirSync(join(pathBase, document));
+			for (const documentFile of documentFiles) {
+				const summaryFileRegex = /summary-(?<version>\d+\.\d\.\d).json/;
+				const match = summaryFileRegex.exec(documentFile);
+				const filePath = join(pathBase, document, documentFile);
+				if (match && match.groups) {
+					summaryFileContents.set(match.groups.version, fs.readFileSync(filePath, 'utf8'));
+				} else if (documentFile === 'history.json') {
+					historyOrUndefined = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+				}
 			}
 
-			// prefetch history
-			const history = JSON.parse(fs.readFileSync(historyFilePath(summaryType), 'utf8')) as Edit<Change>[];
+			const history = assertNotUndefined(historyOrUndefined);
+			const sortedVersions = Array.from(summaryFileContents.keys()).sort(versionComparator);
 
-			describe(`document ${summaryType}`, () => {
+			describe(`document ${document}`, () => {
 				it(`summaries with different format versions produce identical trees`, () => {
 					// Load the first summary file
-					const serializedSummary = summaryFileContents[versions[0]];
+					const serializedSummary = assertNotUndefined(summaryFileContents.get(sortedVersions[0]));
 					const summary = deserialize(serializedSummary, testSerializer);
 					expectedTree.loadSummary(summary);
 
 					// Check every other summary file results in the same loaded tree
-					for (let i = 1; i < versions.length; i++) {
+					for (let i = 1; i < sortedVersions.length; i++) {
 						const { tree } = setUpTestSharedTree();
 
-						const serializedSummary = summaryFileContents[versions[i]];
+						const serializedSummary = assertNotUndefined(summaryFileContents.get(sortedVersions[i]));
 						const summary = deserialize(serializedSummary, testSerializer);
 						tree.loadSummary(summary);
 
@@ -133,7 +116,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				});
 
 				// Check that clients with certain loaded versions can write their supported write versions.
-				const sortedVersions = versions.sort(versionComparator);
 				for (const [index, readVersion] of sortedVersions.entries()) {
 					// A client that has loaded an older version of a summary should be able to write newer versions
 					// TODO: This only tests version upgrades. Due to phased rollouts, mixed rings, and rollbacks, downgrades can also occur
@@ -144,7 +126,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							const summarizer = summarizerEntry.summarizer;
 							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion}`, async () => {
 								// Load the first summary file (the one with the oldest version)
-								const serializedSummary = summaryFileContents[readVersion];
+								const serializedSummary = assertNotUndefined(summaryFileContents.get(readVersion));
 								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
@@ -159,7 +141,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Check the newly written summary is equivalent to its corresponding test summary file.
 								// This assumes the input file is normalized (that summarizing it produces an identical output).
 								// TODO: Add support for testing de-normalized files, such as files with empty traits.
-								const expectedSummary = JSON.parse(summaryFileContents[writeVersion]);
+								const expectedSummary = JSON.parse(
+									assertNotUndefined(summaryFileContents.get(writeVersion))
+								);
 
 								expect(newSummary).to.deep.equal(expectedSummary);
 							});
@@ -196,7 +180,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
 
-						const serializedSummary = summaryFileContents[version];
+						const serializedSummary = assertNotUndefined(summaryFileContents.get(version));
 						const summary = deserialize(serializedSummary, testSerializer);
 
 						const { tree } = setUpTestSharedTree();
@@ -206,7 +190,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 
 					it(`getTelemetryInfoFromSummary works for version ${version}`, () => {
-						const serializedSummary = summaryFileContents[version];
+						const serializedSummary = assertNotUndefined(summaryFileContents.get(version));
 						const summary = deserialize(serializedSummary, testSerializer);
 						const telemetryInfo = getSummaryStatistics(summary);
 						const expectedTelemetryInfo: SummaryStatistics =
@@ -230,11 +214,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				// summarizer is 0.0.2
 				if (
 					includesHandles(
-						deserialize(summaryFileContents['0.1.0'], testSerializer) as SharedTreeSummary<Change>
+						deserialize(
+							assertNotUndefined(summaryFileContents.get('0.1.0')),
+							testSerializer
+						) as SharedTreeSummary<Change>
 					)
 				) {
 					it('since loaded summary includes handles, 0.1.0 is written by a client with a 0.0.2 summarizer', async () => {
-						const serializedSummary = summaryFileContents['0.1.0'];
+						const serializedSummary = assertNotUndefined(summaryFileContents.get('0.1.0'));
 						const summary = deserialize(serializedSummary, testSerializer);
 
 						// Wait for the ops to to be submitted and processed across the containers.
