@@ -70,7 +70,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			editsPerChunk = (expectedTree.edits as EditLog<Change>).editsPerChunk;
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
-
+		
 		afterEach(async () => {
 			testObjectProvider.reset();
 		});
@@ -78,6 +78,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		const documentFolders = fs.readdirSync(pathBase);
 
 		for (const document of documentFolders) {
+
 			const summaryFileContents = new Map<string, string>();
 			let historyOrUndefined: Edit<Change>[] | undefined;
 
@@ -141,9 +142,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Check the newly written summary is equivalent to its corresponding test summary file.
 								// This assumes the input file is normalized (that summarizing it produces an identical output).
 								// TODO: Add support for testing de-normalized files, such as files with empty traits.
-								const expectedSummary = JSON.parse(
-									assertNotUndefined(summaryFileContents.get(writeVersion))
-								);
+								const expectedSummary = JSON.parse(assertNotUndefined(summaryFileContents.get(writeVersion)));
 
 								expect(newSummary).to.deep.equal(expectedSummary);
 							});
@@ -214,10 +213,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				// summarizer is 0.0.2
 				if (
 					includesHandles(
-						deserialize(
-							assertNotUndefined(summaryFileContents.get('0.1.0')),
-							testSerializer
-						) as SharedTreeSummary<Change>
+						deserialize(assertNotUndefined(summaryFileContents.get('0.1.0')), testSerializer) as SharedTreeSummary<Change>
 					)
 				) {
 					it('since loaded summary includes handles, 0.1.0 is written by a client with a 0.0.2 summarizer', async () => {
@@ -245,7 +241,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					// An editChunk is a handle iff its "chunk" field is not an array
 					return summary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				}
-			});
+			});			
 		}
 	});
 }
