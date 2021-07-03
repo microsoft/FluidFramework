@@ -18,6 +18,8 @@ import {
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
+import { EditLog } from '../../EditLog';
+import { assertNotUndefined } from '../../Common';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -25,8 +27,6 @@ import {
 	SharedTreeTestingOptions,
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
-import { EditLog } from '../../EditLog';
-import { assertNotUndefined } from '../../Common';
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
