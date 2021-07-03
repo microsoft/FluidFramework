@@ -10,6 +10,7 @@ const MapProperty = require('./properties/map_property');
 const NodeProperty = require('./properties/node_property');
 const ArrayProperty = require('./properties/array_property');
 const SetProperty = require('./properties/set_property');
+const StringProperty = require('./properties/string_property');
 const RefereceProperty = require('./properties/reference_property');
 const ReferenceArrayProperty = require('./properties/reference_array_property');
 const ReferenceMapProperty = require('./properties/reference_map_property');
@@ -29,6 +30,7 @@ module.exports = {
   NodeProperty,
   ArrayProperty,
   SetProperty,
+  StringProperty,
   RefereceProperty,
   ReferenceMapProperty,
   ReferenceArrayProperty,

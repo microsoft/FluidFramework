@@ -90,29 +90,31 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
       .then((relevantRemoteChanges) => {
         let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
 
-        for (const c of relevantRemoteChanges) {
-          let changeset = c.changeSet;
-          let applyAfterMetaInformation;
+        if (relevantRemoteChanges.length > 0) {
+            for (const c of relevantRemoteChanges) {
+                let changeset = c.changeSet;
+                let applyAfterMetaInformation;
 
-          if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
-            const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
-            invertedChange._toInverseChangeSet();
-            invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
-            applyAfterMetaInformation = new Map();
-            const conflicts2 = [];
-            changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
-            rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
-              applyAfterMetaInformation,
-            });
+                if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
+                    const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+                    invertedChange._toInverseChangeSet();
+                    invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
+                    applyAfterMetaInformation = new Map();
+                    const conflicts2 = [];
+                    changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+                    rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
+                        applyAfterMetaInformation,
+                    });
 
-            rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
-            alreadyRebasedChanges.shift();
-          }
-          rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, { applyAfterMetaInformation });
+                    rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
+                    alreadyRebasedChanges.shift();
+                }
+                rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, { applyAfterMetaInformation });
+            }
+
+            // Now we have to rebase all changes from the remote local branch with respect to this base changeset
+            rebaseChangeArrays(rebaseBaseChangeSetForAlreadyRebasedChanges, changesOnOtherLocalBranch);
         }
-
-        // Now we have to rebase all changes from the remote local branch with respect to this base changeset
-        rebaseChangeArrays(rebaseBaseChangeSetForAlreadyRebasedChanges, changesOnOtherLocalBranch);
 
         // Update the reference for the rebased changes to indicate that they are now with respect to the
         // new remoteHeadGuid
@@ -127,32 +129,35 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
     .then(() => makePromise(getRebasedChanges(change.remoteHeadGuid)))
     .then((remoteChanges) => {
       const conflicts = [];
-      for (const remoteChange of remoteChanges) {
-        let applyAfterMetaInformation =
-          commitsOnOtherLocalBranch[remoteChange.guid] !== undefined
-            ? remoteChange.rebaseMetaInformation
-            : undefined;
+      if (!_.isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
+                     remoteChanges.map((change) => change.guid))) {
+        for (const remoteChange of remoteChanges) {
+            let applyAfterMetaInformation =
+            commitsOnOtherLocalBranch[remoteChange.guid] !== undefined
+                ? remoteChange.rebaseMetaInformation
+                : undefined;
 
-        let changeset = remoteChange.changeSet;
-        if (changesOnOtherLocalBranch[0] !== undefined && changesOnOtherLocalBranch[0].guid === remoteChange.guid) {
-          const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
-          invertedChange._toInverseChangeSet();
-          invertedChange.applyChangeSet(rebaseBaseChangeSet);
+            let changeset = remoteChange.changeSet;
+            if (changesOnOtherLocalBranch[0] !== undefined && changesOnOtherLocalBranch[0].guid === remoteChange.guid) {
+                const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+                invertedChange._toInverseChangeSet();
+                invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
-          applyAfterMetaInformation = new Map();
-          changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
-          rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
+                applyAfterMetaInformation = new Map();
+                changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+                rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
-          // This is disabled for performance reasons. Only used during debugging
-          // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
-          //                 "Failed Rebase in rebaseToRemoteChanges");
-          rebaseBaseChangeSet = invertedChange;
-          changesOnOtherLocalBranch.shift();
+                // This is disabled for performance reasons. Only used during debugging
+                // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
+                //                 "Failed Rebase in rebaseToRemoteChanges");
+                rebaseBaseChangeSet = invertedChange;
+                changesOnOtherLocalBranch.shift();
+            }
+
+            rebaseBaseChangeSet.applyChangeSet(changeset, {
+                applyAfterMetaInformation,
+            });
         }
-
-        rebaseBaseChangeSet.applyChangeSet(changeset, {
-          applyAfterMetaInformation,
-        });
       }
 
       change.rebaseMetaInformation = new Map();
