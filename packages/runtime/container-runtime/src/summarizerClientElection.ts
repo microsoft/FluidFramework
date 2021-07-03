@@ -28,6 +28,12 @@ export interface ISummarizerClientElectionEvents extends IEvent {
      * When a summary ack comes in, this will be set to the sequence number of the summary ack.
      */
     private lastSummaryAckSeqForClient: number | undefined;
+    /**
+     * Used to prevent excess logging by recording the sequence number that we last reported at,
+     * and making sure we don't report another event to telemetry. If things work as intended,
+     * this is not needed, otherwise it could report an event on every op in worst case scenario.
+     */
+    private lastReportedSeq = 0;
 
     public get electedClientId() {
         return this.clientElection.electedClient?.clientId;
@@ -58,28 +64,33 @@ export interface ISummarizerClientElectionEvents extends IEvent {
             const opsWithoutSummary = sequenceNumber - (this.lastSummaryAckSeqForClient ?? electionSequenceNumber);
             if (opsWithoutSummary > this.maxOpsSinceLastSummary) {
                 // Log and elect a new summarizer client.
-                this.logger.sendErrorEvent({
-                    eventName: "ElectedClientNotSummarizing",
-                    electedClientId,
-                    lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
-                    electionSequenceNumber,
-                    nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
-                });
+                const opsSinceLastReport = sequenceNumber - this.lastReportedSeq;
+                if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
+                    this.logger.sendErrorEvent({
+                        eventName: "ElectedClientNotSummarizing",
+                        electedClientId,
+                        lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
+                        electionSequenceNumber,
+                        nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+                    });
+                    this.lastReportedSeq = sequenceNumber;
+                }
 
                 this.clientElection.incrementElectedClient(sequenceNumber);
 
-                // Verify that we will not be reentrant. This should be reliable,
+                // Verify that state incremented as expected. This should be reliable,
                 // since all of OrderedClientElection is synchronous.
                 electionSequenceNumber = this.clientElection.electionSequenceNumber;
                 if (sequenceNumber > (this.lastSummaryAckSeqForClient ?? electionSequenceNumber)) {
-                    this.logger.sendErrorEvent({
-                        eventName: "UnexpectedElectionSequenceNumber",
-                        sequenceNumber,
-                        // Expected to be undefined
-                        lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
-                        // Expected to be same as op sequenceNumber
-                        electionSequenceNumber,
-                    });
+                    if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
+                        this.logger.sendErrorEvent({
+                            eventName: "UnexpectedElectionSequenceNumber",
+                            // Expected to be undefined
+                            lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
+                            // Expected to be same as op sequenceNumber
+                            electionSequenceNumber,
+                        });
+                    }
                 }
             }
         });
