@@ -177,7 +177,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				// Check that clients with certain loaded versions can write their supported write versions.
 				for (const [index, readVersion] of sortedVersions.entries()) {
 					// A client that has loaded an older version of a summary should be able to write newer versions
-					// TODO: This only tests version upgrades. Due to phased rollouts, mixed rings, and rollbacks, downgrades can also occur
+					// TODO:#60277:  This only tests version upgrades. Due to phased rollouts, mixed rings, and rollbacks, downgrades can also occur
 					// (though some are unsupported), and should be tested.
 					for (const writeVersion of sortedVersions.slice(index)) {
 						const summarizerEntry = supportedSummarizers.find((entry) => entry.version === writeVersion);
@@ -212,7 +212,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
 				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the
-				// summarizer is 0.0.2
+				// summarizer is 0.0.2.
+				// TODO:#60277: Add tests for format version downgrades in general, and make this case a special case of those more general tests.
 				if (
 					includesHandles(
 						deserialize(
