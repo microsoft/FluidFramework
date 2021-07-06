@@ -249,7 +249,7 @@ const response: IFluidResolvedUrl = {
     },
     tokens: { jwt: this.auth(this.tenantId, documentId) },
     type: "fluid",
-    URL: documentUrl,
+    url: documentUrl,
 };
 
 return response;
