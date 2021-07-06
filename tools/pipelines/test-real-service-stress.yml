@@ -36,7 +36,6 @@ stages:
         testSteps:
         - task: Npm@1
           displayName: '[stress tests] npm run start'
-          continueOnError: true
           timeoutInMinutes: 60
           env:
             login__microsoft__clientId: $(login-microsoft-clientId)
