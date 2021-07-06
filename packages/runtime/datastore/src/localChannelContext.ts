@@ -19,7 +19,7 @@ import {
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateContainerError, CreateProcessingError } from "@fluidframework/container-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,

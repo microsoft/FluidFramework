@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
