@@ -64,7 +64,7 @@ export const bindUI = (
             error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
         ) {
             window.alert(
-                `🛑 Container is closed\n\nCurrent code is not compatible with the upgrage proposal.`,
+                `🛑 Container is closed\n\nCurrent code is not compatible with the upgrade proposal.`,
             );
         } else {
             window.alert(`🛑 Container is closed\n\n${error}`);
