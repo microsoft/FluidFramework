@@ -913,11 +913,13 @@ export class DeltaManager
         }
     }
 
-    public emitDelayInfo(
-        id: string,
-        delayMs: number,
-        error: any,
-    ) {
+    /**
+     * Emit info about a delay in service communication on account of throttling.
+     * @param id - Id of the connection that is delayed
+     * @param delayMs - Duration of the delay
+     * @param error - error objecct indicating the throttled
+     */
+    public emitDelayInfo(id: string, delayMs: number, error: any) {
         const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
