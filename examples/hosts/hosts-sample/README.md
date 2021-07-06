@@ -27,7 +27,7 @@ Upon navigating to the example application home URL with no parameters, it will 
 
 The application URL has the following format:
 ```
-http://localhost:8080/[document-id][?code=package-id][#CreateNew]
+http://localhost:8080/<document-id>?code=<package-id>[#CreateNew]
 ```
 , where<br>
 `document-id` - is an alphanumerical string representing the unique Fluid document ID.<br>
