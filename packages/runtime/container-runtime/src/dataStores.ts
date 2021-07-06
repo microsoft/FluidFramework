@@ -87,16 +87,20 @@ export class DataStores implements IDisposable {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
-
         if (baseSnapshot) {
             for (const [key, value] of Object.entries(baseSnapshot.trees)) {
                 fluidDataStores.set(key, value);
             }
         }
 
+        let unreferencedDataStoreCount = 0;
+
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
+            if (value.unreferenced !== undefined) {
+                unreferencedDataStoreCount++;
+            }
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
@@ -141,6 +145,11 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
+        this.logger.sendTelemetryEvent({
+            eventName: "dataStoreCount",
+            dataStoreCount: fluidDataStores.size,
+            referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
+        });
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
