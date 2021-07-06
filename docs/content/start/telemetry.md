@@ -11,11 +11,9 @@ The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-de
 
 [`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
 
-https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50
-`createContainer()` interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`createContainer()`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
 
-https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65
-`getContainer()` interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`getContainer()`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
 
 ```ts
 const loader = new Loader({
@@ -27,8 +25,7 @@ const loader = new Loader({
 ```
 The `Loader` constructor is called by both `createContainer()` and `getContainer()`, and requires a `ILoaderProps` interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the `ITelemetryBaseLogger` defined by the user.
 
-https://github.com/microsoft/FluidFramework/blob/24f5cd9acd3a7ef83604edd9863a47ea50c30569/packages/loader/container-loader/src/loader.ts#L309
-`ILoaderProps.logger` is used by `Loader` to pipe to container's telemetry system.
+[`ILoaderProps.logger`](https://github.com/microsoft/FluidFramework/blob/24f5cd9acd3a7ef83604edd9863a47ea50c30569/packages/loader/container-loader/src/loader.ts#L309) is used by `Loader` to pipe to container's telemetry system.
 
 
 
