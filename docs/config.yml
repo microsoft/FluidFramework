@@ -25,7 +25,7 @@ menu:
     url: "/start/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/start/recipes/react/"
+    url: "/docs/recipes/react/"
     weight: -90
   - name: "Docs"
     url: "/docs/"
@@ -49,13 +49,13 @@ menu:
     name: "Tutorial"
     url: "/start/tutorial/"
     weight: -700
-  - identifier: "examples"
-    name: "Examples"
-    url: "/start/examples/"
-    weight: -600
   - identifier: "recipes"
     name: "Recipes"
     weight: -200
+  # - identifier: "examples"
+  #   name: "Examples"
+  #   url: "/start/examples/"
+  #   weight: -600
   - identifier: "faq"
     name: "FAQ"
     url: "/start/faq/"
@@ -67,17 +67,23 @@ menu:
 
   # this menu supplements one generated in the apiNav partial
   docs:
-  - identifier: "concepts"
-    name: "Concepts"
-    weight: -400
-  - identifier: "advanced"
-    name: "Advanced"
+  - identifier: "build"
+    name: "Build with Fluid"
+    weight: -600
+  # - identifier: "concepts"
+  #   name: "Concepts"
+  #   weight: -300
+  # - identifier: "advanced"
+  #   name: "Advanced"
+  #   weight: -400
+  - identifier: "testing"
+    name: "Testing"
     weight: -300
-  - identifier: "deep"
-    name: "The depths 🤿"
-    weight: -200
   - identifier: "DDS"
     name: "Data Structures"
+    weight: -200
+  - identifier: "deep"
+    name: "The depths 🤿"
     weight: -100
 
 markup:

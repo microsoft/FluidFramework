@@ -10,11 +10,11 @@ import { IAudience } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
-interface IFluidContainerEvents extends IEvent {
+export interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
 }
 
-interface IFluidContainer extends IEventProvider<IFluidContainerEvents>{
+export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
     readonly connected: boolean;
     readonly initialObjects: LoadableObjectRecord;

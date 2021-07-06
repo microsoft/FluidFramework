@@ -21,7 +21,7 @@ import {
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
-interface RootDataObjectProps {
+export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 

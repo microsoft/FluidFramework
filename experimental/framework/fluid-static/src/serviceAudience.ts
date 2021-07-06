@@ -35,9 +35,6 @@ export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> i
     });
   }
 
-  /**
-   * @inheritdoc
-   */
   public getMembers(): Map<string, IMember> {
     const users = new Map<string, IMember>();
     // Iterate through the members and get the user specifics.
@@ -60,7 +57,7 @@ export class ServiceAudience extends TypedEventEmitter<IServiceAudienceEvents> i
   }
 
   /**
-   * @inheritdoc
+   * {@inheritDoc IServiceAudience.getMyself}
    */
   public getMyself(): IMember | undefined {
     const clientId = this.container.clientId;
