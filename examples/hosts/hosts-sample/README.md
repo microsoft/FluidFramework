@@ -216,7 +216,7 @@ method we then parse a URL of this form into the associated `fluid://` schema ba
 To do so we first start by parsing the full URL and extracing the document ID out of the URL
 
 ```typescript
-const parsedUrl = new URL(request.URL);
+const parsedUrl = new URL(request.url);
 const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 ```
 
