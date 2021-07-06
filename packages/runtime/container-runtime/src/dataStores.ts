@@ -95,7 +95,6 @@ export class DataStores implements IDisposable {
         }
 
         let unreferencedDataStoreCount = 0;
-
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
