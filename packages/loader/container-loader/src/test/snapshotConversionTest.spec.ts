@@ -51,7 +51,7 @@ describe("Dehydrate Container", () => {
                 },
             },
         };
-        const { snapshotTree } = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,

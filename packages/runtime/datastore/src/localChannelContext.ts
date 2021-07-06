@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateContainerError, CreateProcessingError } from "@fluidframework/container-utils";
-import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,
     IChannelContext,
@@ -42,12 +42,12 @@ export class LocalChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     }>;
     private readonly dirtyFn: () => void;
-    private readonly factory: IChannelFactory | undefined;
+    private factory: IChannelFactory | undefined;
 
     constructor(
         private readonly id: string,
-        registry: ISharedObjectRegistry,
-        type: string,
+        private readonly registry: ISharedObjectRegistry,
+        type: string | undefined,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
@@ -55,11 +55,9 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
     ) {
-        let blobMap: Map<string, ArrayBufferLike> | undefined;
         const clonedSnapshotTree = cloneDeep(this.snapshotTree);
         if (clonedSnapshotTree !== undefined) {
-            blobMap = new Map<string, ArrayBufferLike>();
-            this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
+            this.sanitizeSnapshot(clonedSnapshotTree);
         }
         this.services = new Lazy(() => {
             return createServiceEndpoints(
@@ -69,14 +67,14 @@ export class LocalChannelContext implements IChannelContext {
                 this.dirtyFn,
                 this.storageService,
                 clonedSnapshotTree,
-                blobMap,
             );
         });
-        this.factory = registry.get(type);
-        if (this.factory === undefined) {
-            throw new Error(`Channel Factory ${type} not registered`);
-        }
         if (snapshotTree === undefined) {
+            assert(type !== undefined, "Type should be defined");
+            this.factory = registry.get(type);
+            if (this.factory === undefined) {
+                throw new Error(`Channel Factory ${type} not registered`);
+            }
             this.channel = this.factory.create(runtime, id);
         }
         this.dirtyFn = () => { dirtyFn(id); };
@@ -152,7 +150,11 @@ export class LocalChannelContext implements IChannelContext {
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(!!this.factory, 0x191 /* "Factory should be there for local channel" */);
+        this.factory = this.registry.get(attributes.type);
+        if (this.factory === undefined) {
+            throw new Error(`Channel Factory ${attributes.type} not registered`);
+        }
+
         // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,
@@ -190,19 +192,20 @@ export class LocalChannelContext implements IChannelContext {
         this.attached = true;
     }
 
-    private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, ArrayBufferLike>) {
+    // 0.42 back-compat Since the old loader still puts contents in same blobs, we need to sanitize it
+    // before passing to lower layer. However we can stop collecting blobs as they will be supplied by the
+    // storage.
+    private sanitizeSnapshot(snapshotTree: ISnapshotTree) {
         const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
         for (const [blobName, blobId] of blobMapInitial.entries()) {
             const blobValue = blobMapInitial.get(blobId);
-            if (blobValue !== undefined) {
-                blobMap.set(blobId, stringToBuffer(blobValue, "base64"));
-            } else {
+            if (blobValue === undefined) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete snapshotTree.blobs[blobName];
             }
         }
         for (const value of Object.values(snapshotTree.trees)) {
-            this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
+            this.sanitizeSnapshot(value);
         }
     }
 

@@ -15,7 +15,6 @@ import {
     ISummaryBlob,
     ISummaryHandle,
     SummaryType,
-    ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
@@ -23,6 +22,7 @@ import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
     convertToSummaryTree,
+    ISnapshotTreeWithBlobContents,
     utf8ByteLength,
 } from "../summaryUtils";
 
@@ -173,16 +173,23 @@ describe("Summary Utils", () => {
     });
 
     describe("ISnapshotTree -> ISummaryTree", () => {
-        let snapshotTree: ISnapshotTree;
+        let snapshotTree: ISnapshotTreeWithBlobContents;
 
         beforeEach(() => {
             snapshotTree = {
+                blobsContents: {
+                    "blob-b": IsoBuffer.from("test-blob"),
+                },
                 blobs: {
                     "b": "blob-b",
                     "blob-b": IsoBuffer.from("test-blob").toString("base64"),
                 },
                 trees: {
                     t: {
+                        blobsContents: {
+                            "blob-bu8": IsoBuffer.from("test-u8"),
+                            "blob-b64": IsoBuffer.from("test-b64"),
+                        },
                         blobs: {
                             "bu8": "blob-bu8",
                             "blob-bu8": IsoBuffer.from("test-u8").toString("base64"),
@@ -191,6 +198,8 @@ describe("Summary Utils", () => {
                         },
                         trees: {
                             tu: {
+                                blobsContents: {
+                                },
                                 blobs: {
                                 },
                                 trees: {
@@ -204,6 +213,8 @@ describe("Summary Utils", () => {
                         },
                     },
                     unref: {
+                        blobsContents: {
+                        },
                         blobs: {
                         },
                         trees: {
