@@ -98,7 +98,7 @@ export class DataStores implements IDisposable {
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
-            if (value.unreferenced !== undefined) {
+            if (value.unreferenced !== undefined && value.unreferenced) {
                 unreferencedDataStoreCount++;
             }
             // If we have a detached container, then create local data store contexts.
