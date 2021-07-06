@@ -39,11 +39,6 @@ export interface IErrorBase {
      */
     readonly errorType: string;
     readonly message: string;
-    /**
-     * Sequence number when error happened
-     * @deprecated - Was used for logging and is no longer needed due to DataProcessingError/DataCorruptionError
-     * */
-    sequenceNumber?: number;
 }
 
 /**
