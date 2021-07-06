@@ -9,7 +9,7 @@ Telemetry is an essential part of maintaining the health of modern applications.
 
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter, - Both `FrsContainerConfig` and `TinyliciousContainerConfig` have a member `logger?: ITelemetryBaseLogger` . Both `createContainer()` and `getContainer()` methods will create an instance of a `Loader` class object, where the logger defined in the `[client]ContainerConfig` is passed in as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
 
-![`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
+[`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
 
 https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50
 `createContainer()` interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
