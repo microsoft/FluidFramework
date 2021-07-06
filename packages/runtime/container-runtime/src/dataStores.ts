@@ -87,6 +87,7 @@ export class DataStores implements IDisposable {
         this.logger = ChildLogger.create(baseLogger);
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
+
         if (baseSnapshot) {
             for (const [key, value] of Object.entries(baseSnapshot.trees)) {
                 fluidDataStores.set(key, value);
@@ -98,6 +99,8 @@ export class DataStores implements IDisposable {
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
+
+            // counting number of unreferenced data stores
             if (value.unreferenced) {
                 unreferencedDataStoreCount++;
             }
