@@ -165,15 +165,7 @@ export class LocalChannelContext implements IChannelContext {
 
         // Send all pending messages to the channel
         for (const message of this.pending) {
-            try {
-                this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
-            } catch (err) {
-                // record sequence number for easier debugging
-                const error = CreateContainerError(err);
-                error.sequenceNumber = message.sequenceNumber;
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw error;
-            }
+            this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
         return this.channel;
     }
