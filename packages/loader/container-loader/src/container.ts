@@ -30,7 +30,6 @@ import {
     IThrottlingWarning,
     IPendingLocalState,
     ReadOnlyInfo,
-    ILoaderOptions,
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
@@ -43,7 +42,6 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -84,6 +82,7 @@ import {
     ISummaryTree,
     IPendingProposal,
     SummaryType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -99,13 +98,13 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
-import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
+import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
+import { getSnapshotTreeFromSerializedContainer } from "./utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -130,6 +129,13 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     loadMode?: IContainerLoadMode;
+    /**
+     * Create the container on load, without an existing snapshot.
+     * Used only for supporting legacy scenarios.
+     *
+     * @deprecated - avoid using this flow, this property is only for temporarily supporting a legacy scenario.
+     */
+    createOnLoad?: boolean;
 }
 
 export interface IContainerConfig {
@@ -157,20 +163,6 @@ export enum ConnectionState {
      */
     Connected,
 }
-
-// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
-// a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
-    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
-    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
-    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
-        0x1e0 /* "Protocol and App summary trees should be present" */);
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
-        protocolSummaryTree,
-        appSummaryTree,
-    );
-    return snapshotTree;
-};
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -336,7 +328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState)
+                container.load(version, mode, pendingLocalState, loadOptions.createOnLoad)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -411,7 +403,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
-    private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private readonly _audience: Audience;
 
@@ -553,13 +544,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * Flag indicating whether the document already existed at the time of load
-     */
-    public get existing(): boolean | undefined {
-        return this._existing;
-    }
-
-    /**
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
@@ -653,6 +637,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
+                    if (this.loader.services.detachedBlobStorage !== undefined) {
+                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.logger);
+                    }
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
@@ -1125,13 +1112,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - one of the following
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param pause - start the container in a paused state
+     * @param createIfNotExisting - create the container when there is no container to load.
+     *        Avoid using this flag, its goal is temporarily supporting a legacy scenario.
      */
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown)
-    {
+        pendingLocalState?: unknown,
+        createIfNotExisting?: boolean,
+    ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1177,8 +1166,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
+        let existing = true;
         if (snapshot !== undefined) {
-            this._existing = true;
             switch (loadMode.opsBeforeReturn) {
                 case undefined:
                     if (loadMode.deltaConnection !== "none") {
@@ -1204,21 +1193,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else {
             //
             // THIS IS LEGACY PATH
+            // The code is maintained for the snapshot back compat tests
             //
+            assert(createIfNotExisting === true, 0x1fb /* "Snapshot should already exist" */);
+
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             const details = await startConnectionP;
-            this._existing = details.existing;
+            existing = details.existing;
         }
 
-        // LoadContext directly requires protocolHandler to be ready, and eventually calls
-        // instantiateRuntime which will want to know existing state.
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
-        await this.loadContext(codeDetails, attributes, snapshot, pendingLocalState);
+        await this.instantiateContext(
+            existing,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
 
         // Propagate current connection state through the system.
         this.propagateConnectionState();
@@ -1265,7 +1261,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return {
-            existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
         };
@@ -1294,9 +1289,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachDeltaManagerOpHandler(attributes);
 
-        // We know this is create detached flow without snapshot.
-        this._existing = false;
-
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
@@ -1305,7 +1297,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.createDetachedContext(attributes);
+        await this.instantiateContextDetached(
+            false, // existing
+            attributes,
+        );
 
         this.propagateConnectionState();
 
@@ -1313,20 +1308,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const snapshotTree: ISnapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        blobs.forEach((value, key) => {
+            this.storageBlobs.set(key, value);
+        });
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
-
-        // We know this is create detached flow with snapshot.
-        this._existing = true;
 
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler =
             await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
 
-        await this.createDetachedContext(attributes, snapshotTree);
+        await this.instantiateContextDetached(
+            true, // existing
+            attributes,
+            snapshotTree,
+        );
 
         this.loaded = true;
 
@@ -1339,13 +1338,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
-        let storageService = await this.service.connectToStorage();
-        // Enable prefetching for the service unless it has a caching policy set otherwise:
-        if (storageService.policies?.caching !== LoaderCachingPolicy.NoCaching) {
-            storageService = new PrefetchDocumentStorageService(storageService);
-        }
+        const storageService = await this.service.connectToStorage();
 
-        this._storageService = new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+        this._storageService =
+            new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+
+        if(this.options.summarizeProtocolTree === true) {
+            this._storageService =
+                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+        }
 
         // ensure we did not lose that policy in the process of wrapping
         assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
@@ -1706,8 +1707,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         switch (outboundMessageType) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
-            case MessageType.Summarize:
                 break;
+            case MessageType.Summarize: {
+                // github #6451: this is only needed for staging so the server
+                // know when the protocol tree is included
+                // this can be removed once all clients send
+                // protocol tree by default
+                const summary = contents as ISummaryContent;
+                if(summary.details === undefined) {
+                    summary.details = {};
+                }
+                summary.details.includesProtocolTree =
+                    this.options.summarizeProtocolTree === true;
+                break;
+            }
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
                 return -1;
@@ -1806,16 +1819,37 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return { snapshot, versionId: version?.id };
     }
 
-    private async loadContext(
-        codeDetails: IFluidCodeDetails,
+    private async instantiateContextDetached(
+        existing: boolean,
         attributes: IDocumentAttributes,
+        snapshot?: ISnapshotTree,
+        pendingLocalState?: unknown,
+    ) {
+        const codeDetails = this.getCodeDetailsFromQuorum();
+        if (codeDetails === undefined) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+
+        await this.instantiateContext(
+            existing,
+            attributes,
+            codeDetails,
+            snapshot,
+            pendingLocalState,
+        );
+    }
+
+    private async instantiateContext(
+        existing: boolean,
+        attributes: IDocumentAttributes,
+        codeDetails: IFluidCodeDetails,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
         assert(this._context?.disposed !== false, 0x0dd /* "Existing context not disposed" */);
         // If this assert fires, our state tracking is likely not synchronized between COntainer & runtime.
         if (this._dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer"});
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadContainer" });
         }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -1840,22 +1874,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._dirtyContainer = dirty;
                 this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
             },
+            existing,
             pendingLocalState,
         );
 
         this.emit("contextChanged", codeDetails);
-    }
-
-    /**
-     * Creates a new, unattached container context
-     */
-    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
-        const codeDetails = this.getCodeDetailsFromQuorum();
-        if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
-        }
-
-        await this.loadContext(codeDetails, attributes, snapshot);
     }
 
     // Please avoid calling it directly.

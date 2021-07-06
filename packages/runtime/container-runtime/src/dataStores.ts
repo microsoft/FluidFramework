@@ -383,6 +383,10 @@ export class DataStores implements IDisposable {
         return entries;
     }
 
+    public get size(): number {
+        return this.contexts.size;
+    }
+
     public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
@@ -482,6 +486,7 @@ export class DataStores implements IDisposable {
     /**
      * After GC has run, called to notify this Container's data stores of routes that are used in it.
      * @param usedRoutes - The routes that are used in all data stores in this Container.
+     * @returns the total number of data stores and the number of data stores that are unused.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of data store ids to routes used in it.
@@ -496,6 +501,13 @@ export class DataStores implements IDisposable {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
+
+        // Return the number of data stores that are unused.
+        const dataStoreCount = this.contexts.size;
+        return {
+            dataStoreCount,
+            unusedDataStoreCount: dataStoreCount - usedDataStoreRoutes.size,
+        };
     }
 
     /**

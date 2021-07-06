@@ -34,6 +34,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
@@ -115,7 +116,7 @@ export function configurableUrlResolver(resolversList: IUrlResolver[], request: 
 export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): GenericNetworkError | ThrottlingError;
 
 // @public (undocumented)
-export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType>;
+export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError {
@@ -141,6 +142,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     getVersions(versionId: string, count: number): Promise<IVersion[]>;
     // (undocumented)
     protected readonly internalStorageService: IDocumentStorageService;
+    set policies(policies: IDocumentStorageServicePolicies | undefined);
+    // (undocumented)
+    get policies(): IDocumentStorageServicePolicies | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -208,7 +212,7 @@ export class MultiUrlResolver implements IUrlResolver {
     }
 
 // @public (undocumented)
-export class NetworkErrorBasic<T> extends LoggingError {
+export class NetworkErrorBasic<T extends string> extends LoggingError {
     constructor(errorMessage: string, errorType: T, canRetry: boolean, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry: boolean;
@@ -217,7 +221,7 @@ export class NetworkErrorBasic<T> extends LoggingError {
 }
 
 // @public (undocumented)
-export class NonRetryableError<T> extends NetworkErrorBasic<T> {
+export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(errorMessage: string, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;
@@ -246,6 +250,21 @@ export class ParallelRequests<T> {
     run(concurrency: number): Promise<void>;
     }
 
+// @public (undocumented)
+export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
+    // (undocumented)
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    // (undocumented)
+    get policies(): {
+        caching: LoaderCachingPolicy;
+        minBlobSize?: number | undefined;
+    } | undefined;
+    // (undocumented)
+    readBlob(blobId: string): Promise<ArrayBufferLike>;
+    // (undocumented)
+    stopPrefetch(): void;
+}
+
 // @public
 export class Queue<T> implements IStream<T> {
     // (undocumented)
@@ -272,7 +291,7 @@ export function readAndParseFromBlobs<T>(blobs: {
 export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
-export class RetryableError<T> extends NetworkErrorBasic<T> {
+export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(errorMessage: string, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;

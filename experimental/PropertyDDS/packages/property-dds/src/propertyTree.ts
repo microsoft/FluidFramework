@@ -37,6 +37,8 @@ import { PropertyTreeFactory } from "./propertyTreeFactory";
 
 export type SerializedChangeSet = any;
 
+export type Metadata = any;
+
 type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
 type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
@@ -48,6 +50,7 @@ export const enum OpKind {
 export interface IPropertyTreeMessage {
 	op: OpKind;
 	changeSet: SerializedChangeSet;
+	metadata: Metadata;
 	guid: string;
 	referenceGuid: string;
 	remoteHeadGuid: string;
@@ -90,7 +93,6 @@ export interface SharedPropertyTreeOptions {
  * in the total order)
  */
 export class SharedPropertyTree extends SharedObject {
-	// Initial state of the PRNG.  Must not be zero.  (See `advance()` below for details.)
 	tipView: SerializedChangeSet = {};
 	remoteTipView: SerializedChangeSet = {};
 	localChanges: IPropertyTreeMessage[] = [];
@@ -164,23 +166,39 @@ export class SharedPropertyTree extends SharedObject {
 		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 	}
 
-	public get changeSet() {
+	public get changeSet(): SerializedChangeSet {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.tipView;
+	}
+
+    public get activeCommit(): IPropertyTreeMessage {
+        if(this.localChanges.length > 0) {
+            return this.localChanges[this.localChanges.length - 1];
+        } else {
+            return this.remoteChanges[this.remoteChanges.length - 1];
+        }
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
 	}
 
-	public commit(submitEmptyChange = false) {
+	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-        if (submitEmptyChange || !_.isEmpty(changes)) {
-            this.applyChangeSet(changes);
+
+        let doSubmit = !!submitEmptyChange;
+
+        // if no override provided dont submit unless metadata are provided
+        if (submitEmptyChange === undefined) {
+            doSubmit =  metadata !== undefined;
+        }
+
+        if (doSubmit || !_.isEmpty(changes)) {
+            this.applyChangeSet(changes, metadata || {});
             this.root.cleanDirty();
         }
 	}
 
-	private applyChangeSet(changeSet: SerializedChangeSet) {
+	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
 
@@ -191,6 +209,7 @@ export class SharedPropertyTree extends SharedObject {
 		const change = {
 			op: OpKind.ChangeSet,
 			changeSet,
+			metadata,
 			guid: uuidv4(),
 			remoteHeadGuid,
 			referenceGuid:
@@ -316,6 +335,12 @@ export class SharedPropertyTree extends SharedObject {
 				if (visitor.remoteHeadGuid === visitor.referenceGuid && remoteChangeMap.has(visitor.referenceGuid)) {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
+
+                // If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
+                // keep all remote Changes until this change has been processed
+                if (visitor.remoteHeadGuid === "") {
+                    visitedRemoteChanges.add(remoteChanges[0].guid);
+                }
 			}
 		}
 		let pruned = 0;
@@ -372,7 +397,7 @@ export class SharedPropertyTree extends SharedObject {
 				remoteChanges: this.remoteChanges,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-			const chunkSize = 64 * 1024; // Default limit seems to be 100k
+			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let serializedSummary =
 				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
 
@@ -500,7 +525,8 @@ export class SharedPropertyTree extends SharedObject {
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
-						const remoteChange = JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
+						const remoteChange: IPropertyTreeMessage
+							= JSON.parse(missingDeltas[i].contents).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
 								`http://localhost:3000/branch/${branchGuid}/commit/${remoteChange.guid}/changeSet`,
@@ -658,10 +684,14 @@ export class SharedPropertyTree extends SharedObject {
 			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
 		});
 
-		// Update the the tip view
-		this.tipView = _.cloneDeep(this.remoteTipView);
-		const changeSet = new ChangeSet(this.tipView);
-		changeSet.applyChangeSet(accumulatedChanges);
+		// Update the tip view
+		if (!this.tipView) {
+            this.tipView = _.cloneDeep(this.remoteTipView);
+            const changeSet = new ChangeSet(this.tipView);
+            changeSet.applyChangeSet(accumulatedChanges);
+        } else {
+            new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
+        }
 
 		return true;
 	}

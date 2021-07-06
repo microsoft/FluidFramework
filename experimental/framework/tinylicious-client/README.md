@@ -6,13 +6,13 @@ This package is marked as experimental and currently under development. The API 
 
 ## Using tinylicious-client
 
-The tinylicious-client package has a default `TinyliciousClient` static class that allows you to interact with Fluid.
+The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
 
 ```javascript
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 ```
 
-## Initializing TinyliciousClient
+## Instantiating TinyliciousClient
 
 Fluid requires a backing service to enable collaborative communication. The TinyliciousClient instance will be instantitated against the Tinylicious service.
 
@@ -22,7 +22,7 @@ In the example below we are connecting to a locally running instance of our Tiny
 import TinyliciousClient, { TinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
 
 const config: TinyliciousConnectionConfig = { port: 7070 };
-TinyliciousClient.init(config);
+const tinyliciousClient = new TinyliciousClient(config);
 ```
 
 ## Fluid Containers
@@ -38,8 +38,9 @@ Using the default `TinyliciousClient` object the developer can create and get Fl
 ```javascript
 import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 
-await TinyliciousClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const tinyliciousClient = new TinyliciousClient(config);
+await tinyliciousClient.createContainer( { id: "_unique-id_" }, /* schema */);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
 ## Defining Fluid Containers
@@ -56,8 +57,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-await TinyliciousClient.createContainer({ id: "_unique-id_" }, schema);
-const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const tinyliciousClient = new TinyliciousClient();
+await tinyliciousClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -76,8 +78,8 @@ const schema = {
         pair1: KeyValueDataObject,
     }
 }
-
-const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const tinyliciousClient = new TinyliciousClient();
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
@@ -100,8 +102,8 @@ const schema = {
     },
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
-
-const container = await TinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const tinyliciousClient = new TinyliciousClient();
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

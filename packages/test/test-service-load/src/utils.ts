@@ -113,7 +113,8 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+export async function createTestDriver(
+    driver: TestDriverTypes, seed: number, runId: number | undefined, supportsBrowserAuth?: true) {
     const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
@@ -121,6 +122,7 @@ export async function createTestDriver(driver: TestDriverTypes, seed: number, ru
             odsp: {
                 directory: "stress",
                 options: options[ (runId ?? seed) % options.length],
+                supportsBrowserAuth,
             },
         });
 }
