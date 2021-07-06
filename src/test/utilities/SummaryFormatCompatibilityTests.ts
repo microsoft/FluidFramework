@@ -210,7 +210,8 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
 				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the
-				// summarizer is 0.0.2
+				// summarizer is 0.0.2.
+				// TODO:#60277: Add tests for format version downgrades in general, and make this case a special case of those more general tests.
 				if (
 					includesHandles(
 						deserialize(
