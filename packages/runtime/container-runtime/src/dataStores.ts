@@ -98,7 +98,7 @@ export class DataStores implements IDisposable {
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
-            if (value.unreferenced !== undefined && value.unreferenced) {
+            if (value.unreferenced) {
                 unreferencedDataStoreCount++;
             }
             // If we have a detached container, then create local data store contexts.
@@ -146,7 +146,7 @@ export class DataStores implements IDisposable {
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
         this.logger.sendTelemetryEvent({
-            eventName: "dataStoreCount",
+            eventName: "ContainerLoadStats",
             dataStoreCount: fluidDataStores.size,
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
         });
