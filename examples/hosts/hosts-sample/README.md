@@ -29,10 +29,11 @@ The application URL has the following format:
 ```
 http://localhost:8080/<document-id>?code=<package-id>[#CreateNew]
 ```
-, where<br>
-`document-id` - is an alphanumerical string representing the unique Fluid document ID.<br>
-`package-id` - is a Fluid code package name and version in the following format `@<scope>/<name>@<version>`.<br>
-`#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.<br>
+where
+
+- `document-id` - is an alphanumerical string representing the unique Fluid document ID.
+- `package-id` - is a Fluid code package name and version in the following format `@<scope>/<name>@<version>`.
+- `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
 
 The application also provides the code details panel allowing to load different code versions and propose code upgrades.
 
