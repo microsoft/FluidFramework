@@ -10,12 +10,15 @@ import { IOdspSocketError } from "./contracts";
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string): OdspError {
-    const message = `socket.io:${handler}`;
+export function errorObjectFromSocketError(
+    socketError: IOdspSocketError,
+    handler: string,
+    canRetry: boolean,
+): OdspError {
     return createOdspNetworkError(
-        message,
+        `socket.io:${handler}`,
         socketError.code,
-        socketError.retryAfter,
+        canRetry ? socketError.retryAfter : undefined,
         undefined /* response */,
         undefined /* responseText */,
         { socketError: socketError.message } /* props */,
