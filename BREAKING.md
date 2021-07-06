@@ -6,7 +6,6 @@
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
 - [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
 - [Changes to client-api](#changes-to-client-api)
-- [DeltaManager.emitDelayInfo signature change](#DeltaManager.emitDelayInfo-signature-change)
 
 ### TinyliciousClient no longer static
 `TinyliciousClient` global static property is removed. Instead, object instantiation is now required.
@@ -28,9 +27,6 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 
 ### Changes to client-api
 - The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
-
-### DeltaManager.emitDelayInfo signature change
-The `error` parameter is now of type `any`, whereas it was previously constrained to be `ICriticalContainerError`.
 
 ## 0.42 Breaking changes
 
