@@ -57,7 +57,7 @@ export function handleError(eventName: LumberEventName, errMsg: string, engineLi
         // we log the error to the console as a last resort, so the information can
         // be found in raw logs.
         if (engineList.length === 0) {
-            console.log(errMsg);
+            console.error(errMsg);
         } else {
             // Otherwise, we log the error through the current LumberjackEngines.
             const errLumber = new Lumber<LumberEventName>(
