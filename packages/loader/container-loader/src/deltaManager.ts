@@ -58,6 +58,7 @@ import {
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
+    wrapError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -72,12 +73,11 @@ function getNackReconnectInfo(nackContent: INackContent) {
     return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-function createReconnectError(prefix: string, err: any) {
-    // use CreateContainerError to get a safe message, but we will ignore errorType if found on err
-    const errorMessage = CreateContainerError(err).message;
-    const error = createGenericNetworkError(`${prefix}: ${errorMessage}`, true);
-    return error;
-}
+const createReconnectError = (prefix: string, err: any) =>
+    wrapError(
+        err,
+        (errorMessage: string) => createGenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+    );
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
