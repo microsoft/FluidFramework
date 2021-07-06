@@ -21,9 +21,10 @@
     "@fluid-experimental/property-common": "^0.44.0",
     "ajv": "7.1.1",
     "async": "^3.2.0",
+    "events": "^3.1.0",
     "lodash": "^4.17.21",
     "semver": "^7.3.4",
-    "traverse": "0.6.6"
+    "traverse": "0.6.6",
   },
   "devDependencies": {
     "@fluidframework/mocha-test-setup": "^0.44.0",

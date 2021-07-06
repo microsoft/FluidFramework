@@ -10,9 +10,9 @@
 const _ = require('lodash');
 const deepCopy = _.cloneDeep;
 
+const EventEmitter = require("events");
 const Collection = require('@fluid-experimental/property-common').Datastructures.Collection;
 const SortedCollection = require('@fluid-experimental/property-common').Datastructures.SortedCollection;
-const EventEmitter = require('@fluid-experimental/property-common').Events.EventEmitter;
 const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
@@ -726,7 +726,7 @@ PropertyFactory.prototype._registerTypeId = function (in_typeid, in_templateOrPr
     this._localPrimitivePropertiesAndTemplates.add(in_typeid, in_templateOrProperty);
   }
 
-  this._eventEmitter.trigger('registered', this, in_templateOrProperty);
+  this._eventEmitter.emit('registered', this, in_templateOrProperty);
 };
 
 /**

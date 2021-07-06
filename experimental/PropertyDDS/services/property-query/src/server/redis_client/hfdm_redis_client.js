@@ -9,7 +9,7 @@
 
   const _ = require('lodash');
   const DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
-  const EventEmitter = require('events').EventEmitter;
+  const EventEmitter = require('events');
   const HttpStatus = require('http-status-codes');
   const ModuleLogger = require('../utils/module_logger');
   const Redis = require('ioredis');

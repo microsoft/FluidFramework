@@ -17,7 +17,7 @@ const defaultInstanceMonitor = {
 };
 
 (function() {
-  var EventEmitter = require('events').EventEmitter,
+  var EventEmitter = require('events'),
       express = require('express'),
       http = require('http'),
       url = require('url'),
