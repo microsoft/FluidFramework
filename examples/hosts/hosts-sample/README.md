@@ -301,8 +301,8 @@ call to load the code package.
 
 #### Fluid Object
 
-The Fluid object model supports a delegation and feature detection mechanism. As it is typical in JavaScript,
-a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
+The Fluid object model supports a delegation and feature detection mechanism.
+A feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
 cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
