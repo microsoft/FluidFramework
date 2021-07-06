@@ -94,7 +94,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 ```
 The `ITelemetryBaseEvent` contains `category` and `eventName` properties for labeling and defining a telemetry event.-
  - `ITelemetryProperties` extended by `ITelemetryBaseEvent`, is a type with a string index signature, the values are either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`, `boolean`, `number`, `undefined`). It is imperative for you to know how to interpret and process these tagged values.
- - Tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (for example, private customer data), those events could be tagged with a unique string so they could be treated differently downstream.
+ -- For context, tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (for example, private customer data), those events could be tagged with a unique string so they could be treated differently downstream.
  ```ts
  export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
