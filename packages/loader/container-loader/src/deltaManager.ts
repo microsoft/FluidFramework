@@ -1165,11 +1165,12 @@ export class DeltaManager
         this.disconnectFromDeltaStream(error.message);
 
         // If reconnection is not an option, close the DeltaManager
-        if (this.reconnectMode === ReconnectMode.Never || !error.canRetry) {
+        const canRetry = canRetryOnError(error);
+        if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(error.canRetry ? undefined : error);
+            this.close(canRetry ? undefined : error);
         }
 
         // If closed then we can't reconnect
