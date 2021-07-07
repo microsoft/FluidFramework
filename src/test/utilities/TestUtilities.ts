@@ -376,6 +376,10 @@ export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNod
  * @returns the list of created edits
  */
 export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
+	if (numberOfEdits === 0) {
+		return [];
+	}
+
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
 	// First edit is an insert
