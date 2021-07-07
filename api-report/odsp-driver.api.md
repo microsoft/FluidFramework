@@ -129,7 +129,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

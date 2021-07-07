@@ -613,7 +613,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 snapshotDownloader,
                 putInCache,
-                removeEntries);
+                removeEntries,
+                this.hostPolicy.enableRedeemFallback);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -635,7 +636,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger,
                     snapshotDownloader,
                     putInCache,
-                    removeEntries);
+                    removeEntries,
+                    this.hostPolicy.enableRedeemFallback);
                 return odspSnapshot;
             }
             throw error;

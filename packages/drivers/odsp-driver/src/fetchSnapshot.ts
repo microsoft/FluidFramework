@@ -74,6 +74,7 @@ export async function fetchSnapshotWithRedeem(
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
+    enableRedeemFallback?: boolean,
 ): Promise<ISnapshotCacheValue> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
@@ -83,7 +84,7 @@ export async function fetchSnapshotWithRedeem(
         snapshotDownloader,
         putInCache,
     ).catch(async (error) => {
-        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+        if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
