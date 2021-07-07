@@ -94,9 +94,15 @@ export class DataStores implements IDisposable {
             }
         }
 
+        let unreferencedDataStoreCount = 0;
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
+
+            // counting number of unreferenced data stores
+            if (value.unreferenced) {
+                unreferencedDataStoreCount++;
+            }
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
@@ -141,6 +147,11 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerLoadStats",
+            dataStoreCount: fluidDataStores.size,
+            referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
+        });
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -383,6 +394,10 @@ export class DataStores implements IDisposable {
         return entries;
     }
 
+    public get size(): number {
+        return this.contexts.size;
+    }
+
     public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
         const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
@@ -482,6 +497,7 @@ export class DataStores implements IDisposable {
     /**
      * After GC has run, called to notify this Container's data stores of routes that are used in it.
      * @param usedRoutes - The routes that are used in all data stores in this Container.
+     * @returns the total number of data stores and the number of data stores that are unused.
      */
     public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of data store ids to routes used in it.
@@ -496,6 +512,13 @@ export class DataStores implements IDisposable {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
+
+        // Return the number of data stores that are unused.
+        const dataStoreCount = this.contexts.size;
+        return {
+            dataStoreCount,
+            unusedDataStoreCount: dataStoreCount - usedDataStoreRoutes.size,
+        };
     }
 
     /**

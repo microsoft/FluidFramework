@@ -25,10 +25,6 @@ import * as sharedTextComponent from "./component";
 /* eslint-disable max-len */
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
-const progressBars = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
-const images = import(
-    /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection");
 
 const DefaultComponentName = "text";
 
@@ -50,8 +46,6 @@ const DefaultComponentName = "text";
 const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
-    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
 class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {

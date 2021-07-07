@@ -42,10 +42,9 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@types/assert": "^1.5.2",
     "@types/mocha": "^8.2.2",
-    "assert": "^2.0.0",
     "concurrently": "^5.2.0",
     "eslint": "~7.18.0",
     "mocha": "^8.4.0",

@@ -316,21 +316,27 @@ ArrayProperty.prototype._setValuesInternal = function(in_values) {
       ContainerProperty.prototype.setValues.call(this, in_values);
     }
   } else {
-    if (_.isArray(in_values) && in_values.length < this._dataArrayGetLength()) {
-      this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
-    }
-
-    var that = this;
-    var maxIndex = this._dataArrayGetLength() - 1;
-    _.each(in_values, function(value, index) {
-      if (index > maxIndex) {
-        that.insert(index, value);
-      } else {
-        if (that._dataArrayGetValue(index) !== value) {
-          that.set(index, value);
-        }
+    if (_.isArray(in_values)) {
+      if (in_values.length < this._dataArrayGetLength()) {
+        this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
       }
-    });
+      this.setRange(0, in_values.slice(0, this._dataArrayGetLength()));
+      if (in_values.length > this._dataArrayGetLength()) {
+          this.insertRange(this._dataArrayGetLength(), in_values.slice(this._dataArrayGetLength()));
+      }
+    } else {
+      var that = this;
+      var maxIndex = this._dataArrayGetLength() - 1;
+      _.each(in_values, function(value, index) {
+        if (index > maxIndex) {
+          that.insert(index, value);
+        } else {
+          if (that._dataArrayGetValue(index) !== value) {
+            that.set(index, value);
+          }
+        }
+      });
+    }
   }
 };
 

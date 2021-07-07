@@ -4,13 +4,14 @@
  */
 
 import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { Container, IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -31,13 +32,13 @@ export interface IOpProcessingController {
 export interface ITestObjectProvider {
     createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-        options?: ILoaderOptions,
+        options?: ITestLoaderOptions,
         detachedBlobStorage?: IDetachedBlobStorage,
     ): IHostLoader;
-    createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions): Promise<IContainer>;
+    createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions): Promise<IContainer>;
     loadContainer(
         entryPoint: fluidEntryPoint,
-        options?: ILoaderOptions,
+        options?: ITestLoaderOptions,
         requestHeader?: IRequestHeader,
     ): Promise<IContainer>;
 
@@ -77,6 +78,10 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions,
 }
 
+// new interface to help inject custom loggers to tests
+export interface ITestLoaderOptions extends ILoaderOptions {
+    logger?: ITelemetryBaseLogger;
+}
 export const createDocumentId = (): string => uuid();
 
 /**
@@ -141,15 +146,22 @@ export class TestObjectProvider {
      */
     public createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-        options?: ILoaderOptions,
+        options?: ITestLoaderOptions,
         detachedBlobStorage?: IDetachedBlobStorage,
     ) {
+        const multiSinkLogger = new MultiSinkLogger();
+        multiSinkLogger.addLogger(ChildLogger.create(getTestLogger?.(),
+            undefined, { all: { driverType: this.driver.type } }));
+        if (options?.logger !== undefined) {
+            multiSinkLogger.addLogger(options.logger);
+        }
+
         const codeLoader = new LocalCodeLoader(packageEntries);
         const loader = new this.LoaderConstructor({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: this.driver.type } }),
+            logger: multiSinkLogger,
             options,
             detachedBlobStorage,
         });
@@ -166,7 +178,7 @@ export class TestObjectProvider {
      *
      * @param packageEntries - list of code details and fluidEntryPoint pairs.
      */
-    public async createContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions) {
+    public async createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions) {
         const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         const container = await createAndAttachContainer(
             defaultCodeDetails,
@@ -176,7 +188,8 @@ export class TestObjectProvider {
         return container;
     }
 
-    public async loadContainer(entryPoint: fluidEntryPoint, options?: ILoaderOptions, requestHeader?: IRequestHeader) {
+    public async loadContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions,
+        requestHeader?: IRequestHeader) {
         const loader = this.createLoader([[defaultCodeDetails, entryPoint]], options);
         return loader.resolve({ url: await this.driver.createContainerUrl(this.documentId), headers: requestHeader });
     }

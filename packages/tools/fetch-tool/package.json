@@ -41,13 +41,11 @@
     "@fluidframework/routerlicious-urlresolver": "^0.43.0",
     "@fluidframework/runtime-definitions": "^0.43.0",
     "@fluidframework/telemetry-utils": "^0.43.0",
-    "@fluidframework/tool-utils": "^0.43.0",
-    "assert": "^2.0.0"
+    "@fluidframework/tool-utils": "^0.43.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@types/assert": "^1.5.2",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

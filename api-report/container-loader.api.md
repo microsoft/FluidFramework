@@ -118,7 +118,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    get existing(): boolean | undefined;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -183,8 +182,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: unknown): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -266,6 +264,8 @@ export interface IContainerConfig {
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
+    // @deprecated
+    createOnLoad?: boolean;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
@@ -318,6 +318,9 @@ export interface ILoaderServices {
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }
+
+// @public @deprecated
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 // @public
 export class Loader implements IHostLoader {

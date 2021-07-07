@@ -62,7 +62,6 @@
     "@fluidframework/runtime-definitions": "^0.43.0",
     "@fluidframework/runtime-utils": "^0.43.0",
     "@fluidframework/telemetry-utils": "^0.43.0",
-    "assert": "^2.0.0",
     "axios": "^0.21.1",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
@@ -71,7 +70,6 @@
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.43.0",
-    "@types/assert": "^1.5.2",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
