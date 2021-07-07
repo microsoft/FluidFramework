@@ -1,6 +1,6 @@
 ---
 title: Available Fluid Services
-menuPosition: 7
+menuPosition: 1
 ---
 
 Overview of the available Fluid services and the differences.

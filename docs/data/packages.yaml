@@ -51,7 +51,7 @@ libraries:
 # - "@fluidframework/dds-interceptions"
 # - "@fluidframework/telemetry-utils"
 # - "@fluidframework/test-utils"
-protocol:
+definitions:
 - "@fluidframework/common-definitions"
 - "@fluidframework/container-definitions"
 - "@fluidframework/core-interfaces"

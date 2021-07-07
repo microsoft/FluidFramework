@@ -5,6 +5,8 @@ menuPosition: 2
 
 ## Creating & loading
 
+What is expected of the developer with respect to creating and deleting containers?
+
 ### How to create a container
 
 ### How to load a container
@@ -12,6 +14,8 @@ menuPosition: 2
 ### FluidContainer vs containerServices
 
 ### Attaching a container
+
+### Deleting a container
 
 ## Lifecycle
 

@@ -1,4 +1,4 @@
 ---
 title: Connect to a Fluid Service in Azure with FrsClient
-menuPosition: 3
+menuPosition: 2
 ---

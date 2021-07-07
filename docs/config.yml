@@ -25,7 +25,7 @@ menu:
     url: "/start/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/docs/recipes/react/"
+    url: "/start/recipes/react/"
     weight: -90
   - name: "Docs"
     url: "/docs/"
@@ -78,10 +78,13 @@ menu:
   #   weight: -400
   - identifier: "testing"
     name: "Testing"
-    weight: -300
+    weight: -500
+  - identifier: "deployment"
+    name: "Deployment"
+    weight: -400
   - identifier: "DDS"
     name: "Data Structures"
-    weight: -200
+    weight: -300
   - identifier: "deep"
     name: "The depths 🤿"
     weight: -100

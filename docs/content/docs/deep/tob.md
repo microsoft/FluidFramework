@@ -1,8 +1,8 @@
 ---
-title: Total Order Broadcast & Eventual Consistency
+title: Total order broadcast & eventual consistency
 menuPosition: 2
-draft: true
 ---
+
 ## Fluid Data: Operations all the way down
 
 Fluid data is different than data you might be familiar with. In Fluid, when data is changed, the change is modeled as

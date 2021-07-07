@@ -1,6 +1,8 @@
 ---
 title: Hosts and the loader
 menuPosition: 4
+aliases:
+  - "/docs/concepts/hosts"
 ---
 
 The **Fluid loader** is one of the key parts of the Fluid Framework. Developers use the Fluid loader within their
