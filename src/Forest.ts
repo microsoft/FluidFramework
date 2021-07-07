@@ -110,14 +110,21 @@ export class Forest {
 	}
 
 	/**
-	 * Adds the supplied nodes to the forest. The IDs must be unique in the forest.
+	 * Adds the supplied nodes to the forest. The nodes' IDs must be unique in the forest.
 	 * @param nodes - the sequence of nodes to add to the forest. If any of them have children which exist in the forest already, those
-	 * children will be parented. Any trait arrays present in a node must be non-empty.
+	 * children will be parented. Any trait arrays present in a node must be non-empty. The nodes may be provided in any order.
 	 */
 	public add(nodes: Iterable<ForestNode>): Forest {
 		const newNodes = [...nodes];
-		const childToParent = new Map<NodeId, ParentData>();
 		const mutableNodes = this.nodes.clone();
+
+		// This method iterates through the supplied nodes in two passes, first looking only at children and second actually adding the
+		// nodes. This allows nodes to be passed in any order, e.g. a parent followed by a child or a child followed by a parent.
+
+		const childToParent = new Map<NodeId, ParentData>(); // Temporarily records the parentage of children that don't exist yet
+
+		// First, inspect the children of each node. If the child is already in the forest, update its parentage. If it is not in the
+		// forest, it may be about to be added in the second loop below so record its parentage temporarily for when that happens.
 		for (const node of newNodes) {
 			const { identifier } = node;
 			for (const [traitLabel, trait] of node.traits) {
@@ -125,8 +132,8 @@ export class Forest {
 				for (const childId of trait) {
 					const child = mutableNodes.get(childId);
 					if (child !== undefined) {
-						assert(child.parentId === undefined, 'can not give a child multiple parents');
 						// A child already exists in the forest, and its parent is now being added
+						assert(child.parentId === undefined, 'can not give a child multiple parents');
 						const parentedChild = {
 							definition: child.definition,
 							identifier: child.identifier,
@@ -135,19 +142,22 @@ export class Forest {
 							traitParent: traitLabel,
 						};
 						copyPropertyIfDefined(child, parentedChild, 'payload');
+						// Overwrite the existing child with its parented version
 						mutableNodes.set(childId, parentedChild as ForestNodeWithParentage);
 					} else {
+						// The child hasn't been added yet, so record its parentage to use when it is added below
 						childToParent.set(childId, { parentId: identifier, traitParent: traitLabel });
 					}
 				}
 			}
 		}
 
+		// Now add each node to the forest and apply any parentage information that was recorded above
 		for (const node of newNodes) {
 			const parentData = childToParent.get(node.identifier);
 			assert(!mutableNodes.has(node.identifier), 'can not add node with already existing id');
 			if (parentData !== undefined) {
-				// A parent and child have both been added for the first time
+				// This is a child whom we haven't added yet, but whose parent we already added above. Supply the recorded parentage info.
 				const child = {
 					definition: node.definition,
 					identifier: node.identifier,
@@ -157,7 +167,7 @@ export class Forest {
 				copyPropertyIfDefined(node, child, 'payload');
 				mutableNodes.set(node.identifier, child as ForestNodeWithParentage);
 			} else {
-				// A root node (no parent) has been added to the forest
+				// This is a node that has no parent. Add it with no parentage information.
 				mutableNodes.set(node.identifier, node as ForestNodeWithParentage);
 			}
 		}

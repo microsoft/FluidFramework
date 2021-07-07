@@ -77,6 +77,19 @@ describe('Forest', () => {
 		expect(forestA.equals(forestB)).to.be.true;
 	});
 
+	// Test that Forest.add() adds descendants and ancestors correctly regardless of the order in which they are supplied
+	it('can add nodes in any order', () => {
+		const child = makeForestNodeWithChildren('child' as NodeId);
+		const parent = makeForestNodeWithChildren('parent' as NodeId, 'child' as NodeId);
+		const grandparent = makeForestNodeWithChildren('grandparent' as NodeId, 'parent' as NodeId);
+		const forestA = emptyForest.add([child, parent, grandparent]);
+		const forestB = emptyForest.add([grandparent, parent, child]);
+		forestA.assertConsistent();
+		forestB.assertConsistent();
+		expect(forestA.size).to.equal(3);
+		expect(forestA.equals(forestB)).to.be.true;
+	});
+
 	it('can replace payloads', () => {
 		expectSuccessfulReplace(oneNodeForest, parentId, 0); // Set a payload when there was none
 		expectSuccessfulReplace(oneNodeForest, parentId, 1); // Change a payload
