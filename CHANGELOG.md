@@ -1,5 +1,38 @@
 # Change Log
 
+## 1.9.1
+
+* build: Update dependencies
+  * Associated pull request: [32212](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32212)
+  * Commit: [2c08c455e13a1bfcc1ec755aba585b33b482342d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2c08c455e13a1bfcc1ec755aba585b33b482342d)
+* docs: Add helpful notes to Forest.add() implementation and add a new test
+  * Associated pull request: [32210](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32210)
+  * Commit: [0e234f190d74d9dc8db3827c14a0f892937eece1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0e234f190d74d9dc8db3827c14a0f892937eece1)
+* feat: SharedTree Telemetry Event Description Docs
+  * Associated pull request: [32026](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32026)
+  * Commit: [4c332a098478ffa495e87da9b81a53e86e7975d9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4c332a098478ffa495e87da9b81a53e86e7975d9)
+* merge: 'release/2021.06.5' into 'master'
+  * Associated pull request: [32121](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32121)
+  * Commit: [7a402964a92feff2c0d0187b4a7cdc0d75eca5ed](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7a402964a92feff2c0d0187b4a7cdc0d75eca5ed)
+* build: updates markdown config to latest version, fixes docs broken by new rules
+  * Associated pull request: [31925](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31925)
+  * Commit: [f24638cdbd46e78437a2493414b328c58acb3b81](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f24638cdbd46e78437a2493414b328c58acb3b81)
+* refactor: migrate away from assertNotUndefined
+  * Associated pull request: [32043](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32043)
+  * Commit: [ab828e808635c56a874b268792d7951effb45b34](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ab828e808635c56a874b268792d7951effb45b34)
+* test: add random tree perf tests to shared-tree
+  * Associated pull request: [31822](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31822)
+  * Commit: [f9cff76b46604019c650b9cbdb040baa319e4e27](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f9cff76b46604019c650b9cbdb040baa319e4e27)
+* test: cleanup mock handle use in tests
+  * Associated pull request: [31880](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31880)
+  * Commit: [d7c0c2f6b664232f8a770030a650357867b4daf5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d7c0c2f6b664232f8a770030a650357867b4daf5)
+* feat: Additional telemetry for SharedTree SummaryLoad events
+  * Associated pull request: [31829](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31829)
+  * Commit: [540825c2c70d8243fbe291ce785e32a9339a70ef](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/540825c2c70d8243fbe291ce785e32a9339a70ef)
+* docs: better document evictableRevisions
+  * Associated pull request: [31969](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/31969)
+  * Commit: [b03ec2f4d585b81f773164fe93e1185b9a615284](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b03ec2f4d585b81f773164fe93e1185b9a615284)
+
 ## 1.5.1
 
 * feat: Re-enable edit chunk upload through SharedTree toggle
