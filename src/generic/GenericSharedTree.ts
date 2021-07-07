@@ -341,6 +341,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 					},
 					error
 				);
+				throw error;
 			}
 		}
 	}
@@ -446,12 +447,12 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 					this.submitLocalMessage(noop);
 					this.logger.sendTelemetryEvent({ eventName: 'NoOpSent' });
 				} else if (this.currentIsOldest) {
-					void this.uploadCatchUpBlobs();
+					this.uploadCatchUpBlobs();
 				}
 			}
 
 			// If this client becomes the oldest, it should take care of uploading catch up blobs.
-			this.on('becameOldest', () => void this.uploadCatchUpBlobs());
+			this.on('becameOldest', () => this.uploadCatchUpBlobs());
 		}
 	}
 
@@ -475,7 +476,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		if (summary.version !== convertedSummary.version) {
 			this.logger.sendTelemetryEvent({
 				eventName: 'SummaryConversion',
-				category: 'generic',
 				...getSummaryStatistics(convertedSummary),
 			});
 		}
@@ -507,15 +507,16 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * Upload any full chunks that have yet to be uploaded.
 	 */
-	private async uploadCatchUpBlobs(): Promise<void> {
+	private uploadCatchUpBlobs(): void {
 		for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
-			await this.uploadEditChunk(chunk, startRevision);
-			this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
-			this.logger.sendTelemetryEvent({
-				eventName: 'CatchUpBlobUpload',
-				category: 'generic',
-				chunkSize: chunk.length,
-			});
+			this.uploadEditChunk(chunk, startRevision)
+				.then(() => {
+					this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
+					this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
+				})
+				// It is safe to swallow errors from edit chunk upload because the next summary load will
+				// do another attempt to upload the edit chunks that couldn't previously be uploaded
+				.catch((error) => {});
 		}
 	}
 
@@ -624,12 +625,13 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 				const [startRevision, chunk] = lastPair;
 				const edits = assertNotUndefined(chunk.edits);
 				if (edits.length === this.editLog.editsPerChunk) {
-					void this.uploadEditChunk(edits, startRevision).then(() => {
-						this.logger.sendTelemetryEvent({
-							eventName: 'EditChunkUpload',
-							chunkSize: edits.length,
-						});
-					});
+					this.uploadEditChunk(edits, startRevision)
+						.then(() => {
+							this.logger.sendTelemetryEvent({ eventName: 'EditChunkUpload', chunkSize: edits.length });
+						})
+						// It is safe to swallow errors from edit chunk upload because the next summary load will
+						// do another attempt to upload the edit chunks that couldn't previously be uploaded
+						.catch((error) => {});
 				}
 			}
 		}
