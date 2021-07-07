@@ -127,7 +127,7 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, 0x1ed /* "Share link should be present" */);
+                assert(!!odspResolvedUrl.sharingLinkToRedeem, 0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
@@ -366,8 +366,6 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 }
 
 function getEncodedShareUrl(url: string): string {
-    assert(!url, 0x1ee /* "Url should not be empty" */);
-
     /**
      * Encode the url to accepted format by Sharepoint
      * https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/shares_get

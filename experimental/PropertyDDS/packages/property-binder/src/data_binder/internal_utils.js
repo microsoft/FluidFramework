@@ -545,13 +545,19 @@ const recursivelyVisitHierarchy = function(
         const ids = in_propertyElement.getChildIds();
         if (ids) {
           _.each(ids, function(id) {
-            const child = in_propertyElement.getChild(id, RESOLVE_NEVER);
+            const skippedId = PathHelper.quotePathSegmentIfNeeded(id);
+            const child = in_propertyElement.getChild(skippedId, RESOLVE_NEVER);
             in_tokenizedPath.push(id);
             const oldDataBindingTreeNode = in_dataBindingTreeNode;
             if (in_dataBindingTreeNode) {
-              in_dataBindingTreeNode = in_dataBindingTreeNode.getNodeForTokenizedPath([id]);
+              in_dataBindingTreeNode = in_dataBindingTreeNode.getNodeForTokenizedPath([skippedId]);
             }
-            const subpath = (in_path === '/') ? '/' + id : in_path + '.' + id;
+            const typeidSplit = TypeIdHelper.extractContext(in_propertyElement.getProperty().getFullTypeid());
+            const subpath = (in_path === '/')
+              ? '/' + skippedId
+              : typeidSplit.context !== 'single'
+                ? in_path + `[${skippedId}]`
+                : in_path + '.' + skippedId;
             _recursiveStep(child, subpath, in_tokenizedPath, in_dataBindingTreeNode);
             in_tokenizedPath.pop();
             in_dataBindingTreeNode = oldDataBindingTreeNode;

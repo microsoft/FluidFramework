@@ -14,7 +14,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "assert": "^2.0.0",
     "azure-devops-node-api": "^10.1.0",
     "jszip": "^3.2.2",
     "msgpack-lite": "^0.1.26",

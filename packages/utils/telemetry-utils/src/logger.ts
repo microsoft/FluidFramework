@@ -55,6 +55,44 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
+    private static extractLogSafeErrorProperties(error: any) {
+        const isRegularObject = (value: any): boolean => {
+            return value !== null && !Array.isArray(value) && typeof value === "object";
+        };
+
+        const removeMessageFromStack = (stack: string, errorName?: string) => {
+            const stackFrames = stack.split("\n");
+            stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+            if (errorName !== undefined) {
+                stackFrames.unshift(errorName); // Add "[ErrorName]"
+            }
+            return stackFrames.join("\n");
+        };
+
+        const message = (typeof error?.message === "string")
+            ? error.message as string
+            : String(error);
+
+        const safeProps: { message: string; errorType?: string; stack?: string } = {
+            message,
+        };
+
+        if (isRegularObject(error)) {
+            const { errorType, stack, name } = error;
+
+            if (typeof errorType === "string") {
+                safeProps.errorType = errorType;
+            }
+
+            if (typeof stack === "string") {
+                const errorName = (typeof name === "string") ? name : undefined;
+                safeProps.stack = removeMessageFromStack(stack, errorName);
+            }
+        }
+
+        return safeProps;
+    }
+
     /**
      * Take an unknown error object and add the appropriate info from it to the event
      * NOTE - message and stack will be copied over from the error object,
@@ -64,14 +102,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        if (isILoggingError(error)) {
-            // First, copy over stack and error message directly
-            // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
+        const { message, errorType, stack} = this.extractLogSafeErrorProperties(error);
+        // First, copy over error message, stack, and errorType directly (overwrite if present on event)
+        event.stack = stack;
+        event.error = message; // Note that the error message goes on the 'error' field
+        event.errorType = errorType;
 
-            // Then add any other telemetry properties from the LoggingError
+        if (isILoggingError(error)) {
+            // Add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
             for (const key of Object.keys(taggableProps)) {
                 if (event[key] !== undefined) {
@@ -105,13 +143,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         break;
                 }
             }
-        } else if (typeof error === "object" && error !== null) {
-            // Try to pull the stack and message off even if it's not an ILoggingError
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
-        } else {
-            event.error = error;
         }
 
         // Collect stack if we were not able to extract it from error
@@ -539,7 +570,7 @@ export class LoggingError extends Error implements ILoggingError {
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
         return maybeLogger !== null
-            && typeof maybeLogger  === "object"
+            && typeof maybeLogger === "object"
             && typeof maybeLogger.message === "string"
             && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
     }

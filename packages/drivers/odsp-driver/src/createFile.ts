@@ -143,10 +143,15 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
         const summaryObject = summary.tree[key];
 
         let value: OdspSummaryTreeValue;
+        // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
+        // property is not present, the tree entry is considered referenced. If the property is present and is true,
+        // the tree entry is considered unreferenced.
+        let unreferenced: true | undefined;
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
                 value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
+                unreferenced = summaryObject.unreferenced;
                 break;
             }
             case SummaryType.Blob: {
@@ -173,6 +178,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
             value,
+            unreferenced,
         };
         snapshotTree.entries?.push(entry);
     }

@@ -53,7 +53,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
             // Check for default data store
             const response = await container.request({ url: "/" });
-            assert.strictEqual(response.status, 200, "Component should exist!!");
+            assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
             assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
