@@ -23,12 +23,8 @@ import {
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { IFluidHandle, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
-import { debug } from "./debug";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
-const apiVersion = require("../../package.json").version;
 
 // Registered services to use when loading a document
 let defaultDocumentServiceFactory: IDocumentServiceFactory;
@@ -180,33 +176,10 @@ export class Document extends EventEmitter {
     }
 }
 
-async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {
-    const quorum = container.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!container.connected) {
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code") && !quorum.has("code2")) {
-        await quorum.propose("code", pkg);
-    }
-
-    let code = quorum.get("code");
-
-    // Back compat
-    if (code === undefined) {
-        code = quorum.get("code2");
-    }
-
-    debug(`Code is ${code}`);
-}
-
 function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
     const responseP = loader.request({ url });
 
-    responseP.then(
+    void responseP.then(
         (response) => {
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 return;
@@ -214,9 +187,6 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
 
             // Check if the Fluid object is viewable
             deferred.resolve(response.value);
-        },
-        (error) => {
-            debug(`Request failure: ${url}}]`);
         });
 }
 
@@ -226,7 +196,7 @@ async function requestDocument(loader: Loader, container: Container, uri: string
     const errorHandler = (e) => deferred.reject(e);
     container.on("error", errorHandler);
     attach(loader, uri, deferred);
-    container.on("contextChanged", (value) => {
+    container.on("contextChanged", () => {
         attach(loader, uri, deferred);
     });
 
@@ -237,33 +207,62 @@ async function requestDocument(loader: Loader, container: Container, uri: string
 /**
  * Loads a specific version (commit) of the shared object
  */
-export async function load(
+export const load = async (
     url: string,
     urlResolver: IUrlResolver,
     options: ILoaderOptions = {},
     documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
+): Promise<Document> => createOrLoad(
+        url,
+        urlResolver,
+        options,
+        documentServiceFactory,
+        runtimeOptions,
+        false, // createNew
+    );
+
+export const create = async (
+    url: string,
+    urlResolver: IUrlResolver,
+    options: ILoaderOptions = {},
+    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
+): Promise<Document> => createOrLoad(
+        url,
+        urlResolver,
+        options,
+        documentServiceFactory,
+        runtimeOptions,
+        true, // createNew
+    );
+
+async function createOrLoad(
+    url: string,
+    urlResolver: IUrlResolver,
+    options: ILoaderOptions,
+    documentServiceFactory: IDocumentServiceFactory,
+    runtimeOptions: IContainerRuntimeOptions,
+    createNew: boolean,
 ): Promise<Document> {
     const codeLoader = new CodeLoader(runtimeOptions);
-
-    // Load the Fluid document
-    // For legacy purposes we currently fill in a default domain
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
         options,
     });
-    const container = await loader.resolve({ url });
 
-    // The client-api CodeLoader doesn't actually read the proposed code details, so this doesn't really matter.
-    const codeDetails: IFluidCodeDetails = {
-        package: `@fluid-internal/client-api@${apiVersion}`,
-        config: {},
-    };
+    let container: Container;
 
-    if (!container.existing) {
-        await initializeChaincode(container, codeDetails);
+    if (createNew) {
+        container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+        await container.attach({ url });
+    } else {
+        container = await loader.resolve({ url });
     }
 
     return requestDocument(loader, container, url);
