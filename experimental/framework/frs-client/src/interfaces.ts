@@ -8,7 +8,6 @@ import {
     IMember,
     IServiceAudience,
 } from "@fluid-experimental/fluid-framework";
-import { TinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
@@ -17,34 +16,12 @@ export interface FrsContainerConfig {
     logger?: ITelemetryBaseLogger;
 }
 
-interface FrsConnectionConfigBase {
-    tenantId: string;
+export interface FrsConnectionConfig {
+    tenantId: "local" | string;
     orderer: string;
     storage: string;
-    user?: FrsMember;
-}
-
-interface FrsConnectionConfigWithKey extends FrsConnectionConfigBase {
-    type: "key";
-    key: string;
-}
-
-interface FrsConnectionConfigWithTokenProvider extends FrsConnectionConfigBase {
-    type: "tokenProvider";
     tokenProvider: ITokenProvider;
 }
-
-interface FrsConnectionConfigWithLocalMode extends TinyliciousConnectionConfig {
-    type: "localMode";
-}
-
-export type FrsConnectionCoreConfig =
-    | FrsConnectionConfigWithKey
-    | FrsConnectionConfigWithTokenProvider;
-
-export type FrsConnectionConfig =
-    | FrsConnectionCoreConfig
-    | FrsConnectionConfigWithLocalMode;
 
 /**
  * FrsContainerServices is returned by the FrsClient alongside a FluidContainer.

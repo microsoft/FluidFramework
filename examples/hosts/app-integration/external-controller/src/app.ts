@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { SharedMap } from "@fluid-experimental/fluid-framework";
-import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
+import { FrsClient, FrsConnectionConfig, InsecureTokenProvider } from "@fluid-experimental/frs-client";
+import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
@@ -11,15 +12,18 @@ import { renderAudience, renderDiceRoller } from "./view";
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
 
+const user = generateUser();
+
 const connectionConfig: FrsConnectionConfig = useFrs ? {
     tenantId: "",
-    type: "key",
-    key: "",
+    tokenProvider: new InsecureTokenProvider("", user),
     orderer: "",
     storage: "",
 } : {
-    type: "localMode",
-    port: 7070, /** Optional, provided here to demonstrate dynamic typing */
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
 };
 
 let createNew = false;

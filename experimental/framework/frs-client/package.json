@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "@fluid-experimental/fluid-framework": "^0.43.0",
-    "@fluid-experimental/tinylicious-client": "^0.43.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-loader": "^0.43.0",
     "@fluidframework/core-interfaces": "^0.39.0",
