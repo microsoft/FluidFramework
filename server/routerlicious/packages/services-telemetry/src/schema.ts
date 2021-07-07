@@ -51,7 +51,7 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
     }
 }
 
-export class RequestSchemaValidator extends BaseLumberjackSchemaValidator {
+export class DocumentSchemaValidator extends BaseLumberjackSchemaValidator {
     constructor() {
         super();
         this.validators.set(SchemaProperties.tenantId, this.idValidation);
@@ -63,7 +63,7 @@ export class RequestSchemaValidator extends BaseLumberjackSchemaValidator {
     }
 }
 
-export class LambdaSchemaValidator extends RequestSchemaValidator {
+export class LambdaSchemaValidator extends DocumentSchemaValidator {
     constructor() {
         super();
         this.validators.set(SchemaProperties.clientId, this.idValidation);

@@ -4,12 +4,12 @@
  */
 
 import { SchemaProperties } from "../resources";
-import { LambdaSchemaValidator, RequestSchemaValidator } from "../schema";
+import { LambdaSchemaValidator, DocumentSchemaValidator } from "../schema";
 import assert from "assert";
 
 describe("LumberjackSchemaValidator", () => {
-    it("Makes sure RequestSchemaValidator can use BaseLumberjackSchemaValidator's base functionality and validation passes.", async () => {
-        const validator = new RequestSchemaValidator();
+    it("Makes sure DocumentSchemaValidator can use BaseLumberjackSchemaValidator's base functionality and validation passes.", async () => {
+        const validator = new DocumentSchemaValidator();
         const props = new Map<string, any>();
         props.set(SchemaProperties.tenantId, "testTenant");
         props.set(SchemaProperties.documentId, "testDocument");
@@ -19,8 +19,8 @@ describe("LumberjackSchemaValidator", () => {
         assert.strictEqual(result.validationFailedForProperties.length, 0);
     });
 
-    it("Makes sure RequestSchemaValidator validation fails due to missing properties on the object being validated.", async () => {
-        const validator = new RequestSchemaValidator();
+    it("Makes sure DocumentSchemaValidator validation fails due to missing properties on the object being validated.", async () => {
+        const validator = new DocumentSchemaValidator();
         const props = new Map<string, any>();
         props.set(SchemaProperties.tenantId, undefined);
         // 'documentId' is missing and validation should fail
@@ -32,8 +32,8 @@ describe("LumberjackSchemaValidator", () => {
         assert.notStrictEqual(result.validationFailedForProperties.indexOf("documentId"), -1);
     });
 
-    it("Makes sure RequestSchemaValidator validation fails due to incorrect data types and values.", async () => {
-        const validator = new RequestSchemaValidator();
+    it("Makes sure DocumentSchemaValidator validation fails due to incorrect data types and values.", async () => {
+        const validator = new DocumentSchemaValidator();
         const props = new Map<string, any>();
         props.set(SchemaProperties.tenantId, ""); // 'tenantId' is an empty string and validation should fail
         props.set(SchemaProperties.documentId, 5); // 'documentId' type is wrong - the validator expects it to be a string
@@ -45,7 +45,7 @@ describe("LumberjackSchemaValidator", () => {
         assert.notStrictEqual(result.validationFailedForProperties.indexOf("documentId"), -1);
     });
 
-    it("Makes sure LambdaSchemaValidator can use RequestSchemaValidator's base functionality and validation passes.", async () => {
+    it("Makes sure LambdaSchemaValidator can use DocumentSchemaValidator's base functionality and validation passes.", async () => {
         const validator = new LambdaSchemaValidator();
         const props = new Map<string, any>();
         props.set(SchemaProperties.tenantId, "testTenant");
@@ -59,7 +59,7 @@ describe("LumberjackSchemaValidator", () => {
         assert.strictEqual(result.validationFailedForProperties.length, 0);
     });
 
-    it("Makes sure LambdaSchemaValidator validation fails if RequestSchemaValidator's required properties are not present.", async () => {
+    it("Makes sure LambdaSchemaValidator validation fails if DocumentSchemaValidator's required properties are not present.", async () => {
         const validator = new LambdaSchemaValidator();
         const props = new Map<string, any>();
         props.set(SchemaProperties.clientId, "testClient");
