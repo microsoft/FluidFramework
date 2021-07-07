@@ -302,10 +302,11 @@ export class ContainerContext implements IContainerContext {
         this._runtime = await runtimeFactory.instantiateRuntime(this);
     }
 
+    public notifyAttaching() {
+        this._runtime?.setAttachState?.(AttachState.Attaching);
+    }
+
     private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
         this.container.once("attached", () => {
             this._runtime?.setAttachState?.(AttachState.Attached);
         });

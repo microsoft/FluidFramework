@@ -49,9 +49,18 @@ export async function createNewFluidFile(
     createNewSummary: ISummaryTree | undefined,
     epochTracker: EpochTracker,
 ): Promise<IOdspResolvedUrl> {
-    return createNewSummary === undefined
-        ? createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
-        : createNewFluidFileFromSummary(getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+    // Check for valid filename before the request to create file is actually made.
+    if (isInvalidFileName(newFileInfo.filename)) {
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
+    }
+
+    const itemId = createNewSummary === undefined
+        ? await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
+        : await createNewFluidFileFromSummary(getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+
+    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
+    const resolver = new OdspDriverUrlResolver();
+    return resolver.resolve({ url: odspUrl });
 }
 
 export async function createNewEmptyFluidFile(
@@ -59,12 +68,7 @@ export async function createNewEmptyFluidFile(
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     epochTracker: EpochTracker,
-): Promise<IOdspResolvedUrl> {
-    // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
-    }
-
+): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
     // remove .fluid extension for empty files
     const extensionlessFileName = newFileInfo.filename.endsWith(".fluid")
@@ -75,12 +79,12 @@ export async function createNewEmptyFluidFile(
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
         }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
-    const itemId = await getWithRetryForTokenRefresh(async (options) => {
+    return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            { eventName: "createNewFile" },
+            { eventName: "createNewEmptyFile" },
             async (event) => {
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
@@ -106,10 +110,6 @@ export async function createNewEmptyFluidFile(
             },
             { end: true, cancel: "error" });
     });
-
-    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
-    const resolver = new OdspDriverUrlResolver();
-    return resolver.resolve({ url: odspUrl });
 }
 
 export async function createNewFluidFileFromSummary(
@@ -118,12 +118,7 @@ export async function createNewFluidFileFromSummary(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
     epochTracker: EpochTracker,
-): Promise<IOdspResolvedUrl> {
-    // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
-    }
-
+): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
     const encodedFilename = encodeURIComponent(newFileInfo.filename);
     const baseUrl =
@@ -133,7 +128,7 @@ export async function createNewFluidFileFromSummary(
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
     const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
 
-    const itemId = await getWithRetryForTokenRefresh(async (options) => {
+    return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
 
         return PerformanceEvent.timedExecAsync(
@@ -164,10 +159,6 @@ export async function createNewFluidFileFromSummary(
             },
             { end: true, cancel: "error" });
     });
-
-    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
-    const resolver = new OdspDriverUrlResolver();
-    return resolver.resolve({ url: odspUrl });
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {

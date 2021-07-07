@@ -428,7 +428,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IFluidResolvedUrl | undefined;
-    private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
     private _dirtyContainer = false;
 
@@ -795,29 +794,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
+        const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
+            && this.loader.services.detachedBlobStorage.size > 0;
+
         this.attachInProgress = true;
         try {
             assert(this.deltaManager.inbound.length === 0, 0x0d6 /* "Inbound queue should be empty when attaching" */);
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
+            let summary: ISummaryTree;
             if (this._attachState === AttachState.Detached) {
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
-                if (!this.loader.services.detachedBlobStorage || this.loader.services.detachedBlobStorage.size === 0) {
+                if (!hasAttachmentBlobs) {
                     const appSummary: ISummaryTree = this.context.createSummary();
                     const protocolSummary = this.captureProtocolSummary();
-                    this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-                }
+                    summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-                // Set the state as attaching as we are starting the process of attaching container.
-                // This should be fired after taking the summary because it is the place where we are
-                // starting to attach the container to storage.
-                // Also, this should only be fired in detached container.
-                this._attachState = AttachState.Attaching;
-                this.emit("attaching");
+                    // Set the state as attaching as we are starting the process of attaching container.
+                    // This should be fired after taking the summary because it is the place where we are
+                    // starting to attach the container to storage.
+                    // Also, this should only be fired in detached container.
+                    this._attachState = AttachState.Attaching;
+                    // this.emit("attaching");
+                    this.context.notifyAttaching();
+                }
             }
-            assert(!!this.cachedAttachSummary || this.loader.services.detachedBlobStorage?.size !== 0,
-                0x0d7 /* "Summary should be there either by this attach call or previous attach call!!" */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -825,7 +827,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (this.service === undefined) {
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
-                        this.cachedAttachSummary as unknown as ISummaryTree,
+                        summary as unknown as ISummaryTree,
                         createNewResolvedUrl,
                         this.subLogger,
                     ),
@@ -844,26 +846,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // upload blobs here (NYI)
 
             // post summary here
-            if (this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0) {
-                if (this.cachedAttachSummary === undefined) {
-                    const appSummary: ISummaryTree = this.context.createSummary();
-                    const protocolSummary = this.captureProtocolSummary();
-                    this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-                }
-                const summary = this.cachedAttachSummary;
+            if (hasAttachmentBlobs) {
+                const appSummary: ISummaryTree = this.context.createSummary();
+                const protocolSummary = this.captureProtocolSummary();
+                summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+                this._attachState = AttachState.Attaching;
+                // this.emit("attaching");
+                this.context.notifyAttaching();
 
                 await this.storageService.uploadSummaryWithContext(summary, {
                     referenceSequenceNumber: 0,
                     ackHandle: undefined,
                     proposalHandle: undefined,
                 });
+
+                assert(!hasAttachmentBlobs, "attaching container with blobs is not yet implemented");
             }
 
-            assert(!this.loader.services.detachedBlobStorage || this.loader.services.detachedBlobStorage.size === 0,
-                "attaching container with blobs is not yet implemented");
             this._attachState = AttachState.Attached;
             this.emit("attached");
-            this.cachedAttachSummary = undefined;
 
             // Propagate current connection state through the system.
             this.propagateConnectionState();
