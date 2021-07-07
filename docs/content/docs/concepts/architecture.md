@@ -3,15 +3,18 @@ title: Architecture
 menuPosition: 1
 ---
 
-The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid service*.
-While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high level,
-identify the important lower level concepts, and discuss some of our key design decisions.
+The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid
+service*. While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high
+level, identify the important lower level concepts, and discuss some of our key design decisions.
 
 ## Introduction
 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
-![A diagram of the Fluid Framework architecture](/docs/concepts/images/architecture.png)
+<img src="/docs/concepts/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
+loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
+objects and distributed data structures.">
 
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
@@ -50,13 +53,13 @@ already a system for accessing app logic and app state, we mimicked existing web
 Most developers will use the Fluid Framework to load Fluid content or create Fluid content. In our own words, developers
 are either loading Fluid containers using the Fluid loader or developers are creating Fluid containers to load.
 
-Based on our two design principles of "Keep the Server Simple" and "Move Logic to the Client", the majority of the Fluid
+Based on our two design principles of "Keep the server simple" and "Move logic to the client", the majority of the Fluid
 codebase is focused on building Containers.
 
 ### Fluid containers
 
-The Fluid container defines the application logic while containing persistent data. If the Fluid Framework is a serverless
-application model with persistent data, the container is the serverless application and data.
+The Fluid container defines the application logic while containing persistent data. If the Fluid Framework is a
+serverless application model with persistent data, the container is the serverless application and data.
 
 The Fluid container is the result of the principle "Move Logic to the Client." The container includes the merge logic
 used to replicate state across connected clients, but the container also includes app logic. The merge logic is
@@ -70,7 +73,8 @@ Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid 
 resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
 **code loader.**
 
-![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
+<img src="/docs/concepts/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
+service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
 
 The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that
 service it is located. The Fluid service driver consumes this information.
@@ -90,7 +94,10 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-![A diagram depicting operations being sent from a Fluid client to a Fluid service and broadcast to Fluid clients](/docs/concepts/images/fluid-service.png)
+<img src="/docs/concepts/images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned
+an order and then broadcast to the other connected clients. The client sending the operation also receives an
+acknowledgement from the service with the assigned order of the operation.">
+
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
 The service also stores old operations, accessible to clients through a **DeltaStorageService** object, and stores
