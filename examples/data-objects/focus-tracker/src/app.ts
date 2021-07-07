@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerSchema } from "@fluid-experimental/fluid-static";
+import { ContainerSchema, SignalManager } from "@fluid-experimental/fluid-static";
 import { TinyliciousClient, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 
@@ -23,6 +23,7 @@ export const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
         focusTracker: FocusTracker,
+        signalManager: SignalManager,
     },
 };
 
@@ -58,7 +59,8 @@ async function start(): Promise<void> {
     // Render page focus information for audience members
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const focusTracker = fluidContainer.initialObjects.focusTracker as FocusTracker;
-    focusTracker.audience = containerServices.audience;
+    const signalManager = fluidContainer.initialObjects.signalManager as SignalManager;
+    focusTracker.init(containerServices.audience, signalManager);
     renderFocusPresence(focusTracker, contentDiv);
 }
 

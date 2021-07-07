@@ -121,7 +121,7 @@ export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implem
         let listenerList = this.listenerMap.get(managerSignalName);
         if (listenerList === undefined) {
             listenerList = [];
-            this.listenerMap.set(signalName, listenerList);
+            this.listenerMap.set(managerSignalName, listenerList);
         }
         listenerList.push(listener);
         return this;
