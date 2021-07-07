@@ -16,6 +16,8 @@ export interface HostStoragePolicy {
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
+    enableRedeemFallback?: boolean;
+    // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
     sessionOptions?: ICollabSessionOptions;
