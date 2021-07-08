@@ -38,6 +38,7 @@ describe("Summarizer Client Election", () => {
     function createElection(
         initialClients: [id: string, seq: number, int: boolean][] = [],
         initialState?: ISerializedElection,
+        electionEnabled = true,
     ) {
         for (const [id, seq, int] of initialClients) {
             addClient(id, seq, int);
@@ -52,6 +53,7 @@ describe("Summarizer Client Election", () => {
                 SummarizerClientElection.isClientEligible,
             ),
             maxOps,
+            electionEnabled,
         );
         election.on("shouldSummarizeStateChanged", () => refreshSummarizerCallCount++);
     }
@@ -207,6 +209,31 @@ describe("Summarizer Client Election", () => {
             defaultOp();
             assertState("a", 2 * maxOps + 4002, "should reelect > max ops since summary ack");
         });
+
+        it("Should never reelect when disabled", () => {
+            currentSequenceNumber = 4800;
+            createElection([
+                ["s1", 1, false],
+                ["a", 2, true],
+                ["s2", 4, false],
+                ["b", 7, true],
+            ], { electedClientId: "b", electionSequenceNumber: 4000 }, false);
+            assertState("b", 4000, "elected client based on initial state");
+
+            // Should stay the same right up until max ops
+            defaultOp(maxOps - 800);
+            assertState("b", 4000, "should not reelect <= max ops");
+
+            // Should elect first client at this point if enabled
+            defaultOp();
+            assertState("b", 4000, "would reelect > max ops, but not since disabled");
+
+            // Trigger another reelection if it were to be enabled
+            defaultOp(maxOps);
+            assertState("b", 4000, "should not reelect <= max ops since baseline");
+            defaultOp();
+            assertState("b", 4000, "would reelect again, but not since disabled");
+        });
     });
 
     describe("No initial state", () => {
@@ -280,6 +307,30 @@ describe("Summarizer Client Election", () => {
             // Should elect next client at this point
             defaultOp();
             assertState("b", 2 * maxOps + 9, "should reelect > max ops since summary ack");
+        });
+
+        it("Should never reelect when disabled", () => {
+            createElection([
+                ["s1", 1, false],
+                ["a", 2, true],
+                ["s2", 4, false],
+                ["b", 7, true],
+            ], undefined, false);
+            assertState("a", 7, "initially should be oldest interactive client");
+
+            // Should stay the same right up until max ops
+            defaultOp(maxOps);
+            assertState("a", 7, "should not reelect <= max ops");
+
+            // Should elect next client at this point
+            defaultOp();
+            assertState("a", 7, "would reelect > max ops, but not since disabled");
+
+            // Next election should be undefined, which resets to first client
+            defaultOp(maxOps);
+            assertState("a", 7, "should not reelect <= max ops since baseline");
+            defaultOp();
+            assertState("a", 7, "would reelect back to oldest client, but not since disabled");
         });
     });
 });

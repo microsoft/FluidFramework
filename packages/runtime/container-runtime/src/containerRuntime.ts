@@ -258,8 +258,14 @@ export interface ISummaryRuntimeOptions {
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 
-    // Defaults to 3000 ops
+    // Defaults to 7000 ops
     maxOpsSinceLastSummary?: number;
+
+    /**
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     * THis defaults to false (disabled) and must be explicitly set to true to enable.
+     */
+    summarizerClientElection?: boolean;
 }
 
 /**
@@ -921,7 +927,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
-        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
         const defaultAction = () => {
             if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
@@ -962,11 +968,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
             SummarizerClientElection.isClientEligible,
         );
+        const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+            this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
         this.summarizerClientElection = new SummarizerClientElection(
             this.logger,
             this.summaryCollection,
             orderedClientElectionForSummarizer,
             maxOpsSinceLastSummary,
+            summarizerClientElectionEnabled,
         );
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
