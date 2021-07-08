@@ -129,7 +129,7 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
-import { ISerializedElection, loadOrderedClients } from "./orderedClientElection";
+import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection } from "./summarizerClientElection";
 
 export enum ContainerMessageType {
@@ -951,16 +951,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
-        const { elections: [summarizerClientElection] } = loadOrderedClients(
+        const orderedClientCollection = new OrderedClientCollection(
             this.logger,
             this.context.deltaManager,
             this.context.quorum,
-            [electedSummarizerData, SummarizerClientElection.isClientEligible],
+        );
+        const orderedClientElectionForSummarizer = new OrderedClientElection(
+            this.logger,
+            orderedClientCollection,
+            electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+            SummarizerClientElection.isClientEligible,
         );
         this.summarizerClientElection = new SummarizerClientElection(
             this.logger,
             this.summaryCollection,
-            summarizerClientElection,
+            orderedClientElectionForSummarizer,
             maxOpsSinceLastSummary,
         );
         // Create the SummaryManager and mark the initial state

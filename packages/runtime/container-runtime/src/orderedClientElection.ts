@@ -380,26 +380,3 @@ export class OrderedClientElection
         };
     }
 }
-
-export function loadOrderedClients<T extends [
-    initialState: ISerializedElection | undefined,
-    eligibleFn: (c: ITrackedClient) => boolean,
-][]>(
-    logger: ITelemetryLogger,
-    deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
-    quorum: Pick<IQuorum, "getMembers" | "on">,
-    ...elections: T
-): {
-    collection: IOrderedClientCollection;
-    elections: { [K in keyof T]: IOrderedClientElection };
-} {
-    const collection = new OrderedClientCollection(logger, deltaManager, quorum);
-    const loadSeq = deltaManager.lastSequenceNumber;
-    return {
-        collection,
-        // Casts needed until https://github.com/microsoft/TypeScript/issues/29841 is fixed.
-        elections: elections.map(([initialState, eligibleFn]) =>
-            new OrderedClientElection(logger, collection, initialState ?? loadSeq, eligibleFn),
-        ) as { [K in keyof T]: OrderedClientElection },
-    };
-}
