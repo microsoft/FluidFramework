@@ -41,7 +41,10 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             await runtime.getRootDataStore("default2");
         }
 
-        async preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & ContainerRuntime> {
+        async preInitialize(
+            context: IContainerContext,
+            existing: boolean,
+        ): Promise<IRuntime & ContainerRuntime> {
             const builder = new RuntimeRequestHandlerBuilder();
             builder.pushHandler(
                 defaultRouteRequestHandler("default"),
