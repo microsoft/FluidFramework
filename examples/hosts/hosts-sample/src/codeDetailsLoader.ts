@@ -6,30 +6,16 @@ import * as semver from "semver";
 import {
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
-    IFluidPackage,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-loader";
 import {
-    extractPackageIdentifierDetails,
     IPackageIdentifierDetails,
 } from "@fluidframework/web-code-loader";
 import { fluidExport } from "./fauxComponent";
-
-/** Parse the package value in the code details object that could either be a string or an object. */
-const parsePackageDetails = (
-    pkg: string | Readonly<IFluidPackage>,
-) => {
-    if (typeof pkg === "object") {
-        const { name, version } = pkg;
-        return { name, version: version as string };
-    } else {
-        const { scope, name, version } = extractPackageIdentifierDetails(pkg);
-        return { name: `@${scope}/${name}`, version };
-    }
-};
+import { parsePackageDetails } from "./utils";
 
 /**
  * Emulates a code loader capable of resolving a Fluid module defined in a local store
@@ -61,16 +47,14 @@ class InMemoryCodeDetailsLoader
         ) {
             // Raise an error when code details written in the document differ from
             // the package supported by this code loader.
-            throw new Error("Source package details don't match the code loader.");
-        }
-        // Can only load code for the document schema major version identical or lower than the emulated package.
-        if (
-            semver.diff(this.packageVersion, sourcePackageVersion) ===
-                "major" &&
-            semver.lt(this.packageVersion, sourcePackageVersion)
-        ) {
             throw new Error(
-                `The document version [${sourcePackageVersion}] is newer than loaded code.`,
+                "The document is created with a different package that is not supported by this code loader.",
+            );
+        }
+        // Can only load code for the document schema version identical or lower than the emulated package.
+        if (semver.lt(this.packageVersion, sourcePackageVersion)) {
+            throw new Error(
+                `The document code version [${sourcePackageVersion}] is newer than loaded code.`,
             );
         }
         return {
@@ -110,12 +94,8 @@ class InMemoryCodeDetailsLoader
         ) {
             return false;
         }
-        // Only tolerate minor version difference
-        return (
-            semver.diff(candidatePackage.version, constraintPackage.version) !==
-                "major" ||
-            semver.gte(candidatePackage.version, constraintPackage.version)
-        );
+        // The candidate package version should be greater than or equal to the constraint (proposal) version.
+        return semver.gte(candidatePackage.version, constraintPackage.version);
     }
 
     /**

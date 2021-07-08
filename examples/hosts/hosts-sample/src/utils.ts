@@ -4,9 +4,10 @@
  */
 
 import { parse } from "querystring";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IFluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 
 /**
  * getFluidObjectAndRender is used to make a request against the loader to load a Fluid data store and then render
@@ -41,7 +42,25 @@ export async function getFluidObjectAndRender(loader: Loader, container: Contain
     });
 }
 
+/** Extract the code package name from the `code` URL query parameter */
 export function parsePackageName(url: Location, defaultPkg: string): string {
     const parsed = parse(url.search.substr(1));
     return parsed.code !== undefined ? parsed.code as string : defaultPkg;
+}
+
+/** Parse the package value in the code details object that could either be a string or an object. */
+export function parsePackageDetails(pkg: string | Readonly<IFluidPackage>) {
+    if (typeof pkg === "object") {
+        const { name, version } = pkg;
+        return { name, version: version as string };
+    } else {
+        const { scope, name, version } = extractPackageIdentifierDetails(pkg);
+        return { name: `@${scope}/${name}`, version };
+    }
+}
+
+/** Retrieve the code proposal value from the container's quorum */
+export function getCodeDetailsFromQuorum(container: Container): IFluidCodeDetails {
+    const pkg = container.getQuorum().get("code");
+    return pkg as IFluidCodeDetails;
 }

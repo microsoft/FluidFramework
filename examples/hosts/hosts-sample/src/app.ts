@@ -15,7 +15,7 @@ import {
     extractPackageIdentifierDetails,
     IPackageIdentifierDetails,
 } from "@fluidframework/web-code-loader";
-import { bindUI, setupUI } from "./codeDetailsView";
+import { setupUI } from "./codeDetailsView";
 import { getCodeLoaderForPackage } from "./codeDetailsLoader";
 import { getFluidObjectAndRender, parsePackageName } from "./utils";
 
@@ -51,7 +51,7 @@ const user = {
 // ```
 // , where
 // `document-id` - is an alphanumerical string representing the unique Fluid document ID.
-// `package-name` - is a Fluid code package name and version in the following format `@<scope>/<package-name>@<semver>`.
+// `package-id` - is a Fluid code package name and version in the following format `@<scope>/<package-name>@<semver>`.
 // `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
 function parseAppUrl() {
     // Create a new container with the specified ID when the hash param is provided
@@ -62,7 +62,7 @@ function parseAppUrl() {
     return { packageName, documentId, isNew };
 }
 
-// Create or load the Fluid container using specified document and package info and render the default component.
+// Create or load the Fluid container using specified document and package info and render the root component.
 async function start(
     url: string,
     containerId: string,
@@ -114,15 +114,17 @@ async function start(
     }
 
     // Wait for connection so that proposals can be sent
-    if (!container.connected) {
+    if (container !== undefined && !container.connected) {
         console.log("waiting for the container to get connected");
         await new Promise<void>((resolve, reject) => {
-            container?.once("connected", () => resolve());
-            container?.once("closed", (error) => {
+            // the promise resolves when the connected event fires.
+            container.once("connected", () => resolve());
+            // the promise rejects when the container is forcefully closed due to an error.
+            container.once("closed", (error) => {
                 if (error?.message === "ExistingContextDoesNotSatisfyIncomingProposal") {
                     reject(
                         new Error(
-                            `Loaded code is not compatible with the document schema.`,
+                            `The document requires a newer package version to open.`,
                         ),
                     );
                 } else {
@@ -136,8 +138,7 @@ async function start(
         });
     }
 
-    // The getFluidObjectAndRender helper method performs the rendering of the data store identified
-    // by the URL in the browser.
+    // Retrieve the root Fluid object and render it in the browser.
     await getFluidObjectAndRender(
         loader,
         container,
@@ -154,18 +155,20 @@ if (document.location.pathname === "/") {
     const newContainerId = Date.now().toString();
     window.location.href = `/${newContainerId}?code=${defaultPackage}#CreateNew`;
 } else {
+    // Parse application URL parameters and determine which package version to load.
     const appParams = parseAppUrl();
     const packageDetails = extractPackageIdentifierDetails(appParams.packageName);
 
-    setupUI(packageDetails);
-
+    // Load container and start collaboration session using specified parameters.
     start(
         document.location.href,
         appParams.documentId,
         packageDetails,
         appParams.isNew,
     )
-        .then((container) => bindUI(container, packageDetails))
+        // Configure application UI in case of successful load.
+        .then(setupUI)
+        // Something went wrong. Display the error message and quit.
         .catch((error) =>
             window.alert(`🛑 Failed to open document\n\n${error}`),
         );

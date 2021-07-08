@@ -4,84 +4,74 @@
  */
 import * as semver from "semver";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { Container } from "@fluidframework/container-loader";
+import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
 
 /**
- * Initial configuration for controls in the code details panel.
- *
- * @param packageDetails - Fluid package name and version
- */
-export const setupUI = (packageDetails: IPackageIdentifierDetails) => {
-    const proposedVersion = document.getElementById(
-        "proposed-version",
-    ) as HTMLInputElement;
-    proposedVersion.value = packageDetails.version ?? "1.0.0";
-
-    const incrementMinorBtn = document.getElementById(
-        "increment-minor-btn",
-    ) as HTMLButtonElement;
-    incrementMinorBtn.onclick = () => {
-        const packageVersion = incrementMinorBtn.previousElementSibling as HTMLInputElement;
-        const version = semver.parse(packageVersion.value);
-        if (version) {
-            packageVersion.value = version.inc("minor").raw;
-        }
-    };
-
-    const incrementMajorBtn = document.getElementById(
-        "increment-major-btn",
-    ) as HTMLButtonElement;
-    incrementMajorBtn.onclick = () => {
-        const packageVersion = incrementMinorBtn.previousElementSibling as HTMLInputElement;
-        const version = semver.parse(packageVersion.value);
-        if (version) {
-            packageVersion.value = version.inc("major").raw;
-        }
-    };
-
-    const loadBtn = document.getElementById("reload-btn") as HTMLButtonElement;
-    loadBtn.onclick = () => {
-        window.location.href = `${document.location.pathname}?code=@${
-            packageDetails.scope
-        }/${packageDetails.name}@${proposedVersion.value ?? "1.0.0"}`;
-    };
-};
-
-/**
- * Configure code details view controls powering the code upgrade functionality.
+ * Configure code details view elements residing at the code upgrade panel.
  *
  * @param container - Loaded Fluid container
- * @param packageDetails - Current code package details
  */
-export const bindUI = (
-    container: Container,
-    packageDetails: IPackageIdentifierDetails,
-) => {
+export const setupUI = (container: Container) => {
+    // Retrieve and cache the current code details from the container.
+    let codeDetails = getCodeDetailsFromQuorum(container);
+
     // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
             error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
         ) {
-            window.alert(
-                `🛑 Container is closed\n\nCurrent code is not compatible with the upgrade proposal.`,
+            const reload = window.confirm(
+                `🛑 Container is closed\n\nThe document requires a newer code version to continue.\nPress OK to reload.`,
             );
+            if (reload && container.codeDetails) {
+                // Reload the application page using the upgraded package version.
+                const { name, version } = parsePackageDetails(container.codeDetails.package);
+                window.location.href = `${document.location.pathname}?code=${name}@${
+                    semver.inc(version ?? "1.0.0", "major")
+                }`;
+            }
         } else {
             window.alert(`🛑 Container is closed\n\n${error}`);
         }
     });
 
+    // A helper method to extract package info and display it in the info text box.
+    const refreshLoadedCodeInfo = (code: IFluidCodeDetails | undefined) => {
+        const loadedPackageInput = document.getElementById(
+            "container-package",
+        ) as HTMLInputElement;
+        if (!code) {
+            loadedPackageInput.innerText = "Package not found";
+        } else {
+            const packageId =
+                typeof code.package === "string"
+                    ? code.package
+                    : `${code.package.name}@${code.package.version}`;
+            loadedPackageInput.value = packageId;
+        }
+    };
+
+    // Retrieve current code details loaded with the container.
+    refreshLoadedCodeInfo(codeDetails);
+
+    // Subscribe to events triggered when new code details proposal is received.
+    container.on("codeDetailsProposed", refreshLoadedCodeInfo); // refresh the UI
+    container.on("codeDetailsProposed", (cd) => codeDetails = cd); // update the cached value
+
+    // The upgrade button submits a code proposal by incrementing major code version of the code
+    // loaded with the container.
     const upgradeBtn = document.getElementById(
         "upgrade-btn",
     ) as HTMLButtonElement;
     upgradeBtn.onclick = async () => {
-        const proposedVersion = document.getElementById(
-            "proposed-version",
-        ) as HTMLInputElement;
+        // Extract currently loaded code details from the container.
+        const { name, version } = parsePackageDetails(codeDetails.package);
+        // Prepare a code upgrade proposal using the current package name and the incremented major version.
         const details: IFluidCodeDetails = {
             package: {
-                name: `@${packageDetails.scope}/${packageDetails.name}`,
-                version: proposedVersion.value ?? "1.0.0",
+                name,
+                version: semver.inc(version ?? "1.0.0", "major"),
                 fluid: { browser: {} },
             },
             config: {},
@@ -93,25 +83,4 @@ export const bindUI = (
             window.alert(`🛑 Failed to upgrade container code\n\n${error}`);
         }
     };
-
-    const refreshLoadedCodeInfo = (code: IFluidCodeDetails | undefined) => {
-        const packageName = document.getElementById(
-            "container-package",
-        ) as HTMLInputElement;
-        if (!code) {
-            packageName.innerText = "Package not found";
-        } else {
-            const packageId =
-                typeof code.package === "string"
-                    ? code.package
-                    : `${code.package.name}@${code.package.version}`;
-            packageName.value = packageId;
-        }
-    };
-
-    // Retrieve current code details loaded in the container.
-    refreshLoadedCodeInfo(container.codeDetails);
-
-    // Subscribe to events triggered when new code details proposal is received.
-    container.on("codeDetailsProposed", refreshLoadedCodeInfo);
 };

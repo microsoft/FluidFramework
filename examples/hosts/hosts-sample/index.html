@@ -1,5 +1,7 @@
-<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
-<!-- Licensed under the MIT License. -->
+<!--
+Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+Licensed under the MIT License.
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -66,43 +68,12 @@
                 disabled
             />
             <br />
-            <label for="proposed-version">Proposed version:</label>
-            <div>
-                <input
-                    type="text"
-                    id="proposed-version"
-                    placeholder="semantic version, e.g. 1.2.3"
-                    title="Semantic package version to propose in code upgrade"
-                    size="16"
-                />
-                <input
-                    id="increment-minor-btn"
-                    type="button"
-                    value="Minor Up"
-                    title="Increment minor version"
-                />
-                <input
-                    id="increment-major-btn"
-                    type="button"
-                    value="Major Up"
-                    title="Increment major version"
-                />
-            </div>
-            <br />
-            <div>
-                <input
-                    id="upgrade-btn"
-                    type="button"
-                    value="Upgrade"
-                    title="Upgrade container code via submitting new code proposal"
-                />
-                <input
-                    id="reload-btn"
-                    type="button"
-                    value="Reload"
-                    title="Reload container using proposed package version"
-                />
-            </div>
+            <input
+                id="upgrade-btn"
+                type="button"
+                value="Upgrade"
+                title="Upgrade container code via submitting new major version proposal"
+            />
             <br />
         </div>
         <div id="content"></div>

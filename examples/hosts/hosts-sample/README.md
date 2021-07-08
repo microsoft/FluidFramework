@@ -39,12 +39,7 @@ The application also provides the code details panel allowing to load different 
 
 ![Code Details](./images/code-details.png)
 
-The code loader implementation in the example differentiates minor and major upgrades by responding differently to upgrade requests.
-A minor non-breaking version upgrade is tolerated even when the upgrade proposal is newer than the loaded code.
-This approach allows applying hotfixes that do not alter the document schema.
-As opposed to a major version upgrade that would require forcefully closing all active sessions.
-
-Consider the following scenario:
+Consider the following code upgrade scenario (see the image below):
 
 1. Users A and B collaboratively edit the same document using the code version 1.0.0
 1. User A reload the document using a newer code version 2.0.0
@@ -233,9 +228,7 @@ We can then construct the final `IFluidResolvedUrl` by generating all the endpoi
 crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
 
 ```typescript
-const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(
-    this.tenantId
-)}/${encodeURIComponent(documentId)}`;
+const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(documentId)}`;
 
 const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(
     this.tenantId
