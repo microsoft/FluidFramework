@@ -74,13 +74,15 @@ function readDictionarySection(node: NodeCore) {
  * @param dictionary - name map, used to decode path/IDs.
  */
 function readBlobSection(node: NodeCore, dictionary: string[]) {
-    const blobs: Map<string, Uint8Array> = new Map();
+    const blobs: Map<string, ArrayBuffer> = new Map();
     for (const [idIndex, blob] of node.iteratePairs()) {
         assert(typeof idIndex === "number", "Blob index should be a number");
         assert(blob instanceof BlobCore, "Blob content should be of type blob");
         const blobId = dictionary[idIndex];
         assert(blobId !== undefined, "blob id should be present");
-        blobs.set(blobId, blob.buffer);
+        const unit8Array = blob.buffer;
+        blobs.set(blobId,
+            unit8Array.buffer.slice(unit8Array.byteOffset, unit8Array.byteOffset + unit8Array.byteLength));
     }
     return blobs;
 }
@@ -126,11 +128,11 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
 }
 
 /**
- * Converts snapshot from binary compact representation to ODSP snapshot.
- * @param buffer - Compact snapshot to be parsed into odsp snapshot.
+ * Converts snapshot from binary compact representation to tree/blobs/ops.
+ * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns - tree, blobs and ops from the snapshot.
  */
-export function convertBinaryFormatToOdspSnapshot(buffer: ReadBuffer) {
+export function parseCompactSnapshotResponse(buffer: ReadBuffer) {
     const builder = TreeBuilder.load(buffer);
     let ops: ISequencedDeltaOpMessage[] | undefined;
 

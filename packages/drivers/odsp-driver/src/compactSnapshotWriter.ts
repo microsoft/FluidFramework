@@ -5,7 +5,7 @@
 
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { snapshotMinReadVersion } from "./compactToOdspSnapshotConverter";
+import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { NodeCore, ReadBuffer, TreeBuilder } from "./snapshotRepresentation";
 
@@ -67,11 +67,11 @@ function writeTree(treeNode: NodeCore, tree: ISnapshotTree, mapping: Map<string,
  * @param blobs - blobs that is being serialized
  * @param mapping - name mapping, used to map path and IDs to integer representation
 */
-function writeBlobsSection(node: NodeCore, blobs: Map<string, IBlob | Uint8Array>, mapping: Map<string, number>) {
+function writeBlobsSection(node: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>, mapping: Map<string, number>) {
     for (const [storageBlobId, blob] of blobs) {
         node.addNumber(mapping.get(storageBlobId));
-        if (blob instanceof Uint8Array) {
-            node.addBlob(blob);
+        if (blob instanceof ArrayBuffer) {
+            node.addBlob(new Uint8Array(blob));
         } else {
             node.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")));
         }
@@ -90,16 +90,16 @@ function writeOpsSection(node: NodeCore, ops: ISequencedDeltaOpMessage[]) {
 }
 
 /**
- * Converts ODSP snapshot format to binary compact representation.
+ * Converts trees/blobs/ops to binary compact representation.
  * @param snapshotTree - snapshot tree to serialize
  * @param blobs - blobs to serialize
  * @param snapshotSeqNumber - seq number at which snapshot is created.
  * @param ops - ops to serialize
  * @returns - ReadBuffer - binary representation of the data.
  */
-export function convertOdspSnapshotToCompactSnapshot(
+export function convertToCompactSnapshot(
     snapshotTree: ISnapshotTree,
-    blobs: Map<string, IBlob | Uint8Array>,
+    blobs: Map<string, IBlob | ArrayBuffer>,
     snapshotSeqNumber: number,
     ops?: ISequencedDeltaOpMessage[]): ReadBuffer
 {
