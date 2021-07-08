@@ -58,13 +58,15 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
             throw new Error("set audience only once");
         }
         this._audience = newAudience;
-        this._audience.on("membersChanged", () => {
-            this.pruneFocusMap();
+
+        this._audience.on("addMember", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
-            // TODO: Currently the current connecting client does not always broadcast its
-            // status on connection because it can't identify itself in the audience yet
-            // (e.g. if the Container hasn't connected).  Once audience events are cleaned
-            // up we can check for ourself here and broadcast.
+        });
+        this._audience.on("removeMember", (clientId: string, member?: IMember) => {
+            this.focusMap.forEach((clientIdMap, userId) => {
+                clientIdMap.delete(clientId);
+            });
+            this.emit("focusChanged");
         });
     }
 
@@ -108,20 +110,6 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
                 { userId: this.audience.getMyself()?.userId, focus: hasFocus },
             );
         }
-    }
-
-    /**
-     * Go through the current audience to remove entries in our focus map on clients
-     * that are no longer present
-     */
-    private pruneFocusMap() {
-        this.focusMap.forEach((clientIdMap, userId) => {
-            clientIdMap.forEach((hasFocus, clientId) => {
-                if (this.audience.getMemberByClientId(clientId) === undefined) {
-                    clientIdMap.delete(clientId);
-                }
-            });
-        });
     }
 
     /**

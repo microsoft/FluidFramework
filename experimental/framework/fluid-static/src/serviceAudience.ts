@@ -12,9 +12,9 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 // Base class for providing audience information for sessions interacting with FluidContainer
 // This can be extended by different service-specific client packages to additional parameters to
 // the user and client details returned in IMember
-export class ServiceAudience
-  extends TypedEventEmitter<IServiceAudienceEvents<IMember>>
-  implements IServiceAudience<IMember> {
+export abstract class ServiceAudience<M extends IMember = IMember>
+  extends TypedEventEmitter<IServiceAudienceEvents<M>>
+  implements IServiceAudience<M> {
   protected readonly audience: IAudience;
 
   constructor(
@@ -23,25 +23,26 @@ export class ServiceAudience
     super();
     this.audience = container.audience;
 
-    // Consolidating both the addition/removal of members
-    this.audience.on("addMember", () => {
-      this.emit("membersChanged", this.getMembers());
+    this.audience.on("addMember", (clientId: string, details: IClient) => {
+      const member = this.getMember(clientId);
+      this.emit("addMember", clientId, member);
+      this.emit("membersChanged");
     });
 
-    this.audience.on("removeMember", () => {
-      this.emit("membersChanged", this.getMembers());
-    });
-
-    this.container.on("connected", () => {
-      this.emit("membersChanged", this.getMembers());
+    this.audience.on("removeMember", (clientId: string) => {
+      // TODO: track removed members somehow
+      this.emit("removeMember", clientId, undefined);
+      this.emit("membersChanged");
     });
   }
+
+  protected abstract createServiceMember(audienceMember: IClient): M;
 
   /**
    * @inheritdoc
    */
-  public getMembers(): Map<string, IMember> {
-    const users = new Map<string, IMember>();
+  public getMembers(): Map<string, M> {
+    const users = new Map<string, M>();
     // Iterate through the members and get the user specifics.
     this.audience.getMembers().forEach((member: IClient, clientId: string) => {
       // Get all the current human members
@@ -50,8 +51,8 @@ export class ServiceAudience
         // Ensure we're tracking the user
         let user = users.get(userId);
         if (user === undefined) {
-            user = { userId, connections: [] };
-            users.set(userId, user);
+          user = this.createServiceMember(member);
+          users.set(userId, user);
         }
 
         // Add this connection to their collection
@@ -64,15 +65,15 @@ export class ServiceAudience
   /**
    * @inheritdoc
    */
-  public getMyself(): IMember | undefined {
+  public getMyself(): M | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;
     }
-    return this.getMemberByClientId(clientId);
+    return this.getMember(clientId);
   }
 
-  public getMemberByClientId(clientId: string): IMember | undefined {
+  private getMember(clientId: string): M | undefined {
     // Fetch the user ID assoicated with this client ID from the runtime
     const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {
