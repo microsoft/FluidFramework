@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
- import {
-    IContainerContext,
-    IRuntime,
-} from "@fluidframework/container-definitions";
+ import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import {
