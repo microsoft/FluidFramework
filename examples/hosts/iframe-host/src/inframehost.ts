@@ -28,7 +28,6 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { IContainerRuntime } from "../../../../packages/runtime/container-runtime-definitions/dist";
 
 export interface IFrameInnerApi {
     /**
