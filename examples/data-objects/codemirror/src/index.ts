@@ -8,7 +8,6 @@
     IRuntime,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
@@ -29,7 +28,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & IContainerRuntime> {
+    ): Promise<IRuntime & ContainerRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);
