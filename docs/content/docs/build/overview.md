@@ -23,7 +23,7 @@ See [Supported [service]-client packages](#Supported-`[service]-client`-packages
 
 ### Container
 
-The container is the primary unit of encapsulation in Fluid and consists of a collection of Loadable Objects as well as a supporting API for dynamically creating new Loadable Objects.
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of Loadable Objects and the supporting API for dynamically creating new Loadable Objects.
 
 New containers require client driven action for creation. Container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
 
