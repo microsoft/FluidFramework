@@ -7,13 +7,15 @@ Telemetry is an essential part of maintaining the health of modern applications.
 
 ## ITelemetryBaseLogger interface
 
-The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter, - Both `FrsContainerConfig` and `TinyliciousContainerConfig` have a member `logger?: ITelemetryBaseLogger` . Both `createContainer()` and `getContainer()` methods will create an instance of a `Loader` class object, where the logger defined in the `[client]ContainerConfig` is passed in as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
+The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
 
-[`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
+All Fluid service clients (for example, `FrsContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?: ITelemetryBaseLogger` into the service client configuration. Both `createContainer()` and `getContainer()` methods will create an instance of a `Loader` class object, where the logger defined in the service client configuration is passed in as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
 
-[`createContainer()`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
 
-[`getContainer()`](https://github.com/microsoft/FluidFramework/blob/7c030344dd54de0cd88fdceabb63f2d0b8e30860/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`createContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+
+[`getContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
 
 ```ts
 const loader = new Loader({
@@ -25,7 +27,7 @@ const loader = new Loader({
 ```
 The `Loader` constructor is called by both `createContainer()` and `getContainer()`, and requires a `ILoaderProps` interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the `ITelemetryBaseLogger` defined by the user.
 
-[`ILoaderProps.logger`](https://github.com/microsoft/FluidFramework/blob/24f5cd9acd3a7ef83604edd9863a47ea50c30569/packages/loader/container-loader/src/loader.ts#L309) is used by `Loader` to pipe to container's telemetry system.
+[`ILoaderProps.logger`](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L309) is used by `Loader` to pipe to container's telemetry system.
 
 
 
@@ -92,7 +94,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
   eventName: string;
 }
 ```
-The `ITelemetryBaseEvent` contains `category` and `eventName` properties for labeling and defining a telemetry event.-
+The `ITelemetryBaseEvent` contains `category` and `eventName` properties for labeling and defining a telemetry event.
  - `ITelemetryProperties` extended by `ITelemetryBaseEvent`, is a type with a string index signature, the values are either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`, `boolean`, `number`, `undefined`). It is imperative for you to know how to interpret and process these tagged values.
     - Tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (for example, private customer data), those events could be tagged with a unique string so they could be treated differently downstream.
  ```ts
