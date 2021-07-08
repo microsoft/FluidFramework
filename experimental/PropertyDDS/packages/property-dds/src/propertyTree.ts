@@ -335,6 +335,12 @@ export class SharedPropertyTree extends SharedObject {
 				if (visitor.remoteHeadGuid === visitor.referenceGuid && remoteChangeMap.has(visitor.referenceGuid)) {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
+
+                // If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
+                // keep all remote Changes until this change has been processed
+                if (visitor.remoteHeadGuid === "") {
+                    visitedRemoteChanges.add(remoteChanges[0].guid);
+                }
 			}
 		}
 		let pruned = 0;
@@ -391,7 +397,7 @@ export class SharedPropertyTree extends SharedObject {
 				remoteChanges: this.remoteChanges,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-			const chunkSize = 64 * 1024; // Default limit seems to be 100k
+			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let serializedSummary =
 				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
 
@@ -678,10 +684,14 @@ export class SharedPropertyTree extends SharedObject {
 			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
 		});
 
-		// Update the the tip view
-		this.tipView = _.cloneDeep(this.remoteTipView);
-		const changeSet = new ChangeSet(this.tipView);
-		changeSet.applyChangeSet(accumulatedChanges);
+		// Update the tip view
+		if (!this.tipView) {
+            this.tipView = _.cloneDeep(this.remoteTipView);
+            const changeSet = new ChangeSet(this.tipView);
+            changeSet.applyChangeSet(accumulatedChanges);
+        } else {
+            new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
+        }
 
 		return true;
 	}
