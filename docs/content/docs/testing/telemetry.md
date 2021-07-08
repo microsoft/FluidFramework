@@ -6,19 +6,30 @@ aliases:
 ---
 
 
-Telemetry is an essential part of maintaining the health of modern applications. Fluid Framework provides a way to plug in your own logic to handle telemetry events sent by Fluid. This enables you to integrate the Fluid telemetry along with your other telemetry, and route the event data in whatever way you need.
+Telemetry is an essential part of maintaining the health of modern applications. Fluid Framework provides a way to plug
+in your own logic to handle telemetry events sent by Fluid. This enables you to integrate the Fluid telemetry along with
+your other telemetry, and route the event data in whatever way you need.
 
-### Collect Fluid Framework logs with a custom ITelemetryBaseLogger
+### Collect Fluid Framework logs with a custom `ITelemetryBaseLogger`
 
-The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
+The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
+be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
 
-All Fluid service clients (for example, `FrsContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?: ITelemetryBaseLogger` into the service client configuration. Both `createContainer()` and `getContainer()` methods will create an instance of a `Loader` class object, where the logger defined in the service client configuration is passed in as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
+All Fluid service clients (for example, `FrsContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?:
+ITelemetryBaseLogger` into the service client configuration. Both `createContainer()` and `getContainer()` methods will
+create an instance of a `Loader` class object, where the logger defined in the service client configuration is passed in
+as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
 
-[`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/interfaces.ts#L9) interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
+[`TinyliciousContainerConfig`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/interfaces.ts#L9)
+interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
 
-[`createContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`createContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50)
+interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
+`FrsClient` will take `FrsContainerConfig` for its respective methods)
 
-[`getContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65) interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The `FrsClient` will take `FrsContainerConfig` for its respective methods)
+[`getContainer()`](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65)
+interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
+`FrsClient` will take `FrsContainerConfig` for its respective methods)
 
 ```ts
 const loader = new Loader({
@@ -28,11 +39,13 @@ const loader = new Loader({
   logger: tinyliciousContainerConfig.logger,
 });
 ```
-The `Loader` constructor is called by both `createContainer()` and `getContainer()`, and requires a `ILoaderProps` interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the `ITelemetryBaseLogger` defined by the user.
 
-[`ILoaderProps.logger`](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L309) is used by `Loader` to pipe to container's telemetry system.
+The `Loader` constructor is called by both `createContainer()` and `getContainer()`, and requires a `ILoaderProps`
+interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the
+`ITelemetryBaseLogger` defined by the user.
 
-
+[`ILoaderProps.logger`](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L309)
+is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods
 
@@ -46,15 +59,22 @@ export interface ITelemetryBaseLogger {
 ```
 
 - `send()`
-  - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions` package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's telemetry system to execute.
+  - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method
+    takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions`
+    package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's
+    telemetry system to execute.
 
-### Customization
+### Customizing the logger object
 
-In some cases you may wish to add custom attributes to the object implementing the `ITelemetryBaseLogger` interface. For example, you may wish to handle some categories differently than others, or you may want to label categories based on the input.
+In some cases you may wish to add custom attributes to the object implementing the `ITelemetryBaseLogger` interface. For
+example, you may wish to handle some categories differently than others, or you may want to label categories based on
+the input.
 
-Regardless of your logic, `ITelemetryBaseLogger` must be implemented, and you must call the `send()` method ultimately since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
+Regardless of your logic, `ITelemetryBaseLogger` must be implemented, and you must call the `send()` method ultimately
+since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
 
-To see an example of building custom logic into the telemetry implementation, see the `ITelemetryLogger` interface snippets below, or in the `@fluidframework/common-definitions` package for full details.
+To see an example of building custom logic into the telemetry implementation, see the `ITelemetryLogger` interface
+snippets below, or in the `@fluidframework/common-definitions` package for full details.
 
 ```ts
 // @public
@@ -65,7 +85,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 ```
-`ITelemetryLogger` interface breaks down telemetry events into different categories, and will contains different logic for different events.
+
+`ITelemetryLogger` interface breaks down telemetry events into different categories, and will contains different logic
+for different events.
 
 ```ts
 /**
@@ -85,11 +107,15 @@ public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
   this.send(newEvent);
 }
 ```
-Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties for the information to be piped to the container's telemetry system and sends the telemetry event.
+
+Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties for the
+information to be piped to the container's telemetry system and sends the telemetry event.
 
 ## ITelemetryBaseEvent interface
 
-All Fluid telemetry events are sent as `ITelemetryBaseEvent`s via the `send()` method in `ITelemetryBaseLogger`. This interface can be augmented, allowing you to add additional properties that will be serialized as JSON. The default required properties, `eventName` and `category`, are set by the telemetry system.
+All Fluid telemetry events are sent as `ITelemetryBaseEvent`s via the `send()` method in `ITelemetryBaseLogger`. This
+interface can be augmented, allowing you to add additional properties that will be serialized as JSON. The default
+required properties, `eventName` and `category`, are set by the telemetry system.
 
 ```ts
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
@@ -97,17 +123,29 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
   eventName: string;
 }
 ```
+
 The `ITelemetryBaseEvent` contains `category` and `eventName` properties for labeling and defining a telemetry event.
- - `ITelemetryProperties` extended by `ITelemetryBaseEvent`, is a type with a string index signature, the values are either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`, `boolean`, `number`, `undefined`). It is imperative for you to know how to interpret and process these tagged values.
-    - Tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same by your logger's implementation. However, in some scenarios, where some data should be handled separately (for example, private customer data), those events could be tagged with a unique string so they could be treated differently downstream.
+
+- `ITelemetryProperties` extended by `ITelemetryBaseEvent`, is a type with a string index signature, the values are
+   either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`,
+   `boolean`, `number`, `undefined`). It is imperative for you to know how to interpret and process these tagged values.
+  - Tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same
+    by your logger's implementation. However, in some scenarios, where some data should be handled separately (for
+    example, private customer data), those events could be tagged with a unique string so they could be treated
+    differently downstream.
+
  ```ts
  export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 ```
-`ITelemetryProperties` values take untagged (`TelemetryEventPropertyType`) or tagged (`ITaggedTelemetryPropertyType`) primitives.
-  - `TelemetryEventPropertyType` takes only `string`, `boolean`, `number`, `undefined` primitives.
-  - `ITaggedTelemetryPropertyType` is an interface that takes `TelemetryEventPropertyType` and a tag
+
+`ITelemetryProperties` values take untagged (`TelemetryEventPropertyType`) or tagged (`ITaggedTelemetryPropertyType`)
+primitives.
+
+- `TelemetryEventPropertyType` takes only `string`, `boolean`, `number`, `undefined` primitives.
+- `ITaggedTelemetryPropertyType` is an interface that takes `TelemetryEventPropertyType` and a tag.
+
 ```ts
 export interface ITaggedTelemetryPropertyType {
   value: TelemetryEventPropertyType,
@@ -120,16 +158,20 @@ export interface ITaggedTelemetryPropertyType {
 The Fluid Framework sends events in the following categories:
 
 - error -- used to identify and report error conditions, e.g. duplicate data store IDs.
-- performance -- used to track performance-critical code paths within the framework. For example, the summarizer tracks how long it takes to create or load a summary and reports this information in an event.
-- generic -- used as a catchall for events that are informational and don't represent an activity with a duration like a performance event.
+- performance -- used to track performance-critical code paths within the framework. For example, the summarizer tracks
+  how long it takes to create or load a summary and reports this information in an event.
+- generic -- used as a catchall for events that are informational and don't represent an activity with a duration like a
+  performance event.
 
 ### EventName
 
 This property contains a unique name for the event.
 
-### Customization
+### Customizing logged events
 
-Similar to the `ITelemetryBaseLogger` interface mentioned above, different levels of event complexity can also be achieved by adding other attributes to the object implementing the `ITelemetryBaseEvent` interface. Below are some examples:
+Similar to the `ITelemetryBaseLogger` interface mentioned above, different levels of event complexity can also be
+achieved by adding other attributes to the object implementing the `ITelemetryBaseEvent` interface. Below are some
+examples:
 
 ```ts
 if (chunk.version !== undefined) {
@@ -142,7 +184,8 @@ if (chunk.version !== undefined) {
 }
 ```
 
-The code snippet here implements a telemetry event without adding much complexity. The telemetry event object here adds only a few other attributes to the `ITelemetryBaseEvent`.
+The code snippet here implements a telemetry event without adding much complexity. The telemetry event object here adds
+only a few other attributes to the `ITelemetryBaseEvent`.
 
 ```ts
 /**
@@ -163,7 +206,9 @@ public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
 }
 ```
 
-However, the code snippet here shows a telemetry event object that adds much more complex logic to determine the event that has occurred, then passes the resulting event to the `send()` method for the container's telemetry system to output.
+However, the code snippet here shows a telemetry event object that adds much more complex logic to determine the event
+that has occurred, then passes the resulting event to the `send()` method for the container's telemetry system to
+output.
 
 Here is the above telemetry event object in action:
 
@@ -181,7 +226,11 @@ this.logger.sendTelemetryEvent({
 
 ## Code example
 
-With the interface already hooked up to the container's telemetry system, it is easy for users to write a custom telemetry object by implementing the `ITelemetryBaseLogger` interface and defining the `send()` method. Below is an example custom telemetry logger, `ConsoleLogger`, that implements the `ITelemetryBaseLogger` interface. As the name suggests, the `ConsoleLogger` defined the `send()` method to stringify the entire event object and print it to the browser console.
+With the interface already hooked up to the container's telemetry system, it is easy for users to write a custom
+telemetry object by implementing the `ITelemetryBaseLogger` interface and defining the `send()` method. Below is an
+example custom telemetry logger, `ConsoleLogger`, that implements the `ITelemetryBaseLogger` interface. As the name
+suggests, the `ConsoleLogger` defined the `send()` method to stringify the entire event object and print it to the
+browser console.
 
 ```ts
 import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
@@ -196,7 +245,8 @@ export class ConsoleLogger implements ITelemetryBaseLogger {
 }
 ```
 
-This custom logger is then created and passed into the `getContainer()` and `createContainer()` in a `TinyliciousClient` object. The custom logger is now hooked up to the container's telemetry system.
+This custom logger is then created and passed into the `getContainer()` and `createContainer()` in a `TinyliciousClient`
+object. The custom logger is now hooked up to the container's telemetry system.
 
 ```ts
 async function start(): Promise<void> {
@@ -211,6 +261,7 @@ async function start(): Promise<void> {
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 ```
 
-Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire event object.
+Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
+event object.
 
 ![ConsoleLogger_telemetry_in_action](https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png "ConsoleLogger_telemetry_in_action")
