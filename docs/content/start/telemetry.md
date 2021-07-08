@@ -212,4 +212,3 @@ Now, whenever a telemetry event is encountered, the custom `send()` method gets 
 
 ![ConsoleLogger_telemetry_in_action](https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png "ConsoleLogger_telemetry_in_action")
 
-
