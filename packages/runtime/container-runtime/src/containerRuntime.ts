@@ -2118,7 +2118,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
         if (this.gcEnabled && result.latestSummaryUpdated) {
             // Since there is not proposal handle for this summary, it should not have been tracked.
-            assert(!result.wasSummaryTracked, 0x1fd /* "Summary without proposal handle should not have been tracked" */);
+            assert(!result.wasSummaryTracked,
+                0x1fd /* "Summary without proposal handle should not have been tracked" */);
             // Update summaryGCVersion from the snapshot that was used to update the latest summary.
             await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
         }
