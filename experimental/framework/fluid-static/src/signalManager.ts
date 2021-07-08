@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IErrorEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
@@ -52,50 +47,54 @@ export interface ISignalManager {
 }
 
 /**
- *
+ * Duck type of something that provides the expected signalling functionality:
+ * A way to verify we can signal, a way to send a signal, and a way to listen for incoming signals
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignalManager {
-    private static readonly managerIdKey = "managerId";
+export interface ISignaler {
+    connected: boolean;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+    submitSignal(type: string, content: any): void;
+}
 
-    private _managerId: number | undefined;
-    private get managerId(): number {
-        assert(this._managerId !== undefined, "managerId must be defined");
-        return this._managerId;
-    }
-
+/**
+ * Note: currently experimental and under development
+ *
+ * Helper class to assist common scenarios around working with signals.  SignalManager wraps an
+ * object with signalling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and steals
+ * its powers as its own, and can then be used in place of the original signaller.  The wrapped
+ * object is not harmed in the process.
+ */
+export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISignalManager {
     /**
      * Local map of registered signal handlers
      * Map<signalName, handlerFunction[]>
      */
     private readonly listenerMap = new Map<string, SignalListener[]>();
 
-    public static get Name() { return "@fluid-example/signal-manager"; }
+    private readonly managerId: string | undefined;
 
-    public static readonly factory = new DataObjectFactory<SignalManager, undefined, undefined, IErrorEvent>
-    (
-        SignalManager.Name,
-        SignalManager,
-        [],
-        {},
-    );
-
-    protected async initializingFirstTime() {
-        const signalManagerId = Math.floor(Math.random() * 10000);
-        this.root.set(SignalManager.managerIdKey, signalManagerId);
-    }
-
-    protected async hasInitialized() {
-        this._managerId = this.root.get(SignalManager.managerIdKey);
-
-        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+    constructor(
+        /**
+         * Object to wrap that can submit and listen to signals
+         */
+        private readonly signaler: ISignaler,
+        /**
+         * Optional id to assign to this manager that will be attached to
+         * signal names.  Useful to avoid collisions if there are multiple
+         * signal users at the Container level
+         */
+        managerId?: string,
+    ) {
+        super();
+        this.managerId = managerId ? `#${managerId}` : undefined;
+        this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const listeners = this.listenerMap.get(message.type);
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
             // identifiable sender clientId.  The listener is responsible for deciding how
             // it wants to handle local/remote signals
             // eslint-disable-next-line no-null/no-null
-            if (listeners !== undefined && this.runtime.connected && clientId !== null) {
+            if (listeners !== undefined && this.signaler.connected && clientId !== null) {
                 listeners.forEach((listener) => {
                     listener(clientId, local, message.content);
                 });
@@ -104,7 +103,7 @@ export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implem
     }
 
     private getManagerSignalName(signalName: string): string {
-        return `${signalName}#${this.managerId}`;
+        return this.managerId ? `${signalName}${this.managerId}` : signalName;
     }
 
     private getBroadcastSignalName(signalName: string): string {
@@ -147,8 +146,8 @@ export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implem
         payload?: Jsonable,
     ) {
         const managerSignalName = this.getManagerSignalName(signalName);
-        if (this.runtime.connected) {
-            this.runtime.submitSignal(managerSignalName, payload);
+        if (this.signaler.connected) {
+            this.signaler.submitSignal(managerSignalName, payload);
         }
     }
 
