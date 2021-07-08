@@ -9,8 +9,8 @@ import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISequencedDeltaOpMessage } from "../contracts";
-import { convertBinaryFormatToOdspSnapshot } from "../compactToOdspSnapshotConverter";
-import { convertOdspSnapshotToCompactSnapshot } from "../odspSnapshotToCompactSnapshotConverter";
+import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 
 const snapshotTree: ISnapshotTree = {
     blobs: {},
@@ -57,16 +57,16 @@ const snapshotTree: ISnapshotTree = {
     },
 };
 
-const blobs = new Map<string, Uint8Array>(
+const blobs = new Map<string, ArrayBuffer>(
     [
         ["bARADgIe4qmDjJl2l2zz12IM3",
-            new Uint8Array(stringToBuffer(JSON.stringify({branch:"",minimumSequenceNumber:0,sequenceNumber:0,term:1}), "utf8"))],
-        ["bARBkx1nses1pHL1vKnmFUfIC", new Uint8Array(stringToBuffer(JSON.stringify([]), "utf8"))],
-        ["bARD4RKvW4LL1KmaUKp6hUMSp", new Uint8Array(stringToBuffer(JSON.stringify({summaryFormatVersion:1,gcFeature:0}), "utf8"))],
+            stringToBuffer(JSON.stringify({branch:"",minimumSequenceNumber:0,sequenceNumber:0,term:1}), "utf8")],
+        ["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
+        ["bARD4RKvW4LL1KmaUKp6hUMSp", stringToBuffer(JSON.stringify({summaryFormatVersion:1,gcFeature:0}), "utf8")],
         ["bARC6dCXlcrPxQHw3PeROtmKc",
-            new Uint8Array(stringToBuffer(JSON.stringify({pkg:"[\"@fluid-example/smde\"]",summaryFormatVersion:2,isRootDataStore:true}), "utf8"))],
-        ["bARDNMoBed+nKrsf04id52iUA", new Uint8Array(stringToBuffer(JSON.stringify(
-            {usedRoutes:[""],gcData:{gcNodes:{"/root":["/default/01b197a2-0432-413b-b2c9-83a992b804c4","/default"],"/01b197a2-0432-413b-b2c9-83a992b804c4":["/default"],"/":["/default/root","/default/01b197a2-0432-413b-b2c9-83a992b804c4"]}}}), "utf8"))],
+        stringToBuffer(JSON.stringify({pkg:"[\"@fluid-example/smde\"]",summaryFormatVersion:2,isRootDataStore:true}), "utf8")],
+        ["bARDNMoBed+nKrsf04id52iUA", stringToBuffer(JSON.stringify(
+            {usedRoutes:[""],gcData:{gcNodes:{"/root":["/default/01b197a2-0432-413b-b2c9-83a992b804c4","/default"],"/01b197a2-0432-413b-b2c9-83a992b804c4":["/default"],"/":["/default/root","/default/01b197a2-0432-413b-b2c9-83a992b804c4"]}}}), "utf8")],
     ],
 );
 
@@ -103,16 +103,14 @@ const ops: ISequencedDeltaOpMessage[] = [
 
 describe("Snapshot Format Conversion Tests", () => {
     it("Conversion test", async () => {
-        const compactSnapshot =
-            convertOdspSnapshotToCompactSnapshot(snapshotTree, blobs, 0, ops);
-        const result = convertBinaryFormatToOdspSnapshot(compactSnapshot);
+        const compactSnapshot = convertToCompactSnapshot(snapshotTree, blobs, 0, ops);
+        const result = parseCompactSnapshotResponse(compactSnapshot);
         assert.deepStrictEqual(result.tree, snapshotTree, "Tree structure should match");
+        console.log(result.blobs.get("bARBkx1nses1pHL1vKnmFUfIC") instanceof ArrayBuffer);
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");
-
         // Convert to compact snapshot again and then match to previous one.
-        const compactSnapshot2 =
-            convertOdspSnapshotToCompactSnapshot(result.tree, result.blobs, 0, result.ops);
+        const compactSnapshot2 = convertToCompactSnapshot(result.tree, result.blobs, 0, result.ops);
         assert.deepStrictEqual(compactSnapshot2.buffer, compactSnapshot.buffer,
             "Compact representation should remain same");
     });

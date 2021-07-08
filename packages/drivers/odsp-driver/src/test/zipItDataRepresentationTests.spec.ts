@@ -9,7 +9,7 @@ import {
     BlobCore,
     NodeCore,
     NodeTypes,
-} from "../snapshotRepresentation";
+} from "../zipItDataRepresentationUtils";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes) {
     if (node1 instanceof NodeCore) {
