@@ -105,7 +105,7 @@ class ProxyChaincode extends RuntimeFactoryHelper {
         _existing: boolean,
     ): Promise<IRuntime & IContainerRuntime> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (new ProxyRuntime() as IContainerRuntime);
+        return new ProxyRuntime() as unknown as (IRuntime & IContainerRuntime);
     }
 }
 
