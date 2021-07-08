@@ -4,4 +4,4 @@ menuPosition: 5
 draft: true
 ---
 
-Building custom Data Objects are currently not supported
+Building a custom DataObject is currently in development and will be coming soon.
