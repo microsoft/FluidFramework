@@ -18,11 +18,10 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { fluidExport as smde } from "./codemirror";
 
 const defaultComponentId = "default";
-const defaultComponent = "@fluid-example/smde";
 
 class CodeMirrorFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await runtime.createRootDataStore(defaultComponent, defaultComponentId);
+        await runtime.createRootDataStore(smde.type, defaultComponentId);
     }
 
     public async preInitialize(
@@ -30,7 +29,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
         existing: boolean,
     ): Promise<ContainerRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
+            [smde.type, Promise.resolve(smde)],
         ]);
 
         const runtime: ContainerRuntime = await ContainerRuntime.load(

@@ -468,7 +468,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,

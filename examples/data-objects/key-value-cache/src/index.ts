@@ -10,10 +10,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { mixinRequestHandler } from "@fluidframework/datastore";
-import {
-    IContainerContext,
-    IRuntime,
-} from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -103,7 +100,8 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
 
 export class KeyValueFactoryComponent
     extends RuntimeFactoryHelper
-    implements IFluidDataStoreFactory {
+    implements IFluidDataStoreFactory
+{
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
     private readonly defaultComponentId = "default";
@@ -131,7 +129,7 @@ export class KeyValueFactoryComponent
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[this.type, Promise.resolve(this)]]),

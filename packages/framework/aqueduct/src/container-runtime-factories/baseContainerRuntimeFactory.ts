@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
     FluidDataStoreRegistry,
@@ -64,7 +64,7 @@ export class BaseContainerRuntimeFactory
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {

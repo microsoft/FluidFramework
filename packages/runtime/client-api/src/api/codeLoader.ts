@@ -8,7 +8,6 @@ import { mixinRequestHandler, FluidDataStoreRuntime } from "@fluidframework/data
 import {
     ICodeLoader,
     IContainerContext,
-    IRuntime,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
@@ -113,7 +112,7 @@ export class ChaincodeFactory extends RuntimeFactoryHelper {
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const chaincode = new Chaincode(context.closeFn);
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,

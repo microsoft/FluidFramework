@@ -8,7 +8,7 @@
 import "./publicpath";
 
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -66,7 +66,7 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [

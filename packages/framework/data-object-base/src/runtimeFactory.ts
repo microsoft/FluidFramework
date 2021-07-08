@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
@@ -46,7 +46,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
     public async preInitialize(
         context: IContainerContext,
         existing: boolean,
-    ): Promise<IRuntime & ContainerRuntime> {
+    ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
