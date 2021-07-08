@@ -39,6 +39,7 @@ COPY packages/services-ordering-kafkanode/package*.json packages/services-orderi
 COPY packages/services-ordering-rdkafka/package*.json packages/services-ordering-rdkafka/
 COPY packages/services-ordering-zookeeper/package*.json packages/services-ordering-zookeeper/
 COPY packages/services-shared/package*.json packages/services-shared/
+COPY packages/services-telemetry/package*.json packages/services-telemetry/
 COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
