@@ -76,6 +76,9 @@ menu:
   - identifier: "advanced"
     name: "Advanced"
     weight: -300
+  - identifier: "DDS"
+    name: "Data Structures"
+    weight: -200
 
 markup:
   goldmark:

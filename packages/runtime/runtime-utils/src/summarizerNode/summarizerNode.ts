@@ -21,6 +21,7 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
+import { ReadAndParseBlob, seqFromTree } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -31,8 +32,7 @@ import {
     ISummarizerNodeRootContract,
     parseSummaryForSubtrees,
     parseSummaryTreeForSubtrees,
-    ReadAndParseBlob,
-    seqFromTree,
+    RefreshSummaryResult,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -238,23 +238,39 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
+    /**
+     * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
+     * it becomes the latest summary. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * summary based off of that.
+     * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
+     *          1. The latest summary was not udpated.
+     *          2. The latest summary was updated and the summary corresponding to the params was being tracked.
+     *          3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
+     *             case, the latest summary is updated based on the downloaded snapshot which is also returned.
+     */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void> {
+    ): Promise<RefreshSummaryResult> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
             if (maybeSummaryNode !== undefined) {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
-                return;
+                return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
         }
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
+
+        // If we have seen a summary same or later as the downloaded one, ignore it.
+        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return { latestSummaryUpdated: false };
+        }
+
         await this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
@@ -263,6 +279,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             correlatedSummaryLogger,
             readAndParseBlob,
         );
+        return { latestSummaryUpdated: true, wasSummaryTracked: false, snapshot: snapshotTree };
     }
 
     protected refreshLatestSummaryFromPending(

@@ -108,6 +108,5 @@ const factory = new DataObjectFactory<TableView, undefined, undefined, IEvent>(
     [],
     {},
     [
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
     ]);

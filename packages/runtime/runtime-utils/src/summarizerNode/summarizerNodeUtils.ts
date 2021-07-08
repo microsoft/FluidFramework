@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     ISnapshotTree,
-    IDocumentAttributes,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryTree,
@@ -15,13 +14,29 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "../summaryUtils";
+import { ReadAndParseBlob } from "../utils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
 const maxDecodeDepth = 100;
 
-/** Reads a blob from storage and parses it from JSON. */
-export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
+/**
+ * Return value of refreshSummaryAck function. There can be three different scenarios based on the passed params:
+ * 1. The latest summary was not udpated.
+ * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
+ * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
+ *    latest summary is updated based on the downloaded snapshot which is also returned.
+ */
+export type RefreshSummaryResult = {
+    latestSummaryUpdated: false,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: true,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: false,
+    snapshot: ISnapshotTree,
+};
 
 export interface ISummarizerNodeRootContract {
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
@@ -32,22 +47,7 @@ export interface ISummarizerNodeRootContract {
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void>;
-}
-
-/**
- * Fetches the sequence number of the snapshot tree by examining the protocol.
- * @param tree - snapshot tree to examine
- * @param readAndParseBlob - function to read blob contents from storage
- * and parse the result from JSON.
- */
-export async function seqFromTree(
-    tree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
-): Promise<number> {
-    const attributesHash = tree.trees[".protocol"].blobs.attributes;
-    const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
-    return attrib.sequenceNumber;
+    ): Promise<RefreshSummaryResult>;
 }
 
 /** Path for nodes in a tree with escaped special characters */

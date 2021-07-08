@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const {PropertyFactory} = require('./property_factory');
 const {PropertyUtils} = require('./property_utils');
 const {BaseProperty} = require('./properties/base_property');

@@ -223,11 +223,11 @@ export async function start(
         config: {},
     };
 
-    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
     const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(
+    const loader1 = await createWebLoader(
         documentId,
         fluidModule,
         options,
@@ -247,7 +247,8 @@ export async function start(
         // This functionality is used in odsp driver to prefetch the latest snapshot and cache it so
         // as to avoid the network call to fetch trees latest.
         if (window.location.hash === "#prefetch") {
-            assert(options.mode === "spo-df" || options.mode === "spo", "Prefetch snapshot only available for odsp!");
+            assert(options.mode === "spo-df" || options.mode === "spo",
+                0x1ea /* "Prefetch snapshot only available for odsp!" */);
             const prefetched = await prefetchLatestSnapshot(
                 await urlResolver.resolve({ url: documentUrl }),
                 async () => options.odspAccessToken,
@@ -255,26 +256,10 @@ export async function start(
                 new BaseTelemetryNullLogger(),
                 undefined,
             );
-            assert(prefetched, "Snapshot should be prefetched!");
+            assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
         container1 = await loader1.resolve({ url: documentUrl });
         containers.push(container1);
-
-        /**
-         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario.
-         * Create a new `documentId`, a new Loader and a new detached container.
-         */
-        if (!container1.existing) {
-            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
-            container1.close();
-
-            documentId = moniker.choose();
-            url = url.replace(id, documentId);
-            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
-            container1 = await loader1.createDetachedContainer(codeDetails);
-        }
     }
 
     let leftDiv: HTMLDivElement = div;

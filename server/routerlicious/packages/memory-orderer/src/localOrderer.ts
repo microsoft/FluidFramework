@@ -12,6 +12,7 @@ import {
     createDeliCheckpointManagerFromCollection,
     DeliLambda,
     ForemanLambda,
+    MoiraLambda,
     ScribeLambda,
     ScriptoriumLambda,
     SummaryReader,
@@ -55,7 +56,6 @@ const DefaultScribe: IScribe = {
 };
 
 const DefaultDeli: IDeliState = {
-    branchMap: undefined,
     clients: undefined,
     durableSequenceNumber: 0,
     epoch: 0,
@@ -111,6 +111,7 @@ export class LocalOrderer implements IOrderer {
         foremanContext: IContext = new LocalContext(logger),
         scribeContext: IContext = new LocalContext(logger),
         deliContext: IContext = new LocalContext(logger),
+        moiraContext: IContext = new LocalContext(logger),
         serviceConfiguration: Partial<IServiceConfiguration> = {},
     ) {
         const documentDetails = await setup.documentP();
@@ -131,6 +132,7 @@ export class LocalOrderer implements IOrderer {
             foremanContext,
             scribeContext,
             deliContext,
+            moiraContext,
             merge({}, DefaultServiceConfiguration, serviceConfiguration));
     }
 
@@ -139,6 +141,7 @@ export class LocalOrderer implements IOrderer {
 
     public scriptoriumLambda: LocalLambdaController | undefined;
     public foremanLambda: LocalLambdaController | undefined;
+    public moiraLambda: LocalLambdaController | undefined;
     public scribeLambda: LocalLambdaController | undefined;
     public deliLambda: LocalLambdaController | undefined;
     public broadcasterLambda: LocalLambdaController | undefined;
@@ -163,6 +166,7 @@ export class LocalOrderer implements IOrderer {
         private readonly foremanContext: IContext,
         private readonly scribeContext: IContext,
         private readonly deliContext: IContext,
+        private readonly moiraContext: IContext,
         private readonly serviceConfiguration: IServiceConfiguration,
     ) {
         this.existing = details.existing;
@@ -283,6 +287,15 @@ export class LocalOrderer implements IOrderer {
                     this.rawDeltasKafka,
                     this.serviceConfiguration);
             });
+
+        if (this.serviceConfiguration.moira.enable) {
+            this.moiraLambda = new LocalLambdaController(
+                this.deltasKafka,
+                this.setup,
+                this.moiraContext,
+                async (_, context) => new MoiraLambda(context, this.serviceConfiguration),
+            );
+        }
     }
 
     private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
@@ -367,6 +380,11 @@ export class LocalOrderer implements IOrderer {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.broadcasterLambda.start();
         }
+
+        if (this.moiraLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.moiraLambda.start();
+        }
     }
 
     private async closeKafkas() {
@@ -400,6 +418,11 @@ export class LocalOrderer implements IOrderer {
         if (this.broadcasterLambda) {
             this.broadcasterLambda.close();
             this.broadcasterLambda = undefined;
+        }
+
+        if (this.moiraLambda) {
+            this.moiraLambda.close();
+            this.moiraLambda = undefined;
         }
     }
 

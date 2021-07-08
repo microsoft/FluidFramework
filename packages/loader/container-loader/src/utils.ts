@@ -5,12 +5,8 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fromUtf8ToBase64, bufferToString, performance } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
-import { DeltaManager } from "./deltaManager";
 
 export interface IParsedUrl {
     id: string;
@@ -49,12 +45,14 @@ export function parseUrl(url: string): IParsedUrl | undefined {
  */
 function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
+    blobs: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
-    const treeNode = {
+    const treeNode: ISnapshotTree = {
         blobs: {},
         trees: {},
         commits: {},
         id: uuid(),
+        unreferenced: summary.unreferenced,
     };
     const keys = Object.keys(summary.tree);
     for (const key of keys) {
@@ -62,15 +60,16 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
+                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject, blobs);
                 break;
             }
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
-                treeNode.blobs[blobId] = typeof summaryObject.content === "string" ?
-                    fromUtf8ToBase64(summaryObject.content) :
-                    bufferToString(summaryObject.content, "base64");
+                const contentBuffer = typeof summaryObject.content === "string" ?
+                    stringToBuffer(summaryObject.content, "utf8") : summaryObject.content;
+                blobs.set(blobId, contentBuffer);
+                treeNode.blobs[blobId] = bufferToString(contentBuffer, "base64");
                 break;
             }
             case SummaryType.Handle:
@@ -92,7 +91,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 export function convertProtocolAndAppSummaryToSnapshotTree(
     protocolSummaryTree: ISummaryTree,
     appSummaryTree: ISummaryTree,
-): ISnapshotTree {
+) {
     // Shallow copy is fine, since we are doing a deep clone below.
     const combinedSummary: ISummaryTree = {
         type: SummaryType.Tree,
@@ -100,74 +99,21 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     };
 
     combinedSummary.tree[".protocol"] = protocolSummaryTree;
-
-    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
-    return snapshotTree;
+    const blobs = new Map<string, ArrayBufferLike>();
+    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary, blobs);
+    return { snapshotTree, blobs };
 }
 
-const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
-
-export async function runWithRetry<T>(
-    api: () => Promise<T>,
-    fetchCallName: string,
-    deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
-    logger: ITelemetryLogger,
-    shouldRetry?: () => { retry: boolean, error: any | undefined},
-): Promise<T> {
-    let result: T | undefined;
-    let success = false;
-    let retryAfterSeconds = 1; // has to be positive!
-    let numRetries = 0;
-    const startTime = performance.now();
-    let lastError: any;
-    let id: string | undefined;
-    do {
-        try {
-            result = await api();
-            if (id !== undefined) {
-                deltaManager.refreshDelayInfo(id);
-            }
-            success = true;
-        } catch (err) {
-            if (shouldRetry !== undefined) {
-                const res = shouldRetry();
-                if (res.retry === false) {
-                    if (res.error !== undefined) {
-                        throw res.error;
-                    }
-                    throw err;
-                }
-            }
-            // If it is not retriable, then just throw the error.
-            if (!canRetryOnError(err)) {
-                logger.sendErrorEvent({
-                    eventName: fetchCallName,
-                    retry: numRetries,
-                    duration: performance.now() - startTime,
-                }, err);
-                throw err;
-            }
-            numRetries++;
-            lastError = err;
-            // If the error is throttling error, then wait for the specified time before retrying.
-            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            retryAfterSeconds = getRetryDelayFromError(err) ?? Math.min(retryAfterSeconds * 2, 8);
-            if (id === undefined) {
-                id = uuid();
-            }
-            deltaManager.emitDelayInfo(id, retryAfterSeconds, CreateContainerError(err));
-            await delay(retryAfterSeconds * 1000);
-        }
-    } while (!success);
-    if (numRetries > 0) {
-        logger.sendTelemetryEvent({
-            eventName: fetchCallName,
-            retry: numRetries,
-            duration: performance.now() - startTime,
-        },
-        lastError);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return result!;
-}
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        0x1e0 /* "Protocol and App summary trees should be present" */);
+    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return { snapshotTree, blobs };
+};

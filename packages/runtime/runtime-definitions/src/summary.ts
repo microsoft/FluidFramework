@@ -17,6 +17,7 @@ export interface ISummaryStats {
     blobNodeCount: number;
     handleNodeCount: number;
     totalBlobSize: number;
+    unreferencedBlobSize: number;
 }
 
 export interface ISummaryTreeWithStats {

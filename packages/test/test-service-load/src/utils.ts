@@ -68,7 +68,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<FileLogger>(async ()=>{
-    if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger?.();
         assert(logger !== undefined, "Expected getTestLogger to return something");
@@ -113,7 +113,8 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+export async function createTestDriver(
+    driver: TestDriverTypes, seed: number, runId: number | undefined, supportsBrowserAuth?: true) {
     const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
@@ -121,6 +122,7 @@ export async function createTestDriver(driver: TestDriverTypes, seed: number, ru
             odsp: {
                 directory: "stress",
                 options: options[ (runId ?? seed) % options.length],
+                supportsBrowserAuth,
             },
         });
 }

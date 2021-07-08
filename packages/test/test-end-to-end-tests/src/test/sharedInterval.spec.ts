@@ -10,7 +10,7 @@ import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    IntervalCollectionView,
+    IntervalCollection,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
@@ -26,10 +26,10 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
-    intervals: IntervalCollectionView<SequenceInterval>,
+    intervalView,
     expected: readonly { start: number; end: number }[],
 ) => {
-    const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -51,6 +51,95 @@ const assertIntervalsHelper = (
     }
 };
 
+function testIntervalCollection(intervalCollection: IntervalCollection<SequenceInterval>) {
+    if (!intervalCollection[Symbol.iterator]) {
+        // Check for prior version that doesn't support iteration
+        return;
+    }
+
+    const intervalArray: SequenceInterval[] = [];
+    intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
+    intervalArray[1] = intervalCollection.add(0, 1, IntervalType.SlideOnRemove);
+    intervalArray[2] = intervalCollection.add(0, 2, IntervalType.SlideOnRemove);
+    intervalArray[3] = intervalCollection.add(1, 0, IntervalType.SlideOnRemove);
+    intervalArray[4] = intervalCollection.add(1, 1, IntervalType.SlideOnRemove);
+    intervalArray[5] = intervalCollection.add(1, 2, IntervalType.SlideOnRemove);
+    intervalArray[6] = intervalCollection.add(2, 0, IntervalType.SlideOnRemove);
+    intervalArray[7] = intervalCollection.add(2, 1, IntervalType.SlideOnRemove);
+    intervalArray[8] = intervalCollection.add(2, 2, IntervalType.SlideOnRemove);
+
+    let i: number;
+    let result;
+    let tempArray: SequenceInterval[] = [];
+    let iterator = intervalCollection.CreateForwardIteratorWithStartPosition(1);
+    tempArray[0] = intervalArray[3];
+    tempArray[1] = intervalArray[4];
+    tempArray[2] = intervalArray[5];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with start position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
+
+    iterator = intervalCollection.CreateBackwardIteratorWithStartPosition(0);
+    tempArray = [];
+    tempArray[0] = intervalArray[2];
+    tempArray[1] = intervalArray[1];
+    tempArray[2] = intervalArray[0];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with start position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with start position");
+
+    iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
+    tempArray = [];
+    tempArray[0] = intervalArray[7];
+    tempArray[1] = intervalArray[4];
+    tempArray[2] = intervalArray[1];
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        const interval = result.value;
+        assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with end position");
+    }
+    assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
+
+    iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+        assert(false, "Iterator with OOB position should not produce a result");
+    }
+
+    for (const interval of intervalCollection) {
+        assert.strictEqual(interval, intervalArray[i], "Mismatch in for...of iteration of collection");
+        i++;
+    }
+    assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
+
+    intervalCollection.delete(0, 0);
+    intervalCollection.delete(0, 1);
+    intervalCollection.delete(0, 2);
+    intervalCollection.delete(1, 0);
+    intervalCollection.delete(1, 1);
+    intervalCollection.delete(1, 2);
+    intervalCollection.delete(2, 0);
+    intervalCollection.delete(2, 1);
+    intervalCollection.delete(2, 2);
+}
+
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -60,10 +149,11 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         const stringId = "stringKey";
 
         let sharedString: SharedString;
-        let intervals: IntervalCollectionView<SequenceInterval>;
+        let intervals: IntervalCollection<SequenceInterval>;
+        let intervalView;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-            assertIntervalsHelper(sharedString, intervals, expected);
+            assertIntervalsHelper(sharedString, intervalView, expected);
         };
 
         beforeEach(async () => {
@@ -76,7 +166,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
-            intervals = await sharedString.getIntervalCollection("intervals").getView();
+
+            intervals = sharedString.getIntervalCollection("intervals");
+            intervalView = await intervals.getView();
+            testIntervalCollection(intervals);
         });
 
         it("replace all is included", async () => {
@@ -192,9 +285,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
             sharedString1.insertText(0, "0123456789");
-            const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
+            const intervals1 = sharedString1.getIntervalCollection("intervals");
+            const intervalView1 = await intervals1.getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
-            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
             const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -203,17 +297,18 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
-            const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+            const intervals2 = sharedString2.getIntervalCollection("intervals");
+            const intervalView2 = await intervals2.getView();
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
 
             sharedString2.removeRange(4, 5);
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 6 }]);
 
             sharedString2.insertText(4, "x");
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
 
             await provider.ensureSynchronized();
-            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
         });
     });
 

@@ -20,7 +20,7 @@ import {
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { fetchLatestSnapshotCore } from "./fetchSnapshot";
+import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -32,6 +32,9 @@ import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
  * @param persistedCache - Cache to store the fetched snapshot.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
+ * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
+ *  1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
+ *  the Trees latest call.
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
@@ -40,6 +43,7 @@ export async function prefetchLatestSnapshot(
     persistedCache: IPersistedCache,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
+    enableRedeemFallback?: boolean,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -57,28 +61,32 @@ export async function prefetchLatestSnapshot(
             fetchOptions,
         );
     };
+    const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
     const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
         cacheP = persistedCache.put(
-            createCacheSnapshotKey(odspResolvedUrl),
+            snapshotKey,
             valueWithEpoch,
         );
         return cacheP;
     };
+    const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
     return PerformanceEvent.timedExecAsync(
         odspLogger,
         { eventName: "PrefetchLatestSnapshot" },
         async () => {
-            await fetchLatestSnapshotCore(
+            await fetchSnapshotWithRedeem(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     hostSnapshotFetchOptions,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,
+                    removeEntries,
+                    enableRedeemFallback,
                 );
-            assert(cacheP !== undefined, "caching was not performed!");
+            assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;
             return true;
-    }).catch((error) => false);
+    }).catch(async (error) => false);
 }

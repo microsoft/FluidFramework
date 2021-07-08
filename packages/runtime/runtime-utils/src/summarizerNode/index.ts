@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { ReadAndParseBlob, ISummarizerNodeRootContract } from "./summarizerNodeUtils";
+export { ISummarizerNodeRootContract, RefreshSummaryResult } from "./summarizerNodeUtils";
 export { IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode";
 export { IRootSummarizerNodeWithGC, createRootSummarizerNodeWithGC } from "./summarizerNodeWithGc";

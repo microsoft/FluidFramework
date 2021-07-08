@@ -6,7 +6,7 @@
 import {
     Change,
     Delete,
-    EditNode,
+    ChangeNode,
     Insert,
     NodeId,
     SharedTree,
@@ -15,6 +15,7 @@ import {
     TraitLabel,
 } from "@fluid-experimental/tree";
 import { IArrayish } from "@fluid-experimental/bubblebench-common";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { fromJson, NodeKind } from "./treeutils";
 
 function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]) => void): unknown {
@@ -128,7 +129,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
     toString(): string { return this.items.toString(); }
     toLocaleString(): string { return this.items.toLocaleString(); }
 
-    pop(): T | undefined {
+    pop(): Serializable<T> | undefined {
         const itemIds = this.itemIds;
         if (itemIds.length === 0) {
             return undefined;
@@ -137,10 +138,10 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         const removedId = itemIds[itemIds.length - 1];
         const removed = getChild(this.tree, removedId, this.update);
         this.update(Delete.create(StableRange.only(this.tree.currentView.getChangeNode(removedId))));
-        return removed as T;
+        return removed as Serializable<T>;
     }
 
-    push(...item: T[]): number {
+    push(...item: Serializable<T>[]): number {
         this.update(
             ...Insert.create(
                 item.map(fromJson), StablePlace.atEndOf({
@@ -150,7 +151,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         return this.items.length;
     }
 
-    pushNode(...node: EditNode[]) {
+    pushNode(...node: ChangeNode[]) {
         this.update(
             ...Insert.create(
                 node, StablePlace.atEndOf({

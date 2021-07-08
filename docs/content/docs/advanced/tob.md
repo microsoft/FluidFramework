@@ -3,16 +3,6 @@ title: Total Order Broadcast & Eventual Consistency
 menuPosition: 2
 draft: true
 ---
-
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
-{{% callout warning "Draft!" %}}
-
-This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
-
-{{% /callout %}}
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 ## Fluid Data: Operations all the way down
 
 Fluid data is different than data you might be familiar with. In Fluid, when data is changed, the change is modeled as
@@ -71,8 +61,7 @@ particular sequence number.
 When a client boots, rather than loading all ops, the client can load the most recent Summary op, making the local Fluid
 data structures consistent with the rest of the clients. Summary ops, like all Fluid operations, are created by the
 client. The Fluid runtime will automatically create summaries at opportune moments. The Summary op is created by a
-single client, called the "leader." In any given session, there is a single leader, and in the case of Summary ops, the
-leader is responsible for creating them.
+single client selected from the connected clients.
 
 The Summary op is unique in that it is ignored by connected clients. The Summary op is primarily a message to the Fluid
 server that it needs to store a new summary. If the operation is valid, then the server will commit the summary to

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAudience } from "@fluidframework/container-definitions";
+import { IFrsAudience } from "@fluid-experimental/frs-client";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -44,7 +44,7 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
  * @param audience - Object that provides the list of current members and listeners for when the list changes
  * @param div - The div to render into
  */
-export function renderAudience(audience: IAudience, div: HTMLDivElement) {
+export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     wrapperDiv.style.margin = "70px";
@@ -53,21 +53,23 @@ export function renderAudience(audience: IAudience, div: HTMLDivElement) {
     const audienceDiv = document.createElement("div");
     audienceDiv.style.fontSize = "20px";
 
-    const onAudienceChange = () => {
+    const onAudienceChanged = () => {
         const members = audience.getMembers();
+        const self = audience.getMyself();
         const memberNames: string[] = [];
         members.forEach((member) => {
-            if (member.details.capabilities.interactive) {
-                memberNames.push((member.user as any).name);
+            if (member.userId !== self?.userId) {
+                memberNames.push(member.userName);
             }
         });
-        audienceDiv.textContent = `Users: ${memberNames.join(", ")}`;
+        audienceDiv.innerHTML = `
+            Current User: ${self?.userName} <br />
+            Other Users: ${memberNames.join(", ")}
+        `;
     };
 
-    onAudienceChange();
-
-    audience.on("addMember", onAudienceChange);
-    audience.on("removeMember", onAudienceChange);
+    onAudienceChanged();
+    audience.on("membersChanged", onAudienceChanged);
 
     wrapperDiv.appendChild(audienceDiv);
 }

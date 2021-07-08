@@ -58,10 +58,8 @@ protocol:
 - "@fluidframework/protocol-definitions"
 experimental:
 - "@fluidframework/data-object-base"
-- "@fluidframework/last-edited-experimental"
-- "@fluidframework/react-inputs"
-- "@fluidframework/react"
+- "@fluid-experimental/react-inputs"
+- "@fluid-experimental/react"
 - "@fluid-experimental/property-dds"
 - "@fluid-experimental/property-binder"
 - "@fluid-experimental/property-properties"
-

@@ -146,17 +146,9 @@ export class SharedTextRunner
             this.rootView.set("text", newString.handle);
 
             const containerRuntime = this.context.containerRuntime;
-            const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(containerRuntime.createDataStore("@fluid-example/progress-bars")),
-                getHandle(containerRuntime.createDataStore("@fluid-example/math")),
-                getHandle(containerRuntime.createDataStore("@fluid-example/video-players")),
-                getHandle(containerRuntime.createDataStore("@fluid-example/image-collection")),
-            ]);
+            const math = await getHandle(containerRuntime.createDataStore("@fluid-example/math"));
 
-            this.rootView.set("progressBars", progressBars);
             this.rootView.set("math", math);
-            this.rootView.set("videoPlayers", videoPlayers);
-            this.rootView.set("images", images);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
 
