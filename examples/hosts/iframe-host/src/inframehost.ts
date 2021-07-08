@@ -28,6 +28,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { IContainerRuntime } from "../../../../packages/runtime/container-runtime-definitions/dist";
 
 export interface IFrameInnerApi {
     /**
@@ -104,7 +105,8 @@ class ProxyChaincode extends RuntimeFactoryHelper {
         _context: IContainerContext,
         _existing: boolean,
     ): Promise<IRuntime & IContainerRuntime> {
-        return new ProxyRuntime();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (new ProxyRuntime() as IContainerRuntime);
     }
 }
 
