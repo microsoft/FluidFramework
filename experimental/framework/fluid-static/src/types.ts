@@ -76,8 +76,8 @@ export interface ContainerSchema {
 /**
  * Event that triggers when the roster of members in the Fluid session change
  */
-export interface IServiceAudienceEvents extends IEvent {
-    (event: "membersChanged", listener: () => void): void;
+export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    (event: "membersChanged", listener: (members: Map<string, M>) => void): void;
 }
 
 /**
@@ -85,7 +85,7 @@ export interface IServiceAudienceEvents extends IEvent {
  * extend the client object with service-specific details about the connecting client, such as device information,
  * environme
  */
-export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents> {
+export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
      * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
      * member object
@@ -96,6 +96,12 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
     getMyself(): M | undefined;
+
+    /**
+     * Gets the member matching the clientId if it is present
+     * @param clientId The clientId to match to a member
+     */
+    getMemberByClientId(clientId: string): M | undefined;
 }
 
 /**
