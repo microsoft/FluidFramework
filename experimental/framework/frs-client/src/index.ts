@@ -10,3 +10,4 @@ export * from "./interfaces";
 export * from "./FrsAudience";
 export * from "./FrsUrlResolver";
 export * from "./FrsClient";
+export * from "./FrsAzFunctionTokenProvider";
