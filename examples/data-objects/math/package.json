@@ -36,7 +36,7 @@
     "@fluid-example/flow-util-lib": "^0.43.0",
     "@fluid-example/fluid-object-interfaces": "^0.43.0",
     "@fluid-example/search-menu": "^0.43.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/data-object-base": "^0.43.0",
     "@fluidframework/datastore": "^0.43.0",
     "@fluidframework/map": "^0.43.0",

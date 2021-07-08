@@ -28,8 +28,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.39.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/container-definitions": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {

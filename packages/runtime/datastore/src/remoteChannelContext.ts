@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
@@ -204,15 +204,7 @@ export class RemoteChannelContext implements IChannelContext {
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            try {
-                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
-            } catch (err) {
-                // record sequence number for easier debugging
-                const error = CreateContainerError(err);
-                error.sequenceNumber = message.sequenceNumber;
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw error;
-            }
+            this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
 
         // Commit changes.

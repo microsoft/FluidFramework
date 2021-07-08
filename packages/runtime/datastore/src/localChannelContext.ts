@@ -19,7 +19,7 @@ import {
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateContainerError, CreateProcessingError } from "@fluidframework/container-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,
@@ -165,15 +165,7 @@ export class LocalChannelContext implements IChannelContext {
 
         // Send all pending messages to the channel
         for (const message of this.pending) {
-            try {
-                this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
-            } catch (err) {
-                // record sequence number for easier debugging
-                const error = CreateContainerError(err);
-                error.sequenceNumber = message.sequenceNumber;
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw error;
-            }
+            this.services.value.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
         return this.channel;
     }
