@@ -22,10 +22,10 @@ params:
 menu:
   main:
   - name: "Getting started"
-    url: "/start/quick-start/"
+    url: "/docs/start/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/start/recipes/react/"
+    url: "/docs/recipes/react/"
     weight: -90
   - name: "Docs"
     url: "/docs/"
@@ -40,33 +40,40 @@ menu:
     url: "/playground/"
     weight: -40
 
-  start:
-  - identifier: "quick-start"
-    name: "Quick Start"
-    url: "/start/quick-start/"
-    weight: -800
-  - identifier: "tutorial"
-    name: "Tutorial"
-    url: "/start/tutorial/"
-    weight: -700
-  - identifier: "recipes"
-    name: "Recipes"
-    weight: -200
+  # start:
+  # - identifier: "quick-start"
+  #   name: "Quick Start"
+  #   url: "/start/quick-start/"
+  #   weight: -800
+  # - identifier: "tutorial"
+  #   name: "Tutorial"
+  #   url: "/start/tutorial/"
+  #   weight: -700
+  # - identifier: "recipes"
+  #   name: "Recipes"
+  #   weight: -200
   # - identifier: "examples"
   #   name: "Examples"
   #   url: "/start/examples/"
   #   weight: -600
-  - identifier: "faq"
-    name: "FAQ"
-    url: "/start/faq/"
-    weight: -100
-  - identifier: "glossary"
-    name: "Glossary"
-    url: "/start/glossary/"
-    weight: -90
 
   # this menu supplements one generated in the apiNav partial
   docs:
+  - identifier: "start"
+    name: "Getting started"
+    weight: -800
+  # - identifier: "quick-start"
+  #   name: "Quick Start"
+  #   url: "/docs/start/quick-start/"
+  #   weight: -800
+  # - identifier: "tutorial"
+  #   name: "Tutorial"
+  #   url: "/docs/start/tutorial/"
+  #   weight: -800
+  - identifier: "recipes"
+    name: "Recipes"
+    weight: -700
+    # url: "/docs/recipes/"
   - identifier: "build"
     name: "Build with Fluid"
     weight: -600
@@ -87,7 +94,15 @@ menu:
     weight: -300
   - identifier: "deep"
     name: "The depths 🤿"
+    weight: -200
+  - identifier: "faq"
+    name: "FAQ"
+    url: "/start/faq/"
     weight: -100
+  - identifier: "glossary"
+    name: "Glossary"
+    url: "/start/glossary/"
+    weight: -90
 
 markup:
   goldmark:

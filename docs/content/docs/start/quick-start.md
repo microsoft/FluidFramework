@@ -4,6 +4,9 @@ menuPosition: 2
 codeCopyButton: true
 aliases:
   - "/docs/get-started/quick-start/"
+  - "/start/quick-start/"
+  - "/docs/start/"
+
 ---
 
 In this Quick Start we will be getting a dice roller Fluid application up and running on your computer's

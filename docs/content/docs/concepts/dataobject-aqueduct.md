@@ -264,7 +264,7 @@ We use custom handlers to build the Container Services pattern.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 

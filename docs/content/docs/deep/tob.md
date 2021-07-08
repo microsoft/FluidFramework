@@ -78,7 +78,7 @@ Fluid objects' data structures will be summarized.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 
