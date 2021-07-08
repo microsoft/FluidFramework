@@ -180,7 +180,7 @@ const utf8StringBytesToCodeMap = {
  * This contains mapping of number of bytes representing the corresponding length in which actual data(base64 string)
  * will be stored to Marker Codes.
 */
-const base64StringBytesToCodeMap = {
+const binaryBytesToCodeMap = {
     0: 32,
     1: 33,
     2: 34,
@@ -246,15 +246,15 @@ export abstract class BlobCore {
      */
     constructor(private readonly useUtf8Code: boolean = false) {}
 
-    public toString(encoding = stringEncoding) {
-        return Uint8ArrayToString(this.buffer, encoding);
+    public toString() {
+        return Uint8ArrayToString(this.buffer, stringEncoding);
     }
 
     public write(buffer: WriteBuffer) {
         const data = this.buffer;
         const lengthLen = calcLength(data.length);
         // Write Marker code.
-        buffer.write(this.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : base64StringBytesToCodeMap[lengthLen]);
+        buffer.write(this.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
         // Write actual data if length greater than 0, otherwise Marker Code is enough.
         if (lengthLen > 0) {
             buffer.write(data.length, lengthLen);
@@ -353,7 +353,7 @@ export class NodeCore {
     {
         const node = this.children[index];
         assert(node instanceof BlobCore, "Type of node does not match");
-        return node.toString(stringEncoding);
+        return node.toString();
     }
 
     public getBlob(index: number)

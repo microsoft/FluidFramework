@@ -7,7 +7,7 @@ import { stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
-import { NodeCore, ReadBuffer, TreeBuilder } from "./snapshotRepresentation";
+import { NodeCore, ReadBuffer, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 /**
  * Writes header section of the snapshot.
