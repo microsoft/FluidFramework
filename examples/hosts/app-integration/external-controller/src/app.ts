@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 import { SharedMap } from "@fluid-experimental/fluid-framework";
-import { FrsClient, FrsConnectionConfig, InsecureTokenProvider } from "@fluid-experimental/frs-client";
+import {
+    FrsAzFunctionTokenProvider,
+    FrsClient,
+    FrsConnectionConfig,
+    InsecureTokenProvider,
+} from "@fluid-experimental/frs-client";
 import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
@@ -15,10 +20,11 @@ const useFrs = process.env.FLUID_CLIENT === "frs";
 const user = generateUser();
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "",
-    tokenProvider: new InsecureTokenProvider("", user),
-    orderer: "",
-    storage: "",
+    tenantId: "frs-client-tenant",
+    tokenProvider: new FrsAzFunctionTokenProvider("https://sumbhatt-frs-helpers.azurewebsites.net/api/GetFrsToken",
+                                             user),
+    orderer: "https://alfred.eus-1.canary.frs.azure.com",
+    storage: "https://historian.eus-1.canary.frs.azure.com",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
