@@ -16,6 +16,7 @@
     },
     "alfred": {
         "maxMessageSize": "16KB",
+        "restJsonSize": "50mb",
         "maxNumberOfClientsPerDocument": 1000000
     },
     "mongo": {

@@ -733,14 +733,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.service?.dispose(error);
 
         if (error !== undefined) {
-            // Log current sequence number - useful if we have access to a file to understand better
-            // what op caused trouble (if it's related to op processing).
-            // Runtime may provide sequence number as part of error object - this may not match DeltaManager
-            // knowledge as old ops are processed when data stores / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
+                    lastSequenceNumber: this._deltaManager.lastSequenceNumber,
                 },
                 error,
             );
@@ -831,7 +827,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     "containerAttach",
                     (id: string) => this._deltaManager.refreshDelayInfo(id),
                     (id: string, delayMs: number, error: any) =>
-                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
+                        this._deltaManager.emitDelayInfo(id, delayMs, error),
                     this.logger,
                 );
             }

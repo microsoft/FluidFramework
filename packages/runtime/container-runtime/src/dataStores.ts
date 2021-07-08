@@ -94,9 +94,15 @@ export class DataStores implements IDisposable {
             }
         }
 
+        let unreferencedDataStoreCount = 0;
         // Create a context for each of them
         for (const [key, value] of fluidDataStores) {
             let dataStoreContext: FluidDataStoreContext;
+
+            // counting number of unreferenced data stores
+            if (value.unreferenced) {
+                unreferencedDataStoreCount++;
+            }
             // If we have a detached container, then create local data store contexts.
             if (this.runtime.attachState !== AttachState.Detached) {
                 dataStoreContext = new RemotedFluidDataStoreContext(
@@ -141,6 +147,11 @@ export class DataStores implements IDisposable {
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
         }
+        this.logger.sendTelemetryEvent({
+            eventName: "ContainerLoadStats",
+            dataStoreCount: fluidDataStores.size,
+            referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
+        });
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {

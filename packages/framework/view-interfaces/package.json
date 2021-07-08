@@ -28,7 +28,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.39.0"
+    "@fluidframework/core-interfaces": "^0.39.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",

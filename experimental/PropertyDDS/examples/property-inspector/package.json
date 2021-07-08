@@ -42,10 +42,10 @@
     "@fluid-experimental/schemas": "^0.43.0",
     "@fluidframework/aqueduct": "^0.43.0",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/container-definitions": "^0.39.0",
+    "@fluidframework/container-definitions": "^0.39.5",
     "@fluidframework/container-loader": "^0.43.0",
     "@fluidframework/container-runtime": "^0.43.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/data-object-base": "^0.43.0",
     "@fluidframework/datastore": "^0.43.0",
     "@fluidframework/datastore-definitions": "^0.43.0",
@@ -67,7 +67,8 @@
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.21",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "react-virtualized-auto-sizer": "^1.0.2"
   },
   "devDependencies": {
     "clean-webpack-plugin": "^3.0.0",
