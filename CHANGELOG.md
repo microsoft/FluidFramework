@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.9.2
+
+* build: Specify fluid-tools/benchmark as a devDep of shared-tree
+  * Associated pull request: [32232](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32232)
+  * Commit: [bce33adbc17b0f4814f215205952eefb1c5bbebd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bce33adbc17b0f4814f215205952eefb1c5bbebd)
+
 ## 1.9.1
 
 * build: Update dependencies
