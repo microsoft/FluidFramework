@@ -30,7 +30,7 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 - The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
 
 ### Property removed from the ContainerRuntime class
-- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`.
+- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
 
 ## 0.42 Breaking changes
 
