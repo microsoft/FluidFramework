@@ -1,0 +1,1 @@
+{"version":3,"file":"fluidModule.d.ts","sourceRoot":"","sources":["../src/fluidModule.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,OAAO,EAAE,YAAY,EAAE,gCAAgC,EAAE,MAAM,iCAAiC,CAAC;AAEjG,MAAM,WAAW,YAAY;IACzB,WAAW,EAAE,YAAY,GAAG,OAAO,CAAC,QAAQ,CAAC,gCAAgC,CAAC,CAAC,CAAC;CACnF"}
