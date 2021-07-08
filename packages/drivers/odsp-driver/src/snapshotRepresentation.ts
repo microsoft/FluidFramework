@@ -169,7 +169,7 @@ const integerBytesToCodeMap = {
 /**
  * This contains mapping of number of bytes representing the corresponding string length to Marker Codes.
 */
-const stringBytesToCodeMap = {
+const utf8StringBytesToCodeMap = {
     0: 13,
     1: 14,
     2: 15,
@@ -177,10 +177,10 @@ const stringBytesToCodeMap = {
 };
 
 /**
- * This contains mapping of number of bytes representing the corresponding length in which actual data
+ * This contains mapping of number of bytes representing the corresponding length in which actual data(base64 string)
  * will be stored to Marker Codes.
 */
-const binaryBytesToCodeMap = {
+const base64StringBytesToCodeMap = {
     0: 32,
     1: 33,
     2: 34,
@@ -242,10 +242,9 @@ export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
     /**
      * Represents a blob.
-     * @param useStringMarkerCode - Represents is the string marker code should be used when representing or
-     * the byte marker code.
+     * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
      */
-    constructor(private readonly useStringMarkerCode: boolean = false) {}
+    constructor(private readonly useUtf8Code: boolean = false) {}
 
     public toString(encoding = stringEncoding) {
         return Uint8ArrayToString(this.buffer, encoding);
@@ -255,7 +254,7 @@ export abstract class BlobCore {
         const data = this.buffer;
         const lengthLen = calcLength(data.length);
         // Write Marker code.
-        buffer.write(this.useStringMarkerCode ? stringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
+        buffer.write(this.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : base64StringBytesToCodeMap[lengthLen]);
         // Write actual data if length greater than 0, otherwise Marker Code is enough.
         if (lengthLen > 0) {
             buffer.write(data.length, lengthLen);
@@ -272,8 +271,13 @@ export abstract class BlobCore {
  * is a reference to underlying binary stream (ReadBuffer).
 */
 class BlobDeepCopy extends BlobCore {
-    constructor(protected readonly data: Uint8Array, useStringMarkerCode: boolean = false) {
-        super(useStringMarkerCode);
+    /**
+     * Represents a deep copy of the blob.
+     * @param data - Data array of the blob
+     * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
+     */
+    constructor(protected readonly data: Uint8Array, useUtf8Code: boolean = false) {
+        super(useUtf8Code);
     }
 
     public get buffer() {
@@ -295,6 +299,12 @@ class BlobDeepCopy extends BlobCore {
  * it was constructed from. It takes much less memory compared to BlobDeepCopy
  */
  export class BlobShallowCopy extends BlobCore {
+    /**
+     * Represents a shallow copy of the blob. It is not a separate blob, just reference to original blobs.
+     * @param data - Data array of the blob
+     * @param start - Start point of the blob in the buffer.
+     * @param end - End point of the blob in the buffer.
+     */
     constructor(protected data: ReadBuffer, protected start: number, protected end: number) {
         super();
     }
@@ -373,8 +383,8 @@ export class NodeCore {
         return node;
     }
 
-    public addBlob(blob: Uint8Array, useStringMarkerCode: boolean = false) {
-        this.children.push(new BlobDeepCopy(blob, useStringMarkerCode));
+    public addBlob(blob: Uint8Array, useUtf8Code: boolean = false) {
+        this.children.push(new BlobDeepCopy(blob, useUtf8Code));
     }
 
     public addString(payload: string) {
