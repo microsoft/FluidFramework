@@ -21,7 +21,7 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 ### Example usage
 
-In the below example we create a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
+The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
 
 ```typescript
 const schema = {
