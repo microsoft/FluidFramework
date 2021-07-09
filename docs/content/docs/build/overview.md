@@ -13,7 +13,7 @@ There are three primary concepts to understand when building an application with
 
 ### Service
 
-Fluid clients require a centralized service that all connected clients use to send and receive operations. When using Fluid in an application it's required to use the correct package that corresponds to the underlying service you are connecting to. Fluid offers multiple service implementations developers can use out of the box.
+Fluid clients require a centralized service that all connected clients use to send and receive operations. When using Fluid in an application you must use the correct package that corresponds to the underlying service you are connecting to. Fluid offers multiple service implementations developers can use out of the box. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
 
 Each service specific package adhere to a common API structure and has the primary goal of creating and retrieving container objects.
 
