@@ -72,7 +72,7 @@
     "@fluidframework/counter": "^0.44.0",
     "@fluidframework/datastore": "^0.44.0",
     "@fluidframework/datastore-definitions": "^0.44.0",
-    "@fluidframework/driver-definitions": "^0.39.0",
+    "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/driver-utils": "^0.44.0",
     "@fluidframework/ink": "^0.44.0",
     "@fluidframework/map": "^0.44.0",
