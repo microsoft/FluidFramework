@@ -124,7 +124,7 @@ For more on dynamic object creation see [Data modeling](data-modeling.md)
 
 When creating and loading a container our basic guidance is to separate the two flows. This provides a cleaner separation of responsibilities within the code it self. From a scenario perspective it manifests as the creator going through a explicit creation process that results in a redirect to a new page who's sole responsibility is to load the container. All users will load the container through this subsequent flow.
 
-It should be noted that the downside of this approach is that the connection needs to be established twice. Once for the creation and once for the load. Depending on your scenario you should choose the pattern that works best for you.
+The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process.
 
 ### Multi-container example
 
