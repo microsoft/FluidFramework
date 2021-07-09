@@ -114,7 +114,7 @@ Dynamic objects are also not strictly defined in the container schema. This enab
 
 ### Garbage collection on de-referenced objects
 
-Fluid automatically handles cleaning up unused objects from the latest document snapshot. Cleaning up unused data reduces the download time and increases boot performance.
+Fluid automatically removes unreferenced objects from document snapshots. Cleaning up unreferenced data reduces the snapshot size, which leads to better download times and increases boot performance of a container.
 
 Dynamic objects can be de-referenced by deleting the value from the parent object. When using the `SharedMap` deleting the handle from the key will de-reference the object and trigger it to be garbage collected.
 
