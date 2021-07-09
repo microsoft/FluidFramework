@@ -135,8 +135,7 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     protocolName: string;
 }
