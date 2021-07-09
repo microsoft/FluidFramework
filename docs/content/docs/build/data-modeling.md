@@ -47,7 +47,7 @@ A `LoadableObject` can be created dynamically by the container at runtime. Dynam
 
 A `FluidContainer` object has a `create` function that takes a `LoadableObject` type and will return a new `LoadableObject`. The `FluidContainer` can only create types defined in the `dynamicObjectTypes` section of the container schema. 
 
-Dynamically created objects are in memory (local) only and need to be stored on a connected `LoadableObject` before being collaborative. See the next section for more on storing and retrieving dynamic objects.
+Dynamically created objects are local only (in-memory) and need to be stored on a connected `LoadableObject` before being collaborative.
 
 ```typescript
 const schema = {
