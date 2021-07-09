@@ -19,7 +19,7 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 `initialObjects` are defined on creation and exist for the lifetime of the underlying document. The work to version and upgrade this object set is currently under development.
 
-### Example Usage
+### Example usage
 
 In the below example we create a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
 
