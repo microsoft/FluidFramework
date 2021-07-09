@@ -29,7 +29,7 @@ export function bindInstanceOfBuiltin<T>(match: T) {
     const compareString = toString(match);
 
     if (compareString === objectString) {
-        throw new Error("bindInstanceOfBuiltin cannot classify '[object Object]' instances");
+        throw new Error(`bindInstanceOfBuiltin cannot classify '${objectString}' instances`);
     }
 
     return (value: any): value is T => compareString === toString(value);
