@@ -79,7 +79,6 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
         [],
         {},
     );
-
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
      * Fluid object and all work will resolve before the view is presented to any user.
