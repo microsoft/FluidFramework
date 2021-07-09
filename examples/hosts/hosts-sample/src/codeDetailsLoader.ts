@@ -11,24 +11,16 @@ import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-loader";
-import {
-    IPackageIdentifierDetails,
-} from "@fluidframework/web-code-loader";
 import { fluidExport } from "./fauxComponent";
 import { parsePackageDetails } from "./utils";
 
 /**
- * Emulates a code loader capable of resolving a Fluid module defined in a local store
+ * Emulates a code loader capable of resolving Fluid modules defined in a local in-memory store
  * given the package name and version. The loader's implementation showcases one of possible
  * strategies of managing code version upgrades.
  */
-class InMemoryCodeDetailsLoader
+export const InMemoryCodeDetailsLoader = new (class
     implements ICodeDetailsLoader, IFluidCodeDetailsComparer {
-    constructor(
-        private readonly packageName: string,
-        private readonly packageVersion: string,
-    ) {}
-
     /**
      * The load method is called by the Fluid loader prior to instantiating the runtime.
      *
@@ -36,13 +28,13 @@ class InMemoryCodeDetailsLoader
      * @returns - Module entry point along with the module's own code details.
      */
     async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-        // Verify source code details match the current loaded code.
+        // Get normalized package info
         const {
             name: sourcePackageName,
             version: sourcePackageVersion,
         } = parsePackageDetails(source.package);
         if (
-            sourcePackageName !== this.packageName ||
+            sourcePackageName === undefined ||
             sourcePackageVersion === undefined
         ) {
             // Raise an error when code details written in the document differ from
@@ -51,18 +43,14 @@ class InMemoryCodeDetailsLoader
                 "The document is created with a different package that is not supported by this code loader.",
             );
         }
-        // Can only load code for the document schema version identical or lower than the emulated package.
-        if (semver.lt(this.packageVersion, sourcePackageVersion)) {
-            throw new Error(
-                `The document code version [${sourcePackageVersion}] is newer than loaded code.`,
-            );
-        }
+        // Assemble the resolved Fluid module accompanied by the code details characterizing
+        // its capabilities, such as supported range of code versions.
         return {
             module: { fluidExport },
             details: {
                 package: {
-                    name: this.packageName,
-                    version: this.packageVersion,
+                    name: sourcePackageName,
+                    version: sourcePackageVersion,
                     fluid: { browser: {} },
                 },
                 config: {},
@@ -118,22 +106,7 @@ class InMemoryCodeDetailsLoader
         return semver.lt(versionA, versionB)
             ? -1
             : semver.gt(versionA, versionB)
-            ? 1
-            : 0;
+                ? 1
+                : 0;
     }
-}
-
-/**
- * A factory method for a code loader emulating an in-memory package store.
- *
- * @param packageDetails - Specifies the package details used when loading the code by the container.
- */
-export const getCodeLoaderForPackage = (
-    packageDetails: IPackageIdentifierDetails,
-) => {
-    const { scope, name, version } = packageDetails;
-    return new InMemoryCodeDetailsLoader(
-        `@${scope}/${name}`,
-        version ?? "1.0.0",
-    );
-};
+})();

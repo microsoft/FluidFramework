@@ -13,9 +13,6 @@ import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
  * @param container - Loaded Fluid container
  */
 export const setupUI = (container: Container) => {
-    // Retrieve and cache the current code details from the container.
-    let codeDetails = getCodeDetailsFromQuorum(container);
-
     // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
@@ -24,18 +21,17 @@ export const setupUI = (container: Container) => {
             const reload = window.confirm(
                 `🛑 Container is closed\n\nThe document requires a newer code version to continue.\nPress OK to reload.`,
             );
-            if (reload && container.codeDetails) {
+            if (reload) {
                 // Reload the application page using the upgraded package version.
-                const { name, version } = parsePackageDetails(container.codeDetails.package);
-                window.location.href = `${document.location.pathname}?code=${name}@${
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    semver.inc(version!, "major")
-                }`;
+                window.location.reload();
             }
         } else {
             window.alert(`🛑 Container is closed\n\n${error}`);
         }
     });
+
+    // Retrieve and cache the current code details from the container.
+    let codeDetails = getCodeDetailsFromQuorum(container);
 
     // A helper method to extract package info and display it in the info text box.
     const refreshLoadedCodeInfo = (code: IFluidCodeDetails | undefined) => {

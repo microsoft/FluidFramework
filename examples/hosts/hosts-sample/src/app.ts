@@ -11,13 +11,10 @@ import {
     InsecureTokenProvider,
     InsecureUrlResolver,
 } from "@fluidframework/test-runtime-utils";
-import {
-    extractPackageIdentifierDetails,
-    IPackageIdentifierDetails,
-} from "@fluidframework/web-code-loader";
+import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { setupUI } from "./codeDetailsView";
-import { getCodeLoaderForPackage } from "./codeDetailsLoader";
-import { getFluidObjectAndRender, parsePackageName } from "./utils";
+import { InMemoryCodeDetailsLoader } from "./codeDetailsLoader";
+import { getFluidObjectAndRender } from "./utils";
 
 // Tinylicious service endpoints
 const hostUrl = "http://localhost:7070";
@@ -25,7 +22,6 @@ const ordererUrl = "http://localhost:7070";
 const storageUrl = "http://localhost:7070";
 
 // Default app URL params
-const createNewHash = "#CreateNew";
 const defaultPackage = "@fluid-example/faux-package@1.0.0";
 
 // Use the application name as a tinylicious tenant ID
@@ -44,29 +40,24 @@ const user = {
     name: "Test User", // Optional value that we included
 } as IUser;
 
-// Parse the browser URL and load the app home page.
-// The URL format:
-// ```
-// http://localhost:8080/[document-id][?code=package-id][#CreateNew]
-// ```
-// , where
-// `document-id` - is an alphanumerical string representing the unique Fluid document ID.
-// `package-id` - is a Fluid code package name and version in the following format `@<scope>/<package-name>@<semver>`.
-// `#CreateNew` - a hashtag indicating the app should create a new document with the specified document ID.
+// Parse the browser URL and retrieve the container ID.
+// The URL format: `http://localhost:8080/[#container-id]`,
+// where `container-id` is an alphanumerical string representing the unique Fluid document ID.
 function parseAppUrl() {
-    // Create a new container with the specified ID when the hash param is provided
-    const isNew = window.location.hash === createNewHash;
-    window.location.hash = "";
-    const documentId = window.location.pathname.split("/")[1];
-    const packageName = parsePackageName(document.location, defaultPackage);
-    return { packageName, documentId, isNew };
+    let isNew = false;
+    if (window.location.hash.length === 0) {
+        // Create a new container with an auto-generated ID when the hash param is not specified
+        isNew = true;
+        window.location.hash = Date.now().toString();
+    }
+    const containerId = window.location.hash.substring(1);
+    return { containerId, isNew };
 }
 
-// Create or load the Fluid container using specified document and package info and render the root component.
+// Create or load the Fluid container using specified document info and render the root component.
 async function start(
-    url: string,
+    origin: string,
     containerId: string,
-    packageId: IPackageIdentifierDetails,
     shouldCreateNew: boolean,
 ) {
     // Create the InsecureUrlResolver so we can generate access tokens to connect to Fluid documents stored in our
@@ -92,17 +83,23 @@ async function start(
 
     // The code loader provides the ability to load code packages that have been quorumed on and that represent
     // the code for the document.
-    const codeLoader = getCodeLoaderForPackage(packageId);
+    const codeLoader = InMemoryCodeDetailsLoader;
 
-    // Finally with all the above objects created we can construct the loader
+    // Finally with all the above objects created we can construct the loader.
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
     });
 
+    // Request URL associated with the document.
+    const url = `${origin}/${containerId}`;
+
     let container: Container;
     if (shouldCreateNew) {
+        // Utilize a Fluid utility function to extract the default package name and version.
+        const packageId = extractPackageIdentifierDetails(defaultPackage);
+
         // This flow is used to create a new container and then attach it to the storage.
         container = await loader.createDetachedContainer({
             package: packageId.fullId,
@@ -113,28 +110,19 @@ async function start(
         container = await loader.resolve({ url });
     }
 
-    // Wait for connection so that proposals can be sent
+    // Wait for connection so that proposals can be sent.
     if (container !== undefined && !container.connected) {
-        console.log("waiting for the container to get connected");
         await new Promise<void>((resolve, reject) => {
             // the promise resolves when the connected event fires.
             container.once("connected", () => resolve());
             // the promise rejects when the container is forcefully closed due to an error.
-            container.once("closed", (error) => {
-                if (error?.message === "ExistingContextDoesNotSatisfyIncomingProposal") {
-                    reject(
-                        new Error(
-                            `The document requires a newer package version to open.`,
-                        ),
-                    );
-                } else {
-                    reject(
-                        new Error(
-                            `Container closed unexpectedly. ${error?.message}`,
-                        ),
-                    );
-                }
-            });
+            container.once("closed", (error) =>
+                reject(
+                    new Error(
+                        `Container is closed unexpectedly. ${error?.message}`,
+                    ),
+                ),
+            );
         });
     }
 
@@ -149,28 +137,17 @@ async function start(
     return container;
 }
 
-if (document.location.pathname === "/") {
-    // Redirect to create a new document with an auto-generated container ID
-    // when URL parameters were not specified by the user
-    const newContainerId = Date.now().toString();
-    window.location.href = `/${newContainerId}?code=${defaultPackage}#CreateNew`;
-} else {
-    // Parse application URL parameters and determine which package version to load.
-    const appParams = parseAppUrl();
-    // Utilize a Fluid utility function to extract the package name and version.
-    const packageId = extractPackageIdentifierDetails(appParams.packageName);
+// App main method to load the home page.
+(function() {
+    // Parse application URL parameters and determine which Fluid document to load.
+    const { containerId, isNew } = parseAppUrl();
 
-    // Load container and start collaboration session using specified parameters.
-    start(
-        document.location.href,
-        appParams.documentId,
-        packageId,
-        appParams.isNew,
-    )
-        // Configure application UI in case of successful load.
+    // Load container and start collaboration session using provided app parameters.
+    start(document.location.origin, containerId, isNew)
+        // Initialize the application UI in case of successful load.
         .then(setupUI)
         // Something went wrong. Display the error message and quit.
         .catch((error) =>
             window.alert(`🛑 Failed to open document\n\n${error}`),
         );
-}
+})();

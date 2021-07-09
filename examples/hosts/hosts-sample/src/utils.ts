@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "querystring";
 import { IFluidCodeDetails, IFluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -40,12 +39,6 @@ export async function getFluidObjectAndRender(loader: Loader, container: Contain
         getFluidObjectAndRenderCore(loader, url, div);
     });
     await getFluidObjectAndRenderCore(loader, url, div);
-}
-
-/** Extract the code package name from the `code` URL query parameter */
-export function parsePackageName(url: Location, defaultPkg: string): string {
-    const parsed = parse(url.search.substr(1));
-    return parsed.code !== undefined ? parsed.code as string : defaultPkg;
 }
 
 /** Parse the package value in the code details object that could either be a string or an object. */
