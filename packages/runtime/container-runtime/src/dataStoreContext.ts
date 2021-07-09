@@ -724,7 +724,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
-                assert(tree !== undefined, "isolated channels subtree should exist in remote datastore snapshot");
+                assert(tree !== undefined,
+                    0x1fe /* "isolated channels subtree should exist in remote datastore snapshot" */);
             }
         }
 
@@ -862,7 +863,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
-                assert(snapshot !== undefined, "isolated channels subtree should exist in local datastore snapshot");
+                assert(snapshot !== undefined,
+                    0x1ff /* "isolated channels subtree should exist in local datastore snapshot" */);
             }
         }
 
