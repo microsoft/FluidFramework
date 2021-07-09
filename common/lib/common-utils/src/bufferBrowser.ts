@@ -4,6 +4,7 @@
  */
 
 import * as base64js from "base64-js";
+import { instanceOf } from "./instanceOf";
 import { assert } from "./assert";
 
 /**
@@ -59,7 +60,7 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  */
 export function isArrayBuffer(obj: any): obj is ArrayBuffer {
     const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
-    return obj instanceof ArrayBuffer
+    return instanceOf.ArrayBuffer(obj)
     || (typeof maybe === "object"
         && maybe !== null
         && typeof maybe.byteLength === "number"

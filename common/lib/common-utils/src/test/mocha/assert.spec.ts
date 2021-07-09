@@ -5,6 +5,7 @@
 
 import { strict } from "assert";
 import { assert } from "../../assert";
+import { instanceOf } from "../../instanceOf";
 
 describe("Assert", () => {
     it("Validate Shortcode Format", async () => {
@@ -13,7 +14,7 @@ describe("Assert", () => {
             try {
                 assert(false, Number.parseInt(shortCode, 16));
             } catch (e) {
-                strict(e instanceof Error, "not an error");
+                strict(instanceOf.Error(e), "not an error");
                 strict.strictEqual(
                     e.message,
                     shortCode,
