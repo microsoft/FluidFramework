@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
-import { FrsAzFuncUser } from "./interfaces";
 
 export class FrsAzFunctionTokenProvider implements ITokenProvider {
-    constructor(private readonly azFunctionUrl: string, private readonly user?: FrsAzFuncUser) { }
+    constructor(private readonly azFunctionUrl: string, private readonly user?: IUser,
+    ) { }
 
     public async fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse> {
         return {
@@ -26,8 +27,7 @@ export class FrsAzFunctionTokenProvider implements ITokenProvider {
             params: {
                 tenantId,
                 documentId,
-                userId: this.user?.userId,
-                username: this.user?.userName,
+                userId: this.user?.id,
             },
         }).then((response) => {
             return response.data as string;

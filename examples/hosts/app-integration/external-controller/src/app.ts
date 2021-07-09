@@ -5,7 +5,6 @@
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import {
     FrsAzFunctionTokenProvider,
-    FrsAzFuncUser,
     FrsClient,
     FrsConnectionConfig,
     InsecureTokenProvider,
@@ -19,16 +18,13 @@ import { renderAudience, renderDiceRoller } from "./view";
 const useFrs = process.env.FLUID_CLIENT === "frs";
 
 const user = generateUser();
-const frsAzFuncUser: FrsAzFuncUser = {
-    userId: "",
-    userName: "",
-};
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "",
-    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzFuncUser),
-    orderer: "",
-    storage: "",
+    tenantId: "frs-client-tenant",
+    tokenProvider: new FrsAzFunctionTokenProvider("https://sumbhatt-frs-helpers.azurewebsites.net/api/GetFrsToken",
+                                             user),
+    orderer: "https://alfred.eus-1.canary.frs.azure.com",
+    storage: "https://historian.eus-1.canary.frs.azure.com",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
