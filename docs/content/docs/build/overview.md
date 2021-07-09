@@ -29,7 +29,7 @@ New containers require client driven action for creation. Container lifetimes ar
 
 For more about containers see [Containers](./containers.md).
 
-### Loadable Objects
+### `LoadableObjects`
 
 A `LoadableObject` is a specific object that powers collaborative data by exposing a specific API. Many Loadable Objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures and DataObjects are both types of Loadable Objects.
 
