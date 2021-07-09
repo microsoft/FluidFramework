@@ -207,10 +207,10 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
         }
     }
 }
-
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(() => {
+    beforeEach(function() {
+        this.skip();
         provider = getTestObjectProvider();
     });
     describe("one client", () => {
