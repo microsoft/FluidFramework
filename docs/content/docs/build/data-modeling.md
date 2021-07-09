@@ -17,7 +17,7 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 ### Versioning `initialObjects`
 
-`initialObjects` are defined on creation and exist for the lifetime of the underlying document. The work to version and upgrade this object set is currently under development.
+`initialObjects` are defined on creation and exist for the lifetime of the underlying container. The work to version and upgrade the `initialObjects` schema is currently under development.
 
 ### Example usage
 
