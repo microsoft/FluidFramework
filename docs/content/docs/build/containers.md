@@ -94,7 +94,7 @@ container.on("connected", () => {
 
 ### dispose
 
-The container exposes functionality that allow cleanup of the container object. Calling dispose will remove any server connections and clean up registered events. Once a container is dispose it cannot be re-hydrated. Connecting to the same container requires another `getContainer(...)` call.
+The container object may be disposed to remove any server connections and clean up registered events. Once a container is disposed, you must call `getContainer` again if you want to re-load it.
 
 ```typescript
 container.dispose();
