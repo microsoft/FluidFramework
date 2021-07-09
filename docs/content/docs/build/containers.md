@@ -114,7 +114,7 @@ For more on `initialObjects` see [Data modeling](data-modeling.md)
 
 ### create
 
-The container also exposes a create function that allows dynamic `LoadableObject` creation.
+The container also exposes a create function that allows dynamic `LoadableObject` creation. This enables containers to create Fluid objects dynamically at runtime.
 
 For more on dynamic object creation see [Data modeling](data-modeling.md)
 
