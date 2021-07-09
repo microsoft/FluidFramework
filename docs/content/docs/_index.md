@@ -1,6 +1,8 @@
 ---
 title: Fluid Framework Documentation
 meta: "meta"
+cascade:
+  includeApiSubmenu: true
 ---
 
 ## What is Fluid Framework?
