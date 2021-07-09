@@ -74,12 +74,13 @@ export interface ContainerSchema {
 }
 
 /**
- * Events that trigger when the roster of members in the Fluid session change
+ * Events that trigger when the roster of members in the Fluid session change.
+ * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
+ * will emit events.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "membersChanged", listener: () => void): void;
-    (event: "addMember", listener: (clientId: string, member: M) => void): void;
-    (event: "removeMember", listener: (clientId: string, member?: M) => void): void;
+    (event: "addMember" | "removeMember", listener: (clientId: string, member: M) => void): void;
 }
 
 /**
@@ -90,7 +91,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
      * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
-     * member object
+     * member object.  The implementation may choose to exclude certain connections from the returned map.
      */
     getMembers(): Map<string, M>;
 

@@ -17,22 +17,42 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   implements IServiceAudience<M> {
   protected readonly audience: IAudience;
 
+  /**
+   * Retain the most recent member list.  This is so we have more information about a member
+   * leaving the audience in the removeMember event.  It allows us to match the behavior of the
+   * addMember event where it only fires on a change to the members this class exposes (and would
+   * actually produce a change in what getMembers returns).  It also allows us to provide the
+   * client details in the event which makes it easier to find that client connection in a map
+   * keyed on the userId and not clientId.
+   * This map will always be up-to-date in a removeMember event because it is set once at
+   * construction and in every addMember event.
+   * It is mapped clientId to M to be better work with what the IAudience event provides
+   */
+  protected lastMembers: Map<string, M> = new Map();
+
   constructor(
       protected readonly container: Container,
   ) {
     super();
     this.audience = container.audience;
 
+    // getMembers will assign lastMembers so the removeMember event has what it needs
+    // in case it would fire before getMembers otherwise gets called the first time
+    this.getMembers();
+
     this.audience.on("addMember", (clientId: string, details: IClient) => {
-      const member = this.getMember(clientId);
-      this.emit("addMember", clientId, member);
-      this.emit("membersChanged");
+      if (this.shouldIncludeAsMember(details)) {
+        const member = this.getMember(clientId);
+        this.emit("addMember", clientId, member);
+        this.emit("membersChanged");
+      }
     });
 
     this.audience.on("removeMember", (clientId: string) => {
-      // TODO: track removed members somehow
-      this.emit("removeMember", clientId, undefined);
-      this.emit("membersChanged");
+      if (this.lastMembers.has(clientId)) {
+        this.emit("removeMember", clientId, this.lastMembers.get(clientId));
+        this.emit("membersChanged");
+      }
     });
   }
 
@@ -40,13 +60,14 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
   /**
    * @inheritdoc
+   * ServiceAudience includes only interactive clients in its provided members.
    */
   public getMembers(): Map<string, M> {
     const users = new Map<string, M>();
+    const clientMemberMap = new Map<string, M>();
     // Iterate through the members and get the user specifics.
     this.audience.getMembers().forEach((member: IClient, clientId: string) => {
-      // Get all the current human members
-      if (member.details.capabilities.interactive) {
+      if (this.shouldIncludeAsMember(member)) {
         const userId = member.user.id;
         // Ensure we're tracking the user
         let user = users.get(userId);
@@ -57,8 +78,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
         // Add this connection to their collection
         user.connections.push({ id: clientId, mode: member.mode });
+        clientMemberMap.set(clientId, user);
       }
     });
+    this.lastMembers = clientMemberMap;
     return users;
   }
 
@@ -86,5 +109,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
       throw Error(`Attempted to fetch client ${clientId} that is not part of the current member list`);
     }
     return member;
+  }
+
+  protected shouldIncludeAsMember(member: IClient): boolean {
+    // Include only human members
+    return member.details.capabilities.interactive;
   }
 }
