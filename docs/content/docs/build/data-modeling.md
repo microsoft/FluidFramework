@@ -9,7 +9,7 @@ Fluid offers two different ways to model your data object. You can do so statica
 
 The most common way to use Fluid is through initial collaborative objects that are created when the `FluidContainer` is created.
 
-`initialObjects` are always connected and are loaded into memory when the `FluidContainer` is loaded. You can access them via the  `initialObjects` property on the `FluidContainer`. The `initialObjects` are defined in the container schema and have the same signature as defined in the schema.
+`initialObjects` are always _connected_ -- that is, they are connected to the Fluid service are fully collaborative -- and are loaded into memory when the `FluidContainer` is loaded. You can access them via the `initialObjects` property on the `FluidContainer`. The `initialObjects` are defined in the container schema and have the same signature as defined in the schema.
 
 ### When to use `initialObjects`
 
