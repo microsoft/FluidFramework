@@ -9,7 +9,7 @@ There are three primary concepts to understand when building an application with
 
 - Service
 - Container
-- Loadable Objects
+- `LoadableObjects`
 
 ### Service
 
