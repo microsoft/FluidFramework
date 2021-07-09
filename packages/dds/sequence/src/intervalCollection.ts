@@ -331,6 +331,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private conflictResolver: MergeTree.IntervalConflictResolver<TInterval>;
     private endConflictResolver: MergeTree.ConflictAction<TInterval, TInterval>;
 
+    private static readonly legacyIdPrefix = "legacy";
+
     constructor(
         private readonly client: MergeTree.Client,
         private readonly label: string,
@@ -356,10 +358,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.map(fn);
     }
 
-    public createLegacyId(): string {
+    public createLegacyId(start: number, end: number): string {
         // Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
         // without ID's.
-        return `legacy`;
+        return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
     }
 
     public ensureSerializedId(serializedInterval: ISerializedInterval) {
@@ -369,7 +371,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             serializedInterval.properties = MergeTree.addProperties(
                 serializedInterval.properties,
                 {
-                    [reservedIntervalIdKey]: this.createLegacyId(),
+                    [reservedIntervalIdKey]: this.createLegacyId(serializedInterval.start, serializedInterval.end),
                 },
             );
         }
@@ -562,11 +564,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             MergeTree.IntervalType.Transient,
         );
 
-        transientInterval.addProperties({
-            [reservedIntervalIdKey]: this.createLegacyId(),
+        let result: TInterval;
+        this.mapUntil((interval: TInterval): boolean => {
+            if (interval.compareStart(transientInterval) === 0 &&
+                interval.compareEnd(transientInterval) === 0 &&
+                interval.getIntervalId()?.startsWith(LocalIntervalCollection.legacyIdPrefix)) {
+                result = interval;
+                return false;
+            }
+            return true;
         });
-
-        return this.intervalTree.intervals.get(transientInterval)?.key;
+        return result;
     }
 }
 
