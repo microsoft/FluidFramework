@@ -53,4 +53,4 @@ export const instanceOf$ = Object.freeze({
     Set: bindInstanceOfBuiltin(Set.prototype),
     Uint8Array: bindInstanceOfBuiltin(new Uint8Array()),
 });
-export const instanceOf = { ...instanceOf$ };
+export const instanceOf = { ...instanceOf$ } as const;
