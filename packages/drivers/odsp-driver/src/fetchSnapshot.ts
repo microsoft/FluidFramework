@@ -254,8 +254,7 @@ async function fetchLatestSnapshotCore(
                     }
                 }
 
-                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } =
-                    validateAndEvalBlobsAndTrees(snapshot);
+                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = evalBlobsAndTrees(snapshot);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
@@ -333,11 +332,7 @@ async function fetchLatestSnapshotCore(
     });
 }
 
-function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
-    assert(Array.isArray(snapshot.trees) && snapshot.trees.length > 0,
-        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
-    assert(Array.isArray(snapshot.blobs) && snapshot.blobs.length > 0,
-        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
+function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numTrees = 0;
     let numBlobs = 0;
     let encodedBlobsSize = 0;
@@ -351,9 +346,11 @@ function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
             }
         }
     }
-    for (const blob of snapshot.blobs) {
-        decodedBlobsSize += blob.size;
-        encodedBlobsSize += blob.content.length;
+    if (snapshot.blobs !== undefined) {
+        for (const blob of snapshot.blobs) {
+            decodedBlobsSize += blob.size;
+            encodedBlobsSize += blob.content.length;
+        }
     }
     return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }

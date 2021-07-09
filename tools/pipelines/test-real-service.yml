@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-real-service-e2e pipeline
+# test-real-service pipeline
 
 name: $(Build.BuildId)
 
@@ -65,9 +65,34 @@ stages:
           env:
             login__microsoft__clientId: $(login-microsoft-clientId)
             login__microsoft__secret: $(login-microsoft-secret)
-            login__odsp__test__accounts: $(automation-e2e-login-odsp-test-accounts)
+            login__odsp__test__accounts: $(login-odsp-test-accounts)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:odsp:report'
+
+    # Run Stress Tests
+  - stage:
+    displayName:  Stress tests
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Main
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testSteps:
+        - task: Npm@1
+          displayName: '[stress tests] npm run start'
+          continueOnError: true
+          timeoutInMinutes: 60
+          env:
+            login__microsoft__clientId: $(login-microsoft-clientId)
+            login__microsoft__secret: $(login-microsoft-secret)
+            login__odsp__test__accounts: $(login-odsp-test-accounts)
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-service-load
+            customCommand: 'run start'

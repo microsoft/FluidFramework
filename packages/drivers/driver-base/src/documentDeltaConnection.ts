@@ -437,13 +437,11 @@ export class DocumentDeltaConnection
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
         //   over it.
-        let message = `socket.io: ${handler}`;
-        if (typeof error === "string") {
-            message = `${message}: ${error}`;
-        }
         const errorObj = createGenericNetworkError(
-            message,
+            `socket.io:${handler}`,
             canRetry,
+            undefined /* retryAfterMs */,
+            typeof error === "string" ? { socketError: error } : undefined /* props */,
         );
 
         return errorObj;
