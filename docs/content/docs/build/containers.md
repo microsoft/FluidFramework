@@ -110,7 +110,7 @@ container.on("disposed", () => {
 
 `initialObjects` are the base set of `LoadableObjects` in a container. They exist for the lifetime of the container and are guaranteed to be available and loadable. They are defined via the container schema and match the signature on the schema. 
 
-For more on `initialObjects` see [Data modeling](data-modeling.md)
+For more information about `initialObjects` see [Data modeling](data-modeling.md).
 
 ### create
 
