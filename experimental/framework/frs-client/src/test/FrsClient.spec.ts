@@ -18,18 +18,19 @@ describe("FrsClient", () => {
     let frsClient: FrsClient;
     let documentId: string;
     const user = generateUser();
-    const connectionConfig: FrsConnectionConfig = {
-        tenantId: "",
-        tokenProvider: new InsecureTokenProvider("", user),
-        orderer: "",
-        storage: "",
-    };
+
     beforeEach(() => {
         documentId = uuid();
-        frsClient = new FrsClient(connectionConfig);
     });
 
-    it("can create container successfully", async () => {
+    it("can create FRS container successfully", async () => {
+        const connectionConfig: FrsConnectionConfig = {
+            tenantId: "",
+            tokenProvider: new InsecureTokenProvider("", user),
+            orderer: "",
+            storage: "",
+        };
+        frsClient = new FrsClient(connectionConfig);
         const containerConfig: FrsContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -43,7 +44,32 @@ describe("FrsClient", () => {
         await assert.doesNotReject(
             containerAndServices,
             () => true,
-            "container cannot be created",
+            "container cannot be created in FRS",
+        );
+    });
+
+    it("can create Tinylicious container successfully", async () => {
+        const connectionConfig: FrsConnectionConfig = {
+            tenantId: "local",
+            tokenProvider: new InsecureTokenProvider("fooBar", user),
+            orderer: "http://localhost:7070",
+            storage: "http://localhost:7070",
+        };
+        frsClient = new FrsClient(connectionConfig);
+        const containerConfig: FrsContainerConfig = { id: documentId };
+        const schema: ContainerSchema = {
+            name: documentId,
+            initialObjects: {
+                map1: SharedMap,
+            },
+        };
+
+        const containerAndServices = await frsClient.createContainer(containerConfig, schema);
+
+        await assert.doesNotReject(
+            containerAndServices,
+            () => true,
+            "container cannot be created locally",
         );
     });
 });
