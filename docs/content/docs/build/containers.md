@@ -66,8 +66,6 @@ const { container, containerServices} =
 
 Once the `createContainer` or `loadContainer` function calls complete, the returned container is _attached_ -- that is, it  is connected to the Fluid service -- and ready to power collaboration. 
 
-We are currently working on an advanced scenario where containers can be created locally before persisting them to the server. The primary use case for this is if a client want's to draft the initial state of a container before other collaborators enter.
-
 ### Deleting a container
 
 Deleting a container is a service-specific feature, so you should refer to the documentation associated with the specific Fluid service you are using. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
