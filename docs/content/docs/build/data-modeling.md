@@ -41,7 +41,7 @@ const cell = container.initialObjects["custom-cell"];
 
 ## Dynamic objects
 
-A `LoadableObject` can be created dynamically during runtime. Dynamic objects are both created and loaded dynamically and are always stored as references within another `LoadableObject`.
+A `LoadableObject` can be created dynamically by the container at runtime. Dynamic objects are both created and loaded dynamically and are always stored as references within another `LoadableObject`. In other words, a container can create an object dynamically, and you must store references to those objects within another `LoadableObject`.
 
 ### Creating a dynamic object
 
