@@ -40,7 +40,7 @@ For more information see [Data modeling](./data-modeling.md).
 There are two primary packages you'll use when building with Fluid. The `fluid-framework` package
 and a service-specific client package like `tinylicious-client`..
 
-### `[service]-client` packages
+### Service-specific client packages
 
 Fluid works with multiple service implementations. Each service has a corresponding service-specific client package. These packages contain a common API structure but also support functionality unique to each service.
 
