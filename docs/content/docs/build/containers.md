@@ -34,7 +34,7 @@ const schema = {
 
 Containers are created from the service-specific client's `createContainer` function. You must provide a config that is specific to the service and a schema object that defines the container schema.
 
-```typescript
+```typescript {hl_lines=[10]}
 const schema = {
     name: "example-container",
     initialObjects: {
@@ -43,8 +43,8 @@ const schema = {
     },
     dynamicObjectTypes: [ SharedCell, SharedString ],
 }
-const { container, containerServices} = await client.createContainer(/*service config*/, schema);
-```
+const { container, containerServices} =
+    await client.createContainer(/*service config*/, schema);
 
 ### How to load a container
 
