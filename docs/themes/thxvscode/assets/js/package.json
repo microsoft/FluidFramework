@@ -10,7 +10,7 @@
     "bootstrap": "^3.4.0",
     "core-js": "^3.6.5",
     "uglifyjs-webpack-plugin": "^2.2.0",
-    "webpack": "^4.43.0",
+    "webpack": "^4.44.0",
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
