@@ -1,3 +1,10 @@
+## 0.44 Breaking changes
+
+- [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
+
+### Property removed from the ContainerRuntime class
+- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
+
 ## 0.43 Breaking changes
 
 - [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
@@ -6,7 +13,6 @@
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
 - [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
 - [Changes to client-api](#changes-to-client-api)
-- [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 
 ### TinyliciousClient and FrsClient are no longer static
 `TinyliciousClient` and `FrsClient` global static properties are removed. Instead, object instantiation is now required.
@@ -28,9 +34,6 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 
 ### Changes to client-api
 - The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
-
-### Property removed from the ContainerRuntime class
-- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
 
 ## 0.42 Breaking changes
 
