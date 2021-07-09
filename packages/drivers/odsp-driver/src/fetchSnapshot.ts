@@ -335,9 +335,9 @@ async function fetchLatestSnapshotCore(
 
 function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
     assert(Array.isArray(snapshot.trees) && snapshot.trees.length > 0,
-        "Returned odsp snapshot is malformed. No trees!");
+        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
     assert(Array.isArray(snapshot.blobs) && snapshot.blobs.length > 0,
-        "Returned odsp snapshot is malformed. No blobs!");
+        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
     let numTrees = 0;
     let numBlobs = 0;
     let encodedBlobsSize = 0;
