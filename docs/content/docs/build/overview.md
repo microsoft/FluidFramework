@@ -33,7 +33,7 @@ For more on containers see [Containers](./containers.md)
 
 A `LoadableObject` is a specific object that powers collaborative data by exposing a specific API. Many Loadable Objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures and DataObjects are both types of Loadable Objects.
 
-For more see [Data modeling](./data-modeling.md)
+For more information see [Data modeling](./data-modeling.md).
 
 ## Package structure
 
