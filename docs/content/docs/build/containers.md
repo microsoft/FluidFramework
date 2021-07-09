@@ -128,7 +128,7 @@ The drawback of this approach is that when creating a container, the service con
 
 ### Multi-container example
 
-Multiple containers can be loaded from an app, or on a page, at the same time. There are two primary scenarios where you application would be using multiple containers.
+Multiple Fluid containers can be loaded from an application or on a Web page at the same time. There are two primary scenarios where an application would use multiple containers.
 
 First, is if your application loads two different experiences that have different underlying data structures. `Experience 1` may require a `SharedMap` and `Experience 2` may requires a `SharedString`. To minimize our memory footprint we can create two different container schemas and load only what we need. In this scenario our app can load two different containers but we are only choosing to load one at a time.
 
