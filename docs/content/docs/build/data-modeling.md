@@ -108,9 +108,9 @@ map.on("valueChanged", (changed) => {
 
 ### When to use dynamic objects
  
-Dynamic objects are best used when you have large data sets and want to virtualize portions of it. Dynamic objects are loaded into memory on demand using them can reduce boot time. 
+Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded.
 
-Dynamic objects are also not strictly defined in the container schema. This can make them more flexible when considering
+Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
 ### Garbage collection on de-referenced objects
 
