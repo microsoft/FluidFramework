@@ -136,6 +136,6 @@ The second scenario involves loading two containers at once. Currently, all serv
 
 {{% callout tip %}}
 
-Using the name property on the container can be helpful when managing multiple containers.
+Use the `name` property on the container to help manage multiple containers.
 
 {{% /callout %}}
