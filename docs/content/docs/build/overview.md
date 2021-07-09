@@ -46,7 +46,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 The `tinylicious` service is our local Fluid service. Our documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each `[service]-client` implementation see their corresponding documentation.
 
-#### Supported `[service]-client` packages
+#### Supported service-specific client packages
 
 - `@fluid-experimental/tinylicious-client`
 - `@fluid-experimental/frs-client`
