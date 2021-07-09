@@ -72,7 +72,7 @@ We are currently working on an advanced scenario where containers can be created
 
 Deleting a container is a service-specific feature, so you should refer to the documentation associated with the specific Fluid service you are using. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
 
-## Interaction & lifecycle
+## Container lifecycle and manipulation
 
 ### connected/disconnected
 
