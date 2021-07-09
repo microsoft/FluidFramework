@@ -39,7 +39,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.43.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/ink": "^0.43.0",
     "@fluidframework/view-interfaces": "^0.43.0"
   },

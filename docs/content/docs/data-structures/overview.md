@@ -10,7 +10,7 @@ who've used common data structures before.
 {{% callout note %}}
 
 This article assumes that you are familiar with [Introducing distributed data structures]({{< relref
-"/docs/concepts/dds.md" >}}).
+"dds.md" >}}).
 
 {{% /callout %}}
 
@@ -71,9 +71,8 @@ Key-value data structures are the most common choice for many scenarios.
 
 - Storing a counter in a map will have [unexpected behavior]({{< relref "/docs/data-structures/keyvalue-ddses.md" >}}).
   Use the SharedCounter instead.
-- Storing arrays, lists, or logs in a key-value entry may lead to [unexpected behavior]({{< relref
-  "/docs/data-structures/keyvalue-ddses.md" >}}) because users can't collaboratively modify parts of one entry. Try
-  storing the array or list data in a SharedSequence or SharedInk.
+- Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
+  collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
 - Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
@@ -83,7 +82,7 @@ These DDSes are used for storing sequential data. They are optimistic. Sequence 
 need to insert, or remove, data at a specified position in a list or array. Unlike the key-value data structures,
 sequences have a sequential order and can handle simultaneous inserts from multiple users.
 
-- [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) - a sequence of numbers.
+- [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) -- a sequence of numbers.
 - [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
 - [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
 

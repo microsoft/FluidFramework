@@ -57,9 +57,9 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/container-definitions": "^0.39.0",
+    "@fluidframework/container-definitions": "^0.39.5",
     "@fluidframework/container-runtime-definitions": "^0.43.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/datastore-definitions": "^0.43.0",
     "@fluidframework/driver-utils": "^0.43.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",

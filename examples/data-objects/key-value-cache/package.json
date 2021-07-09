@@ -34,9 +34,9 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.43.0",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/container-definitions": "^0.39.0",
+    "@fluidframework/container-definitions": "^0.39.5",
     "@fluidframework/container-runtime": "^0.43.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/datastore": "^0.43.0",
     "@fluidframework/datastore-definitions": "^0.43.0",
     "@fluidframework/map": "^0.43.0",

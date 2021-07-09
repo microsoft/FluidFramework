@@ -32,7 +32,7 @@
     "@fluid-experimental/fluid-framework": "^0.43.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-loader": "^0.43.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/driver-definitions": "^0.39.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.43.0",

@@ -3,6 +3,7 @@ title: Tutorial
 menuPosition: 3
 aliases:
   - "/docs/get-started/tutorial/"
+  - "/start/tutorial/"
 ---
 
 In this walkthrough, we'll learn about using the Fluid Framework by building a simple
@@ -240,7 +241,7 @@ to see the changes reflected between clients.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 

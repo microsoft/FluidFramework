@@ -2,6 +2,8 @@
 title: Glossary
 aliases:
   - "/docs/glossary/"
+  - "/docs/start/glossary/"
+
 ---
 
 ## Aqueduct

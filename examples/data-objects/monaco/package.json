@@ -36,8 +36,8 @@
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.43.0",
     "@fluidframework/aqueduct": "^0.43.0",
-    "@fluidframework/container-definitions": "^0.39.0",
-    "@fluidframework/core-interfaces": "^0.39.0",
+    "@fluidframework/container-definitions": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/merge-tree": "^0.43.0",
     "@fluidframework/runtime-definitions": "^0.43.0",
     "@fluidframework/sequence": "^0.43.0",

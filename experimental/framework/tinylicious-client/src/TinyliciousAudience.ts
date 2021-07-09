@@ -41,4 +41,11 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
   public getMyself(): TinyliciousMember | undefined {
     return super.getMyself() as TinyliciousMember;
   }
+
+  /**
+   * @inheritdoc
+   */
+   public getMemberByClientId(clientId: string): TinyliciousMember | undefined {
+    return super.getMemberByClientId(clientId) as TinyliciousMember;
+  }
 }
