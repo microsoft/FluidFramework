@@ -28,7 +28,8 @@ export const setupUI = (container: Container) => {
                 // Reload the application page using the upgraded package version.
                 const { name, version } = parsePackageDetails(container.codeDetails.package);
                 window.location.href = `${document.location.pathname}?code=${name}@${
-                    semver.inc(version ?? "1.0.0", "major")
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    semver.inc(version!, "major")
                 }`;
             }
         } else {
@@ -57,7 +58,7 @@ export const setupUI = (container: Container) => {
 
     // Subscribe to events triggered when new code details proposal is received.
     container.on("codeDetailsProposed", refreshLoadedCodeInfo); // refresh the UI
-    container.on("codeDetailsProposed", (cd) => codeDetails = cd); // update the cached value
+    container.on("codeDetailsProposed", (cd) => codeDetails = cd); // update the cached quorum value
 
     // The upgrade button submits a code proposal by incrementing major code version of the code
     // loaded with the container.
@@ -71,7 +72,8 @@ export const setupUI = (container: Container) => {
         const details: IFluidCodeDetails = {
             package: {
                 name,
-                version: semver.inc(version ?? "1.0.0", "major"),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                version: semver.inc(version!, "major"),
                 fluid: { browser: {} },
             },
             config: {},

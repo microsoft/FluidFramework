@@ -157,13 +157,14 @@ if (document.location.pathname === "/") {
 } else {
     // Parse application URL parameters and determine which package version to load.
     const appParams = parseAppUrl();
-    const packageDetails = extractPackageIdentifierDetails(appParams.packageName);
+    // Utilize a Fluid utility function to extract the package name and version.
+    const packageId = extractPackageIdentifierDetails(appParams.packageName);
 
     // Load container and start collaboration session using specified parameters.
     start(
         document.location.href,
         appParams.documentId,
-        packageDetails,
+        packageId,
         appParams.isNew,
     )
         // Configure application UI in case of successful load.
