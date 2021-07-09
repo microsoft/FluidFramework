@@ -790,6 +790,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
+        // If attachment blobs were uploaded in detached state we will go through a different attach flow
         const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
             && this.loader.services.detachedBlobStorage.size > 0;
 
@@ -812,7 +813,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // starting to attach the container to storage.
                     // Also, this should only be fired in detached container.
                     this._attachState = AttachState.Attaching;
-                    // this.emit("attaching");
                     this.context.notifyAttaching();
                 }
             }
@@ -823,7 +823,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (this.service === undefined) {
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
-                        summary as unknown as ISummaryTree,
+                        summary,
                         createNewResolvedUrl,
                         this.subLogger,
                     ),
@@ -848,7 +848,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 this._attachState = AttachState.Attaching;
-                // this.emit("attaching");
                 this.context.notifyAttaching();
 
                 await this.storageService.uploadSummaryWithContext(summary, {

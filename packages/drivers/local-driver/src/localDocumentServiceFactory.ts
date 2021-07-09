@@ -40,11 +40,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
+        assert(!!createNewSummary, "create empty file not supported");
         const pathName = new URL(resolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
