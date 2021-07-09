@@ -42,7 +42,7 @@ and a service-specific client package like `tinylicious-client`..
 
 ### `[service]-client` packages
 
-Fluid works with multiple service implementations. Each service has a corresponding `[service]-client` package. These packages contain a common API structure but also support functionality unique to each service.
+Fluid works with multiple service implementations. Each service has a corresponding service-specific client package. These packages contain a common API structure but also support functionality unique to each service.
 
 The `tinylicious` service is our local Fluid service. Our documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each `[service]-client` implementation see their corresponding documentation.
 
