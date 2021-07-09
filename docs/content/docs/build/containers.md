@@ -50,7 +50,7 @@ const { container, containerServices} =
 
 To load the container created in the above section you must provide the service config as well as the exact same schema definition. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
 
-```typescript
+```typescript {hl_lines=[10]}
 const schema = {
     name: "example-container",
     initialObjects: {
@@ -59,8 +59,8 @@ const schema = {
     },
     dynamicObjectTypes: [ SharedCell, SharedString ],
 }
-const { container, containerServices} = await client.getContainer(/*service config*/, schema);
-```
+const { container, containerServices} =
+    await client.getContainer(/*service config*/, schema);
 
 ### Attaching a container
 
