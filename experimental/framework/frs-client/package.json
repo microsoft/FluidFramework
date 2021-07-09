@@ -23,6 +23,12 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
+
+    "start:routerlicious:test": "routerlicious > routerlicious.log 2>&1",
+    "test:realsvc": "npm run test:realsvc:routerlicious",
+    "test:realsvc:routerlicious": "start-server-and-test start:routerlicious:test 7070 test:realsvc:routerlicious:run",
+    "test:realsvc:routerlicious:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit",
+
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
