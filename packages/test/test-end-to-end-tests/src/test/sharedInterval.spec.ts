@@ -11,7 +11,6 @@ import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
-    IntervalCollectionView,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
@@ -27,10 +26,10 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
-    intervals: IntervalCollectionView<SequenceInterval>,
+    intervalView,
     expected: readonly { start: number; end: number }[],
 ) => {
-    const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -150,11 +149,11 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         const stringId = "stringKey";
 
         let sharedString: SharedString;
-        let intervalCollection: IntervalCollection<SequenceInterval>;
-        let intervals: IntervalCollectionView<SequenceInterval>;
+        let intervals: IntervalCollection<SequenceInterval>;
+        let intervalView;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-            assertIntervalsHelper(sharedString, intervals, expected);
+            assertIntervalsHelper(sharedString, intervalView, expected);
         };
 
         beforeEach(async () => {
@@ -168,10 +167,9 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
 
-            intervalCollection = sharedString.getIntervalCollection("intervals");
-            intervals = await intervalCollection.getView();
-
-            testIntervalCollection(intervalCollection);
+            intervals = sharedString.getIntervalCollection("intervals");
+            intervalView = await intervals.getView();
+            testIntervalCollection(intervals);
         });
 
         it("replace all is included", async () => {
@@ -287,9 +285,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
             sharedString1.insertText(0, "0123456789");
-            const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
+            const intervals1 = sharedString1.getIntervalCollection("intervals");
+            const intervalView1 = await intervals1.getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
-            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
             const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -298,17 +297,18 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
-            const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+            const intervals2 = sharedString2.getIntervalCollection("intervals");
+            const intervalView2 = await intervals2.getView();
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
 
             sharedString2.removeRange(4, 5);
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 6 }]);
 
             sharedString2.insertText(4, "x");
-            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
 
             await provider.ensureSynchronized();
-            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
         });
     });
 

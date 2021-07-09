@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SyncedDataObject } from "@fluidframework/react";
+import { SyncedDataObject } from "@fluid-experimental/react";
 
 export function getAuthorName(syncedDataObject: SyncedDataObject) {
     const quorum = syncedDataObject.dataProps.runtime.getQuorum();

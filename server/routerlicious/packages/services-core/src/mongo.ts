@@ -66,6 +66,14 @@ export class MongoManager {
                     this.reconnect(this.reconnectDelayMs);
                 });
 
+                db.on("reconnect", (value) => {
+                    debug("DB Reconnect");
+                });
+
+                db.on("reconnectFailed", (value) => {
+                    debug("DB Reconnect failed");
+                });
+
                 return db;
             });
 

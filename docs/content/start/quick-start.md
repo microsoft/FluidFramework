@@ -36,7 +36,7 @@ git clone https://github.com/microsoft/FluidHelloWorld.git
 
 {{< callout note >}}
 
-If you don't have git installed you can [click here](https://github.com/microsoft/FluidHelloWorld/archive/main.zip) to
+If you don't have Git installed you can [click here](https://github.com/microsoft/FluidHelloWorld/archive/main.zip) to
 download a zip of the FluidHelloWorld repo. Once the file downloads, extract the contents of the .zip file and run the
 following steps.
 

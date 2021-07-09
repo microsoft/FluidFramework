@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ServiceAudience } from "@fluid-experimental/fluid-static";
+import { ServiceAudience } from "@fluid-experimental/fluid-framework";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
@@ -40,5 +40,12 @@ export class TinyliciousAudience extends ServiceAudience implements ITinylicious
    */
   public getMyself(): TinyliciousMember | undefined {
     return super.getMyself() as TinyliciousMember;
+  }
+
+  /**
+   * @inheritdoc
+   */
+   public getMemberByClientId(clientId: string): TinyliciousMember | undefined {
+    return super.getMemberByClientId(clientId) as TinyliciousMember;
   }
 }

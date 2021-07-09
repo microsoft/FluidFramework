@@ -5,9 +5,8 @@
 
 import {
     Definition,
-    EditNode,
+    ChangeNode,
     NodeId,
-    TreeNode,
 } from "@fluid-experimental/tree";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
@@ -20,7 +19,7 @@ export const enum NodeKind {
 export const nodeId = () => Math.random().toString(36).slice(2) as NodeId;
 
 // Helper for creating Scalar nodes in SharedTree
-export const makeScalar = <T>(value: Serializable<T>): TreeNode<EditNode> => ({
+export const makeScalar = <T>(value: Serializable<T>): ChangeNode => ({
     identifier: nodeId(),
     definition: NodeKind.scalar as Definition,
     traits: {},
@@ -29,7 +28,7 @@ export const makeScalar = <T>(value: Serializable<T>): TreeNode<EditNode> => ({
 
 /* eslint-disable no-null/no-null */
 
-export function fromJson<T>(value: Serializable<T>): TreeNode<EditNode> {
+export function fromJson<T>(value: Serializable<T>): ChangeNode {
     if (typeof value === "object") {
         if (Array.isArray(value)) {
             return {
@@ -46,7 +45,7 @@ export function fromJson<T>(value: Serializable<T>): TreeNode<EditNode> {
                 traits[label] = { value: [fromJson(json)], enumerable: true };
             }
 
-            const node: EditNode = {
+            const node: ChangeNode = {
                 identifier: nodeId(),
                 definition: NodeKind.object as Definition,
                 traits: Object.defineProperties({}, traits),

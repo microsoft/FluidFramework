@@ -1,8 +1,64 @@
+## 0.43 Breaking changes
+
+- [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
+- [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
+- [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
+- [Property removed from the Container class](#Property-removed-from-the-Container-class)
+- [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- [Changes to client-api](#changes-to-client-api)
+
+### TinyliciousClient and FrsClient are no longer static
+`TinyliciousClient` and `FrsClient` global static properties are removed. Instead, object instantiation is now required.
+
+### Property removed from the Container class
+- the `existing` property from `Container` has been removed. The caller should differentiate on how the container has been created (`Container.load` vs `Container.createDetached`). See also [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated).
+
+### Routerlicious Driver DeltaStorageService constructor changed
+`DeltaStorageService` from `@fluidframework/routerlicious-driver` now takes a `RestWrapper` as the second constructor parameter, rather than a TokenProvider.
+
+### addGlobalAgentSchedulerAndLeaderElection removed
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag was turned off by default in 0.40.  In 0.43 the flag (and the functionality it enabled) has been removed.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
+
+### Creating new containers with Container.load has been deprecated
+- `Container.load` with inexistent files will fail instead of creating a new container. Going forward, please use `Container.createDetached` for this scenario.
+- To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load` (see `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader`).
+
+### Changes to client-api
+- The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
+
+## 0.42 Breaking changes
+
+- [Package renames](#0.42-package-renames)
+- [IContainerRuntime property removed](#IContainerRuntime-property-removed)
+- [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
+- [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
+
+### 0.42 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### IContainerRuntimeEvents changes
+- `fluidDataStoreInstantiated` has been removed from the interface and will no longer be emitted by the `ContainerRuntime`.
+
+### IContainerRuntime property removed
+- the `existing` property from `IContainerRuntime` has been removed.
+
+### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
+These interface and apis are not supposed to be used outside the package. So stop exposing them.
+
 ## 0.41 Breaking changes
 
 - [Package renames](#0.41-package-renames)
 - [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
 - [Leadership API surface removed](#Leadership-API-surface-removed)
+- [IContainerContext and Container storage API return type changed](#IContainerContext-and-Container-storage-API-return-type-changed)
 
 ### 0.41 package renames
 
@@ -19,6 +75,9 @@ the npm scopes.
 In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned off by default.  In 0.41 it has now been removed.  If you still require leadership functionality, you can use a `TaskSubscription` in combination with an `AgentScheduler`.
 
 See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on how to use `TaskSubscription` to migrate away from leadership election.
+
+### IContainerContext and Container storage API return type changed
+IContainerContext and Container now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
 
 ## 0.40 Breaking changes
 

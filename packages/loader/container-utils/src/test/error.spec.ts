@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { CreateContainerError, CreateProcessingError } from "../error";
 
 describe("Errors", () => {
@@ -22,6 +22,13 @@ describe("Errors", () => {
             // eslint-disable-next-line @typescript-eslint/dot-notation
             assert(testError["stack"] === originalError.stack);
         });
+        it("Wrap LoggingError with no errorType", () => {
+            const loggingError = new LoggingError("hello", { foo: "bar" });
+            const testError = CreateContainerError(loggingError);
+
+            assert(testError.errorType === ContainerErrorType.genericError);
+            assert(isILoggingError(testError));
+        });
     });
 
     describe("DataProcessingError coercion", () => {
@@ -32,10 +39,11 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for LoggingErrors", () => {
-            const originalError = new LoggingError("Inherited error message", {
-                errorType: "Demoted error type",
-                otherProperty: "Considered PII-free property",
-            });
+            const originalError = new LoggingError(
+                "Inherited error message", {
+                    errorType: "Demoted error type",
+                    otherProperty: "Considered PII-free property",
+                });
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any === originalError);
@@ -51,6 +59,7 @@ describe("Errors", () => {
                 Symbol("Unique"),
                 () => {},
                 [],
+                [1,2,3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
                 CreateProcessingError(value, undefined),
@@ -67,13 +76,6 @@ describe("Errors", () => {
                 coercedErrors.every(
                     (error) => typeof error.message === "string",
                 ),
-            );
-            assert(
-                coercedErrors.reduce(
-                    (messages, error) => messages.add(error.message),
-                    new Set(),
-                ).size === 1,
-                "All malformed inputs should generate a common error.message",
             );
             assert(
                 !originalMalformations.some(
@@ -98,6 +100,7 @@ describe("Errors", () => {
             const originalProps = {
                 message: "Inherited error message",
                 otherProperty: "Presumed PII-full property",
+                errorType: "specialErrorType", // will be overwritten
             };
             const coercedError = CreateProcessingError(originalProps, undefined);
 

@@ -28,13 +28,16 @@ You may also want to host your Fluid container on a standalone website.
 The Fluid loader loads Fluid containers by connecting to the Fluid service and fetching Fluid container code. From a
 system architecture perspective, the Fluid loader sits in between the Fluid service and a Fluid container.
 
-![A diagram of the Fluid Framework system architecture](/docs/concepts/images/architecture.png)
+<img src="/docs/concepts/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
+loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
+objects and distributed data structures.">
 
 The Fluid loader is intended to be extremely generic. To maintain generic-ness, the loader uses a plugin model. With the
 right plugins (drivers, handlers, resolvers), the Fluid loader will work for any wire protocol and any service
 implementation.
 
-The loader mimicks existing web protocols. Similar to how the browser requests state and app logic (a website) from a
+The loader mimics existing web protocols. Similar to how the browser requests state and app logic (a website) from a
 web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
 
 ## Fluid host responsibilities
@@ -43,7 +46,8 @@ A Fluid host creates a Fluid loader with a URL resolver, Fluid service driver, a
 Fluid container from the loader. Finally, the host *does something* with the Fluid containers. A host can request
 multiple containers from the loader.
 
-![The loader architecture and request flow](/docs/concepts/images/load-flow.png)
+<img src="/docs/concepts/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
+service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
 
@@ -63,7 +67,7 @@ This is not part of instantiating the loader. The request kicks of the process o
 The URL resolver parses a request and returns an `IFluidResolvedUrl`. This object includes all the endpoints and tokens
 needed by the Fluid service driver to access the container.
 
-An example IFluidResolvedUrl includes the below information.
+An example `IFluidResolvedUrl` includes the below information.
 
 ```typescript
 const resolvedUrl: IFluidResolvedUrl = {

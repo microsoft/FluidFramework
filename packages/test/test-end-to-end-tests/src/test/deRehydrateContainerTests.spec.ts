@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import {
-    getSnapshotTreeFromSerializedContainer,
-    Loader,
-} from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -31,11 +28,13 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 
-describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
@@ -139,6 +138,17 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         };
     };
 
+    const getSnapshotTreeFromSerializedSnapshot = (
+        container: Container,
+    ) => {
+        const { snapshotTree, blobs } =
+            getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+        return {
+            snapshotTree,
+            blobs,
+        };
+    };
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
         const documentId = createDocumentId();
@@ -154,8 +164,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const { snapshotTree, blobs } = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -168,6 +177,9 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
                 protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
                 "Min Seq # <= seq #");
 
+            // Check blobs contents for protocolAttributes
+            const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+            assert(blobs.get(protocolAttributesBlobId) !== undefined, "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
@@ -177,14 +189,14 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const res1 = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree1 = res1.snapshotTree;
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const snapshotTree2: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const res2 = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree2: ISnapshotTree = res2.snapshotTree;
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -217,8 +229,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -299,6 +310,31 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
             assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
+        });
+
+        it("Storage in detached container", async () => {
+            const { container } =
+                await createDetachedContainerAndGetRootDataStore();
+
+            const snapshotTree = container.serialize();
+            assert(container.storage !== undefined, "Storage should be present in detached container");
+            const response = await container.request({ url: "/" });
+            const defaultDataStore = response.value as TestFluidObject;
+            assert(defaultDataStore.context.storage !== undefined,
+                "Storage should be present in detached data store");
+            let success1: boolean | undefined;
+            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
+            assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
+
+            const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+            assert(container2.storage !== undefined, "Storage should be present in rehydrated container");
+            const response2 = await container2.request({ url: "/" });
+            const defaultDataStore2 = response2.value as TestFluidObject;
+            assert(defaultDataStore2.context.storage !== undefined,
+                "Storage should be present in rehydrated data store");
+            let success2: boolean | undefined;
+            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => success2 = false);
+            assert(success2 === false, "Snapshot fetch should not be allowed in rehydrated data store");
         });
 
         it("Change contents of dds, then rehydrate and then check summary", async () => {
@@ -564,7 +600,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -575,6 +611,11 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
     tests();
 
     // Run again with isolated channels disabled
-    disableIsolatedChannels = true;
-    describe("With isolated channels disabled", tests);
+    describe("With isolated channels disabled", () => {
+        before(() => {
+            disableIsolatedChannels = true;
+        });
+
+        tests();
+    });
 });

@@ -19,6 +19,7 @@ export {
 	Move,
 	StablePlace,
 	StableRange,
+	getNodeId,
 } from './PersistedTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';

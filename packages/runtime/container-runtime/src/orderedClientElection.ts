@@ -88,10 +88,10 @@ export class OrderedClientElection extends TypedEventEmitter<IOrderedClientElect
     private insertEligibleClient(clientId: string, sequenceNumber: number): IEligibleClient {
         // Normal case is adding the latest client, which will bypass loop.
         // Find where it belongs otherwise (this shouldn't happen, assert?).
-        assert(sequenceNumber > -1, "Negative client sequence number not allowed");
+        assert(sequenceNumber > -1, 0x1f6 /* "Negative client sequence number not allowed" */);
         let currClient = this.youngestClient;
         while (currClient.sequenceNumber > sequenceNumber) {
-            assert(currClient.olderClient !== undefined, "Previous client should always be defined");
+            assert(currClient.olderClient !== undefined, 0x1f7 /* "Previous client should always be defined" */);
             // what to do if currClient === this.currentClient
             currClient = currClient.olderClient;
         }
@@ -227,37 +227,5 @@ export class OrderedClientElection extends TypedEventEmitter<IOrderedClientElect
             currClient = currClient.youngerClient;
         }
         return result;
-    }
-}
-
-/**
- * Used to give increasing delay times for throttling a single functionality.
- * Delay is based on previous attempts within specified time window, ignoring actual delay time.
- */
- export class Throttler {
-    private startTimes: number[] = [];
-    constructor(
-        private readonly delayWindowMs: number,
-        private readonly maxDelayMs: number,
-        private readonly delayFunction: (n: number) => number,
-    ) { }
-
-    public get attempts() {
-        return this.startTimes.length;
-    }
-
-    public getDelay() {
-        const now = Date.now();
-        this.startTimes = this.startTimes.filter((t) => now - t < this.delayWindowMs);
-        const delayMs = Math.min(this.delayFunction(this.startTimes.length), this.maxDelayMs);
-        this.startTimes.push(now);
-        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
-        if (delayMs === this.maxDelayMs) {
-            // we hit max delay so adding more won't affect anything
-            // shift off oldest time to stop this array from growing forever
-            this.startTimes.shift();
-        }
-
-        return delayMs;
     }
 }

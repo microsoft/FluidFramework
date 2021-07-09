@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import {
+    delay,
     IPromiseTimerResult,
     PromiseTimer,
 } from "@fluidframework/common-utils";
@@ -18,11 +19,12 @@ import {
     IContainerContext,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
 import { SummaryCollection } from "./summaryCollection";
-import { ITrackedClient, OrderedClientElection, summarizerClientType, Throttler } from "./orderedClientElection";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { Throttler } from "./throttler";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
@@ -43,14 +45,13 @@ enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
+type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize" | "disposed">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; shouldStart: boolean; }
     | { shouldSummarize: false; stopReason: StopReason; };
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly orderedClients: OrderedClientElection;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private electedClientId?: string;
@@ -75,17 +76,13 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         return this._disposed;
     }
 
-    /** Used to calculate number of ops since last summary ack for the current elected client */
-    private lastSummaryAckSeqForClient = 0;
-    private hasSummarizersInQuorum: boolean;
-    private hasLoggedTelemetry = false;
-
     constructor(
         private readonly context: IContainerContext,
-        private readonly summaryCollection: SummaryCollection,
+        summaryCollection: SummaryCollection,
+        private readonly clientElection: SummarizerClientElection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly maxOpsSinceLastSummary: number,
+        maxOpsSinceLastSummary: number,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -109,50 +106,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        this.summaryCollection.on("default", (op) => {
-            const opsSinceLastAckForClient = op.sequenceNumber - this.lastSummaryAckSeqForClient;
-            if (
-                opsSinceLastAckForClient > this.maxOpsSinceLastSummary
-                && !this.hasLoggedTelemetry
-                && this.electedClientId !== undefined
-            ) {
-                // Limit telemetry to only next client?
-                this.logger.sendErrorEvent({
-                    eventName: "ElectedClientNotSummarizing",
-                    thisClientId: this.clientId,
-                    electedClientId: this.electedClientId,
-                    sequenceNumber: op.sequenceNumber,
-                    lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
-                });
-
-                // In future we will change the elected client.
-                // this.orderedClients.incrementCurrentClient();
-
-                this.hasLoggedTelemetry = true;
-            }
-        });
-        this.summaryCollection.on(MessageType.SummaryAck, (op) => {
-            this.hasLoggedTelemetry = false;
-            this.lastSummaryAckSeqForClient = op.sequenceNumber;
-        });
-
-        this.orderedClients = new OrderedClientElection(context.quorum);
-        this.orderedClients.on("summarizerChange", (summarizerCount) => {
-            const prev = this.hasSummarizersInQuorum;
-            this.hasSummarizersInQuorum = summarizerCount > 0;
-            if (prev !== this.hasSummarizersInQuorum) {
-                this.refreshSummarizer();
-            }
-        });
-        this.orderedClients.on("electedChange", (client: ITrackedClient | undefined) => {
-            this.hasLoggedTelemetry = false;
-            if (client !== undefined) {
-                // set to join seq
-                this.lastSummaryAckSeqForClient = client.sequenceNumber;
-            }
-            this.refreshSummarizer();
-        });
-        this.hasSummarizersInQuorum = this.orderedClients.getSummarizerCount() > 0;
+        clientElection.on("shouldSummarizeStateChanged", () => this.refreshSummarizer());
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
@@ -200,7 +154,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
-        } else if (this.orderedClients.getSummarizerCount() > 0) {
+        } else if (this.clientElection.hasSummarizersInQuorum) {
             // Need to wait for any other existing summarizer clients to close,
             // because they can live longer than their parent container.
             // TODO: We will need to remove this check when we allow elected summarizer
@@ -212,8 +166,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private refreshSummarizer() {
-        // Compute summarizer
-        const newSummarizerClientId = this.orderedClients.getElectedClient()?.clientId;
+        // Check which client is elected as summarizer, and propagate the event if changed.
+        const newSummarizerClientId = this.clientElection.electedClientId;
         if (newSummarizerClientId !== this.electedClientId) {
             this.electedClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
@@ -327,7 +281,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    private stop(reason: string) {
+    private stop(reason: SummarizerStopReason) {
         this.state = SummaryManagerState.Stopping;
 
         if (this.runningSummarizer) {
@@ -355,7 +309,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+                shouldDelay ? delay(delayMs) : Promise.resolve(),
             ]);
         }
 

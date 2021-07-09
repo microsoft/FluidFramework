@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/odsp-doclib-utils";
-export const pkgVersion = "0.41.0";
+export const pkgVersion = "0.43.0";

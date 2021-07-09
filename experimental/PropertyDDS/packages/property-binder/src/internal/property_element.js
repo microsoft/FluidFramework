@@ -301,6 +301,7 @@ class PropertyElement {
    *
    * @param {Array.<String>|String} in_child - the tokenized path, or single child
    * @param {Object} in_options - parameter object
+   * @param {Array.<PathHelper.Token_Types>|undefined} in_tokensTypes - The types of tokens if in_child is tokenized path.
    * @param {Object.<{referenceResolutionMode:LYNX.Property.BaseProperty.REFERENCE_RESOLUTION}>} }
    *    [in_options.referenceResolutionMode=ALWAYS] How should this function behave
    *    during reference resolution?
@@ -308,9 +309,9 @@ class PropertyElement {
    * @return {PropertyElement} the element representing the child. If it does not exist,
    *   this.isValid() will return false
    */
-  getChild(in_child, in_options = RESOLVE_ALWAYS) {
+  getChild(in_child, in_options = RESOLVE_ALWAYS, in_tokensTypes) {
     const result = new PropertyElement(this._property, this._childToken);
-    result.becomeChild(in_child, in_options);
+    result.becomeChild(in_child, in_options, in_tokensTypes);
 
     // We always return an element, it just may not be valid.
     return result;
@@ -319,8 +320,9 @@ class PropertyElement {
   /**
    * Become the child (token or tokenized path). If the child does not exist, then this.isValid() will
    * be false.
-   *
+*
    * @param {Array.<String>|String} in_child - the tokenized path, or single child
+   * @param {Array.<PathHelper.Token_Types>} [in_tokensTypes = []] - The types of tokens if in_child is tokenized path.
    * @param {Object} in_options - parameter object
    * @param {Object.<{referenceResolutionMode:LYNX.Property.BaseProperty.REFERENCE_RESOLUTION}>} }
    *    [in_options.referenceResolutionMode=ALWAYS] How should this function behave
@@ -328,15 +330,21 @@ class PropertyElement {
    *
    * @return {PropertyElement} this
    */
-  becomeChild(in_child, in_options = RESOLVE_ALWAYS) {
+  becomeChild(in_child, in_options = RESOLVE_ALWAYS, in_tokensTypes = []) {
     if (!this.isValid()) {
       // If we're invalid, this isn't going to help
       return this;
     }
 
-    if (typeof in_child === 'string' || typeof in_child === 'number') {
+    let isPathString = false;
+    if (typeof in_child === 'string') {
+      isPathString = true;
+    }
+
+    if (isPathString || typeof in_child === 'number') {
       in_child = [in_child];
     }
+
     const resolutionMode = in_options.referenceResolutionMode;
     // Determine how to resolve references before the last one
     const isAlways = (resolutionMode === undefined || resolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS);
@@ -352,14 +360,14 @@ class PropertyElement {
       const token = in_child[i];
       const nextToken = in_child[i + 1]; // will be undefined at the last element
 
-      if (token === '/') {
+      if (i === 0 && (in_tokensTypes[i] === PathHelper.TOKEN_TYPES.PATH_ROOT_TOKEN) && token === '/') {
         this._property = this._property.getRoot();
         this._childToken = undefined;
-      } else if (token === '*') {
+      } else if ((in_tokensTypes[i] === PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN) && token === '*') {
         if (nextToken !== undefined) {
           this.invalidate();
         }
-      } else if (token === '../') {
+      } else if ((in_tokensTypes[i] === PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN) && token === '../') {
         this.becomeParent();
       } else {
         if (this.isReference()) {
@@ -370,7 +378,8 @@ class PropertyElement {
             this.becomeDereference();
           }
         }
-        if (this._property && this._property.has(token)) {
+        const key = !isPathString ? token : PathHelper.unquotePathSegment(token);
+        if (this._property && this._property.has(key)) {
           if (this.isPrimitiveCollection()) {
             if (this._childToken !== undefined) {
               // We're currently representing an element of a string or number array, why
@@ -378,15 +387,15 @@ class PropertyElement {
               console.assert(!this.isReference());
               this.invalidate();
             } else if (this._property.getContext() === 'array') {
-              this._childToken = Number(token);
+              this._childToken = Number(key);
             } else {
-              this._childToken = String(token);
+              this._childToken = String(key);
             }
           } else {
             // We pass RESOLVE_NEVER so that we just get the child, without following
             // any references if the child is another reference.
             // Below, we will decide whether to dereference
-            this._property = this._property.get(token, RESOLVE_NEVER);
+            this._property = this._property.get(key, RESOLVE_NEVER);
           }
           if (this._property && options === RESOLVE_ALWAYS && nextToken !== '*' && this.isReference()) {
             this.becomeDereference();
@@ -412,14 +421,15 @@ class PropertyElement {
     // of * in paths
     if (this.isValid()) {
       const path = this._property.getValue(this._childToken); // correct even if childToken is undefined
-      const tokens = PathHelper.tokenizePathString(path);
+      const out_pathDelimiters = [];
+      const tokens = PathHelper.tokenizePathString(path, out_pathDelimiters);
       if (tokens.length) {
         if (this.isPrimitiveCollectionElement()) {
           // References are relative to the property that contains it, which in this case is the container
           // this primitive collection element belongs to.
-          this.becomeParent().becomeParent().becomeChild(tokens, options);
+          this.becomeParent().becomeParent().becomeChild(tokens, options, out_pathDelimiters);
         } else {
-          this.becomeParent().becomeChild(tokens, options);
+          this.becomeParent().becomeChild(tokens, options, out_pathDelimiters);
         }
       } else {
         this.invalidate();

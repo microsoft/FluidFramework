@@ -26,7 +26,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -62,6 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
     dataStoreAttributesBlobName,
@@ -268,7 +269,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore().catch((error) => {
-                this.channelDeferred?.reject(error);
+                this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
             });
         }
         return this.channelDeferred.promise;
@@ -413,9 +414,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
-        // If we are not referenced, update the summary tree to indicate that.
+        // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+        // size in the summary stats with the blobs size of this data store.
         if (!this.summarizerNode.isReferenced()) {
             summarizeResult.summary.unreferenced = true;
+            summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
         }
 
         return {
@@ -589,9 +592,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
         }
-
-        // notify the runtime if they want to propagate up. Used for logging.
-        this._containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -724,6 +724,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
+                assert(tree !== undefined,
+                    0x1fe /* "isolated channels subtree should exist in remote datastore snapshot" */);
             }
         }
 
@@ -850,9 +852,22 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         assert(this.isRootDataStore !== undefined,
             0x153 /* "isRootDataStore should be available in local data store" */);
 
-        const snapshot = this.disableIsolatedChannels
-            ? this.snapshotTree
-            : this.snapshotTree?.trees[channelsTreeName];
+        let snapshot = this.snapshotTree;
+        if (snapshot !== undefined) {
+            // Note: storage can be undefined in special case while detached.
+            const attributes = this.storage !== undefined
+                ? await readAndParse<ReadFluidDataStoreAttributes>(
+                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
+                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
+                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
+
+            if (hasIsolatedChannels(attributes)) {
+                snapshot = snapshot.trees[channelsTreeName];
+                assert(snapshot !== undefined,
+                    0x1ff /* "isolated channels subtree should exist in local datastore snapshot" */);
+            }
+        }
+
         return {
             pkg: this.pkg,
             snapshot,

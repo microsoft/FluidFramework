@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import BTree from '@taylorsw04/sorted-btree';
+import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
 import { assert, fail } from './Common';
 import { Revision } from './LogViewer';

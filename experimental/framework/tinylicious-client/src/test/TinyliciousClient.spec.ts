@@ -6,27 +6,29 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { DiceRoller } from "@fluid-example/diceroller";
-import { SharedMap, SharedDirectory } from "@fluid-experimental/fluid-framework";
-import { ContainerSchema } from "@fluid-experimental/fluid-static";
+import { SharedMap, SharedDirectory, ContainerSchema } from "@fluid-experimental/fluid-framework";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
 } from "..";
 
-describe("TinyliciousClient Pre-Initilization", () => {
+describe("TinyliciousClient", () => {
+    let tinyliciousClient: TinyliciousClient;
     let documentId: string;
     beforeEach(() => {
         documentId = uuid();
+        tinyliciousClient = new TinyliciousClient();
     });
 
     /**
-    * Scenario: test if TinyliciousClient can get a container without being initialized.
-    *
-    * Expected behavior: an error should be thrown when trying to get a container
-    * without initializing TinyliciousClient.
-    */
-    it("get a container without initializing", async () => {
+     * Scenario: test if TinyliciousClient can be instantiated without a port
+     * number specified.
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
+    it("can create instance without specifying port number", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -34,7 +36,54 @@ describe("TinyliciousClient Pre-Initilization", () => {
                 map1: SharedMap,
             },
         };
-        const containerAndServices = TinyliciousClient.getContainer(containerConfig, schema);
+        const containerAndServices = tinyliciousClient.createContainer(containerConfig, schema);
+
+        await assert.doesNotReject(
+            containerAndServices,
+            () => true,
+            "container cannot be created without specifying port number",
+        );
+    });
+
+    /**
+     * Scenario: test if TinyliciousClient can be instantiated with a port number specified.
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
+     it("can create a container successfully with port number specification", async () => {
+        const clientConfig: TinyliciousConnectionConfig = { port: 7070 };
+        const clientWithPort = new TinyliciousClient(clientConfig);
+        const containerConfig: TinyliciousContainerConfig = { id: documentId };
+        const schema: ContainerSchema = {
+            name: documentId,
+            initialObjects: {
+                map1: SharedMap,
+            },
+        };
+        const containerAndServices = clientWithPort.createContainer(containerConfig, schema);
+
+        await assert.doesNotReject(
+            containerAndServices,
+            () => true,
+            "container cannot be created with port number",
+        );
+    });
+
+    /**
+     * Scenario: test if TinyliciousClient can get a non-exiting container.
+     *
+     * Expected behavior: an error should be thrown when trying to get a non-exisitent container.
+     */
+    it("cannot load improperly created container (cannot load a non-existent container)", async () => {
+        const containerConfig: TinyliciousContainerConfig = { id: documentId };
+        const schema: ContainerSchema = {
+            name: documentId,
+            initialObjects: {
+                map1: SharedMap,
+            },
+        };
+        const containerAndServices = tinyliciousClient.getContainer(containerConfig, schema);
         const errorFn = (error) => {
             assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
             return true;
@@ -43,17 +92,18 @@ describe("TinyliciousClient Pre-Initilization", () => {
         await assert.rejects(
             containerAndServices,
             errorFn,
-            "TinyliciousClient can get a container without initialization",
+            "TinyliciousClient can load a non-existent container",
         );
     });
 
     /**
-    * Scenario: test if TinyliciousClient can create a container without being initialized.
-    *
-    * Expected behavior: an error should be thrown when trying to create a container
-    * without initializing TinyliciousClient.
-    */
-    it("create a container without initializing", async () => {
+     * Scenario: test when TinyliciousClient is instantiated correctly, it can create
+     * a container successfully.
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
+    it("can create a container and services successfully", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -61,109 +111,21 @@ describe("TinyliciousClient Pre-Initilization", () => {
                 map1: SharedMap,
             },
         };
-        const containerAndServices = TinyliciousClient.createContainer(containerConfig, schema);
-        const errorFn = (error) => {
-            assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
-            return true;
-        };
+        const containerAndServices = tinyliciousClient.createContainer(containerConfig, schema);
 
-        await assert.rejects(
+        await assert.doesNotReject(
             containerAndServices,
-            errorFn,
-            "TinyliciousClient can create a container without initialization",
-        );
-    });
-});
-
-describe("TinyliciousClient Post-Initialization", () => {
-    before(() => {
-        TinyliciousClient.init();
-    });
-
-    let documentId: string;
-    const clientConfig: TinyliciousConnectionConfig = { port: 7070 };
-    beforeEach(() => {
-        documentId = uuid();
-    });
-
-    /**
-    * Scenario: test if TinyliciousClient can get a non-exiting container.
-    *
-    * Expected behavior: an error should be thrown when trying to get a non-exisitng container.
-    */
-    it("load improperly created container (load a non-existing container)", async () => {
-        const containerConfig: TinyliciousContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-        const containerAndServices = TinyliciousClient.getContainer(containerConfig, schema);
-        const errorFn = (error) => {
-            assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
-            return true;
-        };
-
-        await assert.rejects(
-            containerAndServices,
-            errorFn,
-            "TinyliciousClient can load a non-existing container",
+            () => true,
+            "TinyliciousClient cannot create container and services successfully",
         );
     });
 
     /**
-    * Scenario: test if TinyliciousClient can be initialized with a port number specified.
-    *
-    * Expected behavior: returned container should not be undefined.
-    */
-    it("create a container successfully with port number specification", async () => {
-        TinyliciousClient.init(clientConfig);
-        const containerConfig: TinyliciousContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
-        await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
-        assert.notStrictEqual(container, undefined, "container cannot be created with port number");
-    });
-
-    /**
-    * Scenario: test when TinyliciousClient is initialized correctly, it can create
-    * a container successfully.
-    *
-    * Expected behavior: returned container should not be undefined.
-    */
-    it("can create a container successfully", async () => {
-        const containerConfig: TinyliciousContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
-        await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
-        assert.notStrictEqual(container, undefined, "Container cannot be created");
-    });
-
-    /**
-    * Scenario: Given the container already exists, test that TinyliciousClient can get the existing container
-    * when provided with valid ContainerConfig and ContainerSchema.
-    *
-    * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
-    */
+     * Scenario: Given the container already exists, test that TinyliciousClient can get the existing container
+     * when provided with valid ContainerConfig and ContainerSchema.
+     *
+     * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
+     */
     it("can get a container successfully", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
@@ -172,68 +134,27 @@ describe("TinyliciousClient Post-Initialization", () => {
                 map1: SharedMap,
             },
         };
-        const [containerCreate] = await TinyliciousClient.createContainer(containerConfig, schema);
+
+        const containerCreate = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
-        const [containerGet] = await TinyliciousClient.getContainer(containerConfig, schema);
+
+        const containerGet = (await tinyliciousClient.getContainer(containerConfig, schema)).fluidContainer;
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
     });
 
     /**
-    * Scenario: test if given the appropriate COntainerConfig and ContainerSchema,
-    * TinyliciousClient.createContainer will return the a valid ContainerServices.
-    *
-    * Expected behavior: the returned containerServices should not be undefined
-    */
-    it("can get containerServices successfully", async () => {
-        const containerConfig: TinyliciousContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-        const [,containerService] = await TinyliciousClient.createContainer(containerConfig, schema);
-        assert.notStrictEqual(containerService, undefined, "ContainerServices invalid");
-    });
-
-    /**
-    * Scenario: test if an initialized TinyliciousClient can create container successfully when
-    * it is already initialized.
-    *
-    * Expected behavior: TinyliciousClient should use the existing instance instead of creating
-    * a new instance, then proceed to create a container.
-    */
-    it("initializing an initialized TinyliciousClient", async () => {
-        TinyliciousClient.init(clientConfig);
-        const containerConfig: TinyliciousContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
-        await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
-        assert.notStrictEqual(container, undefined, "container is connected");
-    });
-
-    /**
-    * Scenario: test if the container can be created with an empty id in ContainerConfig
-    * and an empty name in ContainerSchema.
-    *
-    * Expected behavior: TinyliciousClient should throw an error
-    */
-    it("create container with empty id in containerConfig", async () => {
+     * Scenario: test if the container can be created with an empty id in ContainerConfig
+     * and an empty name in ContainerSchema.
+     *
+     * Expected behavior: TinyliciousClient should throw an error
+     */
+    it("cannot create container with empty id in containerConfig", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: "" };
         const schema: ContainerSchema = {
             name: "",
@@ -241,7 +162,7 @@ describe("TinyliciousClient Post-Initialization", () => {
                 map1: SharedMap,
             },
         };
-        const containerAndServices = TinyliciousClient.createContainer(containerConfig, schema);
+        const containerAndServices = tinyliciousClient.createContainer(containerConfig, schema);
         const errorFn = (error) => {
             assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
             return true;
@@ -254,13 +175,13 @@ describe("TinyliciousClient Post-Initialization", () => {
         );
     });
 
-   /**
-    * Scenario: test if the initial objects that are passed in as parameter can be
-    * returned by the container.
-    *
-    * Expected behavior: initialObject ID is not empty.
-    */
-    it("use container to retrieve initial objects", async () => {
+    /**
+     * Scenario: test if initialObjects passed into the container functions correctly.
+     *
+     * Expected behavior: initialObjects value loaded in two different containers should mirror
+     * each other after value is changed.
+     */
+     it("can change initialObjects value", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -268,26 +189,34 @@ describe("TinyliciousClient Post-Initialization", () => {
                 map1: SharedMap,
             },
         };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
+
+        const containerCreate = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
+            containerCreate.on("connected", () => {
                 resolve();
             });
         });
-        const initialObjects = container.initialObjects;
-        const map1 = initialObjects.map1 as SharedMap;
-        assert.notStrictEqual(map1.id, "", "container can't connect with dynamic objects");
+
+        const initialObjectsCreate = containerCreate.initialObjects;
+        const map1Create = initialObjectsCreate.map1 as SharedMap;
+        map1Create.set("new-key", "new-value");
+        const valueCreate = await map1Create.get("new-key");
+
+        const containerGet = (await tinyliciousClient.getContainer(containerConfig, schema)).fluidContainer;
+        const map1Get = containerGet.initialObjects.map1 as SharedMap;
+        const valueGet = await map1Get.get("new-key");
+        assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
     });
 
     /**
-    * Scenario: test if the optional schema parameter, dynamicObjectTypes (DDS),
-    * can be added during runtime and be returned by the container.
-    *
-    * Expected behavior: added loadable object can be retreived from the container. Loadable
-    * object's id and containeronfig ID should be identical since it's now attached to
-    * the container.
-    */
-    it("create/add loadable objects (DDS) dynamically during runtime", async () => {
+     * Scenario: test if the optional schema parameter, dynamicObjectTypes (DDS),
+     * can be added during runtime and be returned by the container.
+     *
+     * Expected behavior: added loadable object can be retrieved from the container. Loadable
+     * object's id and containeronfig ID should be identical since it's now attached to
+     * the container.
+     */
+    it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -296,7 +225,9 @@ describe("TinyliciousClient Post-Initialization", () => {
             },
             dynamicObjectTypes: [ SharedDirectory ],
         };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
+
+        const container = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
+
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();
@@ -310,14 +241,14 @@ describe("TinyliciousClient Post-Initialization", () => {
     });
 
     /**
-    * Scenario: test if the optional schema parameter, dynamicObjectTypes (custom data object),
-    * can be added during runtime and be returned by the container.
-    *
-    * Expected behavior: added loadable object can be retreived from the container. Loadable
-    * object's id and containeronfig ID should be identical since it's now attached to
-    * the container.
-    */
-    it("create/add loadable objects (custom data object) dynamically during runtime", async () => {
+     * Scenario: test if the optional schema parameter, dynamicObjectTypes (custom data objects),
+     * can be added during runtime and be returned by the container.
+     *
+     * Expected behavior: added loadable object can be retrieved from the container. Loadable
+     * object's id and containeronfig ID should be identical since it's now attached to
+     * the container.
+     */
+    it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
         const containerConfig: TinyliciousContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -326,14 +257,15 @@ describe("TinyliciousClient Post-Initialization", () => {
             },
             dynamicObjectTypes: [ DiceRoller ],
         };
-        const [container] = await TinyliciousClient.createContainer(containerConfig, schema);
+
+        const createFluidContainer = (await tinyliciousClient.createContainer(containerConfig, schema)).fluidContainer;
         await new Promise<void>((resolve, reject) => {
-            container.on("connected", () => {
+            createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
-        const map1 = container.initialObjects.map1 as SharedMap;
-        const newPair = await container.create(DiceRoller);
+        const map1 = createFluidContainer.initialObjects.map1 as SharedMap;
+        const newPair = await createFluidContainer.create(DiceRoller);
         map1.set("newpair-id", newPair.handle);
         const obj = await map1.get("newpair-id").get();
         assert.strictEqual(obj.runtime.documentId, documentId, "container added dynamic objects incorrectly");

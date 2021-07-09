@@ -14,7 +14,7 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousStorageRestWrapper } from "./restWrapper";
+import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 
 /**
@@ -84,7 +84,9 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            this.tenantId, this.documentId, this.tokenProvider, this.logger);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);
     }
