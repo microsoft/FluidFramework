@@ -54,7 +54,7 @@ Client code responsible for connecting to the Fluid service.
 
 ## Loadable Object
 
-Distributed Data Structure or DataObject
+A distributed data structure (DDS) or `DataObject`.
 
 ## URL resolver
 
