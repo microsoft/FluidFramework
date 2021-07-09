@@ -48,7 +48,7 @@ const { container, containerServices} =
 
 ### How to load a container
 
-To load the container we created in the above section we must provide the service config as well as the exact same schema definition. The same container schema is required on all subsequent loads to ensure the container is loaded correctly.
+To load the container created in the above section you must provide the service config as well as the exact same schema definition. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
 
 ```typescript
 const schema = {
