@@ -112,7 +112,7 @@ Dynamic objects are more difficult to work with than `initialObjects`, but are e
 
 Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
-### Garbage collection on de-referenced objects
+### Garbage collection on unreferenced objects
 
 Fluid automatically removes unreferenced objects from document snapshots. Cleaning up unreferenced data reduces the snapshot size, which leads to better download times and increases boot performance of a container.
 
