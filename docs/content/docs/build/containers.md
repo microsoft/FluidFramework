@@ -76,7 +76,7 @@ Deleting a container is a server specific policy and you should refer to the doc
 
 ### connected/disconnected
 
-The container exposes current connected state and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
+The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
 
 ```typescript
 const connected = container.connected();
