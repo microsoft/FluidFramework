@@ -17,7 +17,7 @@ In the below scenarios, `client` represents the service-specific client. See the
 
 ### Container schema
 
-The container schema defines the data that the container instance knows about. It includes `initialObjects` that will synchronously loaded and always available. It also includes a definition of types that can be dynamically created. The same schema definition must be provided for both. For more information on `initialObjects` and dynamically cration see [Data modeling](./data-modeling.md)
+You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see [Data modeling](./data-modeling.md).
 
 ```typescript
 const schema = {
