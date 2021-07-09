@@ -80,7 +80,7 @@ export interface ContainerSchema {
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "membersChanged", listener: () => void): void;
-    (event: "addMember" | "removeMember", listener: (clientId: string, member: M) => void): void;
+    (event: "memberAdded" | "memberRemoved", listener: (clientId: string, member: M) => void): void;
 }
 
 /**
@@ -92,6 +92,7 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
     /**
      * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
      * member object.  The implementation may choose to exclude certain connections from the returned map.
+     * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
      */
     getMembers(): Map<string, M>;
 

@@ -43,14 +43,14 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     this.audience.on("addMember", (clientId: string, details: IClient) => {
       if (this.shouldIncludeAsMember(details)) {
         const member = this.getMember(clientId);
-        this.emit("addMember", clientId, member);
+        this.emit("memberAdded", clientId, member);
         this.emit("membersChanged");
       }
     });
 
     this.audience.on("removeMember", (clientId: string) => {
       if (this.lastMembers.has(clientId)) {
-        this.emit("removeMember", clientId, this.lastMembers.get(clientId));
+        this.emit("memberRemoved", clientId, this.lastMembers.get(clientId));
         this.emit("membersChanged");
       }
     });
