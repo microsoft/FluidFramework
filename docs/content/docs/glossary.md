@@ -52,6 +52,10 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 
 Client code responsible for connecting to the Fluid service.
 
+## Loadable Object
+
+Distributed Data Structure or DataObject
+
 ## URL resolver
 
 Fluid's API surface makes use of URLs, for example in the `Loader`'s `resolve()` method and `Container`'s `request()`
