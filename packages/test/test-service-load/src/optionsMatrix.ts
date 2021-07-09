@@ -41,8 +41,9 @@ export function generateRuntimeOptions(seed: number) {
         disableIsolatedChannels: booleanCases,
         generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
-        summaryConfigOverrides:[undefined],
+        summaryConfigOverrides: [undefined],
         maxOpsSinceLastSummary: numberCases,
+        summarizerClientElection: booleanCases,
     };
 
     // Using an Omit here such that when new options are added, it is required to either explicitly omit them from
