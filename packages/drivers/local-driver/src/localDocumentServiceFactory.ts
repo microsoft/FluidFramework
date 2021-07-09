@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
