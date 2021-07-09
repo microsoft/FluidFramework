@@ -13,7 +13,7 @@ This documentation will explain how to create and load containers, the APIs to i
 
 You can create containers using APIs provided by a service-specific client package. Each service-specific client package contains a common API for manipulating containers. For example, the `tinylicious-client` package provides these APIs for the Tinylicious Fluid service. These common APIs enable you to define the container schema and retrieve the `FluidContainer` object.
 
-For the below scenarios we will be using the `client` to represent the `[service]-client` portion. For specific `[service]-client` usage see their corresponding documentation.
+In the below scenarios, `client` represents the service-specific client. See the documentation for the service you are using for more details about how to use the service-specific client.
 
 ### Container schema
 
