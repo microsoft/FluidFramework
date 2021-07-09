@@ -5,7 +5,7 @@ menuPosition: 2
 
 ## Overview
 
-The container is the primary unit of encapsulation in Fluid. It consists of a collection of Loadable Objects and supporting lifecycle APIs. The container is represented as the `FluidContainer` type.
+The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of Loadable Objects and APIs to manage the lifecyle of those objects.
 
 The below docs are broken in to `Creation & loading` and `Interaction & lifecycle`.
 
