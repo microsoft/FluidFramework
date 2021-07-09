@@ -21,17 +21,21 @@ import {
     OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
+    IOdspSnapshot,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+    createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
+    ISnapshotCacheValue,
     getOrigin,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { convertSummaryTreeToIOdspSnapshot } from "./createNewUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -97,6 +101,14 @@ export async function createNewFluidFile(
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
+
+    // caching the converted summary
+    const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
+    const value: ISnapshotCacheValue = { snapshot, sequenceNumber: 0 };
+    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+
     return resolver.resolve({ url: odspUrl });
 }
 
