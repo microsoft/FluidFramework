@@ -48,8 +48,8 @@ The `tinylicious` service is our local Fluid service. Our documentation uses `@f
 
 #### Supported service-specific client packages
 
-- `@fluid-experimental/tinylicious-client`
-- `@fluid-experimental/frs-client`
+- `@fluid-experimental/tinylicious-client` -- the client for the [Tinylicious]({{< relref "tinylicious.md" >>}}) service.
+- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay]({{< relref "azure-frs.md" >>}}) service.
 
 ### The `fluid-framework` package
 
