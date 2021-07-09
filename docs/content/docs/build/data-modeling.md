@@ -61,7 +61,7 @@ const newCell = await container.create(SharedCell); // Create a new SharedCell
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-### How to use handles to store and retrieve objects
+### Using handles to store and retrieve Fluid objects
 
 `LoadableObjects` have a `handle` property that we will use to store and retrieve them from other `LoadableObjects`. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients will be aware that it exists.
 
