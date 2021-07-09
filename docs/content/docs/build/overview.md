@@ -37,8 +37,8 @@ For more information see [Data modeling](./data-modeling.md).
 
 ## Package structure
 
-There are two primary packages to use when building with Fluid. The `fluid-framework` package
-and a specific `[service]-client` package.
+There are two primary packages you'll use when building with Fluid. The `fluid-framework` package
+and a service-specific client package like `tinylicious-client`..
 
 ### `[service]-client` packages
 
