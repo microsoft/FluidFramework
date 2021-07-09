@@ -24,6 +24,9 @@ describe("instanceOf", () => {
             expect(instanceOfObject(null)).toEqual(false);
             expect(instanceOfObject(undefined)).toEqual(false);
             expect(instanceOfObject(() => {})).toEqual(false);
+            expect(instanceOfObject(false)).toEqual(false);
+            expect(instanceOfObject("abc")).toEqual(false);
+            expect(instanceOfObject(123)).toEqual(false);
         });
     });
 
@@ -54,11 +57,11 @@ describe("instanceOf", () => {
                 unthrown.delete(label);
             }
 
-            expect([]).toMatchObject([...unthrown]);
+            expect({ unthrownLabels: [] }).toMatchObject({ unthrownLabels: [...unthrown] });
         });
 
         test("yields instance checking functions", () => {
-            const instanceOfMap = bindInstanceOfBuiltin(new Map());
+            const instanceOfMap = bindInstanceOfBuiltin(Map.prototype);
             const instanceOfError = bindInstanceOfBuiltin(new Error("..."));
 
             expect(instanceOfMap(new Map())).toEqual(true);
@@ -126,21 +129,23 @@ describe("instanceOf", () => {
 
         test("checks properly across IFrame boundaries", async () => {
             const allClaims = await page.evaluate(async () => {
-                const { ctx, instanceOf } = window as any;
-
                 Function.prototype.call = () => "foo bar";
                 Object.prototype.toString = () => "resilient to prototype manipulation";
 
+                const { ctx, instanceOfObject: isObject, bindInstanceOfBuiltin: bindIs } = window as any;
+
+                const isSet = bindIs(Set.prototype);
+
                 return {
-                    "A1: $0: new Object() instanceof Object": new Object() instanceof Object,
+                    "A1: new Object() instanceof Object": new Object() instanceof Object,
                     "A2: !(new ctx.Object() instanceof Object)": !(new ctx.Object() instanceof Object),
-                    "A3: instanceOf.Object(new Object())": instanceOf.Object(new Object()),
-                    "A4: instanceOf.Object(new ctx.Object())": instanceOf.Object(new ctx.Object()),
+                    "A3: isObject(new Object())": isObject(new Object()),
+                    "A4: isObject(new ctx.Object())": isObject(new ctx.Object()),
 
                     "B1: new Set() instanceof Set": new Set() instanceof Set,
                     "B2: !(new ctx.Set() instanceof Set)": !(new ctx.Set() instanceof Set),
-                    "B3: instanceOf.Set(new Set())": instanceOf.Set(new Set()),
-                    "B4: instanceOf.Set(new ctx.Set())": instanceOf.Set(new ctx.Set()),
+                    "B3: isSet(new Set())": isSet(new Set()),
+                    "B4: isSet(new ctx.Set())": isSet(new ctx.Set()),
                 };
             });
 

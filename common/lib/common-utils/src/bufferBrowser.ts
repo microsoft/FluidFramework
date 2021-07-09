@@ -4,10 +4,10 @@
  */
 
 import * as base64js from "base64-js";
-import { instanceOf$ } from "./instanceOf";
+import { bindInstanceOfBuiltin } from "./instanceOf";
 import { assert } from "./assert";
 
-const is = { ...instanceOf$ }; // amortize possible performance costs of property reads on frozen objects
+const instanceOfArrayBuffer = bindInstanceOfBuiltin(new ArrayBuffer(0));
 
 /**
  * Converts a Uint8Array to a string of the provided encoding
@@ -62,7 +62,7 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  */
 export function isArrayBuffer(obj: any): obj is ArrayBuffer {
     const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
-    return is.ArrayBuffer(obj)
+    return instanceOfArrayBuffer(obj)
     || (typeof maybe === "object"
         && maybe !== null
         && typeof maybe.byteLength === "number"

@@ -43,14 +43,3 @@ export function bindInstanceOfBuiltin<T>(match: T) {
 
     return (value: any): value is T => compareString === toString(value);
 }
-
-export const instanceOf$ = Object.freeze({
-    Object: instanceOfObject,
-
-    ArrayBuffer: bindInstanceOfBuiltin(ArrayBuffer.prototype),
-    Error: bindInstanceOfBuiltin(new Error("N/A")),
-    Map: bindInstanceOfBuiltin(Map.prototype),
-    Set: bindInstanceOfBuiltin(Set.prototype),
-    Uint8Array: bindInstanceOfBuiltin(new Uint8Array()),
-});
-export const instanceOf = { ...instanceOf$ } as const;
