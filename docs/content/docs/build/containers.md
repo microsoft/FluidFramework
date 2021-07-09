@@ -130,7 +130,7 @@ The drawback of this approach is that when creating a container, the service con
 
 Multiple Fluid containers can be loaded from an application or on a Web page at the same time. There are two primary scenarios where an application would use multiple containers.
 
-First, is if your application loads two different experiences that have different underlying data structures. `Experience 1` may require a `SharedMap` and `Experience 2` may requires a `SharedString`. To minimize our memory footprint we can create two different container schemas and load only what we need. In this scenario our app can load two different containers but we are only choosing to load one at a time.
+First, if your application loads two different experiences that have different underlying data structures. _Experience 1_ may require a `SharedMap` and _Experience 2_ may require a `SharedString`. To minimize the memory footprint of your application you can create two different container schemas and load only the schema you need. In this case your app can load two different containers (two different schemas) but you only load one at a time.
 
 The second scenario involves loading two containers at once. Currently, all services enable permissioning at the container level, so we can use containers as a natural boundary for restricting access. An example scenario for this would be building an education app where mutliple teachers are gathering with students. The students and teachers may have a shared view while the teachers may also want to have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
