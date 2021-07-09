@@ -8,13 +8,6 @@ import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
 import { tryImportNodeRdkafka } from "./tryImport";
 
-// The native dependency of node-rdkafka throws an error when installing in one environment (e.g., macOS) and running
-// inside another (e.g., docker ubuntu). The issue only occurs because we volume mount code directly into docker
-// for local dev flow. Using a pre-built image works fine (https://github.com/Blizzard/node-rdkafka/issues/315).
-// Because of this limitation, currently we cannot use node-rdkafka in local dev flow. So locally kafka config should
-// always point to kafka-node library. Production code can use either one of those.
-const kafka = tryImportNodeRdkafka();
-
 export interface IKafkaBaseOptions {
 	numberOfPartitions: number;
 	replicationFactor: number;
@@ -26,6 +19,7 @@ export interface IKafkaEndpoints {
 }
 
 export abstract class RdkafkaBase extends EventEmitter {
+    protected readonly kafka: typeof kafkaTypes;
 	private readonly options: IKafkaBaseOptions;
 
 	constructor(
@@ -36,10 +30,12 @@ export abstract class RdkafkaBase extends EventEmitter {
 	) {
 		super();
 
+        const kafka = tryImportNodeRdkafka();
 		if (!kafka) {
 			throw new Error("Invalid node-rdkafka package");
 		}
 
+        this.kafka = kafka;
 		this.options = {
 			...options,
 			numberOfPartitions: options?.numberOfPartitions ?? 32,
@@ -68,7 +64,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 	}
 
 	protected async ensureTopics() {
-		const adminClient = kafka.AdminClient.create({
+		const adminClient = this.kafka.AdminClient.create({
 			"client.id": `${this.clientId}-admin`,
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 		});
@@ -83,7 +79,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 			adminClient.createTopic(newTopic, 10000, (err) => {
 				adminClient.disconnect();
 
-				if (err && err.code !== kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
+				if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
 					reject(err);
 				} else {
 					resolve();
