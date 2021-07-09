@@ -67,7 +67,7 @@ All `LoadableObjects` have a `handle` property that can be used to store and ret
 
 Dynamically created objects need to be stored on an already connected `LoadableObject`, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense `LoadableObjects` are arbitrarily nestable.
 
-When retrieving the object you need to first get the handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data under the hood; only loading objects when they are requested. 
+When retrieving dynamically created objects you need to first get the object's handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
 ```typescript
 const schema = {
