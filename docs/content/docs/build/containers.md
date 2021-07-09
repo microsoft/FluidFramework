@@ -64,7 +64,7 @@ const { container, containerServices} = await client.getContainer(/*service conf
 
 ### Attaching a container
 
-Once the `createContainer` call resolves the container is connected to the service (attached) and available to collaborative. 
+Once the `createContainer` or `loadContainer` function calls complete, the returned container is _attached_ -- that is, it  is connected to the Fluid service -- and ready to power collaboration. 
 
 We are currently working on an advanced scenario where containers can be created locally before persisting them to the server. The primary use case for this is if a client want's to draft the initial state of a container before other collaborators enter.
 
