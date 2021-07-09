@@ -46,7 +46,7 @@ const schema = {
 const { container, containerServices} =
     await client.createContainer(/*service config*/, schema);
 
-### How to load a container
+### Loading a container
 
 To load the container created in the above section you must provide the service config as well as the exact same schema definition. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
 
