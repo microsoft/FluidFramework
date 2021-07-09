@@ -65,7 +65,7 @@ const newMap = await container.create(SharedMap); // Create a new SharedMap
 
 All `LoadableObjects` have a `handle` property that can be used to store and retrieve them from other `LoadableObjects`. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 
-Dynamically created objects need to be stored on an already connected object. The most common case it to store it on an initial object, because they are connected on creation, but you can also store new objects to other connect dynamic objects. In this sense `LoadableObjects` are nestable.
+Dynamically created objects need to be stored on an already connected `LoadableObject`, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense `LoadableObjects` are arbitrarily nestable.
 
 When retrieving the object you need to first get the handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data under the hood; only loading objects when they are requested. 
 
