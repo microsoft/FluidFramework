@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const toString: (value: any) => string = (value) => Object.prototype.toString.call(value);
+/**
+ * Attempt to pin "load-time" implementations of call and toString to avoid
+ * behavior changes at "run-time" caused by unexpected prototype manipulation
+ */
+const pinnedObjectToString: (value: any) => string = Function.prototype.call.bind(
+    Object.prototype.toString, // eslint-disable-line @typescript-eslint/unbound-method
+);
+
+const toString: (value: any) => string = (value) => pinnedObjectToString(value);
+
 const objectString = toString(Object.prototype);
 
 /**
@@ -35,10 +44,7 @@ export function bindInstanceOfBuiltin<T>(match: T) {
     return (value: any): value is T => compareString === toString(value);
 }
 
-// RFC:
-// Object.freeze?  Non-configurable getters?  Individual exports?
-// How "hostile" should the environment be treated?
-export const instanceOf = {
+export const instanceOf$ = Object.freeze({
     Object: instanceOfObject,
 
     ArrayBuffer: bindInstanceOfBuiltin(ArrayBuffer.prototype),
@@ -46,4 +52,5 @@ export const instanceOf = {
     Map: bindInstanceOfBuiltin(Map.prototype),
     Set: bindInstanceOfBuiltin(Set.prototype),
     Uint8Array: bindInstanceOfBuiltin(new Uint8Array()),
-};
+});
+export const instanceOf = { ...instanceOf$ };

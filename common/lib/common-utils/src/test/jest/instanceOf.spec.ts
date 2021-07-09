@@ -128,6 +128,9 @@ describe("instanceOf", () => {
             const allClaims = await page.evaluate(async () => {
                 const { ctx, instanceOf } = window as any;
 
+                Function.prototype.call = () => "foo bar";
+                Object.prototype.toString = () => "resilient to prototype manipulation";
+
                 return {
                     "A1: $0: new Object() instanceof Object": new Object() instanceof Object,
                     "A2: !(new ctx.Object() instanceof Object)": !(new ctx.Object() instanceof Object),
@@ -144,7 +147,7 @@ describe("instanceOf", () => {
             // Array<string> (one for each falsey claim -- should be empty)
             const falsyClaims = Object.entries(allClaims).filter(([_, ok]) => !ok).map(([label]) => label);
 
-            expect([]).toMatchObject(falsyClaims);
+            expect({ falsyClaims: [] }).toMatchObject({ falsyClaims });
         });
     });
 });
