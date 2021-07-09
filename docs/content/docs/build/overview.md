@@ -27,7 +27,7 @@ The container is the primary unit of encapsulation in Fluid. It consists of a co
 
 New containers require client driven action for creation. Container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
 
-For more on containers see [Containers](./containers.md)
+For more about containers see [Containers](./containers.md).
 
 ### Loadable Objects
 
