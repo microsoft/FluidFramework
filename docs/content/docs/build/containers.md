@@ -19,7 +19,7 @@ In the below scenarios, `client` represents the service-specific client. See the
 
 You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see [Data modeling](./data-modeling.md).
 
-This example schema defines two initial objects, and also enables the container to create additional `SharedCell`s and `SharedString`s at runtime.
+This example schema defines two initial objects, and declares `SharedCell` and `SharedString` as shared object types that can be dynamically created at runtime.
 
 ```typescript
 const schema = {
