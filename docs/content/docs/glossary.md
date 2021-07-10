@@ -52,7 +52,7 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 
 Client code responsible for connecting to the Fluid service.
 
-## Loadable Object
+## Shared object
 
 A distributed data structure (DDS) or `DataObject`.
 

@@ -5,7 +5,7 @@ menuPosition: 2
 
 ## Overview
 
-The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of Loadable Objects and APIs to manage the lifecyle of those objects.
+The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of shared objects and APIs to manage the lifecyle of those objects.
 
 This documentation will explain how to create and load containers, the APIs to interact with them, and the overall container lifecycle.```
 
@@ -45,6 +45,7 @@ const schema = {
 }
 const { container, containerServices} =
     await client.createContainer(/*service config*/, schema);
+```
 
 ### Loading a container
 
@@ -61,6 +62,7 @@ const schema = {
 }
 const { container, containerServices} =
     await client.getContainer(/*service config*/, schema);
+```
 
 ### Attaching a container
 
@@ -106,13 +108,28 @@ container.on("disposed", () => {
 
 ### initialObjects
 
-`initialObjects` are the base set of `LoadableObjects` in a container. They exist for the lifetime of the container and are guaranteed to be available and loadable. They are defined via the container schema and match the signature on the schema. 
+`initialObjects` are shared objects that you define in a container's schema and exist for the lifetime of the container. These shared objects are exposed via the `initialObjects` property on the container.
+
+```typescript
+const schema = {
+    name: "example-container",
+    initialObjects: {
+        layout: SharedMap,
+        text: SharedString
+    },
+}
+
+// ...
+
+const layout = container.initialObjects.layout;
+const text = container.initialObjects.text;
+```
 
 For more information about `initialObjects` see [Data modeling](data-modeling.md).
 
 ### create
 
-The container also exposes a create function that allows dynamic `LoadableObject` creation. This enables containers to create Fluid objects dynamically at runtime.
+The container also exposes a create function that allows dynamic creation of shared objects. This enables containers to create Fluid objects dynamically at runtime.
 
 For more information about dynamic object creation see [Data modeling](data-modeling.md).
 

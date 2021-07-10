@@ -9,7 +9,7 @@ There are three primary concepts to understand when building an application with
 
 - Service
 - Container
-- `LoadableObjects`
+- Shared objects
 
 ### Service
 
@@ -23,15 +23,15 @@ See [Supported [service]-client packages](#Supported-`[service]-client`-packages
 
 ### Container
 
-The container is the primary unit of encapsulation in Fluid. It consists of a collection of `LoadableObjects` and supporting APIs to manage the lifecycle of the container and the objects within it.
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of shared objects and supporting APIs to manage the lifecycle of the container and the objects within it.
 
 New containers require a client-driven action. Container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
 
 For more about containers see [Containers](./containers.md).
 
-### `LoadableObjects`
+### Shared objects
 
-A `LoadableObject` is a specific object that powers collaborative data by exposing a specific API. Many Loadable Objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures and DataObjects are both types of Loadable Objects.
+A Shared object is a object type that powers collaborative data by exposing a specific API. Many shared objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures(DDSes) and DataObjects are both types of shared objects.
 
 For more information see [Data modeling](./data-modeling.md).
 
@@ -53,4 +53,4 @@ The `tinylicious` service is our local Fluid service. Our documentation uses `@f
 
 ### The `fluid-framework` package
 
-The `fluid-framework` package is a collection of core Fluid packages that make it easy to build and use applications. This package contains all the common type definitions as well as all the primitive `LoadableObjects`.
+The `fluid-framework` package is a collection of core Fluid packages that make it easy to build and use applications. This package contains all the common type definitions as well as all the primitive shared objects.

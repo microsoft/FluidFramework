@@ -1,6 +1,6 @@
 ---
 title: Build a custom data object
-menuPosition: 5
+menuPosition: 6
 draft: true
 ---
 
