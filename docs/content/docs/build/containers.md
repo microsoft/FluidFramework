@@ -64,7 +64,7 @@ const { container, containerServices} =
 
 ### Attaching a container
 
-Once the `createContainer` or `loadContainer` function calls complete, the returned container is _attached_ -- that is, it  is connected to the Fluid service -- and ready to power collaboration. 
+Once the `createContainer` or `loadContainer` function calls complete, the returned container is _attached_ -- that is, it is connected to the Fluid service -- and ready to power collaboration. 
 
 ### Deleting a container
 
