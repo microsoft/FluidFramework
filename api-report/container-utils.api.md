@@ -58,12 +58,15 @@ export class GenericError extends LoggingError implements IGenericError {
 
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
-    constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
+    constructor(message: string, retryAfterSeconds: number, originalError: unknown, // for logging
+    props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
+    readonly originalError: unknown;
+    // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+    static wrap(error: unknown, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
 }
 
 // @public

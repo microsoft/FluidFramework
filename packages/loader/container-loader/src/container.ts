@@ -92,6 +92,7 @@ import {
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
+    isILoggingError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -947,7 +948,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
         if (warning.logged !== true) {
-            this.logContainerError(warning);
+            this.logContainerWarning(warning);
         }
         this.emit("warning", warning);
     }
@@ -1879,7 +1880,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Please avoid calling it directly.
     // raiseContainerWarning() is the right flow for most cases
-    private logContainerError(warning: ContainerWarning) {
-        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+    private logContainerWarning(warning: ContainerWarning & { originalError?: unknown }) {
+        // ContainerWarnings typically wrap whatever specific error was caught,
+        // And expose a different errorType to consumers of the warning event.
+        // Let's log the original error "as-is" here if present
+        if (warning.originalError !== undefined) {
+            const warningProps = isILoggingError(warning) ? warning.getTelemetryProperties() : {};
+            this.logger.sendErrorEvent({
+                    eventName: "ContainerWarning",
+                    warningErrorType: warning.errorType,
+                    warningErrorMessage: warning.message,
+                    warningProps: JSON.stringify(warningProps),
+                },
+                warning.originalError);
+        } else {
+            this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+        }
     }
 }

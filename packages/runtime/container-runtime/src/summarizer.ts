@@ -77,12 +77,16 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     readonly errorType = summarizingError;
     readonly canRetry = true;
 
-    constructor(errorMessage: string, readonly logged: boolean = false) {
+    constructor(
+        errorMessage: string,
+        readonly logged: boolean = false,
+        public readonly originalError?: unknown, // for logging
+    ) {
         super(errorMessage);
     }
 
     static wrap(error: any, logged: boolean = false) {
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged, error);
         return wrapError<SummarizingWarning>(error, newErrorFn);
     }
 }
