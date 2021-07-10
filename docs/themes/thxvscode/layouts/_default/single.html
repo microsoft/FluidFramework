@@ -2,37 +2,32 @@
 {{ partial "header.html" . }}
 {{ end }}
 
-
 {{ define "main" }}
 
-<!-- sections.bodyTag-->
-<!-- EU Cookie Compliance JS -->
-<script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
+{{ $hasContent := gt (len .Content) 0 }}
 
-<!-- > cookie-header  -->
-<main role="main" id="main-content">
-    {{- if (or .Site.Params.images .Site.Params.bgImg) }}
-    <div class="bg-img"></div>
-    {{- end }}
-
-    <div class="container body-content docs">
-        <div class="row">
-            <div class="col-md-2 docs-navbar-container">{{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.start "mainURL" "start") }}</div>
-            <div class="col-sm-9 col-md-8 body">
-                <div>
-                    <h1>{{.Title}}</h1>
-                </div>
-                <div>
-                    {{ .Content }}
-                </div>
+<div class="container body-content docs">
+    <div class="row">
+        {{ partial "navbar.html" . }}
+        <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
+            <div>
+                <h1>{{.Title}}</h1>
             </div>
-
-            <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
-                {{ partial "toc.html"  .}}
+            <div>
+                {{ if and $hasContent (ne .Params.status "placeholder")}}
+                {{ .Content }}
+                {{ else }}
+                {{ partial "empty.html" }}
+                {{ .Content }}
+                {{ end }}
             </div>
         </div>
+
+        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
+            {{ partial "toc.html"  .}}
+        </div>
     </div>
-</main>
+</div>
 
 {{ block "footer" . -}}{{ end }}
 {{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}

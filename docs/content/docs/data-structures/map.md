@@ -1,6 +1,7 @@
 ---
 title: SharedMap
 menuPosition: 4
+status: placeholder
 ---
 
 Directory usage guide.

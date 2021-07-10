@@ -1,8 +1,7 @@
 ---
 title: Glossary
 aliases:
-  - "/docs/glossary/"
-  - "/docs/start/glossary/"
+  - "/start/glossary/"
 
 ---
 

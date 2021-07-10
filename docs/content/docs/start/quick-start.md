@@ -85,5 +85,5 @@ We use the following Fluid packages in this quickstart:
 - `@fluidframework/map`
 - `tinylicious`
   - Note: Tinylicious is only a development dependency, since it is the
-    [service]({{< relref "/docs/concepts/service.md" >}}) used when developing your Fluid app. You can install it as
+    [service]({{< relref "service.md" >}}) used when developing your Fluid app. You can install it as
     a development dependency using `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`.

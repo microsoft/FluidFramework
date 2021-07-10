@@ -40,49 +40,31 @@ menu:
     url: "/playground/"
     weight: -40
 
-  # start:
-  # - identifier: "quick-start"
-  #   name: "Quick Start"
-  #   url: "/start/quick-start/"
-  #   weight: -800
-  # - identifier: "tutorial"
-  #   name: "Tutorial"
-  #   url: "/start/tutorial/"
-  #   weight: -700
-  # - identifier: "recipes"
-  #   name: "Recipes"
-  #   weight: -200
-  # - identifier: "examples"
-  #   name: "Examples"
-  #   url: "/start/examples/"
-  #   weight: -600
+  old_section:
+  - identifier: "quick-start"
+    name: "Quick Start"
+    url: "/start/quick-start/"
+    weight: -800
+  - identifier: "tutorial"
+    name: "Tutorial"
+    url: "/start/tutorial/"
+    weight: -700
+  - identifier: "examples"
+    name: "Examples"
+    url: "/start/examples/"
+    weight: -600
 
   # this menu supplements one generated in the apiNav partial
-  docs:
+  section:
   - identifier: "start"
     name: "Getting started"
     weight: -800
-  # - identifier: "quick-start"
-  #   name: "Quick Start"
-  #   url: "/docs/start/quick-start/"
-  #   weight: -800
-  # - identifier: "tutorial"
-  #   name: "Tutorial"
-  #   url: "/docs/start/tutorial/"
-  #   weight: -800
   - identifier: "recipes"
     name: "Recipes"
     weight: -700
-    # url: "/docs/recipes/"
   - identifier: "build"
     name: "Build with Fluid"
     weight: -600
-  # - identifier: "concepts"
-  #   name: "Concepts"
-  #   weight: -300
-  # - identifier: "advanced"
-  #   name: "Advanced"
-  #   weight: -400
   - identifier: "testing"
     name: "Testing"
     weight: -500
@@ -97,11 +79,11 @@ menu:
     weight: -200
   - identifier: "faq"
     name: "FAQ"
-    url: "/start/faq/"
+    url: "/docs/faq/"
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/start/glossary/"
+    url: "/docs/glossary/"
     weight: -90
 
 markup:
