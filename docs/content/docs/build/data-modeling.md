@@ -13,7 +13,7 @@ The most straightforward way to use Fluid is by defining initial shared objects 
 
 ### When to use `initialObjects`
 
-`initialObjects` are the most straightforward way to use Fluid and serve as a base foundation for a Fluid schema. Your schema must include one initial object and in many cases, `initialObjects` is sufficient to build a Fluid application.
+`initialObjects` are the most straightforward way to use Fluid and serve as a base foundation for a Fluid schema. Your schema must include one initial object and in many cases `initialObjects` is sufficient to build a Fluid application.
 
 ### Example usage
 
