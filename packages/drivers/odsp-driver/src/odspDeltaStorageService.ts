@@ -74,6 +74,8 @@ export class OdspDeltaStorageService {
                 duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,
+                from,
+                to,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
@@ -129,13 +131,6 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                         opsFromSnapshot = messages.length;
                         return { messages, partialResult: true };
                     }
-                    this.logger.sendErrorEvent({
-                        eventName: "SnapshotOpsNotUsed",
-                        length: this.snapshotOps.length,
-                        first: this.snapshotOps[0].sequenceNumber,
-                        from,
-                        to,
-                    });
                     this.snapshotOps = undefined;
                 }
 
