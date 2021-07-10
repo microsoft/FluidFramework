@@ -32,7 +32,7 @@ const schema = {
 }
 ```
 
-### How to create a container
+### Creating a container
 
 Containers are created from the service-specific client's `createContainer` function. You must provide a config that is specific to the service and a schema object that defines the container schema.
 
