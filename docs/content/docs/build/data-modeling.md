@@ -65,6 +65,8 @@ Dynamically created objects need to be stored on an already connected shared obj
 
 When retrieving dynamically created objects you need to first get the object's handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
+This example shows creating a new `SharedCell` and storing it in the `SharedMap` initial object using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new `SharedCell` being added to the Map.
+
 ```typescript
 const schema = {
     name: "example-container",
