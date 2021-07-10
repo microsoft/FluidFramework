@@ -9,7 +9,7 @@ Fluid offers flexible ways to model your collaborative data. Shared objects can 
 
 The most straightforward way to use Fluid is by defining initial shared objects that are created when the `FluidContainer` is created, and exist for the lifetime of the underlying container.
 
-`initialObjects` are always _connected_ -- that is, they are connected to the Fluid service are fully collaborative -- and you can access them via the `initialObjects` property on the `FluidContainer`. The `initialObjects` are defined in the container schema and have the same signature as defined in the schema.
+`initialObjects` are always _connected_ -- that is, they are connected to the Fluid service and are fully collaborative. You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property has the same signature as defined in the schema.
 
 ### When to use `initialObjects`
 
