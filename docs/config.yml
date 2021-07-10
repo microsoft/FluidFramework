@@ -79,11 +79,11 @@ menu:
     weight: -200
   - identifier: "faq"
     name: "FAQ"
-    url: "/start/faq/"
+    url: "/docs/faq/"
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/start/glossary/"
+    url: "/docs/glossary/"
     weight: -90
 
 markup:

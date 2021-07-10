@@ -1,5 +1,5 @@
 ---
-title: Overview of distributed data structures
+title: Types of distributed data structures
 menuPosition: 1
 ---
 
@@ -145,7 +145,13 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 ## Experimental data structures
 
-{{< BetaFlag >}}
+{{< callout "note" "Experimental" "🧪" >}}
+
+This page is about **EXPERIMENTAL** work.
+
+We think it's close to being ready, so we wanted to show it to you early, but the API surface will likely break!
+
+{{< /callout >}}
 
 ### Property DDS
 

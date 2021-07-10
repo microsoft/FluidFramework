@@ -1,8 +1,7 @@
 ---
 title: Frequently Asked Questions
 aliases:
-  - "/docs/faq/"
-  - "/docs/start/faq/"
+  - "/start/faq/"
 ---
 
 The following are short, sometimes superficial, answers to some of the most commonly asked questions about the Fluid

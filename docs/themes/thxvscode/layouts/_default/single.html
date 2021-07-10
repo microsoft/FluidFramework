@@ -3,6 +3,9 @@
 {{ end }}
 
 {{ define "main" }}
+
+{{ $hasContent := gt (len .Content) 0 }}
+
 <div class="container body-content docs">
     <div class="row">
         {{ partial "navbar.html" . }}
@@ -11,7 +14,12 @@
                 <h1>{{.Title}}</h1>
             </div>
             <div>
+                {{ if and $hasContent (ne .Params.status "placeholder")}}
                 {{ .Content }}
+                {{ else }}
+                {{ partial "empty.html" }}
+                {{ .Content }}
+                {{ end }}
             </div>
         </div>
 
