@@ -40,10 +40,8 @@ Containers are created from the service-specific client's `createContainer` func
 const schema = {
     name: "example-container",
     initialObjects: {
-        layout: SharedDirectory,
-        text: SharedString
+        layout: SharedMap,
     },
-    dynamicObjectTypes: [ SharedCell, SharedString ],
 }
 const { container, containerServices} =
     await client.createContainer(/*service config*/, schema);
@@ -57,10 +55,8 @@ To load the container created in the above section you must provide the service 
 const schema = {
     name: "example-container",
     initialObjects: {
-        layout: SharedDirectory,
-        text: SharedString
+        layout: SharedMap,
     },
-    dynamicObjectTypes: [ SharedCell, SharedString ],
 }
 const { container, containerServices} =
     await client.getContainer(/*service config*/, schema);
