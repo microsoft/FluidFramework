@@ -59,7 +59,7 @@ const newMap = await container.create(SharedMap); // Create a new SharedMap
 
 ### Using handles to store and retrieve Fluid objects
 
-All shared objects have a `handle` property that can be used to store and retrieve them from other shared object. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
+All shared objects have a `handle` property that can be used to store and retrieve them from other shared objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 
 Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable.
 
