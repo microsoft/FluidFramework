@@ -1,6 +1,6 @@
 ---
 title: User presence and audience
-menuPosition: 6
+menuPosition: 5
 ---
 
 ## What is Audience

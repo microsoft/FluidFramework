@@ -3,26 +3,109 @@ title: Data modeling
 menuPosition: 3
 ---
 
-## Defining initialObjects
+Fluid offers flexible ways to model your collaborative data. Shared objects can be declaratively defined in the `initialObjects` or dynamically created at runtime.
 
-### When to use initialObjects
+## Defining `initialObjects`
+
+The most straightforward way to use Fluid is by defining initial shared objects that are created when the `FluidContainer` is created, and exist for the lifetime of the underlying container.
+
+`initialObjects` are always _connected_ -- that is, they are connected to the Fluid service and are fully collaborative. You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property has the same signature as defined in the schema.
+
+### When to use `initialObjects`
+
+`initialObjects` are the most straightforward way to use Fluid and serve as a base foundation for a Fluid schema. Your schema must include one initial object and in many cases `initialObjects` is sufficient to build a Fluid application.
+
+### Example usage
+
+The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
+
+```typescript
+const schema = {
+    name: "example-container",
+    initialObjects: {
+        customMap: SharedMap,
+        "custom-cell": SharedCell,
+    }
+}
+
+const { container, containerServices } = await client.createContainer(/*service config*/, schema);
+
+const initialObjects = container.initialObjects;
+const map = container.initialObjects.customMap;
+const cell = container.initialObjects["custom-cell"];
+```
 
 ## Dynamic objects
 
+A shared object can be created dynamically by the container at runtime. Dynamic objects are both created and loaded dynamically and are always stored as references within another shared object. In other words, a container can create an object dynamically, and you must store references to those objects within another shared object.
+
+### Creating a dynamic object
+
+A `FluidContainer` object has a `create` function that takes a shared object type and will return a new shared object. The `FluidContainer` can only create types defined in the `dynamicObjectTypes` section of the container schema. 
+
+Dynamically created objects are local only (in-memory) and need to be stored on a connected shared object before being collaborative.
+
+```typescript
+const schema = {
+    /*...*/,
+    dynamicObjectTypes: [ SharedCell, SharedMap ],
+}
+
+const { container, containerServices } = await client.getContainer(/*service config*/, schema);
+
+const newCell = await container.create(SharedCell); // Create a new SharedCell
+const newMap = await container.create(SharedMap); // Create a new SharedMap
+```
+
+### Using handles to store and retrieve Fluid objects
+
+All shared objects have a `handle` property that can be used to store and retrieve them from other shared objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
+
+Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable.
+
+When retrieving dynamically created objects you need to first get the object's handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+
+This example shows creating a new `SharedCell` and storing it in the `SharedMap` initial object using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new `SharedCell` being added to the Map.
+
+```typescript
+const schema = {
+    name: "example-container",
+    initialObjects: {
+        map: SharedMap,
+    },
+    dynamicObjectTypes: [ SharedCell ],
+}
+
+const { container, containerServices } = await client.getContainer(/*service config*/, schema);
+const map = container.initialObjects.map;
+
+const newCell = await container.create(SharedCell); // Create a new SharedCell
+map.set("cell-id", newCell.handle); // Attach the new SharedCell 
+
+// ...
+
+const cellHandle = map.get("cell-id"); // Get the handle
+const cell = await cellHandle.get(); // Resolve the handle to get the object
+
+// or
+
+const cell = await map.get("cell-id").get(); // Get and resolve handle
+
+// Listening for new dynamic objects
+
+map.on("valueChanged", (changed) => {
+    if (changed.key === "cell-id") {
+        const handle = map.get(changed.key);
+        handle.get().then((cell) => {
+            // ...
+        });
+    }
+}
+
+```
+
 ### When to use dynamic objects
+ 
+Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded. Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
-### How to create an object
-
-### How to use handles to store objects
-
-### Garbage collection on de-referenced objects
-
-## Patterns for modeling data
-
-### When to use initialObjects vs dynamicObjects
-
-### When to use one vs multiple objects
-
-### Data objects are nestable
-
-## Versioning and upgrading schema
+An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.
