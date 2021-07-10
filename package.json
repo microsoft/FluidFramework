@@ -84,7 +84,7 @@
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "forever": "^3.0.4",
-    "lerna": "^3.14.1",
+    "lerna": "^4.0.0",
     "markdown-magic": "^1.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",

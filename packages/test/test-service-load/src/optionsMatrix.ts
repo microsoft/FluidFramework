@@ -41,18 +41,14 @@ export function generateRuntimeOptions(seed: number) {
         disableIsolatedChannels: booleanCases,
         generateSummaries: [true],
         initialSummarizerDelayMs: numberCases,
-        summaryConfigOverrides:[undefined],
+        summaryConfigOverrides: [undefined],
         maxOpsSinceLastSummary: numberCases,
     };
 
-    // Using an Omit here such that when new options are added, it is required to either explicitly omit them from
-    // the stress test matrix or else define the options matrix.
-    type OptionsUnderTest = Omit<IContainerRuntimeOptions, "addGlobalAgentSchedulerAndLeaderElection">;
-
-    const runtimeOptionsMatrix: OptionsMatrix<OptionsUnderTest> = {
+    const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
     };
 
-    return generatePairwiseOptions<OptionsUnderTest>(runtimeOptionsMatrix, seed);
+    return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);
 }

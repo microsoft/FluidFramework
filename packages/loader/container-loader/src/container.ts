@@ -129,6 +129,13 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     loadMode?: IContainerLoadMode;
+    /**
+     * Create the container on load, without an existing snapshot.
+     * Used only for supporting legacy scenarios.
+     *
+     * @deprecated - avoid using this flow, this property is only for temporarily supporting a legacy scenario.
+     */
+    createOnLoad?: boolean;
 }
 
 export interface IContainerConfig {
@@ -321,7 +328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState)
+                container.load(version, mode, pendingLocalState, loadOptions.createOnLoad)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -396,7 +403,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager;
-    private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private readonly _audience: Audience;
 
@@ -535,13 +541,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get codeDetails(): IFluidCodeDetails | undefined {
         return this._context?.codeDetails ?? this.getCodeDetailsFromQuorum();
-    }
-
-    /**
-     * Flag indicating whether the document already existed at the time of load
-     */
-    public get existing(): boolean | undefined {
-        return this._existing;
     }
 
     /**
@@ -734,14 +733,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.service?.dispose(error);
 
         if (error !== undefined) {
-            // Log current sequence number - useful if we have access to a file to understand better
-            // what op caused trouble (if it's related to op processing).
-            // Runtime may provide sequence number as part of error object - this may not match DeltaManager
-            // knowledge as old ops are processed when data stores / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
+                    lastSequenceNumber: this._deltaManager.lastSequenceNumber,
                 },
                 error,
             );
@@ -832,7 +827,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     "containerAttach",
                     (id: string) => this._deltaManager.refreshDelayInfo(id),
                     (id: string, delayMs: number, error: any) =>
-                        this._deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
+                        this._deltaManager.emitDelayInfo(id, delayMs, error),
                     this.logger,
                 );
             }
@@ -1113,13 +1108,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - one of the following
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param pause - start the container in a paused state
+     * @param createIfNotExisting - create the container when there is no container to load.
+     *        Avoid using this flag, its goal is temporarily supporting a legacy scenario.
      */
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown)
-    {
+        pendingLocalState?: unknown,
+        createIfNotExisting?: boolean,
+    ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
@@ -1165,8 +1162,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
+        let existing = true;
         if (snapshot !== undefined) {
-            this._existing = true;
             switch (loadMode.opsBeforeReturn) {
                 case undefined:
                     if (loadMode.deltaConnection !== "none") {
@@ -1192,20 +1189,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else {
             //
             // THIS IS LEGACY PATH
+            // The code is maintained for the snapshot back compat tests
             //
+            assert(createIfNotExisting === true, 0x1fb /* "Snapshot should already exist" */);
+
             if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             const details = await startConnectionP;
-            this._existing = details.existing;
+            existing = details.existing;
         }
 
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            this._existing === true,
+            existing,
             attributes,
             codeDetails,
             snapshot,
@@ -1257,7 +1257,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return {
-            existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
         };
@@ -1286,9 +1285,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachDeltaManagerOpHandler(attributes);
 
-        // We know this is create detached flow without snapshot.
-        this._existing = false;
-
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
@@ -1315,9 +1311,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
-
-        // We know this is create detached flow with snapshot.
-        this._existing = true;
 
         // ...load in the existing quorum
         // Initialize the protocol handler

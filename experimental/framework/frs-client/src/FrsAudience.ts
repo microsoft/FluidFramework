@@ -41,4 +41,11 @@ export class FrsAudience extends ServiceAudience implements IFrsAudience {
   public getMyself(): FrsMember | undefined {
     return super.getMyself() as FrsMember;
   }
+
+  /**
+   * @inheritdoc
+   */
+   public getMemberByClientId(clientId: string): FrsMember | undefined {
+    return super.getMemberByClientId(clientId) as FrsMember;
+  }
 }

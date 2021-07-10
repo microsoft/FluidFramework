@@ -39,8 +39,6 @@ export interface IErrorBase {
      */
     readonly errorType: string;
     readonly message: string;
-    /** Sequence number when error happened */
-    sequenceNumber?: number;
 }
 
 /**

@@ -40,7 +40,7 @@ import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 
 const tinyliciousClient = new TinyliciousClient(config);
 await tinyliciousClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const container = await tinyliciousClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
 ## Defining Fluid Containers
@@ -59,7 +59,7 @@ const schema = {
 }
 const tinyliciousClient = new TinyliciousClient();
 await tinyliciousClient.createContainer({ id: "_unique-id_" }, schema);
-const container = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -79,7 +79,7 @@ const schema = {
     }
 }
 const tinyliciousClient = new TinyliciousClient();
-const container = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
@@ -103,7 +103,7 @@ const schema = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 const tinyliciousClient = new TinyliciousClient();
-const container = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await tinyliciousClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

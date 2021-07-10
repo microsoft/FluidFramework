@@ -50,6 +50,7 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1028.0",
     "@fluidframework/server-services-core": "^0.1028.0",
+    "@fluidframework/server-services-telemetry": "^0.1028.0",
     "debug": "^4.1.1",
     "express": "^4.16.3",
     "ioredis": "^4.24.2",

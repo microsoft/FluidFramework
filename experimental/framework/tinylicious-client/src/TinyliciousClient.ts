@@ -25,6 +25,7 @@ import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
+    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -49,7 +50,7 @@ export class TinyliciousClient {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -64,7 +65,7 @@ export class TinyliciousClient {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -78,11 +79,12 @@ export class TinyliciousClient {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
+    ): Promise<TinyliciousResources>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
+        const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
+        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
+        return tinyliciousResources;
     }
 
     private getContainerServices(
@@ -122,11 +124,6 @@ export class TinyliciousClient {
         } else {
             // Request must be appropriate and parseable by resolver.
             container = await loader.resolve({ url: tinyliciousContainerConfig.id });
-            // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
-            // new container here, where we expect this to be loading an existing container.
-            if (container.existing !== true) {
-                throw new Error("Attempted to load a non-existing container");
-            }
         }
         return container;
     }

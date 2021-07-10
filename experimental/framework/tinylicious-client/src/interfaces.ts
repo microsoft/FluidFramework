@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMember, IServiceAudience } from "@fluid-experimental/fluid-framework";
+import { FluidContainer, IMember, IServiceAudience } from "@fluid-experimental/fluid-framework";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 export interface TinyliciousContainerConfig {
@@ -29,6 +29,11 @@ export interface TinyliciousContainerServices {
      * listeners for when the roster has any changes from users joining/leaving the session
      */
     audience: ITinyliciousAudience;
+}
+
+export interface TinyliciousResources {
+    fluidContainer: FluidContainer;
+    containerServices: TinyliciousContainerServices;
 }
 
 /**

@@ -23,6 +23,7 @@ import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
+    DriverError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
@@ -57,6 +58,7 @@ import {
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
+    wrapError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -71,14 +73,11 @@ function getNackReconnectInfo(nackContent: INackContent) {
     return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-function createReconnectError(prefix: string, err: any) {
-    const error = CreateContainerError(err);
-    const error2 = Object.create(error);
-    error2.message = `${prefix}: ${error.message}`;
-    error2.canRetry = true;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return error2;
-}
+const createReconnectError = (prefix: string, err: any) =>
+    wrapError(
+        err,
+        (errorMessage: string) => createGenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+    );
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -637,10 +636,9 @@ export class DeltaManager
                         break;
                     }
 
-                    const error = CreateContainerError(origError);
-
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
+                        const error = CreateContainerError(origError);
                         this.close(error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
@@ -662,7 +660,7 @@ export class DeltaManager
                     delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
 
                     if (retryDelayFromError !== undefined) {
-                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
+                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, origError);
                     }
                     await waitForConnectedState(delayMs);
                 }
@@ -915,11 +913,13 @@ export class DeltaManager
         }
     }
 
-    public emitDelayInfo(
-        id: string,
-        delayMs: number,
-        error: ICriticalContainerError,
-    ) {
+    /**
+     * Emit info about a delay in service communication on account of throttling.
+     * @param id - Id of the connection that is delayed
+     * @param delayMs - Duration of the delay
+     * @param error - error objecct indicating the throttling
+     */
+    public emitDelayInfo(id: string, delayMs: number, error: unknown) {
         const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
@@ -1152,12 +1152,12 @@ export class DeltaManager
      * Disconnect the current connection and reconnect.
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
-     * @param reconnectInfo - Error reconnect information including whether or not to reconnect
+     * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
         requestedMode: ConnectionMode,
-        error: ICriticalContainerError,
+        error: DriverError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.

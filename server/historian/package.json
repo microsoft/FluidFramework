@@ -68,7 +68,7 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
-    "lerna": "3.19.0",
+    "lerna": "^4.0.0",
     "mocha": "^8.4.0",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",

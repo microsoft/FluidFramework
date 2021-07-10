@@ -414,9 +414,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
-        // If we are not referenced, update the summary tree to indicate that.
+        // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+        // size in the summary stats with the blobs size of this data store.
         if (!this.summarizerNode.isReferenced()) {
             summarizeResult.summary.unreferenced = true;
+            summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
         }
 
         return {
@@ -722,7 +724,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
-                assert(tree !== undefined, "isolated channels subtree should exist in remote datastore snapshot");
+                assert(tree !== undefined,
+                    0x1fe /* "isolated channels subtree should exist in remote datastore snapshot" */);
             }
         }
 
@@ -860,7 +863,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
-                assert(snapshot !== undefined, "isolated channels subtree should exist in local datastore snapshot");
+                assert(snapshot !== undefined,
+                    0x1ff /* "isolated channels subtree should exist in local datastore snapshot" */);
             }
         }
 
