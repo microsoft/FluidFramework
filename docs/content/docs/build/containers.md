@@ -19,6 +19,8 @@ In the below scenarios, `client` represents the service-specific client. See the
 
 You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see [Data modeling](./data-modeling.md).
 
+This example schema defines two initial objects, and also enables the container to create additional `SharedCell`s and `SharedString`s at runtime.
+
 ```typescript
 const schema = {
     name: "example-container",
@@ -137,7 +139,7 @@ For more information about dynamic object creation see [Data modeling](data-mode
 
 ### Create/load separation
 
-When creating and loading a container our basic guidance is to separate the two flows. This provides a cleaner separation of responsibilities within the code it self. From a scenario perspective it manifests as the creator going through a explicit creation process that results in a redirect to a new page who's sole responsibility is to load the container. All users will load the container through this subsequent flow.
+When creating and loading a container, it can be tempting to have a consistent code path for both creation and loading. However, in Fluid it is generally better to separate the two flows. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility is to load a container. All subsequent users will load the container by navigating directly to that page.
 
 The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process.
 
@@ -147,7 +149,8 @@ Multiple Fluid containers can be loaded from an application or on a Web page at 
 
 First, if your application loads two different experiences that have different underlying data structures. _Experience 1_ may require a `SharedMap` and _Experience 2_ may require a `SharedString`. To minimize the memory footprint of your application you can create two different container schemas and load only the schema you need. In this case your app can load two different containers (two different schemas) but you only load one at a time.
 
-The second scenario involves loading two containers at once. Currently, all services enable permissioning at the container level, so we can use containers as a natural boundary for restricting access. An example scenario for this would be building an education app where mutliple teachers are gathering with students. The students and teachers may have a shared view while the teachers may also want to have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
+A more complex scenario involves loading two containers at once. Containers serve as a permissioning boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
+For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
 {{% callout tip %}}
 
