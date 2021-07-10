@@ -1885,16 +1885,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // And expose a different errorType to consumers of the warning event.
         // Let's log the original error "as-is" here if present
         if (warning.originalError !== undefined) {
-            const warningProps = isILoggingError(warning) ? warning.getTelemetryProperties() : {};
             this.logger.sendErrorEvent({
-                    eventName: "ContainerWarning",
+                    eventName: "ContainerWarning-OriginalError",
                     warningErrorType: warning.errorType,
                     warningErrorMessage: warning.message,
-                    warningProps: JSON.stringify(warningProps),
                 },
                 warning.originalError);
-        } else {
-            this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
         }
+        // Also log the wrapped warning directly
+        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 }
