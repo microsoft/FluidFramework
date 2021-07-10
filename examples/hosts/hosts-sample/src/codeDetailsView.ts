@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as semver from "semver";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
@@ -63,13 +62,12 @@ export const setupUI = (container: Container) => {
     ) as HTMLButtonElement;
     upgradeBtn.onclick = async () => {
         // Extract currently loaded code details from the container.
-        const { name, version } = parsePackageDetails(codeDetails.package);
-        // Prepare a code upgrade proposal using the current package name and the incremented major version.
+        const { name } = parsePackageDetails(codeDetails.package);
+        // Prepare a code upgrade proposal using the current package name and the latest major version.
         const details: IFluidCodeDetails = {
             package: {
                 name,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                version: semver.inc(version!, "major"),
+                version: "2.0.0",
                 fluid: { browser: {} },
             },
             config: {},

@@ -29,28 +29,23 @@ export const InMemoryCodeDetailsLoader = new (class
      */
     async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         // Get normalized package info
-        const {
-            name: sourcePackageName,
-            version: sourcePackageVersion,
-        } = parsePackageDetails(source.package);
-        if (
-            sourcePackageName === undefined ||
-            sourcePackageVersion === undefined
-        ) {
+        const { name: sourcePackageName } = parsePackageDetails(source.package);
+        if (sourcePackageName === undefined) {
             // Raise an error when code details written in the document differ from
             // the package supported by this code loader.
             throw new Error(
                 "The document is created with a different package that is not supported by this code loader.",
             );
         }
-        // Assemble the resolved Fluid module accompanied by the code details characterizing
+        // Assemble and return the resolved Fluid module accompanied by the code details characterizing
         // its capabilities, such as supported range of code versions.
+        // In this scenario we use the version 2.0.0 as the latest available in the store.
         return {
             module: { fluidExport },
             details: {
                 package: {
                     name: sourcePackageName,
-                    version: sourcePackageVersion,
+                    version: "2.0.0",
                     fluid: { browser: {} },
                 },
                 config: {},
