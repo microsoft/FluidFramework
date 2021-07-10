@@ -31,7 +31,7 @@ For more about containers see [Containers](./containers.md).
 
 ### Shared objects
 
-A Shared object is a object type that powers collaborative data by exposing a specific API. Many shared objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures(DDSes) and DataObjects are both types of shared objects.
+A Shared object is an object type that powers collaborative data by exposing a specific API. Many shared objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures(DDSes) and DataObjects are both types of shared objects.
 
 For more information see [Data modeling](./data-modeling.md).
 
