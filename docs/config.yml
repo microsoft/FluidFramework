@@ -33,9 +33,9 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -60
-  - name: "Updates"
-    url: "/posts/"
-    weight: -50
+#  - name: "Updates"
+#    url: "/posts/"
+#    weight: -50
   - name: "Playground"
     url: "/playground/"
     weight: -40

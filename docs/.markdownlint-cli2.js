@@ -89,8 +89,8 @@ module.exports = {
                 "JSON",
                 "Microsoft",
                 "npm",
-                "Tinylicious",
-                "Routerlicious"
+                "Routerlicious",
+                "Tinylicious"
             ]
         }
     },
