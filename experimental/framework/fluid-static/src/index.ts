@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./audienceData";
 export * from "./fluidContainer";
 export * from "./rootDataObject";
 export * from "./serviceAudience";
