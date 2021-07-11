@@ -17,8 +17,7 @@
                 {{ if and $hasContent (ne .Params.status "placeholder")}}
                 {{ .Content }}
                 {{ else }}
-                {{ partial "empty.html" }}
-                {{ .Content }}
+                {{ partial "placeholder.html" }}
                 {{ end }}
             </div>
         </div>
