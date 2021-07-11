@@ -59,10 +59,10 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         }
         this._audience = newAudience;
 
-        this._audience.on("addMember", (clientId: string, member: IMember) => {
+        this._audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
         });
-        this._audience.on("removeMember", (clientId: string, member: IMember) => {
+        this._audience.on("memberRemoved", (clientId: string, member: IMember) => {
             const clientIdMap = this.focusMap.get(member.userId);
             if (clientIdMap !== undefined) {
                 clientIdMap.delete(clientId);
