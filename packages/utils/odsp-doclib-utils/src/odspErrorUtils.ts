@@ -161,7 +161,7 @@ export function createOdspNetworkError(
 
     const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
     error.facetCodes = facetCodes;
-    (error as any).response = responseText; // Issue #6139: This shouldn't be logged - will be fixed with #6485
+    (error as any).response = responseText;
 
     props.innerMostErrorCode = facetCodes !== undefined ? facetCodes[0] : undefined;
     if (response) {
