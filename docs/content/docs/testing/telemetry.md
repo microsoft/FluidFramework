@@ -10,7 +10,7 @@ Telemetry is an essential part of maintaining the health of modern applications.
 in your own logic to handle telemetry events sent by Fluid. This enables you to integrate the Fluid telemetry along with
 your other telemetry, and route the event data in whatever way you need.
 
-### Collect Fluid Framework logs with a custom `ITelemetryBaseLogger`
+## Collect Fluid Framework logs with a custom `ITelemetryBaseLogger`
 
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
 be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
@@ -264,4 +264,9 @@ async function start(): Promise<void> {
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
 event object.
 
-![ConsoleLogger_telemetry_in_action](https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png "ConsoleLogger_telemetry_in_action")
+![ConsoleLogger_telemetry_in_action]( "ConsoleLogger_telemetry_in_action")
+
+<img src="https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png" alt="The
+Fluid architecture consists of a client and service. The client contains the Fluid loader and the Fluid container. The
+Fluid loader contains a document service factory, code loader, scopes, and a URL resolver. The Fluid runtime is
+encapsulated within a container, which is built using Fluid objects and distributed data structures.">
