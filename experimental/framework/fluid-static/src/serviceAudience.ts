@@ -88,7 +88,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   /**
    * {@inheritDoc IServiceAudience.getMyself}
    */
-  public getMyself(): IMember | undefined {
+  public getMyself(): M | undefined {
     const clientId = this.container.clientId;
     if (clientId === undefined) {
       return undefined;
