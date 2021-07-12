@@ -4,7 +4,3 @@ menuPosition: 1
 ---
 
 {{< ArticleStatus 5462 >}}
-
-## TypeScript
-
-## JavaScript-only
