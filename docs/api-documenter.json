@@ -2,5 +2,22 @@
   "outputTarget": "markdown",
   "newlineKind": "lf",
   "uriRoot": "/docs/apis",
-  "onlyPackagesStartingWith": "@fluidframework"
+  "onlyPackagesStartingWith": [
+    "@fluid-experimental/fluid-framework",
+    "@fluidframework/core-interfaces",
+    "@fluidframework/common-definitions",
+    "@fluidframework/container-definitions",
+    "@fluidframework/driver-definitions",
+    "@fluidframework/protocol-base",
+    "@fluidframework/protocol-definitions",
+    "@fluidframework/cell",
+    "@fluidframework/counter",
+    "@fluidframework/ink",
+    "@fluidframework/map",
+    "@fluidframework/matrix",
+    "@fluidframework/ordered-collection",
+    "@fluidframework/register-collection",
+    "@fluidframework/sequence",
+    "@fluidframework/aqueduct"
+  ]
 }

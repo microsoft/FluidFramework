@@ -299,7 +299,6 @@ export interface IErrorBase {
     readonly errorType: string;
     // (undocumented)
     readonly message: string;
-    sequenceNumber?: number;
 }
 
 // @public

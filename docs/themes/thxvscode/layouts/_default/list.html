@@ -1,33 +1,31 @@
 {{ define "header" }}
-{{ partialCached "header.html" . }}
+{{ partial "header.html" . }}
 {{ end }}
 
 {{ define "main" }}
-<main role="main" id="main-content" class="site-main section-inner thin animated fadeIn faster">
-    <h1>{{ title .Title }}</h1>
-    {{- if .Content }}
-    <div class="content">
-        {{ .Content }}
-    </div>
-    {{- end }}
-    {{- range .Data.Pages.GroupByDate "2006" }}
-    <div class="posts-group">
-        <div class="post-year" id="{{ .Key }}">{{ .Key }}</div>
-        <ul class="posts-list">
-            {{- range .Pages }}
-            <li class="post-item">
-                <a href="{{.RelPermalink}}">
-                    <span class="post-title">{{title .Title}}</span>
-                    <span class="post-day">{{ .Date.Format .Site.Params.dateformShort }}</span>
-                </a>
-            </li>
-            {{- end }}
-        </ul>
-    </div>
-    {{- end }}
-</main>
-{{ end }}
+<div class="container body-content docs">
+    <div class="row">
+        {{ partial "navbar.html" . }}
+        <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
+            <div>
+                <h1>{{ title .Title }}</h1>
+                <div>{{ .Content }}</div>
+            </div>
+        </div>
+        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
+            {{ partial "toc.html" .}}
+            <!-- TODO: OR subnav -->
+        </div>
 
-{{ define "footer" }}
-{{ partialCached "footer.html" . }}
+    </div>
+</div>
+
+{{ block "footer" . -}}{{ end }}
+{{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
+<!-- <script src="{{/* $script.Permalink | relURL */}}" -->
+<!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
+{{- if templates.Exists "partials/extra-foot.html" -}}
+{{ partial "extra-foot.html" . }}
+{{- end }}
+
 {{ end }}
