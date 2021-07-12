@@ -118,6 +118,7 @@ import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
+    electedSummarizerBlobName,
     gcFeature,
     IContainerRuntimeMetadata,
     metadataBlobName,
@@ -125,7 +126,7 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
-import { OrderedClientElection } from "./orderedClientElection";
+import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection } from "./summarizerClientElection";
 
 export enum ContainerMessageType {
@@ -261,8 +262,14 @@ export interface ISummaryRuntimeOptions {
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 
-    // Defaults to 3000 ops
+    // Defaults to 7000 ops
     maxOpsSinceLastSummary?: number;
+
+    /**
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     * THis defaults to false (disabled) and must be explicitly set to true to enable.
+     */
+    summarizerClientElection?: boolean;
 }
 
 /**
@@ -598,12 +605,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
+            electedSummarizerData,
             chunks,
             combinedRuntimeOptions,
             containerScope,
@@ -691,6 +700,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
+    private readonly summarizerClientElection: SummarizerClientElection;
     private readonly summaryManager: SummaryManager;
     private readonly summaryCollection: SummaryCollection;
 
@@ -767,6 +777,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata | undefined,
+        electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
@@ -885,7 +896,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
-        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
         const defaultAction = () => {
             if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
@@ -915,20 +926,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const orderedClientCollection = new OrderedClientCollection(
+            this.logger,
+            this.context.deltaManager,
+            this.context.quorum,
+        );
+        const orderedClientElectionForSummarizer = new OrderedClientElection(
+            this.logger,
+            orderedClientCollection,
+            electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+            SummarizerClientElection.isClientEligible,
+        );
+        const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+            this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+        this.summarizerClientElection = new SummarizerClientElection(
+            this.logger,
+            this.summaryCollection,
+            orderedClientElectionForSummarizer,
+            maxOpsSinceLastSummary,
+            summarizerClientElectionEnabled,
+        );
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.summaryCollection,
-            new SummarizerClientElection(
-                this.logger,
-                this.summaryCollection,
-                new OrderedClientElection(this.context.quorum),
-                maxOpsSinceLastSummary,
-            ),
+            this.summarizerClientElection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            maxOpsSinceLastSummary,
-            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
+            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+        );
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1148,6 +1173,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
+        const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
+        addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
+
         const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.

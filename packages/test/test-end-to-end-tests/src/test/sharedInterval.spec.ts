@@ -52,7 +52,7 @@ const assertIntervalsHelper = (
 };
 
 function testIntervalOperations(intervalCollection: IntervalCollection<SequenceInterval>) {
-    if (!intervalCollection[Symbol.iterator]) {
+    if (!intervalCollection[Symbol.iterator] || typeof(intervalCollection.removeIntervalById) !== "function") {
         // Check for prior version that doesn't support iteration
         return;
     }
@@ -209,8 +209,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
 }
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(function() {
-        this.skip();
+    beforeEach(() => {
         provider = getTestObjectProvider();
     });
     describe("one client", () => {
@@ -416,10 +415,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-            if (intervals2[Symbol.iterator]) {
+            if (typeof(intervals2.removeIntervalById) === "function") {
                 const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
                     if (typeof(a.getIntervalId) === "function") {
-                        assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
+                         assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
                     }
                 };
                 let i: number;
@@ -462,7 +461,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
             }
 
-            if (typeof(intervalArray[0]?.getIntervalId) === "function") {
+            if (typeof(intervalArray[0]?.getIntervalId) === "function" &&
+                typeof(intervals2.removeIntervalById) === "function") {
                 for (interval of intervalArray) {
                     const id = interval.getIntervalId();
                     if (id !== undefined) {
@@ -518,6 +518,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = sharedString2.getIntervalCollection("intervals");
+
+            if (typeof(intervals1.getIntervalById) !== "function") {
+                return;
+            }
 
             // Conflicting adds
             interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);
