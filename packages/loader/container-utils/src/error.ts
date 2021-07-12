@@ -74,8 +74,8 @@ export class GenericError extends LoggingError implements IGenericError {
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
-        super(errorMessage, props);
-        this.addTelemetryProperties({ errorType: this.errorType });
+        // Don't try to log the inner error
+        super(errorMessage, props, ["error"]);
     }
 }
 
@@ -91,7 +91,6 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
         props?: ITelemetryProperties,
     ) {
         super(message, props);
-        this.addTelemetryProperties({ errorType: this.errorType });
     }
 
     /**
@@ -112,7 +111,6 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
 
     constructor(errorMessage: string, props: ITelemetryProperties) {
         super(errorMessage, props);
-        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 }
 
@@ -122,7 +120,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
 
     constructor(errorMessage: string, props?: ITelemetryProperties) {
         super(errorMessage, props);
-        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 
     /**

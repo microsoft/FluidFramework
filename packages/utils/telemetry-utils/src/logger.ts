@@ -532,9 +532,12 @@ export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTele
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
+        if (key in keysToOmit) {
+            continue;
+        }
         const val = obj[key];
         switch (typeof val) {
             case "string":
@@ -579,8 +582,14 @@ export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
+        omitPropsFromLogging?: string[],
     ) {
         super(message);
+
+        // Any enumerable properties specified already at construction time should be logged by default
+        const taggableInitialProps = getValidTelemetryProps(this, omitPropsFromLogging ?? []);
+        this.addTelemetryProperties(taggableInitialProps);
+
         if (props) {
             this.addTelemetryProperties(props);
         }
