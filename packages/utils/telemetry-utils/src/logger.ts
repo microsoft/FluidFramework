@@ -608,12 +608,13 @@ export class LoggingError extends Error implements ILoggingError {
     public getTelemetryProperties(): ITelemetryProperties {
         // Include props inherited from Error
         // But if any were overwritten (e.g. with a tagged property), then use the value in fluidTelemetryProps.
-        return {
+        // Run through getValidTelemetryProps as a defensive measure in case someone circumvented the type system here.
+        return getValidTelemetryProps({
             stack: this.stack,
             message: this.message,
             name: this.name,
             ...this.fluidTelemetryProps,
-        };
+        }, []);
     }
 }
 
