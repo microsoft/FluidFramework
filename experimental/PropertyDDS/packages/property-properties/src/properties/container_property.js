@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 const _ = require('lodash');
-const BaseProperty = require('./base_property');
+const {BaseProperty} = require('./base_property');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
@@ -44,7 +44,7 @@ var ContainerProperty = function( in_params ) {
 };
 
 ContainerProperty.prototype = Object.create(BaseProperty.prototype);
-
+/** @internal */
 ContainerProperty.prototype._typeid = 'ContainerProperty';
 
 /**
@@ -468,7 +468,7 @@ ContainerProperty.prototype.traverseDown = function( in_callback ) {
  * @param {string} in_pathFromTraversalStart - Path from the root of the traversal to this node
  * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
  *                            otherwise undefined
- * @private
+ * @internal
  */
 ContainerProperty.prototype._traverse = function( in_callback, in_pathFromTraversalStart ) {
   if (in_pathFromTraversalStart) {
@@ -536,7 +536,7 @@ ContainerProperty.prototype._traverseStaticProperties = function(in_callback, in
  *     this can result in an infinite loop
  *
  * @return {Object} The serialized representation of this property
- * @private
+ * @internal
  */
 ContainerProperty.prototype._serialize = function( in_dirtyOnly,
                                                    in_includeRootTypeid,
@@ -662,7 +662,7 @@ ContainerProperty.prototype._deserialize = function(in_serializedObj, in_reportT
  * TODO: Do we want to have this feature or is it to dangerous?
  *
  * @return {Object} the flat representation
- * @private
+ * @internal
  */
 ContainerProperty.prototype._flatten = function() {
   var flattenedRepresentation = {};
@@ -685,7 +685,7 @@ ContainerProperty.prototype._flatten = function() {
 /**
  * Returns the number of children this node has
  * @return {number} The number of children
- * @private
+ * @internal
  */
 ContainerProperty.prototype._getChildrenCount = function() {
   return Object.keys(this._children).length;
@@ -702,4 +702,4 @@ Object.defineProperty(
   }
 );
 
-module.exports = ContainerProperty;
+module.exports = {ContainerProperty};

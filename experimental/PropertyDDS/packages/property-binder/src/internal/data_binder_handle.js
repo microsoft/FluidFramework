@@ -23,10 +23,12 @@ class DataBinderHandle {
    * @param {*} userData - userdata for the handle
    *
    * @hideconstructor
-   * @hidden
+   * @internal
    */
   constructor(destroyCallback = undefined, userData = undefined) {
+    /** @internal */
     this._destroyCallback = destroyCallback;
+    /** @internal */
     this._userData = userData;
   }
 
@@ -66,7 +68,7 @@ class DataBinderHandle {
    * @param {function} destroyCallback - the new destroy function
    *
    * @private
-   * @hidden
+   * @internal
    */
   _setCallback(destroyCallback) {
     this._destroyCallback = destroyCallback;
@@ -79,7 +81,7 @@ class DataBinderHandle {
    * @param {*} in_userData - associate user data with the handle
    *
    * @private
-   * @hidden
+   * @internal
    */
   setUserData(in_userData) {
     this._userData = in_userData;
@@ -90,7 +92,7 @@ class DataBinderHandle {
    *
    * @return {*} associated data, if there is some.
    * @private
-   * @hidden
+   * @internal
    */
   getUserData() {
     return this._userData;

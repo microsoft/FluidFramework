@@ -7,7 +7,7 @@
  * @fileoverview Definition of the Int*Property classes
  */
 
-const ValueProperty = require('./value_property');
+const {ValueProperty} = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 const _ = require('lodash');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
@@ -33,7 +33,9 @@ var Int8Property = function(in_params) {
 
 };
 Int8Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Int8Property.prototype._typeid = 'Int8';
+/** @internal */
 Int8Property.prototype._castFunctor = _castFunctors.Int8;
 
 
@@ -53,7 +55,9 @@ var Int16Property = function(in_params) {
 
 };
 Int16Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Int16Property.prototype._typeid = 'Int16';
+/** @internal */
 Int16Property.prototype._castFunctor = _castFunctors.Int16;
 
 
@@ -73,7 +77,9 @@ var Int32Property = function(in_params) {
 
 };
 Int32Property.prototype = Object.create(ValueProperty.prototype);
+/** @internal */
 Int32Property.prototype._typeid = 'Int32';
+/** @internal */
 Int32Property.prototype._castFunctor = _castFunctors.Int32;
 
 
@@ -214,7 +220,7 @@ Integer64Property.prototype._applyChangeset = function(in_changeSet, in_reportTo
  *     function will descend into referenced repositories. WARNING: if there are loops in the references
  *     this can result in an infinite loop
  * @return {*} The serialized representation of this property
- * @private
+ * @internal
  */
 Integer64Property.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
   in_dirtinessType, in_includeReferencedRepositories) {
@@ -274,8 +280,10 @@ var Int64Property = function(in_params) {
   Integer64Property.call(this, in_params);
 };
 Int64Property.prototype = Object.create(Integer64Property.prototype);
+/** @internal */
 Int64Property.prototype._typeid = 'Int64';
 Int64Property.prototype.DataConstructor = Int64;
+/** @internal */
 Int64Property.prototype._castFunctor = _castFunctors.Int64;
 
 /**
@@ -291,8 +299,10 @@ var Uint64Property = function(in_params) {
   Integer64Property.call(this, in_params);
 };
 Uint64Property.prototype = Object.create(Integer64Property.prototype);
+/** @internal */
 Uint64Property.prototype._typeid = 'Uint64';
 Uint64Property.prototype.DataConstructor = Uint64;
+/** @internal */
 Uint64Property.prototype._castFunctor = _castFunctors.Uint64;
 
 module.exports = {

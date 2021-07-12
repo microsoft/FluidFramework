@@ -32,7 +32,7 @@ var EnumArrayProperty = function( in_params ) {
 };
 
 EnumArrayProperty.prototype = Object.create(ValueArrayProperty.prototype);
-
+/** @internal */
 EnumArrayProperty.prototype._typeid = 'Enum';
 
 /**
@@ -214,4 +214,4 @@ EnumArrayProperty.prototype.getValidEnumList = function() {
   return this._enumDictionary.enumEntriesById;
 };
 
-module.exports = EnumArrayProperty;
+module.exports = {EnumArrayProperty};

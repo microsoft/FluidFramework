@@ -6,6 +6,10 @@
 import { DataBinder } from './data_binder/data_binder';
 import { FluidBinder } from './data_binder/fluid_binder';
 
+import { ModificationContext } from './data_binder/modification_context';
+import { RemovalContext } from './data_binder/removal_context';
+import { BaseContext } from './data_binder/base_context';
+
 import {
   DataBinding,
   onPathChanged,
@@ -46,4 +50,7 @@ export {
   representationInitializer,
   forEachProperty,
   UpgradeType,
+  BaseContext,
+  RemovalContext,
+  ModificationContext
 };

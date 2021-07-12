@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const BaseProperty = require('./base_property');
+const { BaseProperty } = require('./base_property');
 const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 
@@ -28,6 +28,7 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  */
 var ValueProperty = function( in_params ) {
   BaseProperty.call( this, in_params );
+  /** @internal */
   this._data = undefined;
 };
 
@@ -37,7 +38,7 @@ ValueProperty.prototype = Object.create(BaseProperty.prototype);
  * Is this property a leaf node with regard to flattening?
  *
  * TODO: Which semantics should flattening have? It stops at primitive types and collections?
- *
+ * @internal
  * @return {boolean} Is it a leaf with regard to flattening?
  */
 ValueProperty.prototype._isFlattenLeaf = function() {
@@ -75,6 +76,7 @@ ValueProperty.prototype.setValue = function(in_value) {
 /**
  * Internal function to update the value of a property
  *
+ * @internal
  * @param {*} in_value the new value
  * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
@@ -98,6 +100,7 @@ ValueProperty.prototype._setValue = function(in_value, in_reportToView) {
 
 /**
  * @inheritdoc
+ * @internal
  */
 ValueProperty.prototype._deserialize = function(in_serializedObj, in_reportToView, in_filteringOptions) {
   if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
@@ -111,6 +114,7 @@ ValueProperty.prototype._deserialize = function(in_serializedObj, in_reportToVie
 
 /**
  * @inheritdoc
+ * @internal
  */
 ValueProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
   if (!ChangeSet.isEmptyChangeSet(in_changeSet)) {
@@ -124,6 +128,7 @@ ValueProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView
 
 /**
  * @inheritdoc
+ * @internal
  */
 ValueProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_dirtyChangeSet) {
   const flags = (ChangeSet.isEmptyChangeSet(in_pendingChangeSet) ?
@@ -151,7 +156,7 @@ ValueProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_di
  *     this can result in an infinite loop
  *
  * @return {*} The serialized representation of this property
- * @private
+ * @internal
  */
 ValueProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
                                               in_dirtinessType, in_includeReferencedRepositories) {
@@ -173,6 +178,7 @@ ValueProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid
  * @param {string} externalId - Name of the current property at the upper level.
  *                              Used for arrays.
  * @param {function} printFct - Function to call for printing each property
+ * @internal
  */
 ValueProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
   printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): ' + this.value);
@@ -180,8 +186,8 @@ ValueProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
 
 /**
  * Return a JSON representation of the property.
+ * @internal
  * @return {object} A JSON representation of the property.
- * @private
  */
 ValueProperty.prototype._toJson = function() {
   return {
@@ -206,4 +212,4 @@ Object.defineProperty(
   }
 );
 
-module.exports = ValueProperty;
+module.exports = {ValueProperty};

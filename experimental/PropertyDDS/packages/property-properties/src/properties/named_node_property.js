@@ -6,8 +6,8 @@
  * @fileoverview Definition of the named node property class
  */
 
-const NamedProperty = require('./named_property');
-const NodeProperty = require('./node_property');
+const {NamedProperty} = require('./named_property');
+const {NodeProperty} = require('./node_property');
 
 /**
  * A NamedNodeProperty is a NodeProperty that has a GUID which unique identifies the property object.
@@ -28,7 +28,7 @@ var NamedNodeProperty = function(in_params) {
 };
 
 NamedNodeProperty.prototype = Object.create(NodeProperty.prototype);
-
+/** @internal */
 NamedNodeProperty.prototype._typeid = 'NamedNodeProperty';
 
 /**
@@ -55,4 +55,4 @@ NamedNodeProperty.prototype.getGuid = NamedProperty.prototype.getGuid;
  */
 NamedNodeProperty.prototype.getUrn = NamedProperty.prototype.getUrn;
 
-module.exports = NamedNodeProperty;
+module.exports = {NamedNodeProperty};

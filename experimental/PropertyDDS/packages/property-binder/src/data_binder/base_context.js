@@ -10,8 +10,6 @@ import { BaseProperty } from '@fluid-experimental/property-properties'; /* eslin
  * Provides the abstract base class for all contexts passed to data binding callbacks.
  *
  * @alias BaseContext
- * @private
- * @hidden
  */
 class BaseContext {
   /**
@@ -34,7 +32,7 @@ class BaseContext {
    *
    * @constructor
    * @hideconstructor
-   * @hidden
+   * @internal
    */
   constructor(in_operationType,
     in_context,
@@ -42,11 +40,17 @@ class BaseContext {
     in_baseDataBinding = undefined,
     in_nestedChangeSet = undefined,
     in_simulated = false) {
+    /** @internal */
     this._operationType = in_operationType;
+    /** @internal */
     this._context = in_context;
+    /** @internal */
     this._path = in_path;
+    /** @internal */
     this._baseDataBinding = in_baseDataBinding;
+    /** @internal */
     this._nestedChangeSet = in_nestedChangeSet;
+    /** @internal */
     this._simulated = !!in_simulated;
   }
 
@@ -142,7 +146,7 @@ class BaseContext {
    * @return {BaseContext} the cloned context
    * @package
    * @private
-   * @hidden
+   * @internal
    */
   _clone() {
     const clone = new BaseContext();

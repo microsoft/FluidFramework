@@ -19,7 +19,7 @@ import { PathHelper } from '@fluid-experimental/property-changeset';
  * @return {boolean} True if the string is a non-negative integer, false otherwise.
  *
  * @package
- * @hidden
+ * @internal
  */
 const isNormalInteger = function(str) {
   var n = Math.floor(Number(str));
@@ -35,7 +35,7 @@ const isNormalInteger = function(str) {
  * @return {string} reconstructed path
  * @constructor
  * @package
- * @hidden
+ * @internal
  */
 function concatTokenizedPath(in_tokenizedPath, in_pathDelimiters, in_position) {
   var path = '';
@@ -60,7 +60,7 @@ function concatTokenizedPath(in_tokenizedPath, in_pathDelimiters, in_position) {
  * @return {Array.<string>} tokenized path
  *
  * @private
- * @hidden
+ * @internal
  */
 const _tokenizePath = function(in_path, out_pathDelimiters) {
   var tokenizedPath = PathHelper.tokenizePathString(in_path, out_pathDelimiters);
@@ -78,7 +78,7 @@ const _tokenizePath = function(in_path, out_pathDelimiters) {
  * @ignore
  * @alias DataBindingTree
  * @package
- * @hidden
+ * @internal
  */
 class DataBindingTree {
   /**

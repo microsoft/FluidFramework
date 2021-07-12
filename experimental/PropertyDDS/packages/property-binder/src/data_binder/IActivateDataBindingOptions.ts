@@ -23,10 +23,10 @@ export interface IActivateDataBindingOptions {
 
   /**
    * The activated binding is only created when its path in the workspace is exactly
-   * ```exactPath```. Empty path is ignored. Defaults to the empty string (ignored).
-   * If both ```exactPath``` and at least one of
-   * ```includePrefix```/```excludePrefix``` are specified, then
-   * ```exactPath``` takes precedence.
+   * `exactPath`. Empty path is ignored. Defaults to the empty string (ignored).
+   * If both `exactPath` and at least one of
+   * `includePrefix`/`excludePrefix` are specified, then
+   * `exactPath` takes precedence.
    */
   exactPath?: string;
 
