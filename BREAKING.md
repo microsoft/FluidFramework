@@ -1,3 +1,10 @@
+## 0.44 Breaking changes
+
+- [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
+
+### Property removed from the ContainerRuntime class
+- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
+
 ## 0.43 Breaking changes
 
 - [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)

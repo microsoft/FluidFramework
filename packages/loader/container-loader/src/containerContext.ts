@@ -292,14 +292,9 @@ export class ContainerContext implements IContainerContext {
         return runtimeFactory;
     }
 
-    /**
-     * #3429
-     * Will be adjusted to branch on the `existing` parameter
-     * and call the proper runtime factory initializer
-     */
-    private async instantiateRuntime(_existing: boolean) {
+    private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this);
+        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {

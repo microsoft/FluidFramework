@@ -42,6 +42,7 @@
     "@fluidframework/map": "^0.44.0",
     "@fluidframework/request-handler": "^0.44.0",
     "@fluidframework/runtime-definitions": "^0.44.0",
+    "@fluidframework/runtime-utils": "^0.44.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

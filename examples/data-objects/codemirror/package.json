@@ -45,6 +45,7 @@
     "@fluidframework/merge-tree": "^0.44.0",
     "@fluidframework/request-handler": "^0.44.0",
     "@fluidframework/runtime-definitions": "^0.44.0",
+    "@fluidframework/runtime-utils": "^0.44.0",
     "@fluidframework/sequence": "^0.44.0",
     "@fluidframework/view-interfaces": "^0.44.0",
     "@types/codemirror": "0.0.76",
