@@ -92,7 +92,6 @@ import {
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
-    isILoggingError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
