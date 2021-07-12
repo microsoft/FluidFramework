@@ -84,6 +84,7 @@ describe("Odsp Create Container Test", () => {
         const docService = await mockFetchOk(
             async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
             expectedResponse,
+            { "x-fluid-epoch": "epoch1" },
         );
         const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
