@@ -6,7 +6,8 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISequencedDeltaOpMessage } from "./contracts";
-import { BlobCore, NodeCore, ReadBuffer, TreeBuilder } from "./zipItDataRepresentationUtils";
+import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
+import { BlobCore, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
 
