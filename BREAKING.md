@@ -1,3 +1,8 @@
+## 0.44 Breaking changes
+- [attach() should only be called once](#attach-should-only-be-called-once)
+
+### attach() should only be called once
+`Container.attach()` will now throw if called more than once. Once called, it is responsible for retrying on retriable errors or closing the container on non-retriable errors.
 ## 0.43 Breaking changes
 
 - [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)

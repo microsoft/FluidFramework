@@ -70,11 +70,8 @@ export async function createNewEmptyFluidFile(
     epochTracker: EpochTracker,
 ): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // remove .fluid extension for empty files
-    const extensionlessFileName = newFileInfo.filename.endsWith(".fluid")
-        ? newFileInfo.filename.slice(0, newFileInfo.filename.length - 6)
-        : newFileInfo.filename;
-    const encodedFilename = encodeURIComponent(extensionlessFileName);
+    // add .tmp to filename, the app is responsible for removing this once a summary is posted.
+    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
     const initialUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
         }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
