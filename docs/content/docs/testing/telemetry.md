@@ -264,9 +264,5 @@ async function start(): Promise<void> {
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
 event object.
 
-![ConsoleLogger_telemetry_in_action]( "ConsoleLogger_telemetry_in_action")
-
 <img src="https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png" alt="The
-Fluid architecture consists of a client and service. The client contains the Fluid loader and the Fluid container. The
-Fluid loader contains a document service factory, code loader, scopes, and a URL resolver. The Fluid runtime is
-encapsulated within a container, which is built using Fluid objects and distributed data structures.">
+  ConsoleLogger sends telemetry events to the browser console for display.">
