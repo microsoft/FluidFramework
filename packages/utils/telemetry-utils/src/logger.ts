@@ -562,10 +562,10 @@ function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryPrope
 
 /**
  * Helper class for error tracking that can be used to log an error in telemetry.
- * The props passed in (and any set directly on the object after the fact) will be
+ * The props passed in (and any class members present during construction) will be
  * logged in accordance with the given tag, if present.
  *
- * PLEASE take care to properly tag properties set on this object
+ * PLEASE take care to properly tag logging properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
     private readonly __isFluidLoggingError__ = 1;
