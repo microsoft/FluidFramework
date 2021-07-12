@@ -4,105 +4,8 @@
  */
 
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-
-/** Default encoding for strings */
-const stringEncoding = "utf-8";
-
-/**
- * Buffer class, used to sequentially read data.
- * Used by tree code to reconstruct a tree from binary representation.
- */
-export class ReadBuffer {
-    protected index = 0;
-
-    public get buffer() {
-        return this.data;
-    }
-
-    constructor(protected readonly data: Uint8Array) {
-        // BlobShallowCopy will return to users parts of this array.
-        // We need to ensure that nobody can change it, as it will have
-        // catastrophic result and will be really hard to investigate.
-        Object.freeze(data.buffer);
-    }
-
-    public get eof() { return this.index === this.data.length; }
-    public get pos() { return this.index; }
-    public get length() { return this.data.length; }
-
-    public slice(start: number, end: number) {
-        return this.data.slice(start, end);
-    }
-
-    public reset() {
-        this.index = 0;
-    }
-
-    public read(lengthArg = 1): number {
-        let res = 0;
-        let multiplier = 1;
-        let length = lengthArg;
-        while (length > 0) {
-            assert(!this.eof, "unexpected end of buffer");
-            res += this.data[this.index] * multiplier;
-            this.index++;
-            multiplier *= 256;
-            length--;
-        }
-        return res;
-    }
-
-    public skip(length: number) {
-        assert(length >= 0, "Skip length should be positive");
-        this.index += length;
-    }
-}
-
-/**
- * Buffer class, used to sequentially writ data.
- * Used by tree code to serialize tree into binary representation.
- */
-class WriteBuffer {
-    protected data?: Uint8Array = new Uint8Array(4096);
-    protected index = 0;
-
-    protected push(code: number) {
-        assert(this.data !== undefined, "Data should be there");
-        const length = this.data.length;
-        if (this.index === length) {
-            const newData = new Uint8Array(length * 1.2 + 4096);
-            let index = 0;
-            const oldData = this.data;
-            while (index < length) {
-                newData[index] = oldData[index];
-                index++;
-            }
-            this.data = newData;
-        }
-        this.data[this.index] = code % 256;
-        this.index++;
-    }
-
-    public write(codeArg: number, lengthArg = 1) {
-        let code = codeArg;
-        let length = lengthArg;
-        while (length > 0) {
-            this.push(code % 256);
-            code = Math.floor(code / 256);
-            length--;
-        }
-        assert(code === 0, `Should write complete data code= ${codeArg} ${lengthArg}`);
-    }
-
-    public done(): ReadBuffer {
-        assert(this.data !== undefined, "Data should be there");
-        // We can slice it to have smaller memory representation.
-        // But it will be way more expensive in terms of CPU cycles!
-        const buffer = new ReadBuffer(this.data.subarray(0, this.index));
-        this.data = undefined;
-        return buffer;
-    }
-}
+import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
+import { WriteBuffer } from "./zipItDataRepresentationWriteUtils";
 
 /**
  * Control codes used by tree serialization / decentralization code. Same as on server.
@@ -247,7 +150,7 @@ export abstract class BlobCore {
     constructor(private readonly useUtf8Code: boolean = false) {}
 
     public toString() {
-        return Uint8ArrayToString(this.buffer, stringEncoding);
+        return Uint8ArrayToString(this.buffer, "utf-8");
     }
 
     public write(buffer: WriteBuffer) {
@@ -388,7 +291,7 @@ export class NodeCore {
     }
 
     public addString(payload: string) {
-        this.addBlob(IsoBuffer.from(payload, stringEncoding), true);
+        this.addBlob(IsoBuffer.from(payload, "utf-8"), true);
     }
 
     public addNumber(payload: number | undefined) {
