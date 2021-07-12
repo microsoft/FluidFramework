@@ -281,6 +281,10 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    public notifyAttaching() {
+        this.runtime.setAttachState(AttachState.Attaching);
+    }
+
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
@@ -298,11 +302,8 @@ export class ContainerContext implements IContainerContext {
     }
 
     private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
         this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
+            this.runtime.setAttachState(AttachState.Attached);
         });
     }
 

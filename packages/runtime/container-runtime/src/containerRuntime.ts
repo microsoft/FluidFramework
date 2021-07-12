@@ -1555,7 +1555,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        assert(this.blobManager.blobCount === 0, 0x1fa /* "attaching container with blobs is not yet implemented" */);
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
                 0x12d /* "Container Context should already be in attaching state" */);
