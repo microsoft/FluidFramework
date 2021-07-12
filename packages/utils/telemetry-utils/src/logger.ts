@@ -582,12 +582,13 @@ export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        omitPropsFromLogging?: string[],
+        omitPropsFromLogging: string[] = [],
     ) {
         super(message);
 
         // Any enumerable properties specified already at construction time should be logged by default
-        const taggableInitialProps = getValidTelemetryProps(this, omitPropsFromLogging ?? []);
+        omitPropsFromLogging.push("__isFluidLoggingError__", "fluidTelemetryProps");
+        const taggableInitialProps = getValidTelemetryProps(this, omitPropsFromLogging);
         this.addTelemetryProperties(taggableInitialProps);
 
         if (props) {
@@ -600,6 +601,15 @@ export class LoggingError extends Error implements ILoggingError {
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
         Object.assign(this.fluidTelemetryProps, props);
+
+        // Back compat of sorts - just in case some core logic depends on props added via this function
+        // being added to this object itself.
+        // But stay away from overwriting any existing props.
+        for (const key of Object.keys(props)) {
+            if (this[key] === undefined) {
+                this[key] = props[key];
+            }
+        }
     }
 
     /**
