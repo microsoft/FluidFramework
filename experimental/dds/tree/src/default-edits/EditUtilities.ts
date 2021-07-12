@@ -4,10 +4,10 @@
  */
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
-import { Snapshot, SnapshotNode, SnapshotPlace, SnapshotRange } from '../Snapshot';
+import { Snapshot, SnapshotPlace, SnapshotRange } from '../Snapshot';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditValidationResult } from '../Checkout';
-import { EditNode, TraitLocation, TreeNodeSequence } from '../generic';
+import { BuildNode, TraitLocation, TreeNodeSequence } from '../generic';
 import { Change, StablePlace, StableRange } from './PersistedTypes';
 
 /**
@@ -18,7 +18,7 @@ import { Change, StablePlace, StableRange } from './PersistedTypes';
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<EditNode>): readonly Change[] {
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 
@@ -197,24 +197,7 @@ export function insertIntoTrait(
 	nodesToInsert: readonly NodeId[],
 	placeToInsert: StablePlace
 ): Snapshot {
-	const place = placeFromStablePlace(snapshot, placeToInsert);
-	const { parent: parentId, label } = place.trait;
-	const parentNode = snapshot.getSnapshotNode(parentId);
-	const traits = new Map(parentNode.traits);
-	const trait = traits.get(label) ?? [];
-
-	const index = snapshot.findIndexWithinTrait(place);
-	const newChildren = [...trait.slice(0, index), ...nodesToInsert, ...trait.slice(index)];
-	traits.set(label, newChildren);
-
-	const newParent: SnapshotNode = { ...parentNode, traits };
-	const newSnapshot = snapshot.replace(
-		parentId,
-		newParent,
-		nodesToInsert.map((nodeId) => [nodeId, { label }]),
-		undefined
-	);
-	return newSnapshot;
+	return snapshot.attachRange(nodesToInsert, placeFromStablePlace(snapshot, placeToInsert));
 }
 
 /**
@@ -225,33 +208,13 @@ export function detachRange(
 	snapshot: Snapshot,
 	rangeToDetach: StableRange
 ): { snapshot: Snapshot; detached: readonly NodeId[] } {
-	const { start, end } = rangeFromStableRange(snapshot, rangeToDetach);
-	const { trait: traitLocation } = start;
-	const { parent: parentId, label } = traitLocation;
-	const parentNode = snapshot.getSnapshotNode(parentId);
-	const traits = new Map(parentNode.traits);
-	const trait = traits.get(label) ?? [];
-	const startIndex = snapshot.findIndexWithinTrait(start);
-	const endIndex = snapshot.findIndexWithinTrait(end);
-
-	const detached: NodeId[] = trait.slice(startIndex, endIndex);
-	const newChildren = [...trait.slice(0, startIndex), ...trait.slice(endIndex)];
-
-	const deleteTrait = newChildren.length === 0;
-	if (deleteTrait) {
-		traits.delete(label);
-	} else {
-		traits.set(label, newChildren);
-	}
-	const newParent: SnapshotNode = { ...parentNode, traits };
-	const newSnapshot = snapshot.replace(parentId, newParent, undefined, detached);
-	return { snapshot: newSnapshot, detached };
+	return snapshot.detachRange(rangeFromStableRange(snapshot, rangeToDetach));
 }
 
 /**
- * Determine if an EditNode is a DetachedSequenceId.
+ * Determine if an BuildNode is a DetachedSequenceId.
  * @internal
  */
-export function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
+export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceId {
 	return typeof node !== 'object';
 }

@@ -24,13 +24,13 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.29.0-0",
-    "@fluidframework/gitresources": "^0.1025.0-25645",
+    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/gitresources": "^0.1027.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/server-services": "^0.1025.0-25645",
-    "@fluidframework/server-services-client": "^0.1025.0-25645",
-    "@fluidframework/server-services-core": "^0.1025.0-25645",
-    "@fluidframework/server-services-utils": "^0.1025.0-25645",
+    "@fluidframework/server-services": "^0.1027.0",
+    "@fluidframework/server-services-client": "^0.1027.0",
+    "@fluidframework/server-services-core": "^0.1027.0",
+    "@fluidframework/server-services-utils": "^0.1027.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -43,12 +43,12 @@
     "nconf": "^0.11.0",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^3.1.0"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0-0",
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/server-test-utils": "^0.1025.0-25645",
+    "@fluidframework/server-test-utils": "^0.1027.0",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",

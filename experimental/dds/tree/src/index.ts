@@ -4,7 +4,7 @@
  */
 
 /**
- * Libraries related to whiteboard collaboration using FluidFramework
+ * Fluid DDS storing a tree.
  *
  * @packageDocumentation
  */
@@ -19,8 +19,7 @@
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { SharedTreeSummary_0_0_2 } from './SummaryBackCompatibility';
-export { sharedTreeAssertionErrorType, isSharedTreeEvent } from './Common';
+export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
@@ -36,7 +35,7 @@ export {
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
-export { comparePayloads } from './SnapshotUtilities';
+export * from './ReconciliationPath';
 export {
 	SharedTree,
 	SharedTreeEditor,
@@ -60,7 +59,6 @@ export {
 	rangeFromStableRange,
 	placeFromStablePlace,
 	Transaction,
-	noHistorySummarizer,
 	isDetachedSequenceId,
 } from './default-edits';
 export {
@@ -69,6 +67,7 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
+	SharedTreeDiagnosticEvent,
 	Edit,
 	newEdit,
 	EditWithoutId,
@@ -79,14 +78,13 @@ export {
 	NodeData,
 	TreeNode,
 	ChangeNode,
-	EditNode,
-	EditResult,
+	BuildNode,
+	EditStatus,
 	TraitLocation,
 	GenericTransaction,
 	EditingResult,
 	ValidEditingResult,
+	SharedTreeSummarizer,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
-	SharedTreeSummarizer,
-	fullHistorySummarizer,
 } from './generic';

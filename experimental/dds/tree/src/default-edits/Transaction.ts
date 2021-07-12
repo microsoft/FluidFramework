@@ -5,7 +5,7 @@
 
 import { assert, assertNotUndefined, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { GenericTransaction, EditNode, EditResult } from '../generic';
+import { GenericTransaction, BuildNode, EditStatus } from '../generic';
 import { Snapshot, SnapshotNode } from '../Snapshot';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
@@ -17,6 +17,7 @@ import {
 	validateStableRange,
 	isDetachedSequenceId,
 } from './EditUtilities';
+
 /**
  * A mutable transaction for applying sequences of changes to a Snapshot.
  * Allows viewing the intermediate states.
@@ -37,12 +38,12 @@ export class Transaction extends GenericTransaction<Change> {
 		return new Transaction(snapshot);
 	}
 
-	protected validateOnClose(): EditResult {
+	protected validateOnClose(): EditStatus {
 		// Making the policy choice that storing a detached sequences in an edit but not using it is an error.
-		return this.detached.size !== 0 ? EditResult.Malformed : EditResult.Applied;
+		return this.detached.size !== 0 ? EditStatus.Malformed : EditStatus.Applied;
 	}
 
-	protected dispatchChange(change: Change): EditResult {
+	protected dispatchChange(change: Change): EditStatus {
 		switch (change.type) {
 			case ChangeType.Build:
 				return this.applyBuild(change);
@@ -59,9 +60,9 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 	}
 
-	private applyBuild(change: Build): EditResult {
+	private applyBuild(change: Build): EditStatus {
 		if (this.detached.has(change.destination)) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 
 		let idAlreadyPresent = false;
@@ -88,38 +89,38 @@ export class Transaction extends GenericTransaction<Change> {
 		);
 
 		if (detachedSequenceNotFound || duplicateIdInBuild) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 		if (idAlreadyPresent) {
-			return EditResult.Invalid;
+			return EditStatus.Invalid;
 		}
 
-		const view = this.view.insertSnapshotNodes(map);
+		const view = this.view.addNodes(map.values());
 		this._view = view;
 		this.detached.set(change.destination, assertNotUndefined(newIds));
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyInsert(change: Insert): EditResult {
+	private applyInsert(change: Insert): EditStatus {
 		const source = this.detached.get(change.source);
 		if (source === undefined) {
-			return EditResult.Malformed;
+			return EditStatus.Malformed;
 		}
 
 		const destinationChangeResult = validateStablePlace(this.view, change.destination);
 		if (destinationChangeResult !== EditValidationResult.Valid) {
-			return destinationChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
+			return destinationChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
 		}
 
 		this.detached.delete(change.source);
 		this._view = insertIntoTrait(this.view, source, change.destination);
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyDetach(change: Detach): EditResult {
+	private applyDetach(change: Detach): EditStatus {
 		const sourceChangeResult = validateStableRange(this.view, change.source);
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
+			return sourceChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
 		}
 
 		const result = detachRange(this.view, change.source);
@@ -129,7 +130,7 @@ export class Transaction extends GenericTransaction<Change> {
 		// Store or dispose detached
 		if (change.destination !== undefined) {
 			if (this.detached.has(change.destination)) {
-				return EditResult.Malformed;
+				return EditStatus.Malformed;
 			}
 			this.detached.set(change.destination, detached);
 		} else {
@@ -137,18 +138,18 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 
 		this._view = modifiedView;
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applyConstraint(change: Constraint): EditResult {
+	private applyConstraint(change: Constraint): EditStatus {
 		// TODO: Implement identityHash and contentHash
 		assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 		assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
 		const sourceChangeResult = validateStableRange(this.view, change.toConstrain);
-		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditResult.Applied : EditResult.Invalid;
+		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditStatus.Applied : EditStatus.Invalid;
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditResult.Malformed;
+			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditStatus.Malformed;
 		}
 
 		const { start, end } = rangeFromStableRange(this.view, change.toConstrain);
@@ -167,29 +168,16 @@ export class Transaction extends GenericTransaction<Change> {
 			return onViolation;
 		}
 
-		return EditResult.Applied;
+		return EditStatus.Applied;
 	}
 
-	private applySetValue(change: SetValue): EditResult {
+	private applySetValue(change: SetValue): EditStatus {
 		if (!this.view.hasNode(change.nodeToModify)) {
-			return EditResult.Invalid;
+			return EditStatus.Invalid;
 		}
 
-		const node = this.view.getSnapshotNode(change.nodeToModify);
-		const { payload } = change;
-		const newNode = { ...node };
-		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface defn.)
-		// eslint-disable-next-line no-null/no-null
-		if (payload === null) {
-			delete newNode.payload;
-		} else {
-			// TODO: detect payloads that are not Fluid Serializable here.
-			// The consistency of editing does not actually depend on payloads being well formed,
-			// but its better to detect bugs producing bad payloads here than let them pass.
-			newNode.payload = payload;
-		}
-		this._view = this.view.replaceNodeData(change.nodeToModify, newNode);
-		return EditResult.Applied;
+		this._view = this.view.setNodeValue(change.nodeToModify, change.payload);
+		return EditStatus.Applied;
 	}
 
 	/**
@@ -199,22 +187,22 @@ export class Transaction extends GenericTransaction<Change> {
 	 * @returns all the top-level node IDs in `sequence` (both from nodes and from detached sequences).
 	 */
 	protected createSnapshotNodesForTree(
-		sequence: Iterable<EditNode>,
+		sequence: Iterable<BuildNode>,
 		onCreateNode: (id: NodeId, node: SnapshotNode) => boolean,
 		onInvalidDetachedId: () => void
 	): NodeId[] | undefined {
 		const topLevelIds: NodeId[] = [];
-		const unprocessed: EditNode[] = [];
-		for (const editNode of sequence) {
-			if (isDetachedSequenceId(editNode)) {
-				const detachedIds = this.getDetachedNodeIds(editNode, onInvalidDetachedId);
+		const unprocessed: BuildNode[] = [];
+		for (const buildNode of sequence) {
+			if (isDetachedSequenceId(buildNode)) {
+				const detachedIds = this.getDetachedNodeIds(buildNode, onInvalidDetachedId);
 				if (detachedIds === undefined) {
 					return undefined;
 				}
 				topLevelIds.push(...detachedIds);
 			} else {
-				unprocessed.push(editNode);
-				topLevelIds.push(editNode.identifier);
+				unprocessed.push(buildNode);
+				topLevelIds.push(buildNode.identifier);
 			}
 		}
 		while (unprocessed.length > 0) {
@@ -225,20 +213,22 @@ export class Transaction extends GenericTransaction<Change> {
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const children = node.traits[key];
-					const childIds: NodeId[] = [];
-					for (const child of children) {
-						if (isDetachedSequenceId(child)) {
-							const detachedIds = this.getDetachedNodeIds(child, onInvalidDetachedId);
-							if (detachedIds === undefined) {
-								return undefined;
+					if (children.length > 0) {
+						const childIds: NodeId[] = [];
+						for (const child of children) {
+							if (isDetachedSequenceId(child)) {
+								const detachedIds = this.getDetachedNodeIds(child, onInvalidDetachedId);
+								if (detachedIds === undefined) {
+									return undefined;
+								}
+								childIds.push(...detachedIds);
+							} else {
+								childIds.push(child.identifier);
+								unprocessed.push(child);
 							}
-							childIds.push(...detachedIds);
-						} else {
-							childIds.push(child.identifier);
-							unprocessed.push(child);
 						}
+						traits.set(key as TraitLabel, childIds);
 					}
-					traits.set(key as TraitLabel, childIds);
 				}
 			}
 			const newNode: SnapshotNode = {

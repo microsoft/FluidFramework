@@ -117,7 +117,7 @@
     "split": "^1.0.0",
     "static-expiry": "0.0.11",
     "uuid": "^8.3.1",
-    "winston": "^3.1.0"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",

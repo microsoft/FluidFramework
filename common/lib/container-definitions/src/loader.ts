@@ -27,6 +27,8 @@ import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
+ *
+ * @deprecated in favor of {@link @fluidframework/container-loader#ICodeDetailsLoader}
  */
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
@@ -332,7 +334,7 @@ export interface ILoaderHeader {
     [LoaderHeader.loadMode]: IContainerLoadMode;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 interface IProvideLoader {

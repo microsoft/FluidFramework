@@ -16,6 +16,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { delay } from "@fluidframework/common-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -28,7 +29,6 @@ export interface IRunConfig {
 export interface ILoadTest {
     run(config: IRunConfig, reset: boolean): Promise<boolean>;
 }
-const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
@@ -47,20 +47,35 @@ class LoadTestDataStoreModel {
         root.set(taskManagerKey, TaskManager.create(runtime).handle);
     }
 
-    private static async waitForCatchup(runtime: IFluidDataStoreRuntime) {
+    private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
         if(runtime.deltaManager.active) {
             return;
         }
+
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
-        while(runtime.deltaManager.lastSequenceNumber < lastKnownSeq) {
-            await new Promise((resolve,reject)=>{
-                if(runtime.disposed) {
-                    reject(new Error("disposed"));
-                    return;
+
+        return new Promise<void>((resolve, reject) => {
+            if (runtime.disposed) {
+                reject(new Error("disposed"));
+            }
+
+            const opListener = () => {
+                if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
+                    runtime.deltaManager.off("op", opListener);
+                    runtime.off("dispose", disposeListener);
+                    resolve();
                 }
-                runtime.deltaManager.once("op", resolve);
-            });
-        }
+            };
+
+            const disposeListener = () => {
+                runtime.deltaManager.off("op", opListener);
+                runtime.off("dispose", disposeListener);
+                reject(new Error("disposed"));
+            };
+
+            runtime.deltaManager.on("op", opListener);
+            runtime.on("dispose", disposeListener);
+        });
     }
 
     /**
@@ -327,10 +342,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
-                        await wait(cycleMs / 2);
+                        await delay(cycleMs / 2);
                     }else{
                         // Random jitter of +- 50% of opWaitMs
-                        await wait(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
+                        await delay(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
                     }
                 }else{
                     await dataModel.lockTask();

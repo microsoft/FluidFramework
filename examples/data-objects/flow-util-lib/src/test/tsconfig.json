@@ -6,6 +6,7 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [
+            "node",
             "mocha"
         ]
     },

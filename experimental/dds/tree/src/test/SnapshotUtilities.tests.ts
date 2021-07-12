@@ -7,13 +7,13 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+import { comparePayloads } from '../Common';
 import { Payload } from '../generic';
-import { comparePayloads } from '../SnapshotUtilities';
 
 describe('SnapshotUtilities', () => {
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
-		const binder: IFluidHandle = ({ bind: () => void {} } as unknown) as IFluidHandle;
+		const binder: IFluidHandle = { bind: () => void {} } as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,

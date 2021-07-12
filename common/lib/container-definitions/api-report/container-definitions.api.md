@@ -88,7 +88,7 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -174,7 +174,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
@@ -299,7 +299,6 @@ export interface IErrorBase {
     readonly errorType: string;
     // (undocumented)
     readonly message: string;
-    sequenceNumber?: number;
 }
 
 // @public
@@ -373,7 +372,7 @@ export interface ILoaderHeader {
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 // @public (undocumented)
@@ -448,7 +447,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
 }
 
 // @public

@@ -14,8 +14,8 @@ import { SharedTree } from './SharedTree';
 
 /**
  * Factory for SharedTree.
+ * Includes history in the summary.
  * @public
- * @sealed
  */
 export class SharedTreeFactory implements IChannelFactory {
 	/**
@@ -65,9 +65,30 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param runtime - data store runtime that owns the new SharedTree
 	 * @param id - optional name for the SharedTree
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
-		const sharedTree = new SharedTree(runtime, id);
+	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree {
+		const sharedTree = new SharedTree(runtime, id, expensiveValidation, this.includeHistoryInSummary());
 		sharedTree.initializeLocal();
 		return sharedTree;
+	}
+
+	/**
+	 * Determines how the SharedTree will summarize the history.
+	 * This is a workaround for lacking the ability to construct DDSs with custom parameters.
+	 */
+	protected includeHistoryInSummary(): boolean {
+		return true;
+	}
+}
+
+/**
+ * Factory for SharedTree.
+ * Does not include the history in the summary.
+ * This is a workaround for lacking the ability to construct DDSs with custom parameters.
+ * TODO:#54918: Clean up when DDS parameterization is supported.
+ * @public
+ */
+export class SharedTreeFactoryNoHistory extends SharedTreeFactory {
+	protected includeHistoryInSummary(): boolean {
+		return false;
 	}
 }

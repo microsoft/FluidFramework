@@ -7,6 +7,9 @@ import { IClientConfiguration, INackContent, NackErrorType } from "@fluidframewo
 
 // Deli lambda configuration
 export interface IDeliServerConfiguration {
+    // Enables nack messages logic
+    enableNackMessages: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -73,6 +76,13 @@ export interface IDocumentLambdaServerConfiguration {
     partitionActivityCheckInterval: number;
 }
 
+// Moira lambda configuration
+export interface IMoiraServerConfiguration {
+    // Enables Moira submission lambda
+    enable: boolean;
+    endpoint: string;
+}
+
 /**
  * Key value store of service configuration properties
  */
@@ -89,6 +99,9 @@ export interface IServerConfiguration {
 
     // Scribe lambda configuration
     scribe: IScribeServerConfiguration;
+
+    // Moira lambda configuration
+    moira: IMoiraServerConfiguration;
 
     // Document lambda configuration
     documentLambda: IDocumentLambdaServerConfiguration;
@@ -108,6 +121,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         maxAckWaitTime: 600000,
     },
     deli: {
+        enableNackMessages: true,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
@@ -133,6 +147,10 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+    },
+    moira: {
+        enable: false,
+        endpoint: "",
     },
     documentLambda: {
         partitionActivityTimeout: 10 * 60 * 1000,

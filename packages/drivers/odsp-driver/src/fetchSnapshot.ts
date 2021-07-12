@@ -74,6 +74,7 @@ export async function fetchSnapshotWithRedeem(
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
+    enableRedeemFallback?: boolean,
 ): Promise<ISnapshotCacheValue> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
@@ -83,7 +84,7 @@ export async function fetchSnapshotWithRedeem(
         snapshotDownloader,
         putInCache,
     ).catch(async (error) => {
-        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+        if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
@@ -126,7 +127,7 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, 0x1ed /* "Share link should be present" */);
+                assert(!!odspResolvedUrl.sharingLinkToRedeem, 0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
@@ -253,7 +254,8 @@ async function fetchLatestSnapshotCore(
                     }
                 }
 
-                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = evalBlobsAndTrees(snapshot);
+                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } =
+                    validateAndEvalBlobsAndTrees(snapshot);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
@@ -331,7 +333,11 @@ async function fetchLatestSnapshotCore(
     });
 }
 
-function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
+    assert(Array.isArray(snapshot.trees) && snapshot.trees.length > 0,
+        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
+    assert(Array.isArray(snapshot.blobs) && snapshot.blobs.length > 0,
+        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
     let numTrees = 0;
     let numBlobs = 0;
     let encodedBlobsSize = 0;
@@ -345,11 +351,9 @@ function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
             }
         }
     }
-    if (snapshot.blobs !== undefined) {
-        for (const blob of snapshot.blobs) {
-            decodedBlobsSize += blob.size;
-            encodedBlobsSize += blob.content.length;
-        }
+    for (const blob of snapshot.blobs) {
+        decodedBlobsSize += blob.size;
+        encodedBlobsSize += blob.content.length;
     }
     return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
@@ -365,8 +369,6 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 }
 
 function getEncodedShareUrl(url: string): string {
-    assert(!url, 0x1ee /* "Url should not be empty" */);
-
     /**
      * Encode the url to accepted format by Sharepoint
      * https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/shares_get

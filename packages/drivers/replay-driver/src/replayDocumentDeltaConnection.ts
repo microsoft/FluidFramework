@@ -21,7 +21,7 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
@@ -301,7 +301,6 @@ export class ReplayDocumentDeltaConnection
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController,
     ): Promise<void> {
-        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         let done;
         let replayPromiseChain = Promise.resolve();
 

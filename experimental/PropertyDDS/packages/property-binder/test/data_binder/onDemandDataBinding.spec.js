@@ -877,7 +877,7 @@ describe('on demand DataBindings', function() {
       { includePrefix: 'root.child1' });
     // matches root.child1.map.key3
     const h3 = dataBinder.register('BINDING3', PrimitiveChildrenTemplate.typeid, ParentDataBinding,
-      { exactPath: 'root.child1.map.key3' });
+      { exactPath: 'root.child1.map[key3]' });
 
     // Nothing should be created yet
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
@@ -916,13 +916,13 @@ describe('on demand DataBindings', function() {
 
     // matches myArray.{1,2,3} and data
     const h1 = dataBinder.register('BINDING', PrimitiveChildrenTemplate.typeid, ParentDataBinding,
-      { excludePrefix: 'myArray.0' });
+      { excludePrefix: 'myArray[0]' });
     // matches myArray.{0,1,2,3}
     const h2 = dataBinder.register('BINDING2', PrimitiveChildrenTemplate.typeid, ParentDataBinding,
       { includePrefix: 'myArray' });
     // matches myArray.2
     const h3 = dataBinder.register('BINDING3', PrimitiveChildrenTemplate.typeid, ParentDataBinding,
-      { exactPath: 'myArray.2' });
+      { exactPath: 'myArray[2]' });
 
     // Nothing should be created yet
     expect(dataBinder._dataBindingCreatedCounter).toEqual(0);

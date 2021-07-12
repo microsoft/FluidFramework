@@ -75,8 +75,8 @@ export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 1 to enable GC, 0 to disable GC, undefined defaults to disabled. */
-    readonly gcFeature?: 0 | 1;
+    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
+    readonly gcFeature?: number;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -94,6 +94,7 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions

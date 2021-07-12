@@ -492,6 +492,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         if (cachedSnapshot === undefined) {
                             cachedSnapshot = await snapshotP;
                         }
+                        else {
+                            snapshotP.catch(() => {});
+                        }
 
                         method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
                     } else {
@@ -610,7 +613,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 snapshotDownloader,
                 putInCache,
-                removeEntries);
+                removeEntries,
+                this.hostPolicy.enableRedeemFallback);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -632,7 +636,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.logger,
                     snapshotDownloader,
                     putInCache,
-                    removeEntries);
+                    removeEntries,
+                    this.hostPolicy.enableRedeemFallback);
                 return odspSnapshot;
             }
             throw error;
@@ -787,8 +792,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 ...hierarchicalAppTree.commits,
             },
             trees: {
-                ".protocol": hierarchicalProtocolTree,
                 ...hierarchicalAppTree.trees,
+                // the app tree could have a .protocol
+                // in that case we want to server protocol to override it
+                ".protocol": hierarchicalProtocolTree,
             },
         };
 

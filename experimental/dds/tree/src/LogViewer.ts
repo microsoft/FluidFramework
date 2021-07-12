@@ -6,12 +6,13 @@
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
-import { EditLog } from './EditLog';
+import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { Snapshot } from './Snapshot';
-import { ChangeNode, Edit, EditResult, EditingResult, GenericTransaction } from './generic';
+import { Edit, EditStatus, EditingResult, GenericTransaction } from './generic';
 import { EditId } from './Identifiers';
-import { initialTree } from './InitialTree';
 import { RevisionValueCache } from './RevisionValueCache';
+import { initialTree } from './InitialTree';
+import { ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular snapshot is computed).
@@ -32,7 +33,76 @@ import { RevisionValueCache } from './RevisionValueCache';
  * skipping the first evaluation of an edit in a particular context due to setKnownEditingResult is still considered applying.
  * To use this call back to track when the actual computational work of applying edits is done, only count cases when `wasCached` is false.
  */
-export type EditResultCallback = (editResult: EditResult, editId: EditId, wasCached: boolean) => void;
+export type EditStatusCallback = (editResult: EditStatus, editId: EditId, wasCached: boolean) => void;
+
+/**
+ * Result of applying an identified transaction.
+ * @public
+ */
+export type EditingResultWithId<TChange> = EditingResult<TChange> & {
+	/**
+	 * Unique identifier for this edit. Must never be reused.
+	 * Used for referencing and de-duplicating edits.
+	 */
+	readonly id: EditId;
+};
+
+/**
+ * The data cached by `CachingLogViewer` for an edit.
+ */
+export type EditCacheEntry<TChange> =
+	| SuccessfulEditCacheEntry<TChange>
+	| UnsuccessfulEditCacheEntry
+	| SummarizedEditResultCacheEntry;
+
+/**
+ * The data cached by `CachingLogViewer` for an edit that it has attempted to apply locally.
+ */
+export type AttemptedEditResultCacheEntry<TChange> = SuccessfulEditCacheEntry<TChange> | UnsuccessfulEditCacheEntry;
+
+/**
+ * The data cached by `CachingLogViewer` for an edit that it has successfully applied locally.
+ */
+export interface SuccessfulEditCacheEntry<TChange> {
+	/**
+	 * The snapshot resulting from the edit.
+	 */
+	snapshot: Snapshot;
+	/**
+	 * The status code for the edit that produced the snapshot.
+	 */
+	status: EditStatus.Applied;
+	/**
+	 * The resolved changes that were applied during the edit and their associated outcome.
+	 */
+	steps: readonly { resolvedChange: TChange; after: Snapshot }[];
+}
+
+/**
+ * The data cached by `CachingLogViewer` for an edit that it has unsuccessfully attempted to apply locally.
+ */
+export interface UnsuccessfulEditCacheEntry {
+	/**
+	 * The snapshot resulting from the edit.
+	 */
+	readonly snapshot: Snapshot;
+	/**
+	 * The status code for the edit that produced the snapshot.
+	 */
+	status: EditStatus.Invalid | EditStatus.Malformed;
+}
+
+/**
+ * The data cached by `CachingLogViewer` for an edit that it has retrieved from a summary.
+ * TODO:#57176: once summarized edits carry enough information remove this interface and use `AttemptedEditResultCacheEntry` instead.
+ */
+export interface SummarizedEditResultCacheEntry {
+	/**
+	 * The snapshot resulting from the edit.
+	 */
+	snapshot: Snapshot;
+	status?: undefined;
+}
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -87,19 +157,19 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * It is invalidated whenever a new sequenced edit (that was not already a local edit) is added to the log.
 	 * When a previously local edit is sequenced, this cache is adjusted to account for it, not invalidated.
 	 */
-	private readonly localSnapshotCache = new Denque<{ snapshot: Snapshot; result: EditingResult<TChange> }>();
+	private readonly localSnapshotCache = new Denque<AttemptedEditResultCacheEntry<TChange>>();
 
 	/**
 	 * Cache of sequenced snapshots.
 	 */
-	private readonly sequencedSnapshotCache: RevisionValueCache<Snapshot>;
+	private readonly sequencedSnapshotCache: RevisionValueCache<EditCacheEntry<TChange>>;
 
 	/**
 	 * Called whenever an edit is processed.
 	 * This will have been called at least once for any edit if a revision after than edit has been requested.
 	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
 	 */
-	private readonly processEditResult: EditResultCallback;
+	private readonly processEditStatus: EditStatusCallback;
 
 	/**
 	 * Iff true, additional correctness assertions will be run during LogViewer operations.
@@ -135,15 +205,15 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * @param knownRevisions - a set of [sequencedRevision, snapshot] pairs that are known (have been precomputed) at construction time.
 	 * These revisions are guaranteed to never be evicted from the cache.
 	 * @param expensiveValidation - Iff true, additional correctness assertions will be run during LogViewer operations.
-	 * @param processEditResult - called after applying an edit.
+	 * @param processEditStatus - called after applying an edit.
 	 * @param logger - used to log telemetry
 	 */
 	public constructor(
 		log: EditLog<TChange>,
-		baseTree: ChangeNode = initialTree,
-		knownRevisions: [Revision, Snapshot][] = [],
+		baseSnapshot: Snapshot = Snapshot.fromTree(initialTree),
+		knownRevisions: [Revision, EditCacheEntry<TChange>][] = [],
 		expensiveValidation = false,
-		processEditResult: EditResultCallback = noop,
+		processEditStatus: EditStatusCallback = noop,
 		logger: ITelemetryBaseLogger,
 		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
 		minimumSequenceNumber = 0
@@ -158,13 +228,13 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				);
 			});
 		}
-		const initialSnapshot = Snapshot.fromTree(baseTree, expensiveValidation);
+
 		this.sequencedSnapshotCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			minimumSequenceNumber,
-			[...knownRevisions, [0, initialSnapshot]]
+			[...knownRevisions, [0, { snapshot: baseSnapshot }]]
 		);
-		this.processEditResult = processEditResult ?? noop;
+		this.processEditStatus = processEditStatus ?? noop;
 		this.expensiveValidation = expensiveValidation;
 		this.logger = logger;
 		this.transactionFactory = transactionFactory;
@@ -187,8 +257,20 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			if (entry !== undefined) {
 				const revision = this.log.numberOfSequencedEdits;
 				const snapshot = entry.snapshot;
-				this.sequencedSnapshotCache.cacheValue(revision, snapshot);
-				this.handleSequencedEditResult(edit, entry.result);
+				this.sequencedSnapshotCache.cacheValue(
+					revision,
+					entry.status === EditStatus.Applied
+						? {
+								snapshot,
+								status: entry.status,
+								steps: entry.steps,
+						  }
+						: {
+								snapshot,
+								status: entry.status,
+						  }
+				);
+				this.handleSequencedEditResult(edit, entry);
 			}
 		} else {
 			// Invalidate any cached results of applying edits which are ordered after `edit` (which are all remaining local edits)
@@ -196,26 +278,34 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		}
 	}
 
-	public async getSnapshot(revision: Revision): Promise<Snapshot> {
+	public async getEditResult(revision: Revision): Promise<EditCacheEntry<TChange>> {
 		const startingPoint = this.getStartingPoint(revision);
 		const { startRevision } = startingPoint;
-		let { currentSnapshot } = startingPoint;
+		let current: EditCacheEntry<TChange> = startingPoint;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
 			const edit = await this.log.getEditAtIndex(i);
-			currentSnapshot = this.applyEdit(currentSnapshot, edit, i);
+			current = this.applyEdit(current.snapshot, edit, i);
 		}
-		return currentSnapshot;
+		return current;
+	}
+
+	public async getSnapshot(revision: Revision): Promise<Snapshot> {
+		return (await this.getEditResult(revision)).snapshot;
+	}
+
+	public getEditResultInSession(revision: Revision): EditCacheEntry<TChange> {
+		const startingPoint = this.getStartingPoint(revision);
+		const { startRevision } = startingPoint;
+		let current: EditCacheEntry<TChange> = startingPoint;
+		for (let i = startRevision; i < revision && i < this.log.length; i++) {
+			const edit = this.log.getEditInSessionAtIndex(i);
+			current = this.applyEdit(current.snapshot, edit, i);
+		}
+		return current;
 	}
 
 	public getSnapshotInSession(revision: Revision): Snapshot {
-		const startingPoint = this.getStartingPoint(revision);
-		const { startRevision } = startingPoint;
-		let { currentSnapshot } = startingPoint;
-		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.getEditInSessionAtIndex(i);
-			currentSnapshot = this.applyEdit(currentSnapshot, edit, i);
-		}
-		return currentSnapshot;
+		return this.getEditResultInSession(revision).snapshot;
 	}
 
 	/**
@@ -242,10 +332,10 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	/**
 	 * @returns the cached snapshot closest to the requested `revision`.
 	 */
-	private getStartingPoint(revision: Revision): { startRevision: Revision; currentSnapshot: Snapshot } {
+	private getStartingPoint(revision: Revision): { startRevision: Revision } & EditCacheEntry<TChange> {
 		// Per the documentation for revision, the returned snapshot should be the output of the edit at the largest index <= `revision`.
 		const revisionClamped = Math.min(revision, this.log.length);
-		let currentSnapshot: Snapshot;
+		let current: EditCacheEntry<TChange>;
 		let startRevision: Revision;
 		const { numberOfSequencedEdits } = this.log;
 		const isLocalRevision = revisionClamped > numberOfSequencedEdits;
@@ -255,25 +345,23 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			// This is because the local cache does not contain an entry for the implicit initial tree edit.
 			const localCacheIndex = revisionClamped - 1 - numberOfSequencedEdits;
 			if (localCacheIndex < length) {
+				const cached =
+					this.localSnapshotCache.peekAt(localCacheIndex) ?? fail('missing tail of localSnapshotCache');
 				return {
+					...cached,
 					startRevision: revisionClamped,
-					currentSnapshot: (
-						this.localSnapshotCache.peekAt(localCacheIndex) ?? fail('missing tail of localSnapshotCache')
-					).snapshot,
 				};
 			} else {
+				current = this.localSnapshotCache.peekAt(length - 1) ?? fail('missing tail of localSnapshotCache');
 				startRevision = numberOfSequencedEdits + length;
-				currentSnapshot = (
-					this.localSnapshotCache.peekAt(length - 1) ?? fail('missing tail of localSnapshotCache')
-				).snapshot;
 			}
 		} else {
 			const [cachedRevision, cachedSnapshot] =
-				this.sequencedSnapshotCache.getClosestEntry(revision) ?? fail('No preceding snapshot cached.');
+				this.sequencedSnapshotCache.getClosestEntry(revisionClamped) ?? fail('No preceding snapshot cached.');
 			startRevision = cachedRevision;
-			currentSnapshot = cachedSnapshot;
+			current = cachedSnapshot;
 		}
-		return { startRevision, currentSnapshot };
+		return { startRevision, ...current };
 	}
 
 	/**
@@ -281,9 +369,13 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * Must only be called in the order that edits appear in the log.
 	 * Must only be called once for a given local edit as long as the local cache has not been invalidated.
 	 * Must only be called once for a given sequenced edit.
-	 * @returns the resulting snapshot
+	 * @returns the resulting snapshot and the outcome of edit that produced it.
 	 */
-	private applyEdit(prevSnapshot: Snapshot, edit: Edit<TChange>, editIndex: number): Snapshot {
+	private applyEdit(
+		prevSnapshot: Snapshot,
+		edit: Edit<TChange>,
+		editIndex: number
+	): AttemptedEditResultCacheEntry<TChange> {
 		let editingResult: EditingResult<TChange>;
 		let cached;
 		if (
@@ -294,21 +386,28 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			editingResult = this.cachedEditResult.result;
 			cached = true;
 		} else {
-			editingResult = this.transactionFactory(prevSnapshot).applyChanges(edit.changes).close();
+			editingResult = this.transactionFactory(prevSnapshot)
+				.applyChanges(edit.changes, this.reconciliationPathFromEdit(edit.id))
+				.close();
 			cached = false;
 		}
 
 		const revision = editIndex + 1;
 		let nextSnapshot: Snapshot;
-		if (editingResult.result === EditResult.Applied) {
+		if (editingResult.status === EditStatus.Applied) {
 			nextSnapshot = editingResult.after;
 		} else {
 			nextSnapshot = prevSnapshot;
 		}
 
+		const computedCacheEntry =
+			editingResult.status === EditStatus.Applied
+				? { snapshot: nextSnapshot, status: editingResult.status, steps: editingResult.steps }
+				: { snapshot: nextSnapshot, status: editingResult.status };
+
 		if (this.log.isSequencedRevision(revision)) {
-			this.sequencedSnapshotCache.cacheValue(revision, nextSnapshot);
-			this.handleSequencedEditResult(edit, editingResult);
+			this.sequencedSnapshotCache.cacheValue(revision, computedCacheEntry);
+			this.handleSequencedEditResult(edit, computedCacheEntry);
 		} else {
 			// This relies on local edits being append only, and that generating the snapshot for a local revision requires generating
 			// the snapshot for all local revisions before it in the log. Thus, generating such a snapshot will necessarily require
@@ -317,27 +416,27 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				revision === this.log.numberOfSequencedEdits + this.localSnapshotCache.length + 1,
 				'Local snapshot cached out of order.'
 			);
-			this.localSnapshotCache.push({ snapshot: nextSnapshot, result: editingResult });
+			this.localSnapshotCache.push(computedCacheEntry);
 		}
 
-		this.processEditResult(editingResult.result, this.log.getIdAtIndex(editIndex), cached);
-		return nextSnapshot;
+		this.processEditStatus(editingResult.status, this.log.getIdAtIndex(editIndex), cached);
+		return computedCacheEntry;
 	}
 
 	/**
 	 * Helper for performing caching and telemetry logging when a sequenced local edit is first applied.
 	 * Must only be called for non-cached sequenced edits.
 	 */
-	private handleSequencedEditResult(edit: Edit<TChange>, result: EditingResult<TChange>): void {
+	private handleSequencedEditResult(edit: Edit<TChange>, result: AttemptedEditResultCacheEntry<TChange>): void {
 		// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
 		// in the event that it was invalid or malformed.
 		if (this.unappliedSelfEdits.length > 0) {
 			if (edit.id === this.unappliedSelfEdits.peekFront()) {
-				if (result.result !== EditResult.Applied) {
+				if (result.status !== EditStatus.Applied) {
 					this.logger.send({
 						category: 'generic',
 						eventName:
-							result.result === EditResult.Malformed
+							result.status === EditStatus.Malformed
 								? 'MalformedSharedTreeEdit'
 								: 'InvalidSharedTreeEdit',
 					});
@@ -349,5 +448,149 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * We currently compute only the "main branch" part of the reconciliation path (meaning we don't include inverts of the edits
+	 * that occurred on the rebased branch). Doing so is only needed for the sequential anchor resolution approach which is not
+	 * yet supported.
+	 * @param editId - The ID for the edit to get the reconciliation path for.
+	 */
+	public reconciliationPathFromEdit(editId: EditId): ReconciliationPath<TChange> {
+		const reconciliationPath: ReconciliationEdit<TChange>[] = [];
+		let cached = false;
+		return new Proxy(reconciliationPath, {
+			get: (target, prop): unknown => {
+				if (!cached) {
+					cached = true;
+					const orderedId = this.log.getOrderedEditId(editId);
+					if (orderedId.isLocal === false && orderedId.sequenceInfo !== undefined) {
+						const earliestSequenced = this.earliestSequencedEditInSession();
+						if (earliestSequenced !== undefined) {
+							const earliestEditSequenceNumber = earliestSequenced.sequenceNumber;
+							const targetSequenceNumber = Math.max(
+								earliestEditSequenceNumber,
+								orderedId.sequenceInfo.referenceSequenceNumber
+							);
+							if (targetSequenceNumber < orderedId.sequenceInfo.sequenceNumber) {
+								const firstEdit = this.getEditResultFromSequenceNumber(targetSequenceNumber);
+								if (firstEdit !== undefined) {
+									if (firstEdit.status === EditStatus.Applied) {
+										reconciliationPath.push({
+											...firstEdit.steps,
+											before: firstEdit.before,
+											after: firstEdit.after,
+											length: firstEdit.steps.length,
+										});
+									}
+									const lowestIndex = this.log.getIndexOfId(firstEdit.id) + 1;
+									const highestIndex = this.log.getIndexOfId(editId) - 1;
+									for (let index = lowestIndex; index <= highestIndex; ++index) {
+										const edit = this.getEditResultFromIndex(index);
+										if (edit.status === EditStatus.Applied) {
+											reconciliationPath.push({
+												...edit.steps,
+												before: edit.before,
+												after: edit.after,
+												length: edit.steps.length,
+											});
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				return target[prop];
+			},
+		});
+	}
+
+	/**
+	 * @returns Edit information for the earliest known sequenced edit.
+	 */
+	public earliestSequencedEditInSession(): { edit: Edit<TChange>; sequenceNumber: number } | undefined {
+		const earliestEditIndex = this.log.earliestAvailableEditIndex;
+		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
+		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {
+			const edit = this.log.getEditInSessionAtIndex(index);
+			const editOrderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
+			if (editOrderedId.sequenceInfo !== undefined) {
+				return { edit, sequenceNumber: editOrderedId.sequenceInfo.sequenceNumber };
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * @returns Edit result information for the edit at the given `index`.
+	 */
+	private getEditResultFromIndex(index: number): EditingResultWithId<TChange> {
+		const edit = this.log.getEditInSessionAtIndex(index);
+		const before = this.getSnapshotInSession(index);
+		const resultAfter = this.getEditResultInSession(index + 1);
+		if (resultAfter.status === undefined) {
+			fail('The status of every edit in session should be known');
+		}
+		return resultAfter.status === EditStatus.Applied
+			? {
+					id: edit.id,
+					status: EditStatus.Applied,
+					before,
+					changes: edit.changes,
+					after: resultAfter.snapshot,
+					steps: resultAfter.steps,
+			  }
+			: {
+					id: edit.id,
+					status: resultAfter.status,
+					before,
+					changes: edit.changes,
+			  };
+	}
+
+	/**
+	 * @param sequenceNumber - The server-assigned sequenced number assigned to the edit of interest.
+	 * @returns Edit result information for the edit with the given sequence number. Undefined if no such edit is known.
+	 */
+	public getEditResultFromSequenceNumber(sequenceNumber: number): EditingResultWithId<TChange> | undefined {
+		const earliestSequenced = this.earliestSequencedEditInSession();
+		if (earliestSequenced !== undefined && sequenceNumber >= earliestSequenced.sequenceNumber) {
+			const lowestIndex = this.log.getIndexOfId(earliestSequenced.edit.id);
+			const highestIndex = this.log.numberOfSequencedEdits - 1;
+			for (let index = highestIndex; index >= lowestIndex; --index) {
+				const edit = this.log.getEditInSessionAtIndex(index);
+				const orderedId = this.log.getOrderedEditId(edit.id) as SequencedOrderedEditId;
+				// If `orderedId.sequenceInfo.sequenceNumber` is equal to the requested `sequenceNumber` then we have found the edit of
+				// interest and simply return its associated information.
+				// Note that the check bellow also is also satisfied if `orderedId.sequenceInfo.sequenceNumber`is lower than the requested
+				// `sequenceNumber`. This can happen when the edit for the requested `sequenceNumber` has either not yet been received or
+				// has been processed by a different DDS (several DDSes can share the same stream of operations and will only see those
+				// relevant to them). In such cases, we return the edit info for the last known edit before that.
+				if (orderedId.sequenceInfo && orderedId.sequenceInfo.sequenceNumber <= sequenceNumber) {
+					const before = this.getSnapshotInSession(index);
+					const resultAfter = this.getEditResultInSession(index + 1);
+					if (resultAfter.status === undefined) {
+						fail('The status of every edit in session should be known');
+					}
+					return resultAfter.status === EditStatus.Applied
+						? {
+								id: edit.id,
+								status: EditStatus.Applied,
+								before,
+								changes: edit.changes,
+								after: resultAfter.snapshot,
+								steps: resultAfter.steps,
+						  }
+						: {
+								id: edit.id,
+								status: resultAfter.status,
+								before,
+								changes: edit.changes,
+						  };
+				}
+			}
+		}
+		return undefined;
 	}
 }

@@ -124,17 +124,10 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value.IFluidHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
-                    }
-                });
+                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                // eslint-disable-next-line max-len
+                assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
             it("Should serialize an undefined value", () => {
@@ -145,17 +138,10 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value || !value.IFluidHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
-                    }
-                });
+                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                // eslint-disable-next-line max-len
+                assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
             it("Should serialize an object with nested handles", async () => {
@@ -171,9 +157,9 @@ describe("Map", () => {
 
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
-                const serialized = JSON.stringify(map.getSerializableStorage());
+                const summaryContent = (map.summarize().summary.tree.header as ISummaryBlob).content;
                 // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
+                assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
 
             it("can load old serialization format", async () => {

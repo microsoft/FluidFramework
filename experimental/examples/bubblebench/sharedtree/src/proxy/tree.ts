@@ -6,7 +6,7 @@
 import {
     Change,
     Delete,
-    EditNode,
+    ChangeNode,
     Insert,
     NodeId,
     SharedTree,
@@ -151,7 +151,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         return this.items.length;
     }
 
-    pushNode(...node: EditNode[]) {
+    pushNode(...node: ChangeNode[]) {
         this.update(
             ...Insert.create(
                 node, StablePlace.atEndOf({

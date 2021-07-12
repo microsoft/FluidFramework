@@ -34,12 +34,14 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
         blobNodeCount: 0,
         handleNodeCount: 0,
         totalBlobSize: 0,
+        unreferencedBlobSize: 0,
     };
     for (const stat of stats) {
         results.treeNodeCount += stat.treeNodeCount;
         results.blobNodeCount += stat.blobNodeCount;
         results.handleNodeCount += stat.handleNodeCount;
         results.totalBlobSize += stat.totalBlobSize;
+        results.unreferencedBlobSize += stat.unreferencedBlobSize;
     }
     return results;
 }
@@ -220,7 +222,9 @@ export function convertToSummaryTreeWithStats(
         }
     }
 
-    return builder.getSummaryTree();
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
+    return summaryTree;
 }
 
 /**
@@ -274,7 +278,10 @@ export function convertSnapshotTreeToSummaryTree(
         const subtree = convertSnapshotTreeToSummaryTree(tree);
         builder.addWithStats(key, subtree);
     }
-    return builder.getSummaryTree();
+
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
+    return summaryTree;
 }
 
 /**
@@ -318,5 +325,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
+        unreferenced: summaryTree.unreferenced,
     };
 }
