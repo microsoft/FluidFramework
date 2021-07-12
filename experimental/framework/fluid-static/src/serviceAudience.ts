@@ -12,10 +12,23 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 // Base class for providing audience information for sessions interacting with FluidContainer
 // This can be extended by different service-specific client packages to additional parameters to
 // the user and client details returned in IMember
-export class ServiceAudience
-  extends TypedEventEmitter<IServiceAudienceEvents<IMember>>
-  implements IServiceAudience<IMember> {
+export abstract class ServiceAudience<M extends IMember = IMember>
+  extends TypedEventEmitter<IServiceAudienceEvents<M>>
+  implements IServiceAudience<M> {
   protected readonly audience: IAudience;
+
+  /**
+   * Retain the most recent member list.  This is so we have more information about a member
+   * leaving the audience in the removeMember event.  It allows us to match the behavior of the
+   * addMember event where it only fires on a change to the members this class exposes (and would
+   * actually produce a change in what getMembers returns).  It also allows us to provide the
+   * client details in the event which makes it easier to find that client connection in a map
+   * keyed on the userId and not clientId.
+   * This map will always be up-to-date in a removeMember event because it is set once at
+   * construction and in every addMember event.
+   * It is mapped clientId to M to be better work with what the IAudience event provides
+   */
+  protected lastMembers: Map<string, M> = new Map();
 
   constructor(
       protected readonly container: Container,
@@ -23,38 +36,52 @@ export class ServiceAudience
     super();
     this.audience = container.audience;
 
-    // Consolidating both the addition/removal of members
-    this.audience.on("addMember", () => {
-      this.emit("membersChanged", this.getMembers());
+    // getMembers will assign lastMembers so the removeMember event has what it needs
+    // in case it would fire before getMembers otherwise gets called the first time
+    this.getMembers();
+
+    this.audience.on("addMember", (clientId: string, details: IClient) => {
+      if (this.shouldIncludeAsMember(details)) {
+        const member = this.getMember(clientId);
+        this.emit("memberAdded", clientId, member);
+        this.emit("membersChanged");
+      }
     });
 
-    this.audience.on("removeMember", () => {
-      this.emit("membersChanged", this.getMembers());
-    });
-
-    this.container.on("connected", () => {
-      this.emit("membersChanged", this.getMembers());
+    this.audience.on("removeMember", (clientId: string) => {
+      if (this.lastMembers.has(clientId)) {
+        this.emit("memberRemoved", clientId, this.lastMembers.get(clientId));
+        this.emit("membersChanged");
+      }
     });
   }
 
-  public getMembers(): Map<string, IMember> {
-    const users = new Map<string, IMember>();
+  protected abstract createServiceMember(audienceMember: IClient): M;
+
+  /**
+   * {@inheritDoc IServiceAudience.getMembers}
+   * ServiceAudience includes only interactive clients in its provided members.
+   */
+  public getMembers(): Map<string, M> {
+    const users = new Map<string, M>();
+    const clientMemberMap = new Map<string, M>();
     // Iterate through the members and get the user specifics.
     this.audience.getMembers().forEach((member: IClient, clientId: string) => {
-      // Get all the current human members
-      if (member.details.capabilities.interactive) {
+      if (this.shouldIncludeAsMember(member)) {
         const userId = member.user.id;
         // Ensure we're tracking the user
         let user = users.get(userId);
         if (user === undefined) {
-            user = { userId, connections: [] };
-            users.set(userId, user);
+          user = this.createServiceMember(member);
+          users.set(userId, user);
         }
 
         // Add this connection to their collection
         user.connections.push({ id: clientId, mode: member.mode });
+        clientMemberMap.set(clientId, user);
       }
     });
+    this.lastMembers = clientMemberMap;
     return users;
   }
 
@@ -66,10 +93,10 @@ export class ServiceAudience
     if (clientId === undefined) {
       return undefined;
     }
-    return this.getMemberByClientId(clientId);
+    return this.getMember(clientId);
   }
 
-  public getMemberByClientId(clientId: string): IMember | undefined {
+  private getMember(clientId: string): M | undefined {
     // Fetch the user ID assoicated with this client ID from the runtime
     const internalAudienceMember = this.audience.getMember(clientId);
     if (internalAudienceMember === undefined) {
@@ -82,5 +109,10 @@ export class ServiceAudience
       throw Error(`Attempted to fetch client ${clientId} that is not part of the current member list`);
     }
     return member;
+  }
+
+  protected shouldIncludeAsMember(member: IClient): boolean {
+    // Include only human members
+    return member.details.capabilities.interactive;
   }
 }
