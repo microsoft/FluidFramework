@@ -194,7 +194,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
-    (event: "disconnected" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)
