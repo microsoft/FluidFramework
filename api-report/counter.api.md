@@ -22,13 +22,12 @@ export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
 
 // @public (undocumented)
 export interface ISharedCounterEvents extends ISharedObjectEvents {
-    // (undocumented)
+    // @eventProperty
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void): any;
 }
 
 // @public
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
-    // (undocumented)
     protected applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
     static getFactory(): IChannelFactory;
@@ -43,7 +42,5 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     get value(): number;
     }
 
-
-// (No @packageDocumentation comment for this package)
 
 ```

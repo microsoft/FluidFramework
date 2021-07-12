@@ -3,5 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This package contains the SharedCounter distributed data structure.
+ *
+ * @packageDocumentation
+ */
+
 export * from "./counter";
 export * from "./interfaces";
