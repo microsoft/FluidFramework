@@ -60,7 +60,6 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
   /**
    * {@inheritDoc IServiceAudience.getMembers}
-   * ServiceAudience includes only interactive clients in its provided members.
    */
   public getMembers(): Map<string, M> {
     const users = new Map<string, M>();
