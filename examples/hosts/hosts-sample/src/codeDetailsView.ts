@@ -7,7 +7,7 @@ import { Container } from "@fluidframework/container-loader";
 import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
 
 /**
- * Configure code details view elements residing at the code upgrade panel.
+ * Initialize code details view elements residing at the code upgrade panel.
  *
  * @param container - Loaded Fluid container
  */
@@ -29,9 +29,6 @@ export const setupUI = (container: Container) => {
         }
     });
 
-    // Retrieve and cache the current code details from the container.
-    let codeDetails = getCodeDetailsFromQuorum(container);
-
     // A helper method to extract package info and display it in the info text box.
     const refreshLoadedCodeInfo = (code: IFluidCodeDetails | undefined) => {
         const loadedPackageInput = document.getElementById(
@@ -49,11 +46,10 @@ export const setupUI = (container: Container) => {
     };
 
     // Retrieve current code details loaded with the container.
-    refreshLoadedCodeInfo(codeDetails);
+    refreshLoadedCodeInfo(getCodeDetailsFromQuorum(container));
 
     // Subscribe to events triggered when new code details proposal is received.
     container.on("codeDetailsProposed", refreshLoadedCodeInfo); // refresh the UI
-    container.on("codeDetailsProposed", (cd) => codeDetails = cd); // update the cached quorum value
 
     // The upgrade button submits a code proposal by incrementing major code version of the code
     // loaded with the container.
@@ -62,6 +58,7 @@ export const setupUI = (container: Container) => {
     ) as HTMLButtonElement;
     upgradeBtn.onclick = async () => {
         // Extract currently loaded code details from the container.
+        const codeDetails = getCodeDetailsFromQuorum(container);
         const { name } = parsePackageDetails(codeDetails.package);
         // Prepare a code upgrade proposal using the current package name and the latest major version.
         const details: IFluidCodeDetails = {

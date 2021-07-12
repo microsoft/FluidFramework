@@ -29,9 +29,7 @@ The application URL has the following format:
 ```
 http://localhost:8080/[#document-id]
 ```
-where
-
-- `document-id` - is an alphanumerical string representing the unique Fluid document ID.
+, where `document-id` is an alphanumerical string representing the unique Fluid document ID.
 
 The application also provides the code details panel allowing to load different code versions and propose code upgrades.
 
@@ -39,12 +37,14 @@ The application also provides the code details panel allowing to load different 
 
 Consider the following code upgrade scenario (see the image below):
 
-1. Users A and B collaboratively edit the same document using the code version 1.0.0
-1. User A reload the document using a newer code version 2.0.0
-1. User A proposes the document code upgrade to the version 2.0.0
-1. When the code proposal is accepted, user B gets logged out as their container's got forcefully closed by the runtime.
+1. User A creates the initial document using the version 1.0.0.
+1. User A and User B load the document using a newer code version 2.0.0.
+1. User A proposes the document code upgrade to the version 2.0.0.
+1. The code upgrade proposal is propagated by the Fluid runtime to all participants in the current collab window.
 
 ![Code Details](./images/major-upgrade.gif)
+
+Refer to the implementation details [below](#code-upgrade).
 
 ## Implementation Details
 
