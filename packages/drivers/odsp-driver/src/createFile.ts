@@ -106,10 +106,9 @@ export async function createNewFluidFile(
     const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
     const value: ISnapshotCacheValue = { snapshot, sequenceNumber: 0 };
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+    await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
 
-    return resolver.resolve({ url: odspUrl });
+    return odspResolvedUrl;
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
