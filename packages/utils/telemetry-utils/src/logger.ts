@@ -566,6 +566,7 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  */
 export class LoggingError extends Error implements ILoggingError {
     private readonly __isFluidLoggingError__ = 1;
+    private readonly fluidTelemetryProps: ITelemetryProperties = {};
 
     public static is(obj: any): obj is LoggingError {
         const maybeLogger = obj as Partial<LoggingError>;
@@ -589,21 +590,20 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        Object.assign(this, props);
+        Object.assign(this.fluidTelemetryProps, props);
     }
 
     /**
      * Get all properties fit to be logged to telemetry for this error
      */
     public getTelemetryProperties(): ITelemetryProperties {
-        const taggableProps = getValidTelemetryProps(this);
-        // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
-        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
-        // Not including the 'name' property because it's likely always "Error"
-        return  {
+        // Include props inherited from Error
+        // But if any were overwritten (e.g. with a tagged property), then use the value in fluidTelemetryProps.
+        return {
             stack: this.stack,
             message: this.message,
-            ...taggableProps,
+            name: this.name,
+            ...this.fluidTelemetryProps,
         };
     }
 }

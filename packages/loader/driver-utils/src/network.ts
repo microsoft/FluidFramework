@@ -41,6 +41,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
         props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 }
 
@@ -58,6 +59,7 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError {
 
     constructor(errorMessage: string) {
         super(errorMessage, { statusCode: 400 });
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 }
 
@@ -72,6 +74,8 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+        // don't log claims or tenantId
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 }
 
@@ -83,6 +87,7 @@ export class NetworkErrorBasic<T extends string> extends LoggingError {
         props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry });
     }
 }
 
@@ -119,6 +124,8 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
         props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+        // eslint-disable-next-line max-len
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry, retryAfterSeconds: this.retryAfterSeconds }); //* max-len
     }
 }
 

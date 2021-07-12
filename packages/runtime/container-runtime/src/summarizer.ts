@@ -77,8 +77,12 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     readonly errorType = summarizingError;
     readonly canRetry = true;
 
-    constructor(errorMessage: string, readonly logged: boolean = false) {
+    constructor(
+        errorMessage: string,
+        readonly logged: boolean = false,
+    ) {
         super(errorMessage);
+        this.addTelemetryProperties({ errorType: this.errorType, canRetry: this.canRetry, logged: this.logged });
     }
 
     static wrap(error: any, logged: boolean = false) {
