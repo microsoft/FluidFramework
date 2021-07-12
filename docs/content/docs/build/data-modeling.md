@@ -1,6 +1,8 @@
 ---
 title: Data modeling
 menuPosition: 3
+author: skylerjokiel
+editor: tylerbutler
 ---
 
 Fluid offers flexible ways to model your collaborative data. Shared objects can be declaratively defined in the `initialObjects` or dynamically created at runtime.
@@ -9,7 +11,7 @@ Fluid offers flexible ways to model your collaborative data. Shared objects can 
 
 The most straightforward way to use Fluid is by defining initial shared objects that are created when the `FluidContainer` is created, and exist for the lifetime of the underlying container.
 
-`initialObjects` are always _connected_ -- that is, they are connected to the Fluid service and are fully collaborative. You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property has the same signature as defined in the schema.
+`initialObjects` are always *connected* -- that is, they are connected to the Fluid service and are fully collaborative. You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property has the same signature as defined in the schema.
 
 ### When to use `initialObjects`
 
@@ -41,7 +43,7 @@ A shared object can be created dynamically by the container at runtime. Dynamic 
 
 ### Creating a dynamic object
 
-A `FluidContainer` object has a `create` function that takes a shared object type and will return a new shared object. The `FluidContainer` can only create types defined in the `dynamicObjectTypes` section of the container schema. 
+A `FluidContainer` object has a `create` function that takes a shared object type and will return a new shared object. The `FluidContainer` can only create types defined in the `dynamicObjectTypes` section of the container schema.
 
 Dynamically created objects are local only (in-memory) and need to be stored on a connected shared object before being collaborative.
 
@@ -80,7 +82,7 @@ const { container, containerServices } = await client.getContainer(/*service con
 const map = container.initialObjects.map;
 
 const newCell = await container.create(SharedCell); // Create a new SharedCell
-map.set("cell-id", newCell.handle); // Attach the new SharedCell 
+map.set("cell-id", newCell.handle); // Attach the new SharedCell
 
 // ...
 
@@ -101,11 +103,10 @@ map.on("valueChanged", (changed) => {
         });
     }
 }
-
 ```
 
 ### When to use dynamic objects
- 
+
 Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded. Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
 An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.

@@ -3,6 +3,8 @@ title: Introducing distributed data structures
 menuPosition: 4
 aliases:
   - "docs/concepts/dds/"
+author: tylerbutler
+editor: sambroner
 ---
 
 The Fluid Framework provides developers with *distributed data structures* (DDSes) that automatically ensure that each

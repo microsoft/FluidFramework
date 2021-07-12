@@ -13,7 +13,7 @@ level, identify the important lower level concepts, and discuss some of our key 
 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
-<img src="images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+<img src="../images/architecture.png" alt="The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
 loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
 objects and distributed data structures.">
@@ -75,7 +75,7 @@ Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid 
 resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
 **code loader.**
 
-<img src="images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
+<img src="../images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
 service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
 
 The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that
@@ -96,7 +96,7 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-<img src="images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned an order and
+<img src="../images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned an order and
 then broadcast to the other connected clients. The client sending the operation also receives an acknowledgement from
 the service with the assigned order of the operation.">
 

@@ -1,6 +1,8 @@
 ---
 title: Containers
 menuPosition: 2
+author: skylerjokiel
+editor: tylerbutler
 ---
 
 ## Overview
@@ -64,7 +66,7 @@ const { container, containerServices} =
 
 ### Attaching a container
 
-Once the `createContainer` or `loadContainer` function calls complete, the returned container is _attached_ -- that is, it is connected to the Fluid service -- and ready to power collaboration. 
+Once the `createContainer` or `loadContainer` function calls complete, the returned container is *attached* -- that is, it is connected to the Fluid service -- and ready to power collaboration.
 
 ### Deleting a container
 
@@ -143,7 +145,7 @@ The drawback of this approach is that when creating a container, the service con
 
 Multiple Fluid containers can be loaded from an application or on a Web page at the same time. There are two primary scenarios where an application would use multiple containers.
 
-First, if your application loads two different experiences that have different underlying data structures. _Experience 1_ may require a `SharedMap` and _Experience 2_ may require a `SharedString`. To minimize the memory footprint of your application you can create two different container schemas and load only the schema you need. In this case your app can load two different containers (two different schemas) but you only load one at a time.
+First, if your application loads two different experiences that have different underlying data structures. *Experience 1* may require a `SharedMap` and *Experience 2* may require a `SharedString`. To minimize the memory footprint of your application you can create two different container schemas and load only the schema you need. In this case your app can load two different containers (two different schemas) but you only load one at a time.
 
 A more complex scenario involves loading two containers at once. Containers serve as a permissioning boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.

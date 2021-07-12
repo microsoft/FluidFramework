@@ -60,7 +60,7 @@ module.exports = {
             "style": "",
         },
         "emphasis-style": { // custom
-            style: "*",
+            "style": "*",
         },
         "first-line-heading": { // MD041
             "level": 2,
@@ -71,11 +71,12 @@ module.exports = {
         "heading-style": { // MD003
             "style": "atx",
         },
-        "line-length": { // MD013
-            "code_blocks": true,
-            "line_length": 120,
-            "tables": false,
-        },
+        "line-length": false, // MD013
+        // "line-length": { // MD013
+        //     "code_blocks": true,
+        //     "line_length": 120,
+        //     "tables": false,
+        // },
         "no-empty-links": true, // MD042
         "no-inline-html": false, //MD033
         "no-multiple-blanks": { // MD012
