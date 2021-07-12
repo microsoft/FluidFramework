@@ -1,5 +1,5 @@
 ---
-title: Overview of Distributed Data Structures
+title: Types of distributed data structures
 menuPosition: 1
 ---
 
@@ -10,7 +10,7 @@ who've used common data structures before.
 {{% callout note %}}
 
 This article assumes that you are familiar with [Introducing distributed data structures]({{< relref
-"/docs/concepts/dds.md" >}}).
+"dds.md" >}}).
 
 {{% /callout %}}
 
@@ -69,11 +69,9 @@ Key-value data structures are the most common choice for many scenarios.
 
 ### Common issues and best practices for key-value DDSes
 
-- Storing a counter in a map will have [unexpected behavior]({{< relref "/docs/data-structures/keyvalue-ddses.md" >}}).
-  Use the SharedCounter instead.
-- Storing arrays, lists, or logs in a key-value entry may lead to [unexpected behavior]({{< relref
-  "/docs/data-structures/keyvalue-ddses.md" >}}) because users can't collaboratively modify parts of one entry. Try
-  storing the array or list data in a SharedSequence or SharedInk.
+- Storing a counter in a map will have unexpected behavior. Use the SharedCounter instead.
+- Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
+  collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
 - Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
@@ -83,7 +81,7 @@ These DDSes are used for storing sequential data. They are optimistic. Sequence 
 need to insert, or remove, data at a specified position in a list or array. Unlike the key-value data structures,
 sequences have a sequential order and can handle simultaneous inserts from multiple users.
 
-- [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) - a sequence of numbers.
+- [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) -- a sequence of numbers.
 - [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
 - [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
 
@@ -131,11 +129,11 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [ConsensusQueue]({{< relref "/docs/apis/ordered-collection/consensusqueue/" >}}) -- An ordered queue of items, but
+- [ConsensusQueue]({{< relref "/docs/apis/ordered-collection/consensusqueue.md" >}}) -- An ordered queue of items, but
   each item is pulled off the queue by only one client. If multiple clients pull, they each get a different item.
-- [ConsensusRegisterCollection]({{< relref "/docs/apis/register-collection/consensusregistercollection" >}}) -- Stores
-  "registers" (i.e., key-value pairs), but changes are made only when all clients acknowledge the change. Also, it keeps
-  a record of all changes to each register.
+- [ConsensusRegisterCollection]({{< relref "/docs/apis/register-collection/consensusregistercollection.md" >}}) --
+  Stores "registers" (i.e., key-value pairs), but changes are made only when all clients acknowledge the change. Also,
+  it keeps a record of all changes to each register.
 - Quorum -- Allows clients to agree on a proposal. Quorum also contains client information.
 
 ### Consensus scenarios
@@ -147,7 +145,13 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 ## Experimental data structures
 
-{{< BetaFlag >}}
+{{< callout "note" "Experimental" "🧪" >}}
+
+This page is about **EXPERIMENTAL** work.
+
+We think it's close to being ready, so we wanted to show it to you early, but the API surface will likely break!
+
+{{< /callout >}}
 
 ### Property DDS
 

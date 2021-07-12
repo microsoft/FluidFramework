@@ -59,8 +59,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   protected abstract createServiceMember(audienceMember: IClient): M;
 
   /**
-   * @inheritdoc
-   * ServiceAudience includes only interactive clients in its provided members.
+   * {@inheritDoc IServiceAudience.getMembers}
    */
   public getMembers(): Map<string, M> {
     const users = new Map<string, M>();
@@ -86,7 +85,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   }
 
   /**
-   * @inheritdoc
+   * {@inheritDoc IServiceAudience.getMyself}
    */
   public getMyself(): M | undefined {
     const clientId = this.container.clientId;
