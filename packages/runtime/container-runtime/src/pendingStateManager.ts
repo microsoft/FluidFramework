@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
@@ -65,11 +66,15 @@ export interface IPendingLocalState {
  *
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
-export class PendingStateManager {
+export class PendingStateManager implements IDisposable {
     private readonly pendingStates = new Deque<IPendingState>();
     private readonly initialStates: Deque<IPendingState>;
     private readonly initialClientId: string | undefined;
     private readonly initialClientSeqNum: number;
+    private readonly disposeOnce = new Lazy<void>(() => {
+        this.initialStates.clear();
+        this.pendingStates.clear();
+    });
 
     // Maintains the count of messages that are currently unacked.
     private pendingMessagesCount: number = 0;
@@ -126,6 +131,9 @@ export class PendingStateManager {
             }
         }
     }
+
+    public get disposed() {return this.disposeOnce.evaluated;}
+    public readonly dispose = () => this.disposeOnce.value;
 
     /**
      * Called when a message is submitted locally. Adds the message and the associated details to the pending state
