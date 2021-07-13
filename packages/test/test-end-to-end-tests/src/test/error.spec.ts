@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { ILoggingError } from "@fluidframework/common-definitions";
 import {
     ContainerErrorType,
     LoaderHeader,
@@ -24,7 +25,7 @@ import {
     invalidFileNameStatusCode,
 } from "@fluidframework/odsp-doclib-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
-import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
     LocalCodeLoader,
@@ -104,7 +105,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             userData: "My name is Mark",
             message: "Some message",
         };
-        const iError = (CreateContainerError(err) as any) as LoggingError;
+        const iError = (CreateContainerError(err) as any) as ILoggingError;
         const props = iError.getTelemetryProperties();
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");

@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { IRwLoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -94,8 +94,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): OdspError & LoggingError & IFacetCodes {
-    let error: OdspError & LoggingError & IFacetCodes;
+): OdspError & IRwLoggingError & IFacetCodes {
+    let error: OdspError & IRwLoggingError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });

@@ -527,7 +527,16 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
+/** Extension of ILoggingError interface to include ability to add props */
+export interface IRwLoggingError extends ILoggingError {
+    /** Add extra properties to be logged to telemetry */
+    addTelemetryProperties(props: ITelemetryProperties): void;
+}
+
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
+
+export const isRwLoggingError = (x: any): x is IRwLoggingError =>
+    typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
@@ -564,17 +573,7 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
-export class LoggingError extends Error implements ILoggingError {
-    private readonly __isFluidLoggingError__ = 1;
-
-    public static is(obj: any): obj is LoggingError {
-        const maybeLogger = obj as Partial<LoggingError>;
-        return maybeLogger !== null
-            && typeof maybeLogger === "object"
-            && typeof maybeLogger.message === "string"
-            && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
-    }
-
+export class LoggingError extends Error implements IRwLoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,

@@ -10,13 +10,13 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { isILoggingError, isRwLoggingError, IRwLoggingError, LoggingError } from "@fluidframework/telemetry-utils";
+import { ILoggingError, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-/** type guard to ensure it's a LoggingError and also implements IErrorBase */
-const isValidLoggingError = (error: any): error is LoggingError & IErrorBase => {
-    return (typeof error?.errorType === "string") && LoggingError.is(error);
+/** type guard to ensure it's a Read/Write LoggingError and also implements IErrorBase */
+const isValidLoggingError = (error: any): error is IRwLoggingError & IErrorBase => {
+    return (typeof error?.errorType === "string") && isRwLoggingError(error);
 };
 
 function extractLogSafeErrorProperties(error: any) {
@@ -200,7 +200,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-export function wrapError<T extends LoggingError>(
+export function wrapError<T extends IRwLoggingError>(
     error: any,
     newErrorFn: (m: string) => T,
 ): T {

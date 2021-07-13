@@ -14,7 +14,7 @@ import {
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { ILoggingError } from "@fluidframework/common-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -87,7 +87,7 @@ describe("Odsp Error", () => {
             assert.fail("networkError should be a genericNetworkError");
         } else {
             assert.equal(networkError.message, "socket.io:disconnect");
-            assert.equal((networkError as unknown as LoggingError).getTelemetryProperties().socketError, "testMessage");
+            assert.equal((networkError as unknown as ILoggingError).getTelemetryProperties().socketError, "testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -103,7 +103,7 @@ describe("Odsp Error", () => {
             assert.fail("networkError should be a genericNetworkError");
         } else {
             assert.equal(networkError.message, "socket.io:error");
-            assert.equal((networkError as unknown as LoggingError).getTelemetryProperties().socketError, "testMessage");
+            assert.equal((networkError as unknown as ILoggingError).getTelemetryProperties().socketError, "testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -120,7 +120,7 @@ describe("Odsp Error", () => {
             assert.fail("networkError should be a throttlingError");
         } else {
             assert.equal(networkError.message, "socket.io:429");
-            assert.equal((networkError as unknown as LoggingError).getTelemetryProperties().socketError, "testMessage");
+            assert.equal((networkError as unknown as ILoggingError).getTelemetryProperties().socketError, "testMessage");
             assert.equal(networkError.retryAfterSeconds, 10);
         }
     });
