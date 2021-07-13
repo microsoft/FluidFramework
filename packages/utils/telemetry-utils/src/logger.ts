@@ -585,9 +585,9 @@ export class LoggingError extends Error implements ILoggingError {
         omitPropsFromLogging: string[] = [],
     ) {
         super(message);
+        omitPropsFromLogging.push("__isFluidLoggingError__", "fluidTelemetryProps");
 
         // Any enumerable properties specified already at construction time should be logged by default
-        omitPropsFromLogging.push("__isFluidLoggingError__", "fluidTelemetryProps");
         const taggableInitialProps = getValidTelemetryProps(this, omitPropsFromLogging);
         this.addTelemetryProperties(taggableInitialProps);
 
