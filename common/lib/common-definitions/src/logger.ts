@@ -78,8 +78,6 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 export interface ILoggingError extends Error {
     /** Return all properties that should be logged to telemetry */
     getTelemetryProperties(): ITelemetryProperties;
-    /** Add extra properties to be logged to telemetry */
-    addTelemetryProperties(props: ITelemetryProperties): void;
 }
 
 /**

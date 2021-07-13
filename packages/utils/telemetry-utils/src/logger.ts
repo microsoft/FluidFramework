@@ -527,15 +527,15 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
+export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
+
 /** Extension of ILoggingError interface to include ability to add props */
-export interface IRwLoggingError extends ILoggingError {
+interface IRwLoggingError extends ILoggingError {
     /** Add extra properties to be logged to telemetry */
     addTelemetryProperties(props: ITelemetryProperties): void;
 }
 
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
-
-export const isRwLoggingError = (x: any): x is IRwLoggingError =>
+const isRwLoggingError = (x: any): x is IRwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
 /**
@@ -546,17 +546,20 @@ export const isRwLoggingError = (x: any): x is IRwLoggingError =>
 export function annotateError(
     error: unknown,
     props: ITelemetryProperties,
-): IRwLoggingError {
+): ILoggingError {
     if (isRwLoggingError(error)) {
         error.addTelemetryProperties(props);
         return error;
     }
 
     if (isRegularObject(error)) {
-        const propsForError = {...props};
+        // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
         const loggingError = error as IRwLoggingError;
+
+        const propsForError = {...props};
         loggingError.getTelemetryProperties = () => propsForError;
         loggingError.addTelemetryProperties = (p: ITelemetryProperties) => { Object.assign(propsForError, p); };
+        return loggingError;
     }
 
     const message = String(error);
