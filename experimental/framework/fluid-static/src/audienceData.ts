@@ -24,23 +24,14 @@ export class AudienceData<T> {
     }
 
     /**
-     * Get the stored value for a userId and clientId.  The userId is not required, but omitting it
-     * will result in iteration over all stored userIds to find a matching clientId.
+     * Get the stored value for a userId and clientId.
      * @param userId - The userId to match
      * @param clientId - The clientId to match
      * @returns The value for the specified key combination, or undefined if the key combination is
      * not present
      */
-    public get(userId: string | undefined, clientId: string): T | undefined {
-        if (userId !== undefined) {
-            return this._data.get(userId)?.get(clientId);
-        }
-        this._data.forEach((clientIdMap, userIdKey) => {
-            if (clientIdMap.has(clientId)) {
-                return clientIdMap.get(clientId);
-            }
-        });
-        return undefined;
+    public get(userId: string, clientId: string): T | undefined {
+        return this._data.get(userId)?.get(clientId);
     }
 
     /**
@@ -61,27 +52,15 @@ export class AudienceData<T> {
     }
 
     /**
-     * Checks if the specified key(s) exist.  Providing only the clientId will result in iteration
-     * over all stored userIds.  userIds whose clientIds have all disconnected will have been
-     * deleted and will not show as present.
+     * Checks if the specified key(s) exist.  userIds whose clientIds have all disconnected will
+     * have been deleted and will not show as present.
      * @param userId - The userId to check
-     * @param clientId - The clientId to checl
+     * @param clientId - The clientId to check
      * @returns if there is a value present for the key combination
      */
-    public has(userId: string | undefined, clientId: string | undefined): boolean {
+    public has(userId: string, clientId: string | undefined): boolean {
         if (clientId === undefined) {
-            if (userId === undefined) {
-                return false;
-            } else {
-                return this._data.has(userId);
-            }
-        } else if (userId === undefined) {
-            this._data.forEach((clientIdMap, userIdKey) => {
-                if (clientIdMap.has(clientId)) {
-                    return true;
-                }
-            });
-            return false;
+            return this._data.has(userId);
         } else {
             return this._data.get(userId)?.has(clientId) ?? false;
         }
@@ -102,30 +81,14 @@ export class AudienceData<T> {
 
     /**
      * Remove the element for the specified key(s).  In the case that this would result in a userId
-     * having no more associated clientIds, the userId is removed as well.  Providing only the
-     * clientId will result in iteration over all stored userIds.
+     * having no more associated clientIds, the userId is removed as well.
      * @param userId - The userId to remove
      * @param clientId - The clientId to remove
      * @returns if an element was removed
      */
-    public delete(userId: string | undefined, clientId: string | undefined): boolean {
+    public delete(userId: string, clientId: string | undefined): boolean {
         if (clientId === undefined) {
-            if (userId === undefined) {
-                return false;
-            } else {
-                return this._data.delete(userId);
-            }
-        } else if (userId === undefined) {
-            this._data.forEach((clientIdMap, userIdKey) => {
-                if (clientIdMap.has(clientId)) {
-                    clientIdMap.delete(clientId);
-                    if (clientIdMap.size === 0) {
-                        this._data.delete(userIdKey);
-                    }
-                    return true;
-                }
-            });
-            return false;
+            return this._data.delete(userId);
         } else {
             const deleted = this._data.get(userId)?.delete(clientId) ?? false;
             if (this._data.get(userId)?.size === 0) {
