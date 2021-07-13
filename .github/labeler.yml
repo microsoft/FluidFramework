@@ -4,6 +4,7 @@
 "area: build":
   - ".github/*"
   - ".github/workflows/**"
+  - "tools/pipelines/**"
 
 "area: contributor experience":
   - ".vscode/**"
@@ -60,8 +61,7 @@
   - packages/test/**
 
 "area: tools":
-  - common/build/**
-  - tools/**
+  - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
 
 "area: website":
   - any: ["docs/**", "!docs/content/**"]
