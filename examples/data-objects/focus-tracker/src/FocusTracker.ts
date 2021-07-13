@@ -11,6 +11,7 @@ import {
     IMember,
     IServiceAudience,
 } from "@fluid-experimental/fluid-framework";
+import { AudienceData } from "@fluid-experimental/fluid-static";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 export interface IFocusTrackerEvents extends IEvent {
@@ -29,7 +30,7 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
      * Local map of focus status for clients
      * Map<userId, Map<clientid, hasFocus>>
      */
-    private readonly focusMap = new Map<string, Map<string, boolean>>();
+    private readonly focusData = new AudienceData<boolean>();
 
     private readonly onFocusSignalFn = (message: IInboundSignalMessage) => {
         const userId: string = message.content.userId;
@@ -37,12 +38,7 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const clientId: string = message.clientId!;
 
-        let clientIdMap = this.focusMap.get(userId);
-        if (clientIdMap === undefined) {
-            clientIdMap = new Map<string, boolean>();
-            this.focusMap.set(userId, clientIdMap);
-        }
-        clientIdMap.set(clientId, hasFocus);
+        this.focusData.set(userId, clientId, hasFocus);
         this.emit("focusChanged");
     };
 
@@ -63,13 +59,7 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
             this.emit("focusChanged");
         });
         this._audience.on("memberRemoved", (clientId: string, member: IMember) => {
-            const clientIdMap = this.focusMap.get(member.userId);
-            if (clientIdMap !== undefined) {
-                clientIdMap.delete(clientId);
-                if (clientIdMap.size === 0) {
-                    this.focusMap.delete(member.userId);
-                }
-            }
+            this.focusData.delete(member.userId, clientId);
             this.emit("focusChanged");
         });
     }
@@ -123,7 +113,7 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
     public getPresences(): Map<string, Map<string, boolean>> {
         // deep copy to prevent outside shenanigans
         const mapCopy = new Map<string, Map<string, boolean>>();
-        this.focusMap.forEach((value, key) => {
+        this.focusData.data.forEach((value, key) => {
             mapCopy.set(key, new Map(value));
         });
         return mapCopy;
@@ -152,6 +142,6 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
     }
 
     public getPresenceForUser(userId: string, clientId: string): boolean | undefined {
-        return this.focusMap.get(userId)?.get(clientId);
+        return this.focusData.get(userId, clientId);
     }
 }
