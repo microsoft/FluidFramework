@@ -1,5 +1,5 @@
 {
 	"_comment": "This file was generated using `@intentional/release-tools`. Please do not manually update any information in this file.",
 	"packageName": "@intentional/shared-tree",
-	"version": "1.9.2"
+	"version": "2.0.1"
 }
