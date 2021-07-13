@@ -281,6 +281,10 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    public notifyAttaching() {
+        this.runtime.setAttachState(AttachState.Attaching);
+    }
+
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
@@ -292,22 +296,14 @@ export class ContainerContext implements IContainerContext {
         return runtimeFactory;
     }
 
-    /**
-     * #3429
-     * Will be adjusted to branch on the `existing` parameter
-     * and call the proper runtime factory initializer
-     */
-    private async instantiateRuntime(_existing: boolean) {
+    private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this);
+        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
         this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
+            this.runtime.setAttachState(AttachState.Attached);
         });
     }
 

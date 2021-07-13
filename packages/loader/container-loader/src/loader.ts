@@ -260,7 +260,9 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  */
- export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+ };
 
  /**
  * To be included in the `IClientDetails.environment` value for the `IRequest` header
