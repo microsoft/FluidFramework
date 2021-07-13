@@ -540,8 +540,7 @@ const isRwLoggingError = (x: any): x is IRwLoggingError =>
 
 /**
  * Annotate the given error object with the given logging props
- * such that IRwLoggingError functions are mixed in for future access.
- * @returns The same error object passed in if possible, with the logging props functionality mixed in
+ * @returns The same error object passed in if possible, with telemetry props functionality mixed in
  */
 export function annotateError(
     error: unknown,
