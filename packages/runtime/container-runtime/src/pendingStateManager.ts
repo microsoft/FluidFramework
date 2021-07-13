@@ -72,7 +72,6 @@ export class PendingStateManager implements IDisposable {
     private readonly initialClientId: string | undefined;
     private readonly initialClientSeqNum: number;
     private readonly disposeOnce = new Lazy<void>(() => {
-        this.initialStates.clear();
         this.pendingStates.clear();
     });
 
