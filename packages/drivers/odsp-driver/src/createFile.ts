@@ -102,9 +102,14 @@ export async function createNewFluidFile(
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
 
-    // caching the converted summary
+    // converting summary and getting sequence number
     const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
-    const value: ISnapshotCacheValue = { snapshot, sequenceNumber: 0 };
+    const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+    const sequenceNumber = documentAttributes.sequenceNumber;
+
+    // caching the converted summary
+    const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
     await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
 

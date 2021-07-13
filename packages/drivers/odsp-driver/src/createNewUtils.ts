@@ -5,6 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { IOdspSnapshotBlob, IOdspSnapshot, IOdspSnapshotTreeEntry } from "./contracts";
 
@@ -12,6 +13,9 @@ import { IOdspSnapshotBlob, IOdspSnapshot, IOdspSnapshotTreeEntry } from "./cont
  * Converts a summary(ISummaryTree) taken in detached container to IOdspSnapshot tree
  */
 export function convertSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspSnapshot {
+    const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
+    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+    const sequenceNumber = documentAttributes.sequenceNumber;
     const blobs: IOdspSnapshotBlob[] = [];
     const treeId = uuid();
     const snapshotTree: IOdspSnapshot = {
@@ -19,7 +23,7 @@ export function convertSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspS
             {
                 entries: [],
                 id: treeId,
-                sequenceNumber: 0,
+                sequenceNumber,
             },
         ],
         blobs,

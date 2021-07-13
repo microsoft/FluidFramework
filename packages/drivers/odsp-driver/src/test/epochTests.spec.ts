@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IOdspResolvedUrl,
@@ -280,9 +281,10 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(blobs.length, 2, "wrong length of blobs");
         assert.strictEqual(blobs[0].content, "testing", "wrong content of testing blob");
 
-        const content = JSON.parse(blobs[1].content);
-        assert.strictEqual(content.minimumSequenceNumber, 0, "wrong min sequence number");
-        assert.strictEqual(content.sequenceNumber, 0, "wrong sequence number");
-        assert.strictEqual(content.term, 1, "wrong term");
+        const protocolSummary = createSummary().tree[".protocol"] as ISummaryTree;
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        assert.strictEqual(documentAttributes.minimumSequenceNumber, 0, "wrong min sequence number");
+        assert.strictEqual(documentAttributes.sequenceNumber, 0, "wrong sequence number");
+        assert.strictEqual(documentAttributes.term, 1, "wrong term");
     });
 });
