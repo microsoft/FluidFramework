@@ -25,6 +25,10 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag,
 }
 
+const isRegularObject = (value: any): boolean => {
+    return value !== null && !Array.isArray(value) && typeof value === "object";
+};
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -56,10 +60,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     private static extractLogSafeErrorProperties(error: any) {
-        const isRegularObject = (value: any): boolean => {
-            return value !== null && !Array.isArray(value) && typeof value === "object";
-        };
-
         const removeMessageFromStack = (stack: string, errorName?: string) => {
             const stackFrames = stack.split("\n");
             stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
@@ -537,6 +537,31 @@ export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTele
 
 export const isRwLoggingError = (x: any): x is IRwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
+
+/**
+ * Annotate the given error object with the given logging props
+ * such that IRwLoggingError functions are mixed in for future access.
+ * @returns The same error object passed in if possible, with the logging props functionality mixed in
+ */
+export function annotateError(
+    error: unknown,
+    props: ITelemetryProperties,
+): IRwLoggingError {
+    if (isRwLoggingError(error)) {
+        error.addTelemetryProperties(props);
+        return error;
+    }
+
+    if (isRegularObject(error)) {
+        const propsForError = {...props};
+        const loggingError = error as IRwLoggingError;
+        loggingError.getTelemetryProperties = () => propsForError;
+        loggingError.addTelemetryProperties = (p: ITelemetryProperties) => { Object.assign(propsForError, p); };
+    }
+
+    const message = String(error);
+    return new LoggingError(message, props);
+}
 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.

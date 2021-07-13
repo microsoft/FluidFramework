@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IRwLoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { annotateError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -94,8 +94,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): OdspError & IRwLoggingError & IFacetCodes {
-    let error: OdspError & IRwLoggingError & IFacetCodes;
+): OdspError & IFacetCodes {
+    let error: OdspError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
@@ -174,7 +174,7 @@ export function createOdspNetworkError(
             props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
-    error.addTelemetryProperties(props);
+    annotateError(error, props);
     return error;
 }
 

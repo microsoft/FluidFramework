@@ -7,15 +7,10 @@
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
 import { IGenericError } from '@fluidframework/container-definitions';
-import { ILoggingError } from '@fluidframework/common-definitions';
-import { IRwLoggingError } from '@fluidframework/telemetry-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
-
-// @public (undocumented)
-export function annotateError(error: unknown, props: ITelemetryProperties): ILoggingError;
 
 // @public
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError;
@@ -72,7 +67,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
-export function wrapError<T extends IRwLoggingError>(error: any, newErrorFn: (m: string) => T): T;
+export function wrapError<T>(error: any, newErrorFn: (m: string) => T): T;
 
 
 // (No @packageDocumentation comment for this package)
