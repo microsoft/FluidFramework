@@ -3,11 +3,31 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable no-param-reassign */
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import {
+    PropertyFactory, ArrayProperty,
+    BaseProperty,
+    ReferenceProperty,
+    ReferenceArrayProperty,
+    ReferenceMapProperty,
+    ValueProperty,
+    ContainerProperty,
+    EnumProperty,
+    EnumArrayProperty,
+} from "@fluid-experimental/property-properties"
 
 import { ComponentMap } from './componentMap';
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
+
+export type ElementType = any | BaseProperty | PropertyProxy;
+export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty;
+// TODO(marcus): this function should be removed in the future and a safer
+// way to determine the corrent types is useed
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+function forceType<T>(value: any | T): value is T {
+    return true;
+}
 
 /**
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
@@ -15,11 +35,11 @@ import { PropertyProxyErrors } from './errors';
  */
 export class Utilities {
     /**
-     * Wraps a function with push/pophNotificationDelayScope.
-     * @param {external:BaseProperty} property The property that is operated on.
-     * @param {Function} updateFunction The function containing the code that modifies properties in the workspace.
-     */
-    static wrapWithPushPopNotificationDelayScope(property, updateFunction) {
+    * Wraps a function with push/pophNotificationDelayScope.
+    * @param property The property that is operated on.
+    * @param updateFunction The function containing the code that modifies properties in the workspace.
+    */
+    static wrapWithPushPopNotificationDelayScope(property: BaseProperty, updateFunction: () => void) {
         if (property.getWorkspace()) {
             property.getWorkspace().pushNotificationDelayScope();
             updateFunction();
@@ -37,18 +57,19 @@ export class Utilities {
      * if `caller` is 'copyWithin' or 'fill' and `element` removed from `property` so that
      * it no longer has a parent for 'reverse' and 'sort).
      * If `element` is not a {@link external:BaseProperty BaseProperty} the returned element will be `element`
-     * if `property` is not an {@link external:ArrayProperty ArrayProperty} or a
-     *  {@link external:MapProperty MapProperty}.
+     * if `property` is not an {@link external:ArrayProperty ArrayProperty}
+     * or a {@link external:MapProperty MapProperty}.
      * In that case the returned element will be `element` only if `property` is of a primitive type.
-     * @param {external:BaseProperty} property The property that is operated on.
-     * @param {Object|external:BaseProperty|Proxy.<external:BaseProperty>} element The element to be inserted.
-     * @param {String} [caller] Only used if the property parameter is an {@link external:ArrayProperty ArrayProperty}.
+     * @param property The property that is operated on.
+     * @param element The element to be inserted.
+     * @param caller Only used if the property parameter is an {@link external:ArrayProperty ArrayProperty}.
      * Triggers special behavior for the methods copyWithin(), fill(), reverse(), sort().
-     * @return {Object} The prepared element that is ready for insertion.
+     * @return The prepared element that is ready for insertion.
      */
-    static prepareElementForInsertion(property, element, caller) {
+    static prepareElementForInsertion(property: BaseProperty, element: ElementType, caller?: string): any {
         // Check if element exists and is a proxied property
-        if (element && element.getProperty && PropertyFactory.instanceOf(element.getProperty(), 'BaseProperty')) {
+        if (element && typeof element.getProperty === 'function' &&
+            PropertyFactory.instanceOf(element.getProperty(), 'BaseProperty')) {
             element = element.getProperty();
         }
         if (PropertyFactory.instanceOf(element, 'BaseProperty')) {
@@ -62,7 +83,7 @@ export class Utilities {
                 }
             } else {
                 // Some special cases to allow out of the box functionality for arrays
-                if (element.getParent() && property.getContext() === 'array') {
+                if (element.getParent() && property.getContext() === 'array' && forceType<ArrayProperty>(property)) {
                     if (caller === 'copyWithin' || caller === 'fill') {
                         return element.clone();
                     } else if (caller === 'reverse' || caller === 'sort' || caller === 'swap') {
@@ -98,10 +119,10 @@ export class Utilities {
 
     /**
      * Assigns as value property to another property.
-     * @param {external:BaseProperty} property The target of the assignation.
-     * @param {external:BaseProperty | Object} value The value that is to be assigned.
+     * @param property The target of the assignation.
+     * @param value The value that is to be assigned.
      */
-    static assign(property, value) {
+    static assign(property: BaseProperty, value: BaseProperty | any) {
         const context = property.getContext();
         // De-proxify
         if (value && value.getProperty) {
@@ -111,17 +132,19 @@ export class Utilities {
         if (context === 'single') {
             // Allow setting the value from a property
             if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
-                if (PropertyFactory.instanceOf(property, 'Reference')) {
+                if (PropertyFactory.instanceOf(property, 'Reference') && forceType<ReferenceProperty>(property)) {
                     property.set(value);
                 } else {
                     property.deserialize(value.serialize());
                 }
             } else {
                 Utilities.throwOnIterableForSingleProperty(value);
-                if (property.isPrimitiveType()) {
+                if (property.isPrimitiveType() && forceType<ValueProperty>(property)) {
                     property.setValue(value);
                 } else {
-                    property.setValues(value);
+                    if (forceType<ContainerProperty>(property)) {
+                        property.setValues(value);
+                    }
                 }
             }
         } else {
@@ -131,7 +154,7 @@ export class Utilities {
             }
 
             Utilities.wrapWithPushPopNotificationDelayScope(property, () => {
-                if (context === 'array') {
+                if (context === 'array' && forceType<ArrayProperty>(property)) {
                     const proxiedArray = PropertyProxy.proxify(property);
                     property.clear();
                     if (valueContext === 'array') {
@@ -182,29 +205,34 @@ export class Utilities {
     /**
      * This function should be called if the target of the assignment is a property that has "single" defined
      * as its context to check if the passed value is an iterable. In that case an Error will be thrown.
-     * @param {Object} value The value to be checked.
+     * @param value The value to be checked.
      */
-    static throwOnIterableForSingleProperty(value) {
-        if (value && typeof value !== 'string' && value[Symbol.iterator] &&
-            typeof value[Symbol.iterator] === 'function') {
+    static throwOnIterableForSingleProperty(value: any) {
+        if (value && typeof value !== 'string' &&
+            value[Symbol.iterator] && typeof value[Symbol.iterator] === 'function') {
             throw new Error(PropertyProxyErrors.ASSIGN_ITERABLE_TO_SINGLE);
         }
     }
 
     /**
      * This is a utility function that sets the value of the referenced property.
-     * @param {external:BaseProperty} property The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
-     * @param {String|undefined} key The key of the referenced property in the ReferenceArray/Map.
-     * @param {external:BaseProperty | Object} value The value to be set.
+     * @param property The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
+     * @param key The key of the referenced property in the ReferenceArray/Map.
+     * @param value The value to be set.
      */
-    static setValueOfReferencedProperty(property, key, value) {
-        key = (key === undefined ? [] : [key]);
-        if (!property.isReferenceValid(...key)) {
+    static setValueOfReferencedProperty(
+        property: ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty,
+        key: string | number | undefined, value: BaseProperty | any) {
+        const keys = (key === undefined ? [] : [key]);
+
+        // TODO(marcus): this cast is a workaround for resolving the type check
+        // isue that TS cannot statically derive the correct types for isReferenceValid
+        if (!(<any>property.isReferenceValid)(...keys)) {
             throw new Error(PropertyProxyErrors.INVALID_REFERENCE);
         }
 
         const { referencedPropertyParent, relativePathFromParent } =
-            PropertyProxy.getParentOfReferencedProperty(property, ...key);
+            PropertyProxy.getParentOfReferencedProperty(property, ...keys);
         const proxiedReferencedPropertyParent = PropertyProxy.proxify(referencedPropertyParent);
 
         if (proxiedReferencedPropertyParent instanceof ComponentMap) {
@@ -216,19 +244,19 @@ export class Utilities {
 
     /**
      * Check if a passed in string `key`contains an asterisk.
-     * @param {String} key The key to check.
-     * @return {Boolean} True if `key` contains an asterisk.
+     * @param key The key to check.
+     * @return True if `key` contains an asterisk.
      */
-    static containsAsterisk(key) {
+    static containsAsterisk(key: string): boolean {
         return (String(key) === key && key[key.length - 1] === '*');
     }
 
     /**
      * Check if a passed in string `key`contains a caret.
-     * @param {String} key The key to check.
-     * @return {Boolean} True if `key` contains a caret.
+     * @param key The key to check.
+     * @return True if `key` contains a caret.
      */
-    static containsCaret(key) {
+    static containsCaret(key: string): boolean {
         return (String(key) === key && key[key.length - 1] === '^');
     }
 
@@ -236,19 +264,20 @@ export class Utilities {
      * This method handles the proxification of child properties and also takes care of the special cases,
      * that arises if an '^' was part of the key `key` that identifies which child of `property` is about to be
      * proxied.
-     * @param {external:BaseProperty} property The parent property.
-     * @param {String} key The key that determines which child of `property` is proxied.
-     * @param {Boolean} caretFound Indicates if the key initially contained a caret at the end.
-     * @param {Boolean} [isReferenceCollection] Indicates if `property` is either a
+     * @param property The parent property.
+     * @param key The key that determines which child of `property` is proxied.
+     * @param caretFound Indicates if the key initially contained a caret at the end.
+     * @param isReferenceCollection Indicates if `property` is either a
      * ReferenceArray- or ReferenceMapProperty.
      *  @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
      */
-    static proxifyInternal(property, key, caretFound, isReferenceCollection = false) {
+    static proxifyInternal(property: ContainerProperty, key: string | number,
+        caretFound: boolean, isReferenceCollection: boolean = false) {
         const context = property.getContext();
-        const propertyAtKey = property.get(key);
+        const propertyAtKey = property.get(key)!;
         if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
             if (caretFound && propertyAtKey.isPrimitiveType()) {
-                if (PropertyFactory.instanceOf(propertyAtKey, 'Enum')) {
+                if (PropertyFactory.instanceOf(propertyAtKey, 'Enum') && forceType<EnumProperty>(propertyAtKey)) {
                     return propertyAtKey.getEnumString();
                 } else if (PropertyFactory.instanceOf(propertyAtKey, 'Uint64') ||
                     PropertyFactory.instanceOf(propertyAtKey, 'Int64')) {
@@ -260,27 +289,29 @@ export class Utilities {
             // property is a ReferenceProperty that references a primitive entry of a map/set.
             if (caretFound) {
                 const contextIsSingle = context === 'single';
+                let other_property: BaseProperty = property;
                 if (!contextIsSingle && isReferenceCollection) {
                     const data = PropertyProxy.getParentOfReferencedProperty(property, key);
-                    property = data.referencedPropertyParent;
+                    other_property = data.referencedPropertyParent;
                     key = data.relativePathFromParent;
                 }
 
                 if (contextIsSingle) {
                     const data = PropertyProxy.getParentOfReferencedProperty(property.get(key,
                         { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
-                    property = data.referencedPropertyParent;
+                    other_property = data.referencedPropertyParent;
                     key = data.relativePathFromParent;
                 }
 
-                const typeid = property.getTypeid();
-                const fullTypeid = property.getFullTypeid();
+                const typeid = other_property.getTypeid();
+                const fullTypeid = other_property.getFullTypeid();
                 if (typeid === 'Uint64') {
                     return PropertyFactory.create('Uint64', 'single', propertyAtKey).toString();
                 } else if (typeid === 'Int64') {
                     return PropertyFactory.create('Int64', 'single', propertyAtKey).toString();
-                } else if (fullTypeid.includes('<enum<')) {
-                    return property.getEnumString(key);
+                } else if (fullTypeid.includes('<enum<')
+                    && forceType<EnumArrayProperty>(other_property) && forceType<number>(key)) {
+                    return other_property.getEnumString(key);
                 }
             }
             return propertyAtKey;
@@ -291,11 +322,11 @@ export class Utilities {
 /**
  * Helper that checks if the input is a valid iterable and returns an array containing the entries
  * of the Iterable.
- * @param {Iterable} value The Iterable that contains the entries.
- * @return {Array} An array of the entries contained in the passed Iterable.
+ * @param value The Iterable that contains the entries.
+ * @return An array of the entries contained in the passed Iterable.
  * @hidden
  */
-function _getElementsArray(value) {
+function _getElementsArray<T = any>(value: Iterable<T>): T[] {
     if (!value || typeof value[Symbol.iterator] !== 'function' || String(value) === value) {
         throw new Error(PropertyProxyErrors.NON_ITERABLE);
     }
