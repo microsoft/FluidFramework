@@ -69,11 +69,10 @@ export const setupUI = (container: Container) => {
             },
             config: {},
         };
-        try {
-            // Submit a code proposal to the container
-            await container.proposeCodeDetails(details);
-        } catch (error) {
-            window.alert(`🛑 Failed to upgrade container code\n\n${error}`);
-        }
+        // Submit a code proposal to the container
+        container.proposeCodeDetails(details)
+            .catch((error) => {
+                window.alert(`🛑 Failed to upgrade container code\n\n${error}`);
+            });
     };
 };
