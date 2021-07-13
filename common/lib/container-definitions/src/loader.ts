@@ -334,7 +334,7 @@ export interface ILoaderHeader {
     [LoaderHeader.loadMode]: IContainerLoadMode;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.version]: string | undefined;
+    [LoaderHeader.version]: string | undefined | null;
 }
 
 interface IProvideLoader {

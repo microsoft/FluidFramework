@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidConfiguration,
@@ -111,7 +111,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService;
+    readonly storage: IDocumentStorageService | undefined;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
@@ -121,7 +121,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    readonly logger: ITelemetryBaseLogger;
+    readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
