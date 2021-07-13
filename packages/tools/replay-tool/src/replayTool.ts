@@ -192,7 +192,7 @@ process.on("exit", (code) => {
     }
 });
 
-new ReplayTool(new ReplayProcessArgs())
+new ReplayTool(new ReplayProcessArgs(), false /* throwOnEvents */)
     .Go()
     .then((errors) => {
         // If we failed, exit with non-zero code
