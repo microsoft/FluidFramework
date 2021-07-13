@@ -158,10 +158,10 @@ function setUpTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
 >(
-	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
+	factoryGetter: () => TSharedTreeFactory,
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents<TSharedTree> {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory } = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -178,7 +178,7 @@ function setUpTestSharedTreeGeneric<
 	}
 
 	// Enable expensiveValidation
-	const factory = factoryGetter(options.summarizeHistory);
+	const factory = factoryGetter();
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
@@ -214,6 +214,8 @@ function setUpTestSharedTreeGeneric<
 	if (initialTree !== undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
+
+	tree.summarizeHistory = summarizeHistory ?? true;
 
 	return {
 		componentRuntime,
@@ -269,7 +271,7 @@ export interface LocalServerSharedTreeTestingOptions {
  * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
  */
 export async function setUpLocalServerTestSharedTree(
-	options: LocalServerSharedTreeTestingOptions
+	options: LocalServerSharedTreeTestingOptions = {}
 ): Promise<LocalServerSharedTreeTestingComponents> {
 	return setUpLocalServerTestSharedTreeGeneric(SharedTree.getFactory, options);
 }
@@ -281,7 +283,7 @@ export async function setUpLocalServerTestSharedTree(
  * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
  */
 export async function setUpLocalServerTestSharedTreeWithAnchors(
-	options: LocalServerSharedTreeTestingOptions
+	options: LocalServerSharedTreeTestingOptions = {}
 ): Promise<LocalServerSharedTreeTestingComponents<SharedTreeWithAnchors>> {
 	return setUpLocalServerTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
 }
@@ -290,27 +292,14 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
 >(
-	factoryGetter: (
-		summarizeHistory?: boolean,
-		uploadEditChunks?: boolean,
-		writeSummaryFormat?: SharedTreeSummaryWriteFormat
-	) => TSharedTreeFactory,
+	factoryGetter: () => TSharedTreeFactory,
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
 	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat, uploadEditChunks } =
 		options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [
-		[
-			treeId,
-			factoryGetter(
-				summarizeHistory,
-				uploadEditChunks === undefined ? true : uploadEditChunks,
-				writeSummaryFormat
-			),
-		],
-	];
+	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter()]];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			addGlobalAgentSchedulerAndLeaderElection: false,
@@ -335,6 +324,10 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
+
+	tree.summarizeHistory = summarizeHistory ?? true;
+	tree.writeSummaryFormat = writeSummaryFormat ?? SharedTreeSummaryWriteFormat.Format_0_0_2;
+	tree.supportEditBlobbing = uploadEditChunks ?? true;
 
 	return { tree, testObjectProvider: provider };
 }

@@ -184,24 +184,27 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		this.emit(GenericSharedTree.eventFromEditResult(editResult), editId);
 	};
 
+	// SharedTree configuration options
+
+	/** Determines if the history is included in summaries. */
+	public summarizeHistory = true;
+	/** Determines the format version the SharedTree will write summaries in. */
+	public writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2;
+	/** Determines if edit chunks are uploaded when they are full. */
+	public supportEditBlobbing = false;
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - Enable expensive asserts.
-	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
-	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
 		attributes: IChannelAttributes,
-		private readonly expensiveValidation = false,
-		protected readonly summarizeHistory = true,
-		protected readonly writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
-		private readonly uploadEditChunks = false
+		private readonly expensiveValidation = false
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
@@ -313,7 +316,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
 	private async uploadEditChunk(edits: readonly EditWithoutId<TChange>[], startRevision: number): Promise<void> {
-		if (this.uploadEditChunks) {
+		if (this.supportEditBlobbing) {
 			// SPO attachment blob upload limit is set here:
 			// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=%2Fsts%2Fstsom%2FPrague%2FSPPragueProtocolConfig.cs&version=GBmaster&line=82&lineEnd=82&lineStartColumn=29&lineEndColumn=116&lineStyle=plain&_a=contents
 			// TODO:#59754: Create chunks based on data buffer size instead of number of edits

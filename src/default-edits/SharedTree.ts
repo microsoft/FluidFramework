@@ -135,48 +135,19 @@ export class SharedTree extends GenericSharedTree<Change> {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @param summarizeHistory - Determines how history is summarized by the returned `SharedTree`.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	public static getFactory(
-		summarizeHistory = true,
-		uploadEditChunks = false,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
-	): SharedTreeFactory {
-		return new SharedTreeFactory({
-			summarizeHistory,
-			uploadEditChunks,
-			writeSummaryFormat,
-		});
+	public static getFactory(): SharedTreeFactory {
+		return new SharedTreeFactory();
 	}
 
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
-	 * @param expensiveValidation - enable expensive asserts
-	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
-	public constructor(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		expensiveValidation = false,
-		summarizeHistory = true,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
-		uploadEditChunks = false
-	) {
-		super(
-			runtime,
-			id,
-			Transaction.factory,
-			SharedTreeFactory.Attributes,
-			expensiveValidation,
-			summarizeHistory,
-			writeSummaryFormat,
-			uploadEditChunks
-		);
+	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
+		super(runtime, id, Transaction.factory, SharedTreeFactory.Attributes, expensiveValidation);
 	}
 
 	private _editor: SharedTreeEditor | undefined;

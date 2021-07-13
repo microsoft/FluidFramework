@@ -13,19 +13,7 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { SharedTreeWithAnchors } from './SharedTreeWithAnchors';
 
 /**
- * Options for configuring a SharedTreeWithAnchorsFactory.
- * @public
- */
-export interface SharedTreeWithAnchorsFactoryOptions {
-	/** If false, does not include history in summaries. */
-	readonly summarizeHistory?: boolean;
-	/** If true, edit chunks are uploaded as blobs when they become full. */
-	readonly uploadEditChunks?: boolean;
-}
-
-/**
  * Factory for SharedTreeWithAnchors.
- * Includes history in the summary.
  * @public
  */
 export class SharedTreeWithAnchorsFactory implements IChannelFactory {
@@ -42,11 +30,6 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 		snapshotFormatVersion: '0.1',
 		packageVersion: '0.1',
 	};
-
-	/**
-	 * @param options - Options for configuring the SharedTreeWithAnchorsFactory
-	 */
-	constructor(private readonly options: SharedTreeWithAnchorsFactoryOptions = {}) {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -82,13 +65,7 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTreeWithAnchors {
-		const sharedTree = new SharedTreeWithAnchors(
-			runtime,
-			id,
-			expensiveValidation,
-			this.options.summarizeHistory,
-			this.options.uploadEditChunks
-		);
+		const sharedTree = new SharedTreeWithAnchors(runtime, id, expensiveValidation);
 		sharedTree.initializeLocal();
 		return sharedTree;
 	}

@@ -52,7 +52,6 @@ export {
 	StablePlace,
 	StableRange,
 	SharedTreeFactory,
-	SharedTreeFactoryOptions,
 	revert,
 	setTrait,
 	validateStablePlace,
