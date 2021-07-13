@@ -312,21 +312,13 @@ async function fetchLatestSnapshotCore(
                 return value;
             },
         ).catch((error) => {
-            // Issue #5895:
-            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-            // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-            // going getVersions / individual blob download path. This path is very slow, and will not work with
-            // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-            if (typeof error === "object" && error !== null) {
-                error.canRetry = false;
-                // We hit these errors in stress tests, under load
-                // It's useful to try one more time in such case.
-                // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-                // (not in "real" offline) and it actually helps.
-                if (error.errorType === DriverErrorType.fetchFailure ||
-                    error.errorType === OdspErrorType.fetchTimeout) {
-                    error[getWithRetryForTokenRefreshRepeat] = true;
-                }
+            // We hit these errors in stress tests, under load
+            // It's useful to try one more time in such case.
+            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
+            // (not in "real" offline) and it actually helps.
+            if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
+                error.errorType === OdspErrorType.fetchTimeout)) {
+                error[getWithRetryForTokenRefreshRepeat] = true;
             }
             throw error;
         });
