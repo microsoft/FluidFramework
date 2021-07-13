@@ -94,6 +94,7 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions

@@ -67,13 +67,18 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         this._audience = newAudience;
         this._signalManager = new SignalManager(this.runtime);
 
-        this._audience.on("membersChanged", () => {
-            this.pruneFocusMap();
+        this._audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
-            // TODO: Currently the current connecting client does not always broadcast its
-            // status on connection because it can't identify itself in the audience yet
-            // (e.g. if the Container hasn't connected).  Once audience events are cleaned
-            // up we can check for ourself here and broadcast.
+        });
+        this._audience.on("memberRemoved", (clientId: string, member: IMember) => {
+            const clientIdMap = this.focusMap.get(member.userId);
+            if (clientIdMap !== undefined) {
+                clientIdMap.delete(clientId);
+                if (clientIdMap.size === 0) {
+                    this.focusMap.delete(member.userId);
+                }
+            }
+            this.emit("focusChanged");
         });
 
         this.signalManager.registerListener(FocusTracker.focusSignalType, (clientId, local, payload) => {
@@ -112,20 +117,6 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
             FocusTracker.focusSignalType,
             { userId: this.audience.getMyself()?.userId, focus: hasFocus },
         );
-    }
-
-    /**
-     * Go through the current audience to remove entries in our focus map on clients
-     * that are no longer present
-     */
-    private pruneFocusMap() {
-        this.focusMap.forEach((clientIdMap, userId) => {
-            clientIdMap.forEach((hasFocus, clientId) => {
-                if (this.audience.getMemberByClientId(clientId) === undefined) {
-                    clientIdMap.delete(clientId);
-                }
-            });
-        });
     }
 
     /**
