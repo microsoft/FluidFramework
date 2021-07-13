@@ -33,7 +33,7 @@ import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger} from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
@@ -161,7 +161,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
