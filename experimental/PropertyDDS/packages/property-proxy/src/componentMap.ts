@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable no-param-reassign */
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import {
+    PropertyFactory, BaseProperty,
+    MapProperty, ReferenceMapProperty,
+} from "@fluid-experimental/property-properties"
 
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
-import { Utilities } from './utilities';
+import { forceType, Utilities } from './utilities';
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
@@ -16,7 +19,7 @@ import { Utilities } from './utilities';
  * @return {Iterator} An iterator.
  * @hidden
  */
-const createMapIterator = (target) => function*() {
+const createMapIterator = (target) => function*(): Generator<[any, any]> {
     const property = target.getProperty();
     const keys = property.getIds();
     for (let i = 0; i < keys.length; i++) {
@@ -36,11 +39,14 @@ const createMapIterator = (target) => function*() {
  * @hidden
  */
 class ComponentMap extends Map {
+    // workaround, necessary for typescript to handle Object.defineProperty
+    // https://github.com/microsoft/TypeScript/issues/28694
+    private property!: MapProperty
     /**
      * Sets the {@link external:MapProperty MapProperty} to operate on sets the Symbol.iterator attribute.
-     * @param {external:MapProperty} property The {@link external:MapProperty MapProperty} to operate on.
+     * @param property The {@link external:MapProperty MapProperty} to operate on.
      */
-    constructor(property) {
+    constructor(property: MapProperty) {
         super();
         Object.defineProperty(this, 'property', { enumerable: false, value: property });
         this[Symbol.iterator] = createMapIterator(this);
@@ -49,24 +55,24 @@ class ComponentMap extends Map {
     /**
      * Retrieves the length of the array returned by {@link external:MapProperty#getIds} to infer
      * the size (number of entries).
-     * @return {Number} The size of the {@link external:MapProperty MapProperty}.
+     * @return The size of the {@link external:MapProperty MapProperty}.
      */
-    get size() {
+    get size(): number {
         return this.property.getIds().length;
     }
 
     /**
      * Returns the wrapped {@link external:MapProperty MapProperty} property.
-     * @return {external:MapProperty} The wrapped {@link external:MapProperty MapProperty}.
+     * @return The wrapped {@link external:MapProperty MapProperty}.
      */
-    getProperty() {
+    getProperty(): MapProperty {
         return this.property;
     }
 
     /**
      * @inheritdoc
      */
-    clear() {
+    clear(): void {
         const keys = this.property.getIds();
         keys.forEach((id) => {
             this.property.remove(id);
@@ -76,7 +82,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    delete(key) {
+    delete(key: string): boolean {
         if (this.property.has(key)) {
             this.property.remove(key);
             return true;
@@ -95,7 +101,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    get(key) {
+    get(key: string) {
         if (String(key) !== key) {
             return undefined;
         }
@@ -117,7 +123,7 @@ class ComponentMap extends Map {
             } else {
                 if (asteriskFound) {
                     return PropertyProxy.proxify(this.property.get(key,
-                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
+                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                 } else {
                     return Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
                 }
@@ -130,21 +136,25 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    forEach(func) {
+    forEach(func: (value, key, map) => void) {
         const keys = this.property.getIds();
         for (let i = 0; i < keys.length; i++) {
-            let value = this.property.get(keys[i]);
+            const value = this.property.get(keys[i])!;
+            // TODO(marcus): should this ever not be the case? in case its a value property
+            // the proxify method would return the appropriate type like number, string etc.
+            // so the else branch is unnecessary ?
             if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
-                value = PropertyProxy.proxify(value);
+                func(PropertyProxy.proxify(value), keys[i], this);
+            } else {
+                func(value, keys[i], this);
             }
-            func(value, keys[i], this);
         }
     }
 
     /**
      * @inheritdoc
      */
-    has(key) {
+    has(key: string) {
         return this.property.has(key);
     }
 
@@ -164,7 +174,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    set(key, value) {
+    set(key: string, value: any) {
         if (typeof key !== 'string') {
             throw new Error(PropertyProxyErrors.ONLY_STRING_KEYS);
         }
@@ -175,7 +185,8 @@ class ComponentMap extends Map {
         }
 
         if (this.property.has(key)) {
-            if (!asteriskFound && PropertyFactory.instanceOf(this.property, 'Reference', 'map')) {
+            if (!asteriskFound && PropertyFactory.instanceOf(this.property, 'Reference', 'map')
+                && forceType<ReferenceMapProperty>(this.property)) {
                 Utilities.setValueOfReferencedProperty(this.property, key, value);
             } else {
                 if (asteriskFound && !PropertyFactory.instanceOf(this.property, 'Reference', 'map')) {
@@ -186,7 +197,6 @@ class ComponentMap extends Map {
         } else {
             this.property.insert(key, Utilities.prepareElementForInsertion(this.property, value));
         }
-
         return this;
     }
 
@@ -195,9 +205,9 @@ class ComponentMap extends Map {
      */
     values() {
         const keys = this.property.getIds();
-        const valuesIterator = function*() {
+        const valuesIterator = function*(this: ComponentMap) {
             for (let i = 0; i < keys.length; i++) {
-                const propertyAtKey = this.property.get(keys[i]);
+                const propertyAtKey = this.property.get(keys[i])!;
                 if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
                     yield PropertyProxy.proxify(propertyAtKey);
                 } else {
@@ -213,6 +223,7 @@ class ComponentMap extends Map {
      * @inheritdoc
      */
     toJSON() {
+        // TODO(marcus): should this be implemented?
         return {};
     }
 }
