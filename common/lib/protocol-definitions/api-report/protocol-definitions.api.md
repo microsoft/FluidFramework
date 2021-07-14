@@ -260,7 +260,7 @@ export interface IQueueMessage {
 export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
 }
 
-// @public (undocumented)
+// @public
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
@@ -268,7 +268,7 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, ID
     getMembers(): Map<string, ISequencedClient>;
 }
 
-// @public (undocumented)
+// @public
 export interface IQuorumClientsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
@@ -276,10 +276,10 @@ export interface IQuorumClientsEvents extends IErrorEvent {
     (event: "removeMember", listener: (clientId: string) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
-// @public (undocumented)
+// @public
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     // (undocumented)
     get(key: string): any;
@@ -291,7 +291,7 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     propose(key: string, value: any): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: IPendingProposal) => void): any;

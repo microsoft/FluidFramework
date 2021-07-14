@@ -56,11 +56,17 @@ export interface IPendingProposal extends ISequencedProposal {
     readonly rejectionDisabled: boolean;
 }
 
+/**
+ * Events fired by a Quorum in response to client tracking.
+ */
 export interface IQuorumClientsEvents extends IErrorEvent {
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
     (event: "removeMember", listener: (clientId: string) => void);
 }
 
+/**
+ * Events fired by a Quorum in response to proposal tracking.
+ */
 export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "addProposal", listener: (proposal: IPendingProposal) => void);
     (
@@ -79,14 +85,23 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
         listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void);
 }
 
+/**
+ * All events fired by an IQuorum, both client tracking and proposal tracking.
+ */
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
+/**
+ * Interface for tracking clients in the Quorum.
+ */
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
     getMembers(): Map<string, ISequencedClient>;
 
     getMember(clientId: string): ISequencedClient | undefined;
 }
 
+/**
+ * Interface for tracking proposals in the Quorum.
+ */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     propose(key: string, value: any): Promise<void>;
 
@@ -98,7 +113,7 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
 }
 
 /**
- * Class representing agreed upon values in a quorum
+ * Interface combining tracking of clients as well as proposals in the Quorum.
  */
 export interface IQuorum extends
     Omit<IQuorumClients, "on" | "once" | "off">,
