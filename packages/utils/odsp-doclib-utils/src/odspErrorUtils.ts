@@ -94,8 +94,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): OdspError & IFacetCodes {
-    let error: OdspError & IFacetCodes;
+): Error & OdspError & IFacetCodes {
+    let error: Error & OdspError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
@@ -194,7 +194,6 @@ export function throwOdspNetworkError(
         response,
         responseText);
 
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }
 
