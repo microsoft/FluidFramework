@@ -11,7 +11,7 @@ import {
 
 const filePattern = /^.*?[^_]package-lock\.json$/i; // Ignore _package-lock.json
 const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
-const versionPattern = /"lockfileVersion"\s*:\s*1\s*,/g;
+const versionPattern = /"lockfileVersion"\s*:\s*\b1\b/g;
 
 export const handlers: Handler[] = [
     {
@@ -47,6 +47,7 @@ export const handlers: Handler[] = [
         name: "package-lockfiles-npm-version",
         match: filePattern,
         handler: file => {
+            console.log(`lock: ${file}`);
             const content = readFile(file);
             if (content.match(versionPattern) === null) {
                 return `Unexpected 'lockFileVersion' (Please use NPM v6: 'npm i -g npm@latest-6'): ${file}`;
