@@ -2,12 +2,12 @@
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/docs/apis/undo-redo.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
 
 <!-- Classes and interfaces -->
 
