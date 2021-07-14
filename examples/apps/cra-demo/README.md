@@ -37,7 +37,7 @@ cd my-app-name
 
 ### 1.a Start the app
 
-The `tinylicious` server will be required for Fluid to work.
+The `tinylicious` server will be needed to run this demo locally.
 
 ```bash
 npx tinylicious
@@ -53,17 +53,17 @@ npm run start
 
 There are two packages to install to get started with Fluid:
 
-`@fluid-experimental/tinylicious-client` - Defines the service connection for our local Fluid server and starting schema for the [container](https://fluidframework.com/docs/glossary/#container)
+`@fluid-experimental/frs-client` - Defines the client we'll use to connect to our Fluid [container](https://fluidframework.com/docs/glossary/#container), both locally and if deployed
 `@fluidframework/map` - Contains the SharedMap you will use to sync data
 
 ### Using NPM
 ```bash
-npm install @fluid-experimental/tinylicious-client @fluidframework/map
+npm install @fluid-experimental/frs-client @fluidframework/map
 ```
 
 ### Using Yarn
 ```bash
-yarn add @fluid-experimental/tinylicious-client @fluidframework/map
+yarn add @fluid-experimental/frs-client @fluidframework/map
 ```
 
 \* These are still experimental packages, and not ready for production
@@ -72,9 +72,11 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 ## 3. <a style="position: relative; top: 20px" name="import"></a> Import and Initialize Fluid Dependencies
 
-`TinyliciousClient` is the service we will use to connect to our local Tinylicious server. It also provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) or [DDSes](https://fluidframework.com/docs/concepts/dds/) that are defined in the `containerSchema`.
+`FrsClient` is a client that will allow us to connect connect to a local `Tinylicious` server while testing our application. It also provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) or [DDSes](https://fluidframework.com/docs/concepts/dds/) that are defined in the `containerSchema`.
 
 > The Fluid container interacts with the processes and distributes operations, manages the lifecycle of Fluid objects, and provides a request API for accessing Fluid objects.
+
+`InsecureTokenProvider` is a class that we will use to provide temporary credentials to our `Tinylicious` server. In production this would be replaced with an official token provider.
 
 `SharedMap` is the DDS that we will initialize on our container.
 
@@ -83,7 +85,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 // Add to the top of the file
 
 import React from "react";
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";
 import { SharedMap } from "@fluidframework/map";
 ```
 
@@ -104,40 +106,45 @@ const getContainerId = () => {
 };
 ```
 
-### 3.b Instantiate a service client instance
+### 3.b Configure the service client
 
-`TinyliciousClient` instance needs to be instantiated before use and can take an optional configuration object to changes settings such as default port. Depending on your deploy target, you might create and use different client packages.
+In this demo we will only be dealing with a local configuration, but in a production environment you could swap this out with a production configuration without changing your application.
 
 ```js
 // add below getContainerId
-const tinyliciousClient = new TinyliciousClient();
+const localConfig = {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("tenantId", { id: "userId" }),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
 ```
 
 ## 4. <a style="position: relative; top: 20px" name="init"></a> Get Fluid Data
 
-Before we can access any Fluid data, we need to make a call to the `TinyliciousClient` with necessary service configuration and container schema.
+Before we can access any Fluid data, we need to create our configured FRS `client` and define our container schema.
 
-- `serviceConfig` is going to vary per service. With Tinylicious it will only requires an `id`.
 - `containerSchema` is going to include a string `name` and a collection of the data types our application will use.
 
 The following `getFluidData` function utilizes the `getContainerId` to return a unique ID and determine if this is an existing document (`getContainer`) or if we need to create a new one (`createContainer`).
 
-Since this function is an async, we'll need to wait for the `initialObjects` to be returned. Once returned, each `initialObjects` key will point to a connected data structure as per defined in the schema.
+Since this `getFluidData` function is an async, we'll need to wait for the `initialObjects` to be returned. Once returned, each `initialObjects` key will point to a connected data structure as defined in the schema.
+
 ```jsx
 // after creating an instance
 const getFluidData = async () => {
     const { containerId, isNew } = getContainerId();
 
-    const serviceConfig = {id: containerId};
+    const client = new FrsClient(localConfig);
 
     const containerSchema = {
         name: 'cra-demo-container',
         initialObjects: { mySharedMap: SharedMap }
     };
 
-    const fluidContainer = isNew
-        ? await tinyliciousClient.createContainer(serviceConfig, containerSchema)
-        : await tinyliciousClient.getContainer(serviceConfig, containerSchema);
+    const { fluidContainer } = isNew
+        ? await client.createContainer({id: containerId}, containerSchema)
+        : await client.getContainer({id: containerId}, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }

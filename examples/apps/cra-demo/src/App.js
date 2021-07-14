@@ -20,7 +20,6 @@ const getContainerId = () => {
 const localConfig = {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("tenantId", { id: "userId" }),
-    // if you're running Tinylicious on a non-default port, you'll need change these URLs
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
@@ -33,13 +32,11 @@ const getFluidData = async () => {
         name: 'cra-demo',
         initialObjects: { mySharedMap: SharedMap }
     };
-    const serviceConfig = { id: containerId };
 
     const client = new FrsClient(localConfig);
-
-    const fluidContainer = isNew
-        ? await client.createContainer(serviceConfig, containerSchema)
-        : await client.getContainer(serviceConfig, containerSchema);
+    const { fluidContainer } = isNew
+        ? await client.createContainer({ id: containerId }, containerSchema)
+        : await client.getContainer({ id: containerId }, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }
