@@ -5,7 +5,7 @@
 
 import {
     PropertyFactory, BaseProperty,
-    ContainerProperty, ValueProperty,
+    ContainerProperty, ValueProperty, SetProperty,
 } from "@fluid-experimental/property-properties";
 import { PathHelper } from "@fluid-experimental/property-changeset";
 
@@ -143,7 +143,7 @@ export class PropertyProxy {
                     proxy = new ComponentMap(property);
                     break;
                 case 'set':
-                    proxy = new ComponentSet(property);
+                    proxy = new ComponentSet(property as SetProperty);
                     break;
                 default:
                     if (property.isPrimitiveType() && forceType<ValueProperty>(property)) {
