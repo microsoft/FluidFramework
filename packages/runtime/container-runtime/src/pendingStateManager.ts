@@ -71,9 +71,7 @@ export class PendingStateManager implements IDisposable {
     private readonly initialStates: Deque<IPendingState>;
     private readonly initialClientId: string | undefined;
     private readonly initialClientSeqNum: number;
-    private readonly disposeOnce = new Lazy<void>(() => {
-        this.pendingStates.clear();
-    });
+    private _disposed = false;
 
     // Maintains the count of messages that are currently unacked.
     private pendingMessagesCount: number = 0;
@@ -89,6 +87,10 @@ export class PendingStateManager implements IDisposable {
 
     private get connected(): boolean {
         return this.containerRuntime.connected;
+    }
+
+    public get disposed() {
+        return this._disposed;
     }
 
     /**
@@ -131,8 +133,10 @@ export class PendingStateManager implements IDisposable {
         }
     }
 
-    public get disposed() {return this.disposeOnce.evaluated;}
-    public readonly dispose = () => this.disposeOnce.value;
+    public dispose() {
+        this.pendingStates.clear();
+        this._disposed = true;
+    }
 
     /**
      * Called when a message is submitted locally. Adds the message and the associated details to the pending state
