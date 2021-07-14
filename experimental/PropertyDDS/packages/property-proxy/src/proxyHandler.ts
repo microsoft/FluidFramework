@@ -11,7 +11,7 @@ import {
 import { PropertyProxy, proxySymbol } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
 import { Utilities, forceType, ReferenceType } from './utilities';
-import { IProxy } from "./interfaces";
+import { ProxyType } from "./interfaces";
 
 /**
  * The additional proxy handlers for non-collection type properties.
@@ -25,7 +25,7 @@ export const proxyHandler = {
      * @param key The name of the property that is to be accessed.
      * @return {Object | external:BaseProperty} The accessed primitive or Property.
      */
-    get(target: IProxy<ContainerProperty>, key: string) {
+    get(target: ProxyType<ContainerProperty>, key: string) {
         let asteriskFound = false;
         let caretFound = false;
         if (!(target.getProperty().has(key))) {
@@ -59,7 +59,7 @@ export const proxyHandler = {
      * @param value The value to be assigned.
      * @return True on success.
      */
-    set(target: IProxy<ContainerProperty | NodeProperty>
+    set(target: ProxyType<ContainerProperty | NodeProperty>
         , key: string, value: any) {
         const asteriskFound = Utilities.containsAsterisk(key);
         if (asteriskFound) {
@@ -103,7 +103,7 @@ export const proxyHandler = {
      * @param key The name of the property to be deleted.
      * @return {Boolean} Returns `true`on successful removal.
      */
-    deleteProperty(target: IProxy<ContainerProperty | NodeProperty>, key: string) {
+    deleteProperty(target: ProxyType<ContainerProperty | NodeProperty>, key: string) {
         const property = target.getProperty();
         if (property.isDynamic() && property.has(key) && forceType<NodeProperty>(property)) {
             property.remove(key);
@@ -121,8 +121,8 @@ export const proxyHandler = {
      * @param key The name of the property.
      * @return The Descriptor
      */
-    getOwnPropertyDescriptor(target: IProxy<ContainerProperty>, key: string | typeof proxySymbol) {
-        if (Reflect.has(target.getProperty().getEntriesReadOnly(), key)) {
+    getOwnPropertyDescriptor(target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) {
+        if (Reflect.has(target.getProperty().getEntriesReadOnly(), key) && forceType<string>(key)) {
             return {
                 configurable: true,
                 enumerable: true,
@@ -143,7 +143,7 @@ export const proxyHandler = {
      * @param key The name of the property.
      * @return true if `key` is a child of the property.
      */
-    has: (target: IProxy<ContainerProperty>, key: string | typeof proxySymbol) =>
+    has: (target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) =>
         Reflect.has(target.getProperty().getEntriesReadOnly(), key) || key === proxySymbol,
 
     /**
@@ -154,5 +154,5 @@ export const proxyHandler = {
      * the Proxy handles.
      * @return The array containing the IDs of the {@link external:BaseProperty BaseProperty}.
      */
-    ownKeys: (target: IProxy<ContainerProperty>) => Reflect.ownKeys(target.getProperty().getEntriesReadOnly()),
+    ownKeys: (target: ProxyType<ContainerProperty>) => Reflect.ownKeys(target.getProperty().getEntriesReadOnly()),
 };
