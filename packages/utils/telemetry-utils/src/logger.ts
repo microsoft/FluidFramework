@@ -558,12 +558,18 @@ export function annotateError(
 
         const propsForError = {...props};
         loggingError.getTelemetryProperties = () => propsForError;
-        loggingError.addTelemetryProperties = (p: ITelemetryProperties) => { Object.assign(propsForError, p); };
+        loggingError.addTelemetryProperties =
+            (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
         return loggingError;
     }
 
     const message = String(error);
     return new LoggingError(message, props);
+}
+
+/** Copy props from source onto target, overwriting any keys that are already set on target */
+function copyProps(target: unknown, source: ITelemetryProperties) {
+    Object.assign(target, source);
 }
 
 /**
@@ -616,7 +622,7 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        Object.assign(this, props);
+        copyProps(this, props);
     }
 
     /**
