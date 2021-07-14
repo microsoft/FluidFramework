@@ -177,6 +177,9 @@ describe("Logger", () => {
                     { value: "hello" }), false, "undefined (missing) tag is bad");
             });
         });
+        describe("annotateError", () => {
+            //*
+        });
         describe("LoggingError", () => {
             it("ctor props are assigned to the object", () => {
                 const loggingError = new LoggingError(

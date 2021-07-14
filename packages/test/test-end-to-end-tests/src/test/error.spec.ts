@@ -100,6 +100,9 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         }
     });
 
+    //* test CreatecontainerError around errorType precedence, and whether the error is LoggingError or not
+    //* test createOdspNetworkError around the props that should be added
+
     it("GeneralError Logging Test", async () => {
         const err = {
             userData: "My name is Mark",
