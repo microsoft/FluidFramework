@@ -64,7 +64,21 @@ export async function createNewFluidFile(
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
-    return resolver.resolve({ url: odspUrl });
+    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+
+    if (createNewSummary !== undefined) {
+        // converting summary and getting sequence number
+        const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const sequenceNumber = documentAttributes.sequenceNumber;
+
+        // caching the converted summary
+        const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+    }
+
+    return odspResolvedUrl;
 }
 
 export async function createNewEmptyFluidFile(
@@ -160,22 +174,6 @@ export async function createNewFluidFileFromSummary(
             },
             { end: true, cancel: "error" });
     });
-
-    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
-    const resolver = new OdspDriverUrlResolver();
-
-    // converting summary and getting sequence number
-    const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
-    const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-    const sequenceNumber = documentAttributes.sequenceNumber;
-
-    // caching the converted summary
-    const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
-    await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
-
-    return odspResolvedUrl;
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {

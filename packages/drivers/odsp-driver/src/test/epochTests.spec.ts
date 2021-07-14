@@ -5,20 +5,16 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
     IOdspResolvedUrl,
     ICacheEntry,
     IEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
-import { createNewFluidFile } from "../createFile";
-import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
@@ -227,64 +223,5 @@ describe("Tests for Epoch Tracker", () => {
         assert(
             await epochTracker.get(cacheEntry1) === undefined,
             "Entry in cache should be absent because it was epoch 409");
-    });
-
-    it("Should cache converted summary during createNewFluidFile", async () => {
-        const createSummary = () => {
-            const summary: ISummaryTree = {
-                type: SummaryType.Tree,
-                tree: {},
-            };
-                summary.tree[".app"] = {
-                    type: SummaryType.Tree,
-                    tree: {
-                        attributes: {
-                            type: SummaryType.Blob,
-                            content: "testing",
-                        },
-                    },
-                };
-                summary.tree[".protocol"] = {
-                    type: SummaryType.Tree,
-                    tree: {
-                        attributes: {
-                            type: SummaryType.Blob,
-                            content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber: 0,
-                                term: 1 }),
-                        },
-                    },
-                };
-            return summary;
-        };
-
-        const filePath = "path";
-        const newFileParams: INewFileInfo = {
-            driveId,
-            siteUrl: "https://www.localhost.xxx",
-            filePath,
-            filename: "filename",
-        };
-
-        const odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
-                    async (_options) => "token",
-                    newFileParams,
-                    new TelemetryNullLogger(),
-                    createSummary(),
-                    epochTracker,
-                ) ,
-                { itemId: "itemId1"},
-                { "x-fluid-epoch": "epoch1" },
-                );
-        const value = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
-        const blobs = value.snapshot.blobs;
-        assert.strictEqual(blobs.length, 2, "wrong length of blobs");
-        assert.strictEqual(blobs[0].content, "testing", "wrong content of testing blob");
-
-        const protocolSummary = createSummary().tree[".protocol"] as ISummaryTree;
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        assert.strictEqual(documentAttributes.minimumSequenceNumber, 0, "wrong min sequence number");
-        assert.strictEqual(documentAttributes.sequenceNumber, 0, "wrong sequence number");
-        assert.strictEqual(documentAttributes.term, 1, "wrong term");
     });
 });
