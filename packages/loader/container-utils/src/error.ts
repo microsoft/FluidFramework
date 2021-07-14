@@ -131,9 +131,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         originalError: any,
         message: ISequencedDocumentMessage | undefined,
     ): ICriticalContainerError {
-        const messagePropsToLog = message !== undefined
-            ? extractSafePropertiesFromMessage(message)
-            : undefined;
         const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
 
         // Don't coerce if already has an errorType, to distinguish unknown errors from
@@ -142,8 +139,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             ? originalError
             : wrapError(originalError, newErrorFn);
 
-        if (messagePropsToLog !== undefined) {
-            annotateError(error, messagePropsToLog);
+        if (message !== undefined) {
+            annotateError(error, extractSafePropertiesFromMessage(message));
         }
         return error;
     }

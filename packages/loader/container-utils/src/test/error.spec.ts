@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
-import { CreateContainerError, CreateProcessingError, GenericError } from "../error";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { CreateContainerError, CreateProcessingError, DataProcessingError, GenericError } from "../error";
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
@@ -116,7 +119,6 @@ describe("Errors", () => {
         });
     });
 
-    //* Test me with different combos of IErrorBase and LoggingError
     describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
@@ -124,15 +126,36 @@ describe("Errors", () => {
 
             assert((testError as any).stack === originalError.stack);
         });
-        it("Should skip coercion for LoggingErrors", () => {
+        it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
                 "Inherited error message", {
-                    errorType: "Demoted error type",
+                    errorType: "Some error type",
                     otherProperty: "Considered PII-free property",
                 });
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any === originalError);
+        });
+        it("Should skip coercion for object with errorType", () => {
+            const originalError = {
+                errorType: "Some error type",
+            };
+            const coercedError = CreateProcessingError(originalError, undefined);
+
+            assert(coercedError as any === originalError);
+        });
+        it("Should coerce LoggingError missing errorType", () => {
+            const originalError = new LoggingError(
+                "Inherited error message", {
+                    otherProperty: "Considered PII-free property",
+                });
+            const coercedError = CreateProcessingError(originalError, undefined);
+
+            assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.message === "Inherited error message");
+            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property");
         });
 
         it("Should not fail coercing malformed inputs", () => {
@@ -180,20 +203,39 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalMessage, undefined);
 
             assert(coercedError.message === originalMessage);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
         });
 
-        it("Should be coercible from a property object", () => {
+        it("Should be coercible from a property object (no errorType)", () => {
             const originalError = {
                 message: "Inherited error message",
-                errorType: "specialErrorType",
             };
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError.message === originalError.message);
-            assert(
-                coercedError.errorType ===
-                    "specialErrorType",
-            );
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+        });
+
+        it("op props should be logged when coerced", () => {
+            const originalError = {
+                message: "Inherited error message",
+            };
+            const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
+            const coercedError = CreateProcessingError(originalError, op);
+
+            assert(isILoggingError(coercedError));
+            assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);
+        });
+
+        it("op props should be logged even when not coerced", () => {
+            const originalError = {
+                errorType: "hello",
+            };
+            const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
+            const coercedError = CreateProcessingError(originalError, op);
+
+            assert(isILoggingError(coercedError));
+            assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);
         });
     });
 });
