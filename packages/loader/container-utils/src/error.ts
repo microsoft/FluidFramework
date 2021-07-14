@@ -136,7 +136,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             : undefined;
         const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
 
-        // Don't coerce if it's already a recognized LoggingError
+        // Don't coerce if already has an errorType, to distinguish unknown errors from
+        // errors that we raised which we already can interpret apart from this classification
         const error = hasErrorType(originalError)
             ? originalError
             : wrapError(originalError, newErrorFn);

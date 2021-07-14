@@ -6,12 +6,41 @@
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
-import { CreateContainerError, CreateProcessingError } from "../error";
+import { CreateContainerError, CreateProcessingError, GenericError } from "../error";
 
 describe("Errors", () => {
-    describe("GenericError coercion", () => {
-        it("Should have an errorType", () => {
-            const testError = CreateContainerError({});
+    describe("GenericError coercion via CreateContainerError", () => {
+        it("Should add errorType and props, as a new object", () => {
+            const originalError: any = { hello: "world" };
+            const testError = CreateContainerError(originalError, { foo: "bar" });
+
+            assert(testError.errorType === ContainerErrorType.genericError);
+            assert(testError !== originalError);
+            assert((testError as any).hello === undefined);
+            assert((testError as GenericError).error === originalError);
+            assert(isILoggingError(testError));
+            assert(testError.getTelemetryProperties().foo === "bar");
+        });
+        it("Should add errorType and props to non-object input", () => {
+            const originalError = "womp womp";
+            const testError = CreateContainerError(originalError, { foo: "bar" });
+
+            assert(testError.errorType === ContainerErrorType.genericError);
+            assert(testError.message === "womp womp");
+            assert((testError as GenericError).error === originalError);
+            assert(isILoggingError(testError));
+            assert(testError.getTelemetryProperties().foo === "bar");
+        });
+        it("Should preserve existing errorType, and return same object", () => {
+            const originalError = { errorType: "someErrorType" };
+            const testError = CreateContainerError(originalError);
+
+            assert(testError.errorType === "someErrorType");
+            assert(testError === originalError);
+        });
+        it("Should ignore non-string errorType", () => {
+            const originalError = { errorType: 3 };
+            const testError = CreateContainerError(originalError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
         });
@@ -19,19 +48,32 @@ describe("Errors", () => {
             const originalError = new Error();
             const testError = CreateContainerError(originalError);
 
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            assert(testError["stack"] === originalError.stack);
+            assert((testError as GenericError).stack === originalError.stack);
         });
-        it("Wrap LoggingError with no errorType", () => {
+        it("Should add errorType but preserve existing telemetry props, as a new object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" });
             const testError = CreateContainerError(loggingError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(isILoggingError(testError));
+            assert(testError.getTelemetryProperties().foo === "bar");
+            assert(testError as any !== loggingError);
+            assert((testError as GenericError).error === loggingError);
+        });
+        it("Should preserve telemetry props and existing errorType, and return same object", () => {
+            const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string };
+            loggingError.errorType = "someErrorType";
+            const testError = CreateContainerError(loggingError);
+
+            assert(testError.errorType === "someErrorType");
+            assert(isILoggingError(testError));
+            assert(testError.getTelemetryProperties().foo === "bar");
+            assert(testError as any === loggingError);
         });
     });
 
-    describe("DataProcessingError coercion", () => {
+    //* Test me with different combos of IErrorBase and LoggingError
+    describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
             const testError = CreateProcessingError(originalError, undefined);
@@ -97,19 +139,17 @@ describe("Errors", () => {
         });
 
         it("Should be coercible from a property object", () => {
-            const originalProps = {
+            const originalError = {
                 message: "Inherited error message",
-                otherProperty: "Presumed PII-full property",
-                errorType: "specialErrorType", // will be overwritten
+                errorType: "specialErrorType",
             };
-            const coercedError = CreateProcessingError(originalProps, undefined);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
-            assert(coercedError.message === originalProps.message);
+            assert(coercedError.message === originalError.message);
             assert(
                 coercedError.errorType ===
-                    ContainerErrorType.dataProcessingError,
+                    "specialErrorType",
             );
-            assert((coercedError as any).otherProperty === undefined);
         });
     });
 });
