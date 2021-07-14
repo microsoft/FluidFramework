@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";
 import { SharedMap } from "@fluidframework/map";
 
 const getContainerId = () => {
@@ -17,21 +17,29 @@ const getContainerId = () => {
     return { containerId, isNew };
 };
 
-const tinyliciousClient = new TinyliciousClient();
+const localConfig = {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("tenantId", { id: "userId" }),
+    // if you're running Tinylicious on a non-default port, you'll need change these URLs
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
 
 const getFluidData = async () => {
+
     const { containerId, isNew } = getContainerId();
 
     const containerSchema = {
-        name: 'cra-demo-container',
+        name: 'cra-demo',
         initialObjects: { mySharedMap: SharedMap }
     };
-
     const serviceConfig = { id: containerId };
 
+    const client = new FrsClient(localConfig);
+
     const fluidContainer = isNew
-        ? await tinyliciousClient.createContainer(serviceConfig, containerSchema)
-        : await tinyliciousClient.getContainer(serviceConfig, containerSchema);
+        ? await client.createContainer(serviceConfig, containerSchema)
+        : await client.getContainer(serviceConfig, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }
