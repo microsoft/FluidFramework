@@ -19,6 +19,7 @@ import { PropertyProxyErrors } from './errors';
 
 import { IParentAndPathOfReferencedProperty } from './IParentAndPathOfReferencedProperty';
 import { forceType, ReferenceType } from "./utilities";
+import { ProxyType, PropertyTypes } from "./interfaces";
 
 /**
  * This symbol is available on properties proxied via the PropertyProxy.[[proxify]] method.
@@ -33,17 +34,17 @@ export class PropertyProxy {
      * This utility function returns the parent property of a referenced property.
      * @param property
      * The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
-     * @param k The key of the referenced property in the Reference(Array/Map)Property.
+     * @param key The key of the referenced property in the Reference(Array/Map)Property.
      * @return The parent, a BaseProperty,
      *  and the relative path to the parent as a `string`.
      * @public
      */
-    static getParentOfReferencedProperty(property: ReferenceType, k?: string | number)
+    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number)
         : IParentAndPathOfReferencedProperty {
-        const key = (k === undefined ? [] : [k]);
+        const keys = (key === undefined ? [] : [key]);
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for getValue
-        const path = (<any>property.getValue)(...key);
+        const path = (<any>property.getValue)(...keys);
 
         // TODO(marcus): this should be the neum type but that is currently difficult to do correctly without
         // changes to path helper
@@ -54,7 +55,7 @@ export class PropertyProxy {
         let relativePathFromParent;
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for get
-        if (!PropertyFactory.instanceOf((<any>property.get)(...key), 'BaseProperty')) {
+        if (!PropertyFactory.instanceOf((<any>property.get)(...keys), 'BaseProperty')) {
             if (types.includes(PathHelper.TOKEN_TYPES.ARRAY_TOKEN)) {
                 // This happens when accessing a primitive array/map entry
                 // Split key into array id and index
@@ -79,7 +80,7 @@ export class PropertyProxy {
         } else {
             // TODO(marcus): this cast is a workaround for resolving the type check
             // issue that TS cannot statically derive the correct types for get
-            const prop = (<any>property.get)(...key)! as BaseProperty;
+            const prop = (<any>property.get)(...keys)! as BaseProperty;
             referencedPropertyParent = prop.getParent();
             relativePathFromParent = prop.getRelativePath(referencedPropertyParent);
             relativePathFromParent = PathHelper.tokenizePathString(relativePathFromParent)[0];
@@ -131,7 +132,7 @@ export class PropertyProxy {
      * @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
      * @public
      */
-    static proxify(property: BaseProperty) {
+    static proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
         if (PropertyFactory.instanceOf(property, 'BaseProperty')) {
             const context = property.getContext();
             let proxy;
