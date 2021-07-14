@@ -1216,7 +1216,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
             existing,
-            attributes,
             codeDetails,
             snapshot,
             pendingLocalState,
@@ -1305,7 +1304,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The load context - given we seeded the quorum - will be great
         await this.instantiateContextDetached(
             false, // existing
-            attributes,
         );
 
         this.propagateConnectionState();
@@ -1329,7 +1327,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.instantiateContextDetached(
             true, // existing
-            attributes,
             snapshotTree,
         );
 
@@ -1827,7 +1824,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async instantiateContextDetached(
         existing: boolean,
-        attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
@@ -1838,7 +1834,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.instantiateContext(
             existing,
-            attributes,
             codeDetails,
             snapshot,
             pendingLocalState,
@@ -1847,7 +1842,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async instantiateContext(
         existing: boolean,
-        attributes: IDocumentAttributes,
         codeDetails: IFluidCodeDetails,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
@@ -1867,7 +1861,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.codeLoader,
             codeDetails,
             snapshot,
-            attributes,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,

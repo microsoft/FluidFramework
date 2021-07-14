@@ -62,7 +62,6 @@
     "qs": "6.7.0",
     "rmfr": "2.0.0",
     "sanitize": "2.1.0",
-    "sanitize-html": "1.18.2",
     "sleep-promise": "8.0.1"
   },
   "devDependencies": {
