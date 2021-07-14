@@ -47,7 +47,6 @@ export const handlers: Handler[] = [
         name: "package-lockfiles-npm-version",
         match: filePattern,
         handler: file => {
-            console.log(`lock: ${file}`);
             const content = readFile(file);
             if (content.match(versionPattern) === null) {
                 return `Unexpected 'lockFileVersion' (Please use NPM v6: 'npm i -g npm@latest-6'): ${file}`;
