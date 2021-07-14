@@ -30,6 +30,7 @@ describe("Errors", () => {
             assert((testError as GenericError).error === originalError);
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === "bar");
+            assert(testError.getTelemetryProperties().message === "womp womp");
         });
         it("Should preserve existing errorType, and return same object", () => {
             const originalError = { errorType: "someErrorType" };
@@ -43,6 +44,14 @@ describe("Errors", () => {
             const testError = CreateContainerError(originalError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
+        });
+        it("Should not expose original error props for telemetry besides message", () => {
+            const originalError: any = { hello: "world", message: "super important" };
+            const testError = CreateContainerError(originalError, { foo: "bar" });
+
+            assert(isILoggingError(testError));
+            assert(testError.getTelemetryProperties().hello === undefined);
+            assert(testError.getTelemetryProperties().message === "super important");
         });
         it("Should preserve the stack", () => {
             const originalError = new Error();
@@ -69,6 +78,45 @@ describe("Errors", () => {
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === "bar");
             assert(testError as any === loggingError);
+        });
+    });
+    describe("Additional CreateContainerError tests", () => {
+        function assertCustomPropertySupport(err: any) {
+            err.asdf = "asdf";
+            if (err.getTelemetryProperties !== undefined) {
+                assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
+            }
+            else {
+                assert.fail("Error should support getTelemetryProperties()");
+            }
+        }
+        it("Check double conversion of general error", async () => {
+            const err = {
+                message: "Test Error",
+            };
+            const error1 = CreateContainerError(err);
+            const error2 = CreateContainerError(error1);
+            assertCustomPropertySupport(error1);
+            assertCustomPropertySupport(error2);
+            assert.deepEqual(error1, error2, "Both errors should be same!!");
+            assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
+        });
+        it("Check frozen error", async () => {
+            const err = {
+                message: "Test Error",
+            };
+            CreateContainerError(Object.freeze(err));
+        });
+        it("Preserve existing properties", async () => {
+            const err1 = {
+                errorType: "Something",
+                message: "Test Error",
+                canRetry: true,
+            };
+            const error1 = CreateContainerError(err1);
+            const error2 = CreateContainerError(Object.freeze(error1));
+            assert.equal(error1.errorType, err1.errorType, "Preserve errorType 1");
+            assert.equal(error2.errorType, err1.errorType, "Preserve errorType 2");
         });
     });
 
