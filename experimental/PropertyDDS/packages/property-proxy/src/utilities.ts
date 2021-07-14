@@ -20,7 +20,7 @@ import {
 import { ComponentMap } from './componentMap';
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
-import { NonPrimitiveTypes, ProxyType } from "./interfaces";
+import { NonPrimitiveTypes } from "./interfaces";
 
 export type ElementType = any | BaseProperty | PropertyProxy;
 export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty;
