@@ -5,7 +5,7 @@
 
 import {
     PropertyFactory, BaseProperty,
-    ContainerProperty, ValueProperty, SetProperty, MapProperty,
+    ContainerProperty, ValueProperty, SetProperty, MapProperty, ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { PathHelper } from "@fluid-experimental/property-changeset";
 
@@ -138,7 +138,7 @@ export class PropertyProxy {
             let proxy;
             switch (context) {
                 case 'array':
-                    proxy = new Proxy(new ComponentArray(property), arrayProxyHandler);
+                    proxy = new Proxy(new ComponentArray(property as ArrayProperty), arrayProxyHandler);
                     break;
                 case 'map':
                     proxy = new ComponentMap(property as MapProperty);
