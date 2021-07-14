@@ -9,9 +9,8 @@ aliases:
 
 ---
 
-In this Quick Start we will be getting a dice roller Fluid application up and running on your computer's
-localhost. We've already embedded an instance of the application, with two clients, below. Click the **Roll**
-button in either client to see how the state of the dice is shared between the two clients.
+In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
+localhost, then deploy it to an Azure Fluid Relay instance to collaborate with others.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.12142020.js" >}}
@@ -20,14 +19,14 @@ bundleName="dice-roller.12142020.js" >}}
 
 To get started you need the following installed.
 
-- [Node.js](https://nodejs.org/en/download) - {{< include file="_includes/node-versions.md" >}}
-- Code Editor - We recommend [Visual Studio Code](https://code.visualstudio.com/).
+- [Node.js](https://nodejs.org/en/download) -- {{< include file="_includes/node-versions.md" >}}
+- Code editor -- we recommend [Visual Studio Code](https://code.visualstudio.com/).
 
 We also recommend that you install the following:
 
 - [Git](https://git-scm.com/downloads)
 
-## Getting Started
+## Getting started
 
 Open a new command window and navigate to the folder you where you want to install the project, and then clone the
 [FluidHelloWorld repo](https://github.com/microsoft/FluidHelloWorld) with the following commands. The cloning process
@@ -49,13 +48,10 @@ Navigate to the newly created folder and install required dependencies.
 
 ```bash
 cd FluidHelloWorld
-```
-
-```bash
 npm install
 ```
 
-Start both the client and server.
+Start both the client and a local server.
 
 ```bash
 npm start
@@ -66,24 +62,42 @@ action copy the full URL in the browser, including the ID, into a new window or 
 second client for your dice roller application. With both windows open, click the **Roll** button in either and note
 that the state of the dice changes in both clients.
 
+## Running against the Azure Fluid Relay service
+
+To run against the Azure Fluid Relay service, you'll make a code change to ```app.ts```. The app is configured to use a
+local in-memory service called Tinylicious, which runs on port 7070 by default.
+
+To use an Azure Fluid Relay instance instead, replace the configuration values with your Azure Fluid Relay tenant ID,
+orderer, and storage URLs that were provided as part of the FRS onboarding process. Then pass that configuration object
+into the `FrsClient` constructor:
+
+```typescript
+// This configures the FrsClient to use a remote Azure Fluid Service instance.
+const config: FrsConnectionConfig = {
+    tenantId: "myFrsTenantId",
+    // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
+    tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),
+    orderer: "https://myFrsOrdererUrl",
+    storage: "https://myFrsStorageUrl",
+}
+
+const client = new FrsClient(config);
+```
+
+### TokenProvider
+
+The Azure Fluid Relay onboarding process provides you with a secret key for your tenant. You can use
+InsecureTokenProvider to generate and sign auth tokens such that the FRS service will accept it. **To ensure that the
+secret doesn't get exposed, this should be replaced with another implementation of ITokenProvider that fetches the token
+from a secure, developer-provided backend service prior to releasing to production.**
+
+### Build and run the client only
+
+Now that you've updated the `FrsClient` configuration, now run just the client to test it. You no longer need to run a
+local service, because you're using the remote FRS instance!
+
+```bash
+npm run start:client
+```
+
 🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
-
-## Next Steps
-
-Start learning how to work with the Fluid Framework APIs with our [tutorial](./tutorial.md).
-
-Or, if you would like to start a new Fluid project from scratch, the available packages
-are labeled in the [Fluid API Section]({{< relref "/docs/apis/_index.md" >}}) of the documentation.
-
-To install your packages you can follow this format: `npm i package-name` if you use [npm](https://docs.npmjs.com/) or
-`yarn add package-name` if you use [yarn](https://yarnpkg.com/).
-
-We use the following Fluid packages in this quickstart:
-
-- `@fluidframework/aqueduct`
-- `@fluid-experimental/get-container`
-- `@fluidframework/map`
-- `tinylicious`
-  - Note: Tinylicious is only a development dependency, since it is the
-    [service]({{< relref "service.md" >}}) used when developing your Fluid app. You can install it as
-    a development dependency using `npm i tinylicious --save-dev` or `yarn add tinylicious --dev`.
