@@ -74,7 +74,8 @@ export class GenericError extends LoggingError implements IGenericError {
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
-        super(errorMessage, props);
+        // Don't try to log the inner error
+        super(errorMessage, props, ["error"]);
     }
 }
 
