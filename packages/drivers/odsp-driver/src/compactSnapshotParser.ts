@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
-import { BlobCore, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
 
@@ -16,11 +16,11 @@ export const snapshotMinReadVersion = "1.0";
  */
 export interface ISnapshotHeader {
     // This is the minimum version of the reader required to read the wire format of a given snapshot.
-    minReadVersion: string,
+    MinReadVersion: string,
     // Represents the version with which snapshot is created.
-    createVersion: string,
+    CreateVersion: string,
     // Seq number at which the snapshot is created.
-    snapshotSeqNumber: number,
+    SnapshotSequenceNumber: number,
 }
 
 /**
@@ -28,31 +28,13 @@ export interface ISnapshotHeader {
  * @param node - tree node to read header section from
  */
 function readAndValidateHeaderSection(node: NodeCore) {
-    let minReadVersion: string | undefined;
-    let createVersion: string | undefined;
-    for (const [headerName, value] of node.iteratePairs()) {
-        assert(headerName instanceof BlobCore, "Header name should be string");
-        switch(headerName.toString()) {
-            case "MinReadVersion": {
-                assert(value instanceof BlobCore, "MinReadVersion should be a string");
-                minReadVersion = value.toString();
-                break;
-            }
-            case "CreateVersion": {
-                assert(value instanceof BlobCore, "CreateVersion should be a string");
-                createVersion = value.toString();
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    }
+    const header =
+        getAndValidateNodeProps<ISnapshotHeader>(node, ["MinReadVersion", "CreateVersion", "SnapshotSequenceNumber"]);
 
-    assert(minReadVersion !== undefined &&
-        snapshotMinReadVersion >= minReadVersion, "Driver min read version should >= to server minReadVersion");
-    assert(createVersion !== undefined &&
-        createVersion >= snapshotMinReadVersion, "Snapshot should be created with minReadVersion or above");
+    assert(snapshotMinReadVersion >= header.MinReadVersion,
+        "Driver min read version should >= to server minReadVersion");
+    assert(header.CreateVersion >= snapshotMinReadVersion,
+        "Snapshot should be created with minReadVersion or above");
 }
 
 /**

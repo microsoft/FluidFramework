@@ -8,7 +8,7 @@ import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
-import { NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import { addNumberProperty, addStringProperty, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 /**
  * Writes header section of the snapshot.
@@ -16,12 +16,9 @@ import { NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
  * @param snapshotSeqNumber - seq number at which snapshot is created.
 */
 function writeHeaderSection(node: NodeCore, snapshotSeqNumber: number) {
-    node.addString("MinReadVersion");
-    node.addString(snapshotMinReadVersion);
-    node.addString("CreateVersion");
-    node.addString(snapshotMinReadVersion);
-    node.addString("SnapshotSequenceNumber");
-    node.addNumber(snapshotSeqNumber);
+    addStringProperty(node, "MinReadVersion", snapshotMinReadVersion);
+    addStringProperty(node, "CreateVersion", snapshotMinReadVersion);
+    addNumberProperty(node, "SnapshotSequenceNumber", snapshotSeqNumber);
 }
 
 /**

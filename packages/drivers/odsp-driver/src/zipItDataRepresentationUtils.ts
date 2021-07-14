@@ -112,6 +112,20 @@ function calcLength(numArg: number) {
     return res;
 }
 
+export function getAndValidateNodeProps<T>(node: NodeCore, props: string[]) {
+    const propSet = new Set(props);
+    const res: Record<string, NodeTypes> = {};
+    for (const [key, value] of node.iteratePairs()) {
+        assert(key instanceof BlobCore, "Prop name should be a blob");
+        const keyStr = key.toString();
+        assert(propSet.has(keyStr), "Property should exist");
+        propSet.delete(keyStr);
+        res[keyStr] = value;
+    }
+    assert(propSet.size === 0, "All properties should exist");
+    return res as unknown as T;
+}
+
 export function iteratePairs<T>(it: IterableIterator<T>) {
     const res: IterableIterator<[T, T]> = {
         next: () => {
@@ -223,6 +237,9 @@ class BlobDeepCopy extends BlobCore {
         return new BlobShallowCopy(buffer, pos, pos + length);
     }
 }
+
+export const addStringProperty = (node: NodeCore, a: string, b: string) => { node.addString(a); node.addString(b); };
+export const addNumberProperty = (node: NodeCore, a: string, b: number) => { node.addString(a); node.addNumber(b); };
 
 /**
  * Three leaf types supported by tree:
