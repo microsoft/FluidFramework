@@ -13,11 +13,14 @@ import {
     ContainerProperty,
     EnumProperty,
     EnumArrayProperty,
+    MapProperty,
+    SetProperty,
 } from "@fluid-experimental/property-properties"
 
 import { ComponentMap } from './componentMap';
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
+import { NonPrimitiveTypes, ProxyType } from "./interfaces";
 
 export type ElementType = any | BaseProperty | PropertyProxy;
 export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty;
@@ -27,6 +30,11 @@ export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | Referen
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function forceType<T>(value: any | T): value is T {
     return true;
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function excludeType<T>(value: any | T): value is T {
+    return false;
 }
 
 /**
@@ -162,7 +170,7 @@ export class Utilities {
                         if (value.isPrimitiveType()) {
                             proxiedArray.getProperty().setValues(value.getValues());
                         } else {
-                            PropertyProxy.proxify(value).forEach((el) => {
+                            PropertyProxy.proxify(value as ArrayProperty).forEach((el) => {
                                 proxiedArray.push(el.getProperty().clone());
                             });
                         }
@@ -170,7 +178,7 @@ export class Utilities {
                         const elements = _getElementsArray(value);
                         elements.forEach((el) => proxiedArray.push(el));
                     }
-                } else if (context === 'map') {
+                } else if (context === 'map' && forceType<MapProperty>(property)) {
                     const proxiedMap = PropertyProxy.proxify(property);
                     proxiedMap.clear();
                     if (valueContext === 'map') {
@@ -178,7 +186,7 @@ export class Utilities {
                         if (value.isPrimitiveType()) {
                             proxiedMap.getProperty().setValues(value.getValues());
                         } else {
-                            PropertyProxy.proxify(value).forEach((el, key) => {
+                            PropertyProxy.proxify(value as MapProperty).forEach((el, key) => {
                                 proxiedMap.set(key, el.getProperty().clone());
                             });
                         }
@@ -187,9 +195,9 @@ export class Utilities {
                         elements.forEach((el) => proxiedMap.set(el[0], el[1]));
                     }
                 } else { // context === 'set'
-                    const proxiedSet = PropertyProxy.proxify(property);
+                    const proxiedSet = PropertyProxy.proxify(property as MapProperty);
                     proxiedSet.clear();
-                    if (valueContext === 'set') {
+                    if (valueContext === 'set' && forceType<SetProperty>(value)) {
                         PropertyProxy.proxify(value).forEach((el) => {
                             proxiedSet.add(el.getProperty().clone());
                         });
@@ -233,7 +241,7 @@ export class Utilities {
 
         const { referencedPropertyParent, relativePathFromParent } =
             PropertyProxy.getParentOfReferencedProperty(property, ...keys);
-        const proxiedReferencedPropertyParent = PropertyProxy.proxify(referencedPropertyParent);
+        const proxiedReferencedPropertyParent = PropertyProxy.proxify(referencedPropertyParent as NonPrimitiveTypes);
 
         if (proxiedReferencedPropertyParent instanceof ComponentMap) {
             proxiedReferencedPropertyParent.set(relativePathFromParent, value);
