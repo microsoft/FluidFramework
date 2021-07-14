@@ -7,12 +7,11 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-definitions";
-import { createWriteError } from "@fluidframework/driver-utils";
-import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
+import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
+import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { createOdspNetworkError, invalidFileNameStatusCode } from "../odspErrorUtils";
+import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError, IFacetCodes } from "../odspErrorUtils";
 
-//* test createOdspNetworkError around the props that should be added
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";
@@ -120,6 +119,50 @@ describe("OdspErrorUtils", () => {
             assertCustomPropertySupport(networkError);
             assert(networkError.errorType === DriverErrorType.throttlingError, "Error should be a throttlingError");
             assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
+        });
+    });
+
+    describe("enrichError", () => {
+        it("enriched with online flag", () => {
+            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            enrichOdspError(error);
+
+            assert(typeof error.online === "string");
+            assert(isILoggingError(error));
+            assert(typeof error.getTelemetryProperties().online === "string");
+        });
+        it("enriched with facetCodes", () => {
+            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            enrichOdspError(error, undefined /* response */, '{ "error": { "code": "foo" } }' /* responseText */);
+
+            assert.deepStrictEqual(error.facetCodes, ["foo"]);
+            assert(isILoggingError(error));
+            assert.equal(error.getTelemetryProperties().innerMostErrorCode, "foo");
+        });
+        it("enriched with response data", () => {
+            const mockHeaders = {
+                get: (id: string) => {
+                    if (["sprequestduration", "content-length"].includes(id)) {
+                        return 5;
+                    }
+                    return `mock header ${id}`;
+                },
+            };
+            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "responseText");
+
+            assert.equal((error as any).response, "responseText");
+            assert(isILoggingError(error));
+            assert.equal(error.getTelemetryProperties().response, "responseText"); // bug GH #6139
+            assert.equal(error.getTelemetryProperties().responseType, "fooType");
+            assert.equal(error.getTelemetryProperties().sprequestguid, "mock header sprequestguid");
+            assert.equal(error.getTelemetryProperties().requestId, "mock header request-id");
+            assert.equal(error.getTelemetryProperties().clientRequestId, "mock header client-request-id");
+            assert.equal(error.getTelemetryProperties().xMsedgeRef, "mock header x-msedge-ref");
+            assert.equal(error.getTelemetryProperties().serverRetries, "mock header X-Fluid-Retries");
+            assert.equal(error.getTelemetryProperties().sprequestduration, 5);
+            assert.equal(error.getTelemetryProperties().contentsize, 5);
+            assert.equal(error.getTelemetryProperties().serverEpoch, "mock header x-fluid-epoch");
         });
     });
 

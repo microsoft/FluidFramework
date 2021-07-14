@@ -156,7 +156,16 @@ export function createOdspNetworkError(
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
             error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
     }
+    enrichOdspError(error, response, responseText, props);
+    return error;
+}
 
+export function enrichOdspError(
+    error: OdspError & IFacetCodes,
+    response?: Response,
+    responseText?: string,
+    props: ITelemetryProperties = {},
+) {
     error.online = OnlineStatus[isOnline()];
 
     const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
