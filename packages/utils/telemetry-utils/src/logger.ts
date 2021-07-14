@@ -529,13 +529,14 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
-/** Extension of ILoggingError interface to include ability to add props */
-interface IRwLoggingError extends ILoggingError {
-    /** Add extra properties to be logged to telemetry */
-    addTelemetryProperties(props: ITelemetryProperties): void;
-}
+/**
+ * Read-Write Logging Error.  Not exported.
+ * This type alias includes addTelemetryProperties, and applies to objects even if not instanceof LoggingError\
+ */
+type RwLoggingError = LoggingError;
 
-const isRwLoggingError = (x: any): x is IRwLoggingError =>
+/** Type guard for RwLoggingError.  Not exported. */
+const isRwLoggingError = (x: any): x is RwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
 /**
@@ -553,7 +554,7 @@ export function annotateError(
 
     if (isRegularObject(error)) {
         // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
-        const loggingError = error as IRwLoggingError;
+        const loggingError = error as RwLoggingError;
 
         const propsForError = {...props};
         loggingError.getTelemetryProperties = () => propsForError;
@@ -600,7 +601,7 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
-export class LoggingError extends Error implements IRwLoggingError {
+export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
