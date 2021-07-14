@@ -16,24 +16,21 @@ const componentId = "modelComponent";
 
 export type ViewCallback = (fluidModel: any) => any;
 
-const makeViewRequestHandler = (viewCallback: ViewCallback) => {
-    const viewRequestHandler: RuntimeRequestHandler =
-        async (request: RequestParser, runtime: IContainerRuntime) => {
-            if (request.pathParts.length === 0) {
-                const clickerRequest = RequestParser.create({
-                    url: ``,
-                    headers: request.headers,
-                });
-                // TODO type the requestFluidObject
-                const fluidObject = await requestFluidObject(
-                    await runtime.getRootDataStore(componentId),
-                    clickerRequest);
-                const viewResponse = viewCallback(fluidObject);
-                return { status: 200, mimeType: "fluid/view", value: viewResponse };
-            }
-        };
-    return viewRequestHandler;
-};
+const makeViewRequestHandler = (viewCallback: ViewCallback): RuntimeRequestHandler =>
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length === 0) {
+            const clickerRequest = RequestParser.create({
+                url: ``,
+                headers: request.headers,
+            });
+            // TODO type the requestFluidObject
+            const fluidObject = await requestFluidObject(
+                await runtime.getRootDataStore(componentId),
+                clickerRequest);
+            const viewResponse = viewCallback(fluidObject);
+            return { status: 200, mimeType: "fluid/view", value: viewResponse };
+        }
+    };
 
 export class ContainerViewRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor(
