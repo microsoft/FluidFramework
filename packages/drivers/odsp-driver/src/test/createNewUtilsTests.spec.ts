@@ -8,7 +8,7 @@ import * as api from "@fluidframework/protocol-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import { convertSummaryTreeToIOdspSnapshot } from "../createNewUtils";
+import { convertCreateNewSummaryTreeToIOdspSnapshot } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { IOdspSnapshotTreeEntryTree } from "../contracts";
 import { EpochTracker } from "../epochTracker";
@@ -56,7 +56,7 @@ describe("Create New Utils Tests", () => {
         const componentBlobPath = "default/component";
         const contentBlobPath = "contentTree/contentBlob";
 
-        const odspSnapshot = convertSummaryTreeToIOdspSnapshot(createSummary());
+        const odspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createSummary());
         assert.strictEqual(odspSnapshot.trees.length, 1, "1 main tree should be there");
         assert.strictEqual(odspSnapshot.blobs?.length, 2, "2 blobs should be there");
 

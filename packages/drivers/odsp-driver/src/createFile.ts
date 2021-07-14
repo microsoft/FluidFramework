@@ -35,7 +35,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertSummaryTreeToIOdspSnapshot } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToIOdspSnapshot } from "./createNewUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -68,7 +68,7 @@ export async function createNewFluidFile(
 
     if (createNewSummary !== undefined) {
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertSummaryTreeToIOdspSnapshot(createNewSummary);
+        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;
