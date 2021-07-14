@@ -21,7 +21,7 @@ export abstract class ProxifiedArrayProperty extends Array {
 }
 export abstract class ProxifiedSetProperty extends Set { public abstract getProperty(): BaseProperty; }
 export abstract class ProxifiedMapProperty extends Map { public abstract getProperty(): MapProperty; }
-type GenericProxify<TProperty> = {
+export type GenericProxify<TProperty> = {
     [P in keyof TProperty]: ProxyType<TProperty[P]>;
 }
 
