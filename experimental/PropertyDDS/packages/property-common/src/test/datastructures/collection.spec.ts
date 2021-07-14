@@ -49,7 +49,7 @@ describe("collection", function() {
 
         expect(collection.bulkAdd(objectToAdd)).to.equal(collection);
 
-        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key) as boolean);
+        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(true);
 
@@ -78,7 +78,7 @@ describe("collection", function() {
         collection.bulkAdd(objectToAdd);
         collection.bulkRemove(objectToAdd);
 
-        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key) as boolean);
+        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(false);
 
@@ -135,7 +135,7 @@ describe("collection", function() {
 
         expect(collection2.joinInPlace(collection)).to.equal(collection2);
 
-        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key) as boolean);
+        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(true);
 

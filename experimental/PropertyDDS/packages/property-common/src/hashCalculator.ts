@@ -85,7 +85,7 @@ class HashBuffer {
 //   No licensing notice is necessary, but if you need one, you can use:
 //   "Any copyright is dedicated to the Public Domain.
 //    http://creativecommons.org/publicdomain/zero/1.0/".
-const imul = Math.imul === undefined ?  Math.imul :  function(a, b) {
+const imul = Math.imul === undefined ? Math.imul : function(a, b) {
     const ah = (a >>> 16) & 0xffff;
     const al = a & 0xffff;
     const bh = (b >>> 16) & 0xffff;

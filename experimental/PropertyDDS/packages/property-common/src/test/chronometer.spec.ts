@@ -54,7 +54,7 @@ describe("property-common.Chronometer", function() {
             }, 10);
         });
 
-        it("times promises", function(done) {
+        it("times promises", async function() {
             const clock = sinon.useFakeTimers();
             const expectedElapsedMilliSec = 50;
             const expectedResult = 199999;
@@ -65,7 +65,7 @@ describe("property-common.Chronometer", function() {
                 resolve(expectedResult);
             }, expectedElapsedMilliSec);
 
-            const expectations = Chronometer.timePromise(async () => promise)
+            const expectations: Promise<void>  = Chronometer.timePromise(async () => promise)
                 .then(function(timedResult) {
                     expect(timedResult.chrono.elapsedMilliSec()).to.be.at.least(expectedElapsedMilliSec - 5);
                     expect(timedResult.chrono.elapsedMilliSec()).to.be.at.most(expectedElapsedMilliSec + 50);
@@ -79,7 +79,7 @@ describe("property-common.Chronometer", function() {
 
             clock.tick(expectedElapsedMilliSec + 1);
 
-            expectations.then(done);
+            return expectations;
         });
 
         it("@bugfix Cannot read property '0' of undefined", function(done) {

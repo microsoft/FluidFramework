@@ -129,7 +129,7 @@ describe("PropertyDDS", () => {
 						const numOperations = random.irandom(maxOperations);
 						const maxCount = operationCumSums[operationCumSums.length - 1];
 						for (const j of _.range(numOperations)) {
-							const operationId = 1 + (random.irandom(maxCount) as number);
+							const operationId = 1 + random.irandom(maxCount);
 							const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
 							const parameters = operations[selectedOperation].getParameters(random);
@@ -175,7 +175,7 @@ describe("PropertyDDS", () => {
 			(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
 			// Attach error handlers to make debugging easier and ensure that internal failures cause the test to fail
-			errorHandler = (err) => {}; // This enables the create random tests function to register its own handler
+			errorHandler = (err) => { }; // This enables the create random tests function to register its own handler
 			container1.on("closed", (err: any) => {
 				if (err !== undefined) {
 					errorHandler(err);
@@ -548,7 +548,7 @@ describe("PropertyDDS", () => {
 								const array = tree().root.get<ArrayProperty>("array");
 								return {
 									position: random.irandom(array?.getLength()) || 0,
-									count: (random.irandom(3) as number) + 1,
+									count: (random.irandom(3)) + 1,
 									tree,
 								};
 							},
@@ -564,7 +564,7 @@ describe("PropertyDDS", () => {
 								const array = tree().root.get<ArrayProperty>("array");
 								return {
 									position: random.irandom(array?.getLength()) || 0,
-									count: (random.irandom(3) as number) + 1,
+									count: (random.irandom(3)) + 1,
 									tree,
 								};
 							},

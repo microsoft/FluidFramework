@@ -3,13 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import {
+    Collection,
+    SortedCollection,
+    Integer64,
+    Int64,
+    Uint64,
+    DataArrays,
+} from "./datastructures";
+
+export const Datastructures = {
+    Collection,
+    SortedCollection,
+    Integer64,
+    Int64,
+    Uint64,
+    DataArrays,
+};
 export * from "./constants";
 export * from "./consoleUtils";
 export * from "./chronometer";
 export * from "./joinPaths";
-export * as Datastructures from "./datastructures";
 export * from "./guidUtils";
-export { EventEmitter } from "events";
 export * from "./error_objects";
 export * from "./deferredPromise";
 export * from "./deterministicRandomGenerator";
