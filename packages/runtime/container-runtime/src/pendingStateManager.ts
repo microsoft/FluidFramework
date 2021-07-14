@@ -4,7 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/common-definitions";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
