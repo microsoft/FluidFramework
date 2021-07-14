@@ -28,7 +28,9 @@ describe('SharedTree history virtualization', () => {
 	};
 
 	beforeEach(async () => {
-		const testingComponents = await setUpLocalServerTestSharedTree();
+		const testingComponents = await setUpLocalServerTestSharedTree({
+			summarizeHistory: true,
+		});
 		sharedTree = testingComponents.tree;
 		testObjectProvider = testingComponents.testObjectProvider;
 
@@ -45,6 +47,7 @@ describe('SharedTree history virtualization', () => {
 	// Replace sharedTree with one that writes summary format 0.1.0
 	const useSharedTreeSummaryFormat_0_1_0 = async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
+			summarizeHistory: true,
 			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
 		});
 		sharedTree = testingComponents.tree;
@@ -122,9 +125,11 @@ describe('SharedTree history virtualization', () => {
 		// Create more connected trees
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 		});
 
 		let catchUpBlobsUploaded = 0;
@@ -183,9 +188,11 @@ describe('SharedTree history virtualization', () => {
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 		});
 
 		// All shared trees should have no edits or chunks
@@ -232,6 +239,7 @@ describe('SharedTree history virtualization', () => {
 		// Connect another client
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_0,
 		});
 
@@ -255,6 +263,7 @@ describe('SharedTree history virtualization', () => {
 		// Connect another client
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
 		});
 
 		let unexpectedHistoryChunk = false;

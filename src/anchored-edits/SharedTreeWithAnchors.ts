@@ -145,10 +145,11 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 
 	/**
 	 * Get a factory for SharedTreeWithAnchors to register with the data store.
+	 * @param historySummarizing - determines how history is summarized by the returned `SharedTreeWithAnchors`.
 	 * @returns A factory that creates `SharedTreeWithAnchors`s and loads them from storage.
 	 */
-	public static getFactory(): SharedTreeWithAnchorsFactory {
-		return new SharedTreeWithAnchorsFactory();
+	public static getFactory(summarizeHistory = true, uploadEditChunks = false): SharedTreeWithAnchorsFactory {
+		return new SharedTreeWithAnchorsFactory({ summarizeHistory, uploadEditChunks });
 	}
 
 	/**
@@ -156,14 +157,25 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 	 * @param runtime - The runtime the SharedTreeWithAnchors will be associated with
 	 * @param id - Unique ID for the SharedTreeWithAnchors
 	 * @param expensiveValidation - enable expensive asserts
+	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
-	public constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation = false) {
+	public constructor(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		expensiveValidation = false,
+		summarizeHistory = true,
+		uploadEditChunks = false
+	) {
 		super(
 			runtime,
 			id,
 			TransactionWithAnchors.factory,
 			SharedTreeWithAnchorsFactory.Attributes,
-			expensiveValidation
+			expensiveValidation,
+			summarizeHistory,
+			undefined,
+			uploadEditChunks
 		);
 	}
 

@@ -663,6 +663,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			it('asserts when loading a summary with duplicated edits', () => {
 				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 					...treeOptions,
+					summarizeHistory: true,
 				});
 				const { tree: secondTree } = setUpTestSharedTree();
 

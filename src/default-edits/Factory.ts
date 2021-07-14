@@ -10,10 +10,25 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { SharedTreeSummaryWriteFormat } from '../generic';
 import { SharedTree } from './SharedTree';
 
 /**
+ * Options for configuring a SharedTreeFactory.
+ * @public
+ */
+export interface SharedTreeFactoryOptions {
+	/** If false, does not include history in summaries. */
+	readonly summarizeHistory?: boolean;
+	/** Determines the summary format version to write, 0.0.2 by default. */
+	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/** If true, edit chunks are uploaded as blobs when they become full. */
+	readonly uploadEditChunks?: boolean;
+}
+
+/**
  * Factory for SharedTree.
+ * Includes history in the summary.
  * @public
  */
 export class SharedTreeFactory implements IChannelFactory {
@@ -30,6 +45,11 @@ export class SharedTreeFactory implements IChannelFactory {
 		snapshotFormatVersion: '0.1',
 		packageVersion: '0.1',
 	};
+
+	/**
+	 * @param options - Options for configuring the SharedTreeFactory
+	 */
+	constructor(private readonly options: SharedTreeFactoryOptions = {}) {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -65,7 +85,14 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree {
-		const sharedTree = new SharedTree(runtime, id, expensiveValidation);
+		const sharedTree = new SharedTree(
+			runtime,
+			id,
+			expensiveValidation,
+			this.options.summarizeHistory,
+			this.options.writeSummaryFormat,
+			this.options.uploadEditChunks
+		);
 		sharedTree.initializeLocal();
 		return sharedTree;
 	}
