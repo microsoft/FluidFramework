@@ -81,10 +81,10 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
             this.emit("focusChanged");
         });
 
-        this.signalManager.registerListener(FocusTracker.focusSignalType, (clientId, local, payload) => {
+        this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
-        this.signalManager.registerBroadcastListener(FocusTracker.focusSignalType, () => {
+        this.signalManager.onBroadcastRequested(FocusTracker.focusSignalType, () => {
             this.sendFocusSignal(document.hasFocus());
         });
         window.addEventListener("focus", () => {

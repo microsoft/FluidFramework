@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IErrorEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
@@ -10,39 +11,62 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops
-// async listener support
+// throttling and batching
 
 export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
 
+/**
+ * ISignalManager defines an interface for working with signals that is similar to the more common
+ * eventing patterns of EventEmitter.  In addition to sending and responding to signals, it
+ * provides explicit methods around signal requests to other connected clients.
+ */
 export interface ISignalManager {
     /**
-     * Adds a listener for the specified signal at the end of the listeners array.  Multiple calls
-     * with the same signal name and listener will add it (and call it) multiple times.  Listeners
-     * are called in the order they are added.
+     * Adds a listener for the specified signal.  It behaves in the same way as EventEmitter's `on`
+     * method regarding multiple registrations, callback order, etc.
      * @param signalName - The name of the signal
-     * @param listener - The callback signal handler
+     * @param listener - The callback signal handler to add
      * @returns This ISignalManager
      */
-    registerListener(signalName: string, listener: SignalListener): ISignalManager;
-
+    onSignal(signalName: string, listener: SignalListener): ISignalManager;
+     /**
+     * Remove a listener for the specified signal.  It behaves in the same way as EventEmitter's
+     * `off` method regarding multiple registrations, removal order, etc.
+     * @param signalName - The name of the signal
+     * @param listener - The callback signal handler to remove
+     * @returns This ISignalManager
+     */
+    offSignal(signalName: string, listener: SignalListener | ((message: any) => void)): ISignalManager;
     /**
-     * Remove the last added instance of the listener for the specified signal in the listeners
-     * array if present.  If a listener has been added multiple times, it must be removed that many
-     * times as well to remove all instances.
-     *
-     * TODO: specify behavior around in-flight calls/mutability
+     * Send a signal with payload to its connected listeners.
      * @param signalName - The name of the signal
-     * @param listener - The callback signal handler
-     * @returns This ISignalManager
+     * @param payload - The data to send with the signal
      */
-    deregisterListener(signalName: string, listener: SignalListener): ISignalManager;
-
     submitSignal(signalName: string, payload?: Jsonable);
 
-    registerBroadcastListener(signalName: string, listener: SignalListener): ISignalManager;
-
-    deregisterBroadcastListener(signalName: string, listener: SignalListener): ISignalManager;
-
+    /**
+     * Adds a listener for a broadcast request.  The listener is called when a client calls
+     * `requestBroadcast` for that signal.  It behaves in the same way as EventEmitter's `on`
+     * method regarding multiple registrations, callback order, etc.
+     * @param signalName - The signal for which broadcast is requested
+     * @param listener - The callback for the broadcast request to add
+     * @returns This ISignalManager
+     */
+    onBroadcastRequested(signalName: string, listener: SignalListener): ISignalManager;
+    /**
+     * Remove a listener for a broadcast request.  It behaves in the same way as EventEmitter's
+     * `off` method regarding multiple registrations, removal order, etc.
+     * @param signalName  - The signal for which broadcast is requested
+     * @param listener - The callback for the broadcast request to remove
+     * @returns This ISignalManager
+     */
+    offBroadcastRequested(signalName: string, listener: SignalListener): ISignalManager;
+    /**
+     * Request broadcast of a signal from other connected clients.  Other clients must have
+     * registered to respond to broadcast requests using the `onBroadcastRequested` method.
+     * @param signalName - The signal for which broadcast is requested
+     * @param payload - A payload to send with the broadcast request
+     */
     requestBroadcast(signalName: string, payload?: Jsonable);
 }
 
@@ -60,16 +84,13 @@ export interface ISignaler {
  * Note: currently experimental and under development
  *
  * Helper class to assist common scenarios around working with signals.  SignalManager wraps an
- * object with signalling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and steals
- * its powers as its own, and can then be used in place of the original signaller.  The wrapped
- * object is not harmed in the process.
+ * object with signaling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and can
+ * then be used in place of the original signaler.  It uses a separate internal EventEmitter to
+ * manage callbacks, and thus will reflect that behavior with regards to callback registration and
+ * deregistration.
  */
 export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISignalManager {
-    /**
-     * Local map of registered signal handlers
-     * Map<signalName, handlerFunction[]>
-     */
-    private readonly listenerMap = new Map<string, SignalListener[]>();
+    private readonly emitter  = new EventEmitter();
 
     private readonly managerId: string | undefined;
 
@@ -88,16 +109,13 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
         super();
         this.managerId = managerId ? `#${managerId}` : undefined;
         this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-            const listeners = this.listenerMap.get(message.type);
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
             // identifiable sender clientId.  The listener is responsible for deciding how
             // it wants to handle local/remote signals
             // eslint-disable-next-line no-null/no-null
-            if (listeners !== undefined && this.signaler.connected && clientId !== null) {
-                listeners.forEach((listener) => {
-                    listener(clientId, local, message.content);
-                });
+            if (this.signaler.connected && clientId !== null) {
+                this.emitter.emit(message.type, clientId, local, message.content);
             }
         });
     }
@@ -112,32 +130,21 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
 
     // ISignalManager methods
 
-    public registerListener(
+    public onSignal(
         signalName: string,
         listener: SignalListener,
     ): ISignalManager {
         const managerSignalName = this.getManagerSignalName(signalName);
-        let listenerList = this.listenerMap.get(managerSignalName);
-        if (listenerList === undefined) {
-            listenerList = [];
-            this.listenerMap.set(managerSignalName, listenerList);
-        }
-        listenerList.push(listener);
+        this.emitter.on(managerSignalName, listener);
         return this;
     }
 
-    public deregisterListener(
+    public offSignal(
         signalName: string,
         listener: SignalListener,
     ): ISignalManager {
         const managerSignalName = this.getManagerSignalName(signalName);
-        const listenerList = this.listenerMap.get(managerSignalName);
-        if (listenerList !== undefined) {
-            const index = listenerList.lastIndexOf(listener);
-            if (index !== -1) {
-                listenerList.splice(index, 1);
-            }
-        }
+        this.emitter.off(managerSignalName, listener);
         return this;
     }
 
@@ -151,20 +158,20 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
         }
     }
 
-    public registerBroadcastListener(
+    public onBroadcastRequested(
         signalName: string,
         listener: SignalListener,
     ) {
         const broadcastSignalName = this.getBroadcastSignalName(signalName);
-        return this.registerListener(broadcastSignalName, listener);
+        return this.onSignal(broadcastSignalName, listener);
     }
 
-    public deregisterBroadcastListener(
+    public offBroadcastRequested(
         signalName: string,
         listener: SignalListener,
     ) {
         const broadcastSignalName = this.getBroadcastSignalName(signalName);
-        return this.deregisterListener(broadcastSignalName, listener);
+        return this.offSignal(broadcastSignalName, listener);
     }
 
     public requestBroadcast(
