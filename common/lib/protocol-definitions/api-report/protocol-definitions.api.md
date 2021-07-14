@@ -257,15 +257,34 @@ export interface IQueueMessage {
 }
 
 // @public
-export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
-    // (undocumented)
-    get(key: string): any;
-    // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
+export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
+}
+
+// @public (undocumented)
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
+}
+
+// @public (undocumented)
+export interface IQuorumClientsEvents extends IErrorEvent {
+    // (undocumented)
+    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    (event: "removeMember", listener: (clientId: string) => void): any;
+}
+
+// @public (undocumented)
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+// @public (undocumented)
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+    // (undocumented)
+    get(key: string): any;
+    // (undocumented)
+    getApprovalData(key: string): ICommittedProposal | undefined;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
@@ -273,11 +292,7 @@ export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
 }
 
 // @public (undocumented)
-export interface IQuorumEvents extends IErrorEvent {
-    // (undocumented)
-    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
-    // (undocumented)
-    (event: "removeMember", listener: (clientId: string) => void): any;
+export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: IPendingProposal) => void): any;
     // (undocumented)
