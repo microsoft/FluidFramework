@@ -10,8 +10,6 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 
-// ----- FACTORY SETUP -----
-
 const componentId = "modelComponent";
 
 export type ViewCallback<T> = (fluidModel: T) => any;
@@ -32,6 +30,11 @@ const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeReques
         }
     };
 
+/**
+ * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
+ * within the container.  For more-robust implementation of binding views within the container, check out the examples
+ * @fluid-example/app-integration-container-views and @fluid-example/multiview-container
+ */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
     constructor(
         private readonly dataStoreFactory: IFluidDataStoreFactory,
