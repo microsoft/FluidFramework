@@ -60,7 +60,7 @@ type SummarizeReason =
      */
     | "lastSummary"
     /** Previous summary attempt failed, and we are retrying. */
-    | `retry${1 | 2}`;
+    | `retry${number}`;
 
 const summarizeErrors = {
     /**
@@ -427,18 +427,29 @@ export class RunningSummarizer implements IDisposable {
         this.summarizing = new Deferred<void>();
 
         (async () => {
-            if (await this.summarize(reason, { refreshLatestAck: false, fullTree: false })) {
-                return;
+            type AttemptSummarizeOptions = {
+                delayMinutes?: number;
+            } & Omit<IGenerateSummaryOptions, "summaryLogger">;
+            const attemptSummarize = async (retryNumber: number, options: AttemptSummarizeOptions) => {
+                const { delayMinutes = 0, ...otherOptions } = options;
+                if (delayMinutes > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
+                }
+                const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as `retry${number}` : reason;
+                return this.summarize(attemptReason, otherOptions);
+            };
+            const attempts = [
+                { refreshLatestAck: false, fullTree: false },
+                { refreshLatestAck: true, fullTree: false },
+                { refreshLatestAck: true, fullTree: false, delayMinutes: 2 },
+                { refreshLatestAck: true, fullTree: true, delayMinutes: 10 },
+            ];
+            for (let i = 0; i < attempts.length; i++) {
+                if (await attemptSummarize(i, attempts[i])) {
+                    return;
+                }
             }
-            // On nack or error, try again fetching latest from storage server
-            if (await this.summarize("retry1", { refreshLatestAck: true, fullTree: false })) {
-                return;
-            }
-            // On another failure, run the full tree
-            if (await this.summarize("retry2", { refreshLatestAck: true, fullTree: true })) {
-                return;
-            }
-            // If all 3 attempts failed, close the summarizer container
+            // If all attempts failed, close the summarizer container
             this.logger.sendErrorEvent({ eventName: "FailToSummarize" });
             this.internalsProvider.stop("failToSummarize");
         })().finally(() => {
