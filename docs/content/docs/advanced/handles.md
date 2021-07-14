@@ -1,6 +1,6 @@
 ---
 title: Handles
-menuPosition: 1
+menuPosition: 2
 ---
 
 A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed
@@ -9,7 +9,7 @@ data structure (DDS).
 The primary use case for handles in the Fluid Framework is for storing a [DataObject][], or a DDS, into another DDS.
 This section covers how to consume and use Fluid handles.
 
-### Why use Fluid handles?
+## Why use Fluid handles?
 
 - Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
   reasons for this:
@@ -17,7 +17,7 @@ This section covers how to consume and use Fluid handles.
   1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
      a DDS.
   2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
-     way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in
+     way to make this possible is to store *references* (which is what a handle is) to the collaborative objects in
      the DDSes.
 
 - Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
@@ -27,7 +27,7 @@ This section covers how to consume and use Fluid handles.
 - Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage
   collection to the runtime in a future version.
 
-### Basic Scenario
+## Basic Scenario
 
 Given a SharedMap DDS `myMap`, and a SharedString DDS `myText`, we want to store `myText` as a value in `myMap`. Because
 we now know we can't directly store one DDS object in another DDS, we need to store a handle to `myText` then use that handle
@@ -70,11 +70,11 @@ const text2 = await myMap2.get("my-text").get();
 console.log(text === text2) // true
 ```
 
-### Scenarios in Practice
+## Scenarios in Practice
 
 The following examples outline the uses of handles to retrieve the underlying object in different scenarios.
 
-#### Storing DDSes on the DataObject `root`
+### Storing DDSes on the DataObject `root`
 
 When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes.
 In the scenario below we want to create a new `SharedMap` that all users have access to, and we also want to ensure it
@@ -98,7 +98,7 @@ export class MyFluidObject extends DataObject {
 }
 ```
 
-#### Storing other DataObjects
+### Storing other DataObjects
 
 One of the advanced uses of a Fluid handle is creating and storing other DataObjects within the DataObject `root`. We
 can do this the same as a DDS by storing the handle to the Fluid object then later using that to retrieve the handle and
@@ -134,12 +134,12 @@ protected async hasInitialized() {
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/docs/apis/undo-redo.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
 
 <!-- Classes and interfaces -->
 

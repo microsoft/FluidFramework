@@ -6,7 +6,6 @@
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
-    IQuorumSnapshot,
     getQuorumTreeEntries,
     mergeAppAndProtocolTree,
 } from "@fluidframework/protocol-base";
@@ -55,9 +54,6 @@ export class SummaryWriter implements ISummaryWriter {
      * a git summary, commits the change, and finalizes the ref.
      * @param op - Operation that triggered the write
      * @param lastSummaryHead - Points to the last summary head if available
-     * @param protocolMinimumSequenceNumber - Minimum sequence number of current protocol state
-     * @param protocolSequenceNumber - Sequence number of current protocol state
-     * @param protocolSequenceNumber - State of quourum at protocol sequence number
      * @param checkpoint - State of the scribe service at current sequence number
      * @param pendingOps - List of unprocessed ops currently present in memory
      * @returns ISummaryWriteResponse; that represents the success or failure of the write, along with an
@@ -67,9 +63,6 @@ export class SummaryWriter implements ISummaryWriter {
     public async writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
         lastSummaryHead: string | undefined,
-        protocolMinimumSequenceNumber: number,
-        protocolSequenceNumber: number,
-        quorumSnapshot: IQuorumSnapshot,
         checkpoint: IScribe,
         pendingOps: ISequencedOperationMessage[],
     ): Promise<ISummaryWriteResponse> {
@@ -123,11 +116,11 @@ export class SummaryWriter implements ISummaryWriter {
             };
         }
 
-        // We should not accept a summary earlier than our current protocol state
-        if (op.referenceSequenceNumber < protocolSequenceNumber) {
+        // We should not accept this summary if it is less than current protocol sequence number
+        if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
             return {
                 message: {
-                    errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${op.sequenceNumber}`,
+                    errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
                     summaryProposal: {
                         summarySequenceNumber: op.sequenceNumber,
                     },
@@ -140,13 +133,13 @@ export class SummaryWriter implements ISummaryWriter {
         const protocolEntries: ITreeEntry[] =
             getQuorumTreeEntries(
                 this.documentId,
-                protocolMinimumSequenceNumber,
-                protocolSequenceNumber,
+                checkpoint.protocolState.minimumSequenceNumber,
+                checkpoint.protocolState.sequenceNumber,
                 op.term ?? 1,
-                quorumSnapshot);
+                checkpoint.protocolState);
 
         // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
-        const logTailEntries = await this.generateLogtailEntries(protocolSequenceNumber, op.sequenceNumber + 1, pendingOps);
+        const logTailEntries = await this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps);
 
         // Create service protocol entries combining scribe and deli states.
         const serviceProtocolEntries = generateServiceProtocolEntries(

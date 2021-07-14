@@ -6,14 +6,11 @@ import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
+import { delay } from "@fluidframework/common-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 
 export type MyDataInput = IMessage & { data: string; };
-
-async function delay(timeMs: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(() => resolve(), timeMs));
-}
 
 class MockCache implements ICache {
     public writeCount = 0;

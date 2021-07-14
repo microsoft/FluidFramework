@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
@@ -20,9 +19,13 @@ import {
 } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
-import { DocumentService2 } from "./documentService2";
+import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+
+const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
+    enablePrefetch: true,
+};
 
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
@@ -30,22 +33,25 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
+    private readonly driverPolicies: IRouterliciousDriverPolicies;
+
     constructor(
         private readonly tokenProvider: ITokenProvider,
-        private readonly useDocumentService2: boolean = false,
-        private readonly disableCache: boolean = false,
-        private readonly historianApi: boolean = true,
-        private readonly gitCache: IGitCache | undefined = undefined,
-        private readonly credentials?: ICredentials,
+        driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        this.driverPolicies = {
+            ...defaultRouterliciousDriverPolicies,
+            ...driverPolicies,
+        };
     }
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
+        assert(!!createNewSummary, "create empty file not supported");
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {
@@ -111,33 +117,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
 
-        if (this.useDocumentService2) {
-            return new DocumentService2(
-                fluidResolvedUrl,
-                ordererUrl,
-                deltaStorageUrl,
-                storageUrl,
-                this.disableCache,
-                this.historianApi,
-                this.credentials,
-                logger2,
-                this.tokenProvider,
-                tenantId,
-                documentId);
-        } else {
-            return new DocumentService(
-                fluidResolvedUrl,
-                ordererUrl,
-                deltaStorageUrl,
-                storageUrl,
-                this.disableCache,
-                this.historianApi,
-                this.credentials,
-                this.gitCache,
-                logger2,
-                this.tokenProvider,
-                tenantId,
-                documentId);
-        }
+        return new DocumentService(
+            fluidResolvedUrl,
+            ordererUrl,
+            deltaStorageUrl,
+            storageUrl,
+            logger2,
+            this.tokenProvider,
+            tenantId,
+            documentId,
+            this.driverPolicies);
     }
 }

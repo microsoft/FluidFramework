@@ -8,6 +8,7 @@ import { IWorkerArgs, processOneNode } from "./replayMultipleFiles";
 
 const data = threads.workerData as IWorkerArgs;
 processOneNode(data)
+    .then(() => threads.parentPort.postMessage("true"))
     .catch((error) => {
         // eslint-disable-next-line no-null/no-null
         if (typeof error === "object" && error !== null && (error as Error).message !== undefined) {

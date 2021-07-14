@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, EditNode, NodeId, SharedTree } from '@fluid-experimental/tree';
+import { Definition, ChangeNode, NodeId, SharedTree } from '@fluid-experimental/tree';
 import { assert } from '@fluidframework/common-utils';
 import { expect } from 'chai';
 import { Maybe } from 'graphql-tools';
@@ -19,7 +19,7 @@ describe('SharedTreeQuerier', () => {
 		id = new NodeIdGenerator();
 	});
 
-	function stringNode(value: string): EditNode {
+	function stringNode(value: string): ChangeNode {
 		return {
 			definition: 'String' as Definition,
 			identifier: id.new(),
@@ -28,7 +28,7 @@ describe('SharedTreeQuerier', () => {
 		};
 	}
 
-	function booleanNode(value: boolean): EditNode {
+	function booleanNode(value: boolean): ChangeNode {
 		return {
 			definition: 'Boolean' as Definition,
 			identifier: id.new(),
@@ -37,7 +37,7 @@ describe('SharedTreeQuerier', () => {
 		};
 	}
 
-	function intNode(value: number): EditNode {
+	function intNode(value: number): ChangeNode {
 		assert(value === Math.round(value), 'Not an int');
 		return {
 			definition: 'Int' as Definition,
@@ -47,7 +47,7 @@ describe('SharedTreeQuerier', () => {
 		};
 	}
 
-	function floatNode(value: number): EditNode {
+	function floatNode(value: number): ChangeNode {
 		return {
 			definition: 'Float' as Definition,
 			identifier: id.new(),
@@ -56,11 +56,11 @@ describe('SharedTreeQuerier', () => {
 		};
 	}
 
-	function idNode(value: string): EditNode {
+	function idNode(value: string): ChangeNode {
 		return stringNode(value);
 	}
 
-	function enumNode(type: string, value: string): EditNode {
+	function enumNode(type: string, value: string): ChangeNode {
 		return {
 			definition: type as Definition,
 			identifier: id.new(),
@@ -69,7 +69,7 @@ describe('SharedTreeQuerier', () => {
 		};
 	}
 
-	const fourPizzasTree: EditNode = {
+	const fourPizzasTree: ChangeNode = {
 		definition: 'Query' as Definition,
 		identifier: id.new(),
 		traits: {

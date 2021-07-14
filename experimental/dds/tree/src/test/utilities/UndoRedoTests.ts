@@ -63,11 +63,14 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 	const treeOptions = {
 		initialTree,
 		localMode,
+		allowInvalid: true,
+		allowMalformed: true,
 	};
 
 	const secondTreeOptions = {
 		localMode,
 		id: 'secondTestTree',
+		allowInvalid: true,
 	};
 
 	return describe(title, () => {

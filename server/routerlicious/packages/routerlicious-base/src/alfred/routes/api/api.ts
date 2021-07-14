@@ -14,12 +14,12 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
-import { Request, Response, Router } from "express";
+import { Request, Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
-import { Constants } from "../../../utils";
+import { Constants, handleResponse } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
@@ -42,20 +42,16 @@ export function create(
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
     };
 
-    function returnResponse<T>(
-        resultP: Promise<T>,
+    function handlePatchRootSuccess(
         request: Request,
-        response: Response,
-        opBuilder: (request: Request) => any[]) {
-        resultP.then(() => {
-            const tenantId = getParam(request.params, "tenantId");
-            const documentId = getParam(request.params, "id");
-            const clientId = moniker.choose();
-            sendJoin(tenantId, documentId, clientId, producer);
-            sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
-            sendLeave(tenantId, documentId, clientId, producer);
-            response.status(200).json();
-        }, (error) => response.status(400).end(error.toString()));
+        opBuilder: (request: Request) => any[],
+    ) {
+        const tenantId = getParam(request.params, "tenantId");
+        const documentId = getParam(request.params, "id");
+        const clientId = moniker.choose();
+        sendJoin(tenantId, documentId, clientId, producer);
+        sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+        sendLeave(tenantId, documentId, clientId, producer);
     }
 
     router.get("/ping", throttle(throttler, winston, {
@@ -72,7 +68,12 @@ export function create(
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
             const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
             const validP = verifyRequest(request, tenantManager, storage, maxTokenLifetimeSec, isTokenExpiryEnabled);
-            returnResponse(validP, request, response, mapSetBuilder);
+            handleResponse(
+                validP.then(() => undefined),
+                response,
+                undefined,
+                200,
+                () => handlePatchRootSuccess(request, mapSetBuilder));
         },
     );
 

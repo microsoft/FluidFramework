@@ -1,6 +1,6 @@
 ---
 title: Signals
-menuPosition: 8
+menuPosition: 5
 ---
 
 {{< ArticleStatus 5469 >}}

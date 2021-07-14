@@ -6,7 +6,8 @@
 import * as path from "path";
 import * as winston from "winston";
 import { configureLogging } from "@fluidframework/server-services-utils";
-import { AlfredResourcesFactory, AlfredRunnerFactory, runService } from "@fluidframework/server-routerlicious-base";
+import { AlfredResourcesFactory, AlfredRunnerFactory } from "@fluidframework/server-routerlicious-base";
+import { runService } from "@fluidframework/server-services-shared";
 
 const configPath = path.join(__dirname, "../../config/config.json");
 

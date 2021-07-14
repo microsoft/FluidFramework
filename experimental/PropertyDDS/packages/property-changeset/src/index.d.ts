@@ -102,7 +102,7 @@ declare module "@fluid-experimental/property-changeset" {
     }
 
 
-    const  Utils: {
+    const Utils: {
         /**
          * Utils
          */
@@ -316,5 +316,23 @@ declare module "@fluid-experimental/property-changeset" {
         static types: types_ENUM;
 
     }
+
+    type Change = {
+        guid: string,
+        changeSet: string,
+        referenceGuid: string,
+        remoteHeadGuid: string,
+        localBranchStart: string | undefined
+    }
+
+    type FetchUnrebasedChangeFn = (guid: string) => Change;
+    type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => Change[];
+
+    function rebaseToRemoteChanges(
+        change: Change,
+        getUnrebasedChange: FetchUnrebasedChangeFn,
+        getRebasedChanges: FetchRebasedChangesFn
+    )
+
 }
 

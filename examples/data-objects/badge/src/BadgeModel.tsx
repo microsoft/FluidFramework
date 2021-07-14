@@ -10,13 +10,12 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { AsSerializable } from "@fluidframework/datastore-definitions";
 import { IBadgeModel, IBadgeHistory, IBadgeType } from "./Badge.types";
 import { defaultItems } from "./helpers";
 import { BadgeClient } from "./BadgeClient";
 
 export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
-    private _currentCell: SharedCell<AsSerializable<IBadgeType>> | undefined;
+    private _currentCell: SharedCell<IBadgeType> | undefined;
     private _optionsMap: SharedMap | undefined;
     private _historySequence: SharedObjectSequence<IBadgeHistory> | undefined;
 
@@ -60,7 +59,7 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
         const badgeHistory = SharedObjectSequence.create<IBadgeHistory>(this.runtime);
         badgeHistory.insert(0, [{
             value: current.get(),
-            timestamp: new Date(),
+            timestamp: new Date().toJSON(),
         }]);
         this.root.set(this.historyId, badgeHistory.handle);
     }

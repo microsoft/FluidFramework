@@ -22,10 +22,10 @@ params:
 menu:
   main:
   - name: "Getting started"
-    url: "/start/quick-start/"
+    url: "/docs/start/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/start/recipes/react/"
+    url: "/docs/recipes/react/"
     weight: -90
   - name: "Docs"
     url: "/docs/"
@@ -33,11 +33,14 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -60
+#  - name: "Updates"
+#    url: "/posts/"
+#    weight: -50
   - name: "Playground"
     url: "/playground/"
-    weight: -50
+    weight: -40
 
-  start:
+  old_section:
   - identifier: "quick-start"
     name: "Quick Start"
     url: "/start/quick-start/"
@@ -50,26 +53,38 @@ menu:
     name: "Examples"
     url: "/start/examples/"
     weight: -600
+
+  # this menu supplements one generated in the apiNav partial
+  section:
+  - identifier: "start"
+    name: "Getting started"
+    weight: -800
   - identifier: "recipes"
     name: "Recipes"
+    weight: -700
+  - identifier: "build"
+    name: "Build with Fluid"
+    weight: -600
+  - identifier: "testing"
+    name: "Testing"
+    weight: -500
+  - identifier: "deployment"
+    name: "Deployment"
+    weight: -400
+  - identifier: "DDS"
+    name: "Data Structures"
+    weight: -300
+  - identifier: "deep"
+    name: "The depths 🤿"
     weight: -200
   - identifier: "faq"
     name: "FAQ"
-    url: "/start/faq/"
+    url: "/docs/faq/"
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/start/glossary/"
+    url: "/docs/glossary/"
     weight: -90
-
-  # this menu supplements one generated in the apiNav partial
-  docs:
-  - identifier: "concepts"
-    name: "Concepts"
-    weight: -400
-  - identifier: "advanced"
-    name: "Advanced"
-    weight: -300
 
 markup:
   goldmark:

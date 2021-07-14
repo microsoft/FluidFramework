@@ -58,8 +58,7 @@ export function getTenantIdFromRequest(params: Params) {
  */
 export function getRequestErrorTranslator(
     url: string,
-    method: string,
-    networkErrorOverride?: NetworkError): (error: any) => never {
+    method: string): (error: any) => never {
     const getStandardLogErrorMessage = (message: string) =>
         `[${method}] Request to [${url}] failed: ${message}`;
     const requestErrorTranslator = (error: any): never => {
@@ -68,14 +67,14 @@ export function getRequestErrorTranslator(
         if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10)))  {
             const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
             winston.error(getStandardLogErrorMessage(`${errorCode}`));
-            throw (networkErrorOverride ?? new NetworkError(
+            throw new NetworkError(
                 errorCode,
                 "Internal Service Request Failed",
-            ));
+            );
         }
         // Treat anything else as an internal error, but log for debugging purposes
         winston.error(getStandardLogErrorMessage(safeStringify(error)));
-        throw (networkErrorOverride ?? new NetworkError(500, "Internal Server Error"));
+        throw new NetworkError(500, "Internal Server Error");
     };
     return requestErrorTranslator;
 }

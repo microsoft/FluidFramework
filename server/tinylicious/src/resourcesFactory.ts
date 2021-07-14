@@ -7,7 +7,7 @@ import fs from "fs";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { generateToken, Historian } from "@fluidframework/server-services-client";
-import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
+import { MongoDatabaseManager, MongoManager, IResourcesFactory } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
@@ -25,7 +25,7 @@ import {
 
 const defaultTinyliciousPort = 7070;
 
-export class TinyliciousResourcesFactory implements utils.IResourcesFactory<TinyliciousResources> {
+export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
     public async create(config: Provider): Promise<TinyliciousResources> {
         // Pull in the default port off the config
         const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);

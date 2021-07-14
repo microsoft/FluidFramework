@@ -9,7 +9,6 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
-import { ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -55,7 +54,6 @@ export class ImageGalleryObject extends DataObject implements IFluidHTMLView {
     };
 
     imageGallery: ImageGallery | undefined;
-    images: ISharedMap | undefined;
 
     private readonly onSlide = (index) => {
         this.root.set("position", index);

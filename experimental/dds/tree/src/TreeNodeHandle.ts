@@ -26,6 +26,7 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	}
 
 	public get payload(): Payload | undefined {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.node.payload;
 	}
 

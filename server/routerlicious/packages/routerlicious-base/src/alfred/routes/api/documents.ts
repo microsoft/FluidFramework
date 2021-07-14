@@ -14,7 +14,7 @@ import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
-import { Constants } from "../../../utils";
+import { Constants, handleResponse } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,
@@ -56,7 +56,7 @@ export function create(
         (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
-            const id = request.body.id;
+            const id = request.body.id as string;
 
             // Summary information
             const summary = request.body.summary;
@@ -73,13 +73,7 @@ export function create(
                 1,
                 values);
 
-            createP.then(
-                () => {
-                    response.status(201).json(id);
-                },
-                (error) => {
-                    response.status(400).json(error);
-                });
+            handleResponse(createP.then(() => id), response, undefined, 201);
         });
 
     return router;

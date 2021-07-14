@@ -227,6 +227,8 @@ The site theme/template lives in `themes/thxvscode`.
 | `install:hugo:default` | --- |
 | `install:hugo:force` | Install the version of Hugo used by the documentation. |
 | `install:hugo:win32` | --- |
+| `lint` | `markdownlint-cli2` |
+| `lint:fix` | `markdownlint-cli2-fix` |
 | `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 | `start:default` | --- |

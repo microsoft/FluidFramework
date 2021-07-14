@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/routerlicious-host";
-export const pkgVersion = "0.40.0";
+export const pkgVersion = "0.44.0";

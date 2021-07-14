@@ -11,7 +11,6 @@ describe("Loader", () => {
 
         beforeEach(() => {
             quorum = new Quorum(
-                0,
                 [],
                 [],
                 [],

@@ -21,8 +21,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "@fluidframework/common-utils": "^0.31.0-0",
     "@fluidframework/gitresources": "^0.1025.0-0",
+    "@fluidframework/server-services": "^0.1025.0-0",
     "@fluidframework/server-services-client": "^0.1025.0-0",
+    "@fluidframework/server-services-core": "^0.1025.0-0",
+    "@fluidframework/server-services-shared": "^0.1025.0-0",
     "@fluidframework/server-services-utils": "^0.1025.0-0",
     "axios": "^0.21.1",
     "body-parser": "^1.17.2",
@@ -36,7 +40,7 @@
     "nodegit": "^0.26.1",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^2.4.4"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0-0",
@@ -45,7 +49,7 @@
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",
     "@types/lorem-ipsum": "^1.0.2",
-    "@types/mocha": "^2.2.48",
+    "@types/mocha": "^8.2.2",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "^0.10.0",
     "@types/node": "^12.12.54",
@@ -57,8 +61,8 @@
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
     "async": "^3.2.0",
-    "concurrently": "^3.5.1",
-    "eslint": "~7.9.0",
+    "concurrently": "^5.2.0",
+    "eslint": "~7.18.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.22.0",
     "eslint-plugin-no-null": "~1.0.2",
@@ -66,7 +70,7 @@
     "eslint-plugin-react": "~7.21.2",
     "eslint-plugin-unicorn": "~22.0.0",
     "lorem-ipsum": "^1.0.6",
-    "mocha": "^8.1.1",
+    "mocha": "^8.4.0",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.3",

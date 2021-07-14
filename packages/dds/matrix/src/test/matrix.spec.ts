@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
@@ -16,7 +15,7 @@ import {
     MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
@@ -59,7 +58,7 @@ describe("Matrix", () => {
 
         // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
-        async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+        async function summarize<T>(matrix: SharedMatrix<T>) {
             // Create a summary
             const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
@@ -81,7 +80,7 @@ describe("Matrix", () => {
             return matrix2;
         }
 
-        async function expect<T extends Serializable>(expected: readonly (readonly T[])[]) {
+        async function expect<T>(expected: readonly (readonly (MatrixItem<T>)[])[]) {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");

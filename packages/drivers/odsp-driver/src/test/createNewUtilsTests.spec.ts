@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToIOdspSnapshot } from "../createNewUtils";
+import { IOdspSnapshotTreeEntryTree } from "../contracts";
 
 describe("Create New Utils Tests", () => {
     beforeEach(() => {
@@ -42,6 +43,7 @@ describe("Create New Utils Tests", () => {
                     tree: {
                         contentBlob,
                     },
+                    unreferenced: true,
                 },
             },
         };
@@ -52,15 +54,31 @@ describe("Create New Utils Tests", () => {
 
         const mainTree = odspSnapshot.trees[0];
         assert.strictEqual(mainTree.id, odspSnapshot.id, "Main tree id should match");
-        assert.strictEqual(mainTree.entries.length, 5, "2 Trees and 3 blobs should be there");
 
-        const treeEntries = new Set();
-        mainTree.entries.forEach((treeEntry) => {
-            treeEntries.add(treeEntry.path);
+        const blobEntries: string[] = [];
+        const treeEntries: IOdspSnapshotTreeEntryTree[] = [];
+        mainTree.entries.forEach((entry) => {
+            if (entry.type === "tree") {
+                treeEntries.push(entry);
+            } else {
+                blobEntries.push(entry.path);
+            }
         });
 
-        assert(treeEntries.has(rootBlobPath), "Root blob should exist");
-        assert(treeEntries.has(componentBlobPath), "Component blob should exist");
-        assert(treeEntries.has(contentBlobPath), "Content blob should exist");
+        // Validate that the snapshot has all the expected blob entries.
+        assert.strictEqual(blobEntries.length, 3, "There should be 3 blob entries in the main tree");
+        assert(blobEntries.includes(rootBlobPath), "Root blob should exist");
+        assert(blobEntries.includes(componentBlobPath), "Component blob should exist");
+        assert(blobEntries.includes(contentBlobPath), "Content blob should exist");
+
+        // Validate that the snapshot has correct reference state for tree entries.
+        assert.strictEqual(treeEntries.length, 2, "There should be 2 tree entries in the main tree");
+        for (const treeEntry of treeEntries) {
+            if (treeEntry.path === "default") {
+                assert(treeEntry.unreferenced === undefined, "default tree entry should be referenced");
+            } else {
+                assert(treeEntry.unreferenced, "content tree entry should be unreferenced");
+            }
+        }
     });
 });

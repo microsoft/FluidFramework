@@ -2,13 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
+import { FrsClient, FrsConnectionConfig, InsecureTokenProvider } from "@fluid-experimental/frs-client";
+import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
+import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
-TinyliciousClient.init();
+const useFrs = process.env.FLUID_CLIENT === "frs";
+
+const user = generateUser();
+
+const connectionConfig: FrsConnectionConfig = useFrs ? {
+    tenantId: "",
+    tokenProvider: new InsecureTokenProvider("", user),
+    orderer: "",
+    storage: "",
+} : {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -31,10 +47,16 @@ export const containerSchema = {
 };
 
 async function start(): Promise<void> {
+    // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+    // and hook to the Telemetry system
+    const consoleLogger: ConsoleLogger = new ConsoleLogger();
+
     // Get or create the document depending if we are running through the create new flow
-    const fluidContainer = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId }, containerSchema);
+
+    const client = new FrsClient(connectionConfig);
+    const { fluidContainer, containerServices } = createNew
+        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
@@ -61,8 +83,8 @@ async function start(): Promise<void> {
     // We render a view which uses the controller.
     renderDiceRoller(diceRollerController2, div2);
 
-    // Render the user names for the members currently in the session
-    renderAudience(fluidContainer.audience, contentDiv);
+    // Render the audience information for the members currently in the session
+    renderAudience(containerServices.audience, contentDiv);
 }
 
 start().catch((error) => console.error(error));

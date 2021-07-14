@@ -35,7 +35,7 @@ export interface IR11sSocketError {
      * Optional Retry-After time in seconds.
      * The client should wait this many seconds before retrying its request.
      */
-    retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 export interface IR11sError {
@@ -49,7 +49,7 @@ export type R11sError = DriverError | IR11sError;
 export function createR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterSeconds?: number,
+    retryAfterMs?: number,
 ): R11sError {
     switch (statusCode) {
         case undefined:
@@ -65,24 +65,24 @@ export function createR11sNetworkError(
                 errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
-                errorMessage, true, retryAfterSeconds, { statusCode });
+                errorMessage, true, retryAfterMs, { statusCode });
         case 500:
             return new GenericNetworkError(errorMessage, true, { statusCode });
         default:
             return createGenericNetworkError(
-                errorMessage, retryAfterSeconds !== undefined, retryAfterSeconds, { statusCode });
+                errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
     }
 }
 
 export function throwR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterSeconds?: number,
+    retryAfterMs?: number,
 ): never {
     const networkError = createR11sNetworkError(
         errorMessage,
         statusCode,
-        retryAfterSeconds);
+        retryAfterMs);
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
@@ -96,6 +96,6 @@ export function errorObjectFromSocketError(socketError: IR11sSocketError, handle
     return createR11sNetworkError(
         message,
         socketError.code,
-        socketError.retryAfter,
+        socketError.retryAfterMs,
     );
 }

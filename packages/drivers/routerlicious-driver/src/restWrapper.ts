@@ -7,7 +7,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
     getAuthorizationTokenFromCredentials,
-    ICredentials,
     RestWrapper,
 } from "@fluidframework/server-services-client";
 import Axios, { AxiosError, AxiosRequestConfig } from "axios";
@@ -108,27 +107,20 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         baseurl?: string,
-        directCredentials?: ICredentials,
     ): Promise<RouterliciousStorageRestWrapper> {
         const defaultQueryString = {
-            token: `${fromUtf8ToBase64(directCredentials?.user || tenantId)}`,
+            token: `${fromUtf8ToBase64(tenantId)}`,
         };
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
-            // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
-            // tenant token
-            let credentials: ICredentials;
-            if (directCredentials) {
-                credentials = directCredentials;
-            } else {
-                const storageToken = await tokenProvider.fetchStorageToken(
-                    tenantId,
-                    documentId,
-                );
-                credentials = {
-                    password: storageToken.jwt,
-                    user: tenantId,
-                };
-            }
+            // Craft credentials using tenant id and token
+            const storageToken = await tokenProvider.fetchStorageToken(
+                tenantId,
+                documentId,
+            );
+            const credentials = {
+                password: storageToken.jwt,
+                user: tenantId,
+            };
             return getAuthorizationTokenFromCredentials(credentials);
         };
 

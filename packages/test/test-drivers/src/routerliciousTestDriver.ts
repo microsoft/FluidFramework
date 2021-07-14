@@ -92,10 +92,6 @@ export class RouterliciousTestDriver implements ITestDriver {
 
         return new this.api.RouterliciousDocumentServiceFactory(
             tokenProvider,
-            false,
-            false,
-            true,
-            undefined,
         );
     }
 

@@ -74,8 +74,9 @@ export async function fetchSnapshotWithRedeem(
     snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
+    enableRedeemFallback?: boolean,
 ): Promise<ISnapshotCacheValue> {
-    let odspSnapshot = await fetchLatestSnapshotCore(
+    return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
         snapshotOptions,
@@ -83,7 +84,8 @@ export async function fetchSnapshotWithRedeem(
         snapshotDownloader,
         putInCache,
     ).catch(async (error) => {
-        if (isRedeemSharingLinkError(odspResolvedUrl, error)) {
+        if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
+            // Execute the redeem fallback
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
                 errorType: error.errorType,
@@ -91,7 +93,7 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
-            odspSnapshot = await fetchLatestSnapshotCore(
+            return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
                 snapshotOptions,
@@ -99,8 +101,9 @@ export async function fetchSnapshotWithRedeem(
                 snapshotDownloader,
                 putInCache,
             );
+        } else {
+            throw error;
         }
-        throw error;
     }).catch(async (error) => {
         // Clear the cache on 401/403/404 on snapshot fetch from network because this means either the user doesn't
         // have permissions for the file or it was deleted. So, if we do not clear cache, we will continue fetching
@@ -111,7 +114,6 @@ export async function fetchSnapshotWithRedeem(
         }
         throw error;
     });
-    return odspSnapshot;
 }
 
 async function redeemSharingLink(
@@ -125,8 +127,8 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(odspResolvedUrl.sharingLinkToRedeem !== undefined, "Share link should be present");
-                const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+                assert(!!odspResolvedUrl.sharingLinkToRedeem, 0x1ed /* "Share link should be present" */);
+                const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
@@ -252,7 +254,8 @@ async function fetchLatestSnapshotCore(
                     }
                 }
 
-                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } = evalBlobsAndTrees(snapshot);
+                const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } =
+                    validateAndEvalBlobsAndTrees(snapshot);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
@@ -309,28 +312,24 @@ async function fetchLatestSnapshotCore(
                 return value;
             },
         ).catch((error) => {
-            // Issue #5895:
-            // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-            // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-            // going getVersions / individual blob download path. This path is very slow, and will not work with
-            // delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-            if (typeof error === "object" && error !== null) {
-                error.canRetry = false;
-                // We hit these errors in stress tests, under load
-                // It's useful to try one more time in such case.
-                // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-                // (not in "real" offline) and it actually helps.
-                if (error.errorType === DriverErrorType.fetchFailure ||
-                    error.errorType === OdspErrorType.fetchTimeout) {
-                    error[getWithRetryForTokenRefreshRepeat] = true;
-                }
+            // We hit these errors in stress tests, under load
+            // It's useful to try one more time in such case.
+            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
+            // (not in "real" offline) and it actually helps.
+            if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
+                error.errorType === OdspErrorType.fetchTimeout)) {
+                error[getWithRetryForTokenRefreshRepeat] = true;
             }
             throw error;
         });
     });
 }
 
-function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
+    assert(Array.isArray(snapshot.trees) && snapshot.trees.length > 0,
+        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
+    assert(Array.isArray(snapshot.blobs) && snapshot.blobs.length > 0,
+        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
     let numTrees = 0;
     let numBlobs = 0;
     let encodedBlobsSize = 0;
@@ -344,11 +343,9 @@ function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
             }
         }
     }
-    if (snapshot.blobs !== undefined) {
-        for (const blob of snapshot.blobs) {
-            decodedBlobsSize += blob.size;
-            encodedBlobsSize += blob.content.length;
-        }
+    for (const blob of snapshot.blobs) {
+        decodedBlobsSize += blob.size;
+        encodedBlobsSize += blob.content.length;
     }
     return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
@@ -364,8 +361,6 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 }
 
 function getEncodedShareUrl(url: string): string {
-    assert(!url, "Url should not be empty");
-
     /**
      * Encode the url to accepted format by Sharepoint
      * https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/shares_get

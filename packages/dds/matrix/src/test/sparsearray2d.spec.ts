@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { SparseArray2D } from "../sparsearray2d";
 import { fill, check, extract } from "./utils";
 
-function expectEqual<T extends Serializable>(
+function expectEqual<T>(
     actual: SparseArray2D<T>,
     expected: SparseArray2D<T>,
     rowStart: number,
@@ -98,12 +97,12 @@ describe("SparseArray2D", () => {
                 : "";
 
             it(`${rowClearRange}${colClearRange} (filled: ${fillRange})`, () => {
-                const actual = new SparseArray2D<Serializable>();
+                const actual = new SparseArray2D();
                 fill(actual, rowStart, colStart, rowCount, colCount);
                 actual.clearRows(rowClearStart, rowClearCount);
                 actual.clearCols(colClearStart, colClearCount);
 
-                const expected = new SparseArray2D<Serializable>();
+                const expected = new SparseArray2D();
                 fill(expected, rowStart, colStart, rowCount, colCount);
 
                 for (let row = rowClearStart; row < rowClearStart + rowClearCount; row++) {

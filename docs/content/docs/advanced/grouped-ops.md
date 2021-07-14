@@ -1,6 +1,6 @@
 ---
 title: Grouped Ops
-menuPosition: 7
+menuPosition: 4
 ---
 
 {{< ArticleStatus 5468 >}}

@@ -153,7 +153,11 @@ export abstract class LeafTask extends Task {
             const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
             const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
             const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${this.command} - ${elapsedTime.toFixed(3)}s`);
+            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${this.command} - ${elapsedTime.toFixed(3)}s`;
+            logStatus(statusString);
+            if (status === BuildResult.Failed) {
+                this.node.buildContext.failedTaskLines.push(statusString);
+            }
             this.node.buildContext.taskStats.leafExecTimeTotal += elapsedTime;
         }
         return status;

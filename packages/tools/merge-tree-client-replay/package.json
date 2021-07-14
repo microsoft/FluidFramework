@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/merge-tree-client-replay",
-  "version": "0.40.0",
+  "version": "0.44.0",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "homepage": "https://fluidframework.com",
@@ -30,20 +30,18 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.30.0-0",
-    "@fluidframework/container-runtime": "^0.40.0",
-    "@fluidframework/file-driver": "^0.40.0",
-    "@fluidframework/merge-tree": "^0.40.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-0",
-    "@fluidframework/runtime-definitions": "^0.40.0",
-    "@fluidframework/sequence": "^0.40.0",
-    "assert": "^2.0.0"
+    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/container-runtime": "^0.44.0",
+    "@fluidframework/file-driver": "^0.44.0",
+    "@fluidframework/merge-tree": "^0.44.0",
+    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/runtime-definitions": "^0.44.0",
+    "@fluidframework/sequence": "^0.44.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0-0",
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@microsoft/api-extractor": "^7.13.1",
-    "@types/assert": "^1.5.2",
+    "@microsoft/api-extractor": "^7.16.1",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

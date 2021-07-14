@@ -1,6 +1,0 @@
-version: '3'
-services:
-    headless:
-        ports:
-            - "5858:5858"
-        command: node --inspect=0.0.0.0:5858 dist/index.js -w dist

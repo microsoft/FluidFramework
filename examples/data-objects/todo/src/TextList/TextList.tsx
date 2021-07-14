@@ -50,7 +50,6 @@ export class TextList extends DataObject implements IFluidHTMLView {
         ReactDOM.render(
             <TextListView
                 textDirectory={this.textDirectory}
-                root={this.root}
                 createNewItem={this.createNewItem.bind(this)} />,
             div,
         );

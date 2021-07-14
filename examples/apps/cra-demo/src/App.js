@@ -13,22 +13,25 @@ const getContainerId = () => {
         isNew = true;
         window.location.hash = Date.now().toString();
     }
-    const id = window.location.hash.substring(1);
-    return { id, isNew };
+    const containerId = window.location.hash.substring(1);
+    return { containerId, isNew };
 };
 
-TinyliciousClient.init();
+const tinyliciousClient = new TinyliciousClient();
 
 const getFluidData = async () => {
+    const { containerId, isNew } = getContainerId();
+
     const containerSchema = {
         name: 'cra-demo-container',
-        initialObjects: { myMap: SharedMap }
+        initialObjects: { mySharedMap: SharedMap }
     };
 
-    const { id, isNew } = getContainerId();
+    const serviceConfig = { id: containerId };
+
     const fluidContainer = isNew
-        ? await TinyliciousClient.createContainer({ id }, containerSchema)
-        : await TinyliciousClient.getContainer({ id }, containerSchema);
+        ? await tinyliciousClient.createContainer(serviceConfig, containerSchema)
+        : await tinyliciousClient.getContainer(serviceConfig, containerSchema);
     // returned initialObjects are live Fluid data structures
     return fluidContainer.initialObjects;
 }
@@ -36,36 +39,40 @@ const getFluidData = async () => {
 function App() {
 
     const [fluidData, setFluidData] = React.useState();
-    const [time, setViewTime] = React.useState('');
+    const [viewData, setViewData] = React.useState();
 
     React.useEffect(() => {
-        if (fluidData === undefined) {
-            // Get/Create container and return live Fluid data
-            getFluidData().then(data => setFluidData(data));
-        } else {
-            // set up initial UI state
-            setViewTime(fluidData.myMap.get("time"));
+        // Get/Create container and return live Fluid data
+        getFluidData().then(data => setFluidData(data))
+    }, []);
 
-            // sync Fluid data into view state
-            const handleChange = () => setViewTime(fluidData.myMap.get("time"));
+    React.useEffect(() => {
+        if (!fluidData) return;
 
-            // update state each time our map changes
-            fluidData.myMap.on("valueChanged", handleChange);
-            return () => { fluidData.myMap.off("valueChanged", handleChange) }
-        }
-    }, [fluidData]);
+        const { mySharedMap } = fluidData;
+        // sync Fluid data into view state
+        const syncView = () => setViewData({ time: mySharedMap.get("time") });
+        // ensure sync runs at least once
+        syncView();
+        // update state each time our map changes
+        mySharedMap.on("valueChanged", syncView);
+        return () => { mySharedMap.off("valueChanged", syncView) }
 
-    if (!fluidData) return <div />;
+    }, [fluidData])
+
+
+    if (!viewData) return <div />;
 
     // business logic could be passed into the view via context
-    const setTime = () => fluidData.myMap.set("time", Date.now().toString());
+    const setTime = () => fluidData.mySharedMap.set("time", Date.now().toString());
 
     return (
         <div>
             <button onClick={setTime}> click </button>
-            <span>{time}</span>
+            <span>{viewData.time}</span>
         </div>
     )
 }
 
 export default App;
+

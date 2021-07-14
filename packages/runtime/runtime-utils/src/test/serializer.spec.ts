@@ -22,14 +22,35 @@ describe("FluidSerializer", () => {
         });
     }
 
+    function createNestedCases(testCases: any[]) {
+        // Add an object where each field references one of the JSON serializable types.
+        testCases.push(
+            testCases.reduce<any>(
+                (o, value, index) => {
+                    o[`f${index}`] = value;
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return o;
+                },
+                {}));
+
+        // Add an array that contains each of our constructed test cases.
+        testCases.push([...testCases]);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return testCases;
+    }
+
     describe("vanilla JSON", () => {
         const context = new MockHandleContext();
         const serializer = new FluidSerializer(context);
         const handle = new RemoteFluidObjectHandle("/root", context);
 
-        // Start with the various JSON-serializable types
+        // Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
+        // are of particular interest.
+
         // eslint-disable-next-line no-null/no-null
-        const simple = [true, 1, "x", null, [], {}];
+        const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
+
         // Add an object where each field references one of the JSON serializable types.
         simple.push(
             simple.reduce<any>(
@@ -39,6 +60,7 @@ describe("FluidSerializer", () => {
                     return o;
                 },
                 {}));
+
         // Add an array that contains each of our constructed test cases.
         simple.push([...simple]);
 
@@ -49,10 +71,20 @@ describe("FluidSerializer", () => {
                 assert.strictEqual(actual, input,
                     "replaceHandles() on input with no handles must return original input.");
 
+                const decoded = serializer.decode(actual);
+                assert.strictEqual(decoded, input,
+                    "decode() on input with no handles must return original input.");
+                assert.deepStrictEqual(decoded, input,
+                    "input must round-trip through decode(replaceHandles()).");
+
                 const stringified = serializer.stringify(input, handle);
+                // Paranoid check that serializer.stringify() and JSON.stringify() agree.
+                assert.deepStrictEqual(stringified, JSON.stringify(input),
+                    "stringify() of input without handles must produce same result as JSON.stringify().");
+
                 const parsed = serializer.parse(stringified);
                 assert.deepStrictEqual(parsed, input,
-                    "input must round-trip through stringify()/parse().");
+                    "input must round-trip through parse(stringify()).");
 
                 // Paranoid check that serializer.parse() and JSON.parse() agree.
                 assert.deepStrictEqual(parsed, JSON.parse(stringified),
@@ -60,8 +92,42 @@ describe("FluidSerializer", () => {
             });
         }
 
-        it("replaceHandles() must round-trip undefined", () => {
+        // Non-finite numbers are coerced to null.  Date is coerced to string.
+        const tricky = createNestedCases([-Infinity, NaN, +Infinity, new Date()]);
+
+        // Undefined is extra special in that it can't appear at the root, but can appear
+        // embedded in the tree, in which case the key is elided (if an object) or it is
+        // coerced to null (if in an array).
+        tricky.push({ u: undefined}, [undefined]);
+
+        for (const input of tricky) {
+            it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
+                const actual = serializer.replaceHandles(input, handle);
+                assert.strictEqual(actual, input,
+                    "replaceHandles() on input with no handles must return original input.");
+
+                const decoded = serializer.decode(actual);
+                assert.strictEqual(decoded, input,
+                    "decode() on input with no handles must return original input.");
+                assert.deepStrictEqual(decoded, input,
+                    "input must round-trip through decode(replaceHandles()).");
+
+                const stringified = serializer.stringify(input, handle);
+                // Check that serializer.stringify() and JSON.stringify() agree.
+                assert.deepStrictEqual(stringified, JSON.stringify(input),
+                    "stringify() of input without handles must produce same result as JSON.stringify().");
+
+                const parsed = serializer.parse(stringified);
+                // Check that serializer.parse() and JSON.parse() agree.
+                assert.deepStrictEqual(parsed, JSON.parse(stringified),
+                    "parse() of input without handles must produce same result as JSON.parse().");
+            });
+        }
+
+        // Undefined is extra special in that it can't be stringified at the root of the tree.
+        it("'undefined' must round-trip through decode(replaceHandes(...))", () => {
             assert.strictEqual(serializer.replaceHandles(undefined, handle), undefined);
+            assert.strictEqual(serializer.decode(undefined), undefined);
         });
     });
 
@@ -81,6 +147,12 @@ describe("FluidSerializer", () => {
                     "replaceHandles() must shallow-clone rather than mutate original object.");
                 assert.deepStrictEqual(replaced, expected,
                     "replaceHandles() must return expected output.");
+
+                const decoded = serializer.decode(replaced);
+                assert.notStrictEqual(decoded, input,
+                    "decode() must shallow-clone rather than mutate original object.");
+                assert.deepStrictEqual(decoded, input,
+                    "input must round-trip through replaceHandles()/decode().");
 
                 const stringified = serializer.stringify(input, handle);
 
@@ -112,6 +184,12 @@ describe("FluidSerializer", () => {
             const replaced = serializer.replaceHandles(input, handle);
             assert.notStrictEqual(replaced, input,
                 "replaceHandles() must shallow-clone rather than mutate original object.");
+
+            const decoded = serializer.decode(replaced);
+            assert.notStrictEqual(decoded, input,
+                "decode() must shallow-clone rather than mutate original object.");
+            assert.deepStrictEqual(decoded, input,
+                "input must round-trip through replaceHandles()/decode().");
 
             const stringified = serializer.stringify(input, handle);
             const parsed = serializer.parse(stringified);

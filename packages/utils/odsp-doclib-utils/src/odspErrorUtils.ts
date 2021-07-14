@@ -63,14 +63,39 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     return additionalProps;
 }
 
+export interface IFacetCodes {
+    facetCodes?: string[];
+ }
+
+export function parseFacetCodes(response: string): string[] {
+    const stack: string[] = [];
+    let error;
+    try {
+        error = JSON.parse(response).error;
+    }
+    catch(e) {
+        return stack;
+    }
+
+    // eslint-disable-next-line no-null/no-null
+    while (typeof error === "object" && error !== null) {
+        if (error.code !== undefined) {
+            stack.unshift(error.code);
+        }
+        error = error.innerError;
+    }
+    return stack;
+}
+
 export function createOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     retryAfterSeconds?: number,
     response?: Response,
     responseText?: string,
-): OdspError {
-    let error: OdspError & LoggingError;
+    props: ITelemetryProperties = {},
+): OdspError & LoggingError & IFacetCodes {
+    let error: OdspError & LoggingError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
@@ -128,12 +153,17 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, { statusCode });
+            const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
+            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
     }
 
     error.online = OnlineStatus[isOnline()];
 
-    const props: ITelemetryProperties = { response: responseText };
+    const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
+    error.facetCodes = facetCodes;
+    (error as any).response = responseText; // Issue #6139: This shouldn't be logged - will be fixed with #6485
+
+    props.innerMostErrorCode = facetCodes !== undefined ? facetCodes[0] : undefined;
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
@@ -164,7 +194,6 @@ export function throwOdspNetworkError(
         response,
         responseText);
 
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }
 

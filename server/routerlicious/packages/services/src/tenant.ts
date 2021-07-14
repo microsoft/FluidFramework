@@ -54,16 +54,19 @@ export class TenantManager implements core.ITenantManager {
             Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
             this.getKey(tenantId)]);
 
-        const credentials: ICredentials = {
-            password: generateToken(tenantId, null, key, null),
-            user: tenantId,
-        };
         const defaultQueryString = {
-            token: fromUtf8ToBase64(`${credentials.user}`),
+            token: fromUtf8ToBase64(`${tenantId}`),
         };
-        const defaultHeaders = {
-            Authorization: getAuthorizationTokenFromCredentials(credentials),
+        const getDefaultHeaders = () => {
+            const credentials: ICredentials = {
+                password: generateToken(tenantId, null, key, null),
+                user: tenantId,
+            };
+            return ({
+                Authorization: getAuthorizationTokenFromCredentials(credentials),
+            });
         };
+        const defaultHeaders = getDefaultHeaders();
         const baseUrl = `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
         const restWrapper = new BasicRestWrapper(
             baseUrl,
@@ -73,7 +76,7 @@ export class TenantManager implements core.ITenantManager {
             defaultHeaders,
             undefined,
             undefined,
-            undefined,
+            getDefaultHeaders,
             getCorrelationId);
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,

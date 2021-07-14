@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IRequest,
@@ -21,12 +20,12 @@ import {
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
-import { IAgentScheduler } from "./agent";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler {
+class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
@@ -105,11 +104,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
-        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // in isActive(). This check is done by users of this class - containerRuntime.ts (for "leader") and
-        // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
-        // I'm adding assert here to catch that case and make decision on which way we go - push requirements
-        // to consumers to make a choice, or centrally make this call here.
+        // We have a policy to disallow non-interactive clients from taking tasks.  Callers of pick() can
+        // either perform this check proactively and call conditionally, or catch the error (in which case
+        // they can know they will not get the task).
         assert(this.context.deltaManager.clientDetails.capabilities.interactive,
             0x118 /* "Bad client interactive check" */);
 
@@ -314,10 +311,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
 
         // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // here. This is done by users of this class - containerRuntime.ts (for "leader") and TaskManager.
-        // In the future, as new usage shows up, we may need to reconsider that.
-        // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
-        // to consumers to make a choice, or centrally make this call here.
+        // here.  Instead we assert in pick() if a non-interactive client tries to pick.
 
         return this.context.deltaManager.active;
     }

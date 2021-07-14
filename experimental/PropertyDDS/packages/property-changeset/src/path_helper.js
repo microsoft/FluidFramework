@@ -333,6 +333,34 @@ PathHelper.quotePathSegment = function(in_pathSegment) {
 };
 
 /**
+ * Reverse a quoted/escaped string for a path seqment
+ *
+ * @param {string} in_quotedPathSegment   - The quoted/escaped path string to put in quotes
+ *
+ * @return {string} unquoted path string
+ */
+ PathHelper.unquotePathSegment = function(in_quotedPathSegment) {
+    if (typeof in_quotedPathSegment !== 'string') {
+        throw new Error(`Expecting a string as a path: ${in_quotedPathSegment}`);
+    }
+
+    if (in_quotedPathSegment[0] === '"' && in_quotedPathSegment[in_quotedPathSegment.length - 1] === '"') {
+
+          // We remove double quotes
+          in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
+
+          // Then we unescape escape symbols
+          in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, '\\');
+
+          // Then we unescape quotes
+          in_quotedPathSegment = in_quotedPathSegment.replace(/\\"/g, '"');
+    }
+
+    return in_quotedPathSegment;
+  };
+
+
+/**
  * Adds quotation marks to a path string if they are needed
  *
  * @param {string} in_pathSegment   - The path string to put in quotes
