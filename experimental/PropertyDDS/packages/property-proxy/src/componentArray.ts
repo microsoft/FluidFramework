@@ -4,10 +4,11 @@
  */
 /* eslint-disable no-param-reassign */
 
-import { PropertyFactory } from "@fluid-experimental/property-properties"
+import { ArrayProperty, BaseProperty, PropertyFactory, ValueProperty } from "@fluid-experimental/property-properties"
+import { BaseProxifiedProperty } from "./interfaces";
 
 import { PropertyProxy } from './propertyProxy';
-import { Utilities } from './utilities';
+import { forceType, Utilities } from './utilities';
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
@@ -44,29 +45,31 @@ const prepareElementsForInsertion =
  * @hidden
  */
 class ComponentArray extends Array {
+    private lastCalledMethod = ''
+
     /**
      * Sets the {@link external:ArrayProperty ArrayProperty} to operate on sets the Symbol.iterator attribute.
-     * @param {external:ArrayProperty} property The ArrayProperty to operate on.
+     * @param property The ArrayProperty to operate on.
      */
-    constructor(property) {
+    constructor(private property: ArrayProperty) {
         super();
         this.property = property;
         this[Symbol.iterator] = createArrayIterator(this);
-        this.lastCalledMethod = '';
     }
 
     /**
      * Returns the ArrayProperty property.
-     * @return {external:ArrayProperty} The ArrayProperty.
+     * @return The ArrayProperty.
      */
-    getProperty() {
+    getProperty(): ArrayProperty {
         return this.property;
     }
 
     /**
      * @inheritdoc
      */
-    includes(searchElement, fromIndex) {
+    includes(searchElement: BaseProxifiedProperty | BaseProperty | any, fromIndex) {
+        // TODO(marcus): any is a workaround here for now
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {
@@ -83,8 +86,9 @@ class ComponentArray extends Array {
             searchElement = searchElement.getProperty();
         }
         for (let i = startSearchIdx; i < this.property.length; ++i) {
-            let prop = this.property.get(i);
-            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
                 prop = prop.getValue();
             }
             if (prop === searchElement) {
@@ -97,11 +101,11 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    indexOf(searchElement, fromIndex) {
+    indexOf(searchElement: any, fromIndex?: number): number {
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {
-                return false;
+                return -1;
             } else if (fromIndex < 0) {
                 startSearchIdx = Math.max(0, this.property.getLength() + fromIndex);
             } else {
@@ -114,8 +118,9 @@ class ComponentArray extends Array {
             searchElement = searchElement.getProperty();
         }
         for (let i = startSearchIdx; i < this.property.length; ++i) {
-            let prop = this.property.get(i);
-            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
                 prop = prop.getValue();
             }
             if (prop === searchElement) {
@@ -128,11 +133,11 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    lastIndexOf(searchElement, fromIndex) {
+    lastIndexOf(searchElement: any, fromIndex?: number) {
         // Only handle non-primitive cases,
         // primitive cases can be handled implicitly (see componentArrayProxyHandler.js)
 
-        if (PropertyFactory.instanceOf(!searchElement, 'BaseProperty')) {
+        if (!PropertyFactory.instanceOf(searchElement, 'BaseProperty')) {
             return -1;
         } else {
             // check if a proxied value was passed
@@ -147,8 +152,9 @@ class ComponentArray extends Array {
                 this.property.getLength() - 1;
 
             for (let i = startSearchIdx; i >= 0; i--) {
-                let prop = this.property.get(i);
-                if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
+                let prop = this.property.get(i)!;
+                if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()
+                    && forceType<ValueProperty>(prop)) {
                     prop = prop.getValue();
                 }
                 if (prop === searchElement) {
@@ -212,9 +218,10 @@ class ComponentArray extends Array {
     sort(compareFunction) {
         this.lastCalledMethod = 'sort';
         if (PropertyFactory.instanceOf(this.property, 'Reference', 'array')) {
-            const referencedAndReference = [];
+            // TODO(marcus): any is a workaround here to make it work
+            const referencedAndReference: any[] = [];
             for (let i = 0; i < this.property.getLength(); ++i) {
-                const referenced = this.property.get(i);
+                const referenced = this.property.get(i)!;
                 if (PropertyFactory.instanceOf(referenced, 'BaseProperty')) {
                     referencedAndReference.push([PropertyProxy.proxify(referenced), this.property.getValue(i)]);
                 } else {
@@ -256,7 +263,7 @@ class ComponentArray extends Array {
         const removed = [];
         if (deleteUntil > 0 && startValue < arrayLength) {
             for (let i = startValue; i < startValue + deleteUntil; ++i) {
-                removed.push(this.property.get(i));
+                removed.push(this.property.get(i)!);
                 const lastEntryIdx = removed.length - 1;
                 if (PropertyFactory.instanceOf(removed[lastEntryIdx], 'BaseProperty')) {
                     removed[lastEntryIdx] = PropertyProxy.proxify(removed[lastEntryIdx]);
@@ -279,10 +286,10 @@ class ComponentArray extends Array {
 
     /**
      * Swaps two elements in place in the array.
-     * @param {Number} idxOne The index of one of the elements to be swapped.
-     * @param {Number} idxTwo The index of one of the elements to be swapped.
+     * @param idxOne The index of one of the elements to be swapped.
+     * @param idxTwo The index of one of the elements to be swapped.
      */
-    swap(idxOne, idxTwo) {
+    swap(idxOne: number, idxTwo: number) {
         if (idxOne >= this.property.getLength() || idxTwo >= this.property.getLength()) {
             throw new RangeError('Cannot swap element that is out of range');
         }
