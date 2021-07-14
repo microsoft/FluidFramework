@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyFactory } from "@fluid-experimental/property-properties"
+import { NamedProperty, PropertyFactory, SetProperty } from "@fluid-experimental/property-properties"
 
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
@@ -30,11 +30,14 @@ const createSetIterator = (target) => function*() {
  * @hidden
  */
 class ComponentSet extends Set {
+    // workaround, necessary for typescript to handle Object.defineProperty
+    // https://github.com/microsoft/TypeScript/issues/28694
+    private property!: SetProperty
     /**
      * Sets the {@link external:SetProperty SetProperty} to operate on sets the Symbol.iterator attribute.
      * @param {external:SetProperty} property The {@link external:SetProperty SetProperty} to operate on.
      */
-    constructor(property) {
+    constructor(property: SetProperty) {
         super();
         Object.defineProperty(this, 'property', { enumerable: false, value: property });
         this[Symbol.iterator] = createSetIterator(this);
@@ -43,24 +46,24 @@ class ComponentSet extends Set {
     /**
      * Retrieves the length of the array returned by {@link external:SetProperty#getIds} to infer
      * the size (number of entries).
-     * @return {Number} The size of the {@link external:SetProperty SetProperty}.
+     * @return The size of the {@link external:SetProperty SetProperty}.
      */
-    get size() {
+    get size(): number {
         return this.property.getIds().length;
     }
 
     /**
      * Returns the wrapped {@link external:SetProperty SetProperty} property.
-     * @return {external:SetProperty} The wrapped {@link external:SetProperty SetProperty}.
+     * @return The wrapped {@link external:SetProperty SetProperty}.
      */
-    getProperty() {
+    getProperty(): SetProperty {
         return this.property;
     }
 
     /**
      * @inheritdoc
      */
-    add(value) {
+    add(value: NamedProperty) {
         let valueIsProperty = false;
         if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
             valueIsProperty = true;
@@ -90,7 +93,7 @@ class ComponentSet extends Set {
     /**
      * @inheritdoc
      */
-    delete(value) {
+    delete(value: NamedProperty) {
         if (!this.has(value)) {
             return false;
         }
@@ -105,9 +108,9 @@ class ComponentSet extends Set {
      */
     entries() {
         const keys = this.property.getIds();
-        const entriesIterator = function*() {
+        const entriesIterator = function*(this: ComponentSet): Generator<[any, any]> {
             for (let i = 0; i < keys.length; i++) {
-                const proxy = PropertyProxy.proxify(this.property.get(keys[i]));
+                const proxy = PropertyProxy.proxify(this.property.get(keys[i])!);
                 yield [proxy, proxy];
             }
         };
@@ -118,10 +121,10 @@ class ComponentSet extends Set {
     /**
      * @inheritdoc
      */
-    forEach(func) {
+    forEach(func: (value, key, set) => void) {
         const keys = this.property.getIds();
         for (let i = 0; i < keys.length; i++) {
-            const value = PropertyProxy.proxify(this.property.get(keys[i]));
+            const value = PropertyProxy.proxify(this.property.get(keys[i])!);
             func(value, value, this);
         }
     }
@@ -129,7 +132,7 @@ class ComponentSet extends Set {
     /**
      * @inheritdoc
      */
-    has(value) {
+    has(value: NamedProperty) {
         const guid = this._getGuid(value);
         return this.property.has(guid);
     }
@@ -147,7 +150,9 @@ class ComponentSet extends Set {
      * @param {external:NamedProperty} value The entry in the set for which a guid is queried.
      * @return {String} The guid of the passed {@link external:NamedProperty NamedProperty}.
      */
-    _getGuid(value) {
+    // TODO(marcus): any is a workaround since it is not quite clear what
+    // should have a field guid, I assume its the proxyfied property but I cant be sure yet
+    _getGuid(value: NamedProperty | any) {
         // The set property uses the guid field of NamedProperty for equality
         let guid = value.guid;
         // It might be that the user inserts a value ist not proxied
