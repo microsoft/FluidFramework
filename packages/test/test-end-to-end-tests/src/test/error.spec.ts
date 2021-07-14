@@ -20,7 +20,7 @@ import {
 import {
     createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, isILoggingError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
     LocalCodeLoader,
@@ -97,12 +97,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 
     function assertCustomPropertySupport(err: any) {
         err.asdf = "asdf";
-        if (err.getTelemetryProperties !== undefined) {
-            assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
-        }
-        else {
-            assert.fail("Error should support getTelemetryProperties()");
-        }
+        assert(isILoggingError(err), "Error should support getTelemetryProperties()");
+        assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
     }
 
     it("Check double conversion of network error", async () => {

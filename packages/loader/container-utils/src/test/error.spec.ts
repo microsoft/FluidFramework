@@ -83,12 +83,8 @@ describe("Errors", () => {
     describe("Additional CreateContainerError tests", () => {
         function assertCustomPropertySupport(err: any) {
             err.asdf = "asdf";
-            if (err.getTelemetryProperties !== undefined) {
-                assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
-            }
-            else {
-                assert.fail("Error should support getTelemetryProperties()");
-            }
+            assert(isILoggingError(err), "Error should support getTelemetryProperties()");
+            assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
         }
         it("Check double conversion of general error", async () => {
             const err = {
