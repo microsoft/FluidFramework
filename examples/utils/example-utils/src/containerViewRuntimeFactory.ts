@@ -14,9 +14,9 @@ import { MountableView } from "@fluidframework/view-adapters";
 
 const componentId = "modelComponent";
 
-export type ViewCallback = (fluidModel: any) => any;
+export type ViewCallback<T> = (fluidModel: T) => any;
 
-const makeViewRequestHandler = (viewCallback: ViewCallback): RuntimeRequestHandler =>
+const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             const clickerRequest = RequestParser.create({
@@ -24,7 +24,7 @@ const makeViewRequestHandler = (viewCallback: ViewCallback): RuntimeRequestHandl
                 headers: request.headers,
             });
             // TODO type the requestFluidObject
-            const fluidObject = await requestFluidObject(
+            const fluidObject = await requestFluidObject<T>(
                 await runtime.getRootDataStore(componentId),
                 clickerRequest);
             const viewResponse = viewCallback(fluidObject);
@@ -32,10 +32,10 @@ const makeViewRequestHandler = (viewCallback: ViewCallback): RuntimeRequestHandl
         }
     };
 
-export class ContainerViewRuntimeFactory extends BaseContainerRuntimeFactory {
+export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
     constructor(
         private readonly dataStoreFactory: IFluidDataStoreFactory,
-        viewCallback: ViewCallback,
+        viewCallback: ViewCallback<T>,
     ) {
         // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
