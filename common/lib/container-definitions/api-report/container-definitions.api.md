@@ -170,6 +170,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     // (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
+    readBlobContentsSync(blobId: string): ArrayBufferLike;
     readonly scope: IFluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
