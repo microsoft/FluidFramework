@@ -4,7 +4,7 @@
  */
 
 export type {
-    IDisposable
+    IDisposable,
 } from "./disposable";
 export type {
     ExtendEventProvider,
