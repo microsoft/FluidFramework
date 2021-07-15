@@ -15,7 +15,8 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { BaseTelemetryNullLogger, performance, stringToBuffer } from "@fluidframework/common-utils";
+import { Builder, IFluidErrorBase, hasErrorType, isFluidError } from "./staging";
 
 export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
@@ -527,10 +528,6 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
-const hasErrorType = (error: any): error is { errorType: string } => {
-    return (typeof error?.errorType === "string");
-};
-
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
@@ -570,25 +567,52 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
  export function annotateError(
     error: unknown,
     props: ITelemetryProperties = {},
-): ILoggingError & { errorType: string } {
-    if (!isRegularObject(error)) {
-        const message = String(error);
-        const typedLoggingerror = new LoggingError(message, props) as LoggingError & { errorType: string };
-        typedLoggingerror.errorType = `none (${typeof(error)})`;
-        return typedLoggingerror;
+    errorCodeIfNone?: string,
+): IFluidErrorBase & ILoggingError {
+    if (isFluidError(error)) {
+        return mixinTelemetryProps(error as IFluidErrorBase & Record<string, unknown>, props);
     }
 
-    let typedErrorObject: { errorType: string };
-    if (hasErrorType(error)) {
-        typedErrorObject = error;
-    } else if (error instanceof Error) {
-        typedErrorObject = error as Error & { errorType: string };
-        typedErrorObject.errorType = `none (${error.name})`;
-    } else {
-        typedErrorObject = error as { errorType: string };
-        typedErrorObject.errorType = `none (object)`;
+    // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
+    let fluidErrorBuilder: Builder<IFluidErrorBase>;
+
+    function setErrorTypeIfMissing(errorTypeIfNone: string) {
+        if (!hasErrorType(error)) {
+            fluidErrorBuilder.errorType = `none (${errorTypeIfNone})`;
+        }
     }
-        return mixinTelemetryProps(typedErrorObject, props);
+
+    const fullErrorCodeifNone = errorCodeIfNone === undefined
+        ? "none"
+        : `none (${errorCodeIfNone})`;
+
+    // If someone has thrown or passed a non-object, create a new Error object
+    if (!isRegularObject(error)) {
+        const message = String(error);
+        fluidErrorBuilder = new LoggingError(message, props) as Builder<IFluidErrorBase>;
+        setErrorTypeIfMissing(typeof(error));
+        fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
+
+        return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
+    }
+
+    fluidErrorBuilder = error as Builder<IFluidErrorBase>;
+    fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
+
+    if (error instanceof Error) {
+        setErrorTypeIfMissing(error.name);
+    } else {
+        setErrorTypeIfMissing("object");
+        fluidErrorBuilder.message = errorCodeIfNone;
+        fluidErrorBuilder.name = "none";
+    }
+
+    if (typeof (fluidErrorBuilder.stack) !== "string") {
+        fluidErrorBuilder.stack = new Error("<<generated stack>>").stack;
+    }
+
+    const fluidError = fluidErrorBuilder as IFluidErrorBase & Record<string, unknown>;
+    return mixinTelemetryProps(fluidError, props);
 }
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
