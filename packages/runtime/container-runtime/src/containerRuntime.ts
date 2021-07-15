@@ -1561,8 +1561,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             assert(this.attachState === AttachState.Attached,
                 0x12e /* "Container Context should already be in attached state" */);
+            this.emit("attached");
         }
         this.dataStores.setAttachState(attachState);
+    }
+
+    public setBlobRedirectTable(table: Map<string, string>) {
+        return this.blobManager.setRedirectTable(table);
     }
 
     public createSummary(): ISummaryTree {

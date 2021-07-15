@@ -811,9 +811,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.context.notifyAttaching();
             }
 
+            // Actually go and create the resolved document
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
-            // Actually go and create the resolved document
             if (this.service === undefined) {
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
@@ -833,10 +833,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             await this.connectStorageService();
 
-            // upload blobs here (NYI)
-
-            // post summary here
             if (hasAttachmentBlobs) {
+                // upload blobs to storage
+                assert(!!this.loader.services.detachedBlobStorage, "assertion for type narrowing");
+                const redirectTable: Map<string, string | undefined>
+                    = new Map(this.loader.services.detachedBlobStorage.all().map((id) => [id, undefined]));
+                do {
+                    for (const id of this.loader.services.detachedBlobStorage.all()) {
+                        if (!redirectTable.has(id)) {
+                            redirectTable.set(id, undefined);
+                        }
+                    }
+                    for (const [localId, storageId] of redirectTable) {
+                        if (storageId === undefined) {
+                            const blob = await this.loader.services.detachedBlobStorage.readBlob(localId);
+                            const response = await this.storageService.createBlob(blob);
+                            redirectTable.set(localId, response.id);
+                        }
+                    }
+                // if there are any new blobs, upload them too
+                } while (redirectTable.size < this.loader.services.detachedBlobStorage.size);
+
+                // set redirectTable on ContainerRuntime/BlobManager...
+                (this.context as any).setBlobRedirectTable(redirectTable);
+
+                // take summary and upload
                 const appSummary: ISummaryTree = this.context.createSummary();
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
@@ -849,8 +870,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     ackHandle: undefined,
                     proposalHandle: undefined,
                 });
-
-                assert(!hasAttachmentBlobs, "attaching container with blobs is not yet implemented");
             }
 
             this._attachState = AttachState.Attached;

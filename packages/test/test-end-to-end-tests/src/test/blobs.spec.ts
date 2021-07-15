@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -29,10 +28,14 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
-    private readonly blobs = new Map<number, ArrayBufferLike>();
+    public readonly blobs = new Map<number, ArrayBufferLike>();
     private blobCount = 0;
 
     public get size() { return this.blobCount; }
+
+    public all(): string[] {
+        return Array.from(this.blobs.keys()).map((id) => id.toString());
+    }
 
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         this.blobs.set(++this.blobCount, content);
@@ -212,7 +215,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("works in detached container", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -223,12 +227,14 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         dataStore._root.set("my blob", blobHandle);
         assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
 
-        // make sure we are still detached
-        assert.strictEqual(container.attachState, AttachState.Detached);
+        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-        await assert.rejects(
-            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            /(attaching container with blobs is not yet implemented)|(create empty file not supported)/,
-        );
+        // make sure we're getting the blob from actual storage
+        detachedBlobStorage.blobs.clear();
+
+        // old handle still works
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+        // new handle works
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
     });
 });
