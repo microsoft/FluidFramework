@@ -10,7 +10,6 @@ declare module "@fluidframework/core-interfaces" {
     export interface IFluidObject extends Readonly<Partial<IProvideFluidObjectCollection>> { }
 }
 
-
 /**
  * @deprecated This example will be removed in a future release.
  */
@@ -36,7 +35,7 @@ export interface IFluidObjectCollection extends IProvideFluidObjectCollection {
      * @deprecated This example will be removed in a future release.
      */
     createCollectionItem<TOpt = Record<string, unknown>>(options?: TOpt): IFluidObject;
-    
+
     /**
      * @deprecated This example will be removed in a future release.
      */
