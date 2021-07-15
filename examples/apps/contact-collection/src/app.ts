@@ -32,7 +32,8 @@ async function start(): Promise<void> {
     // flag to specify whether we're creating a new document or loading an existing one.
     const container = await getTinyliciousContainer(documentId, ContactCollectionContainerRuntimeFactory, createNew);
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our contact collection is available
+    // at the URL "/".
     const url = "/";
     const response = await container.request({ url });
 

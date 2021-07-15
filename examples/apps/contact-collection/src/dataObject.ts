@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
@@ -11,15 +12,10 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
 export interface IContactCollection extends EventEmitter {
-    /**
-     * Get the dice value as a number.
-     */
-    readonly value: number;
-
-    /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    roll: () => void;
+    addContact: (name: string, phone: string) => string;
+    removeContact: (id: string) => void;
+    getContact: (id: string) => Contact | undefined;
+    getContacts: () => Contact[];
 
     /**
      * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
@@ -30,6 +26,22 @@ export interface IContactCollection extends EventEmitter {
 // The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
+export class Contact {
+    constructor(
+        private readonly _name: string,
+        private readonly _phone: string,
+        // setName(), setPhone() ?
+    ) { }
+
+    public get name(): string {
+        return this._name;
+    }
+
+    public get phone(): string {
+        return this._phone;
+    }
+}
+
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
@@ -39,12 +51,14 @@ export class ContactCollection extends DataObject implements IContactCollection 
      * initialize the state of the DataObject.
      */
     protected async initializingFirstTime() {
-        this.root.set(diceValueKey, 1);
+        this.addContact("Alice", "555-1234");
+        this.addContact("Bob", "555-5678");
+        this.addContact("Carol", "555-9999");
     }
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-     * DataObject, by registering an event listener for dice rolls.
+     * DataObject, by registering an event listener for changes to the contact list.
      */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
@@ -55,14 +69,31 @@ export class ContactCollection extends DataObject implements IContactCollection 
         });
     }
 
-    public get value() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(diceValueKey);
-    }
+    public readonly addContact = (name: string, phone: string) => {
+        const id = uuid();
+        this.root.set(id, { name, phone });
+        return id; // ?
+    };
 
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
+    public readonly removeContact = (id: string) => {
+        this.root.delete(id);
+    };
+
+    public readonly getContact = (id: string) => {
+        const contactData = this.root.get(id);
+        if (contactData === undefined) {
+            return undefined;
+        }
+
+        return new Contact(contactData.name, contactData.phone);
+    };
+
+    public readonly getContacts = () => {
+        const contactList: Contact[] = [];
+        for (const contactData of this.root.values()) {
+            contactList.push(new Contact(contactData.name, contactData.phone));
+        }
+        return contactList;
     };
 }
 

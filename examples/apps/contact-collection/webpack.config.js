@@ -41,9 +41,6 @@ module.exports = env => {
         ],
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
-            alias: {
-                vue$: "vue/dist/vue.esm.js",
-            },
         },
     }, isProduction
         ? require("./webpack.prod")

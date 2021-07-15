@@ -11,5 +11,10 @@ import { IContactCollection } from "./dataObject";
  * @param div - The div to render into
  */
 export function renderContactCollection(contactCollection: IContactCollection, div: HTMLDivElement) {
-    div.textContent = "Hello World";
+    const contacts = contactCollection.getContacts();
+    for (const contact of contacts) {
+        const contactDiv = document.createElement("div");
+        contactDiv.textContent = `${contact.name}: ${contact.phone}`;
+        div.append(contactDiv);
+    }
 }
