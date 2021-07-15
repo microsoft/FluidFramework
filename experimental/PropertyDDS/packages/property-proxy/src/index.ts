@@ -4,5 +4,16 @@
  */
 
 import { PropertyProxy, proxySymbol } from './propertyProxy';
-
-export { PropertyProxy, proxySymbol };
+import {
+    ReferenceType, ProxyType,
+    ProxifiedArrayProperty, ProxifiedMapProperty,
+    ProxifiedPropertyValueArray, BaseProxifiedProperty, ProxifiedSetProperty, GenericProxify,
+    PropertyTypes, PrimitiveTypes, CollectionTypes,
+} from './interfaces';
+import { IParentAndPathOfReferencedProperty } from './IParentAndPathOfReferencedProperty';
+export {
+    PropertyProxy, proxySymbol, ReferenceType,
+    ProxyType, ProxifiedArrayProperty, ProxifiedMapProperty,
+    ProxifiedPropertyValueArray, BaseProxifiedProperty, ProxifiedSetProperty,
+    GenericProxify, IParentAndPathOfReferencedProperty, PropertyTypes, PrimitiveTypes, CollectionTypes,
+};
