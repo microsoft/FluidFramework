@@ -2144,7 +2144,7 @@ declare module "@fluid-experimental/property-properties" {
           /**
            * Removes the given property from the set
            */
-          remove(in_entry: NamedProperty|string): NamedProperty;
+          remove(in_entry: NamedProperty | string): NamedProperty;
           /**
            * Returns the name of all the sub-properties of this property.
            */
