@@ -156,7 +156,7 @@ export const arrayProxyHandler = {
      * Trap for the Object.keys().
      * Returns the Ids of the {@link external:ArrayProperty ArrayProperty} as an array.
      * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
-     * @return {Array | undefined} The array containing the IDs of the {@link external:ArrayProperty ArrayProperty}.
+     * @return The array containing the IDs of the {@link external:ArrayProperty ArrayProperty}.
      */
     ownKeys: (target) => Reflect.ownKeys(Array.from(target.getProperty().getEntriesReadOnly())),
 
