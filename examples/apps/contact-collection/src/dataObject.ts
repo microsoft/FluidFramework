@@ -18,13 +18,10 @@ export interface IContactCollection extends EventEmitter {
     getContacts: () => Contact[];
 
     /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     * The contactCollectionChanged event will fire whenever the list changes, either locally or remotely.
      */
-    on(event: "diceRolled", listener: () => void): this;
+    on(event: "contactCollectionChanged", listener: () => void): this;
 }
-
-// The root is map-like, so we'll use this key for storing the value.
-const diceValueKey = "diceValue";
 
 export class Contact {
     constructor(
@@ -62,10 +59,9 @@ export class ContactCollection extends DataObject implements IContactCollection 
      */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
-            if (changed.key === diceValueKey) {
-                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-                this.emit("diceRolled");
-            }
+            // When we see the contacts change, we'll emit the contactCollectionChanged event we specified
+            // in our interface.
+            this.emit("contactCollectionChanged");
         });
     }
 
