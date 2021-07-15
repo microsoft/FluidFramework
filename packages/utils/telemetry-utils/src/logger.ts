@@ -15,8 +15,8 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance, stringToBuffer } from "@fluidframework/common-utils";
-import { Builder, IFluidErrorBase, hasErrorType, isFluidError } from "./staging";
+import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { Builder, IFluidErrorBase, hasErrorType, isFluidError, ExtensibleObject } from "./staging";
 
 export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
@@ -540,6 +540,10 @@ type RwLoggingError = LoggingError;
 const isRwLoggingError = (x: any): x is RwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
+/**
+ * Mixes in the given properties, accessible henceforth via ILoggingError.getTelemetryProperties
+ * @returns the same object that was passed in, now also implementing ILoggingError.
+ */
 export function mixinTelemetryProps<T extends Record<string, unknown>>(
     error: T,
     props: ITelemetryProperties,
@@ -570,7 +574,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     errorCodeIfNone?: string,
 ): IFluidErrorBase & ILoggingError {
     if (isFluidError(error)) {
-        return mixinTelemetryProps(error as IFluidErrorBase & Record<string, unknown>, props);
+        return mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, props);
     }
 
     // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
@@ -611,7 +615,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
         fluidErrorBuilder.stack = new Error("<<generated stack>>").stack;
     }
 
-    const fluidError = fluidErrorBuilder as IFluidErrorBase & Record<string, unknown>;
+    const fluidError = fluidErrorBuilder as ExtensibleObject<IFluidErrorBase>;
     return mixinTelemetryProps(fluidError, props);
 }
 

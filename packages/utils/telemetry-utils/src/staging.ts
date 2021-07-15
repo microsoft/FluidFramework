@@ -25,3 +25,8 @@ export const hasErrorType = (error: any): error is { errorType: string } => {
 export type Builder<T> = {
     -readonly [Property in keyof T]?: T[Property];
 };
+
+/**
+ * This type adds Record, and should only be used on a proper Object
+ * that can accept additional properties being added */
+export type ExtensibleObject<T> = T & Record<string, unknown>;
