@@ -29,7 +29,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "jest",
     "test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
-    "tsc": "tsc --project ./tsconfig.json"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluid-experimental/property-changeset": "^0.45.0",
