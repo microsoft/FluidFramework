@@ -16,10 +16,10 @@ let nodeRdkafkaModule: typeof kafkaTypes | undefined;
 // Because of this limitation, currently we cannot use node-rdkafka in local dev flow. So locally kafka config should
 // always point to kafka-node library. Production code can use either one of those.
 //
-// node-rdkafka set up an AtExit callback to call RdKafka::wait_destroyed to cleanup
-// However, on windows it AVs if we never create and rdkafka instance.
-// librdkafka lazy initialize the global mutex, and it wouldn't be initialize it if no rdkafka is created,
-// and the clean would try to access the mutex and crash.
+// node-rdkafka sets up an AtExit callback to call RdKafka::wait_destroyed to cleanup.
+// However, on windows it AVs if we never create an rdkafka instance.
+// librdkafka lazy initializes the global mutex, and it wouldn't be initialized if no rdkafka is created,
+// so then the cleanup callback tries to access the mutex and crashes.
 //
 // So we will also lazy import node-rdkafka only if we intent to use it.
 export function tryImportNodeRdkafka() {
