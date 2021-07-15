@@ -57,22 +57,4 @@ describe("FrsClient", () => {
             "container cannot be created in FRS",
         );
     });
-
-    it("can create Tinylicious container successfully", async () => {
-        const containerConfig: FrsContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-
-        const containerAndServices = await client.createContainer(containerConfig, schema);
-
-        await assert.doesNotReject(
-            Promise.resolve(containerAndServices),
-            () => true,
-            "container cannot be created locally",
-        );
-    });
 });
