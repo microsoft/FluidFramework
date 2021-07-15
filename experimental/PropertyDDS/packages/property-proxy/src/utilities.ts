@@ -20,10 +20,9 @@ import {
 import { ComponentMap } from './componentMap';
 import { PropertyProxy } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
-import { NonPrimitiveTypes } from "./interfaces";
+import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
 
 export type ElementType = any | BaseProperty | PropertyProxy;
-export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty;
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed
 

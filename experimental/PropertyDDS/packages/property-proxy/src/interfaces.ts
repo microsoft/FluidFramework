@@ -5,7 +5,8 @@
 
 import {
     BaseProperty, ContainerProperty, ValueProperty, ValueArrayProperty,
-    ValueMapProperty, MapProperty, ArrayProperty, SetProperty,
+    ValueMapProperty, MapProperty, ArrayProperty, SetProperty, ReferenceProperty,
+    ReferenceArrayProperty, ReferenceMapProperty,
 } from "@fluid-experimental/property-properties";
 
 export abstract class ProxifiedPropertyValueArray {
@@ -42,3 +43,5 @@ export type PropertyTypes = BaseProperty |
     ContainerProperty | PrimitiveTypes | CollectionTypes;
 export type NonPrimitiveTypes =
     ContainerProperty | CollectionTypes;
+
+export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty;
