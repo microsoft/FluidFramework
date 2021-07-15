@@ -12,12 +12,11 @@ import { IOdspSnapshotBlob, IOdspSnapshot, IOdspSnapshotTreeEntry } from "./cont
 /**
  * Converts a summary(ISummaryTree) taken in detached container to IOdspSnapshot tree
  */
-export function convertCreateNewSummaryTreeToIOdspSnapshot(summary: ISummaryTree): IOdspSnapshot {
+export function convertCreateNewSummaryTreeToIOdspSnapshot(summary: ISummaryTree, treeId: string): IOdspSnapshot {
     const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
     const sequenceNumber = documentAttributes.sequenceNumber;
     const blobs: IOdspSnapshotBlob[] = [];
-    const treeId = uuid();
     const snapshotTree: IOdspSnapshot = {
         trees: [
             {

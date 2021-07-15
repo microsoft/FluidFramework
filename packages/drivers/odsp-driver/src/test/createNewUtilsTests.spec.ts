@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { convertCreateNewSummaryTreeToIOdspSnapshot } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
@@ -52,11 +52,7 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should convert as expected and check contents", async () => {
-        const rootBlobPath = "default/root";
-        const componentBlobPath = "default/component";
-        const contentBlobPath = "contentTree/contentBlob";
-
-        const odspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createSummary());
+        const odspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createSummary(),"");
         assert.strictEqual(odspSnapshot.trees.length, 1, "1 main tree should be there");
         assert.strictEqual(odspSnapshot.blobs?.length, 2, "2 blobs should be there");
 
@@ -75,19 +71,7 @@ describe("Create New Utils Tests", () => {
 
         // Validate that the snapshot has all the expected blob entries.
         assert.strictEqual(blobEntries.length, 2, "There should be 2 blob entries in the main tree");
-        assert(blobEntries.includes(rootBlobPath), "Root blob should exist");
-        assert(blobEntries.includes(componentBlobPath), "Component blob should exist");
-        assert(blobEntries.includes(contentBlobPath), "Content blob should exist");
-
-        // Validate that the snapshot has correct reference state for tree entries.
         assert.strictEqual(treeEntries.length, 2, "There should be 2 tree entries in the main tree");
-        for (const treeEntry of treeEntries) {
-            if (treeEntry.path === "default") {
-                assert(treeEntry.unreferenced === undefined, "default tree entry should be referenced");
-            } else {
-                assert(treeEntry.unreferenced, "content tree entry should be unreferenced");
-            }
-        }
     });
     it("Should cache converted summary during createNewFluidFile", async () => {
         const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -113,6 +97,11 @@ describe("Create New Utils Tests", () => {
             filename: "filename",
         };
 
+        const fileEntry: IFileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
+
         const odspResolvedUrl = await mockFetchOk(
                 async () =>createNewFluidFile(
                     async (_options) => "token",
@@ -120,6 +109,7 @@ describe("Create New Utils Tests", () => {
                     new TelemetryNullLogger(),
                     createSummary(),
                     epochTracker,
+                    fileEntry,
                 ) ,
                 { itemId: "itemId1"},
                 { "x-fluid-epoch": "epoch1" },

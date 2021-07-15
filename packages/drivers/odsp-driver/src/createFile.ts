@@ -14,7 +14,7 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
@@ -52,23 +52,40 @@ export async function createNewFluidFile(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree | undefined,
     epochTracker: EpochTracker,
+    fileEntry: IFileEntry,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
     }
 
-    const itemId = createNewSummary === undefined
-        ? await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
-        : await createNewFluidFileFromSummary(getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+    // const itemId = createNewSummary === undefined
+    //     ? await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
+    //     : (await createNewFluidFileFromSummary(
+    //         getStorageToken, newFileInfo, logger, createNewSummary, epochTracker)).itemId;
+
+    let itemId: string;
+    let id: string;
+
+    if (createNewSummary === undefined) {
+        itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
+        id = "";
+    } else {
+        const content = await createNewFluidFileFromSummary(
+            getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+        itemId = content.itemId;
+        id = content.id;
+    }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
+    fileEntry.resolvedUrl = odspResolvedUrl;
 
     if (createNewSummary !== undefined) {
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary);
+        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, id);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;
@@ -133,7 +150,7 @@ export async function createNewFluidFileFromSummary(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
     epochTracker: EpochTracker,
-): Promise<string> {
+): Promise<ICreateFileResponse> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
     const encodedFilename = encodeURIComponent(newFileInfo.filename);
     const baseUrl =
@@ -170,7 +187,7 @@ export async function createNewFluidFileFromSummary(
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     ...fetchResponse.commonSpoHeaders,
                 });
-                return content.itemId;
+                return content;
             },
             { end: true, cancel: "error" });
     });
