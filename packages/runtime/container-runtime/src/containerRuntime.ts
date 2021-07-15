@@ -157,35 +157,32 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
-export interface IGeneratedSummaryStats extends ISummaryStats{
+export interface IGeneratedSummaryStats extends ISummaryStats {
     dataStoreCount: number;
     summarizedDataStoreCount: number;
 }
-
-export interface IGeneratedSummaryData {
+export interface IBaseSummaryData {
+    readonly referenceSequenceNumber: number;
+}
+export interface IGenerateSummaryData {
     readonly summaryStats: IGeneratedSummaryStats;
-    readonly generateDuration?: number;
+    readonly generateDuration: number;
 }
-
-export interface IUploadedSummaryData {
+export interface IUploadSummaryData {
     readonly handle: string;
-    readonly uploadDuration?: number;
+    readonly uploadDuration: number;
 }
-
-export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
-    readonly referenceSequenceNumber: number;
-    readonly submitted: false;
-    readonly error: any;
-}
-
-export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
-    readonly referenceSequenceNumber: number;
-    readonly submitted: true;
+export interface ISubmitSummaryData {
     readonly clientSequenceNumber: number;
-    readonly submitOpDuration?: number;
+    readonly submitOpDuration: number;
 }
-
-export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
+export type GenerateSummaryData =
+    ({ error: any; } & (
+        | ({ stage: "aborted"; } & IBaseSummaryData)
+        | ({ stage: "generated"; } & IGenerateSummaryData & IBaseSummaryData)
+        | ({ stage: "uploaded"; } & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData)
+    ))
+    | ({ stage: "submitted"; } & ISubmitSummaryData & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData);
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -1730,14 +1727,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { continue: true };
             };
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "error"> = {
-                referenceSequenceNumber: summaryRefSeqNum,
-                submitted: false,
-            };
-
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, error: continueResult.error };
+                return { stage: "aborted", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
             }
 
             // If the GC version that this container is loaded from differs from the current GC version that this
@@ -1759,7 +1751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
                 });
             } catch (error) {
-                return { ...attemptData, error };
+                return { stage: "aborted", referenceSequenceNumber: summaryRefSeqNum, error };
             }
 
             // Counting dataStores and handles
@@ -1772,20 +1764,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
 
-            const stats: IGeneratedSummaryStats = {
+            const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
                 ...summarizeResult.stats,
             };
-
-            const generateData: IGeneratedSummaryData = {
-                summaryStats: stats,
+            const generateSummaryData = {
+                referenceSequenceNumber: summaryRefSeqNum,
+                summaryStats,
                 generateDuration: trace.trace().duration,
-            };
+            } as const;
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, ...generateData, error: continueResult.error };
+                return { stage: "generated", ...generateSummaryData, error: continueResult.error };
             }
 
             const lastAck = this.summaryCollection.latestAck;
@@ -1806,7 +1798,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
-                return { ...attemptData, ...generateData, error };
+                return { stage: "generated", ...generateSummaryData, error };
             }
 
             const parent = summaryContext.ackHandle;
@@ -1817,31 +1809,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 message,
                 parents: parent ? [parent] : [],
             };
-            const uploadData: IUploadedSummaryData = {
+            const uploadData = {
+                ...generateSummaryData,
                 handle,
                 uploadDuration: trace.trace().duration,
-            };
+            } as const;
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, ...generateData, ...uploadData, error: continueResult.error };
+                return { stage: "uploaded", ...uploadData, error: continueResult.error };
             }
 
             let clientSequenceNumber: number;
             try {
                 clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
             } catch (error) {
-                return { ...attemptData, ...generateData, ...uploadData, error };
+                return { stage: "uploaded", ...uploadData, error };
             }
 
-            const submitData: ISubmittedSummaryData = {
-                ...attemptData,
-                ...generateData,
+            const submitData = {
+                stage: "submitted",
                 ...uploadData,
-                submitted: true,
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
-            };
+            } as const;
 
             this.summarizerNode.completeSummary(handle);
 
