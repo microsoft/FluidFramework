@@ -10,7 +10,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
-export interface IDiceRoller extends EventEmitter {
+export interface IContactCollection extends EventEmitter {
     /**
      * Get the dice value as a number.
      */
@@ -33,7 +33,7 @@ const diceValueKey = "diceValue";
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+export class ContactCollection extends DataObject implements IContactCollection {
     /**
      * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
      * initialize the state of the DataObject.
@@ -70,10 +70,10 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
-(
-    "dice-roller",
-    DiceRoller,
-    [],
-    {},
-);
+export const ContactCollectionInstantiationFactory =
+    new DataObjectFactory<ContactCollection, undefined, undefined, IEvent>(
+        "contact-collection",
+        ContactCollection,
+        [],
+        {},
+    );

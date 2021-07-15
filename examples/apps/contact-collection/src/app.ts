@@ -5,9 +5,9 @@
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
-import { DiceRollerContainerRuntimeFactory } from "./containerCode";
-import { IDiceRoller } from "./dataObject";
-import { renderSampler } from "./view";
+import { ContactCollectionContainerRuntimeFactory } from "./containerCode";
+import { IContactCollection } from "./dataObject";
+import { renderContactCollection } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -30,7 +30,7 @@ async function start(): Promise<void> {
     // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
     // function takes the ID of the document we're creating or loading, the container code to load into it, and a
     // flag to specify whether we're creating a new document or loading an existing one.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const container = await getTinyliciousContainer(documentId, ContactCollectionContainerRuntimeFactory, createNew);
 
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
     const url = "/";
@@ -43,12 +43,12 @@ async function start(): Promise<void> {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const diceRoller: IDiceRoller = response.value;
+    // In this app, we know our container code provides a default data object that is an IContactCollection.
+    const contactCollection: IContactCollection = response.value;
 
-    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
+    // Given an IContactCollection, we can render the contacts.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderSampler(diceRoller, div);
+    renderContactCollection(contactCollection, div);
 }
 
 start().catch((error) => console.error(error));
