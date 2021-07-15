@@ -44,6 +44,7 @@ export interface FrsContainerServices {
  */
 export interface FrsMember extends IMember {
     userName: string;
+    userId: string;
 }
 
 export interface FrsResources {
@@ -51,9 +52,6 @@ export interface FrsResources {
     containerServices: FrsContainerServices;
 }
 
-export interface FrsAzFuncUser {
-    userId: string;
-    userName: string;
-}
+export type FrsAzFuncUser = Pick<FrsMember, "userId" | "userName">;
 
 export type IFrsAudience = IServiceAudience<FrsMember>;

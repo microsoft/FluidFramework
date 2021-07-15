@@ -25,7 +25,7 @@ export class FrsAzFunctionTokenProvider implements ITokenProvider {
         };
     }
 
-    private async getToken(tenantId, documentId: string): Promise<string> {
+    private async getToken(tenantId: string, documentId: string): Promise<string> {
         return axios.get(this.azFunctionUrl, {
             params: {
                 tenantId,
