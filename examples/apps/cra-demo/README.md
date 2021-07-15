@@ -114,7 +114,7 @@ This demo illustrates using a local configuration, but in a production environme
 // add below getContainerId
 const localConfig = {
     tenantId: "local",
-    tokenProvider: new InsecureTokenProvider("tenantId", { id: "userId" }),
+    tokenProvider: new InsecureTokenProvider("anyValue", { id: "userId" }),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
