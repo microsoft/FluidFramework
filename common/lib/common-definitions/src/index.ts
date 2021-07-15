@@ -3,6 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export * from "./disposable";
-export * from "./events";
-export * from "./logger";
+export type {
+    IDisposable
+} from "./disposable";
+export type {
+    ExtendEventProvider,
+    IErrorEvent,
+    IEvent,
+    IEventProvider,
+    IEventThisPlaceHolder,
+    IEventTransformer,
+    ReplaceIEventThisPlaceHolder,
+    TransformedEvent,
+} from "./events";
+export type {
+    ILoggingError,
+    ITaggedTelemetryPropertyType,
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+    ITelemetryErrorEvent,
+    ITelemetryGenericEvent,
+    ITelemetryLogger,
+    ITelemetryPerformanceEvent,
+    ITelemetryProperties,
+    TelemetryEventCategory,
+    TelemetryEventPropertyType,
+} from "./logger";
