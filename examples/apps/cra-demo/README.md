@@ -72,7 +72,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 ## 3. <a style="position: relative; top: 20px" name="import"></a> Import and Initialize Fluid Dependencies
 
-`FrsClient` is a client that will allow us to connect connect to a local `Tinylicious` server while testing our application. It also provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) or [DDSes](https://fluidframework.com/docs/concepts/dds/) that are defined in the `containerSchema`.
+`FrsClient` is a client for `Tinylicious`, a local test Fluid server while testing our application. It provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DDSes](https://fluidframework.com/docs/concepts/dds/) or [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) that are defined in the `containerSchema`.
 
 > The Fluid container interacts with the processes and distributes operations, manages the lifecycle of Fluid objects, and provides a request API for accessing Fluid objects.
 
