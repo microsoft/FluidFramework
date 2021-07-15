@@ -37,7 +37,8 @@ export class Utilities {
      * if `caller` is 'copyWithin' or 'fill' and `element` removed from `property` so that
      * it no longer has a parent for 'reverse' and 'sort).
      * If `element` is not a {@link external:BaseProperty BaseProperty} the returned element will be `element`
-     * if `property` is not an {@link external:ArrayProperty ArrayProperty} or a {@link external:MapProperty MapProperty}.
+     * if `property` is not an {@link external:ArrayProperty ArrayProperty} or a
+     *  {@link external:MapProperty MapProperty}.
      * In that case the returned element will be `element` only if `property` is of a primitive type.
      * @param {external:BaseProperty} property The property that is operated on.
      * @param {Object|external:BaseProperty|Proxy.<external:BaseProperty>} element The element to be inserted.
@@ -184,7 +185,8 @@ export class Utilities {
      * @param {Object} value The value to be checked.
      */
     static throwOnIterableForSingleProperty(value) {
-        if (value && typeof value !== 'string' && value[Symbol.iterator] && typeof value[Symbol.iterator] === 'function') {
+        if (value && typeof value !== 'string' && value[Symbol.iterator] &&
+            typeof value[Symbol.iterator] === 'function') {
             throw new Error(PropertyProxyErrors.ASSIGN_ITERABLE_TO_SINGLE);
         }
     }

@@ -52,7 +52,8 @@ export class PropertyProxy {
                     referencedPropertyParent = property.getRoot().get(tokens);
                 } else {
                     if (types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)) {
-                        referencedPropertyParent = property.getParent().resolvePath(path.slice(0, path.lastIndexOf('[')));
+                        referencedPropertyParent =
+                            property.getParent().resolvePath(path.slice(0, path.lastIndexOf('[')));
                     } else {
                         referencedPropertyParent = property.getParent().get(tokens);
                     }

@@ -16,7 +16,7 @@ import { Utilities } from './utilities';
  * @return {Iterator} The iterator.
  * @hidden
  */
-const createArrayIterator = (target) => function*() {
+const createArrayIterator = (target) => function* () {
     for (let i = 0; i < target.getProperty().getLength(); i++) {
         if (PropertyFactory.instanceOf(target.getProperty().get(i), 'BaseProperty')) {
             yield PropertyProxy.proxify(target.getProperty().get(i));
@@ -141,7 +141,9 @@ class ComponentArray extends Array {
             }
 
             const startSearchIdx = fromIndex ?
-                (fromIndex < 0 ? this.property.getLength() + fromIndex : Math.min(fromIndex, this.property.getLength() - 1)) :
+                (fromIndex < 0 ?
+                    this.property.getLength() + fromIndex :
+                    Math.min(fromIndex, this.property.getLength() - 1)) :
                 this.property.getLength() - 1;
 
             for (let i = startSearchIdx; i >= 0; i--) {

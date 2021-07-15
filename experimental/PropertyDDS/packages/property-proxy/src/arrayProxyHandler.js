@@ -134,7 +134,7 @@ export const arrayProxyHandler = {
             } else {
                 return {
                     configurable: true, enumerable: true,
-                    value: PropertyProxy.proxify(target.getProperty())[key], writable: true
+                    value: PropertyProxy.proxify(target.getProperty())[key], writable: true,
                 };
             }
         } else {
