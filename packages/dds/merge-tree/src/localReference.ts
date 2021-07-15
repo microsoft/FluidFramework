@@ -101,6 +101,10 @@ export class LocalReference implements ReferencePosition {
         this.properties = addProperties(this.properties, newProps, op);
     }
 
+    public getClient() {
+        return this.client;
+    }
+
     public getSegment() {
         return this.segment;
     }

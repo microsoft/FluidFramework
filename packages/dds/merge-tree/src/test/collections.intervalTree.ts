@@ -42,6 +42,12 @@ class TestInterval implements IInterval {
         return new TestInterval(Math.min(this.start, b.start),
             Math.max(this.end, b.end));
     }
+
+    public modify(label: string, start: number, end: number): TestInterval {
+        this.start = start;
+        this.end = end;
+        return this;
+    }
 }
 
 describe("Collections.IntervalTree", () => {
