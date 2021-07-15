@@ -571,24 +571,24 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     error: unknown,
     props: ITelemetryProperties = {},
 ): ILoggingError & { errorType: string } {
-    let typedErrorObject: { errorType: string };
-    if (hasErrorType(error)) {
-        typedErrorObject = error;
-        return mixinTelemetryProps(typedErrorObject, props);
-    } else if (error instanceof Error) {
-        typedErrorObject = error as Error & { errorType: string };
-        typedErrorObject.errorType = `none (${error.name})`;
-        return mixinTelemetryProps(typedErrorObject, props);
-    } else if (isRegularObject(error)) {
-        typedErrorObject = error as { errorType: string };
-        typedErrorObject.errorType = `none (object)`;
-        return mixinTelemetryProps(typedErrorObject, props);
-    } else {
+    if (!isRegularObject(error)) {
         const message = String(error);
         const typedLoggingerror = new LoggingError(message, props) as LoggingError & { errorType: string };
         typedLoggingerror.errorType = `none (${typeof(error)})`;
         return typedLoggingerror;
     }
+
+    let typedErrorObject: { errorType: string };
+    if (hasErrorType(error)) {
+        typedErrorObject = error;
+    } else if (error instanceof Error) {
+        typedErrorObject = error as Error & { errorType: string };
+        typedErrorObject.errorType = `none (${error.name})`;
+    } else {
+        typedErrorObject = error as { errorType: string };
+        typedErrorObject.errorType = `none (object)`;
+    }
+        return mixinTelemetryProps(typedErrorObject, props);
 }
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
