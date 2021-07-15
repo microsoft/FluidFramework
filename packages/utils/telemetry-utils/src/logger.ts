@@ -527,6 +527,10 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
+const hasErrorType = (error: any): error is { errorType: string } => {
+    return (typeof error?.errorType === "string");
+};
+
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
@@ -539,32 +543,52 @@ type RwLoggingError = LoggingError;
 const isRwLoggingError = (x: any): x is RwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
-/**
- * Annotate the given error object with the given logging props
- * @returns The same error object passed in if possible, with telemetry props functionality mixed in
- */
-export function annotateError(
-    error: unknown,
+export function mixinTelemetryProps<T extends Record<string, unknown>>(
+    error: T,
     props: ITelemetryProperties,
-): ILoggingError {
+): T & ILoggingError {
     if (isRwLoggingError(error)) {
         error.addTelemetryProperties(props);
         return error;
     }
 
-    if (isRegularObject(error)) {
-        // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
-        const loggingError = error as RwLoggingError;
+    // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
+    const loggingError = error as T & RwLoggingError;
 
-        const propsForError = {...props};
-        loggingError.getTelemetryProperties = () => propsForError;
-        loggingError.addTelemetryProperties =
-            (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
-        return loggingError;
+    const propsForError = {...props};
+    loggingError.getTelemetryProperties = () => propsForError;
+    loggingError.addTelemetryProperties =
+        (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
+
+    return loggingError;
+}
+
+/**
+ * Annotate the given error object with the given logging props
+ * @returns The same error object passed in if possible, with telemetry props functionality mixed in
+ */
+ export function annotateError(
+    error: unknown,
+    props: ITelemetryProperties = {},
+): ILoggingError & { errorType: string } {
+    let typedErrorObject: { errorType: string };
+    if (hasErrorType(error)) {
+        typedErrorObject = error;
+        return mixinTelemetryProps(typedErrorObject, props);
+    } else if (error instanceof Error) {
+        typedErrorObject = error as Error & { errorType: string };
+        typedErrorObject.errorType = `none (${error.name})`;
+        return mixinTelemetryProps(typedErrorObject, props);
+    } else if (isRegularObject(error)) {
+        typedErrorObject = error as { errorType: string };
+        typedErrorObject.errorType = `none (object)`;
+        return mixinTelemetryProps(typedErrorObject, props);
+    } else {
+        const message = String(error);
+        const typedLoggingerror = new LoggingError(message, props) as LoggingError & { errorType: string };
+        typedLoggingerror.errorType = `none (${typeof(error)})`;
+        return typedLoggingerror;
     }
-
-    const message = String(error);
-    return new LoggingError(message, props);
 }
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
