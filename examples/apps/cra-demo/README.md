@@ -128,7 +128,7 @@ Before you can access any Fluid data, you need to create a  configured FRS `clie
 
 The following `getFluidData` function utilizes the `getContainerId` to return a unique ID and determine if this is an existing document (`getContainer`) or if we need to create a new one (`createContainer`).
 
-Since this `getFluidData` function is an async, we'll need to wait for the `initialObjects` to be returned. Once returned, each `initialObjects` key will point to a connected data structure as defined in the schema.
+Since `getFluidData` is an async function, we'll need to `await` for the `initialObjects` to be returned. Once returned, each `initialObjects` key will point to a connected data structure as defined in the schema.
 
 ```jsx
 // after creating an instance
