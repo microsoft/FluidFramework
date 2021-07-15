@@ -23,17 +23,11 @@
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
-
+    "start:frs": "webpack-dev-server --define process.env.FLUID_CLIENT='\"frs\"'",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test:realsvc": "npm run test:realsvc:tinylicious",
     "test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit",
-
-    "start:routerlicious:test": "routerlicious > routerlicious.log 2>&1",
-    "test:realsvc": "npm run test:realsvc:routerlicious",
-    "test:realsvc:routerlicious": "start-server-and-test start:routerlicious:test 7070 test:realsvc:routerlicious:run",
-    "test:realsvc:routerlicious:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit",
-
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
@@ -64,9 +58,9 @@
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "routerlicious": "^0.0.1",
     "tinylicious": "^0.4.21640",
     "typescript": "~4.1.3",
-    "uuid": "^8.3.1"
+    "uuid": "^8.3.1",
+    "webpack-dev-server": "^3.8.0"
   }
 }

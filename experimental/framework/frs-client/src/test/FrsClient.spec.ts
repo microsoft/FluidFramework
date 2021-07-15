@@ -15,22 +15,32 @@ import {
 } from "..";
 
 describe("FrsClient", () => {
-    let frsClient: FrsClient;
-    let documentId: string;
+    // use FrsClient will run against live service. Default to running Tinylicious for PR validation
+    // and local testing so it's not hindered by service availability
+    const useFrs = process.env.FLUID_CLIENT === "frs";
+    const tenantKey: string = useFrs ? process.env.fluid__webpack__tenantKey as string : "";
     const user = generateUser();
+    const connectionConfig: FrsConnectionConfig = useFrs ? {
+        tenantId: "frs-client-tenant",
+        tokenProvider: new InsecureTokenProvider(
+            tenantKey, user,
+        ),
+        orderer: "https://alfred.eus-1.canary.frs.azure.com",
+        storage: "https://historian.eus-1.canary.frs.azure.com",
+    } : {
+        tenantId: "local",
+        tokenProvider: new InsecureTokenProvider("fooBar", user),
+        orderer: "http://localhost:7070",
+        storage: "http://localhost:7070",
+    };
+    const client = new FrsClient(connectionConfig);
 
+    let documentId: string;
     beforeEach(() => {
         documentId = uuid();
     });
 
     it("can create FRS container successfully", async () => {
-        const connectionConfig: FrsConnectionConfig = {
-            tenantId: "",
-            tokenProvider: new InsecureTokenProvider("", user),
-            orderer: "",
-            storage: "",
-        };
-        frsClient = new FrsClient(connectionConfig);
         const containerConfig: FrsContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -39,23 +49,16 @@ describe("FrsClient", () => {
             },
         };
 
-        const containerAndServices = await frsClient.createContainer(containerConfig, schema);
+        const containerAndServices  = await client.createContainer(containerConfig, schema);
 
         await assert.doesNotReject(
-            containerAndServices,
+            Promise.resolve(containerAndServices),
             () => true,
             "container cannot be created in FRS",
         );
     });
 
     it("can create Tinylicious container successfully", async () => {
-        const connectionConfig: FrsConnectionConfig = {
-            tenantId: "local",
-            tokenProvider: new InsecureTokenProvider("fooBar", user),
-            orderer: "http://localhost:7070",
-            storage: "http://localhost:7070",
-        };
-        frsClient = new FrsClient(connectionConfig);
         const containerConfig: FrsContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
@@ -64,10 +67,10 @@ describe("FrsClient", () => {
             },
         };
 
-        const containerAndServices = await frsClient.createContainer(containerConfig, schema);
+        const containerAndServices = await client.createContainer(containerConfig, schema);
 
         await assert.doesNotReject(
-            containerAndServices,
+            Promise.resolve(containerAndServices),
             () => true,
             "container cannot be created locally",
         );
