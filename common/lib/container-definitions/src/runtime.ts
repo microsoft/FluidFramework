@@ -23,6 +23,7 @@ import {
     IVersion,
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import { deprecate } from "node:util";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
@@ -121,6 +122,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
+    // @deprecated
     readonly logger: ITelemetryBaseLogger;
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
