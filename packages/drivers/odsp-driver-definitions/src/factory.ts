@@ -89,4 +89,9 @@ export interface HostStoragePolicy {
     // True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
     // During fallback it will first redeem the sharing link and then make the Trees latest call.
     enableRedeemFallback?: boolean;
+
+    /**
+     * Policy controlling if createNewFluidFile will cache initial summary
+     */
+    createNewCaching?: boolean;
 }

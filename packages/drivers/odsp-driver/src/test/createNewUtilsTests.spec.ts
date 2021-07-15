@@ -110,6 +110,7 @@ describe("Create New Utils Tests", () => {
                     createSummary(),
                     epochTracker,
                     fileEntry,
+                    true,
                 ) ,
                 { itemId: "itemId1"},
                 { "x-fluid-epoch": "epoch1" },

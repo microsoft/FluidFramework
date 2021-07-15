@@ -53,16 +53,12 @@ export async function createNewFluidFile(
     createNewSummary: ISummaryTree | undefined,
     epochTracker: EpochTracker,
     fileEntry: IFileEntry,
+    createNewCaching: boolean,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
     }
-
-    // const itemId = createNewSummary === undefined
-    //     ? await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
-    //     : (await createNewFluidFileFromSummary(
-    //         getStorageToken, newFileInfo, logger, createNewSummary, epochTracker)).itemId;
 
     let itemId: string;
     let id: string;
@@ -83,7 +79,7 @@ export async function createNewFluidFile(
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
-    if (createNewSummary !== undefined) {
+    if (createNewSummary !== undefined && createNewCaching) {
         // converting summary and getting sequence number
         const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, id);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
