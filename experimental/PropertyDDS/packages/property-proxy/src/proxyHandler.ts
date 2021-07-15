@@ -10,8 +10,8 @@ import {
 
 import { PropertyProxy, proxySymbol } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
-import { Utilities, forceType, ReferenceType } from './utilities';
-import { ProxyType } from "./interfaces";
+import { Utilities, forceType } from './utilities';
+import { ProxyType, ReferenceType } from "./interfaces";
 
 /**
  * The additional proxy handlers for non-collection type properties.

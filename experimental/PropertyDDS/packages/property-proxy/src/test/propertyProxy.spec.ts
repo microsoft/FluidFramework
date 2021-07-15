@@ -5,9 +5,12 @@
 
 /* eslint-env jest */
 /* eslint-disable no-param-reassign */
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import {
+    PropertyFactory, BaseProperty,
+    ArrayProperty, MapProperty, SetProperty, NodeProperty,
+} from "@fluid-experimental/property-properties"
 
-import { PropertyProxy } from '../propertyProxy';
+import { PropertyProxy } from '..';
 
 import {
     vector2DTemplate, vector3DTemplate, enumUnoDosTresTemplate,
@@ -75,7 +78,7 @@ describe('JS-Object-like property accessing ', function() {
     describe('Proxy properties directly', function() {
         it('should throw if something other than a property is supplied', function() {
             const someNonProperty = { a: 1, name: 'property' };
-            expect(() => { PropertyProxy.proxify(someNonProperty); }).toThrow(Error, 'PropertyProxy-000');
+            expect(() => { PropertyProxy.proxify(someNonProperty as any); }).toThrow('PropertyProxy-000');
         });
 
         it('should return the value if a value property is supplied', function() {
@@ -85,13 +88,14 @@ describe('JS-Object-like property accessing ', function() {
         });
 
         it('should be able to proxy Array/Map/SetProperties directly', function() {
-            const proxiedI32Array = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myI32Array'));
+            const proxiedI32Array =
+                PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myI32Array') as ArrayProperty);
             expect(proxiedI32Array.length).toEqual(5);
 
-            const proxiedI32Map = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myMap'));
+            const proxiedI32Map = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myMap') as MapProperty);
             expect(proxiedI32Map.size).toEqual(3);
 
-            const proxiedSet = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myBookSet'));
+            const proxiedSet = PropertyProxy.proxify(rootNode.resolvePath('myTestProperty.myBookSet') as SetProperty);
             expect(proxiedSet.size).toEqual(3);
         });
     });
@@ -122,8 +126,8 @@ describe('JS-Object-like property accessing ', function() {
             expect(state.getProperty('myTestProperty')).toEqual(rootNode.get('myTestProperty'));
             expect(state.getProperty(['myTestProperty'])).toEqual(rootNode.get('myTestProperty'));
 
-            expect(state.getProperty('myTestProperty.myVector')).toBe.undefined;
-            expect(() => { state.getProperty(['myTestProperty', 'myVector']); }).toThrow(Error, 'PropertyProxy-010');
+            expect(state.getProperty('myTestProperty.myVector')).toBeUndefined();
+            expect(() => { state.getProperty(['myTestProperty', 'myVector']); }).toThrow('PropertyProxy-010');
         });
 
         it('should be possible to use the `in` operator', function() {
@@ -132,9 +136,9 @@ describe('JS-Object-like property accessing ', function() {
 
             expect('someThingThatIsNoChild' in state.myTestProperty).toEqual(false);
             expect(
-                rootNode.resolvePath('myTestProperty.myI32Array')
-                    .getLength() in state.myTestProperty.myI32Array).toEqual(
-                        false);
+                rootNode.resolvePath('myTestProperty.myI32Array').getLength()
+                in state.myTestProperty.myI32Array).toEqual(
+                    false);
         });
 
         describe('NodeProperty', function() {
@@ -161,20 +165,20 @@ describe('JS-Object-like property accessing ', function() {
 
                 // Trying to set on non-dynamic property should not work
                 expect(() => { state.myBook.year = PropertyFactory.create('Int32', 'single', 1977); }).toThrow(
-                    Error, 'PropertyProxy-001');
+                    'PropertyProxy-001');
             });
 
             it('should be able to delete primitive and non-primitive properties', function() {
                 let removed = delete state.myFirstPrimitivePropertyInsertedViaProxy;
                 expect(removed).toEqual(true);
-                expect(rootNode.get('myFirstPrimitivePropertyInsertedViaProxy')).toBe.undefined;
+                expect(rootNode.get('myFirstPrimitivePropertyInsertedViaProxy')).toBeUndefined;
 
                 removed = delete state.myFirstNonPrimitivePropertyInsertedViaProxy;
                 expect(removed).toEqual(true);
-                expect(rootNode.get('myFirstNonPrimitivePropertyInsertedViaProxy')).toBe.undefined;
+                expect(rootNode.get('myFirstNonPrimitivePropertyInsertedViaProxy')).toBeUndefined;
 
                 // Trying to delete something that is not a child of a NodeProperty should throw
-                expect(() => { delete state.myTestProperty.myVector; }).toThrow(Error, 'PropertyProxy-006');
+                expect(() => { delete state.myTestProperty.myVector; }).toThrow('PropertyProxy-006');
             });
         });
 
@@ -281,21 +285,20 @@ describe('JS-Object-like property accessing ', function() {
                 });
 
                 it('should throw if setting via * is used on a non reference property', function() {
-                    expect(() => { state.myTestProperty['myF32Number*'] = 'something'; })
-                        .toThrow(Error, 'PropertyProxy-008');
+                    expect(() => { state.myTestProperty['myF32Number*'] = 'something'; }).toThrow('PropertyProxy-008');
                     expect(() => {
                         state.myTestProperty.myMap.set('firstNumber*', 'something');
-                    }).toThrow(Error, 'PropertyProxy-008');
+                    }).toThrow('PropertyProxy-008');
                     expect(() => {
                         state.myTestProperty.myI32Array['0*'] = 'something';
-                    }).toThrow(Error, 'PropertyProxy-008');
+                    }).toThrow('PropertyProxy-008');
                 });
 
                 it('should throw if not in in the same tree and referenced via absolute path', function() {
-                    const prop = PropertyFactory.create('NodeProperty', 'single');
+                    const prop = PropertyFactory.create('NodeProperty', 'single') as NodeProperty;
                     prop.insert('ref', PropertyFactory.create('Reference', 'single', '/myTestProperty.myF32Number'));
                     const proxiedProp = PropertyProxy.proxify(prop);
-                    expect(() => { proxiedProp.ref = 5; }).toThrow(Error, 'PropertyProxy-009');
+                    expect(() => { proxiedProp.ref = 5; }).toThrow('PropertyProxy-009');
 
                     rootNode.insert('prop', prop);
                     expect(() => { proxiedProp.ref = 3; }).not.toThrow();
@@ -304,10 +307,10 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('should throw if trying to set a non valid reference', function() {
                     rootNode.resolvePath('myTestProperty.myReference*').setValue('relativeInvalid');
-                    expect(() => { state.myTestProperty.myReference = 10; }).toThrow(Error, 'PropertyProxy-009');
+                    expect(() => { state.myTestProperty.myReference = 10; }).toThrow('PropertyProxy-009');
 
                     rootNode.resolvePath('myTestProperty.myReference*').setValue('/absoluteInvalid');
-                    expect(() => { state.myTestProperty.myReference = 10; }).toThrow(Error, 'PropertyProxy-009');
+                    expect(() => { state.myTestProperty.myReference = 10; }).toThrow('PropertyProxy-009');
 
                     rootNode.resolvePath('myTestProperty.myReference*').setValue('myVector');
                 });
@@ -337,7 +340,7 @@ describe('JS-Object-like property accessing ', function() {
             describe('array', function() {
                 let refArraySum = 0;
                 let refArray;
-                const refArrayEntriesToString = [];
+                const refArrayEntriesToString: string[] = [];
 
                 beforeAll(function() {
                     refArray = rootNode.resolvePath('myTestProperty.myReferenceArray');
@@ -1012,12 +1015,8 @@ describe('JS-Object-like property accessing ', function() {
                         rootNode.resolvePath('myTestProperty.myReferenceArray').insert(0, 'relativeInvalid');
                         rootNode.resolvePath('myTestProperty.myReferenceArray').insert(1, '/absoluteInvalid');
 
-                        expect(() => {
-                            state.myTestProperty.myReferenceArray[0] = 100;
-                        }).toThrow(Error, 'PropertyProxy-009');
-                        expect(() => {
-                            state.myTestProperty.myReferenceArray[1] = 100;
-                        }).toThrow(Error, 'PropertyProxy-009');
+                        expect(() => { state.myTestProperty.myReferenceArray[0] = 100; }).toThrow('PropertyProxy-009');
+                        expect(() => { state.myTestProperty.myReferenceArray[1] = 100; }).toThrow('PropertyProxy-009');
                     });
                 });
             });
@@ -1454,7 +1453,7 @@ describe('JS-Object-like property accessing ', function() {
                     PropertyFactory.create('Float32', 'single', 11));
                 expect(rootNode.resolvePath('myTestProperty.myF32Number').getValue()).toEqual(11);
 
-                expect(() => { state.myTestProperty.myF32Number = [1, 2, 3]; }).toThrow(Error, 'PropertyProxy-007');
+                expect(() => { state.myTestProperty.myF32Number = [1, 2, 3]; }).toThrow('PropertyProxy-007');
             });
 
             it('Obtain the property via the parent', function() {
@@ -1585,8 +1584,7 @@ describe('JS-Object-like property accessing ', function() {
                 // ref to entry of Uint64Array
                 expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64[2])
                     .toEqual(valueOfUint64ArrayAtZero);
-                expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64['2^'])
-                    .toEqual(stringVal);
+                expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64['2^']).toEqual(stringVal);
                 expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64[3])
                     .toEqual(valueOfUint64ArrayAtZero);
                 expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64['3^']).toEqual(stringVal);
@@ -1625,20 +1623,19 @@ describe('JS-Object-like property accessing ', function() {
                 expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('b^')).toEqual(stringVal);
 
                 // ref to entry of Uint64Array
-                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('c'))
-                    .toEqual(valueOfUint64ArrayAtZero);
+                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64
+                    .get('c')).toEqual(valueOfUint64ArrayAtZero);
                 expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('c^')).toEqual(stringVal);
-                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('d'))
-                    .toEqual(valueOfUint64ArrayAtZero);
-                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('d^'))
-                    .toEqual(stringVal);
+                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64
+                    .get('d')).toEqual(valueOfUint64ArrayAtZero);
+                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('d^')).toEqual(stringVal);
 
                 // ref to entry of Int64Map
-                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('e'))
-                    .toEqual(valueOfInt64MapAtA);
+                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64
+                    .get('e')).toEqual(valueOfInt64MapAtA);
                 expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('e^')).toEqual(stringVal);
-                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('f'))
-                    .toEqual(valueOfInt64MapAtA);
+                expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64
+                    .get('f')).toEqual(valueOfInt64MapAtA);
                 expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get('f^')).toEqual(stringVal);
 
                 // ref to ref to Uint64
@@ -1712,7 +1709,7 @@ describe('JS-Object-like property accessing ', function() {
                 expect(() => {
                     state.myTestProperty.myF32Number =
                         [{ x: 1, y: 2 }];
-                }).toThrow(Error, 'PropertyProxy-007');
+                }).toThrow('PropertyProxy-007');
             });
         });
 
@@ -1733,7 +1730,7 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('Looping through the array indices using a for loop', function() {
                     const testArray = state.myTestProperty.myI32Array;
-                    const tempArray = [];
+                    const tempArray: any[] = [];
                     // The array is defined as [0,10,20,30,...]
                     for (let i = 0; i < testArray.length; i++) {
                         tempArray.push(testArray[i]);
@@ -1747,7 +1744,7 @@ describe('JS-Object-like property accessing ', function() {
                 it('Looping through the array entries using a for-of loop', function() {
                     const testArray = state.myTestProperty.myI32Array;
                     // The array is defined as [0,10,20,30,...]
-                    const tempArray = [];
+                    const tempArray: any[] = [];
                     for (const entry of testArray) {
                         tempArray.push(entry);
                     }
@@ -1761,7 +1758,7 @@ describe('JS-Object-like property accessing ', function() {
                 it('Looping through the array indices using a for-in loop', function() {
                     const testArray = state.myTestProperty.myI32Array;
                     // The array is defined as [0,1,2,3,...]
-                    const tempArray = [];
+                    const tempArray: string[] = [];
                     // eslint-disable-next-line no-restricted-syntax
                     for (const key in testArray) {  // eslint-disable-line guard-for-in
                         tempArray.push(key);
@@ -1813,13 +1810,13 @@ describe('JS-Object-like property accessing ', function() {
                 });
 
                 it('check .findIndex() functionality', function() {
-                    expect(state.myTestProperty.myI32Array
-                        .findIndex((element) => (element < 15 && element > 5))).toEqual(1);
+                    expect(state.myTestProperty.myI32Array.
+                        findIndex((element) => (element < 15 && element > 5))).toEqual(1);
                 });
 
                 it('check .foreach() functionality', function() {
                     const testArray = state.myTestProperty.myI32Array;
-                    const tempArray = [];
+                    const tempArray: number[] = [];
                     const squareIt = function(element) {
                         tempArray.push(element * element);
                     };
@@ -1944,7 +1941,7 @@ describe('JS-Object-like property accessing ', function() {
 
                     expect(() => {
                         state.myTestProperty.myI32Array[0] = [1, 2, 3];
-                    }).toThrow(Error, 'PropertyProxy-007');
+                    }).toThrow('PropertyProxy-007');
                 });
 
                 it('should set an element out of range', function() {
@@ -2013,7 +2010,7 @@ describe('JS-Object-like property accessing ', function() {
                     expect(rootNode.get('myTestProperty').get('myI32Array').get('10')).toEqual(100);
                     expect(rootNode.get('myTestProperty').get('myI32Array').get('11')).toEqual(110);
 
-                    expect(() => state.myTestProperty.myI32Array.push([1, 2, 3])).toThrow(Error, 'PropertyProxy-002');
+                    expect(() => state.myTestProperty.myI32Array.push([1, 2, 3])).toThrow('PropertyProxy-002');
                 });
 
                 it('check .reverse() functionality', function() {
@@ -2095,8 +2092,7 @@ describe('JS-Object-like property accessing ', function() {
                         '0,10,20,30,40,50,60',
                     );
 
-                    expect(() => state.myTestProperty.myI32Array.splice(1, 0, [1, 2, 3])).toThrow(
-                        Error, 'PropertyProxy-002');
+                    expect(() => state.myTestProperty.myI32Array.splice(1, 0, [1, 2, 3])).toThrow('PropertyProxy-002');
                 });
 
                 it('check .unshift() functionality', function() {
@@ -2116,8 +2112,8 @@ describe('JS-Object-like property accessing ', function() {
                         '-20,-30,-10,0,10,20,30,40',
                     );
 
-                    expect(() => state.myTestProperty.myI32Array.unshift([1, 2, 3]))
-                        .toThrow(Error, 'PropertyProxy-002');
+                    expect(() => state.myTestProperty.myI32Array
+                        .unshift([1, 2, 3])).toThrow('PropertyProxy-002');
                 });
 
                 it('should be able to adjust array size be setting length', function() {
@@ -2147,7 +2143,7 @@ describe('JS-Object-like property accessing ', function() {
                 });
 
                 it('check behavior of .forEach() if a modification occurs in the loop', function() {
-                    const entries = [];
+                    const entries: any[] = [];
                     state.myTestProperty.myI32Array.forEach((element) => {
                         entries.push(element);
                         if (element === 20) {
@@ -2208,7 +2204,7 @@ describe('JS-Object-like property accessing ', function() {
                     // Assigning a non-iterable should throw
                     expect(() => {
                         state.myTestProperty.myI32Array = numbersAsProperties()[0];
-                    }).toThrow(Error, 'PropertyProxy-003');
+                    }).toThrow('PropertyProxy-003');
                 });
             });
         });
@@ -2235,7 +2231,7 @@ describe('JS-Object-like property accessing ', function() {
             it('Looping through the array indices using a for-in loop', function() {
                 const testArray = state.myTestProperty.myComplexArray;
                 // The array is defined as [0,1,2,3,...]
-                const tempArray = [];
+                const tempArray: string[] = [];
                 // eslint-disable-next-line no-restricted-syntax
                 for (const key in testArray) {  // eslint-disable-line guard-for-in
                     tempArray.push(key);
@@ -2419,10 +2415,10 @@ describe('JS-Object-like property accessing ', function() {
                     rootNode.get('myTestProperty').get('myComplexArray').clear();
                     rootNode.get('myTestProperty').get('myComplexArray').insertRange(0,
                         [
-                            PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single',
-                                { x: 1, y: 2 }),
-                            PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single',
-                                { x: 10, y: 20 }),
+                            PropertyFactory
+                                .create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 1, y: 2 }),
+                            PropertyFactory
+                                .create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 10, y: 20 }),
                         ],
                     );
                 });
@@ -2441,29 +2437,29 @@ describe('JS-Object-like property accessing ', function() {
                     state.myTestProperty.myComplexArray[0] = PropertyProxy.proxify(
                         PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 30, y: 40 }),
                     );
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('x').getValue()).toEqual(30);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('y').getValue()).toEqual(40);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('x').getValue()).toEqual(30);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('y').getValue()).toEqual(40);
 
                     state.myTestProperty.myComplexArray[0] = PropertyFactory.create(
                         vector2DTemplate.typeid, 'single', { x: 5, y: 6 },
                     );
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('x').getValue()).toEqual(5);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('y').getValue()).toEqual(6);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('x').getValue()).toEqual(5);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('y').getValue()).toEqual(6);
 
                     // polymorphic
                     state.myTestProperty.myComplexArray[0] = PropertyFactory.create(
                         vector3DTemplate.typeid, 'single', { x: 50, y: 60, z: 1 },
                     );
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('x').getValue()).toEqual(50);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('y').getValue()).toEqual(60);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('0').get('z').getValue()).toEqual(1);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('x').getValue()).toEqual(50);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('y').getValue()).toEqual(60);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('0').get('z').getValue()).toEqual(1);
                 });
 
                 it('should set an element out of range', function() {
@@ -2536,8 +2532,8 @@ describe('JS-Object-like property accessing ', function() {
                     }
 
                     state.myTestProperty.myComplexArray.fill(
-                        PropertyProxy.proxify(PropertyFactory
-                            .create(vector2DTemplate.typeid, 'single', { x: 5, y: 6 })),
+                        PropertyProxy.proxify(
+                            PropertyFactory.create(vector2DTemplate.typeid, 'single', { x: 5, y: 6 })),
                     );
                     for (let i = 0; i < state.myTestProperty.myComplexArray.length; i++) {
                         expect(
@@ -2578,23 +2574,25 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('check .push() functionality', function() {
                     expect(state.myTestProperty.myComplexArray.push({ x: 3, y: 4 })).toEqual(3);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(3);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('2').get('x').getValue()).toEqual(3);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('2').get('y').getValue()).toEqual(4);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').getLength()).toEqual(3);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('2').get('x').getValue()).toEqual(3);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('2').get('y').getValue()).toEqual(4);
 
                     // multiple elements
                     expect(state.myTestProperty.myComplexArray.push({ x: 30, y: 40 }, { x: 5, y: 6 })).toEqual(5);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray').getLength()).toEqual(5);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('3').get('x').getValue()).toEqual(30);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('3').get('y').getValue()).toEqual(40);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('4').get('x').getValue()).toEqual(5);
-                    expect(rootNode.get('myTestProperty').get('myComplexArray')
-                        .get('4').get('y').getValue()).toEqual(6);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').getLength()).toEqual(5);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('3').get('x').getValue()).toEqual(30);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('3').get('y').getValue()).toEqual(40);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('4').get('x').getValue()).toEqual(5);
+                    expect(rootNode.get('myTestProperty')
+                        .get('myComplexArray').get('4').get('y').getValue()).toEqual(6);
 
                     // (proxied) properties
                     state.myTestProperty.myComplexArray.push(
@@ -2791,7 +2789,7 @@ describe('JS-Object-like property accessing ', function() {
                     // Assigning a non-iterable should throw
                     expect(() => {
                         state.myTestProperty.myComplexArray = vectorsAsProperties()[0];
-                    }).toThrow(Error, 'PropertyProxy-003');
+                    }).toThrow('PropertyProxy-003');
                 });
             });
         });
@@ -2877,7 +2875,7 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('should be able to access the map using a for-of loop', function() {
                     const testMap = state.myTestProperty.myMap;
-                    const tempArray = [];
+                    const tempArray: any[] = [];
                     for (const entry of testMap) {
                         tempArray.push(entry);
                     }
@@ -2899,7 +2897,7 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('check .forEach() functionality', function() {
                     const testMap = state.myTestProperty.myMap;
-                    const tempArray = [];
+                    const tempArray: number[] = [];
                     const squareIt = function(value) {
                         tempArray.push(value * value);
                     };
@@ -3011,15 +3009,15 @@ describe('JS-Object-like property accessing ', function() {
                         };
 
                         // Assign pure javascript iterables
-                        const entries = [['a', 1], ['b', 2]];
-                        state.myTestProperty.myMap = new Map(entries);
+                        const entries: [string, number][] = [['a', 1], ['b', 2]];
+                        state.myTestProperty.myMap = new Map<string, number>(entries);
                         checkAssignment();
 
                         state.myTestProperty.myMap = entries;
                         checkAssignment();
 
                         // Assign iterables of properties
-                        const entriesAsProperties = () => [
+                        const entriesAsProperties = (): [string, BaseProperty][] => [
                             [entries[0][0], PropertyFactory.create('Int32', 'single', entries[0][1])],
                             [entries[1][0], PropertyFactory.create('Int32', 'single', entries[1][1])],
                         ];
@@ -3041,7 +3039,7 @@ describe('JS-Object-like property accessing ', function() {
 
                 it('for-of loop corresponding to complex-map', function() {
                     const testMap = state.myTestProperty.myComplexMap;
-                    const tempArray = [];
+                    const tempArray: any[] = [];
                     for (const entry of testMap) {
                         tempArray.push(entry);
                     }
@@ -3190,45 +3188,46 @@ describe('JS-Object-like property accessing ', function() {
                     it('check .set() functionality', function() {
                         // replace entry
                         state.myTestProperty.myComplexMap.set('firstEntry',
-                            PropertyFactory.create('autodesk.appframework.tests:myVector2D-1.0.0', 'single',
-                                { x: 7, y: 8 }));
+                            PropertyFactory
+                                .create('autodesk.appframework.tests:myVector2D-1.0.0', 'single', { x: 7, y: 8 }));
                         expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(7);
                         expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(8);
 
                         // replace with polymorphic
                         state.myTestProperty.myComplexMap.set('firstEntry',
                             PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 10, y: 20, z: 1 }));
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].x')
-                            .getValue()).toEqual(10);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].y')
-                            .getValue()).toEqual(20);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[firstEntry].z')
-                            .getValue()).toEqual(1);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[firstEntry].x').getValue()).toEqual(10);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[firstEntry].y').getValue()).toEqual(20);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[firstEntry].z').getValue()).toEqual(1);
 
                         // insert entry
                         state.myTestProperty.myComplexMap.set('fourthEntry', { x: 70, y: 80 });
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[fourthEntry].x')
-                            .getValue()).toEqual(70);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[fourthEntry].y')
-                            .getValue()).toEqual(80);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[fourthEntry].x').getValue()).toEqual(70);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[fourthEntry].y').getValue()).toEqual(80);
 
                         // proxied property
                         state.myTestProperty.myComplexMap.set('fifthEntry',
                             PropertyProxy.proxify(PropertyFactory.create(vector2DTemplate.typeid, 'single',
                                 { x: 90, y: 100 })));
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[fifthEntry].x')
-                            .getValue()).toEqual(90);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[fifthEntry].y')
-                            .getValue()).toEqual(100);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[fifthEntry].x').getValue()).toEqual(90);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[fifthEntry].y').getValue()).toEqual(100);
 
                         // polymorphic
                         state.myTestProperty.myComplexMap.set('sixthEntry',
                             PropertyFactory.create(vector3DTemplate.typeid, 'single', { x: 110, y: 120, z: 1 }));
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].x')
-                            .getValue()).toEqual(110);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].y')
-                            .getValue()).toEqual(120);
-                        expect(rootNode.resolvePath('myTestProperty.myComplexMap[sixthEntry].z').getValue()).toEqual(1);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[sixthEntry].x').getValue()).toEqual(110);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[sixthEntry].y').getValue()).toEqual(120);
+                        expect(rootNode
+                            .resolvePath('myTestProperty.myComplexMap[sixthEntry].z').getValue()).toEqual(1);
                     });
 
                     it('should be possible to assign another MapProperty', function() {
@@ -3252,7 +3251,8 @@ describe('JS-Object-like property accessing ', function() {
                         };
 
                         // Assign pure javascript iterables
-                        const entries = [['a', { x: 1, y: 2 }], ['b', { x: 3, y: 4 }]];
+                        const entries: [string, Record<string, number>][] =
+                            [['a', { x: 1, y: 2 }], ['b', { x: 3, y: 4 }]];
                         state.myTestProperty.myComplexMap = new Map(entries);
                         checkAssignment();
 
@@ -3260,7 +3260,7 @@ describe('JS-Object-like property accessing ', function() {
                         checkAssignment();
 
                         // Assign iterables of properties
-                        const entriesAsProperties = () => [
+                        const entriesAsProperties = (): [string, BaseProperty][] => [
                             [entries[0][0], PropertyFactory.create(vector2DTemplate.typeid, 'single', entries[0][1])],
                             [entries[1][0], PropertyFactory.create(vector2DTemplate.typeid, 'single', entries[1][1])],
                         ];
@@ -3362,7 +3362,7 @@ describe('JS-Object-like property accessing ', function() {
 
             it('should be able to access the set using a for-of loop', function() {
                 const testSet = state.myTestProperty.myBookSet;
-                const tempArray = [];
+                const tempArray: any[] = [];
                 for (const value of testSet) {
                     tempArray.push(value);
                 }
@@ -3424,7 +3424,7 @@ describe('JS-Object-like property accessing ', function() {
 
             it('check .forEach() functionality', function() {
                 const testSet = state.myTestProperty.myBookSet;
-                const tempArray = [];
+                const tempArray: any[] = [];
                 const testCallback = function(entry) {
                     tempArray.push(entry.book);
                     tempArray.push(entry.author);
@@ -3446,7 +3446,7 @@ describe('JS-Object-like property accessing ', function() {
 
             it('check .values()/iterator functionality', function() {
                 const testSet = state.myTestProperty.myBookSet;
-                const tempArray = [];
+                const tempArray: any[] = [];
                 const iterator = testSet.values();
                 for (let i = 0; i < testSet.size; i++) {
                     tempArray.push(iterator.next().value);
@@ -3464,8 +3464,8 @@ describe('JS-Object-like property accessing ', function() {
                 const myBookSet = state.myTestProperty.myBookSet;
                 expect(myBookSet.size).toEqual(3);
                 rootNode.resolvePath('myTestProperty.myBookSet').insert(
-                    PropertyFactory.create(bookDataTemplate.typeid, 'single',
-                        { author: 'Tolkien', book: 'The Hobbit' }));
+                    PropertyFactory
+                        .create(bookDataTemplate.typeid, 'single', { author: 'Tolkien', book: 'The Hobbit' }));
                 expect(myBookSet.size).toEqual(4);
             });
 
@@ -3517,7 +3517,7 @@ describe('JS-Object-like property accessing ', function() {
 
                 // Assigning a non-iterable should throw
                 expect(() => { state.myTestProperty.myBookSet = booksAsProperties()[0]; }).toThrow(
-                    Error, 'PropertyProxy-003');
+                    'PropertyProxy-003');
             });
         });
     });
