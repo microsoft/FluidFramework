@@ -83,7 +83,6 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    ISummaryStats,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -107,13 +106,15 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
+import { Summarizer } from "./summarizer";
 import {
+    GenerateSummaryData,
     ISummarizerRuntime,
     ISummarizerInternalsProvider,
-    Summarizer,
     IGenerateSummaryOptions,
     ISummarizer,
-} from "./summarizer";
+    IGeneratedSummaryStats,
+} from "./summarizerTypes";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
@@ -162,33 +163,6 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
-
-export interface IGeneratedSummaryStats extends ISummaryStats {
-    dataStoreCount: number;
-    summarizedDataStoreCount: number;
-}
-export interface IBaseSummaryData {
-    readonly referenceSequenceNumber: number;
-}
-export interface IGenerateSummaryData {
-    readonly summaryStats: IGeneratedSummaryStats;
-    readonly generateDuration: number;
-}
-export interface IUploadSummaryData {
-    readonly handle: string;
-    readonly uploadDuration: number;
-}
-export interface ISubmitSummaryData {
-    readonly clientSequenceNumber: number;
-    readonly submitOpDuration: number;
-}
-export type GenerateSummaryData =
-    ({ error: any; } & (
-        | ({ stage: "aborted"; } & IBaseSummaryData)
-        | ({ stage: "generated"; } & IGenerateSummaryData & IBaseSummaryData)
-        | ({ stage: "uploaded"; } & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData)
-    ))
-    | ({ stage: "submitted"; } & ISubmitSummaryData & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData);
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;

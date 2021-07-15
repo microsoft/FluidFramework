@@ -5,78 +5,40 @@
 
 import { EventEmitter } from "events";
 import {
-    IEvent,
-    IEventProvider,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
-    IFluidRouter,
-    IFluidRunnable,
     IRequest,
     IResponse,
     IFluidHandleContext,
     IFluidHandle,
-    IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import { wrapError } from "@fluidframework/container-utils";
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { GenerateSummaryData } from "./containerRuntime";
-import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { wrapError } from "@fluidframework/container-utils";
+import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
-    ISummaryAckMessage,
-    ISummaryNackMessage,
-    ISummaryOpMessage,
     SummaryCollection,
 } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { ISummaryAttempt, RunningSummarizer } from "./runningSummarizer";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
-}
-
-export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
-
-export interface IProvideSummarizer {
-    readonly ISummarizer: ISummarizer;
-}
-
-export interface IGenerateSummaryOptions {
-    /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    fullTree?: boolean,
-    /** True to ask the server what the latest summary is first */
-    refreshLatestAck: boolean,
-    /** Logger to use for correlated summary events */
-    summaryLogger: ITelemetryLogger,
-}
-
-export interface ISummarizerInternalsProvider {
-    /** Encapsulates the work to walk the internals of the running container to generate a summary */
-    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData>;
-
-    /** Callback whenever a new SummaryAck is received, to update internal tracking state */
-    refreshLatestSummaryAck(
-        proposalHandle: string,
-        ackHandle: string,
-        summaryLogger: ITelemetryLogger,
-    ): Promise<void>;
-}
+import {
+    GenerateSummaryData,
+    IGenerateSummaryOptions,
+    ISummarizer,
+    ISummarizerInternalsProvider,
+    ISummarizerRuntime,
+    ISummarizingWarning,
+    OnDemandSummarizeResult,
+    SummarizerStopReason,
+} from "./summarizerTypes";
 
 const summarizingError = "summarizingError";
-
-export interface ISummarizingWarning extends ContainerWarning {
-    readonly errorType: "summarizingError";
-    readonly logged: boolean;
-}
 
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
     readonly errorType = summarizingError;
@@ -94,98 +56,6 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
 export const createSummarizingWarning =
     (details: string, logged: boolean) => new SummarizingWarning(details, logged);
-
-export interface IBroadcastSummaryResult {
-    readonly summarizeOp: ISummaryOpMessage;
-    readonly broadcastDuration: number;
-}
-export interface INackSummaryResult {
-    readonly summaryNackOp: ISummaryNackMessage;
-    readonly nackDuration: number;
-}
-export interface IAckSummaryResult {
-    readonly summaryAckOp: ISummaryAckMessage;
-    readonly ackDuration: number;
-}
-export type SummarizeResultPart<T> = {
-    success: true;
-    data: T;
-} | {
-    success: false;
-    data: T | undefined;
-    message: string;
-    error: any;
-};
-export interface ISummarizeResult {
-    /** Resolves when we generate, upload, and submit the summary */
-    readonly generateSummary: Promise<SummarizeResultPart<GenerateSummaryData>>;
-    /** Resolves when we see our summarize op broadcast; is sequence number of op */
-    readonly broadcastSummaryOp: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    /** True for ack; false for nack */
-    readonly summaryAckNack: Promise<SummarizeResultPart<IAckSummaryResult | INackSummaryResult>>;
-}
-export type OnDemandSummarizeResult = (ISummarizeResult & {
-    /** Indicates that an already running summarize attempt does not exist. */
-    readonly alreadyRunning?: undefined;
-}) | {
-    /** Resolves when an already running summarize attempt completes. */
-    readonly alreadyRunning: Promise<void>;
-};
-
-export interface ISummarizerEvents extends IEvent {
-    /**
-     * An event indicating that the Summarizer is having problems summarizing
-     */
-    (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
-}
-export type SummarizerStopReason =
-    /** Summarizer client failed to summarize in all 3 consecutive attempts. */
-    | "failToSummarize"
-    /**
-     * Summarizer client detected that its parent is no longer elected the summarizer.
-     * Normally, the parent client would realize it is disconnected first and call stop
-     * giving a "parentNotConnected" stop reason. If the summarizer client attempts to
-     * generate a summary and realizes at that moment that the parent is not elected,
-     * only then will it stop itself with this message.
-     */
-    | "parentNoLongerSummarizer"
-    /** Parent client reported that it is no longer connected. */
-    | "parentNotConnected"
-    /**
-     * Parent client reported that it is no longer elected the summarizer.
-     * This is the normal flow; a disconnect will always trigger the parent
-     * client to no longer be elected as responsible for summaries. Then it
-     * tries to stop its spawned summarizer client.
-     */
-    | "parentShouldNotSummarize"
-    /** Parent client reported that it is disposed. */
-    | "disposed";
-export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
-    /**
-     * Returns a promise that will be resolved with the next Summarizer after context reload
-     */
-    setSummarizer(): Promise<Summarizer>;
-    stop(reason?: SummarizerStopReason): void;
-    run(onBehalfOf: string): Promise<void>;
-    updateOnBehalfOf(onBehalfOf: string): void;
-    /** Attempts to generate a summary on demand. */
-    summarizeOnDemand(
-        reason: string,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult;
-}
-
-export interface ISummarizerRuntime extends IConnectableRuntime {
-    readonly logger: ITelemetryLogger;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly summarizerClientId: string | undefined;
-    nextSummarizerD?: Deferred<Summarizer>;
-    closeFn(): void;
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "disconnected", listener: () => void): this;
-    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-}
 
 /**
  * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -391,7 +261,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    public async setSummarizer(): Promise<Summarizer> {
+    public async setSummarizer(): Promise<ISummarizer> {
         this.runtime.nextSummarizerD = new Deferred<Summarizer>();
         return this.runtime.nextSummarizerD.promise;
     }

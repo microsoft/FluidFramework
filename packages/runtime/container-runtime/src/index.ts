@@ -9,4 +9,5 @@ export * from "./dataStoreRegistry";
 export * from "./pendingStateManager";
 export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
+export * from "./summarizerTypes";
 export * from "./summaryCollection";

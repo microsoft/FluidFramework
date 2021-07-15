@@ -12,9 +12,8 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-// Only types are circular file dependencies
-import { GenerateSummaryData } from "./containerRuntime";
 import {
+    GenerateSummaryData,
     IAckSummaryResult,
     IBroadcastSummaryResult,
     IGenerateSummaryOptions,
@@ -24,7 +23,7 @@ import {
     ISummarizerInternalsProvider,
     OnDemandSummarizeResult,
     SummarizeResultPart,
-} from "./summarizer";
+} from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -320,7 +319,6 @@ class SummaryGenerator {
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
         });
         // Helper function to report failures and return.
-        let summaryData: GenerateSummaryData | undefined;
         const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
         const fail = (
             message: keyof typeof summarizeErrors,
@@ -335,6 +333,7 @@ class SummaryGenerator {
         // Wait to generate and send summary
         this.summarizeTimer.start();
         // Use record type to prevent unexpected value types
+        let summaryData: GenerateSummaryData | undefined;
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
             summaryData = await this.internalsProvider.generateSummary({
@@ -343,7 +342,6 @@ class SummaryGenerator {
                 summaryLogger: this.logger,
             });
 
-            // ENTRY POINT FOR GENERATE
             resultsBuilder.generateSummary.resolve({ success: true, data: summaryData });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
@@ -378,7 +376,6 @@ class SummaryGenerator {
             }
 
             this.logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
-            // EXIT POINT FOR GENERATE
             if (summaryData.stage !== "submitted") {
                 return fail("generateSummaryFailure", summaryData.error, generateTelemetryProps);
             }
@@ -399,7 +396,6 @@ class SummaryGenerator {
                 return fail("summaryOpWaitTimeout");
             }
 
-            // ENTRY POINT FOR BROADCAST
             const broadcastDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
             resultsBuilder.broadcastSummaryOp.resolve({
                 success: true,
@@ -413,7 +409,6 @@ class SummaryGenerator {
                 summarySequenceNumber: summarizeOp.sequenceNumber,
                 handle: summarizeOp.contents.handle,
             });
-            // EXIT POINT FOR BROADCAST
 
             // Wait for ack/nack
             const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
