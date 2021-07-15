@@ -18,8 +18,8 @@ import { ComponentSet } from './componentSet';
 import { PropertyProxyErrors } from './errors';
 
 import { IParentAndPathOfReferencedProperty } from './IParentAndPathOfReferencedProperty';
-import { forceType, ReferenceType } from "./utilities";
-import { ProxyType, PropertyTypes } from "./interfaces";
+import { forceType } from "./utilities";
+import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
 
 /**
  * This symbol is available on properties proxied via the PropertyProxy.[[proxify]] method.
@@ -32,11 +32,8 @@ export const proxySymbol = Symbol('property-proxy');
 export class PropertyProxy {
     /**
      * This utility function returns the parent property of a referenced property.
-     * @param property
-     * The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
-     * @param key The key of the referenced property in the Reference(Array/Map)Property.
-     * @return The parent, a BaseProperty,
-     *  and the relative path to the parent as a `string`.
+     * @param property - The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
+     * @param key - The key of the referenced property in the Reference(Array/Map)Property.
      * @public
      */
     static getParentOfReferencedProperty(property: ReferenceType, key?: string | number)
@@ -127,9 +124,9 @@ export class PropertyProxy {
      * console.log(proxiedArray.toString()); // 4,3,2,1
      * console.log(workspace.get('someArray').getValues().toString()); // 4,3,2,1
      * ```
-     * @param property The BaseProperty to be proxied.
+     * @param property - The BaseProperty to be proxied.
      *
-     * @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
+     * returns the newly created proxy if `property` is of a non-primitive type otherwise the value.
      * @public
      */
     static proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
