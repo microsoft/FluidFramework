@@ -66,6 +66,7 @@ export class DocumentService implements api.IDocumentService {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
                 : api.LoaderCachingPolicy.NoCaching,
+            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
         };
 
         this.documentStorageService = new DocumentStorageService(
