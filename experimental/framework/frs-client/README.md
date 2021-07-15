@@ -160,8 +160,4 @@ const pair = await map1.get(); // Resolve the handle to get the object
 const pair = await map1.get("pair-unique-id").get();
 ```
 
-### Instantiating FrsAzFunctionTokenProvider
-
-
-
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
