@@ -121,7 +121,9 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
+    /** @deprecated - use taggedLogger instead */
     readonly logger: ITelemetryLogger;
+    readonly taggedLogger?: ITelemetryLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
