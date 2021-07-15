@@ -122,7 +122,7 @@ const localConfig = {
 
 ## 4. <a style="position: relative; top: 20px" name="init"></a> Get Fluid Data
 
-Before we can access any Fluid data, we need to create our configured FRS `client` and define our container schema.
+Before you can access any Fluid data, you need to create a  configured FRS `client` and define your container schema.
 
 - `containerSchema` is going to include a string `name` and a collection of the data types our application will use.
 
