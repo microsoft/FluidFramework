@@ -854,8 +854,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // if there are any new blobs, upload them too
                 } while (redirectTable.size < this.loader.services.detachedBlobStorage.size);
 
-                // set redirectTable on ContainerRuntime/BlobManager...
-                (this.context as any).setBlobRedirectTable(redirectTable);
+                // set redirectTable on ContainerRuntime/BlobManager
+                this.context.setBlobRedirectTable(redirectTable as Map<string, string>);
 
                 // take summary and upload
                 const appSummary: ISummaryTree = this.context.createSummary();
