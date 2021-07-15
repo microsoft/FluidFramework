@@ -30,7 +30,12 @@ import {
 import { create404Response } from "@fluidframework/runtime-utils";
 import { GenerateSummaryData } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { SummaryCollection } from "./summaryCollection";
+import {
+    ISummaryAckMessage,
+    ISummaryNackMessage,
+    ISummaryOpMessage,
+    SummaryCollection,
+} from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { ISummaryAttempt, RunningSummarizer } from "./runningSummarizer";
 
@@ -90,6 +95,43 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 export const createSummarizingWarning =
     (details: string, logged: boolean) => new SummarizingWarning(details, logged);
 
+export interface IBroadcastSummaryResult {
+    readonly summarizeOp: ISummaryOpMessage;
+    readonly broadcastDuration: number;
+}
+export interface INackSummaryResult {
+    readonly summaryNackOp: ISummaryNackMessage;
+    readonly nackDuration: number;
+}
+export interface IAckSummaryResult {
+    readonly summaryAckOp: ISummaryAckMessage;
+    readonly ackDuration: number;
+}
+export type SummarizeResultPart<T> = {
+    success: true;
+    data: T;
+} | {
+    success: false;
+    data: T | undefined;
+    message: string;
+    error: any;
+};
+export interface ISummarizeResult {
+    /** Resolves when we generate, upload, and submit the summary */
+    readonly generateSummary: Promise<SummarizeResultPart<GenerateSummaryData>>;
+    /** Resolves when we see our summarize op broadcast; is sequence number of op */
+    readonly broadcastSummaryOp: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    /** True for ack; false for nack */
+    readonly summaryAckNack: Promise<SummarizeResultPart<IAckSummaryResult | INackSummaryResult>>;
+}
+export type OnDemandSummarizeResult = (ISummarizeResult & {
+    /** Indicates that an already running summarize attempt does not exist. */
+    readonly alreadyRunning?: undefined;
+}) | {
+    /** Resolves when an already running summarize attempt completes. */
+    readonly alreadyRunning: Promise<void>;
+};
+
 export interface ISummarizerEvents extends IEvent {
     /**
      * An event indicating that the Summarizer is having problems summarizing
@@ -127,6 +169,11 @@ export interface ISummarizer
     stop(reason?: SummarizerStopReason): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
+    /** Attempts to generate a summary on demand. */
+    summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -359,6 +406,16 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.stop("parentNoLongerSummarizer");
         }
         return result;
+    }
+
+    public summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult {
+        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
+            throw Error("Summarizer is not running or already disposed.");
+        }
+        return this.runningSummarizer.summarizeOnDemand(reason, options);
     }
 
     private async handleSummaryAcks() {

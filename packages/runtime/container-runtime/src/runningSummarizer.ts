@@ -13,15 +13,19 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 // Only types are circular file dependencies
-import { GenerateSummaryData, ISubmitSummaryData } from "./containerRuntime";
-import { IGenerateSummaryOptions, ISummarizer, ISummarizerInternalsProvider } from "./summarizer";
+import { GenerateSummaryData } from "./containerRuntime";
 import {
-    IClientSummaryWatcher,
-    ISummaryAckMessage,
-    ISummaryNackMessage,
-    ISummaryOpMessage,
-    SummaryCollection,
-} from "./summaryCollection";
+    IAckSummaryResult,
+    IBroadcastSummaryResult,
+    IGenerateSummaryOptions,
+    INackSummaryResult,
+    ISummarizer,
+    ISummarizeResult,
+    ISummarizerInternalsProvider,
+    OnDemandSummarizeResult,
+    SummarizeResultPart,
+} from "./summarizer";
+import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -115,24 +119,6 @@ export interface ISummaryAttempt {
     summarySequenceNumber?: number;
 }
 
-export type SummarizeResultPart<T> = {
-    success: true;
-    data: T;
-} | {
-    success: false;
-    data: T | undefined;
-    message: string;
-    error: any;
-};
-
-export interface ISummarizeResult {
-    /** Resolves when we generate, upload, and submit the summary */
-    readonly generateSummary: Promise<SummarizeResultPart<GenerateSummaryData>>;
-    /** Resolves when we see our summarize op broadcast; is sequence number of op */
-    readonly broadcastSummaryOp: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    /** True for ack; false for nack */
-    readonly summaryAckNack: Promise<SummarizeResultPart<IAckSummaryResult | INackSummaryResult>>;
-}
 class SummarizeResultBuilder {
     public readonly generateSummary = new Deferred<SummarizeResultPart<GenerateSummaryData>>();
     public readonly broadcastSummaryOp = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
@@ -153,34 +139,6 @@ class SummarizeResultBuilder {
         } as const;
     }
 }
-
-export interface IBroadcastSummaryResult {
-    readonly summarizeOp: ISummaryOpMessage;
-    readonly broadcastDuration: number;
-}
-export interface INackSummaryResult {
-    readonly summaryNackOp: ISummaryNackMessage;
-    readonly nackDuration: number;
-}
-export interface IAckSummaryResult {
-    readonly summaryAckOp: ISummaryAckMessage;
-    readonly ackDuration: number;
-}
-export type SummarizeResult =
-    ({ error: any; } & (
-        | GenerateSummaryData
-        | ({ stage: "broadcasted"; } & IBroadcastSummaryResult & ISubmitSummaryData)
-        | ({ stage: "nack"; } & INackSummaryResult & IBroadcastSummaryResult & ISubmitSummaryData)
-    ))
-    | ({ stage: "ack"; } & IAckSummaryResult & IBroadcastSummaryResult & ISubmitSummaryData);
-
-export type OnDemandSummarizeResult = (ISummarizeResult & {
-    /** Indicates that an already running summarize attempt does not exist. */
-    readonly alreadyRunning?: undefined;
-}) | {
-    /** Resolves when an already running summarize attempt completes. */
-    readonly alreadyRunning: Promise<void>;
-};
 
 const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): something is T => {
     if (something === undefined) {

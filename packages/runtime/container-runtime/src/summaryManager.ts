@@ -326,6 +326,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         return summarizer;
     }
 
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        if (this.runningSummarizer === undefined) {
+            throw Error("No running summarizer client");
+            // TODO: could spawn a summarizer client temporarily.
+        }
+        return this.runningSummarizer.summarizeOnDemand(...args);
+    };
+
     public dispose() {
         this.initialDelayTimer?.clear();
         this._disposed = true;
