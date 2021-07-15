@@ -124,6 +124,7 @@ export interface IContainerContext extends IDisposable {
     readonly logger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
+    taggedLogger?: ITelemetryBaseLogger;
 
     /**
      * Ambient services provided with the context
