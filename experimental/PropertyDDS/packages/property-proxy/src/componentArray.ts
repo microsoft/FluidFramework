@@ -12,15 +12,15 @@ import { forceType, Utilities } from './utilities';
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
- * @param {ComponentArray} target The ComponentArray that holds a reference to the
+ * @param target The ComponentArray that holds a reference to the
  * {@link external:ArrayProperty ArrayProperty}.
  * @return {Iterator} The iterator.
  * @hidden
  */
-const createArrayIterator = (target) => function* () {
+const createArrayIterator = (target: ComponentArray) => function*() {
     for (let i = 0; i < target.getProperty().getLength(); i++) {
-        if (PropertyFactory.instanceOf(target.getProperty().get(i), 'BaseProperty')) {
-            yield PropertyProxy.proxify(target.getProperty().get(i));
+        if (PropertyFactory.instanceOf(target.getProperty().get(i)!, 'BaseProperty')) {
+            yield PropertyProxy.proxify(target.getProperty().get(i)!);
         } else {
             yield target.getProperty().get(i);
         }
@@ -29,13 +29,14 @@ const createArrayIterator = (target) => function* () {
 
 /**
  * Prepares the elements that are to be inserted into the {@link external:ArrayProperty ArrayProperty}.
- * @param {external:ArrayProperty} property The ArrayProperty in which elements are to be inserted.
- * @param {Object | external:BaseProperty} elements The elements to be inserted.
- * @return {Array} The array that contains elements ready for insertion.
+ * @param property The ArrayProperty in which elements are to be inserted.
+ * @param elements The elements to be inserted.
+ * @return The array that contains elements ready for insertion.
  * @hidden
  */
 const prepareElementsForInsertion =
-    (property, elements) => elements.map((element) => Utilities.prepareElementForInsertion(property, element));
+    (property: ArrayProperty, elements: (BaseProperty | object)[]) =>
+        elements.map((element) => Utilities.prepareElementForInsertion(property, element));
 
 /**
  * ComponentArray extends Array to work directly on the data stored in PropertyDDS.
@@ -45,7 +46,7 @@ const prepareElementsForInsertion =
  * @hidden
  */
 class ComponentArray extends Array {
-    private lastCalledMethod = ''
+    public lastCalledMethod = ''
 
     /**
      * Sets the {@link external:ArrayProperty ArrayProperty} to operate on sets the Symbol.iterator attribute.
@@ -260,7 +261,8 @@ class ComponentArray extends Array {
         const deleteUntil = Number(deleteCount) === deleteCount &&
             startValue + deleteCount < arrayLength ? deleteCount : arrayLength - startValue;
 
-        const removed = [];
+        // TODO(marcus): workaround
+        const removed: any[] = [];
         if (deleteUntil > 0 && startValue < arrayLength) {
             for (let i = startValue; i < startValue + deleteUntil; ++i) {
                 removed.push(this.property.get(i)!);
