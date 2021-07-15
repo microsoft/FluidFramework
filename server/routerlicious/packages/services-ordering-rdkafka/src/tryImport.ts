@@ -21,7 +21,7 @@ let nodeRdkafkaModule: typeof kafkaTypes | undefined;
 // librdkafka lazy initializes the global mutex, and it wouldn't be initialized if no rdkafka is created,
 // so then the cleanup callback tries to access the mutex and crashes.
 //
-// So we will also lazy import node-rdkafka only if we intent to use it.
+// So we will also lazy import node-rdkafka only if we intend to use it.
 export function tryImportNodeRdkafka() {
     if (!tryImport) {
         tryImport = true;
