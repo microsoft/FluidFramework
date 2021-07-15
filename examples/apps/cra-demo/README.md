@@ -108,7 +108,7 @@ const getContainerId = () => {
 
 ### 3.b Configure the service client
 
-In this demo we will only be dealing with a local configuration, but in a production environment you could swap this out with a production configuration without changing your application.
+This demo illustrates using a local configuration, but in a production environment you could swap this out with a production configuration without changing your application.
 
 ```js
 // add below getContainerId
