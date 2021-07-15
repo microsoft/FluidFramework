@@ -226,7 +226,7 @@ export class Utilities {
         const keys = (key === undefined ? [] : [key]);
 
         // TODO(marcus): this cast is a workaround for resolving the type check
-        // isue that TS cannot statically derive the correct types for isReferenceValid
+        // issue that TS cannot statically derive the correct types for isReferenceValid
         if (!(<any>property.isReferenceValid)(...keys)) {
             throw new Error(PropertyProxyErrors.INVALID_REFERENCE);
         }
@@ -271,10 +271,13 @@ export class Utilities {
      * ReferenceArray- or ReferenceMapProperty.
      *  @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
      */
-    static proxifyInternal(property: ContainerProperty, key: string | number,
+    static proxifyInternal(property: ContainerProperty | ReferenceType
+        , key: string | number,
         caretFound: boolean, isReferenceCollection: boolean = false) {
         const context = property.getContext();
-        const propertyAtKey = property.get(key)!;
+        // TODO(marcus): this cast is a workaround for resolving the type check
+        // issue that TS cannot statically derive the correct types for get
+        const propertyAtKey = (<any>property.get)(key)!;
         if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
             if (caretFound && propertyAtKey.isPrimitiveType()) {
                 if (PropertyFactory.instanceOf(propertyAtKey, 'Enum') && forceType<EnumProperty>(propertyAtKey)) {
@@ -291,14 +294,19 @@ export class Utilities {
                 const contextIsSingle = context === 'single';
                 let other_property: BaseProperty = property;
                 if (!contextIsSingle && isReferenceCollection) {
-                    const data = PropertyProxy.getParentOfReferencedProperty(property, key);
+                    // TODO(marcus): "as" reference type cast is has to be done because we cant differentiate
+                    // the types well at the moment
+                    const data = PropertyProxy
+                        .getParentOfReferencedProperty(property as ReferenceMapProperty | ReferenceArrayProperty, key);
                     other_property = data.referencedPropertyParent;
                     key = data.relativePathFromParent;
                 }
 
-                if (contextIsSingle) {
-                    const data = PropertyProxy.getParentOfReferencedProperty(property.get(key,
-                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
+                if (contextIsSingle && forceType<string>(key)) {
+                    // TODO(marcus): this cast is a workaround for resolving the type check
+                    // issue that TS cannot statically derive the correct types for get
+                    const data = PropertyProxy.getParentOfReferencedProperty((<any>property.get)(key,
+                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                     other_property = data.referencedPropertyParent;
                     key = data.relativePathFromParent;
                 }

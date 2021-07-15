@@ -4,7 +4,8 @@
  */
 /* eslint-disable no-param-reassign */
 
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties";
+import { ComponentArray } from './componentArray';
 import { PropertyProxy, proxySymbol } from './propertyProxy';
 import { PropertyProxyErrors } from './errors';
 import { Utilities } from './utilities';
@@ -15,13 +16,14 @@ import { Utilities } from './utilities';
  * new empty properties with the same typeid as the {@link external:ArrayProperty ArrayProperty} are appended.
  * If the the new length is smaller than the current length,
  * the appropriate amount of elements is deleted from the end of the {@link external:ArrayProperty ArrayProperty}.
- * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
- * @param {Number} length The desired new length of the Array.
- * @return {Boolean} False if the passed length is less than 0, true otherwise.
+ * @param target The {@link ComponentArray} the Proxy handles.
+ * @param length The desired new length of the Array.
+ * @return False if the passed length is less than 0, true otherwise.
  * @hidden
  */
-function setLength(target, length) {
-    const newLength = Number(length) === length ? parseInt(length, 10) : 0;
+function setLength(target: ComponentArray, length: number | string): boolean {
+    // TODO(marcus): seems unnecessary and a little incorrect
+    const newLength = Number(length) === length ? parseInt(length as unknown as string, 10) : 0;
     if (newLength < 0) {
         throw new RangeError('Invalid array length');
     }
@@ -37,7 +39,7 @@ function setLength(target, length) {
             () => property.removeRange(newLength, currentLength - newLength));
     } else if (currentLength < newLength) {
         // Fill the array with empty but valid values (instead of 'undefined')
-        const itemProps = [];
+        const itemProps: any[] = [];
         for (let i = currentLength; i < newLength; i++) {
             if (PropertyFactory.instanceOf(property, 'Reference', 'array')) {
                 itemProps.push('');
@@ -75,7 +77,7 @@ export const arrayProxyHandler = {
      * @param {Proxy} receiver The proxy
      * @return {Object | external:BaseProperty | Function} The accessed primitive, Property or function.
      */
-    get(target, key, receiver) {
+    get(target: ComponentArray, key: string, receiver) {
         if (typeof target[key] === 'function') {
             if (key === 'constructor') {
                 // Always return the constructor for the base Array class.
@@ -102,7 +104,7 @@ export const arrayProxyHandler = {
                 key = key.slice(0, -1);
             }
 
-            if (typeof key !== 'symbol' && key >= 0 && key < target.getProperty().getLength()) {
+            if (typeof key !== 'symbol' && Number(key) >= 0 && Number(key) < target.getProperty().getLength()) {
                 const property = target.getProperty();
                 const isReferenceArray = PropertyFactory.instanceOf(property, 'Reference', 'array');
                 if (isReferenceArray && (asteriskFound || getTrapSpecialCases.includes(target.lastCalledMethod))) {
@@ -110,7 +112,7 @@ export const arrayProxyHandler = {
                 } else {
                     if (asteriskFound) {
                         return PropertyProxy.proxify(property.get(key,
-                            { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
+                            { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                     } else {
                         return Utilities.proxifyInternal(property, key, caretFound, isReferenceArray);
                     }
