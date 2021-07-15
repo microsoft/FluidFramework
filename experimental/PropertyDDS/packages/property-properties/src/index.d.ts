@@ -777,6 +777,8 @@ declare module "@fluid-experimental/property-properties" {
            * @param in_scope The scope in which the property typeid is defined
            */
           constructor(in_params: ArrayProperty_ArrayProperty_in_params_TYPE, in_constructor: object, in_primitiveType: Boolean, in_scope: string | undefined);
+
+          public get length()
           /**
            * Gets the array element at a given index
            * @param in_position the target index
@@ -811,6 +813,10 @@ declare module "@fluid-experimental/property-properties" {
            * Removes the last element of the array or the last letter of a string (for StringProperty)
            */
           pop(): BaseProperty | any;
+           /**
+           * Removes an element from the front of the array or a letter from the beginning of a string (for StringProperty)
+           */
+          shift(): BaseProperty;
           /**
            * Change an existing element of the array. This will overwrite an existing element.
            * E.g. [1, 2, 3]  .set(1, 8) => [1, 8, 3]
@@ -836,7 +842,7 @@ declare module "@fluid-experimental/property-properties" {
            *  and shifts remaining values to the left.
            * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
            */
-          removeRange(): Array<any> | Array<BaseProperty>;
+          removeRange(in_offset: number, in_deleteCount: number): Array<any> | Array<BaseProperty>;
           /**
            * Sets the array properties elements to the content of the given array
            * All changed elements must already exist. This will overwrite existing elements.
@@ -2128,7 +2134,7 @@ declare module "@fluid-experimental/property-properties" {
           /**
            * Inserts a property into the set
            */
-          insert(): void;
+          insert(in_property: NamedProperty): void;
           /**
            * Adds a property to the set
            * - If the property's key exists, the entry is replaced with new one.
@@ -2138,7 +2144,7 @@ declare module "@fluid-experimental/property-properties" {
           /**
            * Removes the given property from the set
            */
-          remove(): NamedProperty;
+          remove(in_entry: NamedProperty | string): NamedProperty;
           /**
            * Returns the name of all the sub-properties of this property.
            */
