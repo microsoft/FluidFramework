@@ -26,7 +26,7 @@ import {
     SummaryCollection,
 } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
-import { ISummaryAttempt, RunningSummarizer } from "./runningSummarizer";
+import { RunningSummarizer } from "./runningSummarizer";
 import {
     GenerateSummaryData,
     IGenerateSummaryOptions,
@@ -196,11 +196,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
         });
 
-        const initialAttempt: ISummaryAttempt = {
-            refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-            summaryTime: Date.now(),
-        };
-
         const runningSummarizer = await RunningSummarizer.start(
             startResult.clientId,
             onBehalfOf,
@@ -209,7 +204,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.configurationGetter(),
             this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
-            initialAttempt,
+            { /** Initial summary attempt */
+                refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+                summaryTime: Date.now(),
+            } as const,
             (description: string) => {
                 if (!this._disposed) {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
