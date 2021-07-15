@@ -122,7 +122,7 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    // @deprecated
+    /** @deprecated */
     readonly logger: ITelemetryBaseLogger;
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
