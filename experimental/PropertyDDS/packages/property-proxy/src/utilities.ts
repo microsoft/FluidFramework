@@ -25,7 +25,7 @@ export type ReferenceType = ReferenceProperty | ReferenceArrayProperty | Referen
 // way to determine the corrent types is useed
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function forceType<T>(value: any | T): value is T {
+export function forceType<T>(value: any | T): value is T {
     return true;
 }
 
