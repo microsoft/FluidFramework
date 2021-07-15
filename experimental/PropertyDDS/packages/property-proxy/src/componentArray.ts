@@ -138,7 +138,8 @@ class ComponentArray extends Array {
         // Only handle non-primitive cases,
         // primitive cases can be handled implicitly (see componentArrayProxyHandler.js)
 
-        if (!PropertyFactory.instanceOf(searchElement, 'BaseProperty')) {
+        // TODO(marcus) this branch should never work
+        if (PropertyFactory.instanceOf(!searchElement as any, 'BaseProperty')) {
             return -1;
         } else {
             // check if a proxied value was passed
