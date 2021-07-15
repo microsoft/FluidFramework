@@ -11,9 +11,9 @@ const pinnedObjectToString: (value: any) => string = Function.prototype.call.bin
     Object.prototype.toString, // eslint-disable-line @typescript-eslint/unbound-method
 );
 
-const toString: (value: any) => string = (value) => pinnedObjectToString(value);
+const prototypeToString: (value: any) => string = (value) => pinnedObjectToString(value);
 
-const objectString = toString(Object.prototype);
+const objectString = prototypeToString(Object.prototype);
 
 /**
  * Plain-Old-JavaScript-Object -- as recommended by TypeScript
@@ -35,11 +35,11 @@ export function instanceOfObject(value: any): value is POJO {
  * @returns the partially applied test function -- (value: any): value is typeof match
  */
 export function bindInstanceOfBuiltin<T>(match: T) {
-    const compareString = toString(match);
+    const compareString = prototypeToString(match);
 
     if (compareString === objectString) {
         throw new Error(`bindInstanceOfBuiltin cannot classify '${objectString}' instances`);
     }
 
-    return (value: any): value is T => compareString === toString(value);
+    return (value: any): value is T => compareString === prototypeToString(value);
 }
