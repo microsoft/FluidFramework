@@ -10,8 +10,5 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
-    "rules": {
-        "@typescript-eslint/no-shadow": "off",
-        "space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
-    }
+    "rules": { }
 }
