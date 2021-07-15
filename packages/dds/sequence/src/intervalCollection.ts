@@ -368,13 +368,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         if (serializedInterval.properties?.[reservedIntervalIdKey] === undefined) {
             // An interval came over the wire without an ID, so create a non-unique one based on start/end.
             // This will allow all clients to refer to this interval consistently.
-            serializedInterval.properties = MergeTree.addProperties(
-                serializedInterval.properties,
-                {
-                    [reservedIntervalIdKey]: this.createLegacyId(serializedInterval.start, serializedInterval.end),
-                },
-            );
+            const newProps = {
+                [reservedIntervalIdKey]: this.createLegacyId(serializedInterval.start, serializedInterval.end),
+            };
+            serializedInterval.properties = MergeTree.addProperties(serializedInterval.properties, newProps);
         }
+        // Make the ID immutable for safety's sake.
+        Object.defineProperty(serializedInterval.properties, reservedIntervalIdKey, {
+            configurable: false,
+            enumerable: true,
+            writable: false,
+        });
     }
 
     public mapUntil(fn: (interval: TInterval) => boolean) {
@@ -525,8 +529,15 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
             }
             if (interval.properties[reservedIntervalIdKey] === undefined) {
+                // Create a new ID.
                 interval.properties[reservedIntervalIdKey] = uuid();
             }
+            // Make the ID immutable.
+            Object.defineProperty(interval.properties, reservedIntervalIdKey, {
+                configurable: false,
+                enumerable: true,
+                writable: false,
+            });
             this.intervalTree.put(interval, this.conflictResolver);
             this.endIntervalTree.put(interval, interval, this.endConflictResolver);
         }
