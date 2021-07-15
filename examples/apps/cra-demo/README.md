@@ -54,16 +54,16 @@ npm run start
 There are two packages to install to get started with Fluid:
 
 `@fluid-experimental/frs-client` - Defines the client we'll use to connect to our Fluid [container](https://fluidframework.com/docs/glossary/#container), both locally and if deployed
-`@fluidframework/map` - Contains the SharedMap you will use to sync data
+`@fluid-experimental/fluid-framework` - Contains the SharedMap you will use to sync data
 
 ### Using NPM
 ```bash
-npm install @fluid-experimental/frs-client @fluidframework/map
+npm install @fluid-experimental/frs-client @fluid-experimental/fluid-framework
 ```
 
 ### Using Yarn
 ```bash
-yarn add @fluid-experimental/frs-client @fluidframework/map
+yarn add @fluid-experimental/frs-client @fluid-experimental/fluid-framework
 ```
 
 \* These are still experimental packages, and not ready for production
@@ -86,7 +86,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 import React from "react";
 import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluid-experimental/fluid-framework";
 ```
 
 ### 3.a Create unique container IDs
