@@ -23,7 +23,6 @@ import {
     IVersion,
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { deprecate } from "node:util";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
