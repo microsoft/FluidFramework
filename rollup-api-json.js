@@ -4,13 +4,7 @@
  */
 
 const fs = require("fs");
-// const pathLib = require("path");
-// const process = require("process");
 
-// const parseOptions = (argv) => {
-// };
-
-// const options = parseOptions(process.argv)
 const apiPath = process.argv[2];
 
 const packages = [
