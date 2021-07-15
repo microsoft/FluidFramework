@@ -5,11 +5,11 @@
         "outDir": "../../dist/test",
         "types": [
             "node",
-            "mocha",
             "jest"
         ],
         "declaration": false,
-        "declarationMap": false
+        "declarationMap": false,
+        "allowJs": true
     },
     "include": [
         "./**/*"
