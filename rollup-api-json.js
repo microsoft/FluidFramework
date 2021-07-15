@@ -23,6 +23,8 @@ const packages = [
     "@fluidframework/protocol-definitions",
     "@fluidframework/register-collection",
     "@fluidframework/sequence",
+    "@fluid-experimental/task-manager",
+    // "@fluid-experimental/property-dds",
 ];
 
 const rollup = [];
