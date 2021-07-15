@@ -138,7 +138,8 @@ class ComponentArray extends Array {
         // Only handle non-primitive cases,
         // primitive cases can be handled implicitly (see componentArrayProxyHandler.js)
 
-        // TODO(marcus) this branch should never work
+        // TODO(marcus) this branch should never work appart from the value "false" which gets negated to true
+        // all searchElement values would be coerced to "false" therefore this branch would not taken
         if (PropertyFactory.instanceOf(!searchElement as any, 'BaseProperty')) {
             return -1;
         } else {
