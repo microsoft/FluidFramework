@@ -13,10 +13,11 @@
     "index.d.ts"
   ],
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently npm:build:compile npm:lint npm:build:test",
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
@@ -37,6 +38,7 @@
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/jest": "22.2.3",
+    "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "babel-loader": "^8.0.5",
