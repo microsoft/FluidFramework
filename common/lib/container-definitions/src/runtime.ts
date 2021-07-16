@@ -121,7 +121,11 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    /** @deprecated - use taggedLogger instead */
+    /** @deprecated - Use `taggedLogger` instead. In time we will enforce the use of `taggedLogger` as we transition to
+     * tags being handled directly here at the loader/runtime boundary (whereas all loggers used internally will
+     * remain agnostic). In the meantime, current and older loader versions buttress loggers that do not support tags
+     * so IContainerContext will retain both options, but newer hosts should try to make the switch.
+     */
     readonly logger: ITelemetryBaseLogger;
     readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
