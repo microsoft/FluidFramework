@@ -664,9 +664,9 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
             fluidErrorBuilder = new LoggingError(errMsg, annotations.props) as Builder<IFluidErrorBase>;
             setErrorTypeIfMissing(fluidErrorBuilder, errorType);
             fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
-            return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
+            return fluidErrorBuilder as IFluidErrorBase;
         };
-        return wrapError<IFluidErrorBase & ILoggingError>(error, newErrorFn);
+        return wrapError<IFluidErrorBase>(error, newErrorFn);
     }
 
     // Do we already have a valid Fluid Error?  Then just mixin telemetry props
