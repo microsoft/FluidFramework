@@ -5,7 +5,7 @@
 
 import { IContact, IContactCollection } from "./dataObject";
 
-function makeContactDiv(contact: IContact) {
+function makeContactDiv(contact: IContact): HTMLDivElement {
     const contactDiv = document.createElement("div");
     contactDiv.textContent = `${contact.name}: ${contact.phone}`;
     return contactDiv;
@@ -21,6 +21,11 @@ const profilePictures = [
     "👱‍♀️", "👱‍♂️", "👽",
 ];
 
+/**
+ * Render an IContact into a given div with a random emoji as a profile picture
+ * @param contact - the IContact to render details for
+ * @param div - The div to render into
+ */
 export function renderContact(contact: IContact, div: HTMLDivElement) {
     const contactDiv = makeContactDiv(contact);
     const profilePic = document.createElement("div");
@@ -31,8 +36,10 @@ export function renderContact(contact: IContact, div: HTMLDivElement) {
 }
 
 /**
- * Render an IContactCollection into a given div as a text character, with a button to roll it.
+ * Render an IContactCollection into a given div plus UX to add new contacts.  Clicking on the contacts opens a
+ * details view.
  * @param contactCollection - The Data Object to be rendered
+ * @param getContactUrl - A helper function that generates absolute URLs for a given contact ID
  * @param div - The div to render into
  */
 export function renderContactCollection(

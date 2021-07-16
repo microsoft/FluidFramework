@@ -10,6 +10,9 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
+/**
+ * IContact describes the public, read-only API surface for a single contact
+ */
 export interface IContact {
     readonly id: string;
     readonly name: string;
@@ -17,11 +20,10 @@ export interface IContact {
 }
 
 /**
- * IDiceRoller describes the public API surface for our dice roller data object.
+ * IContactCollection describes the public API surface for our contact collection data object.
  */
 export interface IContactCollection extends EventEmitter {
-    addContact: (name: string, phone: string) => string;
-    removeContact: (id: string) => void;
+    addContact: (name: string, phone: string) => void;
     getContact: (id: string) => IContact | undefined;
     getContacts: () => IContact[];
 
@@ -36,7 +38,6 @@ export class Contact implements IContact {
         private readonly _id: string,
         private readonly _name: string,
         private readonly _phone: string,
-        // setName(), setPhone() ?
     ) { }
 
     public get id(): string {
@@ -86,7 +87,6 @@ export class ContactCollection extends DataObject implements IContactCollection 
      * DataObject, by registering an event listener for changes to the contact list.
      */
     protected async hasInitialized() {
-        // Preemptively build out IContact[] collection?
         this.root.on("valueChanged", (changed) => {
             // When we see the contacts change, we'll emit the contactCollectionChanged event we specified
             // in our interface.
@@ -97,15 +97,8 @@ export class ContactCollection extends DataObject implements IContactCollection 
     public readonly addContact = (name: string, phone: string) => {
         const id = uuid();
         this.root.set(id, { name, phone });
-        return id; // maybe return an IContact instead?
     };
 
-    // Should this be private and accessed via an API on Contact?
-    public readonly removeContact = (id: string) => {
-        this.root.delete(id);
-    };
-
-    // Should this be private and accessed via an API on Contact?
     public readonly getContact = (id: string): IContact | undefined => {
         const contactData = this.root.get(id);
         if (contactData === undefined) {

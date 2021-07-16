@@ -27,6 +27,14 @@ document.title = documentId;
 const searchParams = new URLSearchParams(location.search);
 const specifiedContact = searchParams.get("contact") ?? undefined;
 
+/**
+ * A helper function that can generate an app-defined URL that will navigate to the single contact view.
+ * Similar to getAbsoluteUrl in other Fluid examples, but keeping the control over URL format in the app
+ * rather than the URL resolver.  Fluid doesn't need to know about this URL format in this example, only
+ * the view (for rendering hyperlinks to single-contact view).
+ * @param contactId - The ID of the contact to load in details view
+ * @returns A URL that will navigate to single-contact view of the given contact
+ */
 const getContactUrl = (contactId: string): string => {
     const contactUrl = new URL(location.toString());
     contactUrl.search = `?contact=${contactId}`;
@@ -56,6 +64,10 @@ async function start(): Promise<void> {
 
     const div = document.getElementById("content") as HTMLDivElement;
 
+    // Our app has two rendering modes, contact list and single contact details view.  The app owns the url format,
+    // and here we've chosen to use the query params to pass the single contact id if that's the view we want (notice
+    // that getContactUrl generates urls of this format).  Alternate implementations might use the URL path or other
+    // routing strategies to specify the view to use -- it's all up to the app.
     if (specifiedContact === undefined) {
         // If a contact was not specified, we'll render the full collection.
         const contactCollection: IContactCollection = response.value;
