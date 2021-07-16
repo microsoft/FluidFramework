@@ -35,7 +35,11 @@ export function renderContact(contact: IContact, div: HTMLDivElement) {
  * @param contactCollection - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function renderContactCollection(contactCollection: IContactCollection, div: HTMLDivElement) {
+export function renderContactCollection(
+    contactCollection: IContactCollection,
+    getContactUrl: (contactId: string) => string,
+    div: HTMLDivElement,
+) {
     const contactListDiv = document.createElement("div");
 
     // Render the contact list.  Since we'll want to re-render every time the contacts change, we'll
@@ -45,6 +49,10 @@ export function renderContactCollection(contactCollection: IContactCollection, d
         const contacts = contactCollection.getContacts();
         for (const contact of contacts) {
             const contactDiv = makeContactDiv(contact);
+            const contactUrl = getContactUrl(contact.id);
+            contactDiv.addEventListener("click", () => {
+                window.open(contactUrl, "ContactDetailsWindow", "width=400,height=400");
+            });
             contactListDiv.append(contactDiv);
         }
     };

@@ -19,6 +19,12 @@ if (window.location.hash.length === 0) {
 }
 const documentId = window.location.hash.substring(1);
 
+const getContactUrl = (contactId: string): string => {
+    const contactUrl = new URL(location.toString());
+    contactUrl.search = `?contact=${contactId}`;
+    return contactUrl.toString();
+};
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
@@ -32,7 +38,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const defaultObject = await getDefaultObjectFromContainer<IContactCollection>(container);
 
     // Given an IContactCollection, we can render its data using the view we've created in our app.
-    renderContactCollection(defaultObject, element);
+    renderContactCollection(defaultObject, getContactUrl, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

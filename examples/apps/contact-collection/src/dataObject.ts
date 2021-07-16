@@ -11,6 +11,7 @@ import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 export interface IContact {
+    readonly id: string;
     readonly name: string;
     readonly phone: string;
 }
@@ -32,10 +33,15 @@ export interface IContactCollection extends EventEmitter {
 
 export class Contact implements IContact {
     constructor(
+        private readonly _id: string,
         private readonly _name: string,
         private readonly _phone: string,
         // setName(), setPhone() ?
     ) { }
+
+    public get id(): string {
+        return this._id;
+    }
 
     public get name(): string {
         return this._name;
@@ -47,9 +53,13 @@ export class Contact implements IContact {
 }
 
 /**
- * The DiceRoller is our data object that implements the IDiceRoller interface.
+ * The ContactCollection is our data object that implements the IContactCollection interface.
  */
 export class ContactCollection extends DataObject implements IContactCollection {
+    // The key feature of the collection pattern is its request handling.  Most data objects will respond to a
+    // request of "/" to return themselves, but the collection pattern will additionally respond to subrequests
+    // to return specific members of the collection instead.  Here we interpret the url to be of the form
+    // "/<contactId>" and get the corresponding Contact to return.
     public async request(request: IRequest): Promise<IResponse> {
         const requestParser = RequestParser.create(request);
         // We interpret the first path part as the id of the contact that we should retrieve
@@ -102,13 +112,13 @@ export class ContactCollection extends DataObject implements IContactCollection 
             return undefined;
         }
 
-        return new Contact(contactData.name, contactData.phone);
+        return new Contact(id, contactData.name, contactData.phone);
     };
 
     public readonly getContacts = () => {
         const contactList: IContact[] = [];
-        for (const contactData of this.root.values()) {
-            contactList.push(new Contact(contactData.name, contactData.phone));
+        for (const [id, contactData] of this.root) {
+            contactList.push(new Contact(id, contactData.name, contactData.phone));
         }
         return contactList;
     };

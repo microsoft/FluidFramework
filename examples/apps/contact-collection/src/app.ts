@@ -27,6 +27,12 @@ document.title = documentId;
 const searchParams = new URLSearchParams(location.search);
 const specifiedContact = searchParams.get("contact") ?? undefined;
 
+const getContactUrl = (contactId: string): string => {
+    const contactUrl = new URL(location.toString());
+    contactUrl.search = `?contact=${contactId}`;
+    return contactUrl.toString();
+};
+
 async function start(): Promise<void> {
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
@@ -53,7 +59,7 @@ async function start(): Promise<void> {
     if (specifiedContact === undefined) {
         // If a contact was not specified, we'll render the full collection.
         const contactCollection: IContactCollection = response.value;
-        renderContactCollection(contactCollection, div);
+        renderContactCollection(contactCollection, getContactUrl, div);
     } else {
         // If a contact was specified, we'll render just that contact.
         const contact: IContact = response.value;
