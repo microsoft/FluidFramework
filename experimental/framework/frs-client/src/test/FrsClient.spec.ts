@@ -6,35 +6,14 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { SharedMap, ContainerSchema } from "@fluid-experimental/fluid-framework";
-import { generateUser } from "@fluidframework/server-services-client";
 import {
-    FrsClient,
-    FrsConnectionConfig,
     FrsContainerConfig,
-    InsecureTokenProvider,
 } from "..";
+import { CreateClient } from "./CreateClient";
 
 describe("FrsClient", () => {
-    // use FrsClient will run against live service. Default to running Tinylicious for PR validation
-    // and local testing so it's not hindered by service availability
-    const useFrs = process.env.FLUID_CLIENT === "frs";
-    const tenantKey: string = useFrs ? process.env.fluid__webpack__tenantKey as string : "";
-    const user = generateUser();
-    const connectionConfig: FrsConnectionConfig = useFrs ? {
-        tenantId: "frs-client-tenant",
-        tokenProvider: new InsecureTokenProvider(
-            tenantKey, user,
-        ),
-        orderer: "https://alfred.eus-1.canary.frs.azure.com",
-        storage: "https://historian.eus-1.canary.frs.azure.com",
-    } : {
-        tenantId: "local",
-        tokenProvider: new InsecureTokenProvider("fooBar", user),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070",
-    };
-    const client = new FrsClient(connectionConfig);
-
+    const createClient = new CreateClient();
+    const client = createClient.create();
     let documentId: string;
     beforeEach(() => {
         documentId = uuid();
