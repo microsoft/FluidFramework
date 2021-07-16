@@ -25,11 +25,10 @@ const frsAzUser = {
 };
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "frs-client-tenant",
-    tokenProvider: new FrsAzFunctionTokenProvider("https://sumbhatt-frs-helpers.azurewebsites.net/api/GetFrsToken",
-                                frsAzUser),
-    orderer: "https://alfred.eus-1.canary.frs.azure.com",
-    storage: "https://historian.eus-1.canary.frs.azure.com",
+    tenantId: "",
+    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
+    orderer: "",
+    storage: "",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
