@@ -15,7 +15,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { assert, BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import { Builder, IFluidErrorBase, hasErrorType, isFluidError, ExtensibleObject } from "./staging";
 
 export interface ITelemetryLoggerPropertyBag {
@@ -26,7 +26,8 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag,
 }
 
-const isRegularObject = (value: any): boolean => {
+// eslint-disable-next-line @typescript-eslint/ban-types
+const isRegularObject = (value: any): value is Object => {
     return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
@@ -573,10 +574,6 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     props: ITelemetryProperties = {},
     errorCodeIfNone?: string,
 ): IFluidErrorBase & ILoggingError {
-    if (isFluidError(error)) {
-        return mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, props);
-    }
-
     // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
     let fluidErrorBuilder: Builder<IFluidErrorBase>;
 
@@ -598,6 +595,30 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
         fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
 
         return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
+    }
+
+    const mutableError = Object.isFrozen(error)
+        ? Object.create(error)
+        : error;
+
+    return annotateErrorObject(mutableError, fullErrorCodeifNone, setErrorTypeIfMissing, props);
+}
+
+function annotateErrorObject(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    error: Object,
+    fullErrorCodeifNone: string,
+    setErrorTypeIfMissing: (errorType: string) => void,
+    props: ITelemetryProperties = {},
+): IFluidErrorBase & ILoggingError {
+    if (Object.isFrozen(error)) {
+        const invalid = new LoggingError("") as Builder<IFluidErrorBase>;
+        invalid.errorType = "invalid";
+        invalid.fluidErrorCode = "Can't annotate a frozen object";
+    }
+
+    if (isFluidError(error)) {
+        return mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, props);
     }
 
     fluidErrorBuilder = error as Builder<IFluidErrorBase>;
