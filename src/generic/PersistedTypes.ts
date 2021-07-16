@@ -156,7 +156,7 @@ export type ChangeNode = TreeNode<ChangeNode>;
  * Other formats for sub-sequences of Nodes can be added here, and those formats should be supported in blobs as well.
  * Future formats will include referenced blobs containing sequences of Nodes,
  * template based metadata and identity deduplication, and possibly compressed and binary formats.
- * These optimized formats should also be used within snapshots.
+ * These optimized formats should also be used within tree views.
  * @public
  */
 export type BuildNode = TreeNode<BuildNode> | DetachedSequenceId;

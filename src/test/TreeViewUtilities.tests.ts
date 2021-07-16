@@ -10,7 +10,7 @@ import { expect } from 'chai';
 import { comparePayloads, noop } from '../Common';
 import { Payload } from '../generic';
 
-describe('SnapshotUtilities', () => {
+describe('TreeViewUtilities', () => {
 	describe('comparePayloads', () => {
 		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
 		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;

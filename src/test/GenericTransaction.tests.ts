@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { EditStatus } from '../generic';
 import { ReconciliationEdit } from '../ReconciliationPath';
-import { initialSnapshotWithValidation } from './utilities/TestUtilities';
+import { initialRevisionViewWithValidation } from './utilities/TestUtilities';
 import { MockTransaction } from './utilities/MockTransaction';
 
 describe('GenericTransaction', () => {
@@ -17,7 +17,7 @@ describe('GenericTransaction', () => {
 				return target[prop];
 			},
 		});
-		const transaction = new MockTransaction<unknown>(initialSnapshotWithValidation);
+		const transaction = new MockTransaction<unknown>(initialRevisionViewWithValidation);
 		transaction.applyChanges([{}, {}], trappedPath);
 		expect(transaction.status).equals(EditStatus.Applied);
 	});

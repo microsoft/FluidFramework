@@ -25,13 +25,15 @@ export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from '.
 export {
 	NodeInTrait,
 	PlaceIndex,
-	SnapshotNode,
-	Snapshot,
+	TreeViewNode,
+	TreeView,
+	RevisionView,
+	TransactionView,
 	TraitNodeIndex,
-	SnapshotPlace,
-	SnapshotRange,
+	TreeViewPlace,
+	TreeViewRange,
 	Side,
-} from './Snapshot';
+} from './TreeView';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';

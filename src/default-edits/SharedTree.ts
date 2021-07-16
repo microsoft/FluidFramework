@@ -5,7 +5,7 @@
 
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId, NodeId } from '../Identifiers';
-import { Snapshot } from '../Snapshot';
+import { RevisionView } from '../TreeView';
 import {
 	Edit,
 	BuildNode,
@@ -111,7 +111,7 @@ export class SharedTreeEditor {
 	 * @param edit - the edit to revert
 	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
 	 */
-	public revert(edit: Edit<Change>, view: Snapshot): EditId {
+	public revert(edit: Edit<Change>, view: RevisionView): EditId {
 		return this.tree.applyEdit(...HistoryEditFactory.revert(edit.changes, view));
 	}
 

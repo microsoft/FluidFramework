@@ -296,7 +296,7 @@ const insertScenarios: TestScenario[] = [
 			const deletionEditId = tree.editor.delete(StableRange.only(left));
 			const deletionEditIndex = tree.edits.getIndexOfId(deletionEditId);
 			const deletionEdit = tree.edits.getEditInSessionAtIndex(deletionEditIndex);
-			return revert(deletionEdit.changes, tree.logViewer.getSnapshotInSession(deletionEditIndex));
+			return revert(deletionEdit.changes, tree.logViewer.getRevisionViewInSession(deletionEditIndex));
 		},
 	},
 	{
@@ -306,10 +306,13 @@ const insertScenarios: TestScenario[] = [
 			const deletionEditId = tree.editor.delete(StableRange.only(left));
 			const deletionEditIndex = tree.edits.getIndexOfId(deletionEditId);
 			const deletionEdit = tree.edits.getEditInSessionAtIndex(deletionEditIndex);
-			const undoEditId = tree.editor.revert(deletionEdit, tree.logViewer.getSnapshotInSession(deletionEditIndex));
+			const undoEditId = tree.editor.revert(
+				deletionEdit,
+				tree.logViewer.getRevisionViewInSession(deletionEditIndex)
+			);
 			const undoEditIndex = tree.edits.getIndexOfId(undoEditId);
 			const undoEdit = tree.edits.getEditInSessionAtIndex(undoEditIndex);
-			return revert(undoEdit.changes, tree.logViewer.getSnapshotInSession(undoEditIndex));
+			return revert(undoEdit.changes, tree.logViewer.getRevisionViewInSession(undoEditIndex));
 		},
 	},
 	{

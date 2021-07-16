@@ -26,7 +26,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class BasicCheckout<TChange> extends Checkout<TChange> {
     constructor(tree: GenericSharedTree<TChange>);
     // (undocumented)
-    protected get latestCommittedView(): Snapshot;
+    protected get latestCommittedView(): RevisionView;
     // (undocumented)
     waitForPendingUpdates(): Promise<void>;
 }
@@ -76,21 +76,21 @@ export enum ChangeType {
 
 // @public
 export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
-    protected constructor(tree: GenericSharedTree<TChange>, currentView: Snapshot, onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>);
+    protected constructor(tree: GenericSharedTree<TChange>, currentView: RevisionView, onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>);
     abortEdit(): void;
     applyChanges(...changes: TChange[]): void;
     applyEdit(...changes: TChange[]): EditId;
     closeEdit(): EditId;
     // (undocumented)
-    get currentView(): Snapshot;
+    get currentView(): TreeView;
     dispose(error?: Error): void;
     // (undocumented)
     disposed: boolean;
     protected emitChange(): void;
     // (undocumented)
-    getChangesAndSnapshotBeforeInSession(id: EditId): {
+    getChangesAndRevisionBeforeInSession(id: EditId): {
         changes: readonly TChange[];
-        before: Snapshot;
+        before: RevisionView;
     };
     // (undocumented)
     getEditStatus(): EditStatus;
@@ -98,7 +98,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
     // @internal (undocumented)
     hasOpenEdit(): boolean;
     protected hintKnownEditingResult(edit: Edit<TChange>, result: ValidEditingResult<TChange>): void;
-    protected abstract readonly latestCommittedView: Snapshot;
+    protected abstract readonly latestCommittedView: RevisionView;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     readonly tree: GenericSharedTree<TChange>;
@@ -208,7 +208,7 @@ export type EditingResult<TChange> = {
     readonly status: EditStatus.Invalid | EditStatus.Malformed;
     readonly changes: readonly TChange[];
     readonly steps?: undefined;
-    readonly before: Snapshot;
+    readonly before: RevisionView;
 } | ValidEditingResult<TChange>;
 
 // Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
@@ -243,13 +243,13 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 
 // @public
 export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     // (undocumented)
     protected applyStashedOp(): void;
     // (undocumented)
-    get currentView(): Snapshot;
+    get currentView(): RevisionView;
     // (undocumented)
     get edits(): OrderedEditSet<TChange>;
     equals<TOtherChangeTypes>(sharedTree: GenericSharedTree<TOtherChangeTypes>): boolean;
@@ -280,18 +280,18 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // (undocumented)
     protected readonly summarizeHistory: boolean;
     // (undocumented)
-    readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
+    readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange>;
     // (undocumented)
     protected readonly writeSummaryFormat: SharedTreeSummaryWriteFormat;
 }
 
 // @public
 export abstract class GenericTransaction<TChange> {
-    constructor(view: Snapshot);
+    constructor(view: RevisionView);
     applyChange(change: TChange, path?: ReconciliationPath<TChange>): this;
     applyChanges(changes: Iterable<TChange>, path?: ReconciliationPath<TChange>): this;
     // (undocumented)
-    protected readonly before: Snapshot;
+    protected readonly before: RevisionView;
     // (undocumented)
     protected readonly changes: TChange[];
     // (undocumented)
@@ -308,15 +308,15 @@ export abstract class GenericTransaction<TChange> {
     // (undocumented)
     protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined;
     protected abstract validateOnClose(): EditStatus;
-    get view(): Snapshot;
+    get view(): TransactionView;
     // (undocumented)
-    protected _view: Snapshot;
+    protected _view: TransactionView;
 }
 
 // @public
 export interface ICheckoutEvents extends IErrorEvent {
     // (undocumented)
-    (event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void): any;
+    (event: 'viewChange', listener: (before: TreeView, after: TreeView) => void): any;
 }
 
 // @public
@@ -353,8 +353,8 @@ export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
 // @public
 export interface LogViewer {
-    getSnapshot(revision: Revision): Promise<Snapshot>;
-    getSnapshotInSession(revision: Revision): Snapshot;
+    getRevisionView(revision: Revision): Promise<RevisionView>;
+    getRevisionViewInSession(revision: Revision): RevisionView;
 }
 
 // @public
@@ -410,7 +410,7 @@ export interface OrderedEditSet<TChange> {
 export type Payload = Serializable;
 
 // @public
-export function placeFromStablePlace(snapshot: Snapshot, stablePlace: StablePlace): SnapshotPlace;
+export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace;
 
 // @public
 export type PlaceIndex = number & {
@@ -418,19 +418,19 @@ export type PlaceIndex = number & {
 };
 
 // @public
-export function rangeFromStableRange(snapshot: Snapshot, range: StableRange): SnapshotRange;
+export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange;
 
 // @public
 export interface ReconciliationChange<TChange> {
-    readonly after: Snapshot;
+    readonly after: TransactionView;
     readonly resolvedChange: TChange;
 }
 
 // @public
 export interface ReconciliationEdit<TChange> {
     readonly [index: number]: ReconciliationChange<TChange>;
-    readonly after: Snapshot;
-    readonly before: Snapshot;
+    readonly after: TreeView;
+    readonly before: TreeView;
     readonly length: number;
 }
 
@@ -441,10 +441,18 @@ export interface ReconciliationPath<TChange> {
 }
 
 // @public
-export function revert(changes: readonly Change[], before: Snapshot): Change[];
+export function revert(changes: readonly Change[], before: RevisionView): Change[];
 
 // @public
 export type Revision = number;
+
+// @public
+export class RevisionView extends TreeView {
+    // (undocumented)
+    equals(view: TreeView): boolean;
+    static fromTree(root: ChangeNode, expensiveValidation?: boolean): RevisionView;
+    openForTransaction(): TransactionView;
+}
 
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[];
@@ -491,8 +499,8 @@ export class SharedTreeEditor {
     move(source: NodeData, destination: StablePlace): EditId;
     move(source: NodeId, destination: StablePlace): EditId;
     move(source: StableRange, destination: StablePlace): EditId;
-    revert(edit: Edit<Change>, view: Snapshot): EditId;
-    }
+    revert(edit: Edit<Change>, view: RevisionView): EditId;
+}
 
 // @public
 export enum SharedTreeEvent {
@@ -525,7 +533,7 @@ export interface SharedTreeFactoryOptions {
 // Warning: (ae-internal-missing-underscore) The name "SharedTreeSummarizer" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type SharedTreeSummarizer<TChange> = (editLog: OrderedEditSet<TChange>, currentView: Snapshot) => SharedTreeSummaryBase;
+export type SharedTreeSummarizer<TChange> = (editLog: OrderedEditSet<TChange>, currentView: RevisionView) => SharedTreeSummaryBase;
 
 // @public
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
@@ -552,68 +560,6 @@ export enum Side {
     After = 1,
     // (undocumented)
     Before = 0
-}
-
-// @public
-export class Snapshot {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<SnapshotNode>;
-    addNodes(sequence: Iterable<SnapshotNode>): Snapshot;
-    assertConsistent(): void;
-    attachRange(nodesToAttach: readonly NodeId[], place: SnapshotPlace): Snapshot;
-    deleteNodes(nodes: Iterable<NodeId>): Snapshot;
-    delta(snapshot: Snapshot): Delta<NodeId>;
-    detachRange(rangeToDetach: SnapshotRange): {
-        snapshot: Snapshot;
-        detached: readonly NodeId[];
-    };
-    equals(snapshot: Snapshot): boolean;
-    // (undocumented)
-    findIndexWithinTrait(place: SnapshotPlace): PlaceIndex;
-    static fromTree(root: ChangeNode, expensiveValidation?: boolean): Snapshot;
-    // (undocumented)
-    getChangeNode(id: NodeId): ChangeNode;
-    // (undocumented)
-    getChangeNodes(nodeIds: readonly NodeId[]): ChangeNode[];
-    getChangeNodeTree(): ChangeNode;
-    // (undocumented)
-    getIndexInTrait(node: NodeId): TraitNodeIndex;
-    getParentSnapshotNode(id: NodeId): SnapshotNode | undefined;
-    getSnapshotNode(id: NodeId): SnapshotNode;
-    getTrait(traitLocation: TraitLocation): readonly NodeId[];
-    getTraitLabel(id: NodeId): TraitLabel | undefined;
-    // (undocumented)
-    getTraitLocation(node: NodeId): TraitLocation;
-    // (undocumented)
-    hasNode(id: NodeId): boolean;
-    // (undocumented)
-    readonly root: NodeId;
-    setNodeValue(nodeId: NodeId, value: Payload): Snapshot;
-    get size(): number;
-    }
-
-// @public
-export interface SnapshotNode extends NodeData {
-    // (undocumented)
-    readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
-}
-
-// @public
-export interface SnapshotPlace {
-    // (undocumented)
-    readonly sibling?: NodeId;
-    // (undocumented)
-    readonly side: Side;
-    // (undocumented)
-    readonly trait: TraitLocation;
-}
-
-// @public
-export interface SnapshotRange {
-    // (undocumented)
-    readonly end: SnapshotPlace;
-    // (undocumented)
-    readonly start: SnapshotPlace;
 }
 
 // @public
@@ -674,15 +620,30 @@ export type TraitNodeIndex = number & {
 
 // @public
 export class Transaction extends GenericTransaction<Change> {
-    protected createSnapshotNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: SnapshotNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
+    protected createViewNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: TreeViewNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
     // (undocumented)
     protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
     // (undocumented)
     protected dispatchChange(change: Change): EditStatus;
     // (undocumented)
-    static factory(snapshot: Snapshot): Transaction;
+    static factory(view: RevisionView): Transaction;
     // (undocumented)
     protected validateOnClose(): EditStatus;
+}
+
+// @public
+export class TransactionView extends TreeView {
+    addNodes(sequence: Iterable<TreeViewNode>): TransactionView;
+    attachRange(nodesToAttach: readonly NodeId[], place: TreeViewPlace): TransactionView;
+    close(): RevisionView;
+    deleteNodes(nodes: Iterable<NodeId>): TransactionView;
+    detachRange(rangeToDetach: TreeViewRange): {
+        view: TransactionView;
+        detached: readonly NodeId[];
+    };
+    // (undocumented)
+    equals(view: TreeView): boolean;
+    setNodeValue(nodeId: NodeId, value: Payload): TransactionView;
 }
 
 // @public
@@ -693,7 +654,7 @@ export interface TreeNode<TChild> extends NodeData {
 
 // @public
 export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
-    constructor(snapshot: Snapshot, nodeId: NodeId);
+    constructor(view: TreeView, nodeId: NodeId);
     // (undocumented)
     get definition(): Definition;
     demandTree(): ChangeNode;
@@ -712,22 +673,90 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 export type TreeNodeSequence<TChild> = readonly TChild[];
 
 // @public
+export abstract class TreeView {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<TreeViewNode>;
+    protected constructor(root: NodeId, forest: Forest);
+    assertConsistent(): void;
+    delta(view: TreeView): Delta<NodeId>;
+    // (undocumented)
+    abstract equals(view: TreeView): boolean;
+    // (undocumented)
+    findIndexWithinTrait(place: TreeViewPlace): PlaceIndex;
+    // Warning: (ae-forgotten-export) The symbol "Forest" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected readonly forest: Forest;
+    // @deprecated
+    static fromTree(root: ChangeNode, expensiveValidation?: boolean): RevisionView;
+    // (undocumented)
+    getChangeNode(id: NodeId): ChangeNode;
+    // (undocumented)
+    getChangeNodes(nodeIds: readonly NodeId[]): ChangeNode[];
+    getChangeNodeTree(): ChangeNode;
+    // (undocumented)
+    getIndexInTrait(node: NodeId): TraitNodeIndex;
+    // (undocumented)
+    getParentViewNode(id: NodeId): TreeViewNode | undefined;
+    // (undocumented)
+    getTrait(traitLocation: TraitLocation): readonly NodeId[];
+    // (undocumented)
+    getTraitLabel(id: NodeId): TraitLabel | undefined;
+    // (undocumented)
+    getTraitLocation(id: NodeId): TraitLocation;
+    // (undocumented)
+    getViewNode(id: NodeId): TreeViewNode;
+    // (undocumented)
+    hasEqualForest(view: TreeView, strict?: boolean): boolean;
+    // (undocumented)
+    hasNode(id: NodeId): boolean;
+    // (undocumented)
+    readonly root: NodeId;
+    // (undocumented)
+    get size(): number;
+}
+
+// @public
+export interface TreeViewNode extends NodeData {
+    // (undocumented)
+    readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
+}
+
+// @public
+export interface TreeViewPlace {
+    // (undocumented)
+    readonly sibling?: NodeId;
+    // (undocumented)
+    readonly side: Side;
+    // (undocumented)
+    readonly trait: TraitLocation;
+}
+
+// @public
+export interface TreeViewRange {
+    // (undocumented)
+    readonly end: TreeViewPlace;
+    // (undocumented)
+    readonly start: TreeViewPlace;
+}
+
+// @public
 export type UuidString = string & {
     readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
 // @public
-export function validateStablePlace(snapshot: Snapshot, place: StablePlace): EditValidationResult;
+export function validateStablePlace(view: TreeView, place: StablePlace): EditValidationResult;
 
 // @public
-export function validateStableRange(snapshot: Snapshot, range: StableRange): EditValidationResult;
+export function validateStableRange(view: TreeView, range: StableRange): EditValidationResult;
 
 // @public
 export interface ValidEditingResult<TChange> {
     // (undocumented)
-    readonly after: Snapshot;
+    readonly after: RevisionView;
     // (undocumented)
-    readonly before: Snapshot;
+    readonly before: RevisionView;
     // (undocumented)
     readonly changes: readonly TChange[];
     // (undocumented)
@@ -735,9 +764,8 @@ export interface ValidEditingResult<TChange> {
     // (undocumented)
     readonly steps: readonly {
         readonly resolvedChange: TChange;
-        readonly after: Snapshot;
+        readonly after: TransactionView;
     }[];
 }
-
 
 ```

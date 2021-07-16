@@ -4,15 +4,15 @@
  */
 
 import { EditStatus, GenericTransaction } from '../../generic';
-import { Snapshot } from '../../Snapshot';
+import { RevisionView } from '../../TreeView';
 
 /**
  * A mock implementation of `GenericTransaction` for use in tests.
  * @internal
  */
 export class MockTransaction<TChange> extends GenericTransaction<TChange> {
-	public static factory<TChange>(snapshot: Snapshot): MockTransaction<TChange> {
-		return new MockTransaction<TChange>(snapshot);
+	public static factory<TChange>(view: RevisionView): MockTransaction<TChange> {
+		return new MockTransaction<TChange>(view);
 	}
 
 	protected validateOnClose(): EditStatus {

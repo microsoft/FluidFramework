@@ -7,7 +7,7 @@ import BTree from 'sorted-btree';
 import { fail, assert, comparePayloads, copyPropertyIfDefined } from './Common';
 import { NodeData, Payload } from './generic';
 import { NodeId, TraitLabel } from './Identifiers';
-import { compareStrings } from './SnapshotUtilities';
+import { compareStrings } from './TreeViewUtilities';
 
 type Optional<T> = {
 	[P in keyof T]: T[P] | undefined;
@@ -507,7 +507,7 @@ export class Forest {
 }
 
 /**
- * @returns true iff two `SnapshotNodes` are equivalent.
+ * @returns true iff two `ForestNodes` are equivalent.
  * May return false for nodes they contain equivalent payloads encoded differently.
  */
 export function compareForestNodes(nodeA: ForestNode, nodeB: ForestNode): boolean {

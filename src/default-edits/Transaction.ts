@@ -6,7 +6,7 @@
 import { assert, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
 import { GenericTransaction, BuildNode, EditStatus } from '../generic';
-import { Snapshot, SnapshotNode } from '../Snapshot';
+import { RevisionView, TreeViewNode } from '../TreeView';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
 import {
@@ -19,14 +19,14 @@ import {
 } from './EditUtilities';
 
 /**
- * A mutable transaction for applying sequences of changes to a Snapshot.
+ * A mutable transaction for applying sequences of changes to a TreeView.
  * Allows viewing the intermediate states.
  *
- * Contains necessary state to apply changes within an edit to a Snapshot.
+ * Contains necessary state to apply changes within an edit to a TreeView.
  *
  * May have any number of changes applied to make up the edit.
  * Use `close` to complete the transaction, returning the array of changes and an EditingResult showing the
- * results of applying the changes as an Edit to the initial Snapshot (passed to the constructor).
+ * results of applying the changes as an Edit to the initial TreeView (passed to the constructor).
  *
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
@@ -34,8 +34,8 @@ import {
 export class Transaction extends GenericTransaction<Change> {
 	protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
 
-	public static factory(snapshot: Snapshot): Transaction {
-		return new Transaction(snapshot);
+	public static factory(view: RevisionView): Transaction {
+		return new Transaction(view);
 	}
 
 	protected validateOnClose(): EditStatus {
@@ -67,11 +67,11 @@ export class Transaction extends GenericTransaction<Change> {
 
 		let idAlreadyPresent = false;
 		let duplicateIdInBuild = false;
-		const map = new Map<NodeId, SnapshotNode>();
+		const map = new Map<NodeId, TreeViewNode>();
 		let detachedSequenceNotFound = false;
-		const newIds = this.createSnapshotNodesForTree(
+		const newIds = this.createViewNodesForTree(
 			change.source,
-			(id, snapshotNode) => {
+			(id, viewNode) => {
 				if (map.has(id)) {
 					duplicateIdInBuild = true;
 					return true;
@@ -80,7 +80,7 @@ export class Transaction extends GenericTransaction<Change> {
 					idAlreadyPresent = true;
 					return true;
 				}
-				map.set(id, snapshotNode);
+				map.set(id, viewNode);
 				return false;
 			},
 			() => {
@@ -124,7 +124,7 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 
 		const result = detachRange(this.view, change.source);
-		let modifiedView = result.snapshot;
+		let modifiedView = result.view;
 		const { detached } = result;
 
 		// Store or dispose detached
@@ -181,14 +181,14 @@ export class Transaction extends GenericTransaction<Change> {
 	}
 
 	/**
-	 * Generates snapshot nodes from the supplied edit nodes.
-	 * Invokes onCreateNode for each new snapshot node, and halts creation early if it returns true.
+	 * Generates tree view nodes from the supplied edit nodes.
+	 * Invokes onCreateNode for each new node, and halts creation early if it returns true.
 	 * Invokes onInvalidDetachedId and halts early for any invalid detached IDs referenced in the edit node sequence.
 	 * @returns all the top-level node IDs in `sequence` (both from nodes and from detached sequences).
 	 */
-	protected createSnapshotNodesForTree(
+	protected createViewNodesForTree(
 		sequence: Iterable<BuildNode>,
-		onCreateNode: (id: NodeId, node: SnapshotNode) => boolean,
+		onCreateNode: (id: NodeId, node: TreeViewNode) => boolean,
 		onInvalidDetachedId: () => void
 	): NodeId[] | undefined {
 		const topLevelIds: NodeId[] = [];
@@ -231,7 +231,7 @@ export class Transaction extends GenericTransaction<Change> {
 					}
 				}
 			}
-			const newNode: SnapshotNode = {
+			const newNode: TreeViewNode = {
 				identifier: node.identifier,
 				definition: node.definition,
 				traits,

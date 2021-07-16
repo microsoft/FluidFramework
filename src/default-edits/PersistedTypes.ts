@@ -10,7 +10,7 @@
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assertNotUndefined, assert } from '../Common';
-import { Side } from '../Snapshot';
+import { Side } from '../TreeView';
 import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 
 /**

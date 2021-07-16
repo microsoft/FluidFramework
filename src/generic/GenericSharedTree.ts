@@ -18,7 +18,7 @@ import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fl
 import { assert, assertNotUndefined } from '../Common';
 import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
-import { Snapshot } from '../Snapshot';
+import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
 import {
@@ -159,7 +159,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	private editLog: EditLog<TChange>;
 
 	/**
-	 * As an implementation detail, SharedTree uses a log viewer that caches snapshots at different revisions.
+	 * As an implementation detail, SharedTree uses a log viewer that caches views of different revisions.
 	 * It is not exposed to avoid accidental correctness issues, but `logViewer` is exposed in order to give clients a way
 	 * to access the revision history.
 	 */
@@ -174,7 +174,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	protected readonly logger: ITelemetryLogger;
 
-	public readonly transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>;
+	public readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange>;
 
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
@@ -196,7 +196,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-		transactionFactory: (snapshot: Snapshot) => GenericTransaction<TChange>,
+		transactionFactory: (view: RevisionView) => GenericTransaction<TChange>,
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
@@ -279,8 +279,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	/**
 	 * @returns the current view of the tree.
 	 */
-	public get currentView(): Snapshot {
-		return this.logViewer.getSnapshotInSession(Number.POSITIVE_INFINITY);
+	public get currentView(): RevisionView {
+		return this.logViewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -481,7 +481,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		}
 
 		const { editHistory, currentTree } = convertedSummary;
-		const currentView = Snapshot.fromTree(currentTree);
+		const currentView = RevisionView.fromTree(currentTree);
 
 		const editLog = new EditLog(editHistory, this.logger);
 
@@ -491,9 +491,9 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 		const logViewer = new CachingLogViewer(
 			editLog,
-			Snapshot.fromTree(initialTree),
+			RevisionView.fromTree(initialTree),
 			// TODO:#47830: Store multiple checkpoints in summary.
-			[[editLog.length, { snapshot: currentView }]],
+			[[editLog.length, { view: currentView }]],
 			this.expensiveValidation,
 			callback,
 			this.logger,

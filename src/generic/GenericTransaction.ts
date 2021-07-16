@@ -5,7 +5,7 @@
 
 import { assert, fail } from '../Common';
 import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
-import { Snapshot } from '../Snapshot';
+import { RevisionView, TransactionView } from '../TreeView';
 import { EditStatus } from './PersistedTypes';
 
 /**
@@ -17,7 +17,7 @@ export type EditingResult<TChange> =
 			readonly status: EditStatus.Invalid | EditStatus.Malformed;
 			readonly changes: readonly TChange[];
 			readonly steps?: undefined;
-			readonly before: Snapshot;
+			readonly before: RevisionView;
 	  }
 	| ValidEditingResult<TChange>;
 
@@ -28,43 +28,43 @@ export type EditingResult<TChange> =
 export interface ValidEditingResult<TChange> {
 	readonly status: EditStatus.Applied;
 	readonly changes: readonly TChange[];
-	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: Snapshot }[];
-	readonly before: Snapshot;
-	readonly after: Snapshot;
+	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[];
+	readonly before: RevisionView;
+	readonly after: RevisionView;
 }
 
 /**
- * A mutable transaction for applying sequences of changes to a Snapshot.
+ * A mutable transaction for applying sequences of changes to a TreeView.
  * Allows viewing the intermediate states.
  *
- * Contains necessary state to apply changes within an edit to a Snapshot.
+ * Contains necessary state to apply changes within an edit to a TreeView.
  *
  * May have any number of changes applied to make up the edit.
  * Use `close` to complete the transaction, returning the array of changes and an EditingResult showing the
- * results of applying the changes as an Edit to the initial Snapshot (passed to the constructor).
+ * results of applying the changes as an Edit to the initial TreeView (passed to the constructor).
  *
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
  */
 export abstract class GenericTransaction<TChange> {
-	protected readonly before: Snapshot;
-	protected _view: Snapshot;
+	protected readonly before: RevisionView;
+	protected _view: TransactionView;
 	protected _status: EditStatus = EditStatus.Applied;
 	protected readonly changes: TChange[] = [];
 	protected readonly steps: ReconciliationChange<TChange>[] = [];
 	protected isOpen = true;
 
 	/**
-	 * Create and open an edit of the provided `Snapshot`. After applying 0 or more changes, this editor should be closed via `close()`.
-	 * @param view - the `Snapshot` at which this edit begins. The first change will be applied against this view.
+	 * Create and open an edit of the provided `TreeView`. After applying 0 or more changes, this editor should be closed via `close()`.
+	 * @param view - the `TreeView` at which this edit begins. The first change will be applied against this view.
 	 */
-	public constructor(view: Snapshot) {
-		this._view = view;
+	public constructor(view: RevisionView) {
+		this._view = view.openForTransaction();
 		this.before = view;
 	}
 
-	/** The most up-to-date `Snapshot` for this edit. This is the state of the tree after all changes applied so far. */
-	public get view(): Snapshot {
+	/** The most up-to-date `TreeView` for this edit. This is the state of the tree after all changes applied so far. */
+	public get view(): TransactionView {
 		return this._view;
 	}
 
@@ -73,7 +73,7 @@ export abstract class GenericTransaction<TChange> {
 		return this._status;
 	}
 
-	/** @returns the final `EditStatus` and `Snapshot` after all changes are applied. */
+	/** @returns the final `EditStatus` and `TreeView` after all changes are applied. */
 	public close(): EditingResult<TChange> {
 		assert(this.isOpen, 'transaction has already been closed');
 		this.isOpen = false;
@@ -84,7 +84,7 @@ export abstract class GenericTransaction<TChange> {
 			return {
 				status: EditStatus.Applied,
 				before: this.before,
-				after: this._view,
+				after: this._view.close(),
 				changes: this.changes,
 				steps: this.steps,
 			};

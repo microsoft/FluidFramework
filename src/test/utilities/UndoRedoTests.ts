@@ -261,7 +261,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				parent: initialTree.identifier,
 				label: leftTraitLabel,
 			});
-			const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+			const nodeAfterUndo = tree.currentView.getViewNode(leftTraitAfterUndo[1]);
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
@@ -278,7 +278,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				parent: initialTree.identifier,
 				label: leftTraitLabel,
 			});
-			const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
+			const nodeAfterRedo = tree.currentView.getViewNode(leftTraitAfterRedo[1]);
 			expect(nodeAfterRedo.payload).equal(testPayload);
 		});
 
@@ -314,7 +314,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				expect(leftTraitAfterUndo.length).to.equal(2);
 
 				// Check that the node under the left trait is the second node
-				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				const nodeAfterUndo = tree.currentView.getViewNode(leftTraitAfterUndo[1]);
 				expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
 
 				// Redo testing
@@ -365,7 +365,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				expect(leftTraitAfterUndo.length).to.equal(3);
 
 				// Check the first node is the second one under the left trait
-				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				const nodeAfterUndo = tree.currentView.getViewNode(leftTraitAfterUndo[1]);
 				expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
 
 				// Redo testing
@@ -414,7 +414,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 					parent: initialTree.identifier,
 					label: leftTraitLabel,
 				});
-				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				const nodeAfterUndo = tree.currentView.getViewNode(leftTraitAfterUndo[1]);
 				expect(nodeAfterUndo.payload).to.be.undefined;
 
 				// Redo testing
@@ -431,7 +431,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 					parent: initialTree.identifier,
 					label: leftTraitLabel,
 				});
-				const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
+				const nodeAfterRedo = tree.currentView.getViewNode(leftTraitAfterRedo[1]);
 				expect(nodeAfterRedo.payload).equal(testPayload);
 			});
 		}

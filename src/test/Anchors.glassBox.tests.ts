@@ -23,7 +23,7 @@ import {
 	EvaluatedChange,
 } from '../anchored-edits';
 import { assert, fail } from '../Common';
-import { Side, Snapshot } from '../Snapshot';
+import { RevisionView, Side, TreeView, TransactionView } from '../TreeView';
 import { EditValidationResult } from '../Checkout';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from '../ReconciliationPath';
 import { makeEmptyNode, leftTraitLabel, rightTraitLabel } from './utilities/TestUtilities';
@@ -68,7 +68,7 @@ const mockNodeId = 'mock-node-id' as NodeId;
 const mockPlace = 'mock-place' as unknown as StablePlace;
 const mockRange = 'mock-range' as unknown as StableRange;
 const mockPlaceAnchor = 'mock-place-anchor' as unknown as RelativePlaceAnchor;
-const mockSnapshot = 'mock-snapshot' as unknown as Snapshot;
+const mockView = 'mock-view' as unknown as TransactionView;
 const mockPath = 'mock-path' as unknown as ReconciliationPath<AnchoredChange>;
 const mockEvaluatedChange = 'mock-evaluated-change' as unknown as EvaluatedChange<AnchoredChange>;
 
@@ -104,13 +104,13 @@ describe('Anchor Glass Box Tests', () => {
 		for (const testCase of testCases) {
 			it(`attempts to resolve anchors in ${testCase.name} changes`, () => {
 				const change = testCase.input;
-				const actualHappy = resolveChangeAnchors(change, mockSnapshot, [], {
+				const actualHappy = resolveChangeAnchors(change, mockView, [], {
 					nodeResolver: () => mockNodeId,
 					placeResolver: () => mockPlace,
 					rangeResolver: () => mockRange,
 				});
 				expect(actualHappy).deep.equal(testCase.expected);
-				const actualSad = resolveChangeAnchors(change, mockSnapshot, [], {
+				const actualSad = resolveChangeAnchors(change, mockView, [], {
 					nodeResolver: () => undefined,
 					placeResolver: () => undefined,
 					rangeResolver: () => undefined,
@@ -121,26 +121,26 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('throws when given an unsupported change type', () => {
 			const fakeChange = { type: -42 };
-			expect(() => resolveChangeAnchors(fakeChange as AnchoredChange, mockSnapshot, [])).throws();
+			expect(() => resolveChangeAnchors(fakeChange as AnchoredChange, mockView, [])).throws();
 		});
 	});
 
 	describe(resolveNodeAnchor.name, () => {
-		it('returns the given NodeAnchor as a NodeId if the node exists in the snapshot', () => {
-			const snapshot = Snapshot.fromTree(left);
-			expect(resolveNodeAnchor(left.identifier, snapshot, [])).equals(left.identifier);
+		it('returns the given NodeAnchor as a NodeId if the node exists in the view', () => {
+			const view = RevisionView.fromTree(left);
+			expect(resolveNodeAnchor(left.identifier, view, [])).equals(left.identifier);
 		});
 
-		it('returns undefined if the node does not exists in the snapshot', () => {
-			const snapshot = Snapshot.fromTree(left);
-			expect(resolveNodeAnchor(mockNodeId, snapshot, [])).equals(undefined);
+		it('returns undefined if the node does not exists in the view', () => {
+			const view = RevisionView.fromTree(left);
+			expect(resolveNodeAnchor(mockNodeId, view, [])).equals(undefined);
 		});
 	});
 
 	describe(resolveRangeAnchor.name, () => {
 		it('returns a range with resolved places when possible', () => {
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockSnapshot, [], {
+				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
 					placeResolver: () => mockPlace,
 					rangeValidator: () => EditValidationResult.Valid,
 				})
@@ -149,13 +149,13 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns undefined if either place cannot be resolved', () => {
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockSnapshot, [], {
+				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
 					placeResolver: (place: PlaceAnchor) => (place.side === Side.After ? mockPlace : undefined),
 					rangeValidator: () => EditValidationResult.Valid,
 				})
 			).equals(undefined);
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockSnapshot, [], {
+				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
 					placeResolver: (place: PlaceAnchor) => (place.side === Side.Before ? undefined : mockPlace),
 					rangeValidator: () => EditValidationResult.Valid,
 				})
@@ -164,13 +164,13 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns undefined the resolved places do not make a valid range', () => {
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockSnapshot, [], {
+				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
 					placeResolver: () => mockPlace,
 					rangeValidator: () => EditValidationResult.Malformed,
 				})
 			).equals(undefined);
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockSnapshot, [], {
+				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
 					placeResolver: () => mockPlace,
 					rangeValidator: () => EditValidationResult.Invalid,
 				})
@@ -179,9 +179,9 @@ describe('Anchor Glass Box Tests', () => {
 	});
 
 	describe(resolvePlaceAnchor.name, () => {
-		it('returns the given anchor when that anchor is valid in the current snapshot', () => {
-			const snapshot = Snapshot.fromTree(initialTree);
-			const testWithPlace = (place) => resolvePlaceAnchor(place, snapshot, []);
+		it('returns the given anchor when that anchor is valid in the current view', () => {
+			const view = RevisionView.fromTree(initialTree);
+			const testWithPlace = (place) => resolvePlaceAnchor(place, view, []);
 			expect(testWithPlace(startPlace)).contains(startPlace);
 			expect(testWithPlace(endPlace)).contains(endPlace);
 			expect(testWithPlace(beforePlace)).contains(beforePlace);
@@ -194,7 +194,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns undefined when the anchor is invalid and not updatable', () => {
 			expect(
-				resolvePlaceAnchor(mockPlace, mockSnapshot, [], {
+				resolvePlaceAnchor(mockPlace, mockView, [], {
 					placeUpdatorForPath: () => undefined,
 					placeValidator: () => EditValidationResult.Invalid,
 				})
@@ -203,7 +203,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns undefined when the anchor is invalid and bound to the node', () => {
 			const resolvePlaceAnchorForInvalidPlace = (place) =>
-				resolvePlaceAnchor(place, mockSnapshot, [], {
+				resolvePlaceAnchor(place, mockView, [], {
 					placeUpdatorForPath: () => fail(),
 					placeValidator: () => EditValidationResult.Invalid,
 				});
@@ -215,7 +215,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns an updated anchor when the anchor is invalid but updatable to be valid', () => {
 			let updateCountdown = 5;
-			const inputSnapshot = Snapshot.fromTree(initialTree);
+			const inputView = RevisionView.fromTree(initialTree);
 			const inputPlace = PlaceAnchor.after(mockNodeId);
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
@@ -225,12 +225,12 @@ describe('Anchor Glass Box Tests', () => {
 				expect(path).equals(mockPath);
 				return --updateCountdown ? inputPlace : afterAnchor;
 			};
-			const placeValidator = (snapshot, place) => {
-				expect(snapshot).equals(inputSnapshot);
+			const placeValidator = (view, place) => {
+				expect(view).equals(inputView);
 				return place === inputPlace ? EditValidationResult.Invalid : EditValidationResult.Valid;
 			};
 			expect(
-				resolvePlaceAnchor(inputPlace, inputSnapshot, mockPath, {
+				resolvePlaceAnchor(inputPlace, inputView, mockPath, {
 					placeUpdatorForPath,
 					placeValidator,
 				})
@@ -241,7 +241,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('returns undefined when the anchor is invalid and updatable to be invalid', () => {
 			let updateCountdown = 5;
-			const inputSnapshot = Snapshot.fromTree(initialTree);
+			const inputView = RevisionView.fromTree(initialTree);
 			const inputPlace = PlaceAnchor.after(mockNodeId);
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
@@ -251,13 +251,13 @@ describe('Anchor Glass Box Tests', () => {
 				expect(path).equals(mockPath);
 				return --updateCountdown ? inputPlace : undefined;
 			};
-			const placeValidator = (snapshot, place) => {
-				expect(snapshot).equals(inputSnapshot);
+			const placeValidator = (view, place) => {
+				expect(view).equals(inputView);
 				expect(place).equals(inputPlace);
 				return EditValidationResult.Invalid;
 			};
 			expect(
-				resolvePlaceAnchor(inputPlace, inputSnapshot, mockPath, {
+				resolvePlaceAnchor(inputPlace, inputView, mockPath, {
 					placeUpdatorForPath,
 					placeValidator,
 				})
@@ -268,7 +268,7 @@ describe('Anchor Glass Box Tests', () => {
 
 		it('throws when given an unsupported choice of anchor semantics', () => {
 			const fakeAnchor = { semantics: -42 };
-			expect(() => resolvePlaceAnchor(fakeAnchor as PlaceAnchor, mockSnapshot, [])).throws();
+			expect(() => resolvePlaceAnchor(fakeAnchor as PlaceAnchor, mockView, [])).throws();
 		});
 	});
 
@@ -316,7 +316,7 @@ describe('Anchor Glass Box Tests', () => {
 			assert(changes.length > 0);
 			const steps: ReconciliationChange<AnchoredChange>[] = changes.map(makeChange);
 			return Object.assign(steps, {
-				before: snapshotBeforeChange(changes[0]),
+				before: viewBeforeChange(changes[0]),
 				after: steps[steps.length - 1].after,
 			});
 		}
@@ -324,20 +324,20 @@ describe('Anchor Glass Box Tests', () => {
 		function makeChange(change: AnchoredChange): ReconciliationChange<AnchoredChange> {
 			return {
 				resolvedChange: change,
-				after: snapshotAfterChange(change),
+				after: viewAfterChange(change) as TransactionView,
 			};
 		}
 
-		function snapshotBeforeChange(change: AnchoredChange): Snapshot {
-			return change === stayInvalidChange || change === mendingChange ? invalidSnapshot : validSnapshot;
+		function viewBeforeChange(change: AnchoredChange): TreeView {
+			return change === stayInvalidChange || change === mendingChange ? invalidView : validView;
 		}
 
-		function snapshotAfterChange(change: AnchoredChange): Snapshot {
-			return change === stayValidChange || change === mendingChange ? validSnapshot : invalidSnapshot;
+		function viewAfterChange(change: AnchoredChange): TreeView {
+			return change === stayValidChange || change === mendingChange ? validView : invalidView;
 		}
 
-		const validSnapshot = 'valid-snapshot' as unknown as Snapshot;
-		const invalidSnapshot = 'invalid-snapshot' as unknown as Snapshot;
+		const validView = 'valid-view' as unknown as TreeView;
+		const invalidView = 'invalid-view' as unknown as TreeView;
 		const priorOffendingChange = 'prior-offending-change' as unknown as AnchoredChange;
 		const lastOffendingChange = 'last-offending-change' as unknown as AnchoredChange;
 		const stayValidChange = 'stay-valid-change' as unknown as AnchoredChange;
@@ -351,10 +351,10 @@ describe('Anchor Glass Box Tests', () => {
 
 		const testWithPath = (path: ReconciliationPath<AnchoredChange>) =>
 			findLastOffendingChange(mockPlaceAnchor, path, {
-				placeValidator: (snapshot) =>
-					snapshot === invalidSnapshot
+				placeValidator: (view) =>
+					view === invalidView
 						? EditValidationResult.Invalid
-						: snapshot === validSnapshot
+						: view === validView
 						? EditValidationResult.Valid
 						: fail(),
 			});
@@ -401,8 +401,8 @@ describe('Anchor Glass Box Tests', () => {
 				it(`Test Case ${i}`, () => {
 					const actual = testWithPath(testCases[i]);
 					expect(actual).deep.equals({
-						before: validSnapshot,
-						after: invalidSnapshot,
+						before: validView,
+						after: invalidView,
 						change: lastOffendingChange,
 					});
 				});
@@ -453,15 +453,15 @@ describe('Anchor Glass Box Tests', () => {
 		];
 
 		function evaluateCase(caseIndex: number, anchor: RelativePlaceAnchor): PlaceAnchor | undefined {
-			const before = Snapshot.fromTree({
+			const before = RevisionView.fromTree({
 				...parent,
 				traits: { [leftTraitLabel]: rangesInSitu[caseIndex].trait },
-			});
+			}).openForTransaction();
 			const filteredTrait = rangesInSitu[caseIndex].trait.filter((sibling) => sibling !== left);
-			const after = Snapshot.fromTree({
+			const after = RevisionView.fromTree({
 				...parent,
 				traits: filteredTrait.length ? { [leftTraitLabel]: filteredTrait } : {},
-			});
+			}).openForTransaction();
 			const evaluatedChange: EvaluatedChange<AnchoredChange> = {
 				change: AnchoredChange.detach(rangesInSitu[caseIndex].range),
 				before,
@@ -494,11 +494,11 @@ describe('Anchor Glass Box Tests', () => {
 		});
 
 		it('does not update anchors when the containing parent is deleted', () => {
-			const before = Snapshot.fromTree(initialTree);
-			const after = Snapshot.fromTree({
+			const before = RevisionView.fromTree(initialTree).openForTransaction();
+			const after = RevisionView.fromTree({
 				...initialTree,
 				traits: {},
-			});
+			}).openForTransaction();
 			const evaluatedChange: EvaluatedChange<AnchoredChange> = {
 				change: AnchoredChange.detach(RangeAnchor.only(parent)),
 				before,

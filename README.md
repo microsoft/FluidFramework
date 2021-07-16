@@ -7,7 +7,7 @@ A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 -   High quality automatic merge resolution
 -   Full History Inspection, Manipulation and Metadata
 
-Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [Snapshot](.\src\Snapshot.ts)) are created from sequences of Edits.
+Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [TreeView](.\src\TreeView.ts)) are created from sequences of Edits.
 
 Semantically, the current state of the tree is defined as:
 
@@ -137,7 +137,7 @@ Design wise:
 
 # Edits
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\generic\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\generic\PersistedTypes.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
 
 Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.

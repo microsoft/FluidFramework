@@ -5,7 +5,7 @@
 
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId } from '../Identifiers';
-import { Snapshot } from '../Snapshot';
+import { RevisionView } from '../TreeView';
 import { Edit, BuildNode, fullHistorySummarizer, GenericSharedTree, NodeData, SharedTreeSummaryBase } from '../generic';
 import { OrderedEditSet } from '../EditLog';
 import { noHistorySummarizer, revert } from '../default-edits';
@@ -110,7 +110,7 @@ export class SharedTreeWithAnchorsEditor {
 	 * @param edit - the edit to revert
 	 * @param view - the revision to which the edit is applied (not the output of applying edit: it's the one just before that)
 	 */
-	public revert(edit: Edit<AnchoredChange>, view: Snapshot): EditId {
+	public revert(edit: Edit<AnchoredChange>, view: RevisionView): EditId {
 		return this.tree.applyEdit(...revert(edit.changes, view));
 	}
 

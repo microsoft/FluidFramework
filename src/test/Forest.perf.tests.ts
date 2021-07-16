@@ -7,7 +7,7 @@ import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
 import { assert } from '../Common';
-import { Side, Snapshot, SnapshotNode } from '../Snapshot';
+import { RevisionView, Side, TreeViewNode } from '../TreeView';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { ChangeNode } from '../generic';
 
@@ -18,17 +18,17 @@ describe('Forest Perf', () => {
 
 		benchmark({
 			type,
-			title: `${count} random inserts in Snapshot`,
+			title: `${count} random inserts in TreeView`,
 			benchmarkFn: () => {
 				buildRandomTree(count);
 			},
 		});
 
-		let built: Snapshot | undefined;
+		let built: RevisionView | undefined;
 		let rootId: NodeId | undefined;
 		benchmark({
 			type,
-			title: `walk ${count} node Snapshot`,
+			title: `walk ${count} node TreeView`,
 			before: () => {
 				[built, rootId] = buildRandomTree(count);
 			},
@@ -45,9 +45,9 @@ describe('Forest Perf', () => {
 	}
 });
 
-function walk(s: Snapshot, id: NodeId): number {
+function walk(s: RevisionView, id: NodeId): number {
 	let count = 1;
-	const n = s.getSnapshotNode(id);
+	const n = s.getViewNode(id);
 	for (const [_label, v] of n.traits.entries()) {
 		for (const child of v) {
 			count += walk(s, child);
@@ -56,7 +56,7 @@ function walk(s: Snapshot, id: NodeId): number {
 	return count;
 }
 
-function buildRandomTree(size: number): [Snapshot, NodeId] {
+function buildRandomTree(size: number): [RevisionView, NodeId] {
 	function getId(): NodeId {
 		return v4() as NodeId;
 	}
@@ -68,14 +68,14 @@ function buildRandomTree(size: number): [Snapshot, NodeId] {
 	const rootId = getId();
 	const root: ChangeNode = { traits: {}, definition: v4() as Definition, identifier: rootId };
 	const ids = [rootId];
-	let f = Snapshot.fromTree(root);
+	let f = RevisionView.fromTree(root).openForTransaction();
 
 	for (let i = 1; i < size; i++) {
 		const label = getLabel();
 		const def: Definition = v4() as Definition;
 		const id = getId();
 
-		const newNode: SnapshotNode = {
+		const newNode: TreeViewNode = {
 			identifier: id,
 			definition: def,
 			traits: new Map<TraitLabel, readonly NodeId[]>(),
@@ -86,5 +86,5 @@ function buildRandomTree(size: number): [Snapshot, NodeId] {
 		f = f.attachRange([id], { trait: { parent, label }, side: Side.Before });
 		ids.push(id);
 	}
-	return [f, rootId];
+	return [f.close(), rootId];
 }

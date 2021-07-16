@@ -49,10 +49,10 @@ export class SharedTreeRevertible implements IRevertible {
 	public revert() {
 		const editIndex = this.tree.edits.getIndexOfId(this.editId);
 		const edit = this.tree.edits.getEditInSessionAtIndex(editIndex);
-		const snapshotBefore = this.tree.logViewer.getSnapshotInSession(editIndex);
+		const viewBefore = this.tree.logViewer.getRevisionViewInSession(editIndex);
 
 		// Apply the revert edit and set it as the new revertible edit.
-		this.editId = this.tree.editor.revert(edit, snapshotBefore);
+		this.editId = this.tree.editor.revert(edit, viewBefore);
 	}
 
 	public discard() {

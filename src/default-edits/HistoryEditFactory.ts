@@ -5,7 +5,7 @@
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { Snapshot, Side } from '../Snapshot';
+import { RevisionView, Side, TransactionView } from '../TreeView';
 import { BuildNode, TreeNode } from '../generic';
 import { Change, ChangeType, Detach, Insert, SetValue, StableRange, StablePlace } from './PersistedTypes';
 import { Transaction } from './Transaction';
@@ -14,15 +14,15 @@ import { rangeFromStableRange } from './EditUtilities';
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
  * @param changes - the changes for which to produce an inverse.
- * @param before - a snapshot of the tree state before `changes` are/were applied - used as a basis for generating the inverse.
- * @returns a sequence of changes _r_ that will produce `before` if applied to a snapshot _A_, where _A_ is the result of
- * applying `changes` to `before`. Applying _r_ to snapshots other than _A_ is legal but may cause the changes to fail to apply or may
+ * @param before - a view of the tree state before `changes` are/were applied - used as a basis for generating the inverse.
+ * @returns a sequence of changes _r_ that will produce `before` if applied to a view _A_, where _A_ is the result of
+ * applying `changes` to `before`. Applying _r_ to views other than _A_ is legal but may cause the changes to fail to apply or may
  * not be a true semantic inverse.
  *
  * TODO: what should this do if `changes` fails to apply to `before`?
  * @public
  */
-export function revert(changes: readonly Change[], before: Snapshot): Change[] {
+export function revert(changes: readonly Change[], before: RevisionView): Change[] {
 	const result: Change[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -150,16 +150,16 @@ function createInvertedInsert(insert: Insert, nodesInserted: readonly NodeId[], 
  */
 function createInvertedDetach(
 	detach: Detach,
-	snapshotBeforeEdit: Snapshot
+	viewBeforeChange: TransactionView
 ): { invertedDetach: Change[]; detachedNodeIds: NodeId[] } {
 	const { source } = detach;
 
-	const { start, end } = rangeFromStableRange(snapshotBeforeEdit, source);
+	const { start, end } = rangeFromStableRange(viewBeforeChange, source);
 	const { trait: referenceTrait } = start;
-	const nodes = snapshotBeforeEdit.getTrait(referenceTrait);
+	const nodes = viewBeforeChange.getTrait(referenceTrait);
 
-	const startIndex = snapshotBeforeEdit.findIndexWithinTrait(start);
-	const endIndex = snapshotBeforeEdit.findIndexWithinTrait(end);
+	const startIndex = viewBeforeChange.findIndexWithinTrait(start);
+	const endIndex = viewBeforeChange.findIndexWithinTrait(end);
 	const detachedNodeIds: NodeId[] = nodes.slice(startIndex, endIndex);
 
 	const leftOfDetached = nodes.slice(0, startIndex);
@@ -195,16 +195,16 @@ function createInvertedDetach(
 	const detachedSequenceId = 0 as DetachedSequenceId;
 	return {
 		invertedDetach: [
-			Change.build(snapshotBeforeEdit.getChangeNodes(detachedNodeIds), detachedSequenceId),
+			Change.build(viewBeforeChange.getChangeNodes(detachedNodeIds), detachedSequenceId),
 			Change.insert(detachedSequenceId, insertDestination),
 		],
 		detachedNodeIds,
 	};
 }
 
-function createInvertedSetValue(setValue: SetValue, revisionBeforeEdit: Snapshot): Change[] {
+function createInvertedSetValue(setValue: SetValue, revisionBeforeChange: TransactionView): Change[] {
 	const { nodeToModify } = setValue;
-	const oldPayload = revisionBeforeEdit.getSnapshotNode(nodeToModify).payload;
+	const oldPayload = revisionBeforeChange.getViewNode(nodeToModify).payload;
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
 	// eslint-disable-next-line no-null/no-null

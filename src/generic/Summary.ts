@@ -7,7 +7,7 @@ import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces'
 import { serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
 import { EditLogSummary, OrderedEditSet } from '../EditLog';
-import { Snapshot } from '../Snapshot';
+import { RevisionView } from '../TreeView';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { ChangeNode, Edit } from './PersistedTypes';
 
@@ -27,7 +27,7 @@ export const formatVersion = '0.0.2';
  */
 export type SharedTreeSummarizer<TChange> = (
 	editLog: OrderedEditSet<TChange>,
-	currentView: Snapshot
+	currentView: RevisionView
 ) => SharedTreeSummaryBase;
 
 /**
@@ -71,7 +71,7 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
  */
 export function fullHistorySummarizer<TChange>(
 	editLog: OrderedEditSet<TChange>,
-	currentView: Snapshot
+	currentView: RevisionView
 ): SharedTreeSummary_0_0_2<TChange> | SharedTreeSummary<TChange> {
 	const { editChunks, editIds } = editLog.getEditLogSummary();
 
@@ -108,7 +108,7 @@ export function fullHistorySummarizer<TChange>(
  */
 export function fullHistorySummarizer_0_1_0<TChange>(
 	editLog: OrderedEditSet<TChange>,
-	currentView: Snapshot
+	currentView: RevisionView
 ): SharedTreeSummary<TChange> {
 	return {
 		currentTree: currentView.getChangeNodeTree(),

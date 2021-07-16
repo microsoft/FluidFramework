@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Snapshot } from './Snapshot';
+import { RevisionView } from './TreeView';
 import { Checkout } from './Checkout';
 import { EditCommittedEventArguments, GenericSharedTree } from './generic';
 
@@ -24,7 +24,7 @@ export class BasicCheckout<TChange> extends Checkout<TChange> {
 		});
 	}
 
-	protected get latestCommittedView(): Snapshot {
+	protected get latestCommittedView(): RevisionView {
 		return this.tree.currentView;
 	}
 

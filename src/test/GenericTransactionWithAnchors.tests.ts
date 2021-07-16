@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import { EditStatus } from '../generic';
 import { ReconciliationEdit } from '../ReconciliationPath';
 import { AnchoredChange, PlaceAnchorSemanticsChoice, RangeAnchor, TransactionWithAnchors } from '../anchored-edits';
-import { simpleTreeSnapshotWithValidation, left, right } from './utilities/TestUtilities';
+import { simpleRevisionViewWithValidation, left, right } from './utilities/TestUtilities';
 
 describe('TransactionWithAnchors', () => {
 	it('does not read the reconciliation path when change resolution does not require it', () => {
@@ -17,7 +17,7 @@ describe('TransactionWithAnchors', () => {
 				return target[prop];
 			},
 		});
-		const transaction = new TransactionWithAnchors(simpleTreeSnapshotWithValidation);
+		const transaction = new TransactionWithAnchors(simpleRevisionViewWithValidation);
 		transaction.applyChanges(
 			[
 				AnchoredChange.detach(RangeAnchor.only(left, PlaceAnchorSemanticsChoice.BoundToNode)),

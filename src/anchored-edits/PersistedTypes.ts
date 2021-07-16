@@ -9,7 +9,7 @@
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
-import { Side } from '../Snapshot';
+import { Side } from '../TreeView';
 import { EditBase, BuildNode, NodeData, Payload, TraitLocation, TreeNodeSequence } from '../generic';
 import {
 	Build,
@@ -174,7 +174,7 @@ export const AnchoredMove = {
  */
 export enum PlaceAnchorSemanticsChoice {
 	/**
-	 * The resulting `PlaceAnchor` is valid iff the referenced sibling or parent node with the given ID exists in the snapshot on which the
+	 * The resulting `PlaceAnchor` is valid iff the referenced sibling or parent node with the given ID exists in the tree view on which the
 	 * change is applied.
 	 */
 	BoundToNode = 0,

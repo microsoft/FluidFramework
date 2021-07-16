@@ -7,7 +7,7 @@ import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
 import { assert, fail } from './Common';
 import { Revision } from './LogViewer';
-import { compareFiniteNumbers } from './SnapshotUtilities';
+import { compareFiniteNumbers } from './TreeViewUtilities';
 
 /**
  * A cache of `TValue`s corresponding to `Revision`s.

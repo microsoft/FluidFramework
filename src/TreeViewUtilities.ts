@@ -6,17 +6,17 @@
 import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { ChangeNode, TraitMap } from './generic';
-import { Snapshot } from './Snapshot';
+import { TreeView } from './TreeView';
 
 /**
- * Converts a node in a snapshot to an equivalent `ChangeNode`.
- * @param snapshot - the snapshot in which the node exists
- * @param nodeId - the id of the node in the snapshot
+ * Converts a node in a tree view to an equivalent `ChangeNode`.
+ * @param view - the view in which the node exists
+ * @param nodeId - the id of the node in the view
  * @param lazyTraits - whether or not traits should be populated lazily.
  * If lazy, the subtrees under each trait will not be read until the trait is first accessed.
  */
-export function getChangeNodeFromSnapshot(snapshot: Snapshot, nodeId: NodeId, lazyTraits = false): ChangeNode {
-	const node = snapshot.getSnapshotNode(nodeId);
+export function getChangeNodeFromView(view: TreeView, nodeId: NodeId, lazyTraits = false): ChangeNode {
+	const node = view.getViewNode(nodeId);
 	const nodeData = {
 		definition: node.definition,
 		identifier: node.identifier,
@@ -27,20 +27,20 @@ export function getChangeNodeFromSnapshot(snapshot: Snapshot, nodeId: NodeId, la
 		return {
 			...nodeData,
 			get traits() {
-				return memoizeGetter(this, 'traits', makeTraits(snapshot, node.traits, lazyTraits));
+				return memoizeGetter(this, 'traits', makeTraits(view, node.traits, lazyTraits));
 			},
 		};
 	}
 
 	return {
 		...nodeData,
-		traits: makeTraits(snapshot, node.traits, lazyTraits),
+		traits: makeTraits(view, node.traits, lazyTraits),
 	};
 }
 
-/** Given the traits of a SnapshotNode, return the corresponding traits on a Node */
+/** Given the traits of a TreeViewNode, return the corresponding traits on a Node */
 function makeTraits(
-	snapshot: Snapshot,
+	view: TreeView,
 	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
 	lazyTraits = false
 ): TraitMap<ChangeNode> {
@@ -49,9 +49,7 @@ function makeTraits(
 		if (lazyTraits) {
 			Object.defineProperty(traitMap, label, {
 				get() {
-					const treeNodeTrait = trait.map((nodeId) =>
-						getChangeNodeFromSnapshot(snapshot, nodeId, lazyTraits)
-					);
+					const treeNodeTrait = trait.map((nodeId) => getChangeNodeFromView(view, nodeId, lazyTraits));
 					return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
 				},
 				configurable: true,
@@ -59,7 +57,7 @@ function makeTraits(
 			});
 		} else {
 			Object.defineProperty(traitMap, label, {
-				value: trait.map((nodeId) => getChangeNodeFromSnapshot(snapshot, nodeId, lazyTraits)),
+				value: trait.map((nodeId) => getChangeNodeFromView(view, nodeId, lazyTraits)),
 				enumerable: true,
 			});
 		}

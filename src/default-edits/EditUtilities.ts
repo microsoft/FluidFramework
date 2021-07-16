@@ -4,7 +4,7 @@
  */
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
-import { Snapshot, SnapshotPlace, SnapshotRange } from '../Snapshot';
+import { TreeView, TransactionView, TreeViewPlace, TreeViewRange } from '../TreeView';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditValidationResult } from '../Checkout';
 import { BuildNode, TraitLocation, TreeNodeSequence } from '../generic';
@@ -27,14 +27,14 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode
 
 /**
  * Check the validity of the given `StablePlace`
- * @param snapshot - the `Snapshot` within which to validate the given place
+ * @param view - the `TreeView` within which to validate the given place
  * @param place - the `StablePlace` to check
  */
-export function validateStablePlace(snapshot: Snapshot, place: StablePlace): EditValidationResult {
+export function validateStablePlace(view: TreeView, place: StablePlace): EditValidationResult {
 	/* A StablePlace is valid if the following conditions are met:
 	 *     1. A sibling or trait is defined.
-	 *     2. If a sibling is defined, both it and its parent exist in the `Snapshot`.
-	 *     3. If a trait is defined, its parent node exists in the `Snapshot`.
+	 *     2. If a sibling is defined, both it and its parent exist in the `TreeView`.
+	 *     3. If a trait is defined, its parent node exists in the `TreeView`.
 	 *     4. If a sibling and a trait location are both specified, the sibling needs to actually be in that trait.
 	 */
 	const { referenceSibling, referenceTrait } = place;
@@ -48,19 +48,19 @@ export function validateStablePlace(snapshot: Snapshot, place: StablePlace): Edi
 	}
 
 	if (referenceSibling !== undefined) {
-		if (!snapshot.hasNode(referenceSibling)) {
+		if (!view.hasNode(referenceSibling)) {
 			return EditValidationResult.Invalid;
 		}
 
 		// Detached nodes and the root are invalid anchors.
-		if (snapshot.getTraitLabel(referenceSibling) === undefined) {
+		if (view.getTraitLabel(referenceSibling) === undefined) {
 			return EditValidationResult.Invalid;
 		}
 
 		return EditValidationResult.Valid;
 	}
 
-	if (!snapshot.hasNode(assertNotUndefined(referenceTrait).parent)) {
+	if (!view.hasNode(assertNotUndefined(referenceTrait).parent)) {
 		return EditValidationResult.Invalid;
 	}
 
@@ -69,10 +69,10 @@ export function validateStablePlace(snapshot: Snapshot, place: StablePlace): Edi
 
 /**
  * Check the validity of the given `StableRange`
- * @param snapshot - the `Snapshot` within which to validate the given range
+ * @param view - the `TreeView` within which to validate the given range
  * @param range - the `StableRange` to check
  */
-export function validateStableRange(snapshot: Snapshot, range: StableRange): EditValidationResult {
+export function validateStableRange(view: TreeView, range: StableRange): EditValidationResult {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
 	 *     2. Its start and end places are within the same trait.
@@ -80,26 +80,26 @@ export function validateStableRange(snapshot: Snapshot, range: StableRange): Edi
 	 */
 	const { start, end } = range;
 
-	const startValidationResult = validateStablePlace(snapshot, start);
+	const startValidationResult = validateStablePlace(view, start);
 	if (startValidationResult !== EditValidationResult.Valid) {
 		return startValidationResult;
 	}
 
-	const endValidationResult = validateStablePlace(snapshot, end);
+	const endValidationResult = validateStablePlace(view, end);
 	if (endValidationResult !== EditValidationResult.Valid) {
 		return endValidationResult;
 	}
 
 	const startTraitLocation =
-		start.referenceTrait || snapshot.getTraitLocation(assertNotUndefined(start.referenceSibling));
-	const endTraitLocation = end.referenceTrait || snapshot.getTraitLocation(assertNotUndefined(end.referenceSibling));
+		start.referenceTrait || view.getTraitLocation(assertNotUndefined(start.referenceSibling));
+	const endTraitLocation = end.referenceTrait || view.getTraitLocation(assertNotUndefined(end.referenceSibling));
 	if (!compareTraits(startTraitLocation, endTraitLocation)) {
 		return EditValidationResult.Invalid;
 	}
 
-	const { start: startPlace, end: endPlace } = rangeFromStableRange(snapshot, range);
-	const startIndex = snapshot.findIndexWithinTrait(startPlace);
-	const endIndex = snapshot.findIndexWithinTrait(endPlace);
+	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, range);
+	const startIndex = view.findIndexWithinTrait(startPlace);
+	const endIndex = view.findIndexWithinTrait(endPlace);
 
 	if (startIndex > endIndex) {
 		return EditValidationResult.Invalid;
@@ -109,17 +109,17 @@ export function validateStableRange(snapshot: Snapshot, range: StableRange): Edi
 }
 
 /**
- * @param snapshot - the `Snapshot` within which to retrieve the trait location
+ * @param view - the `TreeView` within which to retrieve the trait location
  * @param range - must be well formed and valid
  */
-function getTraitLocationOfRange(snapshot: Snapshot, range: StableRange): TraitLocation {
+function getTraitLocationOfRange(view: TreeView, range: StableRange): TraitLocation {
 	const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;
 	if (referenceTrait) {
 		return referenceTrait;
 	}
 	const sibling =
 		range.start.referenceSibling ?? range.end.referenceSibling ?? fail('malformed range does not indicate trait');
-	return snapshot.getTraitLocation(sibling);
+	return view.getTraitLocation(sibling);
 }
 
 /**
@@ -136,7 +136,7 @@ enum SideOfRange {
 	End = 1,
 }
 
-function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitLocation): SnapshotPlace {
+function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitLocation): TreeViewPlace {
 	const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
 	return {
 		trait,
@@ -148,8 +148,8 @@ function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitL
 /**
  * Express the given `StableRange` as a `Range`
  */
-export function rangeFromStableRange(snapshot: Snapshot, range: StableRange): SnapshotRange {
-	const location = getTraitLocationOfRange(snapshot, range);
+export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange {
+	const location = getTraitLocationOfRange(view, range);
 	// This can be optimized for better constant factors.
 	return {
 		start: sideOfRange(range, SideOfRange.Start, location),
@@ -160,7 +160,7 @@ export function rangeFromStableRange(snapshot: Snapshot, range: StableRange): Sn
 /**
  * Express the given `StablePlace` as a `Place`
  */
-export function placeFromStablePlace(snapshot: Snapshot, stablePlace: StablePlace): SnapshotPlace {
+export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace {
 	const { side } = stablePlace;
 	if (stablePlace.referenceSibling === undefined) {
 		assert(stablePlace.referenceTrait !== undefined);
@@ -170,7 +170,7 @@ export function placeFromStablePlace(snapshot: Snapshot, stablePlace: StablePlac
 		};
 	}
 	return {
-		trait: snapshot.getTraitLocation(stablePlace.referenceSibling),
+		trait: view.getTraitLocation(stablePlace.referenceSibling),
 		side: stablePlace.side,
 		sibling: stablePlace.referenceSibling,
 	};
@@ -189,26 +189,26 @@ function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boolean {
 
 /**
  * Parents a set of nodes in a specified location within a trait.
- * @param nodesToInsert - the nodes to parent in the specified place. The nodes must already be present in the Snapshot.
+ * @param nodesToInsert - the nodes to parent in the specified place. The nodes must already be present in the TreeView.
  * @param placeToInsert - the location to insert the nodes.
  */
 export function insertIntoTrait(
-	snapshot: Snapshot,
+	view: TransactionView,
 	nodesToInsert: readonly NodeId[],
 	placeToInsert: StablePlace
-): Snapshot {
-	return snapshot.attachRange(nodesToInsert, placeFromStablePlace(snapshot, placeToInsert));
+): TransactionView {
+	return view.attachRange(nodesToInsert, placeFromStablePlace(view, placeToInsert));
 }
 
 /**
- * Detaches a range of nodes from their parent. The detached nodes remain in the Snapshot.
+ * Detaches a range of nodes from their parent. The detached nodes remain in the TreeView.
  * @param rangeToDetach - the range of nodes to detach
  */
 export function detachRange(
-	snapshot: Snapshot,
+	view: TransactionView,
 	rangeToDetach: StableRange
-): { snapshot: Snapshot; detached: readonly NodeId[] } {
-	return snapshot.detachRange(rangeFromStableRange(snapshot, rangeToDetach));
+): { view: TransactionView; detached: readonly NodeId[] } {
+	return view.detachRange(rangeFromStableRange(view, rangeToDetach));
 }
 
 /**

@@ -10,7 +10,7 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { assert, assertNotUndefined, compareArrays, fail } from './Common';
 import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
-import { compareFiniteNumbers } from './SnapshotUtilities';
+import { compareFiniteNumbers } from './TreeViewUtilities';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -333,7 +333,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	/**
-	 * @returns true iff the revision is a local revision (not sequenced).
+	 * @returns true iff the revision is a sequenced revision (not local).
 	 */
 	public isSequencedRevision(revision: number): boolean {
 		return revision <= this.sequencedEditIds.length;

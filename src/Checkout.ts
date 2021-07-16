@@ -7,7 +7,7 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
-import { Snapshot } from './Snapshot';
+import { TreeView, RevisionView } from './TreeView';
 import {
 	newEditId,
 	ValidEditingResult,
@@ -27,7 +27,7 @@ import { CachingLogViewer } from './LogViewer';
 export enum CheckoutEvent {
 	/**
 	 * `currentView` has changed.
-	 * Passed a before and after Snapshot.
+	 * Passed a before and after TreeView.
 	 */
 	ViewChange = 'viewChange',
 }
@@ -36,7 +36,7 @@ export enum CheckoutEvent {
  * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
  */
 export interface ICheckoutEvents extends IErrorEvent {
-	(event: 'viewChange', listener: (before: Snapshot, after: Snapshot) => void);
+	(event: 'viewChange', listener: (before: TreeView, after: TreeView) => void);
 }
 
 /**
@@ -84,13 +84,13 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 *
 	 * When this changes, emitChange must be called.
 	 */
-	protected abstract readonly latestCommittedView: Snapshot;
+	protected abstract readonly latestCommittedView: RevisionView;
 
 	/**
 	 * The last view for which invalidation was sent.
 	 * Updated by emitChange.
 	 */
-	private previousView: Snapshot;
+	private previousView: TreeView;
 
 	/**
 	 * A handler for 'committedEdit' SharedTreeEvent
@@ -121,7 +121,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 
 	protected constructor(
 		tree: GenericSharedTree<TChange>,
-		currentView: Snapshot,
+		currentView: RevisionView,
 		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>
 	) {
 		super();
@@ -143,7 +143,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 * @returns the current view of the tree, including the result of changes applied so far during an edit.
 	 * Note that any external edits (from other clients) will not added to view while there is a `currentEdit`.
 	 */
-	public get currentView(): Snapshot {
+	public get currentView(): TreeView {
 		return this.currentEdit?.view ?? this.latestCommittedView;
 	}
 
@@ -161,7 +161,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 */
 	public openEdit(): void {
 		assert(this.currentEdit === undefined, 'An edit is already open.');
-		this.currentEdit = this.tree.transactionFactory(this.currentView);
+		this.currentEdit = this.tree.transactionFactory(this.latestCommittedView);
 	}
 
 	/**
@@ -186,11 +186,11 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	}
 
 	/**
-	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular Snapshot.
+	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular TreeView.
 	 * This may be used as a caching hint to avoid recomputation.
 	 */
 	protected hintKnownEditingResult(edit: Edit<TChange>, result: ValidEditingResult<TChange>): void {
-		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before snapshot.
+		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before revision.
 		this.cachingLogViewer?.setKnownEditingResult(edit, result);
 	}
 
@@ -294,18 +294,21 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	/**
 	 * @param id - an edit added during the current session.
 	 *
-	 * @returns the edit with the specified `id`, and a snapshot just before applying the edit.
-	 * The returned snapshot may be the exact version that the exit was made against, or it may have additional remote edits included.
+	 * @returns the edit with the specified `id`, and a revision just before applying the edit.
+	 * The returned revision may be the exact version that the exit was made against, or it may have additional remote edits included.
 	 *
 	 * This requires that the edit was added during the current session as this guarantees its available synchronously.
 	 *
 	 * Override this in Checkouts that may have edits which are not included in tree.edits.
 	 */
-	public getChangesAndSnapshotBeforeInSession(id: EditId): { changes: readonly TChange[]; before: Snapshot } {
+	public getChangesAndRevisionBeforeInSession(id: EditId): {
+		changes: readonly TChange[];
+		before: RevisionView;
+	} {
 		const editIndex = this.tree.edits.getIndexOfId(id);
 		return {
 			changes: this.tree.edits.getEditInSessionAtIndex(editIndex).changes,
-			before: this.tree.logViewer.getSnapshotInSession(editIndex),
+			before: this.tree.logViewer.getRevisionViewInSession(editIndex),
 		};
 	}
 
@@ -317,7 +320,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	protected emitChange(): void {
 		const current = this.currentView;
 		const previous = this.previousView;
-		if (previous !== current) {
+		if (!previous.hasEqualForest(current, true)) {
 			// Set previousView before calling emit to make reentrant case work (where the event handler causes an edit).
 			this.previousView = current;
 			this.emit(CheckoutEvent.ViewChange, previous, current);

@@ -107,7 +107,7 @@ export function checkoutTests(
 			checkout.abortEdit();
 
 			// The left node should still be there
-			expect(checkout.currentView.getSnapshotNode(left.identifier).identifier).not.undefined;
+			expect(checkout.currentView.getViewNode(left.identifier).identifier).not.undefined;
 		});
 
 		it('can abort invalid edits', async () => {
@@ -327,7 +327,7 @@ export function checkoutTests(
 			);
 
 			// Checkout's use of LogViewer.setKnownEditingResult should enable CachingLogViewer
-			// to return the exact same SnapShot object, allowing checkout to so skip an extra change event from closeEdit.
+			// to return the exact same revision view object, allowing checkout to skip an extra change event from closeEdit.
 			expect(changes).equals(2);
 		});
 
@@ -388,19 +388,29 @@ export function checkoutTests(
 			const checkout = await checkoutFactory(tree);
 			const secondCheckout = await checkoutFactory(tree);
 
-			checkout.openEdit();
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
+			checkout.openEdit();
+			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
 			secondCheckout.openEdit();
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.applyChanges(Delete.create(StableRange.only(left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.false;
 			secondCheckout.applyChanges(Delete.create(StableRange.only(left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
 			checkout.closeEdit();
+			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			secondCheckout.closeEdit();
+			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			await checkout.waitForPendingUpdates();
 			await secondCheckout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
@@ -408,6 +418,7 @@ export function checkoutTests(
 			await checkout.waitForPendingUpdates();
 			await secondCheckout.waitForPendingUpdates();
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 		});
 
 		it('can successfully rebase an ongoing local edit', async () => {

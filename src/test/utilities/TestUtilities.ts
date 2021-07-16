@@ -24,7 +24,6 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
-import { Snapshot } from '../../Snapshot';
 import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace } from '../../default-edits';
 import {
 	ChangeNode,
@@ -37,6 +36,7 @@ import {
 	TraitLocation,
 } from '../../generic';
 import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
+import { RevisionView } from '../../TreeView';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -119,26 +119,26 @@ export const rightTraitLocation = {
 	label: rightTraitLabel,
 };
 
-/** Convenient pre-made Snapshot for 'simpleTestTree'. */
-export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
+/** Convenient pre-made RevisionView for 'simpleTestTree'. */
+export const simpleRevisionView = RevisionView.fromTree(simpleTestTree);
 
-/** Convenient pre-made Snapshot for 'initialTree'. */
-export const initialSnapshot = Snapshot.fromTree(initialTree);
-
-/**
- * Convenient pre-made Snapshot for 'simpleTestTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
- */
-export const simpleTreeSnapshotWithValidation = Snapshot.fromTree(simpleTestTree, true);
+/** Convenient pre-made RevisionView for 'initialTree'. */
+export const initialRevisionView = RevisionView.fromTree(initialTree);
 
 /**
- * Convenient pre-made Snapshot for 'initialTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
+ * Convenient pre-made RevisionView for 'simpleTestTree'.
+ * Expensive validation is turned on for this view, and it should not be used for performance testing.
  */
-export const initialSnapshotWithValidation = Snapshot.fromTree(initialTree, true);
+export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTestTree, true);
+
+/**
+ * Convenient pre-made RevisionView for 'initialTree'.
+ * Expensive validation is turned on for this view, and it should not be used for performance testing.
+ */
+export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
 
 export const testTrait: TraitLocation = {
-	parent: initialSnapshot.root,
+	parent: initialRevisionView.root,
 	label: 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel,
 };
 
@@ -404,10 +404,10 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
 export function assertNoDelta<TChange>(tree: GenericSharedTree<TChange>, editor: () => void) {
-	const snapshotA = tree.currentView;
+	const viewA = tree.currentView;
 	editor();
-	const snapshotB = tree.currentView;
-	const delta = snapshotA.delta(snapshotB);
+	const viewB = tree.currentView;
+	const delta = viewA.delta(viewB);
 	expect(delta).deep.equals({
 		changed: [],
 		added: [],

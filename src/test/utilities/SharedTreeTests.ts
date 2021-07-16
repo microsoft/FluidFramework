@@ -21,11 +21,11 @@ import {
 import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree } from '../../default-edits';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog } from '../../EditLog';
-import { Snapshot } from '../../Snapshot';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
+import { RevisionView } from '../../TreeView';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -39,7 +39,7 @@ import {
 	rightTraitLabel,
 	assertNoDelta,
 	deepCompareNodes,
-	initialSnapshot,
+	initialRevisionView,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
 } from './TestUtilities';
@@ -50,7 +50,7 @@ const revert = (tree: SharedTree, editId: EditId) => {
 	const editIndex = tree.edits.getIndexOfId(editId);
 	return tree.editor.revert(
 		tree.edits.getEditInSessionAtIndex(editIndex),
-		tree.logViewer.getSnapshotInSession(editIndex)
+		tree.logViewer.getRevisionViewInSession(editIndex)
 	);
 };
 
@@ -212,10 +212,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 			it('prevents deletion of the root', () => {
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree, allowInvalid: true });
-				expect(tree.currentView.hasNode(initialSnapshot.root));
+				expect(tree.currentView.hasNode(initialRevisionView.root));
 				assertNoDelta(tree, () => {
 					// Try to delete the root
-					tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialSnapshot.root))]));
+					tree.processLocalEdit(newEdit([Delete.create(StableRange.only(initialRevisionView.root))]));
 				});
 			});
 
@@ -261,7 +261,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				tree.editor.delete(firstNode);
 
 				// Trying to insert next to the deleted node should drop, confirm that it doesn't
-				// change the snapshot
+				// change the view
 				assertNoDelta(tree, () => {
 					tree.processLocalEdit(newEdit(Insert.create([secondNode], StablePlace.after(firstNode))));
 				});
@@ -331,17 +331,17 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				containerRuntimeFactory.processAllMessages();
 
 				// Both trees should contain 'left'
-				expect(tree.currentView.getSnapshotNode(left.identifier)).to.not.be.undefined;
-				expect(secondTree.currentView.getSnapshotNode(left.identifier)).to.not.be.undefined;
+				expect(tree.currentView.getViewNode(left.identifier)).to.not.be.undefined;
+				expect(secondTree.currentView.getViewNode(left.identifier)).to.not.be.undefined;
 
 				secondTree.editor.delete(left);
 
 				containerRuntimeFactory.processAllMessages();
 
-				const rootA = tree.currentView.getSnapshotNode(simpleTestTree.identifier);
+				const rootA = tree.currentView.getViewNode(simpleTestTree.identifier);
 				expect(rootA.traits.get(leftTraitLabel)).to.be.undefined;
 
-				const rootB = secondTree.currentView.getSnapshotNode(simpleTestTree.identifier);
+				const rootB = secondTree.currentView.getViewNode(simpleTestTree.identifier);
 				expect(rootB.traits.get(leftTraitLabel)).to.be.undefined;
 			});
 
@@ -735,11 +735,11 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 		});
 
-		describe('correctly diffs snapshots', () => {
+		describe('correctly diffs revision views', () => {
 			it('that are the same object', () => {
 				const id = uuidv4() as NodeId;
-				const snapshot = Snapshot.fromTree(makeEmptyNode(id));
-				expect(snapshot.delta(snapshot)).deep.equals({
+				const view = RevisionView.fromTree(makeEmptyNode(id));
+				expect(view.delta(view)).deep.equals({
 					changed: [],
 					added: [],
 					removed: [],
@@ -748,9 +748,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 
 			it('that have the same tree', () => {
 				const node = makeEmptyNode();
-				const snapshotA = Snapshot.fromTree(node);
-				const snapshotB = Snapshot.fromTree(node);
-				expect(snapshotA.delta(snapshotB)).deep.equals({
+				const viewA = RevisionView.fromTree(node);
+				const viewB = RevisionView.fromTree(node);
+				expect(viewA.delta(viewB)).deep.equals({
 					changed: [],
 					added: [],
 					removed: [],
@@ -758,10 +758,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('with different root ids', () => {
-				const snapshotA = Snapshot.fromTree(makeEmptyNode());
-				const snapshotB = Snapshot.fromTree(makeEmptyNode());
-				expect(() => snapshotA.delta(snapshotB)).to.throw(
-					'Delta can only be calculated between snapshots that share a root'
+				const viewA = RevisionView.fromTree(makeEmptyNode());
+				const viewB = RevisionView.fromTree(makeEmptyNode());
+				expect(() => viewA.delta(viewB)).to.throw(
+					'Delta can only be calculated between views that share a root'
 				);
 			});
 
@@ -798,9 +798,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					},
 				};
 
-				const snapshotA = Snapshot.fromTree(rootA);
-				const snapshotB = Snapshot.fromTree(rootB);
-				const delta = snapshotA.delta(snapshotB);
+				const viewA = RevisionView.fromTree(rootA);
+				const viewB = RevisionView.fromTree(rootB);
+				const delta = viewA.delta(viewB);
 				expect(delta.changed).deep.equals([rootId]);
 				expect(delta.removed.length).equals(2);
 				expect(delta.added.length).equals(2);
@@ -825,9 +825,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					traits: {},
 				};
 
-				const snapshotA = Snapshot.fromTree(nodeA);
-				const snapshotB = Snapshot.fromTree(nodeB);
-				const delta = snapshotA.delta(snapshotB);
+				const viewA = RevisionView.fromTree(nodeA);
+				const viewB = RevisionView.fromTree(nodeB);
+				const delta = viewA.delta(viewB);
 				expect(delta.changed).deep.equals([rootId]);
 				expect(delta.removed).deep.equals([]);
 				expect(delta.added).deep.equals([]);
@@ -836,11 +836,11 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			it('after an insert', () => {
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
-				const snapshotA = tree.currentView;
+				const viewA = tree.currentView;
 				const insertedNode = makeEmptyNode();
 				tree.editor.insert(insertedNode, StablePlace.before(left));
-				const snapshotB = tree.currentView;
-				const delta = snapshotA.delta(snapshotB);
+				const viewB = tree.currentView;
+				const delta = viewA.delta(viewB);
 				assert(delta);
 				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
 				expect(delta.removed).deep.equals([]);
@@ -850,10 +850,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			it('after a delete', () => {
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
-				const snapshotA = tree.currentView;
+				const viewA = tree.currentView;
 				tree.editor.delete(left);
-				const snapshotB = tree.currentView;
-				const delta = snapshotA.delta(snapshotB);
+				const viewB = tree.currentView;
+				const delta = viewA.delta(viewB);
 				assert(delta);
 				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
 				expect(delta.removed).deep.equals([left.identifier]);
@@ -863,10 +863,10 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			it('after a move', () => {
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 
-				const snapshotA = tree.currentView;
+				const viewA = tree.currentView;
 				tree.editor.move(left, StablePlace.after(right));
-				const snapshotB = tree.currentView;
-				const delta = snapshotA.delta(snapshotB);
+				const viewB = tree.currentView;
+				const delta = viewA.delta(viewB);
 				assert(delta);
 				expect(delta.changed).deep.equals([simpleTestTree.identifier]);
 				expect(delta.removed).deep.equals([]);
@@ -895,7 +895,6 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 			});
 
 			it('do not update when the current view of the tree changes', () => {
-				// Unlike CurrentTreeNodeHandles, SnapshotTreeNodeHandles should never change
 				const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
 				const leftHandle = new TreeNodeHandle(tree.currentView, left.identifier);
 				expect(leftHandle.traits.right).to.be.undefined;
@@ -939,7 +938,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
 				containerRuntimeFactory.processAllMessages();
 				// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-				await tree.logViewer.getSnapshot(Number.POSITIVE_INFINITY);
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 				expect(events.length).is.greaterThan(0);
 				events.forEach((event) => {
 					expect(isSharedTreeEvent(event)).is.true;

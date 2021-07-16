@@ -6,7 +6,7 @@
 import { TraitLabel } from '../Identifiers';
 import { assert } from '../Common';
 import { OrderedEditSet } from '../EditLog';
-import { Snapshot } from '../Snapshot';
+import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { formatVersion, newEdit, SharedTreeSummary } from '../generic';
@@ -20,7 +20,7 @@ import { setTrait } from './EditUtilities';
  */
 export function noHistorySummarizer(
 	_editLog: OrderedEditSet<Change>,
-	currentView: Snapshot
+	currentView: RevisionView
 ): SharedTreeSummary_0_0_2<Change> {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;
@@ -51,7 +51,7 @@ export function noHistorySummarizer(
  */
 export function noHistorySummarizer_0_1_0(
 	_editLog: OrderedEditSet<Change>,
-	currentView: Snapshot
+	currentView: RevisionView
 ): SharedTreeSummary<Change> {
 	const currentTree = currentView.getChangeNodeTree();
 	const rootId = currentTree.identifier;

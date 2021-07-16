@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Side, Snapshot } from '../Snapshot';
+import { Side, TreeView } from '../TreeView';
 import {
 	Change,
 	ChangeType,
@@ -27,18 +27,18 @@ import {
 } from './PersistedTypes';
 
 /**
- * A change and the snapshots that precede and succeed it.
+ * A change and the views that precede and succeed it.
  */
 export interface EvaluatedChange<TChange> {
 	readonly change: TChange;
 	/**
-	 * The snapshot before the change was applied.
+	 * The view before the change was applied.
 	 */
-	readonly before: Snapshot;
+	readonly before: TreeView;
 	/**
-	 * The snapshot after the change was applied.
+	 * The view after the change was applied.
 	 */
-	readonly after: Snapshot;
+	readonly after: TreeView;
 }
 
 /**
@@ -47,7 +47,7 @@ export interface EvaluatedChange<TChange> {
 export interface HasNodeResolver {
 	readonly nodeResolver: (
 		node: NodeAnchor,
-		before: Snapshot,
+		before: TreeView,
 		path: ReconciliationPath<AnchoredChange>
 	) => NodeId | undefined;
 }
@@ -58,7 +58,7 @@ export interface HasNodeResolver {
 export interface HasPlaceResolver {
 	readonly placeResolver: (
 		range: PlaceAnchor,
-		before: Snapshot,
+		before: TreeView,
 		path: ReconciliationPath<AnchoredChange>
 	) => StablePlace | undefined;
 }
@@ -69,7 +69,7 @@ export interface HasPlaceResolver {
 export interface HasRangeResolver {
 	readonly rangeResolver: (
 		range: RangeAnchor,
-		before: Snapshot,
+		before: TreeView,
 		path: ReconciliationPath<AnchoredChange>
 	) => StableRange | undefined;
 }
@@ -78,7 +78,7 @@ export interface HasRangeResolver {
  * Object that includes a function for validating places.
  */
 export interface HasPlaceValidator {
-	readonly placeValidator: (snapshot: Snapshot, place: StablePlace) => EditValidationResult;
+	readonly placeValidator: (view: TreeView, place: StablePlace) => EditValidationResult;
 }
 
 /**
@@ -86,13 +86,13 @@ export interface HasPlaceValidator {
  * @param change - The anchor to reconciliate.
  * @param before - The state to which the `change` would be applied to.
  * @param path - The reconciliation path for the `change`.
- * @returns A `Change` that satisfies the same semantics of the given `change` but whose tree locations are valid in the `before` snapshot.
+ * @returns A `Change` that satisfies the same semantics of the given `change` but whose tree locations are valid in the `before` view.
  *   Undefined if no such change can be produced.
  * @internal
  */
 export function resolveChangeAnchors(
 	change: AnchoredChange,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>
 ): Change | undefined;
 
@@ -102,14 +102,14 @@ export function resolveChangeAnchors(
  */
 export function resolveChangeAnchors(
 	change: AnchoredChange,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	dependencies?: HasNodeResolver & HasPlaceResolver & HasRangeResolver
 ): Change | undefined;
 
 export function resolveChangeAnchors(
 	change: AnchoredChange,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	{ nodeResolver, placeResolver, rangeResolver }: HasNodeResolver & HasPlaceResolver & HasRangeResolver = {
 		nodeResolver: resolveNodeAnchor,
@@ -146,12 +146,12 @@ export function resolveChangeAnchors(
  * @param node - The anchor to resolve.
  * @param before - The state to which the change that the `node` anchor should be applied to.
  * @param path - The reconciliation path for the change that the `node` is part of.
- * @returns A matching `NodeId` that is valid in the snapshot at the end of the `path`. Undefined if no such node exists.
+ * @returns A matching `NodeId` that is valid in the view at the end of the `path`. Undefined if no such node exists.
  * @internal
  */
 export function resolveNodeAnchor(
 	node: NodeAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>
 ): NodeId | undefined {
 	return before.hasNode(node) ? node : undefined;
@@ -162,12 +162,12 @@ export function resolveNodeAnchor(
  * @param range - The anchor to resolve.
  * @param before - The state to which the change that the `range` anchor should be applied to.
  * @param path - The reconciliation path for the change that the `range` is part of.
- * @returns A matching `StableRange` that is valid in the snapshot at the end of the `path`. Undefined if no such valid range exists.
+ * @returns A matching `StableRange` that is valid in the view at the end of the `path`. Undefined if no such valid range exists.
  * @internal
  */
 export function resolveRangeAnchor(
 	range: RangeAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>
 ): StableRange | undefined;
 
@@ -177,22 +177,22 @@ export function resolveRangeAnchor(
  */
 export function resolveRangeAnchor(
 	range: RangeAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	dependencies?: HasPlaceResolver & {
-		rangeValidator: (snapshot: Snapshot, range: StableRange) => EditValidationResult;
+		rangeValidator: (view: TreeView, range: StableRange) => EditValidationResult;
 	}
 ): StableRange | undefined;
 
 export function resolveRangeAnchor(
 	range: RangeAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	{
 		placeResolver,
 		rangeValidator,
 	}: HasPlaceResolver & {
-		rangeValidator: (snapshot: Snapshot, range: StableRange) => EditValidationResult;
+		rangeValidator: (view: TreeView, range: StableRange) => EditValidationResult;
 	} = {
 		placeResolver: resolvePlaceAnchor,
 		rangeValidator: validateStableRange,
@@ -217,12 +217,12 @@ export function resolveRangeAnchor(
  * @param place - The anchor to resolve.
  * @param before - The state to which the change that the `place` anchor should be applied to.
  * @param path - The reconciliation path for the change that the `place` is part of.
- * @returns A matching `StablePlace` that is valid in the snapshot at the end of the `path`. Undefined if no such valid place exists.
+ * @returns A matching `StablePlace` that is valid in the view at the end of the `path`. Undefined if no such valid place exists.
  * @internal
  */
 export function resolvePlaceAnchor(
 	place: PlaceAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>
 ): StablePlace | undefined;
 
@@ -232,7 +232,7 @@ export function resolvePlaceAnchor(
  */
 export function resolvePlaceAnchor(
 	place: PlaceAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	dependencies?: HasPlaceValidator & {
 		placeUpdatorForPath: (
@@ -244,7 +244,7 @@ export function resolvePlaceAnchor(
 
 export function resolvePlaceAnchor(
 	place: PlaceAnchor,
-	before: Snapshot,
+	before: TreeView,
 	path: ReconciliationPath<AnchoredChange>,
 	{
 		placeValidator,
@@ -340,9 +340,9 @@ export function updateRelativePlaceAnchorForPath(
 
 /**
  * Finds the latest change in the given `path` that last made the given `place` invalid.
- * @param place - A anchor that is invalid in the last snapshot on the path.
+ * @param place - A anchor that is invalid in the last view on the path.
  * @param path - The sequence of edits that violates the anchor's semantics.
- * @returns The change that last made the given `place` invalid and the snapshots before and after it. Undefined if `place` was never valid.
+ * @returns The change that last made the given `place` invalid and the views before and after it. Undefined if `place` was never valid.
  * @internal
  */
 export function findLastOffendingChange(
@@ -367,7 +367,7 @@ export function findLastOffendingChange(
 		placeValidator: validateStablePlace,
 	}
 ): EvaluatedChange<AnchoredChange> | undefined {
-	let followingChange: { change: AnchoredChange; after: Snapshot } | undefined;
+	let followingChange: { change: AnchoredChange; after: TreeView } | undefined;
 	for (let editIndex = path.length - 1; editIndex >= 0; --editIndex) {
 		const edit = path[editIndex];
 		for (let changeIndex = edit.length - 1; changeIndex >= 0; --changeIndex) {
@@ -432,7 +432,7 @@ export function updateRelativePlaceAnchorForChange(
 		newIndex = before.findIndexWithinTrait(endPlace);
 	}
 	const referenceTrait = targetPlace.trait;
-	const parentNode = before.getSnapshotNode(referenceTrait.parent);
+	const parentNode = before.getViewNode(referenceTrait.parent);
 	const traits = new Map(parentNode.traits);
 	const trait = assertNotUndefined(
 		traits.get(referenceTrait.label),
