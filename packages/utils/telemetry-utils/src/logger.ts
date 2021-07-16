@@ -16,7 +16,15 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { assert, BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
-import { Builder, IFluidErrorBase, hasErrorType, isFluidError, ExtensibleObject } from "./staging";
+import {
+    Builder,
+    IFluidErrorBase,
+    hasErrorType,
+    isFluidError,
+    ExtensibleObject,
+    isILoggingError,
+    isErrorLike,
+} from "./staging";
 
 export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
@@ -26,8 +34,7 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag,
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-const isRegularObject = (value: any): value is Object => {
+const isRegularObject = (value: any): boolean => {
     return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
@@ -529,8 +536,6 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
-
 /**
  * Read-Write Logging Error.  Not exported.
  * This type alias includes addTelemetryProperties, and applies to objects even if not instanceof LoggingError\
@@ -541,6 +546,67 @@ type RwLoggingError = LoggingError;
 const isRwLoggingError = (x: any): x is RwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
+function extractLogSafeErrorProperties(error: any) {
+    const removeMessageFromStack = (stack: string, errorName?: string) => {
+        const stackFrames = stack.split("\n");
+        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+        if (errorName !== undefined) {
+            stackFrames.unshift(errorName); // Add "[ErrorName]"
+        }
+        return stackFrames.join("\n");
+    };
+
+    const message = (typeof error?.message === "string")
+        ? error.message as string
+        : String(error);
+
+    const safeProps: { message: string; errorType?: string; stack?: string } = {
+        message,
+    };
+
+    if (isRegularObject(error)) {
+        const { errorType, stack, name } = error;
+
+        if (typeof errorType === "string") {
+            safeProps.errorType = errorType;
+        }
+
+        if (typeof stack === "string") {
+            const errorName = (typeof name === "string") ? name : undefined;
+            safeProps.stack = removeMessageFromStack(stack, errorName);
+        }
+    }
+
+    return safeProps;
+}
+
+/**
+ * Take an unknown error object and extract certain known properties to be included in a new error object.
+ * The stack is preserved, along with any safe-to-log telemetry props.
+ * @param error - An error that was presumably caught, thrown from unknown origins
+ * @param newErrorFn - callback that will create a new error given the original error's message
+ * @returns A new error object "wrapping" the given error
+ */
+ export function wrapError<T>(
+    error: any,
+    newErrorFn: (m: string) => T,
+): T {
+    const {
+        message,
+        stack,
+    } = extractLogSafeErrorProperties(error);
+    const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
+
+    const newError = newErrorFn(message);
+    mixinTelemetryProps(newError as ExtensibleObject<T>, props);
+
+    if (stack !== undefined) {
+        Object.assign(newError, { stack });
+    }
+
+    return newError;
+}
+
 /**
  * Mixes in the given properties, accessible henceforth via ILoggingError.getTelemetryProperties
  * @returns the same object that was passed in, now also implementing ILoggingError.
@@ -549,6 +615,8 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     error: T,
     props: ITelemetryProperties,
 ): T & ILoggingError {
+    assert(isRegularObject(error) && !Object.isFrozen(error), "Cannot mixin Telemetry Props");
+
     if (isRwLoggingError(error)) {
         error.addTelemetryProperties(props);
         return error;
@@ -574,60 +642,49 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     props: ITelemetryProperties = {},
     errorCodeIfNone?: string,
 ): IFluidErrorBase & ILoggingError {
-    // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
-    let fluidErrorBuilder: Builder<IFluidErrorBase>;
-
-    function setErrorTypeIfMissing(errorTypeIfNone: string) {
+    // Set up some helpers
+    function setErrorTypeIfMissing(builder: Builder<IFluidErrorBase>, errorTypeIfNone: string) {
         if (!hasErrorType(error)) {
-            fluidErrorBuilder.errorType = `none (${errorTypeIfNone})`;
+            builder.errorType = `none (${errorTypeIfNone})`;
         }
     }
-
     const fullErrorCodeifNone = errorCodeIfNone === undefined
         ? "none"
         : `none (${errorCodeIfNone})`;
 
-    // If someone has thrown or passed a non-object, create a new Error object
-    if (!isRegularObject(error)) {
-        const message = String(error);
-        fluidErrorBuilder = new LoggingError(message, props) as Builder<IFluidErrorBase>;
-        setErrorTypeIfMissing(typeof(error));
-        fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
+    // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
+    let fluidErrorBuilder: Builder<IFluidErrorBase>;
 
-        return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
+    // If we can't annotate the error, wrap it
+    if (Object.isFrozen(error) || !isRegularObject(error)) {
+        const errorType = hasErrorType(error)
+            ? error.errorType
+            : typeof(error);
+        const errorCode = isFluidError(error)
+            ? error.fluidErrorCode
+            : fullErrorCodeifNone;
+        const newErrorFn = (errMsg: string) => {
+            fluidErrorBuilder = new LoggingError(errMsg, props) as Builder<IFluidErrorBase>;
+            setErrorTypeIfMissing(fluidErrorBuilder, errorType);
+            fluidErrorBuilder.fluidErrorCode = errorCode;
+            return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
+        };
+        return wrapError<IFluidErrorBase & ILoggingError>(error, newErrorFn);
     }
 
-    const mutableError = Object.isFrozen(error)
-        ? Object.create(error)
-        : error;
-
-    return annotateErrorObject(mutableError, fullErrorCodeifNone, setErrorTypeIfMissing, props);
-}
-
-function annotateErrorObject(
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    error: Object,
-    fullErrorCodeifNone: string,
-    setErrorTypeIfMissing: (errorType: string) => void,
-    props: ITelemetryProperties = {},
-): IFluidErrorBase & ILoggingError {
-    if (Object.isFrozen(error)) {
-        const invalid = new LoggingError("") as Builder<IFluidErrorBase>;
-        invalid.errorType = "invalid";
-        invalid.fluidErrorCode = "Can't annotate a frozen object";
-    }
-
+    // Do we already have a valid Fluid Error?  Then just mixin telemetry props
     if (isFluidError(error)) {
         return mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, props);
     }
 
+    // We have a mutable object, not already a valid Fluid Error. Time to fill in the gaps!
     fluidErrorBuilder = error as Builder<IFluidErrorBase>;
     fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
 
-    if (error instanceof Error) {
-        setErrorTypeIfMissing(error.name);
+    if (isErrorLike(error)) {
+        setErrorTypeIfMissing(fluidErrorBuilder, error.name);
     } else {
-        setErrorTypeIfMissing("object");
+        setErrorTypeIfMissing(fluidErrorBuilder, typeof(error));
         fluidErrorBuilder.message = errorCodeIfNone;
         fluidErrorBuilder.name = "none";
     }

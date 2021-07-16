@@ -10,7 +10,7 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { isILoggingError, annotateError, LoggingError } from "@fluidframework/telemetry-utils";
+import { wrapError, annotateError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -18,44 +18,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 const hasErrorType = (error: any): error is IErrorBase => {
     return (typeof error?.errorType === "string");
 };
-
-const isRegularObject = (value: any): boolean => {
-    return value !== null && !Array.isArray(value) && typeof value === "object";
-};
-
-function extractLogSafeErrorProperties(error: any) {
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
-        const stackFrames = stack.split("\n");
-        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
-        }
-        return stackFrames.join("\n");
-    };
-
-    const message = (typeof error?.message === "string")
-        ? error.message as string
-        : String(error);
-
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
-        message,
-    };
-
-    if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
-
-        if (typeof errorType === "string") {
-            safeProps.errorType = errorType;
-        }
-
-        if (typeof stack === "string") {
-            const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-    }
-
-    return safeProps;
-}
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
@@ -176,31 +138,4 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         annotateError(error, props);
     }
     return error;
-}
-
-/**
- * Take an unknown error object and extract certain known properties to be included in a new error object.
- * The stack is preserved, along with any safe-to-log telemetry props.
- * @param error - An error that was presumably caught, thrown from unknown origins
- * @param newErrorFn - callback that will create a new error given the original error's message
- * @returns A new error object "wrapping" the given error
- */
-export function wrapError<T>(
-    error: any,
-    newErrorFn: (m: string) => T,
-): T {
-    const {
-        message,
-        stack,
-    } = extractLogSafeErrorProperties(error);
-    const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
-
-    const newError = newErrorFn(message);
-    annotateError(newError, props);
-
-    if (stack !== undefined) {
-        Object.assign(newError, { stack });
-    }
-
-    return newError;
 }

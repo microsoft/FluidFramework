@@ -10,7 +10,7 @@ import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError, wrapError } from "@fluidframework/telemetry-utils";
 import {
     IFluidRouter,
     IFluidRunnable,
@@ -21,7 +21,6 @@ import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import { wrapError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,

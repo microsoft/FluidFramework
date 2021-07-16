@@ -6,4 +6,5 @@ export * from "./debugLogger";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./events";
 export * from "./logger";
+export * from "./staging";
 export * from "./utils";
