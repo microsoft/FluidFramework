@@ -5,6 +5,7 @@
 
 export * from "./assert";
 export * from "./indexNode";
+export * from "./buffer";
 export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./disposal";
@@ -23,3 +24,4 @@ export * from "./unreachable";
 export * from "./lazy";
 export * from "./performanceIsomorphic";
 export * from "./delay";
+export * from "./instanceOf";

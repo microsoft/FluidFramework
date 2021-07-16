@@ -5,6 +5,9 @@
 
 import { strict } from "assert";
 import { assert } from "../../assert";
+import { bindInstanceOfBuiltin } from "../../instanceOf";
+
+const instanceOfError = bindInstanceOfBuiltin(new Error("N/A"));
 
 describe("Assert", () => {
     it("Validate Shortcode Format", async () => {
@@ -13,7 +16,7 @@ describe("Assert", () => {
             try {
                 assert(false, Number.parseInt(shortCode, 16));
             } catch (e) {
-                strict(e instanceof Error, "not an error");
+                strict(instanceOfError(e), "not an error");
                 strict.strictEqual(
                     e.message,
                     shortCode,
