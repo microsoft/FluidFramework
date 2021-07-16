@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import {
     fetchIncorrectResponse,
@@ -61,11 +61,10 @@ export async function createNewFluidFile(
     }
 
     let itemId: string;
-    let id: string;
+    let id: string = "";
 
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
-        id = "";
     } else {
         const content = await createNewFluidFileFromSummary(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
@@ -80,6 +79,7 @@ export async function createNewFluidFile(
     fileEntry.resolvedUrl = odspResolvedUrl;
 
     if (createNewSummary !== undefined && createNewCaching) {
+        assert(id !== undefined, "response content id is undefined");
         // converting summary and getting sequence number
         const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, id);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;

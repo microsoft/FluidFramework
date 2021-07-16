@@ -91,7 +91,7 @@ export interface HostStoragePolicy {
     enableRedeemFallback?: boolean;
 
     /**
-     * Policy controlling if createNewFluidFile will cache initial summary
+     * Policy controlling if we will cache initial summary when we create a document
      */
-    createNewCaching?: boolean;
+     cacheCreateNewSummary?: boolean;
 }

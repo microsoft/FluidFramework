@@ -12,10 +12,10 @@ export type CacheContentType = "snapshot" | "ops";
 
 // @public (undocumented)
 export interface HostStoragePolicy {
+    cacheCreateNewSummary?: boolean;
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    createNewCaching?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
     // (undocumented)
