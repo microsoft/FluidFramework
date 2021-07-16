@@ -69,7 +69,6 @@
     "graphiql": "^0.13.0",
     "graphql": "^15.4.0",
     "graphql-subscriptions": "^1.0.0",
-    "katex": "^0.10.2",
     "loader-utils": "^1.1.0",
     "monaco-editor": "^0.15.6",
     "prop-types": "^15.7.2",

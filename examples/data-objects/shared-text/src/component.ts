@@ -189,7 +189,6 @@ export class SharedTextRunner
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
-        require("katex/dist/katex.min.css");
         /* eslint-enable @typescript-eslint/no-require-imports,
         import/no-internal-modules, import/no-unassigned-import */
 
