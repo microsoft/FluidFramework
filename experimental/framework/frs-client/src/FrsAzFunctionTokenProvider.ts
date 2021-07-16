@@ -5,12 +5,12 @@
 
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
-import type { FrsAzFuncUser } from "./interfaces";
+import { FrsMember } from "./interfaces";
 
 export class FrsAzFunctionTokenProvider implements ITokenProvider {
     constructor(
         private readonly azFunctionUrl: string,
-        private readonly user?: FrsAzFuncUser,
+        private readonly user?: Pick<FrsMember, "userId" | "userName">,
     ) { }
 
     public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
