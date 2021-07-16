@@ -957,7 +957,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
         if (warning.logged !== true) {
-            this.logContainerError(warning);
+            this.logContainerWarning(warning);
         }
         this.emit("warning", warning);
     }
@@ -1882,7 +1882,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Please avoid calling it directly.
     // raiseContainerWarning() is the right flow for most cases
-    private logContainerError(warning: ContainerWarning) {
+    private logContainerWarning(warning: ContainerWarning & { originalError?: unknown }) {
+        // ContainerWarnings typically wrap whatever specific error was caught,
+        // And expose a different errorType to consumers of the warning event.
+        // Let's log the original error "as-is" here if present
+        if (warning.originalError !== undefined) {
+            this.logger.sendErrorEvent({
+                    eventName: "ContainerWarning-OriginalError",
+                    warningErrorType: warning.errorType,
+                    warningErrorMessage: warning.message,
+                },
+                warning.originalError);
+        }
+        // Also log the wrapped warning directly
         this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 }

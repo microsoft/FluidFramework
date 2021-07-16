@@ -54,6 +54,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     constructor(
         message: string,
         readonly retryAfterSeconds: number,
+        public readonly originalError: unknown, // for logging
         props?: ITelemetryProperties,
     ) {
         super(message, props);
@@ -63,10 +64,10 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
      * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
      * and prefixing the wrapped error message with messagePrefix.
      */
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning {
+    static wrap(error: unknown, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning {
         const newErrorFn =
             (errMsg: string) =>
-                new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds);
+                new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds, error);
         return wrapError(error, newErrorFn);
     }
 }
