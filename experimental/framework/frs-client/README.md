@@ -48,14 +48,9 @@ When running against a live FRS instance, we can use the same interface as we do
 ```typescript
 import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 
-const frsAzUser: FrsAzFuncUser = {
-    userId: "USER-ID",
-    userName: "USER-NAME",
-};
-
 const config: FrsConnectionConfig = {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", frsAzUser),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
     orderer: "https://alfred.eus-1.canary.frs.azure.com",
     storage: "https://historian.eus-1.canary.frs.azure.com",
 };

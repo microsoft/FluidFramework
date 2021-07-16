@@ -5,7 +5,7 @@
 
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
-import { FrsAzFuncUser } from "./interfaces";
+import type { FrsAzFuncUser } from "./interfaces";
 
 export class FrsAzFunctionTokenProvider implements ITokenProvider {
     constructor(
