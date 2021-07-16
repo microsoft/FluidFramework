@@ -622,7 +622,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
         return error;
     }
 
-    // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to mixingTelemetryProps
+    // Even though it's not exposed, fully implement RwLoggingError for subsequent calls to mixingTelemetryProps
     const loggingError = error as T & RwLoggingError;
 
     const propsForError = {...props};
@@ -658,17 +658,12 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     let fluidErrorBuilder: Builder<IFluidErrorBase>;
 
     // If we can't annotate the error, wrap it
-    if (Object.isFrozen(error) || !isRegularObject(error)) {
-        const errorType = hasErrorType(error)
-            ? error.errorType
-            : typeof(error);
-        const errorCode = isFluidError(error)
-            ? error.fluidErrorCode
-            : fullErrorCodeifNone;
+    if (!isRegularObject(error) || Object.isFrozen(error)) {
+        const errorType = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
         const newErrorFn = (errMsg: string) => {
             fluidErrorBuilder = new LoggingError(errMsg, annotations.props) as Builder<IFluidErrorBase>;
             setErrorTypeIfMissing(fluidErrorBuilder, errorType);
-            fluidErrorBuilder.fluidErrorCode = errorCode;
+            fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
             return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
         };
         return wrapError<IFluidErrorBase & ILoggingError>(error, newErrorFn);
