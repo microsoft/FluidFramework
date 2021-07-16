@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import * as _ from "lodash";
+import { clone } from "lodash";
 import Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
@@ -53,6 +53,7 @@ class SocketIoServer implements core.IWebSocketServer {
         private readonly pub: Redis.Redis,
         private readonly sub: Redis.Redis) {
         this.io.on("connection", (socket: Socket) => {
+            winston.info(`Socket.io connection received: protocol ${socket.conn.protocol}`);
             const webSocket = new SocketIoSocket(socket);
             this.events.emit("connection", webSocket);
         });
@@ -85,8 +86,8 @@ export function create(
         };
     }
 
-    const pub = new Redis(_.clone(options));
-    const sub = new Redis(_.clone(options));
+    const pub = new Redis(clone(options));
+    const sub = new Redis(clone(options));
 
     pub.on("error", (err) => {
         winston.error("Error with Redis pub connection: ", err);
@@ -95,19 +96,7 @@ export function create(
         winston.error("Error with Redis sub connection: ", err);
     });
 
-    // Create and register a socket.io connection on the server
-    const io = new Server(server, {
-        // enable compatibility with socket.io v2 clients
-        allowEIO3: true,
-        cors: {
-            // Explicitly allow all origins. As a service that has potential to host countless different client apps,
-            // it would impossible to hardcode or configure restricted CORS policies.
-            origin: "*",
-        },
-    });
-
-    let adapter: (typeof Adapter | ((nsp: Namespace) => Adapter)) | undefined;
-
+    let adapter: (nsp: Namespace) => Adapter | undefined;
     if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
         const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions =
         {
@@ -120,13 +109,21 @@ export function create(
             socketIoAdapterConfig?.shouldDisableDefaultNamespace);
 
         adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
-    }
-    else {
+    } else {
         adapter = createAdapter(pub, sub);
     }
 
-    io.attach(server);
-    io.adapter(adapter);
+    // Create and register a socket.io connection on the server
+    const io = new Server(server, {
+        // enable compatibility with socket.io v2 clients
+        allowEIO3: true,
+        cors: {
+            // Explicitly allow all origins. As a service that has potential to host countless different client apps,
+            // it would impossible to hardcode or configure restricted CORS policies.
+            origin: "*",
+        },
+        adapter
+    });
 
     return new SocketIoServer(io, pub, sub);
 }
