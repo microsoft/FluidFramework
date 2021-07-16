@@ -30,6 +30,7 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1028.0",
     "@fluidframework/server-services-core": "^0.1028.0",
+    "@socket.io/redis-adapter": "^7.0.0",
     "debug": "^4.1.1",
     "ioredis": "^4.24.2",
     "lodash": "^4.17.21",
@@ -37,7 +38,8 @@
     "nconf": "^0.11.0",
     "notepack.io": "^2.3.0",
     "socket.io": "^4.1.2",
-    "socket.io-redis": "^6.1.1",
+    "socket.io-adapter": "^2.3.1",
+    "socket.io-parser": "^4.0.4",
     "uuid": "^8.3.1",
     "winston": "^3.3.3"
   },

@@ -10,7 +10,7 @@ import * as core from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
-import { createAdapter } from "socket.io-redis";
+import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import * as winston from "winston";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
@@ -122,7 +122,7 @@ export function create(
         adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
     }
     else {
-        adapter = createAdapter({ pubClient: pub, subClient: sub });
+        adapter = createAdapter(pub, sub);
     }
 
     io.attach(server);

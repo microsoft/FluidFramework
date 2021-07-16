@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
 import * as msgpack from "notepack.io";
 import * as socketio from "socket.io";
-import type { Adapter, BroadcastOptions } from "socket.io-adapter";
+import { Adapter, BroadcastOptions, Room, SocketId } from "socket.io-adapter";
+import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
@@ -66,31 +65,25 @@ export interface ISocketIoRedisOptions {
  * - https://github.com/socketio/socket.io-emitter
  * - https://github.com/socketio/socket.io-adapter
  */
-export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
+export class RedisSocketIoAdapter extends Adapter {
     private static options: ISocketIoRedisOptions;
     private static shouldDisableDefaultNamespace: boolean;
 
-    // required for socketio.Adapter typing - however these are not used within socketio
-    public rooms: any = undefined;
-    public sids: any = undefined;
-
     /**
-     * Map of room id to socket ids
-     * Shows what sockets are in a given room
-     */
-    public readonly roomToSocketIds: Map<string, Set<string>> = new Map();
-
+	 * Map of room id to socket ids
+	 * Shows what sockets are in a given room
+	 */
+    public rooms: Map<Room, Set<SocketId>> = new Map();
     /**
      * Map of socket id to room ids
      * Shows what rooms the given socket is id
      */
-    private readonly socketIdToRooms: Map<string, Set<string>> = new Map();
+    public sids: Map<SocketId, Set<Room>> = new Map();
 
     private _uniqueRoomCount = 0;
 
     private readonly uid: string;
     private readonly channel: string;
-    private readonly encoder: any;
 
     private readonly pendingHealthChecks: Map<string, () => void> = new Map();
     private readonly roomHealthCheckTimeoutIds: Map<string, NodeJS.Timeout> = new Map();
@@ -104,21 +97,12 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
     }
 
     constructor(public readonly nsp: socketio.Namespace) {
-        super();
-
-        this.encoder = (nsp.server as any).encoder;
+        super(nsp);
 
         // todo: better id here?
         this.uid = uuid.v4().substring(0, 6);
 
         this.channel = `socket.io#${nsp.name}#`;
-
-        if (this.isDefaultNamespaceAndDisable) {
-            // the default namespace
-            // don't setup stuff for the default namespace. we only use /fluid. this will save memory
-            // related to https://github.com/socketio/socket.io/issues/3089
-            return;
-        }
     }
 
     /**
@@ -136,38 +120,63 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
     }
 
     /**
-     * Add a socket to a room
-     */
-    public async add(socketId: string, roomId: string, callback?: ((err?: any) => void) | undefined): Promise<void> {
-        return this.addAll(socketId, new Set([roomId]), callback);
-    }
+	 * Gets a list of sockets by sid.
+	 */
+	public async sockets(rooms: Set<Room>): Promise<Set<SocketId>> {
+		const sids = new Set<SocketId>();
+
+		if (rooms.size) {
+			for (const room of rooms) {
+				const roomSockets = this.rooms.get(room);
+				if (roomSockets) {
+					for (const id of roomSockets) {
+						if (this.nsp.sockets.has(id)) {
+							sids.add(id);
+						}
+					}
+				}
+			}
+		} else {
+			for (const id of this.sids.keys()) {
+				if (this.nsp.sockets.has(id)) {
+					sids.add(id);
+				}
+			}
+		}
+
+		return sids;
+	}
+
+	/**
+	 * Gets the list of rooms a given socket has joined.
+	 */
+	public socketRooms(id: SocketId): Set<Room> | undefined {
+		return this.sids.get(id);
+	}
 
     /**
      * Add a socket to a list of rooms
      */
-    public async addAll(
-        socketId: string,
-        roomIds: Set<string>,
-        callback?: ((err?: any) => void) | undefined): Promise<void> {
+    public async addAll(socketId: SocketId, roomIds: Set<Room>): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
             const newRooms: string[] = [];
 
             for (const roomId of roomIds) {
-                let socketRooms = this.socketIdToRooms.get(socketId);
+                let socketRooms = this.sids.get(socketId);
                 if (!socketRooms) {
                     socketRooms = new Set();
-                    this.socketIdToRooms.set(socketId, socketRooms);
+                    this.sids.set(socketId, socketRooms);
                 }
 
                 socketRooms.add(roomId);
 
-                let roomSocketIds = this.roomToSocketIds.get(roomId);
+                let roomSocketIds = this.rooms.get(roomId);
                 if (!roomSocketIds) {
                     roomSocketIds = new Set();
-                    this.roomToSocketIds.set(roomId, roomSocketIds);
+                    this.rooms.set(roomId, roomSocketIds);
 
                     // don't count the built in user rooms
-                    if (!roomId.startsWith("/")) {
+                    if (roomId.includes("-")) {
                         this._uniqueRoomCount++;
 
                         newRooms.push(roomId);
@@ -182,38 +191,30 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
                 await this.subscribeToRooms(newRooms);
             }
         }
-
-        if (callback) {
-            process.nextTick(callback);
-        }
     }
 
     /**
      * Removes a socket from a room
      */
-    public del(socketId: string, roomId: string, callback?: ((err?: any) => void) | undefined): void {
+    public del(socketId: SocketId, roomId: Room): void {
         if (!this.isDefaultNamespaceAndDisable) {
-            this.socketIdToRooms.get(socketId)?.delete(roomId);
+            this.sids.get(socketId)?.delete(roomId);
 
             const shouldUnsubscribe = this.removeFromRoom(socketId, roomId);
             if (shouldUnsubscribe) {
-                // don't delay socket removal due due to the redis subscription
+                // don't delay socket removal due to the redis subscription
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.unsubscribeFromRooms([roomId]);
             }
-        }
-
-        if (callback) {
-            process.nextTick(callback);
         }
     }
 
     /**
      * Removes a socket
      */
-    public delAll(socketId: string, callback?: () => void): void {
+    public delAll(socketId: SocketId): void {
         if (!this.isDefaultNamespaceAndDisable) {
-            const rooms = this.socketIdToRooms.get(socketId);
+            const rooms = this.sids.get(socketId);
             if (rooms) {
                 const unsubscribeRooms = [];
 
@@ -225,86 +226,43 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
                 }
 
                 if (unsubscribeRooms.length > 0) {
-                    // don't delay socket removal due due to the redis subscription
+                    // don't delay socket removal due to the redis subscription
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.unsubscribeFromRooms(unsubscribeRooms);
                 }
 
-                this.socketIdToRooms.delete(socketId);
+                this.sids.delete(socketId);
             }
-        }
-
-        if (callback) {
-            process.nextTick(callback);
         }
     }
 
     /**
      * Broadcast packets
      */
-    public broadcast(
-        packet: any,
-        opts: BroadcastOptions,
-        remote?: boolean): void {
+    public broadcast(packet: any, opts: BroadcastOptions): void {
         if (this.isDefaultNamespaceAndDisable) {
             return;
         }
 
-        if (!remote) {
-            this.publish(packet, opts);
-        }
-
-        const rooms = opts.rooms ? Array.from(opts.rooms) : [];
-        const except = opts.except ? Array.from(opts.except) : [];
-        const flags = opts.flags ?? {};
-        const packetOpts = {
-            preEncoded: true,
-            volatile: flags.volatile,
-            compress: flags.compress,
-        };
-        const ids: Record<string, boolean> = {};
-
-        if (rooms.length === 0) {
-            // explicitly disable broadcasting to all rooms
-            // we will never do this
+        if (opts.rooms.size !== 1) {
+            // block full broadcasts and multi room broadcasts
             return;
         }
 
-        this.encoder.encode(packet, (encodedPackets: any) => {
-            for (const roomId of rooms) {
-                const roomSocketIds = this.roomToSocketIds.get(roomId);
-                if (!roomSocketIds) {
-                    continue;
-                }
+        super.broadcast(packet, opts);
 
-                for (const socketId of roomSocketIds) {
-                    // eslint-disable-next-line no-bitwise
-                    if (ids[socketId] || ~except.indexOf(socketId)) {
-                        continue;
-                    }
-
-                    const socket = this.nsp.connected[socketId];
-                    if (socket) {
-                        (socket as any).packet(encodedPackets, packetOpts);
-                        ids[socketId] = true;
-                    }
-                }
-            }
-        });
+        this.publish(packet, opts);
     }
 
     /**
      * Publishes the packet to Redis
      */
-    private publish(packet: any, opts: { rooms?: Set<string> | undefined; except?: Set<string> | undefined }) {
-        packet.nsp = this.nsp.name;
+    private publish(packet: any, opts: BroadcastOptions) {
+        // include the room in the channel name
+		const channel = `${this.channel}${opts.rooms.values().next().value}#`;
 
-        const msg = msgpack.encode([this.uid, packet, opts]);
-
-        let channel = this.channel;
-        if (opts.rooms?.size === 1) {
-            channel += `${opts.rooms[0]}#`;
-        }
+        // don't provide any "opts"
+		const msg = msgpack.encode([this.uid, packet]);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         RedisSocketIoAdapter.options.pubConnection.publish(channel, msg);
@@ -321,7 +279,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
 
         const room = channel.slice(this.channel.length, -1);
 
-        if (room !== "" && !this.roomToSocketIds.has(room)) {
+        if (room !== "" && !this.rooms.has(room)) {
             // ignore unknown room
             return;
         }
@@ -329,7 +287,7 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
         const args = msgpack.decode(messageBuffer);
 
         const messageUid = args.shift();
-        const packet = args[0];
+        let packet = args[0];
         const isHealthCheckPacket = typeof (packet) === "string";
 
         if (this.uid === messageUid) {
@@ -348,8 +306,25 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
         const startTime = Date.now();
 
         try {
-            if (packet && packet.nsp === undefined) {
-                packet.nsp = "/";
+            if (packet) {
+                if (packet.data === undefined) {
+                    // the data is the packet itself
+                    // recreate the packet object
+                    packet = {
+                        data: packet,
+                    };
+                }
+
+                if (packet.nsp === undefined) {
+                    // default to this namespace
+                    // the packet namespace is in the channel name
+                    packet.nsp = this.nsp.name;
+                }
+
+                if (packet.type === undefined) {
+                    // default to a normal socketio event
+                    packet.type = PacketType.EVENT;
+                }
             }
 
             if (!packet || packet.nsp !== this.nsp.name) {
@@ -357,15 +332,12 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
                 throw new Error(`Invalid namespace. ${packet.nsp} !== ${this.nsp.name}`);
             }
 
-            let opts: { rooms?: Set<string> | undefined } = args[1];
+            const opts: BroadcastOptions = {
+				rooms: new Set([room]),
+			};
 
-            if (!opts || !opts.rooms || opts.rooms.size === 0) {
-                opts = {
-                    rooms: new Set([room]),
-                };
-            }
-
-            this.broadcast(packet, opts, true);
+            // only allow room broadcasts
+            super.broadcast(packet, opts);
 
             if (RedisSocketIoAdapter.options.onReceive) {
                 RedisSocketIoAdapter.options.onReceive(channel, startTime, packet);
@@ -381,15 +353,15 @@ export class RedisSocketIoAdapter extends EventEmitter implements Adapter {
      * Removes a socket from the room
      */
     private removeFromRoom(socketId: string, roomId: string) {
-        const roomSocketIds = this.roomToSocketIds.get(roomId);
+        const roomSocketIds = this.rooms.get(roomId);
         if (roomSocketIds) {
             roomSocketIds.delete(socketId);
 
             if (roomSocketIds.size === 0) {
-                this.roomToSocketIds.delete(roomId);
+                this.rooms.delete(roomId);
 
                 // don't count the built in user rooms
-                if (!roomId.startsWith("/")) {
+                if (roomId.includes("-")) {
                     this._uniqueRoomCount--;
                     return true;
                 }
