@@ -19,7 +19,6 @@ import {
     IFluidLoadable,
     IRequest,
     IResponse,
-    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import {
@@ -35,20 +34,12 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject, RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
-
-/**
- * Helper function to retrieve the handle for the default component route
- */
-async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
-    const component = await requestFluidObject(await runtimeP, "");
-    return component.IFluidLoadable.handle;
-}
 
 export class SharedTextRunner
     extends EventEmitter
@@ -144,11 +135,6 @@ export class SharedTextRunner
                 }
             }
             this.rootView.set("text", newString.handle);
-
-            const containerRuntime = this.context.containerRuntime;
-            const math = await getHandle(containerRuntime.createDataStore("@fluid-example/math"));
-
-            this.rootView.set("math", math);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
 
