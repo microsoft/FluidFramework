@@ -73,6 +73,7 @@ describe("Create New Utils Tests", () => {
         assert.strictEqual(blobEntries.length, 2, "There should be 2 blob entries in the main tree");
         assert.strictEqual(treeEntries.length, 2, "There should be 2 tree entries in the main tree");
     });
+
     it("Should cache converted summary during createNewFluidFile", async () => {
         const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
         const driveId = "driveId";
@@ -112,7 +113,7 @@ describe("Create New Utils Tests", () => {
                     fileEntry,
                     true,
                 ) ,
-                { itemId: "itemId1"},
+                { itemId: "itemId1", id: "Summary handle"},
                 { "x-fluid-epoch": "epoch1" },
                 );
         const value = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));

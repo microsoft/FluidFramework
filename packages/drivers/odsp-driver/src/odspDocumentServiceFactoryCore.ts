@@ -97,7 +97,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     createNewSummary,
                     cacheAndTracker.epochTracker,
                     fileEntry,
-                    this.hostPolicy.cacheCreateNewSummary ?? true,
+                    this.hostPolicy.cacheCreateNewSummary ?? false,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
                 event.end({

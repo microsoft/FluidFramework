@@ -61,7 +61,7 @@ export async function createNewFluidFile(
     }
 
     let itemId: string;
-    let id: string = "";
+    let summaryHandle: string = "";
 
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
@@ -69,7 +69,7 @@ export async function createNewFluidFile(
         const content = await createNewFluidFileFromSummary(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
         itemId = content.itemId;
-        id = content.id;
+        summaryHandle = content.id;
     }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
@@ -79,9 +79,9 @@ export async function createNewFluidFile(
     fileEntry.resolvedUrl = odspResolvedUrl;
 
     if (createNewSummary !== undefined && createNewCaching) {
-        assert(id !== undefined, "response content id is undefined");
+        assert(summaryHandle !== undefined, "Summary handle is undefined");
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, id);
+        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;

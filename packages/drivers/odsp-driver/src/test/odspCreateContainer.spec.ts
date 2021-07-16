@@ -32,6 +32,7 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
+        id : "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
