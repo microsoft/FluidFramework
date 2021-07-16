@@ -10,7 +10,7 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { wrapError, annotateError, LoggingError } from "@fluidframework/telemetry-utils";
+import { wrapError, normalizeError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -102,7 +102,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             : wrapError(originalError, newErrorFn);
 
         if (message !== undefined) {
-            annotateError(error, extractSafePropertiesFromMessage(message));
+            normalizeError(error, { props: extractSafePropertiesFromMessage(message) });
         }
         return error;
     }
@@ -135,7 +135,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         : wrapError(originalError, newErrorFn);
 
     if (props !== undefined) {
-        annotateError(error, props);
+        normalizeError(error, { props });
     }
     return error;
 }

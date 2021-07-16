@@ -7,8 +7,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue, annotateError } from "../logger";
-import { isILoggingError } from "../staging";
+import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -194,47 +193,47 @@ describe("Logger", () => {
             //     assert(retVal === loggingError);
             //     assert(loggingError.getTelemetryProperties().p1 === 1);
             // });
-            it("Custom Read/Write Logging Error is annotated", () => {
-                let atpCalled = false;
-                const loggingError = {
-                    getTelemetryProperties: () => {},
-                    addTelemetryProperties: () => { atpCalled = true; },
-                };
-                const retVal = annotateError(loggingError, { p1: 1 });
+            // it("Custom Read/Write Logging Error is annotated", () => {
+            //     let atpCalled = false;
+            //     const loggingError = {
+            //         getTelemetryProperties: () => {},
+            //         addTelemetryProperties: () => { atpCalled = true; },
+            //     };
+            //     const retVal = normalizeError(loggingError, { p1: 1 });
 
-                assert(retVal as any === loggingError);
-                assert(atpCalled);
-            });
-            it("Arbitrary object get telemetry prop functions mixed in", () => {
-                const obj = {};
-                const retVal = annotateError(obj, { p1: 1 });
+            //     assert(retVal as any === loggingError);
+            //     assert(atpCalled);
+            // });
+            // it("Arbitrary object get telemetry prop functions mixed in", () => {
+            //     const obj = {};
+            //     const retVal = normalizeError(obj, { p1: 1 });
 
-                assert(retVal === obj);
-                assert(isILoggingError(obj));
-                assert(obj.getTelemetryProperties().p1 === 1);
+            //     assert(retVal === obj);
+            //     assert(isILoggingError(obj));
+            //     assert(obj.getTelemetryProperties().p1 === 1);
 
-                const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
-                atp({ p2: 2 });
-                assert(obj.getTelemetryProperties().p2 === 2);
-                atp({ p1: "one" });
-                assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
-            });
-            it("non-objects result in new LoggingError", () => {
-                const inputs = [
-                    null,
-                    undefined,
-                    false,
-                    true,
-                    3.14,
-                    Symbol("Unique"),
-                    () => {},
-                    [],
-                    [1,2,3],
-                ];
-                const annotated = inputs.map((i) => annotateError(i, { p1: 1 }));
+            //     const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
+            //     atp({ p2: 2 });
+            //     assert(obj.getTelemetryProperties().p2 === 2);
+            //     atp({ p1: "one" });
+            //     assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
+            // });
+            // it("non-objects result in new LoggingError", () => {
+            //     const inputs = [
+            //         null,
+            //         undefined,
+            //         false,
+            //         true,
+            //         3.14,
+            //         Symbol("Unique"),
+            //         () => {},
+            //         [],
+            //         [1,2,3],
+            //     ];
+            //     const annotated = inputs.map((i) => normalizeError(i, { p1: 1 }));
 
-                assert(annotated.every((a) => a instanceof LoggingError));
-            });
+            //     assert(annotated.every((a) => a instanceof LoggingError));
+            // });
         });
         describe("LoggingError", () => {
             it("ctor props are assigned to the object", () => {

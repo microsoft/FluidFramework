@@ -622,7 +622,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
         return error;
     }
 
-    // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
+    // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to mixingTelemetryProps
     const loggingError = error as T & RwLoggingError;
 
     const propsForError = {...props};
@@ -634,23 +634,25 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
 }
 
 /**
- * Annotate the given error object with the given logging props
- * @returns The same error object passed in if possible, with telemetry props functionality mixed in
+ * Normalize the given error object yielding a valid Fluid Error
+ * @returns The same error object passed in if possible, normalized and with any provided annotations applied
  */
- export function annotateError(
+ export function normalizeError(
     error: unknown,
-    props: ITelemetryProperties = {},
-    errorCodeIfNone?: string,
-): IFluidErrorBase & ILoggingError {
+    annotations: {
+        props?: ITelemetryProperties,
+        errorCodeIfNone?: string,
+    } = {},
+): IFluidErrorBase {
     // Set up some helpers
     function setErrorTypeIfMissing(builder: Builder<IFluidErrorBase>, errorTypeIfNone: string) {
         if (!hasErrorType(error)) {
             builder.errorType = `none (${errorTypeIfNone})`;
         }
     }
-    const fullErrorCodeifNone = errorCodeIfNone === undefined
+    const fullErrorCodeifNone = annotations.errorCodeIfNone === undefined
         ? "none"
-        : `none (${errorCodeIfNone})`;
+        : `none (${annotations.errorCodeIfNone})`;
 
     // We'll be sure to set all properties on here before casting to IFluidErrorBase and returning
     let fluidErrorBuilder: Builder<IFluidErrorBase>;
@@ -664,7 +666,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
             ? error.fluidErrorCode
             : fullErrorCodeifNone;
         const newErrorFn = (errMsg: string) => {
-            fluidErrorBuilder = new LoggingError(errMsg, props) as Builder<IFluidErrorBase>;
+            fluidErrorBuilder = new LoggingError(errMsg, annotations.props) as Builder<IFluidErrorBase>;
             setErrorTypeIfMissing(fluidErrorBuilder, errorType);
             fluidErrorBuilder.fluidErrorCode = errorCode;
             return fluidErrorBuilder as IFluidErrorBase & ILoggingError;
@@ -674,7 +676,9 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
 
     // Do we already have a valid Fluid Error?  Then just mixin telemetry props
     if (isFluidError(error)) {
-        return mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, props);
+        return annotations.props !== undefined
+            ? mixinTelemetryProps(error as ExtensibleObject<IFluidErrorBase>, annotations.props)
+            : error;
     }
 
     // We have a mutable object, not already a valid Fluid Error. Time to fill in the gaps!
@@ -685,7 +689,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
         setErrorTypeIfMissing(fluidErrorBuilder, error.name);
     } else {
         setErrorTypeIfMissing(fluidErrorBuilder, typeof(error));
-        fluidErrorBuilder.message = errorCodeIfNone;
+        fluidErrorBuilder.message = annotations.errorCodeIfNone;
         fluidErrorBuilder.name = "none";
     }
 
@@ -694,7 +698,9 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     }
 
     const fluidError = fluidErrorBuilder as ExtensibleObject<IFluidErrorBase>;
-    return mixinTelemetryProps(fluidError, props);
+    return annotations.props !== undefined
+        ? mixinTelemetryProps(fluidError, annotations.props)
+        : fluidError;
 }
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
