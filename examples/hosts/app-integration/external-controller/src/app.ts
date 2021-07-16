@@ -54,8 +54,12 @@ async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
 
     const client = new FrsClient(connectionConfig);
+    const preAttach = async (container) => {
+      // perform any preAttach actions here
+      console.log(container.initialObjects);
+    }
     const { fluidContainer, containerServices } = createNew
-        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema, preAttach)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
@@ -69,7 +73,6 @@ async function start(): Promise<void> {
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
-    renderDiceRoller(diceRollerController, div1);
 
     // We now get the SharedMap from the container
     const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
@@ -80,7 +83,9 @@ async function start(): Promise<void> {
 
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
-    // We render a view which uses the controller.
+
+    // We render views which uses the controller.
+    renderDiceRoller(diceRollerController, div1);
     renderDiceRoller(diceRollerController2, div2);
 
     // Render the audience information for the members currently in the session

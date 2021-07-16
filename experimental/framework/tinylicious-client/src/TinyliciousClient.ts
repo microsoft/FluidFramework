@@ -50,16 +50,22 @@ export class TinyliciousClient {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
+        preAttach?: (container: FluidContainer) => Promise<void>,
     ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const container = await this.getContainerCore(
+        const detachedContainer = await this.getContainerCore(
             serviceContainerConfig,
             runtimeFactory,
             true,
         );
-        return this.getFluidContainerAndServices(container);
+        const {fluidContainer, containerServices} = await this.getFluidResources(detachedContainer);
+        if (preAttach) {
+            await preAttach(fluidContainer);
+        }
+        await detachedContainer.attach({ url: serviceContainerConfig.id });
+        return {fluidContainer, containerServices};
     }
 
     public async getContainer(
@@ -74,10 +80,11 @@ export class TinyliciousClient {
             runtimeFactory,
             false,
         );
-        return this.getFluidContainerAndServices(container);
+        const resources = await this.getFluidResources(container);
+        return resources;
     }
 
-    private async getFluidContainerAndServices(
+    private async getFluidResources(
         container: Container,
     ): Promise<TinyliciousResources>  {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
@@ -120,7 +127,6 @@ export class TinyliciousClient {
                 package: "no-dynamic-package",
                 config: {},
             });
-            await container.attach({ url: tinyliciousContainerConfig.id });
         } else {
             // Request must be appropriate and parseable by resolver.
             container = await loader.resolve({ url: tinyliciousContainerConfig.id });
