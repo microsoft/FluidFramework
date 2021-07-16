@@ -43,14 +43,14 @@ const frsClient = new FrsClient(config);
 ```
 
 ### Backed by a Live FRS Instance
-When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. Each tenant ID maps to a tenant key secret that can be passed to the `InsecureTokenProvider` to generate and sign the token such that the service will accept it. To ensure that the secret doesn't get exposed, this should be replaced with another implementation of `ITokenProvider` that fetches the token from a secure, developer-provided backend service prior to releasing to production.
+When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. Each tenant ID maps to a tenant key secret that can be passed to the `FrsAzFunctionTokenProvider` to generate and sign the token such that the service will accept it. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched.
 
 ```typescript
 import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 
-const config: FrsConnectionConfig = { 
+const config: FrsConnectionConfig = {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new InsecureTokenProvider("YOUR-TENANT-ID-HERE" { id: "123", name: "Test User" }),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
     orderer: "https://alfred.eus-1.canary.frs.azure.com",
     storage: "https://historian.eus-1.canary.frs.azure.com",
 };
