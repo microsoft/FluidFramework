@@ -3,23 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 
 import { ContactCollectionInstantiationFactory } from "./dataObject";
 
+const contactCollectionId = "contactCollection";
+
+// All requests will be routed to the ContactCollection, so e.g. of the format "/contactId".
+// If we wanted to permit routing to other DO's then we might use a url format more like
+// "/contactCollection/contactId".
+const collectionRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    const response = await requestFluidObject<IFluidRouter>(
+        await runtime.getRootDataStore(contactCollectionId),
+        request);
+    return { status: 200, mimeType: "fluid/object", value: response };
+};
+
+class ContactCollectionContainerRuntimeFactoryType extends BaseContainerRuntimeFactory {
+    constructor() {
+        super(
+            new Map([ContactCollectionInstantiationFactory.registryEntry]),
+            [],
+            [collectionRequestHandler],
+        );
+    }
+
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        await runtime.createRootDataStore(ContactCollectionInstantiationFactory.type, contactCollectionId);
+    }
+}
+
 /**
- * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
- *
- * Since we only need to instantiate and retrieve a single dice roller for our scenario, we can use a
- * ContainerRuntimeFactoryWithDefaultDataStore. We provide it with the type of the data object we want to create
- * and retrieve by default, and the registry entry mapping the type to the factory.
- *
- * This container code will create the single default data object on our behalf and make it available on the
- * Container with a URL of "/", so it can be retrieved via container.request("/").
+ * The ContactCollectionContainerRuntimeFactory is the container code for our scenario.
  */
-export const ContactCollectionContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    ContactCollectionInstantiationFactory,
-    new Map([
-        ContactCollectionInstantiationFactory.registryEntry,
-    ]),
-);
+export const ContactCollectionContainerRuntimeFactory = new ContactCollectionContainerRuntimeFactoryType();

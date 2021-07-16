@@ -7,6 +7,13 @@ import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { RequestParser } from "@fluidframework/runtime-utils";
+
+export interface IContact {
+    readonly name: string;
+    readonly phone: string;
+}
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -14,8 +21,8 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 export interface IContactCollection extends EventEmitter {
     addContact: (name: string, phone: string) => string;
     removeContact: (id: string) => void;
-    getContact: (id: string) => Contact | undefined;
-    getContacts: () => Contact[];
+    getContact: (id: string) => IContact | undefined;
+    getContacts: () => IContact[];
 
     /**
      * The contactCollectionChanged event will fire whenever the list changes, either locally or remotely.
@@ -23,7 +30,7 @@ export interface IContactCollection extends EventEmitter {
     on(event: "contactCollectionChanged", listener: () => void): this;
 }
 
-export class Contact {
+export class Contact implements IContact {
     constructor(
         private readonly _name: string,
         private readonly _phone: string,
@@ -43,6 +50,17 @@ export class Contact {
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class ContactCollection extends DataObject implements IContactCollection {
+    public async request(request: IRequest): Promise<IResponse> {
+        const requestParser = RequestParser.create(request);
+        // We interpret the first path part as the id of the contact that we should retrieve
+        if (requestParser.pathParts.length === 1) {
+            const contact = this.getContact(requestParser.pathParts[0]);
+            return { mimeType: "fluid/object", status: 200, value: contact };
+        }
+        // Otherwise we'll return the collection itself
+        return super.request(request);
+    }
+
     /**
      * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
      * initialize the state of the DataObject.
@@ -58,6 +76,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
      * DataObject, by registering an event listener for changes to the contact list.
      */
     protected async hasInitialized() {
+        // Preemptively build out IContact[] collection?
         this.root.on("valueChanged", (changed) => {
             // When we see the contacts change, we'll emit the contactCollectionChanged event we specified
             // in our interface.
@@ -68,14 +87,16 @@ export class ContactCollection extends DataObject implements IContactCollection 
     public readonly addContact = (name: string, phone: string) => {
         const id = uuid();
         this.root.set(id, { name, phone });
-        return id; // ?
+        return id; // maybe return an IContact instead?
     };
 
+    // Should this be private and accessed via an API on Contact?
     public readonly removeContact = (id: string) => {
         this.root.delete(id);
     };
 
-    public readonly getContact = (id: string) => {
+    // Should this be private and accessed via an API on Contact?
+    public readonly getContact = (id: string): IContact | undefined => {
         const contactData = this.root.get(id);
         if (contactData === undefined) {
             return undefined;
@@ -85,7 +106,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
     };
 
     public readonly getContacts = () => {
-        const contactList: Contact[] = [];
+        const contactList: IContact[] = [];
         for (const contactData of this.root.values()) {
             contactList.push(new Contact(contactData.name, contactData.phone));
         }

@@ -3,7 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IContactCollection } from "./dataObject";
+import { IContact, IContactCollection } from "./dataObject";
+
+function makeContactDiv(contact: IContact) {
+    const contactDiv = document.createElement("div");
+    contactDiv.textContent = `${contact.name}: ${contact.phone}`;
+    return contactDiv;
+}
+
+export function renderContact(contact: IContact, div: HTMLDivElement) {
+    const contactDiv = makeContactDiv(contact);
+    div.append(contactDiv);
+}
 
 /**
  * Render an IContactCollection into a given div as a text character, with a button to roll it.
@@ -19,8 +30,7 @@ export function renderContactCollection(contactCollection: IContactCollection, d
         contactListDiv.innerHTML = "";
         const contacts = contactCollection.getContacts();
         for (const contact of contacts) {
-            const contactDiv = document.createElement("div");
-            contactDiv.textContent = `${contact.name}: ${contact.phone}`;
+            const contactDiv = makeContactDiv(contact);
             contactListDiv.append(contactDiv);
         }
     };
@@ -41,7 +51,7 @@ export function renderContactCollection(contactCollection: IContactCollection, d
         contactCollection.addContact(name, phone);
         nameInput.value = "";
         phoneInput.value = "";
-    })
+    });
     addContactDiv.append(nameInput, phoneInput, addButton);
 
     div.append(contactListDiv, addContactDiv);

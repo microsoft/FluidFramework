@@ -6,8 +6,8 @@
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
 import { ContactCollectionContainerRuntimeFactory } from "./containerCode";
-import { IContactCollection } from "./dataObject";
-import { renderContactCollection } from "./view";
+import { IContact, IContactCollection } from "./dataObject";
+import { renderContact, renderContactCollection } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -24,6 +24,9 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+const searchParams = new URLSearchParams(location.search);
+const specifiedContact = searchParams.get("contact") ?? undefined;
+
 async function start(): Promise<void> {
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
@@ -33,8 +36,9 @@ async function start(): Promise<void> {
     const container = await getTinyliciousContainer(documentId, ContactCollectionContainerRuntimeFactory, createNew);
 
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our contact collection is available
-    // at the URL "/".
-    const url = "/";
+    // at the URL "/".  Since it's using the collection pattern, it will interpret subrequests as requests for a
+    // single contact.
+    const url = `/${specifiedContact ?? ""}`;
     const response = await container.request({ url });
 
     // Verify the response to make sure we got what we expected.
@@ -44,12 +48,17 @@ async function start(): Promise<void> {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    // In this app, we know our container code provides a default data object that is an IContactCollection.
-    const contactCollection: IContactCollection = response.value;
-
-    // Given an IContactCollection, we can render the contacts.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderContactCollection(contactCollection, div);
+
+    if (specifiedContact === undefined) {
+        // If a contact was not specified, we'll render the full collection.
+        const contactCollection: IContactCollection = response.value;
+        renderContactCollection(contactCollection, div);
+    } else {
+        // If a contact was specified, we'll render just that contact.
+        const contact: IContact = response.value;
+        renderContact(contact, div);
+    }
 }
 
 start().catch((error) => console.error(error));
