@@ -13,7 +13,6 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
@@ -24,7 +23,6 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
-const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
 
 const DefaultComponentName = "text";
@@ -43,10 +41,6 @@ const DefaultComponentName = "text";
 // 	}
 // };
 /* eslint-enable max-len */
-
-const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
-    ["@fluid-example/math", math.then((m) => m.fluidExport)],
-];
 
 class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/shared-text";
@@ -70,7 +64,6 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
-                ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 AgentSchedulerFactory.registryEntry,
             ],

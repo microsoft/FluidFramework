@@ -153,7 +153,6 @@ export function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
 export const enum ParagraphLexerState {
     AccumBlockChars,
     AccumSpaces,
-    AccumMath,
 }
 
 export interface ParagraphTokenActions<TContext> {
@@ -165,8 +164,6 @@ export class ParagraphLexer<TContext> {
     public state = ParagraphLexerState.AccumBlockChars;
     private spaceCount = 0;
     private textBuf = "";
-    private mathBuf = "";
-    private readonly inMath = false;
     private leadSegment: MergeTree.TextSegment;
 
     constructor(public tokenActions: ParagraphTokenActions<TContext>, public actionContext?: TContext) {
@@ -185,34 +182,30 @@ export class ParagraphLexer<TContext> {
     }
 
     public lex(textSegment: MergeTree.TextSegment) {
-        if (this.state === ParagraphLexerState.AccumMath) {
-            this.mathBuf += textSegment.text;
-        } else {
-            if (this.leadSegment && (!MergeTree.matchProperties(this.leadSegment.properties, textSegment.properties))) {
-                this.emit();
-                this.leadSegment = textSegment;
-            } else if (!this.leadSegment) {
-                this.leadSegment = textSegment;
-            }
-            const segText = textSegment.text;
-            for (let i = 0, len = segText.length; i < len; i++) {
-                const c = segText.charAt(i);
-                if (c === " ") {
-                    if (this.state === ParagraphLexerState.AccumBlockChars) {
-                        this.emitBlock();
-                    }
-                    this.state = ParagraphLexerState.AccumSpaces;
-                    this.spaceCount++;
-                } else {
-                    if (this.state === ParagraphLexerState.AccumSpaces) {
-                        this.emitGlue();
-                    }
-                    this.state = ParagraphLexerState.AccumBlockChars;
-                    this.textBuf += c;
-                }
-            }
+        if (this.leadSegment && (!MergeTree.matchProperties(this.leadSegment.properties, textSegment.properties))) {
             this.emit();
+            this.leadSegment = textSegment;
+        } else if (!this.leadSegment) {
+            this.leadSegment = textSegment;
         }
+        const segText = textSegment.text;
+        for (let i = 0, len = segText.length; i < len; i++) {
+            const c = segText.charAt(i);
+            if (c === " ") {
+                if (this.state === ParagraphLexerState.AccumBlockChars) {
+                    this.emitBlock();
+                }
+                this.state = ParagraphLexerState.AccumSpaces;
+                this.spaceCount++;
+            } else {
+                if (this.state === ParagraphLexerState.AccumSpaces) {
+                    this.emitGlue();
+                }
+                this.state = ParagraphLexerState.AccumBlockChars;
+                this.textBuf += c;
+            }
+        }
+        this.emit();
     }
 
     private emit() {
