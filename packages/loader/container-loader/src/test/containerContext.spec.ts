@@ -15,7 +15,6 @@ import {
     IFluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-    IDocumentAttributes,
     IQuorum,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -63,7 +62,6 @@ describe("ContainerContext Tests", () => {
             codeLoader as ICodeDetailsLoader,
             quorumCodeDetails,
             undefined,
-            (sandbox.stub() as unknown) as IDocumentAttributes,
             sandbox.stub() as any,
             (sandbox.stub() as unknown) as IQuorum,
             (sandbox.stub() as unknown) as ILoader,

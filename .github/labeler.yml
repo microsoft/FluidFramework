@@ -4,6 +4,7 @@
 "area: build":
   - ".github/*"
   - ".github/workflows/**"
+  - "tools/pipelines/**"
 
 "area: contributor experience":
   - ".vscode/**"
@@ -17,6 +18,11 @@
 
 "area: dds: sharedstring":
   - packages/dds/sequence/**
+
+"area: definitions":
+  - common/lib/container-definitions/**
+  - common/lib/core-interfaces/**
+  - common/lib/driver-definitions/**
 
 "area: dev experience":
   - experimental/framework/**
@@ -55,7 +61,7 @@
   - packages/test/**
 
 "area: tools":
-  - tools/**
+  - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
 
 "area: website":
   - any: ["docs/**", "!docs/content/**"]
@@ -63,7 +69,7 @@
 # Any change to BREAKING.md or to any api-report path in the repo
 "breaking change":
   - BREAKING.md
-  - api-report/*
+  - "**/api-report/**"
 
 dependencies:
   - lerna-package-lock.json

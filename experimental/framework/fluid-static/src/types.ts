@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
@@ -74,10 +74,13 @@ export interface ContainerSchema {
 }
 
 /**
- * Event that triggers when the roster of members in the Fluid session change
+ * Events that trigger when the roster of members in the Fluid session change.
+ * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
+ * will emit events.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
-    (event: "membersChanged", listener: (members: Map<string, M>) => void): void;
+    (event: "membersChanged", listener: () => void): void;
+    (event: "memberAdded" | "memberRemoved", listener: (clientId: string, member: M) => void): void;
 }
 
 /**
@@ -88,7 +91,8 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
      * Returns an map of all users currently in the Fluid session where key is the userId and the value is the
-     * member object
+     * member object.  The implementation may choose to exclude certain connections from the returned map.
+     * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
      */
     getMembers(): Map<string, M>;
 
@@ -96,12 +100,6 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
      * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
      */
     getMyself(): M | undefined;
-
-    /**
-     * Gets the member matching the clientId if it is present
-     * @param clientId The clientId to match to a member
-     */
-    getMemberByClientId(clientId: string): M | undefined;
 }
 
 /**
