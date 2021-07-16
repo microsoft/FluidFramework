@@ -54,10 +54,7 @@
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
-<<<<<<< HEAD
     "@types/assert": "^1.5.2",
-=======
->>>>>>> abd10321a1428a1baf83adf29a1b67ffddcdc76f
     "@types/mocha": "^8.2.2",
     "assert": "^2.0.0",
     "concurrently": "^5.2.0",
