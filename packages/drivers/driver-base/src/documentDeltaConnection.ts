@@ -419,7 +419,9 @@ export class DocumentDeltaConnection
     }
 
     private removeConnectionListeners() {
-        clearTimeout(this.socketConnectionTimeout);
+        if (this.socketConnectionTimeout !== undefined) {
+            clearTimeout(this.socketConnectionTimeout);
+        }
 
         for (const { event, listener } of this.connectionListeners) {
             this.socket.off(event, listener);

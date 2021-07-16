@@ -133,16 +133,21 @@ async function runnerProcess(
         const logger = ChildLogger.create(
             baseLogger, undefined, {all: { runId: runConfig.runId, driverType: testDriver.type }});
 
-        let iteration = 0;
+        // Cycle between creating new factory vs. reusing factory.
+        // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+        // At the same time we want to test newly created factory.
         const iterator = factoryPermutations(
             () => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()));
 
-        for (const {documentServiceFactory, headers} of iterator) {
-            iteration++;
-
-            // Switch between creating new factory vs. reusing factory.
-            // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
-            // At the same time we want to test newly created factory.
+        let done = false;
+        // Reset the workload once, on the first iteration
+        let reset = true;
+        while (!done) {
+            const nextFactoryPermutation = iterator.next();
+            if (nextFactoryPermutation.done === true) {
+                throw new Error("Factory permutation iterator is expected to cycle forever");
+            }
+            const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
             // Construct the loader
             const loader = new Loader({
@@ -150,7 +155,7 @@ async function runnerProcess(
                 documentServiceFactory,
                 codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
                 logger,
-                options: loaderOptions,
+                options: loaderOptions[runConfig.runId % containerOptions.length],
             });
 
             const container = await loader.resolve({ url, headers });
@@ -159,20 +164,15 @@ async function runnerProcess(
 
             scheduleContainerClose(container, runConfig);
             scheduleFaultInjection(documentServiceFactory, container, runConfig);
-            try{
+            try {
                 printStatus(runConfig, `running`);
-                const done = await test.run(runConfig, iteration === 0 /* reset */);
-                printStatus(runConfig, done ?  `finished` : "closed");
-                if (done) {
-                    break;
-                }
-            }catch(error) {
-                await loggerP.then(
-                    async (l)=>l.sendErrorEvent({eventName: "RunnerFailed", runId: runConfig.runId}, error));
-                throw error;
-            }
-            finally {
-                if(!container.closed) {
+                done = await test.run(runConfig, reset);
+                reset = false;
+                printStatus(runConfig, done ? `finished` : "closed");
+            } catch (error) {
+                logger.sendErrorEvent({eventName: "RunnerFailed"}, error);
+            } finally {
+                if (!container.closed) {
                     container.close();
                 }
                 await baseLogger.flush({url, runId: runConfig.runId});

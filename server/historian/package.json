@@ -24,6 +24,8 @@
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
     "start": "node packages/historian/dist/www.js",
+    "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
+    "start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "test": "lerna run test --stream --no-bail --no-sort",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
@@ -42,7 +44,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.22453",
+    "@fluidframework/build-tools": "^0.2.25384",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
@@ -66,7 +68,7 @@
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.22.0",
     "eslint-plugin-unicorn": "~26.0.1",
-    "lerna": "3.19.0",
+    "lerna": "^4.0.0",
     "mocha": "^8.4.0",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",

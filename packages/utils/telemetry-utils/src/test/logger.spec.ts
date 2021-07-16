@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-// eslint-disable-next-line max-len
-import { LoggingError, TelemetryLogger, TelemetryDataTag, isTaggedTelemetryPropertyValue, ITaggableTelemetryProperties } from "../logger";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue, annotateError, isILoggingError } from "../logger";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -14,7 +15,7 @@ describe("Logger", () => {
             function freshEvent(): ITelemetryBaseEvent {
                 return { category: "cat1", eventName: "event1" };
             }
-            function createILoggingError(props: ITaggableTelemetryProperties) {
+            function createILoggingError(props: ITelemetryProperties) {
                 return {...props, getTelemetryProperties: () => props };
             }
 
@@ -24,33 +25,37 @@ describe("Logger", () => {
                 assert.strictEqual(event.error, "hello", "string should work");
                 event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, 42, false);
-                assert.strictEqual(event.error, 42, "number should work");
+                assert.strictEqual(event.error, "42", "number should work");
                 event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, true, false);
-                assert.strictEqual(event.error, true, "boolean should work");
+                assert.strictEqual(event.error, "true", "boolean should work");
                 event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, undefined, false);
-                assert.strictEqual(event.error, undefined, "undefined should work");
+                assert.strictEqual(event.error, "undefined", "undefined should work");
 
                 // Technically this violates TelemetryEventPropertyType's type constraint but it's actually supported
                 event = freshEvent();
                 TelemetryLogger.prepareErrorObject(event, null, false);
-                assert.strictEqual(event.error, null, "null should work");
+                assert.strictEqual(event.error, "null", "null should work");
             });
-            it("stack and message added to event", () => {
+            it("stack and message added to event (stack should exclude message)", () => {
                 const event = freshEvent();
-                TelemetryLogger.prepareErrorObject(event, new Error("boom"), false);
+                const error = new Error("boom");
+                error.name = "MyErrorName";
+                TelemetryLogger.prepareErrorObject(event, error, false);
                 assert(event.error === "boom");
-                assert((event.stack as string).includes("boom"));
+                assert((event.stack as string).includes("MyErrorName"));
+                assert(!(event.stack as string).includes("boom"));
             });
             it("containsPII (legacy) is ignored", () => {
                 // Previously, setting containsPII = true on an error obj would (attempt to) redact its message
                 const event = freshEvent();
                 const error = new Error("boom");
+                error.name = "MyErrorName";
                 (error as any).containsPII = true;
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert(event.error === "boom");
-                assert((event.stack as string).includes("boom"));
+                assert((event.stack as string).includes("MyErrorName"));
             });
             it("getTelemetryProperties absent - no further props added", () => {
                 const event = freshEvent();
@@ -70,17 +75,17 @@ describe("Logger", () => {
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert(event.foo === "foo" && event.bar === 2);
             });
-            it("getTelemetryProperties - tagged TelemetryDataTag.UserData is removed", () => {
+            it("getTelemetryProperties - tagged UserData is removed", () => {
                 const event = freshEvent();
                 const error = createILoggingError(
-                    { somePii: { value: "very personal", tag: TelemetryDataTag.UserData }});
+                    { somePii: { value: "very personal", tag: "UserData" }});
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert.strictEqual(event.somePii, "REDACTED (UserData)", "somePii should be redacted");
             });
             it("getTelemetryProperties - tagged PackageData are preserved", () => {
                 const event = freshEvent();
                 const error = createILoggingError({
-                    packageName: { value: "myPkg", tag: TelemetryDataTag.PackageData },
+                    packageName: { value: "myPkg", tag: "PackageData" },
                 });
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert.strictEqual(event.packageName, "myPkg");
@@ -88,20 +93,20 @@ describe("Logger", () => {
             it("getTelemetryProperties - tagged [unrecognized tag] are removed", () => {
                 const event = freshEvent();
                 const error = createILoggingError(
-                    { somePii: { value: "very personal", tag: "FutureTag" as TelemetryDataTag }});
+                    { somePii: { value: "very personal", tag: "FutureTag"}});
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert.strictEqual(event.somePii, "REDACTED (unknown tag)", "somePii should be redacted");
             });
-            it("getTelemetryProperties - tags on overwritten Error base props are NOT respected", () => {
+            it("getTelemetryProperties - tags on overwritten Error base props", () => {
                 const event = freshEvent();
                 const error = createILoggingError({
-                    message: { value: "Mark Fields", tag: TelemetryDataTag.UserData }, // hopefully no one does this!
-                    stack: { value: "tagged", tag: TelemetryDataTag.PackageData },
+                    message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
+                    stack: { value: "tagged", tag: "PackageData" },
                 });
                 TelemetryLogger.prepareErrorObject(event, error, false);
                 assert.strictEqual(event.message, "REDACTED (UserData)");
-                assert.deepStrictEqual(event.error, { value: "Mark Fields", tag: TelemetryDataTag.UserData }); // Bug!
-                assert.deepStrictEqual(event.stack, { value: "tagged", tag: TelemetryDataTag.PackageData }); // Bug!
+                assert.deepStrictEqual(event.error, "[object Object]"); // weird but ok
+                assert.deepStrictEqual(event.stack, "tagged"); // weird but ok
             });
             it("fetchStack false - Don't add a stack if missing", () => {
                 const event = freshEvent();
@@ -112,15 +117,16 @@ describe("Logger", () => {
             it("fetchStack true - Don't add a stack if present", () => {
                 const event = freshEvent();
                 const error = new Error("boom");
+                error.name = "MyName";
                 TelemetryLogger.prepareErrorObject(event, error, false);
-                assert((event.stack as string).includes("boom"));
+                assert((event.stack as string).includes("MyName"));
             });
             it("fetchStack true - Add a stack if missing", () => {
                 const event = freshEvent();
-                const error = { message: "I have no stack - boom" };
+                const error = { message: "I have no stack - boom", name: "MyName" };
                 TelemetryLogger.prepareErrorObject(event, error, true);
                 assert.strictEqual(typeof (event.stack), "string");
-                assert(!(event.stack as string).includes("boom"));
+                assert(!(event.stack as string).includes("MyName"));
             });
         });
         describe("TaggedTelemetryData", () => {
@@ -178,17 +184,67 @@ describe("Logger", () => {
                     { value: "hello" }), false, "undefined (missing) tag is bad");
             });
         });
+        describe("annotateError", () => {
+            it("LoggingError is annotated", () => {
+                const loggingError = new LoggingError("msg");
+                const retVal = annotateError(loggingError, { p1: 1 });
+
+                assert(retVal === loggingError);
+                assert(loggingError.getTelemetryProperties().p1 === 1);
+            });
+            it("Custom Read/Write Logging Error is annotated", () => {
+                let atpCalled = false;
+                const loggingError = {
+                    getTelemetryProperties: () => {},
+                    addTelemetryProperties: () => { atpCalled = true; },
+                };
+                const retVal = annotateError(loggingError, { p1: 1 });
+
+                assert(retVal as any === loggingError);
+                assert(atpCalled);
+            });
+            it("Arbitrary object get telemetry prop functions mixed in", () => {
+                const obj = {};
+                const retVal = annotateError(obj, { p1: 1 });
+
+                assert(retVal === obj);
+                assert(isILoggingError(obj));
+                assert(obj.getTelemetryProperties().p1 === 1);
+
+                const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
+                atp({ p2: 2 });
+                assert(obj.getTelemetryProperties().p2 === 2);
+                atp({ p1: "one" });
+                assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
+            });
+            it("non-objects result in new LoggingError", () => {
+                const inputs = [
+                    null,
+                    undefined,
+                    false,
+                    true,
+                    3.14,
+                    Symbol("Unique"),
+                    () => {},
+                    [],
+                    [1,2,3],
+                ];
+                const annotated = inputs.map((i) => annotateError(i, { p1: 1 }));
+
+                assert(annotated.every((a) => a instanceof LoggingError));
+            });
+        });
         describe("LoggingError", () => {
             it("ctor props are assigned to the object", () => {
                 const loggingError = new LoggingError(
                     "myMessage",
-                    { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: TelemetryDataTag.PackageData }});
+                    { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: "PackageData" }});
                 const errorAsAny = loggingError as any;
                 assert.strictEqual(errorAsAny.message, "myMessage");
                 assert.strictEqual(errorAsAny.p1, 1);
                 assert.strictEqual(errorAsAny.p2, "two");
                 assert.strictEqual(errorAsAny.p3, true);
-                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: TelemetryDataTag.PackageData });
+                assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
             });
             it("getTelemetryProperties extracts all untagged ctor props", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
@@ -204,15 +260,15 @@ describe("Logger", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
                 (loggingError as any).p1 = "should be overwritten";
                 loggingError.addTelemetryProperties(
-                    {p1: "one", p4: 4, p5: { value: 5, tag: TelemetryDataTag.PackageData }});
+                    {p1: "one", p4: 4, p5: { value: 5, tag: "PackageData" }});
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.p1, "one");
                 assert.strictEqual(props.p4, 4);
-                assert.deepStrictEqual(props.p5, { value: 5, tag: TelemetryDataTag.PackageData });
+                assert.deepStrictEqual(props.p5, { value: 5, tag: "PackageData" });
                 const errorAsAny = loggingError as any;
                 assert.strictEqual(errorAsAny.p1, "one");
                 assert.strictEqual(errorAsAny.p4, 4);
-                assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: TelemetryDataTag.PackageData });
+                assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "PackageData" });
             });
             it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
@@ -220,13 +276,13 @@ describe("Logger", () => {
                 const errorAsAny = loggingError as any;
                 errorAsAny.p1 = "one";
                 errorAsAny.p4 = 4;
-                errorAsAny.p5 = { value: 5, tag: TelemetryDataTag.PackageData };
-                errorAsAny.pii6 = { value: 5, tag: TelemetryDataTag.UserData };
+                errorAsAny.p5 = { value: 5, tag: "PackageData" };
+                errorAsAny.pii6 = { value: 5, tag: "UserData" };
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.p1, "one");
                 assert.strictEqual(props.p4, 4);
-                assert.deepStrictEqual(props.p5, { value: 5, tag: TelemetryDataTag.PackageData });
-                assert.deepStrictEqual(props.pii6, { value: 5, tag: TelemetryDataTag.UserData });
+                assert.deepStrictEqual(props.p5, { value: 5, tag: "PackageData" });
+                assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
             });
             it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
@@ -241,7 +297,7 @@ describe("Logger", () => {
             });
             it("addTelemetryProperties - overwrites base class Error fields (untagged)", () => {
                 const loggingError = new LoggingError("myMessage");
-                const overwritingProps = { message: "surprise1", stack: "surprise2" };
+                const overwritingProps = { message: "surprise1", stack: "surprise2", __isFluidLoggingError__: 2 };
                 loggingError.addTelemetryProperties(overwritingProps);
                 const props = loggingError.getTelemetryProperties();
                 assert.deepStrictEqual(props, overwritingProps);
@@ -249,12 +305,20 @@ describe("Logger", () => {
             it("addTelemetryProperties - overwrites base class Error fields (tagged)", () => {
                 const overwritingProps = new LoggingError("myMessage");
                 const expectedProps = {
-                    message: { value: "Mark Fields", tag: TelemetryDataTag.UserData }, // hopefully no one does this!
-                    stack: { value: "surprise2", tag: TelemetryDataTag.PackageData },
+                    message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
+                    stack: { value: "surprise2", tag: "PackageData" },
+                    __isFluidLoggingError__: 2,
                 };
                 overwritingProps.addTelemetryProperties(expectedProps);
                 const props = overwritingProps.getTelemetryProperties();
                 assert.deepStrictEqual(props, expectedProps);
+            });
+            it("addTelemetryProperties - overwrites existing telemetry props", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1 });
+                loggingError.addTelemetryProperties({ p1: "one" });
+                assert(loggingError.getTelemetryProperties().p1 === "one");
+                loggingError.addTelemetryProperties({ p1: "uno" });
+                assert(loggingError.getTelemetryProperties().p1 === "uno");
             });
         });
     });

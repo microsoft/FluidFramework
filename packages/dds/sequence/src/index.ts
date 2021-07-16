@@ -11,11 +11,11 @@ export {
     ISerializedInterval,
     IntervalCollection,
     IntervalCollectionIterator,
-    IntervalCollectionValueType,
-    IntervalCollectionView,
     SequenceInterval,
-    SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+export {
+    IValueOpEmitter,
+} from "./mapKernelInterfaces";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";

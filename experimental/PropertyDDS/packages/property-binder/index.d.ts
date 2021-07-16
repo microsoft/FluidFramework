@@ -1206,6 +1206,8 @@ declare module "@fluid-experimental/property-binder" {
              */
             _clone(): RemovalContext;
 
+            getAbsolutePath(): string;
+
         }
 
         /**

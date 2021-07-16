@@ -2,14 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
+import { FrsClient, FrsConnectionConfig, InsecureTokenProvider } from "@fluid-experimental/frs-client";
+import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 // Define the server we will be using and initialize Fluid
-TinyliciousClient.init();
+const useFrs = process.env.FLUID_CLIENT === "frs";
+
+const user = generateUser();
+
+const connectionConfig: FrsConnectionConfig = useFrs ? {
+    tenantId: "",
+    tokenProvider: new InsecureTokenProvider("", user),
+    orderer: "",
+    storage: "",
+} : {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
 
 let createNew = false;
 if (location.hash.length === 0) {
@@ -37,9 +52,11 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const [fluidContainer, containerServices] = createNew
-        ? await TinyliciousClient.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-        : await TinyliciousClient.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+
+    const client = new FrsClient(connectionConfig);
+    const { fluidContainer, containerServices } = createNew
+        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
+        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;

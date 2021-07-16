@@ -5,9 +5,9 @@
 
 import { assert, copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { compareSnapshotNodes, getChangeNodeFromSnapshot } from './SnapshotUtilities';
-import { createForest, Delta, Forest as GenericForest } from './Forest';
-import { ChangeNode, NodeData, TraitLocation } from './generic';
+import { getChangeNodeFromSnapshot } from './SnapshotUtilities';
+import { Delta, Forest } from './Forest';
+import { ChangeNode, NodeData, Payload, TraitLocation } from './generic';
 
 /**
  * An immutable view of a distributed tree node.
@@ -80,29 +80,6 @@ export interface SnapshotRange {
 	readonly end: SnapshotPlace;
 }
 
-type Forest = GenericForest<NodeId, SnapshotNode, { label: TraitLabel }>;
-
-/** Yield the direct children of the given `SnapshotNode` */
-function* getSnapshotNodeChildren(
-	parentNode: SnapshotNode
-): Iterable<[NodeId, { label: TraitLabel; index: TraitNodeIndex }]> {
-	for (const [label, trait] of parentNode.traits) {
-		let index = 0 as TraitNodeIndex;
-		for (const childId of trait) {
-			yield [childId, { label, index }];
-			index++;
-		}
-	}
-}
-
-/**
- * Compares strings lexically to form a strict partial ordering.
- * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
- */
-function compareStrings(a: string, b: string): number {
-	return a > b ? 1 : a === b ? 0 : -1;
-}
-
 /**
  * An immutable view of a distributed tree.
  * @public
@@ -130,23 +107,26 @@ export class Snapshot {
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const element = node.traits[key];
-					traits.set(
-						key as TraitLabel,
-						element.map((n) => insertNodeRecursive(n, newSnapshotNodes))
-					);
+					if (element.length > 0) {
+						traits.set(
+							key as TraitLabel,
+							element.map((n) => insertNodeRecursive(n, newSnapshotNodes))
+						);
+					}
 				}
 			}
 			const snapshotNode: SnapshotNode = { identifier, definition, traits };
 			copyPropertyIfDefined(node, snapshotNode, 'payload');
+			assert(
+				!newSnapshotNodes.has(identifier),
+				`duplicate node in tree for snapshot: { identifier: ${identifier}, definition: ${definition}`
+			);
 			newSnapshotNodes.set(snapshotNode.identifier, snapshotNode);
 			return snapshotNode.identifier;
 		}
 
 		const map = new Map<NodeId, SnapshotNode>();
-		return new Snapshot(
-			insertNodeRecursive(root, map),
-			createForest(getSnapshotNodeChildren, compareStrings, expensiveValidation).add(map)
-		);
+		return new Snapshot(insertNodeRecursive(root, map), Forest.create(expensiveValidation).add(map.values()));
 	}
 
 	private constructor(root: NodeId, forest: Forest) {
@@ -195,9 +175,9 @@ export class Snapshot {
 	}
 
 	/**
-	 * Inserts all nodes (and their descendants) in a NodeSequence into the forest.
+	 * Inserts all nodes in a NodeSequence into the forest.
 	 */
-	public insertSnapshotNodes(sequence: Iterable<[NodeId, SnapshotNode]>): Snapshot {
+	public addNodes(sequence: Iterable<SnapshotNode>): Snapshot {
 		return new Snapshot(this.root, this.forest.add(sequence));
 	}
 
@@ -209,33 +189,37 @@ export class Snapshot {
 	}
 
 	/**
-	 * Replaces the node associated with `id`. The inserted node will have the same NodeId. A node with `id` must exist in the snapshot.
-	 *
-	 * By default, no re-parenting is performed. The optionally provided iterators can be used to adjust the children of the replaced node.
-	 * Any added children must already exist in the forest and be unparented.
-	 * Any removed children will be unparented and remain in the forest.
-	 *
-	 * Care should be taken to ensure that the child set that results from the adds/deletes are consistent with those returned by the
-	 * `getChildren` delegate provided to `createForest`. This will be checked automatically when `expensiveValidation` is true.
-	 *
+	 * Parents a set of detached nodes at a specified place.
+	 * @param nodesToAttach - the nodes to parent in the specified place. The nodes must already be present in the Snapshot.
+	 * @param place - the location to insert the nodes.
 	 */
-	public replace(
-		id: NodeId,
-		node: SnapshotNode,
-		childrenAdded?: [NodeId, { label: TraitLabel }][],
-		childrenRemoved?: NodeId[]
-	): Snapshot {
-		return new Snapshot(this.root, this.forest.replace(id, node, childrenAdded, childrenRemoved));
+	public attachRange(nodesToAttach: readonly NodeId[], place: SnapshotPlace): Snapshot {
+		const { parent, label } = place.trait;
+		const index = this.findIndexWithinTrait(place);
+		return new Snapshot(this.root, this.forest.attachRangeOfChildren(parent, label, index, nodesToAttach));
 	}
 
 	/**
-	 * Replaces a node's data and leaves the children parented. The node must exist in this `Snapshot`.
-	 * @param nodeId - the id of the node to replace
-	 * @param nodeData - the new data
+	 * Detaches a range of nodes from their parent. The detached nodes remain in the Snapshot.
+	 * @param rangeToDetach - the range of nodes to detach
 	 */
-	public replaceNodeData(nodeId: NodeId, nodeData: NodeData): Snapshot {
-		const existingNode = this.getSnapshotNode(nodeId);
-		return new Snapshot(this.root, this.forest.replace(nodeId, { ...nodeData, traits: existingNode.traits }));
+	public detachRange(rangeToDetach: SnapshotRange): { snapshot: Snapshot; detached: readonly NodeId[] } {
+		const { start, end } = rangeToDetach;
+		const { trait: traitLocation } = start;
+		const { parent, label } = traitLocation;
+		const startIndex = this.findIndexWithinTrait(start);
+		const endIndex = this.findIndexWithinTrait(end);
+		const { forest, detached } = this.forest.detachRangeOfChildren(parent, label, startIndex, endIndex);
+		return { snapshot: new Snapshot(this.root, forest), detached };
+	}
+
+	/**
+	 * Sets a node's value. The node must exist in this `Snapshot`.
+	 * @param nodeId - the id of the node
+	 * @param value - the new value
+	 */
+	public setNodeValue(nodeId: NodeId, value: Payload): Snapshot {
+		return new Snapshot(this.root, this.forest.setValue(nodeId, value));
 	}
 
 	/**
@@ -260,7 +244,7 @@ export class Snapshot {
 	 * Returns the label of the trait that a node is under. Returns undefined if the node is not present or if it is the root node.
 	 */
 	public getTraitLabel(id: NodeId): TraitLabel | undefined {
-		return this.forest.tryGetParent(id)?.parentData.label;
+		return this.forest.tryGetParent(id)?.traitParent;
 	}
 
 	/**
@@ -271,7 +255,7 @@ export class Snapshot {
 		if (parentInfo === undefined) {
 			return undefined;
 		}
-		return this.getSnapshotNode(parentInfo.parentNode);
+		return this.getSnapshotNode(parentInfo.parentId);
 	}
 
 	/**
@@ -281,8 +265,8 @@ export class Snapshot {
 		const parentData = this.forest.getParent(node);
 		assert(parentData !== undefined, 'node must have parent');
 		return {
-			parent: parentData.parentNode,
-			label: parentData.parentData.label,
+			parent: parentData.parentId,
+			label: parentData.traitParent,
 		};
 	}
 
@@ -300,9 +284,9 @@ export class Snapshot {
 			}
 		}
 		const parentData = this.forest.getParent(node);
-		const parent = this.forest.get(parentData.parentNode);
+		const parent = this.forest.get(parentData.parentId);
 		const traitParent =
-			parent.traits.get(parentData.parentData.label) ?? fail('invalid parentData: trait parent not found.');
+			parent.traits.get(parentData.traitParent) ?? fail('invalid parentData: trait parent not found.');
 		let foundIndex = -1 as TraitNodeIndex;
 		for (let i = 0; i < traitParent.length; i++) {
 			const nodeInTrait = traitParent[i];
@@ -334,15 +318,16 @@ export class Snapshot {
 		}
 
 		// TODO:#49100:Perf: make this faster and/or remove use by PrefetchingCheckout.
-		return this.forest.equals(snapshot.forest, compareSnapshotNodes);
+		return this.forest.equals(snapshot.forest);
 	}
 
 	private *iterateNodeDescendants(nodeId: NodeId): IterableIterator<SnapshotNode> {
 		const node = this.getSnapshotNode(nodeId);
 		yield node;
-		for (const child of getSnapshotNodeChildren(node)) {
-			const childId = child[0];
-			yield* this.iterateNodeDescendants(childId);
+		for (const trait of node.traits.values()) {
+			for (const childId of trait) {
+				yield* this.iterateNodeDescendants(childId);
+			}
 		}
 	}
 
@@ -354,7 +339,7 @@ export class Snapshot {
 	 */
 	public delta(snapshot: Snapshot): Delta<NodeId> {
 		assert(this.root === snapshot.root, 'Delta can only be calculated between snapshots that share a root');
-		return this.forest.delta(snapshot.forest, compareSnapshotNodes);
+		return this.forest.delta(snapshot.forest);
 	}
 
 	public [Symbol.iterator](): IterableIterator<SnapshotNode> {

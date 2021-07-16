@@ -90,6 +90,7 @@ export class LocalOrdererManager implements IOrdererManager {
             undefined /* foremanContext */,
             undefined /* scribeContext */,
             undefined /* deliContext */,
+            undefined /* moiraContext */,
             this.serviceConfiguration);
 
         const lambdas = [

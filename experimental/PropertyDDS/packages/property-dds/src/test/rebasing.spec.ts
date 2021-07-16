@@ -172,7 +172,7 @@ describe("PropertyDDS", () => {
 			container2 = await loadContainer();
 			dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
-			(sharedPropertyTree2 as any).__id = 2; // Add an id to simplyify debugging via conditional breakpoints
+			(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
 			// Attach error handlers to make debugging easier and ensure that internal failures cause the test to fail
 			errorHandler = (err) => {}; // This enables the create random tests function to register its own handler
@@ -230,6 +230,7 @@ describe("PropertyDDS", () => {
 					}
 				}
 			});
+
 			function insertInArray(tree: SharedPropertyTree, letter: string) {
 				const array = tree.root.get("array") as StringArrayProperty;
 

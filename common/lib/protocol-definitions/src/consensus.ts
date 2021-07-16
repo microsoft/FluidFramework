@@ -56,9 +56,18 @@ export interface IPendingProposal extends ISequencedProposal {
     readonly rejectionDisabled: boolean;
 }
 
-export interface IQuorumEvents extends IErrorEvent {
+/**
+ * Events fired by a Quorum in response to client tracking.
+ */
+export interface IQuorumClientsEvents extends IErrorEvent {
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
     (event: "removeMember", listener: (clientId: string) => void);
+}
+
+/**
+ * Events fired by a Quorum in response to proposal tracking.
+ */
+export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "addProposal", listener: (proposal: IPendingProposal) => void);
     (
         event: "approveProposal",
@@ -77,9 +86,23 @@ export interface IQuorumEvents extends IErrorEvent {
 }
 
 /**
- * Class representing agreed upon values in a quorum
+ * All events fired by an IQuorum, both client tracking and proposal tracking.
  */
-export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+/**
+ * Interface for tracking clients in the Quorum.
+ */
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
+    getMembers(): Map<string, ISequencedClient>;
+
+    getMember(clientId: string): ISequencedClient | undefined;
+}
+
+/**
+ * Interface for tracking proposals in the Quorum.
+ */
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;
@@ -87,11 +110,15 @@ export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
     get(key: string): any;
 
     getApprovalData(key: string): ICommittedProposal | undefined;
-
-    getMembers(): Map<string, ISequencedClient>;
-
-    getMember(clientId: string): ISequencedClient | undefined;
 }
+
+/**
+ * Interface combining tracking of clients as well as proposals in the Quorum.
+ */
+export interface IQuorum extends
+    Omit<IQuorumClients, "on" | "once" | "off">,
+    Omit<IQuorumProposals, "on" | "once" | "off">,
+    IEventProvider<IQuorumEvents> { }
 
 export interface IProtocolState {
     sequenceNumber: number;

@@ -101,7 +101,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
                                     "Not Found",
-                                    undefined,
+                                    "",
                                     { statusCode: 404 });
                             }
                             return blob;

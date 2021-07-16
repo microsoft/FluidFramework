@@ -111,7 +111,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
@@ -166,6 +166,9 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
+     *
+     * @param context - container context to be supplied to the runtime
+     * @param existing - whether to instantiate for the first time or from an existing context
      */
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
 }

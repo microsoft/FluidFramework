@@ -223,11 +223,11 @@ export async function start(
         config: {},
     };
 
-    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
     const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(
+    const loader1 = await createWebLoader(
         documentId,
         fluidModule,
         options,
@@ -260,22 +260,6 @@ export async function start(
         }
         container1 = await loader1.resolve({ url: documentUrl });
         containers.push(container1);
-
-        /**
-         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario.
-         * Create a new `documentId`, a new Loader and a new detached container.
-         */
-        if (!container1.existing) {
-            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
-            container1.close();
-
-            documentId = moniker.choose();
-            url = url.replace(id, documentId);
-            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
-            container1 = await loader1.createDetachedContainer(codeDetails);
-        }
     }
 
     let leftDiv: HTMLDivElement = div;

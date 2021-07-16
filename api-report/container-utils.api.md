@@ -9,13 +9,14 @@ import { IErrorBase } from '@fluidframework/container-definitions';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerError(error: any): ICriticalContainerError;
+export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError;
 
 // @public
-export function CreateProcessingError(error: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase {
@@ -33,6 +34,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
+    static wrapIfUnrecognized(originalError: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
 }
 
 // @public (undocumented)
@@ -47,12 +49,25 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError {
-    constructor(errorMessage: string, error: any, props?: ITelemetryProperties);
+    constructor(errorMessage: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
-    readonly error: any;
+    readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
 }
+
+// @public
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
+    constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
+    // (undocumented)
+    readonly errorType = ContainerErrorType.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+}
+
+// @public
+export function wrapError<T>(error: any, newErrorFn: (m: string) => T): T;
 
 
 // (No @packageDocumentation comment for this package)

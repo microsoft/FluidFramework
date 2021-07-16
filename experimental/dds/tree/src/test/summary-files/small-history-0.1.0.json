@@ -7,7 +7,7 @@
 	"editHistory": {
 		"editChunks": [
 			{
-				"key": 0,
+				"startRevision": 0,
 				"chunk": [
 					{
 						"changes": [

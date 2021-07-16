@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { create404Response, RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -25,7 +25,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
     => Promise<IResponse | undefined>;
 
 /**
- * @deprecated - please avoid adding new references to this API!
+ * @deprecated - please avoid adding new references to this API!  Instead prefer rootDataObjectRequestHandler.
  * It exposes internal container guts to external world, which is not ideal.
  * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
  * And last, but not least, it does not allow any policy to be implemented around GC of data stores exposed
@@ -36,6 +36,25 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  */
 export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
     runtime.IFluidHandleContext.resolveHandle(request);
+
+/**
+ * A request handler to expose access to all root data stores in the container by id.
+ * @param request - the request for the root data store.  The first path part must be the data store's ID.
+ * @param runtime - the container runtime
+ * @returns the result of the request
+ */
+export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IContainerRuntime) => {
+    const requestParser = RequestParser.create(request);
+    const id = requestParser.pathParts[0];
+    const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+    try {
+        // getRootDataStore currently throws if the data store is not found
+        const rootDataStore = await runtime.getRootDataStore(id, wait);
+        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+    } catch (error) {
+        return create404Response(request);
+    }
+};
 
 export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
