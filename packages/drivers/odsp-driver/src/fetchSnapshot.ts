@@ -23,8 +23,9 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
-    ISnapshotCacheValue,
+    ISnapshotCacheValueV2,
 } from "./odspUtils";
+import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -41,8 +42,8 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
-): Promise<IOdspResponse<IOdspSnapshot>> {
+    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
+): Promise<ISnapshotCacheValueV2> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
 
@@ -56,14 +57,15 @@ export async function fetchSnapshot(
 
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
-    return PerformanceEvent.timedExecAsync(
+    const response = await PerformanceEvent.timedExecAsync(
         logger,
         {
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => snapshotDownloader(url, { headers }),
+        async () => snapshotDownloader<IOdspSnapshot>(url, { headers }),
     );
+    return convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
 }
 
 export async function fetchSnapshotWithRedeem(
@@ -71,11 +73,11 @@ export async function fetchSnapshotWithRedeem(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
+    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
-): Promise<ISnapshotCacheValue> {
+): Promise<ISnapshotCacheValueV2> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -143,9 +145,9 @@ async function fetchLatestSnapshotCore(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<IOdspSnapshot>>,
+    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-): Promise<ISnapshotCacheValue> {
+): Promise<ISnapshotCacheValueV2> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
             // This is the most critical code path for boot.
@@ -205,7 +207,7 @@ async function fetchLatestSnapshotCore(
             },
             async (event) => {
                 const startTime = performance.now();
-                const response: IOdspResponse<IOdspSnapshot> = await snapshotDownloader(
+                const response = await snapshotDownloader<IOdspSnapshot>(
                     url,
                     {
                         body: postBody,
@@ -216,7 +218,7 @@ async function fetchLatestSnapshotCore(
                 );
                 const endTime = performance.now();
                 const overallTime = endTime - startTime;
-                const snapshot: IOdspSnapshot = response.content;
+                const snapshot = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
                 let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
                 let redirectTime: number | undefined; // redirectEnd -redirectStart
                 let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
@@ -255,28 +257,26 @@ async function fetchLatestSnapshotCore(
                 }
 
                 const { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize } =
-                    validateAndEvalBlobsAndTrees(snapshot);
+                    validateAndEvalBlobsAndTrees(response.content);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
                 // cannot cache using an HTTP response header.
                 const canCache = response.headers.get("disablebrowsercachingofusercontent") !== "true";
-                // There maybe no snapshot - TreesLatest would return just ops.
-                const sequenceNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
+                const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
                 const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
                     snapshot.ops[0].sequenceNumber - 1 :
                     undefined;
 
-                const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
                 if (!Number.isInteger(sequenceNumber)
                     || seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber) {
                     logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
-                    value.sequenceNumber = undefined;
+                    snapshot.sequenceNumber = undefined;
                 } else if (canCache) {
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value,
+                        value: snapshot,
                         fluidEpoch,
                         version: 2,
                     };
@@ -285,7 +285,7 @@ async function fetchLatestSnapshotCore(
                 }
                 event.end({
                     trees: numTrees,
-                    blobs: snapshot.blobs?.length ?? 0,
+                    blobs: snapshot.blobs?.size ?? 0,
                     leafNodes: numBlobs,
                     encodedBlobsSize,
                     decodedBlobsSize,
@@ -309,7 +309,7 @@ async function fetchLatestSnapshotCore(
                     attempts: tokenFetchOptions.refresh ? 2 : 1,
                     ...response.commonSpoHeaders,
                 });
-                return value;
+                return snapshot;
             },
         ).catch((error) => {
             // We hit these errors in stress tests, under load
