@@ -55,7 +55,7 @@ const frsAzUser: FrsAzFuncUser = {
 
 const config: FrsConnectionConfig = {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL", frsAzUser),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", frsAzUser),
     orderer: "https://alfred.eus-1.canary.frs.azure.com",
     storage: "https://historian.eus-1.canary.frs.azure.com",
 };

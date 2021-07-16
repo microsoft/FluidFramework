@@ -18,11 +18,11 @@ import { renderAudience, renderDiceRoller } from "./view";
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
 
-const user = generateUser();
+const user = generateUser() as any;
 
 const frsAzUser: FrsAzFuncUser = {
     userId: user.id,
-    userName: user.id,
+    userName: user.name,
 };
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
