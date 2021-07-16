@@ -169,6 +169,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     /** The routes in this node that are currently in use. */
     readonly usedRoutes: string[];
 
+    /** The garbage collection data of the node. */
+    readonly gcData: IGarbageCollectionData | undefined;
+
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(
         /** Summarize function */
