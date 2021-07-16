@@ -15,6 +15,7 @@ import {
 	fullHistorySummarizer_0_1_0,
 	SharedTreeSummarizer,
 	SharedTreeSummary,
+	SharedTreeSummaryBase,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
@@ -39,6 +40,55 @@ const pathBase = resolve(__dirname, '../../../src/test/documents/');
 const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<unknown> }[] = [
 	{ version: '0.0.2', summarizer: fullHistorySummarizer },
 	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
+];
+
+/**
+ * An entry into the forwardCompatibilityTests list that is run as the following test:
+ *
+ * For each load version,
+ *   - load a tree with the specified version summary
+ *   - write a new summary with the specified summarizer version
+ *   - check the condition
+ *       - if true, expect that the new summary is equal to the specified conditional write version's summary
+ *       - if false, expect that the new summary is equal to the summarizer version's summary
+ */
+interface ForwardCompatibilityTestEntry {
+	/** Version of the summarizer, should be older than the load versions. */
+	summarizerVersion: string;
+	/** A list of all the versions that can be read with directions on how they are expected to be handled by the specified summarizer. */
+	loadVersions: {
+		/** Version of the summary to load for testing. */
+		loadVersion: string;
+		/** Condition under which the summarizer will write a different format version than the summarizerVersion. */
+		condition: (summary: SharedTreeSummaryBase) => boolean;
+		/** The format version that will be written if the condition is true. */
+		conditionalWriteVersion: string;
+	}[];
+}
+
+/**
+ * Directions for forward compatibility tests. There should be an entry for each supported summarizer that is not the latest.
+ */
+const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
+	{
+		summarizerVersion: '0.0.2',
+		loadVersions: [
+			{
+				loadVersion: '0.1.0',
+				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
+				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the summarizer is 0.0.2.
+				condition: (summary: SharedTreeSummaryBase): boolean => {
+					const castedSummary = summary as SharedTreeSummary<Change>;
+					if (castedSummary.editHistory === undefined || castedSummary.editHistory.editChunks === undefined) {
+						return false;
+					}
+					// An editChunk is a handle iff its "chunk" field is not an array
+					return castedSummary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
+				},
+				conditionalWriteVersion: '0.1.0',
+			},
+		],
+	},
 ];
 
 /**
@@ -177,8 +227,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				// Check that clients with certain loaded versions can write their supported write versions.
 				for (const [index, readVersion] of sortedVersions.entries()) {
 					// A client that has loaded an older version of a summary should be able to write newer versions
-					// TODO:#60277:  This only tests version upgrades. Due to phased rollouts, mixed rings, and rollbacks, downgrades can also occur
-					// (though some are unsupported), and should be tested.
 					for (const writeVersion of sortedVersions.slice(index)) {
 						const summarizerEntry = supportedSummarizers.find((entry) => entry.version === writeVersion);
 						if (summarizerEntry !== undefined) {
@@ -210,42 +258,48 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					}
 				}
 
-				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
-				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the
-				// summarizer is 0.0.2.
-				// TODO:#60277: Add tests for format version downgrades in general, and make this case a special case of those more general tests.
-				if (
-					includesHandles(
-						deserialize(
-							assertNotUndefined(summaryByVersion.get('0.1.0')),
-							testSerializer
-						) as SharedTreeSummary<Change>
-					)
-				) {
-					it('since loaded summary includes handles, 0.1.0 is written by a client with a 0.0.2 summarizer', async () => {
-						const serializedSummary = assertNotUndefined(summaryByVersion.get('0.1.0'));
-						const summary = deserialize(serializedSummary, testSerializer);
+				// Forward compatibility tests
+				for (const { summarizerVersion, loadVersions } of forwardCompatibilityTests) {
+					for (const { loadVersion, condition, conditionalWriteVersion } of loadVersions) {
+						it(`version ${loadVersion} can be loaded by a client with summarizer format ${summarizerVersion} and written in the correct summary version`, async () => {
+							const summarizerEntry = supportedSummarizers.find(
+								(entry) => entry.version === summarizerVersion
+							);
+							if (summarizerEntry !== undefined) {
+								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
+								const summary = deserialize(serializedSummary, testSerializer);
 
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
-						expectedTree.loadSummary(summary);
+								// Wait for the ops to to be submitted and processed across the containers.
+								await testObjectProvider.ensureSynchronized();
+								expectedTree.loadSummary(summary);
 
-						await testObjectProvider.ensureSynchronized();
+								await testObjectProvider.ensureSynchronized();
 
-						// Write a new summary with the 0.0.2 summarizer
-						const newSummary = JSON.parse(expectedTree.saveSerializedSummary(fullHistorySummarizer));
-						const expectedSummary = JSON.parse(serializedSummary);
+								// Write a new summary with the summarizer of version `summarizerVersion`.
+								const summarizer = summarizerEntry.summarizer;
+								const newSummary = JSON.parse(expectedTree.saveSerializedSummary(summarizer));
 
-						expect(newSummary).to.deep.equal(expectedSummary);
-					});
-				}
+								// Check the new summary is equivalent to the conditional version summary if the condition is true.
+								// Otherwise, check it's equivalent to the summarizer version summary.
+								const conditionalSummary = deserialize(
+									assertNotUndefined(summaryByVersion.get(conditionalWriteVersion)),
+									testSerializer
+								);
+								let expectedSummary: SharedTreeSummaryBase;
 
-				function includesHandles(summary: SharedTreeSummary<Change>): boolean {
-					if (summary.editHistory === undefined || summary.editHistory.editChunks === undefined) {
-						return false;
+								if (condition(conditionalSummary)) {
+									expectedSummary = conditionalSummary;
+								} else {
+									expectedSummary = deserialize(
+										assertNotUndefined(summaryByVersion.get(summarizerVersion)),
+										testSerializer
+									);
+								}
+
+								expect(newSummary).to.deep.equal(expectedSummary);
+							}
+						});
 					}
-					// An editChunk is a handle iff its "chunk" field is not an array
-					return summary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				}
 			});
 		}
