@@ -66,8 +66,7 @@
     "@fluidframework/undo-redo": "^0.44.0",
     "@fluidframework/view-adapters": "^0.44.0",
     "@fluidframework/view-interfaces": "^0.44.0",
-    "debug": "^4.1.1",
-    "shape-detector": "^0.2.1"
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",

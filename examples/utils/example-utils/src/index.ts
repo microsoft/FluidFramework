@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./circle";
-export * from "./polygon";
-export * from "./shape";
+export * from "./containerViewRuntimeFactory";
