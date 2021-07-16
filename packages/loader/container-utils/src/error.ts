@@ -10,7 +10,11 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { wrapError, normalizeError, LoggingError } from "@fluidframework/telemetry-utils";
+import {
+    wrapError,
+    normalizeError,
+    LoggingError,
+} from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

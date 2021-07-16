@@ -7,11 +7,12 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
+import { TelemetryDataTag, TelemetryLogger } from "../logger";
+import { LoggingError, isTaggedTelemetryPropertyValue } from "../errorLogging";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
-        describe("prepareErrorObject", () => {
+        describe("TelemetryLogger.prepareErrorObject", () => {
             function freshEvent(): ITelemetryBaseEvent {
                 return { category: "cat1", eventName: "event1" };
             }

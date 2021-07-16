@@ -6,7 +6,7 @@
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { ThrottlingError } from "@fluidframework/driver-utils";
+import { ThrottlingError, RateLimiter } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import {
     snapshotKey,
@@ -23,7 +23,6 @@ import {
     INonPersistentCache,
     IPersistedFileCache,
  } from "./odspCache";
-import { RateLimiter } from "./rateLimiter";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
