@@ -29,7 +29,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IDocumentAttributes,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -54,7 +53,6 @@ export class ContainerContext implements IContainerContext {
         codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -73,7 +71,6 @@ export class ContainerContext implements IContainerContext {
             codeLoader,
             codeDetails,
             baseSnapshot,
-            attributes,
             deltaManager,
             quorum,
             loader,
@@ -101,10 +98,6 @@ export class ContainerContext implements IContainerContext {
 
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
-    }
-
-    public get branch(): string {
-        return this.attributes.branch;
     }
 
     public get connected(): boolean {
@@ -166,7 +159,6 @@ export class ContainerContext implements IContainerContext {
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
-        private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
@@ -281,6 +273,10 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    public notifyAttaching() {
+        this.runtime.setAttachState(AttachState.Attaching);
+    }
+
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
@@ -292,22 +288,14 @@ export class ContainerContext implements IContainerContext {
         return runtimeFactory;
     }
 
-    /**
-     * #3429
-     * Will be adjusted to branch on the `existing` parameter
-     * and call the proper runtime factory initializer
-     */
-    private async instantiateRuntime(_existing: boolean) {
+    private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this);
+        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
         this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
+            this.runtime.setAttachState(AttachState.Attached);
         });
     }
 

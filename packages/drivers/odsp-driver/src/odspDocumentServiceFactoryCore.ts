@@ -47,7 +47,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private readonly nonPersistentCache = new NonPersistentCache();
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {

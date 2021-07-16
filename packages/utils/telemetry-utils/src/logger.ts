@@ -25,6 +25,10 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag,
 }
 
+const isRegularObject = (value: any): boolean => {
+    return value !== null && !Array.isArray(value) && typeof value === "object";
+};
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -56,10 +60,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     private static extractLogSafeErrorProperties(error: any) {
-        const isRegularObject = (value: any): boolean => {
-            return value !== null && !Array.isArray(value) && typeof value === "object";
-        };
-
         const removeMessageFromStack = (stack: string, errorName?: string) => {
             const stackFrames = stack.split("\n");
             stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
@@ -530,6 +530,49 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
+ * Read-Write Logging Error.  Not exported.
+ * This type alias includes addTelemetryProperties, and applies to objects even if not instanceof LoggingError\
+ */
+type RwLoggingError = LoggingError;
+
+/** Type guard for RwLoggingError.  Not exported. */
+const isRwLoggingError = (x: any): x is RwLoggingError =>
+    typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
+
+/**
+ * Annotate the given error object with the given logging props
+ * @returns The same error object passed in if possible, with telemetry props functionality mixed in
+ */
+export function annotateError(
+    error: unknown,
+    props: ITelemetryProperties,
+): ILoggingError {
+    if (isRwLoggingError(error)) {
+        error.addTelemetryProperties(props);
+        return error;
+    }
+
+    if (isRegularObject(error)) {
+        // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
+        const loggingError = error as RwLoggingError;
+
+        const propsForError = {...props};
+        loggingError.getTelemetryProperties = () => propsForError;
+        loggingError.addTelemetryProperties =
+            (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
+        return loggingError;
+    }
+
+    const message = String(error);
+    return new LoggingError(message, props);
+}
+
+/** Copy props from source onto target, overwriting any keys that are already set on target */
+function copyProps(target: unknown, source: ITelemetryProperties) {
+    Object.assign(target, source);
+}
+
+/**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
 function getValidTelemetryProps(obj: any): ITelemetryProperties {
@@ -565,16 +608,6 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  * PLEASE take care to properly tag properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
-    private readonly __isFluidLoggingError__ = 1;
-
-    public static is(obj: any): obj is LoggingError {
-        const maybeLogger = obj as Partial<LoggingError>;
-        return maybeLogger !== null
-            && typeof maybeLogger === "object"
-            && typeof maybeLogger.message === "string"
-            && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
-    }
-
     constructor(
         message: string,
         props?: ITelemetryProperties,
@@ -589,7 +622,7 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        Object.assign(this, props);
+        copyProps(this, props);
     }
 
     /**
