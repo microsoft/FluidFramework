@@ -20,6 +20,7 @@ import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
 import { tinyliciousUrls } from "./multiResolver";
+import { id } from '../../../../examples/data-objects/client-ui-lib/src/ui/utils';
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
