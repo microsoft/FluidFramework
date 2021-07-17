@@ -9,11 +9,10 @@ import { SharedMap, ContainerSchema } from "@fluid-experimental/fluid-framework"
 import {
     FrsContainerConfig,
 } from "..";
-import { CreateClient } from "./CreateClient";
+import { createFrsClient } from "./FrsClientFactory";
 
 describe("FrsClient", () => {
-    const createClient = new CreateClient();
-    const client = createClient.create();
+    const client = createFrsClient();
     let documentId: string;
     beforeEach(() => {
         documentId = uuid();
