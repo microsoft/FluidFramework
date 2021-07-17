@@ -11,7 +11,8 @@ import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
+import { createSummarizingWarning } from "./summarizer";
+import { ISummarizer, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
 
@@ -325,6 +326,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         return summarizer;
     }
+
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        if (this.runningSummarizer === undefined) {
+            throw Error("No running summarizer client");
+            // TODO: could spawn a summarizer client temporarily.
+        }
+        return this.runningSummarizer.summarizeOnDemand(...args);
+    };
 
     public dispose() {
         this.initialDelayTimer?.clear();
