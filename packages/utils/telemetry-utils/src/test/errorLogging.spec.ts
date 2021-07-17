@@ -8,7 +8,8 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError } from "../errorLogging";
+import { IFluidErrorBase } from "../staging";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -185,8 +186,76 @@ describe("Logger", () => {
                     { value: "hello" }), false, "undefined (missing) tag is bad");
             });
         });
-        //* Redo all these tests
-        describe("annotateError", () => {
+        //* REMOVE THIS .ONLY!!!!!!
+        describe.only("annotateError", () => {
+            function checkOutput(actual: IFluidErrorBase, expected: IFluidErrorBase): boolean {
+                if (typeof(actual.stack) === "string") {
+                    Object.assign(actual, { stack: "" });
+                };
+                return actual.errorType === expected.errorType
+                    && actual.fluidErrorCode === expected.fluidErrorCode
+                    && actual.message === expected.message
+                    && actual.name === expected.name
+                    && actual.stack === expected.stack;
+            }
+            const testCases: { [label: string]: { input: any, expectedOutput: IFluidErrorBase }} = {
+                "string": {
+                    input: "I'm an error",
+                    expectedOutput: {
+                        errorType: "none (string)",
+                        fluidErrorCode: "none",
+                        message: "I'm an error",
+                        name: "Error",
+                        stack: "",
+                    },
+                },
+                "Valid Fluid Error": {
+                    input: {
+                        errorType: "sometype",
+                        fluidErrorCode: "somecode",
+                        message: "Hello",
+                        name: "Error",
+                        stack: "",
+                    },
+                    expectedOutput: {
+                        errorType: "sometype",
+                        fluidErrorCode: "somecode",
+                        message: "Hello",
+                        name: "Error",
+                        stack: "",
+                    },
+                },
+                "Error object": {
+                    input: new Error("boom"),
+                    expectedOutput: {
+                        errorType: "none (Error)",
+                        fluidErrorCode: "none",
+                        message: "boom",
+                        name: "Error",
+                        stack: "",
+                    },
+                },
+                "Empty object": {
+                    input: {},
+                    expectedOutput: {
+                        errorType: "none (object)",
+                        fluidErrorCode: "none",
+                        message: "",
+                        name: "none",
+                        stack: "",
+                    },
+                },
+            };
+            for (const label of Object.keys(testCases)) {
+                const { input, expectedOutput } = testCases[label];
+                it(`${label} error input`, () => {
+                    const actualOutput = normalizeError(input);
+                    assert(checkOutput(actualOutput, expectedOutput));
+                });
+            }
+        });
+        //* Most of these can be uncommented and flipped from annotate to mixin
+        describe("mixinTelemetryProps", () => {
             // it("LoggingError is annotated", () => {
             //     const loggingError = new LoggingError("msg");
             //     const retVal = annotateError(loggingError, { p1: 1 });

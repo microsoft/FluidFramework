@@ -139,7 +139,7 @@ export function normalizeError(
             builder.errorType = `none (${errorTypeIfNone})`;
         }
     }
-    const fullErrorCodeifNone = annotations.errorCodeIfNone === undefined
+    const fullErrorCodeIfNone = annotations.errorCodeIfNone === undefined
         ? "none"
         : `none (${annotations.errorCodeIfNone})`;
 
@@ -152,7 +152,7 @@ export function normalizeError(
         const newErrorFn = (errMsg: string) => {
             fluidErrorBuilder = new LoggingError(errMsg, annotations.props) as Builder<IFluidErrorBase>;
             setErrorTypeIfMissing(fluidErrorBuilder, errorType);
-            fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
+            fluidErrorBuilder.fluidErrorCode = fullErrorCodeIfNone;
             return fluidErrorBuilder as IFluidErrorBase;
         };
         return wrapError<IFluidErrorBase>(error, newErrorFn);
@@ -167,13 +167,13 @@ export function normalizeError(
 
     // We have a mutable object, not already a valid Fluid Error. Time to fill in the gaps!
     fluidErrorBuilder = error as Builder<IFluidErrorBase>;
-    fluidErrorBuilder.fluidErrorCode = fullErrorCodeifNone;
+    fluidErrorBuilder.fluidErrorCode = fullErrorCodeIfNone;
 
     if (isErrorLike(error)) {
         setErrorTypeIfMissing(fluidErrorBuilder, error.name);
     } else {
         setErrorTypeIfMissing(fluidErrorBuilder, typeof(error));
-        fluidErrorBuilder.message = annotations.errorCodeIfNone;
+        fluidErrorBuilder.message = annotations.errorCodeIfNone ?? "";
         fluidErrorBuilder.name = "none";
     }
 
@@ -185,6 +185,7 @@ export function normalizeError(
     return annotations.props !== undefined
         ? mixinTelemetryProps(fluidError, annotations.props)
         : fluidError;
+    //* Need to add errorType and fluidErrorCode to telemetry props!
 }
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
