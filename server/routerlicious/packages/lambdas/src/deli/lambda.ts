@@ -41,6 +41,8 @@ import {
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
 } from "@fluidframework/server-services-core";
+import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
@@ -173,6 +175,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
+        const lumberJackMetric = Lumberjack.newLumberMetric(LumberEventName.DeliHandler);
+        lumberJackMetric.setProperties(new Map([["tenantId", this.tenantId], ["documentId", this.documentId]]));
+        setQueuedMessageProperties(lumberJackMetric, rawMessage);
 
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
@@ -181,6 +186,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.context.checkpoint(kafkaCheckpointMessage);
             }
 
+            lumberJackMetric.success("Already processed checkpointed message");
             return undefined;
         }
 
@@ -233,6 +239,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
         const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+        this.setDeliStateMetrics(checkpoint, lumberJackMetric);
 
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
@@ -244,6 +251,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
+                lumberJackMetric.setProperties(new Map([["restart", true]]));
+                lumberJackMetric.error("Restarting as message could not be sent to scriptorium", error);
                 this.context.log?.error(
                     `Could not send message to scriptorium: ${JSON.stringify(error)}`,
                     {
@@ -277,6 +286,22 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 }
             }
         }
+
+        lumberJackMetric.success(`Message checkpointed successfully 
+            at seq number ${checkpoint.deliState.sequenceNumber}`);
+    }
+
+    private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric: Lumber<LumberEventName.DeliHandler>) {
+        const deliState = new Map([
+            ["connectedClientCount", checkpoint.deliState.clients?.length],
+            ["DSN", checkpoint.deliState.durableSequenceNumber],
+            ["logOffset", checkpoint.deliState.logOffset],
+            ["sequenceNumber", checkpoint.deliState.sequenceNumber],
+            ["term", checkpoint.deliState.term],
+            ["lastSentMSN", checkpoint.deliState.lastSentMSN],
+        ]);
+
+        lumberJackMetric.setProperties(deliState);
     }
 
     public close() {
