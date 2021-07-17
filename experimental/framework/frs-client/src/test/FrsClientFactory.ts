@@ -10,7 +10,7 @@ import {
 } from "..";
 
 // This function will detemine if local or remote mode is required (based on FLUID_CLIENT),
-// and returns a new FrsClient instance based on the mode by setting the ConnectionConfig
+// and return a new FrsClient instance based on the mode by setting the ConnectionConfig
 // accordingly.
 export function createFrsClient(): FrsClient {
     const useFrs = process.env.FLUID_CLIENT === "frs";
