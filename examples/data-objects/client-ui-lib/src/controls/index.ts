@@ -14,5 +14,4 @@ export * from "./status";
 export * from "../text/characterCodes";
 export * from "./keycode";
 export * from "./domutils";
-export * from "./shapeRecognizer";
 export * from "./title";

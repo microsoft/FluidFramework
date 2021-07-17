@@ -58,7 +58,7 @@ async function start(): Promise<void> {
     // Render page focus information for audience members
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const focusTracker = fluidContainer.initialObjects.focusTracker as FocusTracker;
-    focusTracker.audience = containerServices.audience;
+    focusTracker.init(containerServices.audience);
     renderFocusPresence(focusTracker, contentDiv);
 }
 

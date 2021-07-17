@@ -29,7 +29,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IDocumentAttributes,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -54,7 +53,6 @@ export class ContainerContext implements IContainerContext {
         codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -73,7 +71,6 @@ export class ContainerContext implements IContainerContext {
             codeLoader,
             codeDetails,
             baseSnapshot,
-            attributes,
             deltaManager,
             quorum,
             loader,
@@ -101,10 +98,6 @@ export class ContainerContext implements IContainerContext {
 
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
-    }
-
-    public get branch(): string {
-        return this.attributes.branch;
     }
 
     public get connected(): boolean {
@@ -166,7 +159,6 @@ export class ContainerContext implements IContainerContext {
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
-        private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
