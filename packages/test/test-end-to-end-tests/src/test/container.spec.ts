@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
+    IPendingLocalState,
     ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -275,10 +276,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             runCount++;
         });
 
-        const pendingLocalState = container.closeAndGetPendingLocalState();
+        const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
         assert.strictEqual(container.readOnlyInfo.readonly, true);
         assert.strictEqual(container.closed, true);
-        assert.strictEqual(pendingLocalState, {});
+        assert.strictEqual(pendingLocalState.url, container.resolvedUrl);
+        assert.strictEqual(pendingLocalState.pendingRuntimeState, undefined);
 
         assert.strictEqual(runCount, 1);
     });
