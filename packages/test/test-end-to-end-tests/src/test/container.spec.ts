@@ -258,7 +258,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(runCount, 1);
     });
 
-    it("Delta manager receives readonly event when calling container.closeAndGetPendingLocalState()", async () => {
+    it("closeAndGetPendingLocalState() called on container", async () => {
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
             getDataStoreFactory());
@@ -269,20 +269,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
-
-        let runCount = 0;
-
-        dataObject._context.deltaManager.on("readonly", () => {
-            runCount++;
-        });
 
         const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
-        assert.strictEqual(container.readOnlyInfo.readonly, true);
         assert.strictEqual(container.closed, true);
         assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
-        assert.strictEqual(pendingLocalState.pendingRuntimeState, undefined);
-
-        assert.strictEqual(runCount, 1);
     });
 });
