@@ -102,7 +102,7 @@ export abstract class SnapshotExtractor {
     public async unpackSnapshotCore(snapshot: ISnapshotTree, level = 0): Promise<void> {
         // for now only working at data store level, i.e.
         // .app/DataStore/...
-        if (level >= 2) {
+        if (level >= 3) {
             return;
         }
 
