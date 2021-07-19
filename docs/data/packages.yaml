@@ -1,4 +1,6 @@
 distributed-data-structures:
+# - "@fluid-experimental/property-dds"
+- "@fluid-experimental/task-manager"
 - "@fluidframework/cell"
 - "@fluidframework/counter"
 - "@fluidframework/ink"
@@ -7,8 +9,6 @@ distributed-data-structures:
 - "@fluidframework/ordered-collection"
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
-- "@fluid-experimental/task-manager"
-- "@fluid-experimental/property-dds"
 - custom:
     title: "SharedString"
     url: "/docs/apis/sequence/sharedstring/"
