@@ -1,14 +1,16 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
+
 /**
  * @fileoverview A chronometer implementation backed by a high resolution timer. Implementation
  *   falls back to milliseconds precision when high resolution timers are not supported.
  */
 
- declare let process: any;
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
+declare let process: any;
 
 /**
  * All the chronometer implementations (hrtime, window.performance, and date:
@@ -107,7 +109,7 @@ const implementations = {
             if (!this._stopTime) {
                 this.stop();
             }
-            return (this._stopTime as Date).getTime()  - this._startTime.getTime();
+            return (this._stopTime as Date).getTime() - this._startTime.getTime();
         },
         _elapsedMicroSec(): number {
             if (!this._stopTime) {
@@ -148,18 +150,19 @@ export class Chronometer {
     }
 
     /**
-     * Stops the chronometer. Stopped chronometers can be reused by calling {@link #start} again.
-     * @return {Chronometer} The chronometer instance, so that callers can do this:
+     * Stops the chronometer. Stopped chronometers can be reused by calling {@link Chronometer.start} again.
+     *
+     * @returns The chronometer instance, so that callers can do this:
      *   let elapsedMS = chrono.stop().elapsedMS();
      */
     stop(): Chronometer {
-          impl._stop.call(this);
-          return this;
+        impl._stop.call(this);
+        return this;
     }
 
     /**
-     * @return {number} How many microseconds have elapsed between the last call to {@link #start}
-     *   (or the chronometer creation), and {@link #stop}. Implementations that are not precise
+     * @returns How many microseconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Implementations that are not precise
      *   enough may return "elapsedMilliSec() * 1000". Measuring elapsed time causes the chronometer
      *   to be stopped if required (if the chrono is not stopped when this method is called).
      */
@@ -168,8 +171,8 @@ export class Chronometer {
     }
 
     /**
-     * @return {number} How many milliseconds have elapsed between the last call to {@link #start}
-     *   (or the chronometer creation), and {@link #stop}. Measuring elapsed time causes the
+     * @returns How many milliseconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
      *   chronometer to be stopped if required (if the chrono is not stopped when this method is
      *   called).
      */
@@ -178,8 +181,8 @@ export class Chronometer {
     }
 
     /**
-     * @return {number} How many seconds have elapsed between the last call to {@link #start}
-     *   (or the chronometer creation), and {@link #stop}. Measuring elapsed time causes the
+     * @returns How many seconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
      *   chronometer to be stopped if required (if the chrono is not stopped when this method is
      *   called).
      */
@@ -189,16 +192,15 @@ export class Chronometer {
 
     /**
      * A utility function to measure promise execution time.
-     * @param {Function} in_promiseFn A function that returns a promise whose execution time is to be
+     * @param promiseFn - A function that returns a promise whose execution time is to be
      *   measured.
-     * @return {Promise} A Promise that resolves with an object: {
-     *   {object} chrono A stopped chronometer instance from which to get the elapsed time,
-     *   {*} result The resolved result of the promise returned by in_promiseFn
-     * }
+     * @returns A Promise that resolves with an object with properties:
+     *    - chrono A stopped chronometer instance from which to get the elapsed time,
+     *    - result The resolved result of the promise returned by promiseFn
      */
-    static async timePromise(in_promiseFn: () => Promise<any>): Promise<{ chrono: Chronometer, result: any }> {
+    static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer, result: T }> {
         const chrono = new Chronometer();
-        const result = await in_promiseFn();
+        const result = await promiseFn();
         chrono.stop();
         return { chrono, result };
     }

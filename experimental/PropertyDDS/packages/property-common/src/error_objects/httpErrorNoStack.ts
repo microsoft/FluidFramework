@@ -8,18 +8,16 @@ import { FlaggedError } from "./flaggedError";
 /**
  * Class extending HTTPError without storing the stack
  */
-
 export class HTTPErrorNoStack extends HTTPError {
     static FLAGS = FlaggedError.FLAGS;
-    /* @param {string} message The error message
-     * @param {number} statusCode A numeric HTTP status code
-     * @param {string} statusMessage A string message representing the response status message
-     * @param {string} method The HTTP method used in the request
-     * @param {string} url The URL that the request was sent to
-     * @param {?number} flags Flags that characterize the error. See {@link FlaggedError#FLAGS}.
-     * @constructor
-     * @alias property-common.HTTPErrorNoStack
-     * @private
+
+    /**
+     * @param message - The error message
+     * @param statusCode - A numeric HTTP status code
+     * @param statusMessage - A string message representing the response status message
+     * @param method - The HTTP method used in the request
+     * @param url - The URL that the request was sent to
+     * @param flags - Flags that characterize the error. See {@link FlaggedError.FLAGS}.
      */
     constructor(message?, statusCode?, statusMessage?, method?, url?, flags?) {
         super(message, statusCode, statusMessage, method, url, flags);
@@ -27,10 +25,6 @@ export class HTTPErrorNoStack extends HTTPError {
         delete this.stack;
     }
 
-    /**
-     * Returns a string representing the HTTPErrorNoStack object
-     * @return a string representing the HTTPErrorNoStack object
-     */
     toString(): string {
         return this.message;
     }

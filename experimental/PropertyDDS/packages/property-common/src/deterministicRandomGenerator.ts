@@ -20,13 +20,13 @@ import { HashCalculator } from "./hashCalculator";
  *          doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
  *          efficient.
  */
-
 export class DeterministicRandomGenerator {
     _guid1: Uint32Array;
     _guid2: Uint32Array;
     _result: Uint32Array;
+
     /*
-     * @param {string|number} in_seed - The initial seed (it can be either a GUID or a number)
+     * @param in_seed - The initial seed (it can be either a GUID or a number)
      * which is used to initialize the random number generator
      *
      */
@@ -51,27 +51,22 @@ export class DeterministicRandomGenerator {
     /**
      * Creates a floating point random number
      *
-     * @param {number=} [in_max=1.0] If supplied the returned number will be 0 <= number < in_max. If none is given
+     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
      *                               in_max = 1 is assumed
-     * @return {number} The random number
+     * @returns The random number
      */
-    random(in_max) {
+    random(in_max = 1.0) {
         const randomInteger = this.irandom();
-
-        if (in_max === undefined) {
-            return randomInteger / 4294967296;
-        } else {
-            return randomInteger / 4294967296 * in_max;
-        }
+        return randomInteger / 4294967296 * in_max;
     }
 
     /**
- * Creates an integer point random number
- *
- * @param {number=} [in_max=4294967296] If supplied the returned number will be 0 <= number < in_max. If none is given
- *                                      in_max = 14294967296 (2^32) is assumed
- * @return The random number
- */
+     * Creates an integer point random number
+     *
+     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
+     *                                      in_max = 14294967296 (2^32) is assumed
+     * @returns The random number
+     */
     irandom(in_max?: number): number {
         // Create a new hash
         hashCombine4xUint32(this._guid1, this._guid2, this._result);

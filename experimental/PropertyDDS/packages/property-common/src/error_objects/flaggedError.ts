@@ -5,12 +5,11 @@
 
 /**
  * Checks if a flag is set
- * @param {number} flag A flag value
- * @return {boolean} True if the flag is set in passed flags, false otherwise.
- * @private
+ * @param  flags - flags set within an error object
+ * @param  flag - A flag to be checked
+ * @returns   True if the flag is set in passed flags, false otherwise.
  */
-
- const _isFlagSet = (flags, flag) =>   {
+ const _isFlagSet = (flags: number, flag: number) =>   {
     // eslint-disable-next-line no-bitwise
     return (flags & flag) === flag;
 };
@@ -18,7 +17,6 @@
 export class FlaggedError {
     /**
      * Flags that may be set on an error instance.
-     * @type {{TRANSIENT: number, QUIET: number}}
      */
     static FLAGS = {
         /**
@@ -34,14 +32,14 @@ export class FlaggedError {
     protected flags: number = 0;
 
     /**
-     * @return True if the quiet flag is set.
+     * @returns True if the quiet flag is set.
      */
     isQuiet(): boolean {
         return  _isFlagSet(this.flags,FlaggedError.FLAGS.QUIET);
     }
 
     /**
-     * @return True if the transient flag is set.
+     * @returns True if the transient flag is set.
      */
     isTransient(): boolean {
         return  _isFlagSet(this.flags, FlaggedError.FLAGS.TRANSIENT);

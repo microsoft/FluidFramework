@@ -9,7 +9,6 @@
  * - A status code
  * - Extensible flags. {@see ExtendedError.FLAGS}.
  */
-
 import _ from "lodash";
 import { FlaggedError } from "./flaggedError";
 
@@ -17,15 +16,14 @@ export class OperationError extends Error {
     static FLAGS = FlaggedError.FLAGS;
     public stack: string | undefined;
     public readonly name: string;
+
     /**
-       * Instantiates an OperationError, which mimics the {@link #Error} class with added properties
+       * Instantiates an OperationError, which mimics the Error class with added properties
        * meant for reporting the result of operations.
-       * @param {string} message The error message.
-       * @param {?string} operation The operation name.
-       * @param {?number} statusCode The operation result as a numerical status code.
-       * @param {?number} flags Flags that characterize the error. See {@link FlaggedError#FLAGS}.
-       * @constructor
-       * @alias property-common.OperationError
+       * @param message - The error message.
+       * @param operation - The operation name.
+       * @param statusCode - The operation result as a numerical status code.
+       * @param flags - Flags that characterize the error. See {@link FlaggedError.FLAGS}.
        */
     constructor(
         message?: string,
@@ -48,9 +46,7 @@ export class OperationError extends Error {
     }
 
     /**
-     * @return {string} A string representation of the error flags.
-     * @private
-     * @this OperationError
+     * @returns A string representation of the error flags.
      */
     private _flagsToString() {
         const flagArray: string[] = [];
@@ -63,10 +59,6 @@ export class OperationError extends Error {
         return `${this.flags} [${flagArray.join(",")}]`;
     }
 
-    /**
-     * Returns a string representing the OperationError object
-     * @return a string representing the OperationError object
-     */
     toString(): string {
         const extendedFieldsArray: string[] = [];
         if (this.operation !== undefined) {
