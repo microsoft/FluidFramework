@@ -252,7 +252,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         container.forceReadonly(true);
         assert.strictEqual(container.readOnlyInfo.readonly, true);
-        assert.strictEqual(container.readOnlyInfo.forced, true);
 
         assert.strictEqual(runCount, 1);
     });
@@ -278,7 +277,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         const pendingLocalState = container.closeAndGetPendingLocalState();
         assert.strictEqual(container.readOnlyInfo.readonly, true);
-        assert.strictEqual(container.readOnlyInfo.forced, true);
         assert.strictEqual(container.closed, true);
         assert.strictEqual(pendingLocalState, {});
 
