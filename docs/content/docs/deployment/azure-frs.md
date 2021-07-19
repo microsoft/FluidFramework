@@ -31,7 +31,7 @@ const client = new FrsClient(config);
 
 Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
 
-# Managing Containers
+# Managing containers
 
 The `FrsClient` provides two functions on its API to create and get containers respectively. They both take in two parameters:
 - A container config that defines the ID of the container and an optional entrypoint for logging
