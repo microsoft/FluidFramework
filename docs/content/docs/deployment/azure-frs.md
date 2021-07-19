@@ -62,8 +62,8 @@ The container being fetched back will hold the `initialObjects` as defined in th
 Both calls to `createContainer` and `getContainer` return an `FrsResources` object that holds the Fluid container that we were discussing above as well as a `containerServices` object. Whereas the container itself will always stay the same regardless of which service it is being connected, the `containerServices` hold values that are specific to the FRS service. Within this object, we will find an `audience` value that can be used to manage the roster of users that are currently collaborating in the container.
 
 `audience` provides two callbacks that will return `FrsMember` objects that have a user ID and user name:
-- `getMembers` returns a map of all the users that are currently in the Fluid session
-- `getMyself` returns the current user on this client
+- `getMembers` returns a map of all the users connected to the container.
+- `getMyself` returns the current user on this client.
 
 Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients, `connections` here will hold multiple values for each client.
 
