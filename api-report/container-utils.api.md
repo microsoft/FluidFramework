@@ -67,7 +67,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
-export function wrapError<T extends LoggingError>(error: any, newErrorFn: (m: string) => T): T;
+export function wrapError<T>(error: any, newErrorFn: (m: string) => T): T;
 
 
 // (No @packageDocumentation comment for this package)

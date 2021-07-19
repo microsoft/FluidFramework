@@ -34,7 +34,6 @@
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.44.0",
     "@fluid-example/flow-util-lib": "^0.44.0",
-    "@fluid-example/fluid-object-interfaces": "^0.44.0",
     "@fluid-example/search-menu": "^0.44.0",
     "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/data-object-base": "^0.44.0",
