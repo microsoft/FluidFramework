@@ -126,11 +126,12 @@ import {
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
-import { SummarizerClientElection } from "./summarizerClientElection";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
     GenerateSummaryResult,
     IGeneratedSummaryStats,
     IGenerateSummaryOptions,
+    ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerRuntime,
 } from "./summarizerTypes";
@@ -2161,6 +2162,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public getPendingLocalState() {
         return this.pendingStateManager.getLocalState();
     }
+
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        return this.clientDetails.type === summarizerClientType
+            ? this.summarizer.summarizeOnDemand(...args)
+            : this.summaryManager.summarizeOnDemand(...args);
+    };
 }
 
 /**

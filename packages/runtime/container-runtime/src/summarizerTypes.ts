@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -132,6 +133,43 @@ export type GenerateSummaryResult =
     | IUploadSummaryResult
     | ISubmitSummaryOpResult;
 
+export interface IBroadcastSummaryResult {
+    readonly summarizeOp: ISummaryOpMessage;
+    readonly broadcastDuration: number;
+}
+
+export interface IAckNackSummaryResult {
+    readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
+    readonly ackNackDuration: number;
+}
+
+export type SummarizeResultPart<T> = {
+    success: true;
+    data: T;
+} | {
+    success: false;
+    data: T | undefined;
+    message: string;
+    error: any;
+};
+
+export interface ISummarizeResult {
+    /** Resolves when we generate, upload, and submit the summary */
+    readonly generateSummary: Promise<SummarizeResultPart<GenerateSummaryResult>>;
+    /** Resolves when we see our summarize op broadcast; is sequence number of op */
+    readonly broadcastSummaryOp: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    /** True for ack; false for nack */
+    readonly summaryAckNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+}
+
+export type OnDemandSummarizeResult = (ISummarizeResult & {
+    /** Indicates that an already running summarize attempt does not exist. */
+    readonly alreadyRunning?: undefined;
+}) | {
+    /** Resolves when an already running summarize attempt completes. */
+    readonly alreadyRunning: Promise<void>;
+};
+
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
     | "failToSummarize"
@@ -171,4 +209,10 @@ export interface ISummarizer
     stop(reason?: SummarizerStopReason): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
+
+    /** Attempts to generate a summary on demand. */
+    summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult;
 }

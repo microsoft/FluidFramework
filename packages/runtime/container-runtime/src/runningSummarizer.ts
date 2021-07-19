@@ -13,8 +13,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
+    IGenerateSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    OnDemandSummarizeResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -269,7 +271,10 @@ export class RunningSummarizer implements IDisposable {
                     await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
                 }
                 const attemptReason = i > 0 ? `retry${i}` as `retry${number}` : reason;
-                if (await this.generator.summarize(attemptReason, options) === true) {
+                const result = await this.generator.summarize(attemptReason, options).summaryAckNack;
+                await this.generator.waitSummarizing();
+                if (result.success && result.data.summaryAckNackOp.type === MessageType.SummaryAck) {
+                    // Note: checking for MessageType.SummaryAck is redundant since success is false for nack.
                     return;
                 }
             }
@@ -279,14 +284,37 @@ export class RunningSummarizer implements IDisposable {
         })().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
-            if (this.tryWhileSummarizing) {
-                this.tryWhileSummarizing = false;
-                if (!this.stopping && !this._disposed) {
-                    this.heuristics.run();
-                }
-            }
+            this.checkRerunHeuristics();
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
         });
+    }
+
+    public summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult {
+        // Check for concurrent summary attempts. If one is found,
+        // return a promise that caller can await before trying again.
+        if (this.summarizingLock !== undefined) {
+            // The heuristics are blocking concurrent summarize attempts.
+            return { alreadyRunning: this.summarizingLock };
+        }
+        if (this.generator.isSummarizing()) {
+            // Another summary is currently being generated.
+            return { alreadyRunning: this.generator.waitSummarizing() };
+        }
+        const result = this.generator.summarize(`onDemand;${reason}` as `onDemand;${string}`, options);
+        result.summaryAckNack.finally(() => this.checkRerunHeuristics());
+        return result;
+    }
+
+    private checkRerunHeuristics() {
+        if (this.tryWhileSummarizing) {
+            this.tryWhileSummarizing = false;
+            if (!this.stopping && !this._disposed) {
+                this.heuristics.run();
+            }
+        }
     }
 }
