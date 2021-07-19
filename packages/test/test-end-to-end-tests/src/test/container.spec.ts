@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import {
@@ -279,7 +280,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
         assert.strictEqual(container.readOnlyInfo.readonly, true);
         assert.strictEqual(container.closed, true);
-        assert.strictEqual(pendingLocalState.url, container.resolvedUrl);
+        assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
         assert.strictEqual(pendingLocalState.pendingRuntimeState, undefined);
 
         assert.strictEqual(runCount, 1);
