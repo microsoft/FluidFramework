@@ -132,7 +132,7 @@ export class PendingStateManager implements IDisposable {
         }
     }
 
-    public get disposed() {return this.disposeOnce.evaluated;}
+    public get disposed() { return this.disposeOnce.evaluated; }
     public readonly dispose = () => this.disposeOnce.value;
 
     /**
