@@ -13,7 +13,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { ICreateBlobResponse, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
@@ -33,6 +33,24 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     private blobCount = 0;
 
     public get size() { return this.blobCount; }
+
+    public serialize(): ISummaryTree | undefined {
+        if (this.blobCount === 0) {
+            return;
+        }
+        const tree = {};
+        for (const [id, blob] of this.blobs) {
+            tree[id] = { type: 2, content: bufferToString(blob, "base64") };
+        }
+        return { tree, type: 1 };
+    }
+
+    public rehydrate(tree: ISummaryTree) {
+        for (const [id, blob] of Object.entries(tree.tree)) {
+            this.blobs.set(parseInt(id, 10), stringToBuffer((blob as any).content as string, "base64"));
+            ++this.blobCount;
+        }
+    }
 
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         this.blobs.set(++this.blobCount, content);
@@ -230,5 +248,26 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
             container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
             /(attaching container with blobs is not yet implemented)|(create empty file not supported)/,
         );
+    });
+
+    it("serialize rehydrate detached blob storage", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+
+        const summary = container.serialize();
+
+        const loader2 = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container2 = await loader2.rehydrateDetachedContainerFromSnapshot(summary);
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+        const blobHandle2 = await dataStore2._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle2.get(), "utf-8"));
     });
 });

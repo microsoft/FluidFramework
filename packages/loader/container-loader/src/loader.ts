@@ -34,7 +34,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
@@ -262,6 +262,8 @@ export interface ILoaderServices {
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
+    serialize(): ISummaryTree | undefined;
+    rehydrate(tree: ISummaryTree): void;
  };
 
  /**

@@ -283,6 +283,8 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 // @public
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
+    serialize(): ISummaryTree | undefined;
+    rehydrate(tree: ISummaryTree): void;
 };
 
 // @public

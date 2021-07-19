@@ -777,6 +777,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
         const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+        if (this.loader.services.detachedBlobStorage !== undefined) {
+            const detachedBlobSummary = this.loader.services.detachedBlobStorage.serialize();
+            if (detachedBlobSummary) {
+                combinedSummary.tree[".detachedBlobStorage"] = detachedBlobSummary;
+            }
+        }
+
         return JSON.stringify(combinedSummary);
     }
 
@@ -1312,6 +1320,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
+        const detachedBlobSummary = detachedContainerSnapshot.tree[".detachedBlobStorage"];
+        if (detachedBlobSummary !== undefined) {
+            assert(!!this.loader.services.detachedBlobStorage, "detached blob summary but no detached blob storage");
+            this.loader.services.detachedBlobStorage.rehydrate(detachedBlobSummary as ISummaryTree);
+        }
+
         const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         blobs.forEach((value, key) => {
             this.storageBlobs.set(key, value);
