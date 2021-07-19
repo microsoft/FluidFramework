@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/replay-tool",
-  "version": "0.43.1",
+  "version": "0.43.2",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "homepage": "https://fluidframework.com",
@@ -30,21 +30,21 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.43.1",
+    "@fluid-internal/client-api": "^0.43.2",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/container-definitions": "^0.39.5",
-    "@fluidframework/container-loader": "^0.43.1",
+    "@fluidframework/container-loader": "^0.43.2",
     "@fluidframework/core-interfaces": "^0.39.5",
-    "@fluidframework/datastore": "^0.43.1",
-    "@fluidframework/datastore-definitions": "^0.43.1",
+    "@fluidframework/datastore": "^0.43.2",
+    "@fluidframework/datastore-definitions": "^0.43.2",
     "@fluidframework/driver-definitions": "^0.39.0",
-    "@fluidframework/file-driver": "^0.43.1",
+    "@fluidframework/file-driver": "^0.43.2",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/replay-driver": "^0.43.1",
-    "@fluidframework/runtime-definitions": "^0.43.1",
-    "@fluidframework/telemetry-utils": "^0.43.1",
-    "@fluidframework/tool-utils": "^0.43.1"
+    "@fluidframework/replay-driver": "^0.43.2",
+    "@fluidframework/runtime-definitions": "^0.43.2",
+    "@fluidframework/telemetry-utils": "^0.43.2",
+    "@fluidframework/tool-utils": "^0.43.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
