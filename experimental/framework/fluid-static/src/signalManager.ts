@@ -17,27 +17,27 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
 
 /**
- * ISignalManager defines an interface for working with signals that is similar to the more common
+ * ISignaler defines an interface for working with signals that is similar to the more common
  * eventing patterns of EventEmitter.  In addition to sending and responding to signals, it
  * provides explicit methods around signal requests to other connected clients.
  */
-export interface ISignalManager {
+export interface ISignaler {
     /**
      * Adds a listener for the specified signal.  It behaves in the same way as EventEmitter's `on`
      * method regarding multiple registrations, callback order, etc.
      * @param signalName - The name of the signal
      * @param listener - The callback signal handler to add
-     * @returns This ISignalManager
+     * @returns This ISignaler
      */
-    onSignal(signalName: string, listener: SignalListener): ISignalManager;
+    onSignal(signalName: string, listener: SignalListener): ISignaler;
      /**
      * Remove a listener for the specified signal.  It behaves in the same way as EventEmitter's
      * `off` method regarding multiple registrations, removal order, etc.
      * @param signalName - The name of the signal
      * @param listener - The callback signal handler to remove
-     * @returns This ISignalManager
+     * @returns This ISignaler
      */
-    offSignal(signalName: string, listener: SignalListener | ((message: any) => void)): ISignalManager;
+    offSignal(signalName: string, listener: SignalListener | ((message: any) => void)): ISignaler;
     /**
      * Send a signal with payload to its connected listeners.
      * @param signalName - The name of the signal
@@ -51,17 +51,17 @@ export interface ISignalManager {
      * method regarding multiple registrations, callback order, etc.
      * @param signalName - The signal for which broadcast is requested
      * @param listener - The callback for the broadcast request to add
-     * @returns This ISignalManager
+     * @returns This ISignaler
      */
-    onBroadcastRequested(signalName: string, listener: SignalListener): ISignalManager;
+    onBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
     /**
      * Remove a listener for a broadcast request.  It behaves in the same way as EventEmitter's
      * `off` method regarding multiple registrations, removal order, etc.
      * @param signalName  - The signal for which broadcast is requested
      * @param listener - The callback for the broadcast request to remove
-     * @returns This ISignalManager
+     * @returns This ISignaler
      */
-    offBroadcastRequested(signalName: string, listener: SignalListener): ISignalManager;
+    offBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
     /**
      * Request broadcast of a signal from other connected clients.  Other clients must have
      * registered to respond to broadcast requests using the `onBroadcastRequested` method.
@@ -75,7 +75,7 @@ export interface ISignalManager {
  * Duck type of something that provides the expected signalling functionality:
  * A way to verify we can signal, a way to send a signal, and a way to listen for incoming signals
  */
-export interface ISignaler {
+export interface IRuntimeSignaler {
     connected: boolean;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
     submitSignal(type: string, content: any): void;
@@ -84,13 +84,13 @@ export interface ISignaler {
 /**
  * Note: currently experimental and under development
  *
- * Helper class to assist common scenarios around working with signals.  SignalManager wraps an
+ * Helper class to assist common scenarios around working with signals.  Signaler wraps a runtime
  * object with signaling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and can
  * then be used in place of the original signaler.  It uses a separate internal EventEmitter to
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.
  */
-export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISignalManager {
+export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
     private readonly emitter  = new EventEmitter();
 
     private readonly managerId: string | undefined;
@@ -99,7 +99,7 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
         /**
          * Object to wrap that can submit and listen to signals
          */
-        private readonly signaler: ISignaler,
+        private readonly signaler: IRuntimeSignaler,
         /**
          * Optional id to assign to this manager that will be attached to
          * signal names.  Useful to avoid collisions if there are multiple
@@ -132,12 +132,12 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
         return `${signalName}#req`;
     }
 
-    // ISignalManager methods
+    // ISignaler methods
 
     public onSignal(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         const managerSignalName = this.getManagerSignalName(signalName);
         this.emitter.on(managerSignalName, listener);
         return this;
@@ -146,7 +146,7 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
     public offSignal(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         const managerSignalName = this.getManagerSignalName(signalName);
         this.emitter.off(managerSignalName, listener);
         return this;
@@ -165,7 +165,7 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
     public onBroadcastRequested(
         signalName: string,
         listener: SignalListener,
-    ) {
+    ): ISignaler {
         const broadcastSignalName = this.getBroadcastSignalName(signalName);
         return this.onSignal(broadcastSignalName, listener);
     }
@@ -173,7 +173,7 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
     public offBroadcastRequested(
         signalName: string,
         listener: SignalListener,
-    ) {
+    ): ISignaler {
         const broadcastSignalName = this.getBroadcastSignalName(signalName);
         return this.offSignal(broadcastSignalName, listener);
     }
@@ -190,41 +190,41 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
 /**
  * Note: currently experiemental and under development
  *
- * DataObject implementation of SignalManager for fluid-static plug-and-play.  Allows fluid-static
- * users to get an ISignalManager without a custom DO.  Where possible, consumers should instead
- * create a SignalManager themselves instead of using the DO wrapper to avoid the DO overhead.
+ * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
+ * users to get an ISignaler without a custom DO.  Where possible, consumers should instead
+ * create a Signaler themselves instead of using the DO wrapper to avoid the DO overhead.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export class SignalManagerDO extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignalManager {
-    private _manager: SignalManager | undefined;
-    private get manager(): SignalManager {
-        assert(this._manager !== undefined, "internal mangager should be defined");
+export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignaler {
+    private _manager: Signaler | undefined;
+    private get manager(): Signaler {
+        assert(this._manager !== undefined, "internal signaler should be defined");
         return this._manager;
     }
 
-    public static get Name() { return "@fluid-example/signal-manager-do"; }
+    public static get Name() { return "@fluid-example/signal-manager"; }
 
-    public static readonly factory = new DataObjectFactory<SignalManagerDO, undefined, undefined, IErrorEvent>
+    public static readonly factory = new DataObjectFactory<SignalManager, undefined, undefined, IErrorEvent>
     (
-        SignalManagerDO.Name,
-        SignalManagerDO,
+        SignalManager.Name,
+        SignalManager,
         [],
         {},
     );
 
     protected async hasInitialized() {
-        this._manager = new SignalManager(this.runtime);
+        this._manager = new Signaler(this.runtime);
         this.manager.on("error", (error) => {
             this.emit("error", error);
         });
     }
 
-    // ISignalManager methods  Note these are all passthroughs
+    // ISignaler methods  Note these are all passthroughs
 
     public onSignal(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         this.manager.onSignal(signalName, listener);
         return this;
     }
@@ -232,7 +232,7 @@ export class SignalManagerDO extends DataObject<{}, undefined, IErrorEvent> impl
     public offSignal(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         this.manager.offSignal(signalName, listener);
         return this;
     }
@@ -247,7 +247,7 @@ export class SignalManagerDO extends DataObject<{}, undefined, IErrorEvent> impl
     public onBroadcastRequested(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         this.manager.onBroadcastRequested(signalName, listener);
         return this;
     }
@@ -255,7 +255,7 @@ export class SignalManagerDO extends DataObject<{}, undefined, IErrorEvent> impl
     public offBroadcastRequested(
         signalName: string,
         listener: SignalListener,
-    ): ISignalManager {
+    ): ISignaler {
         this.manager.offBroadcastRequested(signalName, listener);
         return this;
     }

@@ -10,8 +10,8 @@ import {
     DataObjectFactory,
     IMember,
     IServiceAudience,
-    ISignalManager,
-    SignalManager,
+    ISignaler,
+    Signaler,
 } from "@fluid-experimental/fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
@@ -54,20 +54,20 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         return this._audience;
     }
 
-    private _signalManager: ISignalManager | undefined;
-    private get signalManager(): ISignalManager {
+    private _signalManager: ISignaler | undefined;
+    private get signalManager(): ISignaler {
         if (this._signalManager === undefined) {
             throw new Error("no signalManager");
         }
         return this._signalManager;
     }
 
-    public init(newAudience: IServiceAudience<IMember>, signalManager?: ISignalManager) {
+    public init(newAudience: IServiceAudience<IMember>, signalManager?: ISignaler) {
         if (this._audience !== undefined || this._signalManager !== undefined) {
             throw new Error("init only once");
         }
         this._audience = newAudience;
-        this._signalManager = signalManager ?? new SignalManager(this.runtime);
+        this._signalManager = signalManager ?? new Signaler(this.runtime);
 
         this._audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");

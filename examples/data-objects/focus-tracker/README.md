@@ -2,7 +2,7 @@
 
 **_This demo is a work-in-progress_**
 
-**Focus Tracker** is an example that demonstrates how transient state of audience members can be tracked among other audience members using signals.  It does so using fluid-static's `FluidContainer`, `ServiceAudience`, and `ISignalManager`.
+**Focus Tracker** is an example that demonstrates how transient state of audience members can be tracked among other audience members using signals.  It does so using fluid-static's `FluidContainer`, `ServiceAudience`, and `ISignaler`.
 
 This implementation visualizes the Container in a standalone application, rather than using the webpack-fluid-loader environment that most of our examples use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
