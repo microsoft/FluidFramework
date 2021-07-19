@@ -33,9 +33,10 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 # Managing containers
 
-The `FrsClient` provides two functions on its API to create and get containers respectively. They both take in two parameters:
-- A container config that defines the ID of the container and an optional entrypoint for logging
-- A container schema that defines the DDSes and data objects that this container will hold
+The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
+
+- A _container config_ that defines the ID of the container and an optional entry point for logging.
+- A _container schema_ that defines the container data model.
 
 ```typescript
 const schema = {
