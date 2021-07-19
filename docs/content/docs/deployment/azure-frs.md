@@ -94,6 +94,6 @@ onAudienceChanged();
 audience.on("membersChanged", onAudienceChanged);
 ```
 
-Every time the `membersChanged` events gets fired, we fetch the new member roster and update the view accordingly.
+Every time the `membersChanged` event is sent, the new member roster is fetched and the view is updated accordingly.
 
 **Congratulations!** You have now succesfully connected your Fluid container to the FRS service and fetched back user details for the members in your collaborative session!!
