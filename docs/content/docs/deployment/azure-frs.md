@@ -5,7 +5,7 @@ menuPosition: 2
 
 # Introduction
 
-Fluid provides an implementation of its backend service, known as the Azure Fluid Relay Service (FRS), for clients to connect to. As part of the onboarding process, you will be provided a tenant ID, a tenant key, and orderer and storage URLs that will be used to connect your application to this service instance. The framework also provides a client-side package, `frs-client`, that will take in these configuration values to quickly allow you set up your collaborative application against the service instance. This package handles the logic of connecting your [Fluid Container](../build/containers.md) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers. 
+Azure Fluid Relay service (FRS) is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 Let's take a look at how to go about using the `frs-client` in your app!
 
