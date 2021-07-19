@@ -29,7 +29,7 @@ const config: FrsConnectionConfig = {
 const client = new FrsClient(config);
 ```
 
-Now that we have an instance of our client, we can start using it to create new or load existing Fluid containers!
+Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
 
 # Managing Containers
 
