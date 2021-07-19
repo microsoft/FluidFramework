@@ -24,7 +24,7 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { ISummaryAttempt, RunningSummarizer } from "./runningSummarizer";
 import {
-    GenerateSummaryData,
+    GenerateSummaryResult,
     IGenerateSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
@@ -262,7 +262,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     /** Implementation of SummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult> {
         const result = this.internalsProvider.generateSummary(options);
 
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId

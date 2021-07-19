@@ -128,7 +128,7 @@ import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection } from "./summarizerClientElection";
 import {
-    GenerateSummaryData,
+    GenerateSummaryResult,
     IGeneratedSummaryStats,
     IGenerateSummaryOptions,
     ISummarizerInternalsProvider,
@@ -1656,7 +1656,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
+    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {
@@ -1708,7 +1708,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "aborted", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
             }
 
             // If the GC version that this container is loaded from differs from the current GC version that this
@@ -1730,7 +1730,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
                 });
             } catch (error) {
-                return { stage: "aborted", referenceSequenceNumber: summaryRefSeqNum, error };
+                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
 
             // Counting dataStores and handles
@@ -1756,7 +1756,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "generated", ...generateSummaryData, error: continueResult.error };
+                return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
             const lastAck = this.summaryCollection.latestAck;
@@ -1777,7 +1777,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
-                return { stage: "generated", ...generateSummaryData, error };
+                return { stage: "generate", ...generateSummaryData, error };
             }
 
             const parent = summaryContext.ackHandle;
@@ -1796,18 +1796,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "uploaded", ...uploadData, error: continueResult.error };
+                return { stage: "upload", ...uploadData, error: continueResult.error };
             }
 
             let clientSequenceNumber: number;
             try {
                 clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
             } catch (error) {
-                return { stage: "uploaded", ...uploadData, error };
+                return { stage: "upload", ...uploadData, error };
             }
 
             const submitData = {
-                stage: "submitted",
+                stage: "submit",
                 ...uploadData,
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,

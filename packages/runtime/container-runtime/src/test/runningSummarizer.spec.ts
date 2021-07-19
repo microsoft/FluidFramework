@@ -105,7 +105,7 @@ describe("Runtime", () => {
                                 await deferGenerateSummary.promise;
                             }
                             return {
-                                stage: "submitted",
+                                stage: "submit",
                                 referenceSequenceNumber: lastRefSeq,
                                 generateDuration: 0,
                                 uploadDuration: 0,

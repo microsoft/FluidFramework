@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    GenerateSummaryData,
+    GenerateSummaryResult,
     IGenerateSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
@@ -496,7 +496,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait to generate and send summary
         this.summarizeTimer.start();
         // Use record type to prevent unexpected value types
-        let summaryData: GenerateSummaryData | undefined;
+        let summaryData: GenerateSummaryResult | undefined;
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
             summaryData = await this.internalsProvider.generateSummary({
@@ -506,27 +506,35 @@ export class RunningSummarizer implements IDisposable {
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
+            // This is based on the stages:
+            // 1. base - stopped before the summary tree was generated
+            // 2. generate - stopped before the summary was uploaded to storage
+            // 3. upload - stopped before the summarize op was submitted
+            // 4. submit - completed submitting the summarize op
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
             generateTelemetryProps = {
                 refSequenceNumber,
                 opsSinceLastAttempt: refSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
                 opsSinceLastSummary: refSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
             };
-            if (summaryData.stage !== "aborted") {
+            if (summaryData.stage !== "base") {
+                // If not base, it at least generated the summary tree.
                 generateTelemetryProps = {
                     ...generateTelemetryProps,
                     ...summaryData.summaryStats,
                     generateDuration: summaryData.generateDuration,
                 };
 
-                if (summaryData.stage !== "generated") {
+                if (summaryData.stage !== "generate") {
+                    // If neither base nor generate, it at least uploaded to storage.
                     generateTelemetryProps = {
                         ...generateTelemetryProps,
                         handle: summaryData.handle,
                         uploadDuration: summaryData.uploadDuration,
                     };
 
-                    if (summaryData.stage !== "uploaded") {
+                    if (summaryData.stage !== "upload") {
+                        // If neither base, generate, nor upload, then it submitted the op.
                         generateTelemetryProps = {
                             ...generateTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
@@ -537,7 +545,7 @@ export class RunningSummarizer implements IDisposable {
             }
 
             this.logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
-            if (summaryData.stage !== "submitted") {
+            if (summaryData.stage !== "submit") {
                 return fail("generateSummaryFailure", summaryData.error, generateTelemetryProps);
             }
         } catch (error) {

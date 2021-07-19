@@ -35,7 +35,7 @@ export interface IProvideSummarizer {
 
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
-    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData>;
+    generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
     refreshLatestSummaryAck(
@@ -70,32 +70,67 @@ export interface IGenerateSummaryOptions {
     summaryLogger: ITelemetryLogger,
 }
 
+/**
+ * In addition to the normal summary tree + stats, this contains additional stats
+ * only relevant at the root of the tree.
+ */
 export interface IGeneratedSummaryStats extends ISummaryStats {
-    dataStoreCount: number;
-    summarizedDataStoreCount: number;
+    readonly dataStoreCount: number;
+    readonly summarizedDataStoreCount: number;
 }
-export interface IBaseSummaryData {
+
+/** Base results for all generateSummary attempts. */
+export interface IBaseSummarizeResult {
+    readonly stage: "base";
+    /** Error object related to failed summarize attempt. */
+    readonly error: any;
+    /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
 }
-export interface IGenerateSummaryData {
+
+/** Results of generateSummary after generating the summary tree. */
+export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+    readonly stage: "generate";
+    /** Generated summary tree and stats. */
     readonly summaryStats: IGeneratedSummaryStats;
+    /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
 }
-export interface IUploadSummaryData {
+
+/** Results of generateSummary after uploading the tree to storage. */
+export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
+    readonly stage: "upload";
+    /** The handle returned by storage pointing to the uploaded summary tree. */
     readonly handle: string;
+    /** Time it took to upload the summary tree to storage. */
     readonly uploadDuration: number;
 }
-export interface ISubmitSummaryData {
+
+/** Results of generateSummary after submitting the summarize op. */
+export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
+    readonly stage: "submit";
+    /** The client sequence number of the summarize op submitted for the summary. */
     readonly clientSequenceNumber: number;
+    /** Time it took to submit the summarize op to the broadcasting service. */
     readonly submitOpDuration: number;
 }
-export type GenerateSummaryData =
-    ({ error: any; } & (
-        | ({ stage: "aborted"; } & IBaseSummaryData)
-        | ({ stage: "generated"; } & IGenerateSummaryData & IBaseSummaryData)
-        | ({ stage: "uploaded"; } & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData)
-    ))
-    | ({ stage: "submitted"; } & ISubmitSummaryData & IUploadSummaryData & IGenerateSummaryData & IBaseSummaryData);
+
+/**
+ * Strict type representing result of a generateSummary attempt.
+ * The result consists of 4 possible stages, each with its own data.
+ * The data is cumulative, so each stage will contain the data from the previous stages.
+ * If the final "submitted" stage is not reached, the result may contain the error object.
+ * Stages:
+ *  1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
+ *  2. "generate" - the summary tree was generated, and the result will contain that tree + stats
+ *  3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
+ *  4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ */
+export type GenerateSummaryResult =
+    | IBaseSummarizeResult
+    | IGenerateSummaryTreeResult
+    | IUploadSummaryResult
+    | ISubmitSummaryOpResult;
 
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
