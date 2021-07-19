@@ -55,7 +55,7 @@ The ID that is being passed in to the container config can be thought of as the 
 
 For the further information on how to start recording logs being emitted by Fluid, please see [Telemetry](../testing/telemetry.md)
 
-The container being fetched back will hold the `initialObjects` as defined in the container schema. Please read [Data modeling](../build/data-modeling.md) to see how to establish the schema and use the `fluidContainer` object.
+The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling](../build/data-modeling.md) to learn more about how to establish the schema and use the `FluidContainer` object.
 
 # Getting Audience Details
 
