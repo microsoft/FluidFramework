@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./circle";
-export * from "./polygon";
-export * from "./shape";
+export { SharedXTree } from "./tree";
+export { SharedXTreeFactory } from "./runtime";

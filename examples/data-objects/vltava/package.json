@@ -37,7 +37,6 @@
   "dependencies": {
     "@fluid-example/clicker": "^0.44.0",
     "@fluid-example/codemirror": "^0.44.0",
-    "@fluid-example/fluid-object-interfaces": "^0.44.0",
     "@fluid-example/prosemirror": "^0.44.0",
     "@fluid-example/spaces": "^0.44.0",
     "@fluid-experimental/last-edited": "^0.44.0",

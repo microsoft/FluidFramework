@@ -19,6 +19,7 @@ import {
     IDocumentStorageService,
     LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
+import { RateLimiter } from "@fluidframework/driver-utils";
 import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
@@ -41,7 +42,6 @@ import { IOdspCache } from "./odspCache";
 import { createCacheSnapshotKey, getWithRetryForTokenRefresh, ISnapshotCacheValue } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
-import { RateLimiter } from "./rateLimiter";
 
 /* eslint-disable max-len */
 

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { LoggingError, TelemetryDataTag, TelemetryLogger, isTaggedTelemetryPropertyValue } from "../logger";
+import { TelemetryDataTag, TelemetryLogger } from "../logger";
+import { LoggingError, isTaggedTelemetryPropertyValue, annotateError, isILoggingError } from "../errorLogging";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
-        describe("prepareErrorObject", () => {
+        describe("TelemetryLogger.prepareErrorObject", () => {
             function freshEvent(): ITelemetryBaseEvent {
                 return { category: "cat1", eventName: "event1" };
             }
@@ -182,6 +185,56 @@ describe("Logger", () => {
                     { value: "hello" }), false, "undefined (missing) tag is bad");
             });
         });
+        describe("annotateError", () => {
+            it("LoggingError is annotated", () => {
+                const loggingError = new LoggingError("msg");
+                const retVal = annotateError(loggingError, { p1: 1 });
+
+                assert(retVal === loggingError);
+                assert(loggingError.getTelemetryProperties().p1 === 1);
+            });
+            it("Custom Read/Write Logging Error is annotated", () => {
+                let atpCalled = false;
+                const loggingError = {
+                    getTelemetryProperties: () => {},
+                    addTelemetryProperties: () => { atpCalled = true; },
+                };
+                const retVal = annotateError(loggingError, { p1: 1 });
+
+                assert(retVal as any === loggingError);
+                assert(atpCalled);
+            });
+            it("Arbitrary object get telemetry prop functions mixed in", () => {
+                const obj = {};
+                const retVal = annotateError(obj, { p1: 1 });
+
+                assert(retVal === obj);
+                assert(isILoggingError(obj));
+                assert(obj.getTelemetryProperties().p1 === 1);
+
+                const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
+                atp({ p2: 2 });
+                assert(obj.getTelemetryProperties().p2 === 2);
+                atp({ p1: "one" });
+                assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
+            });
+            it("non-objects result in new LoggingError", () => {
+                const inputs = [
+                    null,
+                    undefined,
+                    false,
+                    true,
+                    3.14,
+                    Symbol("Unique"),
+                    () => {},
+                    [],
+                    [1,2,3],
+                ];
+                const annotated = inputs.map((i) => annotateError(i, { p1: 1 }));
+
+                assert(annotated.every((a) => a instanceof LoggingError));
+            });
+        });
         describe("LoggingError", () => {
             it("ctor props are assigned to the object", () => {
                 const loggingError = new LoggingError(
@@ -260,6 +313,13 @@ describe("Logger", () => {
                 overwritingProps.addTelemetryProperties(expectedProps);
                 const props = overwritingProps.getTelemetryProperties();
                 assert.deepStrictEqual(props, expectedProps);
+            });
+            it("addTelemetryProperties - overwrites existing telemetry props", () => {
+                const loggingError = new LoggingError("myMessage", { p1: 1 });
+                loggingError.addTelemetryProperties({ p1: "one" });
+                assert(loggingError.getTelemetryProperties().p1 === "one");
+                loggingError.addTelemetryProperties({ p1: "uno" });
+                assert(loggingError.getTelemetryProperties().p1 === "uno");
             });
         });
     });
