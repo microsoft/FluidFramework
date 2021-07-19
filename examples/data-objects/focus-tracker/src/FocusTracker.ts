@@ -10,6 +10,7 @@ import {
     DataObjectFactory,
     IMember,
     IServiceAudience,
+    ISignalManager,
     SignalManager,
 } from "@fluid-experimental/fluid-framework";
 
@@ -18,8 +19,9 @@ export interface IFocusTrackerEvents extends IEvent {
 }
 
 /**
- * Data object example of using the audience with signals to track focus
- * state of connected clients without writing changes to a DDS
+ * Data object example of using the audience with signals to track focus state of connected clients
+ * without writing changes to a DDS.  It exists as a data object for demonstative purposes, and its
+ * logic could all be extracted for fluid-static and used without the data object wrapper.
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents> implements EventEmitter {
@@ -52,20 +54,20 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         return this._audience;
     }
 
-    private _signalManager: SignalManager | undefined;
-    private get signalManager(): SignalManager {
+    private _signalManager: ISignalManager | undefined;
+    private get signalManager(): ISignalManager {
         if (this._signalManager === undefined) {
             throw new Error("no signalManager");
         }
         return this._signalManager;
     }
 
-    public init(newAudience: IServiceAudience<IMember>) {
+    public init(newAudience: IServiceAudience<IMember>, signalManager?: ISignalManager) {
         if (this._audience !== undefined || this._signalManager !== undefined) {
             throw new Error("init only once");
         }
         this._audience = newAudience;
-        this._signalManager = new SignalManager(this.runtime);
+        this._signalManager = signalManager ?? new SignalManager(this.runtime);
 
         this._audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");

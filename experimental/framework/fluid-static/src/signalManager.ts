@@ -4,8 +4,9 @@
  */
 
 import { EventEmitter } from "events";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IErrorEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
@@ -107,6 +108,9 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
         managerId?: string,
     ) {
         super();
+        this.emitter.on("error", (error) => {
+            this.emit("error", error);
+        });
         this.managerId = managerId ? `#${managerId}` : undefined;
         this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const clientId = message.clientId;
@@ -180,5 +184,86 @@ export class SignalManager extends TypedEventEmitter<IErrorEvent> implements ISi
     ) {
         const broadcastSignalName = this.getBroadcastSignalName(signalName);
         this.submitSignal(broadcastSignalName, payload);
+    }
+}
+
+/**
+ * Note: currently experiemental and under development
+ *
+ * DataObject implementation of SignalManager for fluid-static plug-and-play.  Allows fluid-static
+ * users to get an ISignalManager without a custom DO.  Where possible, consumers should instead
+ * create a SignalManager themselves instead of using the DO wrapper to avoid the DO overhead.
+ */
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class SignalManagerDO extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignalManager {
+    private _manager: SignalManager | undefined;
+    private get manager(): SignalManager {
+        assert(this._manager !== undefined, "internal mangager should be defined");
+        return this._manager;
+    }
+
+    public static get Name() { return "@fluid-example/signal-manager-do"; }
+
+    public static readonly factory = new DataObjectFactory<SignalManagerDO, undefined, undefined, IErrorEvent>
+    (
+        SignalManagerDO.Name,
+        SignalManagerDO,
+        [],
+        {},
+    );
+
+    protected async hasInitialized() {
+        this._manager = new SignalManager(this.runtime);
+        this.manager.on("error", (error) => {
+            this.emit("error", error);
+        });
+    }
+
+    // ISignalManager methods  Note these are all passthroughs
+
+    public onSignal(
+        signalName: string,
+        listener: SignalListener,
+    ): ISignalManager {
+        this.manager.onSignal(signalName, listener);
+        return this;
+    }
+
+    public offSignal(
+        signalName: string,
+        listener: SignalListener,
+    ): ISignalManager {
+        this.manager.offSignal(signalName, listener);
+        return this;
+    }
+
+    public submitSignal(
+        signalName: string,
+        payload?: Jsonable,
+    ) {
+        this.manager.submitSignal(signalName, payload);
+    }
+
+    public onBroadcastRequested(
+        signalName: string,
+        listener: SignalListener,
+    ): ISignalManager {
+        this.manager.onBroadcastRequested(signalName, listener);
+        return this;
+    }
+
+    public offBroadcastRequested(
+        signalName: string,
+        listener: SignalListener,
+    ): ISignalManager {
+        this.manager.offBroadcastRequested(signalName, listener);
+        return this;
+    }
+
+    public requestBroadcast(
+        signalName: string,
+        payload?: Jsonable,
+    ) {
+        this.manager.requestBroadcast(signalName, payload);
     }
 }
