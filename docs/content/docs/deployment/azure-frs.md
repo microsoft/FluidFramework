@@ -69,7 +69,7 @@ Alongside the user ID and name, `FrsMember` objects also hold an array of `conne
 
 `audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified.
 
-These callbacks and events can be combined to keep an updated view that represents the members in the current session.
+These callbacks and events can be combined to present a real-time view of the users in the current session.
 
 ``` typescript
 const { audience } = containerServices;
