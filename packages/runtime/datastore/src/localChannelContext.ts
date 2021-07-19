@@ -42,12 +42,12 @@ export class LocalChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     }>;
     private readonly dirtyFn: () => void;
-    private readonly factory: IChannelFactory | undefined;
+    private factory: IChannelFactory | undefined;
 
     constructor(
         private readonly id: string,
-        registry: ISharedObjectRegistry,
-        type: string,
+        private readonly registry: ISharedObjectRegistry,
+        type: string | undefined,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
@@ -72,11 +72,12 @@ export class LocalChannelContext implements IChannelContext {
                 blobMap,
             );
         });
-        this.factory = registry.get(type);
-        if (this.factory === undefined) {
-            throw new Error(`Channel Factory ${type} not registered`);
-        }
         if (snapshotTree === undefined) {
+            assert(type !== undefined, "Factory Type should be defined");
+            this.factory = registry.get(type);
+            if (this.factory === undefined) {
+                throw new Error(`Channel Factory ${type} not registered`);
+            }
             this.channel = this.factory.create(runtime, id);
         }
         this.dirtyFn = () => { dirtyFn(id); };
@@ -152,7 +153,10 @@ export class LocalChannelContext implements IChannelContext {
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(!!this.factory, 0x191 /* "Factory should be there for local channel" */);
+        this.factory = this.registry.get(attributes.type);
+        if (this.factory === undefined) {
+            throw new Error(`Channel Factory ${attributes.type} not registered`);
+        }
         // Services will be assigned during this load.
         const channel = await this.factory.load(
             this.runtime,

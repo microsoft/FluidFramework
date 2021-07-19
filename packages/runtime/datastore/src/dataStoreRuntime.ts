@@ -31,7 +31,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -69,7 +69,6 @@ import {
     IFluidDataStoreRuntime,
     IFluidDataStoreRuntimeEvents,
     IChannelFactory,
-    IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
     cloneGCData,
@@ -250,12 +249,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
                 // true. In this case create a LocalChannelContext.
                 if (dataStoreContext.isLocalDataStore) {
-                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
-                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
                     channelContext = new LocalChannelContext(
                         path,
                         this.sharedObjectRegistry,
-                        channelAttributes.type,
+                        undefined,
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
