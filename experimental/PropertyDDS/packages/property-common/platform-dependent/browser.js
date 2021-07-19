@@ -9,12 +9,12 @@
  * @return {number[]} - an array with random values
  */
 function generateRandomUInt32Array(length) {
-  const array = new Uint32Array(length);
-  const crypto = window.crypto || window.msCrypto; // IE 11 support
-  crypto.getRandomValues(array);
-  return array;
+    const array = new Uint32Array(length);
+    const crypto = window.crypto || window.msCrypto; // IE 11 support
+    crypto.getRandomValues(array);
+    return array;
 }
 
 module.exports = {
-  generateRandomUInt32Array
+    generateRandomUInt32Array
 };

@@ -6,13 +6,11 @@
 /**
  * @fileoverview In this file,we will test property-common.DeterministicRandomGenerator
  */
-(function() {
 
-  const DeterministicRandomGenerator = require('..').DeterministicRandomGenerator;
+const DeterministicRandomGenerator = require('..').DeterministicRandomGenerator;
 
-  describe('property-common.DeterministicRandomGenerator', function() {
-    it('should exist', function() {
-      expect(DeterministicRandomGenerator).to.exist;
+describe('property-common.DeterministicRandomGenerator', function () {
+    it('should exist', function () {
+        expect(DeterministicRandomGenerator).to.exist;
     });
-  });
-})();
+});
