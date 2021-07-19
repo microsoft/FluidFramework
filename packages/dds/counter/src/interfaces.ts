@@ -6,6 +6,14 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ISharedCounterEvents extends ISharedObjectEvents {
+    /**
+     * This event is raised when the counter is incremented or decremented.
+     *
+     * @param event - The event name.
+     * @param listener - An event listener.
+     *
+     * @eventProperty
+     */
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void);
 }
 
