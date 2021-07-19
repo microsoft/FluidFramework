@@ -29,8 +29,8 @@
     ]
   },
   "dependencies": {
-    "@fluid-experimental/tinylicious-client": "^0.44.0",
-    "@fluidframework/map": "^0.44.0",
+    "@fluid-experimental/fluid-framework": "^0.44.0",
+    "@fluid-experimental/frs-client": "^0.44.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

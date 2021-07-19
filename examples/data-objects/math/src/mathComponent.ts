@@ -17,7 +17,6 @@ import {
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -487,7 +486,7 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IFluidHTMLOptions { }
 
-export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> implements IFluidObjectCollection {
+export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> {
     private static readonly factory = new LazyLoadedDataObjectFactory<MathCollection>(
         "@fluid-example/math",
         MathCollection,
@@ -513,7 +512,6 @@ export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> imple
     }
 
     public get IFluidLoadable() { return this; }
-    public get IFluidObjectCollection() { return this; }
     public get IFluidRouter() { return this; }
 
     private combinedMathText: Sequence.SharedString;

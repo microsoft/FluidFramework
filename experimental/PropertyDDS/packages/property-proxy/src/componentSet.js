@@ -15,12 +15,12 @@ import { Utilities } from './utilities';
  * @return {Iterator} An iterator.
  * @hidden
  */
-const createSetIterator = (target) => function* () {
-  const property = target.getProperty();
-  const keys = property.getIds();
-  for (let i = 0; i < keys.length; i++) {
-    yield PropertyProxy.proxify(property.get(keys[i]));
-  }
+const createSetIterator = (target) => function*() {
+    const property = target.getProperty();
+    const keys = property.getIds();
+    for (let i = 0; i < keys.length; i++) {
+        yield PropertyProxy.proxify(property.get(keys[i]));
+    }
 };
 
 /**
@@ -30,151 +30,151 @@ const createSetIterator = (target) => function* () {
  * @hidden
  */
 class ComponentSet extends Set {
-  /**
-   * Sets the {@link external:SetProperty SetProperty} to operate on sets the Symbol.iterator attribute.
-   * @param {external:SetProperty} property The {@link external:SetProperty SetProperty} to operate on.
-   */
-  constructor(property) {
-    super();
-    Object.defineProperty(this, 'property', { enumerable: false, value: property });
-    this[Symbol.iterator] = createSetIterator(this);
-  }
-
-  /**
-   * Retrieves the length of the array returned by {@link external:SetProperty#getIds} to infer
-   * the size (number of entries).
-   * @return {Number} The size of the {@link external:SetProperty SetProperty}.
-   */
-  get size() {
-    return this.property.getIds().length;
-  }
-
-  /**
-   * Returns the wrapped {@link external:SetProperty SetProperty} property.
-   * @return {external:SetProperty} The wrapped {@link external:SetProperty SetProperty}.
-   */
-  getProperty() {
-    return this.property;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  add(value) {
-    let valueIsProperty = false;
-    if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
-      valueIsProperty = true;
-    } else {
-      /* eslint-disable-next-line no-param-reassign */
-      value = PropertyFactory.create(this.property.getTypeid(), 'single', value);
+    /**
+     * Sets the {@link external:SetProperty SetProperty} to operate on sets the Symbol.iterator attribute.
+     * @param {external:SetProperty} property The {@link external:SetProperty SetProperty} to operate on.
+     */
+    constructor(property) {
+        super();
+        Object.defineProperty(this, 'property', { enumerable: false, value: property });
+        this[Symbol.iterator] = createSetIterator(this);
     }
 
-    // Only delete if value is already a property
-    if (valueIsProperty) {
-      this.delete(value);
-    }
-    this.property.insert(value);
-
-    return this;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  clear() {
-    Utilities.wrapWithPushPopNotificationDelayScope(this.property, () => {
-      this.property.clear();
-    });
-  }
-
-  /**
-   * @inheritdoc
-   */
-  delete(value) {
-    if (!this.has(value)) {
-      return false;
+    /**
+     * Retrieves the length of the array returned by {@link external:SetProperty#getIds} to infer
+     * the size (number of entries).
+     * @return {Number} The size of the {@link external:SetProperty SetProperty}.
+     */
+    get size() {
+        return this.property.getIds().length;
     }
 
-    const guid = this._getGuid(value);
-    this._deleteById(guid);
-    return true;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  entries() {
-    const keys = this.property.getIds();
-    const entriesIterator = function* () {
-      for (let i = 0; i < keys.length; i++) {
-        const proxy = PropertyProxy.proxify(this.property.get(keys[i]));
-        yield [proxy, proxy];
-      }
-    };
-
-    return entriesIterator.call(this);
-  }
-
-  /**
-   * @inheritdoc
-   */
-  forEach(func) {
-    const keys = this.property.getIds();
-    for (let i = 0; i < keys.length; i++) {
-      const value = PropertyProxy.proxify(this.property.get(keys[i]));
-      func(value, value, this);
+    /**
+     * Returns the wrapped {@link external:SetProperty SetProperty} property.
+     * @return {external:SetProperty} The wrapped {@link external:SetProperty SetProperty}.
+     */
+    getProperty() {
+        return this.property;
     }
-  }
 
-  /**
-   * @inheritdoc
-   */
-  has(value) {
-    const guid = this._getGuid(value);
-    return this.property.has(guid);
-  }
+    /**
+     * @inheritdoc
+     */
+    add(value) {
+        let valueIsProperty = false;
+        if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
+            valueIsProperty = true;
+        } else {
+            /* eslint-disable-next-line no-param-reassign */
+            value = PropertyFactory.create(this.property.getTypeid(), 'single', value);
+        }
 
-  /**
-   * @inheritdoc
-   */
-  values() {
-    return createSetIterator(this)();
-  }
+        // Only delete if value is already a property
+        if (valueIsProperty) {
+            this.delete(value);
+        }
+        this.property.insert(value);
 
-  /**
-   * Obtains the guid from a {@link external:NamedProperty NamedProperty} that is
-   * part of a {@link external:SetProperty SetProperty}.
-   * @param {external:NamedProperty} value The entry in the set for which a guid is queried.
-   * @return {String} The guid of the passed {@link external:NamedProperty NamedProperty}.
-   */
-  _getGuid(value) {
-    // The set property uses the guid field of NamedProperty for equality
-    let guid = value.guid;
-    // It might be that the user inserts a value ist not proxied
-    if (!guid) {
-      guid = value.getId();
+        return this;
     }
-    // If there is still no valid guid
-    if (!guid) {
-      throw new Error(PropertyProxyErrors.INVALID_GUID);
+
+    /**
+     * @inheritdoc
+     */
+    clear() {
+        Utilities.wrapWithPushPopNotificationDelayScope(this.property, () => {
+            this.property.clear();
+        });
     }
-    return guid;
-  }
 
-  /**
-   * Removes the entry with the passed guid from the wrapped {@link external:SetProperty SetProperty}.
-   * @param {String} guid The guid of the entry to be removed.
-   */
-  _deleteById(guid) {
-    this.property.remove(guid);
-  }
+    /**
+     * @inheritdoc
+     */
+    delete(value) {
+        if (!this.has(value)) {
+            return false;
+        }
 
-  /**
-   * @inheritdoc
-   */
-  toJSON() {
-    return {};
-  }
+        const guid = this._getGuid(value);
+        this._deleteById(guid);
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    entries() {
+        const keys = this.property.getIds();
+        const entriesIterator = function*() {
+            for (let i = 0; i < keys.length; i++) {
+                const proxy = PropertyProxy.proxify(this.property.get(keys[i]));
+                yield [proxy, proxy];
+            }
+        };
+
+        return entriesIterator.call(this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    forEach(func) {
+        const keys = this.property.getIds();
+        for (let i = 0; i < keys.length; i++) {
+            const value = PropertyProxy.proxify(this.property.get(keys[i]));
+            func(value, value, this);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    has(value) {
+        const guid = this._getGuid(value);
+        return this.property.has(guid);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    values() {
+        return createSetIterator(this)();
+    }
+
+    /**
+     * Obtains the guid from a {@link external:NamedProperty NamedProperty} that is
+     * part of a {@link external:SetProperty SetProperty}.
+     * @param {external:NamedProperty} value The entry in the set for which a guid is queried.
+     * @return {String} The guid of the passed {@link external:NamedProperty NamedProperty}.
+     */
+    _getGuid(value) {
+        // The set property uses the guid field of NamedProperty for equality
+        let guid = value.guid;
+        // It might be that the user inserts a value ist not proxied
+        if (!guid) {
+            guid = value.getId();
+        }
+        // If there is still no valid guid
+        if (!guid) {
+            throw new Error(PropertyProxyErrors.INVALID_GUID);
+        }
+        return guid;
+    }
+
+    /**
+     * Removes the entry with the passed guid from the wrapped {@link external:SetProperty SetProperty}.
+     * @param {String} guid The guid of the entry to be removed.
+     */
+    _deleteById(guid) {
+        this.property.remove(guid);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    toJSON() {
+        return {};
+    }
 }
 
 export { ComponentSet };

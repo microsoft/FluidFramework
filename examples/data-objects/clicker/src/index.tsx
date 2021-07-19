@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { TaskManager } from "@fluid-experimental/task-manager";
 import {
-    BaseContainerRuntimeFactory,
     DataObject,
     DataObjectFactory,
-    mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
 import { ClickerAgent } from "./agent";
 
@@ -150,43 +145,6 @@ export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, object
     {},
 );
 
-const clickerComponentId = "clicker";
+const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
 
-const registryEntries = new Map([
-    ClickerInstantiationFactory.registryEntry,
-]);
-
-const defaultViewRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length === 0) {
-            const clickerRequest = RequestParser.create({
-                url: ``,
-                headers: request.headers,
-            });
-            const clicker = await requestFluidObject<Clicker>(
-                await runtime.getRootDataStore(clickerComponentId),
-                clickerRequest);
-            const viewResponse = (
-                <ClickerReactView clicker={clicker} />
-            );
-            return { status: 200, mimeType: "fluid/view", value: viewResponse };
-        }
-    };
-
-export class ClickerContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor() {
-        // We'll use a MountableView so webpack-fluid-loader can display us,
-        // and add our default view request handler.
-        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
-    }
-
-    /**
-     * Since we're letting the container define the default view it will respond with, it must do whatever setup
-     * it requires to produce that default view.  We'll create a single Clicker.
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(ClickerInstantiationFactory.type, clickerComponentId);
-    }
-}
-
-export const fluidExport = new ClickerContainerRuntimeFactory();
+export const fluidExport = new ContainerViewRuntimeFactory<Clicker>(ClickerInstantiationFactory, clickerViewCallback);
