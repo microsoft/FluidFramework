@@ -11,9 +11,10 @@ import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
+import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
+import { ISummarizer, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;

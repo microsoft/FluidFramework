@@ -12,9 +12,12 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { GenerateSummaryData } from "./containerRuntime";
-// Only types are circular file dependencies
-import { IGenerateSummaryOptions, ISummarizer, ISummarizerInternalsProvider } from "./summarizer";
+import {
+    GenerateSummaryData,
+    IGenerateSummaryOptions,
+    ISummarizer,
+    ISummarizerInternalsProvider,
+} from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -427,17 +430,6 @@ export class RunningSummarizer implements IDisposable {
         this.summarizing = new Deferred<void>();
 
         (async () => {
-            type AttemptSummarizeOptions = {
-                delayMinutes?: number;
-            } & Omit<IGenerateSummaryOptions, "summaryLogger">;
-            const attemptSummarize = async (retryNumber: number, options: AttemptSummarizeOptions) => {
-                const { delayMinutes = 0, ...otherOptions } = options;
-                if (delayMinutes > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
-                }
-                const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as `retry${number}` : reason;
-                return this.summarize(attemptReason, otherOptions);
-            };
             const attempts = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
@@ -445,7 +437,12 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: true, delayMinutes: 10 },
             ];
             for (let i = 0; i < attempts.length; i++) {
-                if (await attemptSummarize(i, attempts[i])) {
+                const { delayMinutes = 0, ...options } = attempts[i];
+                if (delayMinutes > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
+                }
+                const attemptReason = i > 0 ? `retry${i}` as `retry${number}` : reason;
+                if (await this.summarize(attemptReason, options) === true) {
                     return;
                 }
             }
@@ -471,13 +468,12 @@ export class RunningSummarizer implements IDisposable {
      * @param options - refreshLatestAck to fetch summary ack info from server,
      * fullTree to generate tree without any summary handles even if unchanged
      */
-    private async summarize(
+     private async summarize(
         reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
     ): Promise<boolean> {
         ++this.summarizeCount;
         const { refreshLatestAck, fullTree } = options;
-
         const summarizeEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarize",
             reason,
@@ -499,7 +495,9 @@ export class RunningSummarizer implements IDisposable {
 
         // Wait to generate and send summary
         this.summarizeTimer.start();
+        // Use record type to prevent unexpected value types
         let summaryData: GenerateSummaryData | undefined;
+        let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
             summaryData = await this.internalsProvider.generateSummary({
                 fullTree,
@@ -507,33 +505,46 @@ export class RunningSummarizer implements IDisposable {
                 summaryLogger: this.logger,
             });
 
-            const {
-                summaryStats,
-                referenceSequenceNumber,
-                ...summaryDataForTelemetry
-            } = summaryData;
-            // Use record type to prevent unexpected value types
-            const telemetryProps: Record<string, string | number | boolean | undefined> = {
-                ...summaryDataForTelemetry,
-                ...summaryStats,
-                refSequenceNumber: referenceSequenceNumber,
-                opsSinceLastAttempt: referenceSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
-                opsSinceLastSummary: referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
+            // Cumulatively add telemetry properties based on how far generateSummary went.
+            const { referenceSequenceNumber: refSequenceNumber } = summaryData;
+            generateTelemetryProps = {
+                refSequenceNumber,
+                opsSinceLastAttempt: refSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
+                opsSinceLastSummary: refSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
             };
-            this.logger.sendTelemetryEvent({
-                eventName: "GenerateSummary",
-                ...telemetryProps,
-            });
+            if (summaryData.stage !== "aborted") {
+                generateTelemetryProps = {
+                    ...generateTelemetryProps,
+                    ...summaryData.summaryStats,
+                    generateDuration: summaryData.generateDuration,
+                };
+
+                if (summaryData.stage !== "generated") {
+                    generateTelemetryProps = {
+                        ...generateTelemetryProps,
+                        handle: summaryData.handle,
+                        uploadDuration: summaryData.uploadDuration,
+                    };
+
+                    if (summaryData.stage !== "uploaded") {
+                        generateTelemetryProps = {
+                            ...generateTelemetryProps,
+                            clientSequenceNumber: summaryData.clientSequenceNumber,
+                            submitOpDuration: summaryData.submitOpDuration,
+                        };
+                    }
+                }
+            }
+
+            this.logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
+            if (summaryData.stage !== "submitted") {
+                return fail("generateSummaryFailure", summaryData.error, generateTelemetryProps);
+            }
         } catch (error) {
-            return fail("generateSummaryFailure", error);
+            return fail("generateSummaryFailure", error, generateTelemetryProps);
         } finally {
             this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
             this.summarizeTimer.clear();
-        }
-
-        if (!summaryData.submitted) {
-            // Did not send the summary op
-            return fail("generateSummaryFailure", summaryData.error);
         }
 
         try {
@@ -541,17 +552,19 @@ export class RunningSummarizer implements IDisposable {
             const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
             // Wait for broadcast
-            const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
-            if (!checkNotTimeout(summaryOp)) {
+            const summarizeOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
+            if (!checkNotTimeout(summarizeOp)) {
                 return fail("summaryOpWaitTimeout");
             }
-            this.heuristics.lastAttempted.summarySequenceNumber = summaryOp.sequenceNumber;
+
+            const broadcastDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
+            this.heuristics.lastAttempted.summarySequenceNumber = summarizeOp.sequenceNumber;
             this.logger.sendTelemetryEvent({
                 eventName: "SummaryOp",
-                timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
-                refSequenceNumber: summaryOp.referenceSequenceNumber,
-                summarySequenceNumber: summaryOp.sequenceNumber,
-                handle: summaryOp.contents.handle,
+                timeWaiting: broadcastDuration,
+                refSequenceNumber: summarizeOp.referenceSequenceNumber,
+                summarySequenceNumber: summarizeOp.sequenceNumber,
+                handle: summarizeOp.contents.handle,
             });
 
             // Wait for ack/nack
@@ -562,8 +575,9 @@ export class RunningSummarizer implements IDisposable {
             this.pendingAckTimer.clear();
 
             // Update for success/failure
+            const ackNackDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
             const telemetryProps: Record<string, number> = {
-                timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
+                timeWaiting: ackNackDuration,
                 sequenceNumber: ackNack.sequenceNumber,
                 summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             };

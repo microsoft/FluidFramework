@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
-import { SummarizerStopReason } from "../summarizer";
+import { SummarizerStopReason } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {
@@ -105,8 +105,11 @@ describe("Runtime", () => {
                                 await deferGenerateSummary.promise;
                             }
                             return {
+                                stage: "submitted",
                                 referenceSequenceNumber: lastRefSeq,
-                                submitted: true,
+                                generateDuration: 0,
+                                uploadDuration: 0,
+                                submitOpDuration: 0,
                                 summaryStats: {
                                     treeNodeCount: 0,
                                     blobNodeCount: 0,
@@ -118,7 +121,7 @@ describe("Runtime", () => {
                                 },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
-                            };
+                            } as const;
                         },
                         stop(reason?: SummarizerStopReason) {
                             // do nothing
