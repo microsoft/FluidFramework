@@ -288,7 +288,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
 
         lumberJackMetric.success(`Message checkpointed successfully 
-            at seq number ${checkpoint.deliState.sequenceNumber}`);
+            at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
     private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric: Lumber<LumberEventName.DeliHandler>) {
