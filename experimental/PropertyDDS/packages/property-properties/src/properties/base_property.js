@@ -21,12 +21,12 @@ const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').c
  * @alias property-properties.BaseProperty.REFERENCE_RESOLUTION
  */
 var REFERENCE_RESOLUTION = {
-  /** The resolution will always automatically follow references */
-  ALWAYS: 0,
-  /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
-  NO_LEAFS: 1,
-  /** References are never automatically resolved */
-  NEVER: 2
+    /** The resolution will always automatically follow references */
+    ALWAYS: 0,
+    /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
+    NO_LEAFS: 1,
+    /** References are never automatically resolved */
+    NEVER: 2
 };
 
 /**
@@ -35,12 +35,12 @@ var REFERENCE_RESOLUTION = {
  * @alias property-properties.BaseProperty.MODIFIED_STATE_FLAGS
  */
 var MODIFIED_STATE_FLAGS = {
-  /** No changes to this property at the moment */
-  CLEAN: 0,
-  /** The property is marked as changed in the currently pending ChangeSet */
-  PENDING_CHANGE: 1,
-  /** The property has been modified and the result has not yet been reported to the application for scene updates */
-  DIRTY: 2
+    /** No changes to this property at the moment */
+    CLEAN: 0,
+    /** The property is marked as changed in the currently pending ChangeSet */
+    PENDING_CHANGE: 1,
+    /** The property has been modified and the result has not yet been reported to the application for scene updates */
+    DIRTY: 2
 };
 
 /**
@@ -49,12 +49,12 @@ var MODIFIED_STATE_FLAGS = {
  * Type of the token in the path string
  */
 var PATH_TOKENS = {
-  /** A / at the beginning of the path */
-  ROOT: {'token': 'ROOT'},
-  /** A * that indicates a dereferencing operation */ // note: reversed!
-  REF: {'token': 'REF'},
-  /** A ../ that indicates one step above the current path */
-  UP: {'token': 'UP'}
+    /** A / at the beginning of the path */
+    ROOT: { 'token': 'ROOT' },
+    /** A * that indicates a dereferencing operation */ // note: reversed!
+    REF: { 'token': 'REF' },
+    /** A ../ that indicates one step above the current path */
+    UP: { 'token': 'UP' }
 };
 
 /**
@@ -92,31 +92,31 @@ var PATH_TOKENS = {
  * @alias property-properties.BaseProperty
  * @category Properties
  */
-var BaseProperty = function(in_params) {
-  // Pre-conditions
-  ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
+var BaseProperty = function (in_params) {
+    // Pre-conditions
+    ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
 
-  in_params = in_params || {};
+    in_params = in_params || {};
 
-  if (this._id !== in_params.id) {
-    this._id = in_params.id;
-  }
+    if (this._id !== in_params.id) {
+        this._id = in_params.id;
+    }
 
-  // Makes sure context value is fine
-  ConsoleUtils.assert(!in_params.context || in_params.context === this._context,
-      MSG.CONTEXT_NOT_AS_EXPECTED + this._context + ' != ' + in_params.context);
+    // Makes sure context value is fine
+    ConsoleUtils.assert(!in_params.context || in_params.context === this._context,
+        MSG.CONTEXT_NOT_AS_EXPECTED + this._context + ' != ' + in_params.context);
 
-  // Sets typeid if default value is not fine
-  if (in_params.typeid && in_params.typeid !== this._typeid) {
-    this._typeid = in_params.typeid;
-  }
+    // Sets typeid if default value is not fine
+    if (in_params.typeid && in_params.typeid !== this._typeid) {
+        this._typeid = in_params.typeid;
+    }
 
-  this._parent = undefined;
+    this._parent = undefined;
 
-  // internal management
-  if (!this._noDirtyInBase) {
-    this._dirty = MODIFIED_STATE_FLAGS.CLEAN;
-  }
+    // internal management
+    if (!this._noDirtyInBase) {
+        this._dirty = MODIFIED_STATE_FLAGS.CLEAN;
+    }
 };
 
 BaseProperty.MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
@@ -136,15 +136,15 @@ BaseProperty.prototype._isConstant = false;
 /**
  * @return {string} - The typeid of this property
  */
-BaseProperty.prototype.getTypeid = function() {
-  return this._typeid;
+BaseProperty.prototype.getTypeid = function () {
+    return this._typeid;
 };
 
 /**
  * @return {string} - The context of this property
  */
-BaseProperty.prototype.getContext = function() {
-  return this._context;
+BaseProperty.prototype.getContext = function () {
+    return this._context;
 };
 
 /**
@@ -153,12 +153,12 @@ BaseProperty.prototype.getContext = function() {
  * property belongs to
  * @private
  */
-BaseProperty.prototype._getScope = function() {
-  if (this._parent) {
-    return this.getRoot()._getScope();
-  } else {
-    return undefined;
-  }
+BaseProperty.prototype._getScope = function () {
+    if (this._parent) {
+        return this.getRoot()._getScope();
+    } else {
+        return undefined;
+    }
 };
 
 /**
@@ -167,8 +167,8 @@ BaseProperty.prototype._getScope = function() {
  *                since that is not aplicable here, this param is ignored
  * @return {string} The typeid
  */
-BaseProperty.prototype.getFullTypeid = function(in_hideCollection) {
-  return this._typeid;
+BaseProperty.prototype.getFullTypeid = function (in_hideCollection) {
+    return this._typeid;
 };
 
 /**
@@ -177,15 +177,15 @@ BaseProperty.prototype.getFullTypeid = function(in_hideCollection) {
  * @param {property-properties.BaseProperty} in_property - The parent property
  * @private
  */
-BaseProperty.prototype._setParent = function( in_property ) {
-  this._parent = in_property;
+BaseProperty.prototype._setParent = function (in_property) {
+    this._parent = in_property;
 
-  // If the property is dirty but not its parent, dirty the parent. In cases like named properties
-  //   and default values, a parent is set after a value is set; we get a case where the
-  //   property is dirty but not its parent and the change is not included in a changeSet.
-  if (this._parent && this._isDirty() && !this._parent._isDirty()) {
-    this._parent._setDirty(false, this);
-  }
+    // If the property is dirty but not its parent, dirty the parent. In cases like named properties
+    //   and default values, a parent is set after a value is set; we get a case where the
+    //   property is dirty but not its parent and the change is not included in a changeSet.
+    if (this._parent && this._isDirty() && !this._parent._isDirty()) {
+        this._parent._setDirty(false, this);
+    }
 };
 
 /**
@@ -193,10 +193,10 @@ BaseProperty.prototype._setParent = function( in_property ) {
  *
  * @return {boolean} True if it is a root, otherwise false.
  */
-BaseProperty.prototype.isRoot = function() {
-  // This checks, whether this is the root of a CheckOutView
-  // (all other properties should have a parent property)
-  return this._parent === undefined;
+BaseProperty.prototype.isRoot = function () {
+    // This checks, whether this is the root of a CheckOutView
+    // (all other properties should have a parent property)
+    return this._parent === undefined;
 };
 
 /**
@@ -206,17 +206,17 @@ BaseProperty.prototype.isRoot = function() {
  * @throws if in_otherProperty is not defined.
  * @return {boolean} True if it is a ancestor, otherwise false.
  */
-BaseProperty.prototype.isAncestorOf = function(in_otherProperty) {
-  ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
-  var parent = in_otherProperty.getParent();
-  while (parent) {
-    if (parent === this ) {
-      return true;
-    } else {
-      parent = parent.getParent();
+BaseProperty.prototype.isAncestorOf = function (in_otherProperty) {
+    ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
+    var parent = in_otherProperty.getParent();
+    while (parent) {
+        if (parent === this) {
+            return true;
+        } else {
+            parent = parent.getParent();
+        }
     }
-  }
-  return false;
+    return false;
 };
 
 /**
@@ -226,9 +226,9 @@ BaseProperty.prototype.isAncestorOf = function(in_otherProperty) {
  * @throws if in_otherProperty is not defined.
  * @return {boolean} True if it is a descendant, otherwise false.
  */
-BaseProperty.prototype.isDescendantOf = function(in_otherProperty) {
-  ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
-  return in_otherProperty.isAncestorOf(this);
+BaseProperty.prototype.isDescendantOf = function (in_otherProperty) {
+    ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
+    return in_otherProperty.isAncestorOf(this);
 };
 
 /**
@@ -238,8 +238,8 @@ BaseProperty.prototype.isDescendantOf = function(in_otherProperty) {
  *
  * @return {boolean} True if it is a leaf with regard to flattening
  */
-BaseProperty.prototype._isFlattenLeaf = function() {
-  return false;
+BaseProperty.prototype._isFlattenLeaf = function () {
+    return false;
 };
 
 /**
@@ -247,15 +247,15 @@ BaseProperty.prototype._isFlattenLeaf = function() {
  *
  * @return {property-properties.BaseProperty|undefined} The parent of this property (or undefined if none exist)
  */
-BaseProperty.prototype.getParent = function() {
-  return this._parent;
+BaseProperty.prototype.getParent = function () {
+    return this._parent;
 };
 
 /**
  * checks whether the property is dynamic (only properties inherting from NodeProperty are)
  * @return {boolean} True if it is a dynamic property.
  */
-BaseProperty.prototype.isDynamic = function() { return false; };
+BaseProperty.prototype.isDynamic = function () { return false; };
 
 /**
  * Sets the property as dirty and/or pending. This will add one or both flags if not already set and will
@@ -268,44 +268,44 @@ BaseProperty.prototype.isDynamic = function() { return false; };
  * @param {Number} [in_flags = DIRTY | PENDING_CHANGE] The flags to set.
  * @private
  */
-BaseProperty.prototype._setDirty = function(in_reportToView, in_callingChild, in_flags) {
-  if (in_flags === undefined) {
-    in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
-  }
-  var reportToView = in_reportToView;
-  if (reportToView === undefined) {
-    reportToView = true;
-  }
-  // We only update the flags upwards in the tree, when the corresponding nodes are not already flagged
-  var oldFlags = this._getDirtyFlags();
-  if ((oldFlags & in_flags) !== in_flags) { // only dirty once until clean.
-    this._setDirtyFlags(oldFlags | in_flags);
-
-    // Report dirtiness upwards in the hierarchy
-    if (this._parent) {
-      this._parent._setDirty(reportToView, this, in_flags);
-      reportToView = false;
+BaseProperty.prototype._setDirty = function (in_reportToView, in_callingChild, in_flags) {
+    if (in_flags === undefined) {
+        in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
     }
-  }
-  if (reportToView) {
-    this._reportDirtinessToView();
-  }
+    var reportToView = in_reportToView;
+    if (reportToView === undefined) {
+        reportToView = true;
+    }
+    // We only update the flags upwards in the tree, when the corresponding nodes are not already flagged
+    var oldFlags = this._getDirtyFlags();
+    if ((oldFlags & in_flags) !== in_flags) { // only dirty once until clean.
+        this._setDirtyFlags(oldFlags | in_flags);
+
+        // Report dirtiness upwards in the hierarchy
+        if (this._parent) {
+            this._parent._setDirty(reportToView, this, in_flags);
+            reportToView = false;
+        }
+    }
+    if (reportToView) {
+        this._reportDirtinessToView();
+    }
 };
 
 /**
  * Sets the dirty flags for this property
  * @param {Number} in_flags The dirty flags
  */
-BaseProperty.prototype._setDirtyFlags = function(in_flags) {
-  this._dirty = in_flags;
+BaseProperty.prototype._setDirtyFlags = function (in_flags) {
+    this._dirty = in_flags;
 };
 
 /**
  * Gets the dirty flags for this property
  * @return {Number} The dirty flags
  */
-BaseProperty.prototype._getDirtyFlags = function() {
-  return this._dirty;
+BaseProperty.prototype._getDirtyFlags = function () {
+    return this._dirty;
 };
 
 /**
@@ -315,23 +315,23 @@ BaseProperty.prototype._getDirtyFlags = function() {
 // TODO: Cleaner way to make the property tree aware of the DDS hosting it.
 // Currently, this._tree is set in SharedPropertyTree constructor.
 BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView() {
-	// eslint-disable-next-line @typescript-eslint/no-this-alias
-	let currentNode = this;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let currentNode = this;
 
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	while (currentNode._parent) {
-		currentNode = currentNode._parent;
-	}
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    while (currentNode._parent) {
+        currentNode = currentNode._parent;
+    }
 
-	if (
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		currentNode._tree &&
-		currentNode._tree.notificationDelayScope === 0 &&
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
-	) {
-		currentNode._tree._reportDirtinessToView();
-	}
+    if (
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        currentNode._tree &&
+        currentNode._tree.notificationDelayScope === 0 &&
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
+    ) {
+        currentNode._tree._reportDirtinessToView();
+    }
 };
 
 /**
@@ -342,11 +342,11 @@ BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView(
  *    The filtering options to consider while applying the ChangeSet.
  * @throws if in_changeSet is invalid.
  */
-BaseProperty.prototype.applyChangeSet = function(in_changeSet, in_filteringOptions) {
-  this._checkIsNotReadOnly(false);
+BaseProperty.prototype.applyChangeSet = function (in_changeSet, in_filteringOptions) {
+    this._checkIsNotReadOnly(false);
 
-  // We just forward the call to the internal function
-  this._applyChangeset(in_changeSet, true, in_filteringOptions);
+    // We just forward the call to the internal function
+    this._applyChangeset(in_changeSet, true, in_filteringOptions);
 };
 
 /**
@@ -363,30 +363,30 @@ BaseProperty.prototype.applyChangeSet = function(in_changeSet, in_filteringOptio
  *    control property creation, to prevent properties from being created outside the checked out
  *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
  */
-BaseProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
-  var typeids = _.keys(in_changeSet);
-  for (var i = 0; i < typeids.length; i++) {
-    var typeid = typeids[i];
-    if (ChangeSet.isReservedKeyword(typeid)) {
-      continue; // Ignore the special keys
+BaseProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
+    var typeids = _.keys(in_changeSet);
+    for (var i = 0; i < typeids.length; i++) {
+        var typeid = typeids[i];
+        if (ChangeSet.isReservedKeyword(typeid)) {
+            continue; // Ignore the special keys
+        }
+
+        var paths = _.keys(in_changeSet[typeid]);
+        for (var j = 0; j < paths.length; j++) {
+            var path = paths[j];
+            var property = this.resolvePath(path,
+                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+            if (property) {
+                property._applyChangeset(in_changeSet[typeid][path], false);
+            } else {
+                throw new Error(MSG.INVALID_PATH + path);
+            }
+        }
     }
 
-    var paths = _.keys(in_changeSet[typeid]);
-    for (var j = 0; j < paths.length; j++) {
-      var path = paths[j];
-      var property = this.resolvePath(path,
-        {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
-      if (property) {
-        property._applyChangeset(in_changeSet[typeid][path], false);
-      } else {
-        throw new Error(MSG.INVALID_PATH + path);
-      }
+    if (in_reportToView) {
+        this._reportDirtinessToView();
     }
-  }
-
-  if (in_reportToView) {
-    this._reportDirtinessToView();
-  }
 };
 
 /**
@@ -398,32 +398,32 @@ BaseProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView,
  * @param {property-properties.SerializedChangeSet} [in_dirtyChangeSet] - The dirty changeset to apply
  * @throws if changeset arguments are invalid.
  */
-BaseProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_dirtyChangeSet) {
-  this._checkIsNotReadOnly(false);
-  // Here we must walk both changesets in parallell. Sometimes there will be only an entry in one
-  // changeset, sometimes only one in the other changeset, sometimes one in both.
-  const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
-  for (let i = 0; i < typeids.length; i++) {
-    let typeid = typeids[i];
-    if (ChangeSet.isReservedKeyword(typeid)) {
-      continue; // Ignore the special keys
-    }
-    const pendingChangeSet = in_pendingChangeSet && in_pendingChangeSet[typeid];
-    const dirtyChangeSet = in_dirtyChangeSet && in_dirtyChangeSet[typeid];
+BaseProperty.prototype._reapplyDirtyFlags = function (in_pendingChangeSet, in_dirtyChangeSet) {
+    this._checkIsNotReadOnly(false);
+    // Here we must walk both changesets in parallell. Sometimes there will be only an entry in one
+    // changeset, sometimes only one in the other changeset, sometimes one in both.
+    const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
+    for (let i = 0; i < typeids.length; i++) {
+        let typeid = typeids[i];
+        if (ChangeSet.isReservedKeyword(typeid)) {
+            continue; // Ignore the special keys
+        }
+        const pendingChangeSet = in_pendingChangeSet && in_pendingChangeSet[typeid];
+        const dirtyChangeSet = in_dirtyChangeSet && in_dirtyChangeSet[typeid];
 
-    const  paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
-    for (let j = 0; j < paths.length; j++) {
-      let path = paths[j];
-      let property = this.resolvePath(path);
-      if (property) {
-        property._reapplyDirtyFlags(
-          pendingChangeSet && pendingChangeSet[path],
-          dirtyChangeSet && dirtyChangeSet[path]);
-      } else {
-        throw new Error(MSG.INVALID_PATH + path);
-      }
+        const paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
+        for (let j = 0; j < paths.length; j++) {
+            let path = paths[j];
+            let property = this.resolvePath(path);
+            if (property) {
+                property._reapplyDirtyFlags(
+                    pendingChangeSet && pendingChangeSet[path],
+                    dirtyChangeSet && dirtyChangeSet[path]);
+            } else {
+                throw new Error(MSG.INVALID_PATH + path);
+            }
+        }
     }
-  }
 };
 
 /**
@@ -432,9 +432,9 @@ BaseProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_dir
  *                                                                       will be removed
  * @private
  */
-BaseProperty.prototype._cleanDirty = function(in_flags) {
-  this._setDirtyFlags(in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN :
-                                              (this._getDirtyFlags() & ~in_flags));
+BaseProperty.prototype._cleanDirty = function (in_flags) {
+    this._setDirtyFlags(in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN :
+        (this._getDirtyFlags() & ~in_flags));
 };
 
 
@@ -444,18 +444,18 @@ BaseProperty.prototype._cleanDirty = function(in_flags) {
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
  *                                                                       will be removed
  */
-BaseProperty.prototype.cleanDirty = function(in_flags) {
-  var dirtyChildren = this._getDirtyChildren(in_flags);
-  var child;
-  for (var i = 0; i < dirtyChildren.length; i++) {
-    child = this.get(dirtyChildren[i],
-      {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
-    child.cleanDirty(in_flags);
-    child._cleanDirty(in_flags);
-  }
+BaseProperty.prototype.cleanDirty = function (in_flags) {
+    var dirtyChildren = this._getDirtyChildren(in_flags);
+    var child;
+    for (var i = 0; i < dirtyChildren.length; i++) {
+        child = this.get(dirtyChildren[i],
+            { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+        child.cleanDirty(in_flags);
+        child._cleanDirty(in_flags);
+    }
 
-  // after all paths are clean, we are also clean!
-  this._cleanDirty(in_flags);
+    // after all paths are clean, we are also clean!
+    this._cleanDirty(in_flags);
 };
 
 /**
@@ -467,9 +467,9 @@ BaseProperty.prototype.cleanDirty = function(in_flags) {
  * @return {boolean} Is the property dirty?
  * @private
  */
-BaseProperty.prototype._isDirty = function(in_dirtinessType) {
-  in_dirtinessType = in_dirtinessType === undefined ? MODIFIED_STATE_FLAGS.DIRTY : in_dirtinessType;
-  return !!(this._getDirtyFlags() & in_dirtinessType);
+BaseProperty.prototype._isDirty = function (in_dirtinessType) {
+    in_dirtinessType = in_dirtinessType === undefined ? MODIFIED_STATE_FLAGS.DIRTY : in_dirtinessType;
+    return !!(this._getDirtyFlags() & in_dirtinessType);
 };
 
 /**
@@ -478,16 +478,16 @@ BaseProperty.prototype._isDirty = function(in_dirtinessType) {
  *
  * @return {boolean} True if the property is dirty. False otherwise.
  */
-BaseProperty.prototype.isDirty = function() {
-  return this._isDirty();
+BaseProperty.prototype.isDirty = function () {
+    return this._isDirty();
 };
 
 /**
  * The property has pending changes in the current ChangeSet.
  * @return {boolean} True if the property has pending changes. False otherwise.
  */
-BaseProperty.prototype.hasPendingChanges = function() {
-  return this._isDirty(MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+BaseProperty.prototype.hasPendingChanges = function () {
+    return this._isDirty(MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 };
 
 /**
@@ -495,9 +495,9 @@ BaseProperty.prototype.hasPendingChanges = function() {
  *
  * @return {property-properties.ChangeSet} The serialized changes
  */
-BaseProperty.prototype.getPendingChanges = function() {
-  var serialized = this._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-  return new ChangeSet(serialized);
+BaseProperty.prototype.getPendingChanges = function () {
+    var serialized = this._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+    return new ChangeSet(serialized);
 };
 
 /**
@@ -505,8 +505,8 @@ BaseProperty.prototype.getPendingChanges = function() {
  *
  * @return {string|undefined} The id of the property
  */
-BaseProperty.prototype.getId = function() {
-  return this._id;
+BaseProperty.prototype.getId = function () {
+    return this._id;
 };
 
 /**
@@ -514,17 +514,17 @@ BaseProperty.prototype.getId = function() {
  * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} value - The checkedOut repository info.
  * @protected
  */
-BaseProperty.prototype._setCheckedOutRepositoryInfo = function(value) {
-  this._checkedOutRepositoryInfo = value;
+BaseProperty.prototype._setCheckedOutRepositoryInfo = function (value) {
+    this._checkedOutRepositoryInfo = value;
 };
 
 /**
  * Returns the checkoutView
  * @return {property-properties.CheckoutView} - the checkout view
  */
-BaseProperty.prototype._getCheckoutView = function() {
-  let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
-  return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
+BaseProperty.prototype._getCheckoutView = function () {
+    let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
+    return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
 };
 
 /**
@@ -532,12 +532,12 @@ BaseProperty.prototype._getCheckoutView = function() {
  * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
  * @protected
  */
-BaseProperty.prototype._getCheckedOutRepositoryInfo = function() {
-  if (!this._parent) {
-    return this._checkedOutRepositoryInfo;
-  } else {
-    return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
-  }
+BaseProperty.prototype._getCheckedOutRepositoryInfo = function () {
+    if (!this._parent) {
+        return this._checkedOutRepositoryInfo;
+    } else {
+        return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
+    }
 };
 
 /**
@@ -546,7 +546,7 @@ BaseProperty.prototype._getCheckedOutRepositoryInfo = function() {
  */
 BaseProperty.prototype.getWorkspace = function () {
     const root = this.getRoot();
-    return root ? root._tree: undefined;
+    return root ? root._tree : undefined;
 };
 
 /**
@@ -557,8 +557,8 @@ BaseProperty.prototype.getWorkspace = function () {
  * @return {string} The path segment to resolve the child property under this property
  * @protected
  */
-BaseProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
-  return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
+BaseProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
+    return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
 };
 
 /**
@@ -570,13 +570,13 @@ BaseProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
  * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
  * @protected
  */
-BaseProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType) {
-  // Base Properties only support paths separated via dots
-  if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
-    throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
-  }
+BaseProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
+    // Base Properties only support paths separated via dots
+    if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
+        throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
+    }
 
-  return this.get(in_segment, {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
+    return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
 };
 
 /**
@@ -587,47 +587,47 @@ BaseProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType
  * @return {string} the new id
  * @private
  */
-BaseProperty.prototype._setId = function(in_id) {
-  if (!_.isString(in_id) && !_.isNumber(in_id)) {
-    throw new Error(MSG.ID_STRING_OR_NUMBER + in_id);
-  }
+BaseProperty.prototype._setId = function (in_id) {
+    if (!_.isString(in_id) && !_.isNumber(in_id)) {
+        throw new Error(MSG.ID_STRING_OR_NUMBER + in_id);
+    }
 
-  if (this._parent !== undefined) {
-    throw new Error(MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + ' to id: ' + in_id);
-  }
+    if (this._parent !== undefined) {
+        throw new Error(MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + ' to id: ' + in_id);
+    }
 
-  this._id = String(in_id);
+    this._id = String(in_id);
 
-  // flush caches
-  this._setDirty();
+    // flush caches
+    this._setDirty();
 
-  return in_id;
+    return in_id;
 };
 
 /**
  * Return a clone of this property
  * @return {BaseProperty} The cloned property
  */
-BaseProperty.prototype.clone = function() {
-  const PropertyFactory = Property.PropertyFactory;
-  var clone = PropertyFactory._createProperty(this.getFullTypeid(), null, undefined, this._getScope());
+BaseProperty.prototype.clone = function () {
+    const PropertyFactory = Property.PropertyFactory;
+    var clone = PropertyFactory._createProperty(this.getFullTypeid(), null, undefined, this._getScope());
 
-  // TODO: this is not very efficient. Clone should be overriden
-  // by the child classes
-  clone.deserialize(this._serialize());
-  clone.cleanDirty(
-    BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE |
-    BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
-  );
-  return clone;
+    // TODO: this is not very efficient. Clone should be overriden
+    // by the child classes
+    clone.deserialize(this._serialize());
+    clone.cleanDirty(
+        BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE |
+        BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+    );
+    return clone;
 };
 
 /**
  * Returns true if the property is a primitive type
  * @return {boolean} true if the property is a primitive type
  */
-BaseProperty.prototype.isPrimitiveType = function() {
-  return TypeIdHelper.isPrimitiveType(this._typeid);
+BaseProperty.prototype.isPrimitiveType = function () {
+    return TypeIdHelper.isPrimitiveType(this._typeid);
 };
 
 /**
@@ -642,8 +642,8 @@ BaseProperty.prototype.isPrimitiveType = function() {
  * @return {Object} the flat representation
  * @private
  */
-BaseProperty.prototype._flatten = function() {
-  return {propertyNode: this};
+BaseProperty.prototype._flatten = function () {
+    return { propertyNode: this };
 };
 
 /**
@@ -652,11 +652,11 @@ BaseProperty.prototype._flatten = function() {
  * If printFct is not a function, it will default to console.log
  * @param {function} [printFct=console.log] - Function to call for printing each property
  */
-BaseProperty.prototype.prettyPrint = function(printFct) {
-  if (typeof printFct !== 'function') {
-    printFct = console.log;
-  }
-  this._prettyPrint('', '', printFct);
+BaseProperty.prototype.prettyPrint = function (printFct) {
+    if (typeof printFct !== 'function') {
+        printFct = console.log;
+    }
+    this._prettyPrint('', '', printFct);
 };
 
 /**
@@ -664,23 +664,23 @@ BaseProperty.prototype.prettyPrint = function(printFct) {
  * @return {object} A JSON representation of the properties and its children.
  * @private
  */
-BaseProperty.prototype._toJson = function() {
-  var json = {
-    id: this.getId(),
-    context: this._context,
-    typeid: this.getTypeid(),
-    isConstant: this._isConstant,
-    value: []
-  };
+BaseProperty.prototype._toJson = function () {
+    var json = {
+        id: this.getId(),
+        context: this._context,
+        typeid: this.getTypeid(),
+        isConstant: this._isConstant,
+        value: []
+    };
 
-  var ids = this.getIds();
-  for (var i = 0; i < ids.length; i++) {
-    json.value.push(
-      this.get(ids[i], {referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER})._toJson()
-    );
-  }
+    var ids = this.getIds();
+    for (var i = 0; i < ids.length; i++) {
+        json.value.push(
+            this.get(ids[i], { referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER })._toJson()
+        );
+    }
 
-  return json;
+    return json;
 };
 
 /**
@@ -691,15 +691,15 @@ BaseProperty.prototype._toJson = function() {
  *                              Used for arrays.
  * @param {function} printFct - Function to call for printing each property
  */
-BaseProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
-  var context = '';
-  switch (this._context) {
-    case 'map': context = 'Map of '; break;
-    case 'set': context = 'Set of '; break;
-    default: break;
-  }
-  printFct(indent + externalId + this.getId() + ' (' + context + this.getTypeid() + '):');
-  this._prettyPrintChildren(indent, printFct);
+BaseProperty.prototype._prettyPrint = function (indent, externalId, printFct) {
+    var context = '';
+    switch (this._context) {
+        case 'map': context = 'Map of '; break;
+        case 'set': context = 'Set of '; break;
+        default: break;
+    }
+    printFct(indent + externalId + this.getId() + ' (' + context + this.getTypeid() + '):');
+    this._prettyPrintChildren(indent, printFct);
 };
 
 /**
@@ -708,12 +708,12 @@ BaseProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
  * @param {string} indent - Leading spaces to create the tree representation
  * @param {function} printFct - Function to call for printing each property
  */
-BaseProperty.prototype._prettyPrintChildren = function(indent, printFct) {
-  indent += '  ';
-  var ids = this.getIds();
-  for (var i = 0; i < ids.length; i++) {
-    this.get(ids[i], {referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER})._prettyPrint(indent, '', printFct);
-  }
+BaseProperty.prototype._prettyPrintChildren = function (indent, printFct) {
+    indent += '  ';
+    var ids = this.getIds();
+    for (var i = 0; i < ids.length; i++) {
+        this.get(ids[i], { referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER })._prettyPrint(indent, '', printFct);
+    }
 };
 
 /**
@@ -726,50 +726,50 @@ BaseProperty.prototype._prettyPrintChildren = function(indent, printFct) {
  * will return an empty array if trying to get the path from a child repo to a parent repo.
  * @private
  */
-BaseProperty.prototype._getPathsThroughRepoRef = function(in_fromProperty) {
-  var paths = [];
-  var that = this;
-  var referenceProps = [];
-  // get all reference properties in the referenceProps array
-  this._getCheckoutView()._forEachCheckedOutRepository(function(repoInfo) {
-    var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i]) {
-        var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]]
-          ._repositoryReferenceProperties[keys[i]].property;
-        if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
-          referenceProps.push(repoRef);
+BaseProperty.prototype._getPathsThroughRepoRef = function (in_fromProperty) {
+    var paths = [];
+    var that = this;
+    var referenceProps = [];
+    // get all reference properties in the referenceProps array
+    this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
+        var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i]) {
+                var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]]
+                    ._repositoryReferenceProperties[keys[i]].property;
+                if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
+                    referenceProps.push(repoRef);
+                }
+            }
         }
-      }
-    }
-  });
+    });
 
-  // if no repo references point to the root of 'this', we can assume that 'this' is in the
-  // parent repo, which cannot return a useful path.
-  if (referenceProps.length === 0) {
-    console.warn(MSG.NO_PATH_FROM_CHILD_REPO);
+    // if no repo references point to the root of 'this', we can assume that 'this' is in the
+    // parent repo, which cannot return a useful path.
+    if (referenceProps.length === 0) {
+        console.warn(MSG.NO_PATH_FROM_CHILD_REPO);
+        return [];
+    }
+
+    // path from root of the child repo to 'this'
+    var pathInChildRepo = this._getDirectPath(this.getRoot());
+
+    // find possible paths from in_fromProperty to the referenceProps
+    // concatenate each with pathInChildRepo
+    for (var i = 0; i < referenceProps.length; i++) {
+        var pathInParentRepo = referenceProps[i].getRelativePath(in_fromProperty);
+        if (pathInParentRepo) {
+            if (pathInChildRepo.length > 0) {
+                paths.push(pathInParentRepo + '.' + pathInChildRepo);
+            } else {
+                paths.push(pathInParentRepo);
+            }
+        }
+    }
+    if (paths.length > 0) {
+        return paths;
+    }
     return [];
-  }
-
-  // path from root of the child repo to 'this'
-  var pathInChildRepo = this._getDirectPath(this.getRoot());
-
-  // find possible paths from in_fromProperty to the referenceProps
-  // concatenate each with pathInChildRepo
-  for (var i = 0; i < referenceProps.length; i++) {
-    var pathInParentRepo = referenceProps[i].getRelativePath(in_fromProperty);
-    if (pathInParentRepo) {
-      if (pathInChildRepo.length > 0) {
-        paths.push(pathInParentRepo + '.' + pathInChildRepo);
-      } else {
-        paths.push(pathInParentRepo);
-      }
-    }
-  }
-  if (paths.length > 0) {
-    return paths;
-  }
-  return [];
 };
 
 /**
@@ -781,28 +781,28 @@ BaseProperty.prototype._getPathsThroughRepoRef = function(in_fromProperty) {
  * @return {string} The path between the given in_fromProperty and this property
  * @private
  */
-BaseProperty.prototype._getIndirectPath = function(in_fromProperty) {
-  var path = [];
-  var that = this;
-  var foundPath = undefined;
+BaseProperty.prototype._getIndirectPath = function (in_fromProperty) {
+    var path = [];
+    var that = this;
+    var foundPath = undefined;
 
-  foundPath = in_fromProperty.traverseUp(function(in_node) {
-    path.push('../');
-    if (in_node === that) {
-      return BREAK_TRAVERSAL;
+    foundPath = in_fromProperty.traverseUp(function (in_node) {
+        path.push('../');
+        if (in_node === that) {
+            return BREAK_TRAVERSAL;
+        }
+        var directPath = that._getDirectPath(in_node);
+        if (directPath) {
+            path.push(directPath);
+            return BREAK_TRAVERSAL;
+        }
+        return undefined;
+    });
+    if (foundPath === BREAK_TRAVERSAL) {
+        return path.join('');
+    } else {
+        return undefined;
     }
-    var directPath = that._getDirectPath(in_node);
-    if (directPath) {
-      path.push(directPath);
-      return BREAK_TRAVERSAL;
-    }
-    return undefined;
-  });
-  if (foundPath === BREAK_TRAVERSAL) {
-    return path.join('');
-  } else {
-    return undefined;
-  }
 };
 
 /**
@@ -814,41 +814,41 @@ BaseProperty.prototype._getIndirectPath = function(in_fromProperty) {
  * @return {string} The path between the given in_fromProperty and this property
  * @private
  */
-BaseProperty.prototype._getDirectPath = function(in_fromProperty) {
-  var path = [];
-  var foundAncestor = undefined;
-  if (in_fromProperty === this) {
-    foundAncestor = BREAK_TRAVERSAL;
-  } else {
-    if (this.getParent()) {
-      path.push(this.getParent()._getPathSegmentForChildNode(this));
+BaseProperty.prototype._getDirectPath = function (in_fromProperty) {
+    var path = [];
+    var foundAncestor = undefined;
+    if (in_fromProperty === this) {
+        foundAncestor = BREAK_TRAVERSAL;
+    } else {
+        if (this.getParent()) {
+            path.push(this.getParent()._getPathSegmentForChildNode(this));
 
-      foundAncestor = this.traverseUp( function( in_node ) {
-        // break where we meet the relative reference
-        if (in_node === in_fromProperty) {
-          return BREAK_TRAVERSAL;
+            foundAncestor = this.traverseUp(function (in_node) {
+                // break where we meet the relative reference
+                if (in_node === in_fromProperty) {
+                    return BREAK_TRAVERSAL;
+                }
+
+                if (in_node.getParent()) {
+                    path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
+                }
+
+                return undefined;
+            });
         }
+    }
 
-        if (in_node.getParent()) {
-          path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
+    if (foundAncestor === BREAK_TRAVERSAL) {
+        var result = path.reverse().join('');
+
+        // We don't use a PROPERTY_PATH_DELIMITER at the start of the path
+        if (result[0] === PROPERTY_PATH_DELIMITER) {
+            result = result.substr(1);
         }
-
+        return result;
+    } else {
         return undefined;
-      });
     }
-  }
-
-  if (foundAncestor === BREAK_TRAVERSAL) {
-    var result = path.reverse().join('');
-
-    // We don't use a PROPERTY_PATH_DELIMITER at the start of the path
-    if (result[0] === PROPERTY_PATH_DELIMITER) {
-      result = result.substr(1);
-    }
-    return result;
-  } else {
-    return undefined;
-  }
 };
 
 /**
@@ -859,19 +859,19 @@ BaseProperty.prototype._getDirectPath = function(in_fromProperty) {
  * @return {Array<string>} The paths between the given in_fromProperty and this property
  * @private
  */
-BaseProperty.prototype._getAllRelativePaths = function(in_fromProperty) {
-  if (this.getRoot() !== in_fromProperty.getRoot()) {
-    // if this and in_fromProperty have different roots, go through a repo ref
-    // this is the case where we might have more than one path
-    return this._getPathsThroughRepoRef(in_fromProperty);
-  } else {
-    var directPath = this._getDirectPath(in_fromProperty);
-    if (directPath !== undefined) {
-      return [directPath];
+BaseProperty.prototype._getAllRelativePaths = function (in_fromProperty) {
+    if (this.getRoot() !== in_fromProperty.getRoot()) {
+        // if this and in_fromProperty have different roots, go through a repo ref
+        // this is the case where we might have more than one path
+        return this._getPathsThroughRepoRef(in_fromProperty);
     } else {
-      return [this._getIndirectPath(in_fromProperty)];
+        var directPath = this._getDirectPath(in_fromProperty);
+        if (directPath !== undefined) {
+            return [directPath];
+        } else {
+            return [this._getIndirectPath(in_fromProperty)];
+        }
     }
-  }
 };
 
 /**
@@ -889,19 +889,19 @@ BaseProperty.prototype._getAllRelativePaths = function(in_fromProperty) {
  * @return {string} The path between the given in_fromProperty and this property
  * @throws if in_fromProperty is not a property
  */
-BaseProperty.prototype.getRelativePath = function( in_fromProperty ) {
-  ConsoleUtils.assert(in_fromProperty instanceof BaseProperty, MSG.IN_FROMPROPERTY_MUST_BE_PROPERTY);
-  var paths = this._getAllRelativePaths(in_fromProperty) || [];
-  if (paths.length === 0) {
-    console.warn(MSG.NO_PATH_BETWEEN +
-      in_fromProperty.getAbsolutePath() +
-      ' and ' +
-      this.getAbsolutePath());
-  } else if (paths.length > 1) {
-    console.warn(MSG.MORE_THAN_ONE_PATH + in_fromProperty.getAbsolutePath() +
-      ' and ' + this.getAbsolutePath());
-  }
-  return paths[0];
+BaseProperty.prototype.getRelativePath = function (in_fromProperty) {
+    ConsoleUtils.assert(in_fromProperty instanceof BaseProperty, MSG.IN_FROMPROPERTY_MUST_BE_PROPERTY);
+    var paths = this._getAllRelativePaths(in_fromProperty) || [];
+    if (paths.length === 0) {
+        console.warn(MSG.NO_PATH_BETWEEN +
+            in_fromProperty.getAbsolutePath() +
+            ' and ' +
+            this.getAbsolutePath());
+    } else if (paths.length > 1) {
+        console.warn(MSG.MORE_THAN_ONE_PATH + in_fromProperty.getAbsolutePath() +
+            ' and ' + this.getAbsolutePath());
+    }
+    return paths[0];
 };
 
 /**
@@ -910,57 +910,57 @@ BaseProperty.prototype.getRelativePath = function( in_fromProperty ) {
  *
  * @return {string} The path from the root
  */
-BaseProperty.prototype.getAbsolutePath = function() {
-  var that = this;
-  var referenceProps = [];
-  // get all reference properties pointing to the root the repository containing 'this'
-  if (this._getCheckoutView()) {
-    this._getCheckoutView()._forEachCheckedOutRepository(function(repoInfo) {
-      var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
-      for (var i = 0; i < keys.length; i++) {
-        if (keys[i]) {
-          let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]];
-          let refProperty = undefined;
+BaseProperty.prototype.getAbsolutePath = function () {
+    var that = this;
+    var referenceProps = [];
+    // get all reference properties pointing to the root the repository containing 'this'
+    if (this._getCheckoutView()) {
+        this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
+            var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
+            for (var i = 0; i < keys.length; i++) {
+                if (keys[i]) {
+                    let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]];
+                    let refProperty = undefined;
 
-          if (repoRef) {
-            refProperty = repoRef._repositoryReferenceProperties[keys[i]] ?
-              repoRef._repositoryReferenceProperties[keys[i]].property : undefined;
-          }
+                    if (repoRef) {
+                        refProperty = repoRef._repositoryReferenceProperties[keys[i]] ?
+                            repoRef._repositoryReferenceProperties[keys[i]].property : undefined;
+                    }
 
-          let refRoot;
-          try {
-            refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
-          } catch (e) {
-            console.warn(e.message);
-          }
+                    let refRoot;
+                    try {
+                        refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
+                    } catch (e) {
+                        console.warn(e.message);
+                    }
 
-          if (that.getRoot() === refRoot) {
-            referenceProps.push(refProperty);
-            break;
-          }
-        }
-      }
-    });
-  }
-
-  var path = this.isRoot() ? [] : [this.getParent()._getPathSegmentForChildNode(this)];
-  this.traverseUp( function( in_node ) {
-    if (in_node.getParent()) {
-      path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
-    } else if (referenceProps.length > 0) {
-      // recursively call getAbsolutePath, removing the '/' at the beginning of the path
-      path.push(referenceProps[0].getAbsolutePath(referenceProps[0].getRoot()).slice(1));
+                    if (that.getRoot() === refRoot) {
+                        referenceProps.push(refProperty);
+                        break;
+                    }
+                }
+            }
+        });
     }
-  });
-  var absolutePath = path.reverse().join('');
 
-  // We don't use the property path separator at the start of the path
-  if (absolutePath[0] === PROPERTY_PATH_DELIMITER) {
-    absolutePath = absolutePath.substr(1);
-  }
-  absolutePath = '/' + absolutePath;
+    var path = this.isRoot() ? [] : [this.getParent()._getPathSegmentForChildNode(this)];
+    this.traverseUp(function (in_node) {
+        if (in_node.getParent()) {
+            path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
+        } else if (referenceProps.length > 0) {
+            // recursively call getAbsolutePath, removing the '/' at the beginning of the path
+            path.push(referenceProps[0].getAbsolutePath(referenceProps[0].getRoot()).slice(1));
+        }
+    });
+    var absolutePath = path.reverse().join('');
 
-  return absolutePath;
+    // We don't use the property path separator at the start of the path
+    if (absolutePath[0] === PROPERTY_PATH_DELIMITER) {
+        absolutePath = absolutePath.substr(1);
+    }
+    absolutePath = '/' + absolutePath;
+
+    return absolutePath;
 };
 
 /**
@@ -972,18 +972,18 @@ BaseProperty.prototype.getAbsolutePath = function() {
  * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL, if the traversal didn't reach the root,
  *                            otherwise undefined
  */
-BaseProperty.prototype.traverseUp = function( in_callback ) {
-  ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
-  if (this._parent) {
-    var result = in_callback( this._parent );
-    if ( result !== BREAK_TRAVERSAL) {
-      return this._parent.traverseUp( in_callback );
-    } else {
-      return BREAK_TRAVERSAL;
+BaseProperty.prototype.traverseUp = function (in_callback) {
+    ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
+    if (this._parent) {
+        var result = in_callback(this._parent);
+        if (result !== BREAK_TRAVERSAL) {
+            return this._parent.traverseUp(in_callback);
+        } else {
+            return BREAK_TRAVERSAL;
+        }
     }
-  }
 
-  return undefined;
+    return undefined;
 };
 
 /**
@@ -1000,8 +1000,8 @@ BaseProperty.BREAK_TRAVERSAL = BREAK_TRAVERSAL;
  * @return {Array.<String>} The list of keys identifying the dirty children
  * @private
  */
-BaseProperty.prototype._getDirtyChildren = function(in_flags) {
-  return [];
+BaseProperty.prototype._getDirtyChildren = function (in_flags) {
+    return [];
 };
 
 /**
@@ -1009,7 +1009,7 @@ BaseProperty.prototype._getDirtyChildren = function(in_flags) {
  * @return {property-properties.NodeProperty} The root property
  */
 BaseProperty.prototype.getRoot = function () {
-  return this._parent ? this._parent.getRoot() : this;
+    return this._parent ? this._parent.getRoot() : this;
 };
 
 /**
@@ -1022,8 +1022,8 @@ BaseProperty.prototype.getRoot = function () {
  *                            otherwise undefined
  * @private
  */
-BaseProperty.prototype._traverse = function( in_callback, in_pathFromTraversalStart ) {
-  return undefined;
+BaseProperty.prototype._traverse = function (in_callback, in_pathFromTraversalStart) {
+    return undefined;
 };
 
 /**
@@ -1040,9 +1040,9 @@ BaseProperty.prototype._traverse = function( in_callback, in_pathFromTraversalSt
  * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
  *     deserialization
  */
-BaseProperty.prototype.deserialize = function( in_serializedObj, in_filteringOptions ) {
-  this._checkIsNotReadOnly(false);
-  return this._deserialize(in_serializedObj, true, in_filteringOptions);
+BaseProperty.prototype.deserialize = function (in_serializedObj, in_filteringOptions) {
+    this._checkIsNotReadOnly(false);
+    return this._deserialize(in_serializedObj, true, in_filteringOptions);
 };
 
 /**
@@ -1057,8 +1057,8 @@ BaseProperty.prototype.deserialize = function( in_serializedObj, in_filteringOpt
  * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
  *     deserialization
  */
-BaseProperty.prototype._deserialize = function(in_serializedObj, in_reportToView, in_filteringOptions) {
-  return {};
+BaseProperty.prototype._deserialize = function (in_serializedObj, in_reportToView, in_filteringOptions) {
+    return {};
 };
 
 /**
@@ -1078,11 +1078,11 @@ BaseProperty.prototype._deserialize = function(in_serializedObj, in_reportToView
  * @return {Object} The serialized representation of this property
  * @private
  */
-BaseProperty.prototype._serialize = function( in_dirtyOnly,
-                                              in_includeRootTypeid,
-                                              in_dirtinessType,
-                                              in_includeReferencedRepositories ) {
-  return {};
+BaseProperty.prototype._serialize = function (in_dirtyOnly,
+    in_includeRootTypeid,
+    in_dirtinessType,
+    in_includeReferencedRepositories) {
+    return {};
 };
 
 /**
@@ -1102,22 +1102,22 @@ BaseProperty.prototype._serialize = function( in_dirtyOnly,
  * @throws if in_options is defined but is not an object.
  * @return {Object} The serialized representation of this property
  */
-BaseProperty.prototype.serialize = function( in_options ) {
-  var opts = {
-    'dirtyOnly': false,
-    'includeRootTypeid': false,
-    'dirtinessType': MODIFIED_STATE_FLAGS.PENDING_CHANGE,
-    'includeReferencedRepositories': false
-  };
-  if (in_options !== undefined) {
-    if (typeof in_options !== 'object') {
-      throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+BaseProperty.prototype.serialize = function (in_options) {
+    var opts = {
+        'dirtyOnly': false,
+        'includeRootTypeid': false,
+        'dirtinessType': MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        'includeReferencedRepositories': false
+    };
+    if (in_options !== undefined) {
+        if (typeof in_options !== 'object') {
+            throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+        }
+        Object.assign(opts, in_options);
     }
-    Object.assign(opts, in_options);
-  }
 
-  return this._serialize( opts.dirtyOnly, opts.includeRootTypeid,
-    opts.dirtinessType, opts.includeReferencedRepositories );
+    return this._serialize(opts.dirtyOnly, opts.includeRootTypeid,
+        opts.dirtinessType, opts.includeReferencedRepositories);
 };
 
 /**
@@ -1126,58 +1126,58 @@ BaseProperty.prototype.serialize = function( in_options ) {
  * This function is invoked by the PropertyFactory once all static members have been added to the template
  * @protected
  */
-BaseProperty.prototype._signalAllStaticMembersHaveBeenAdded = function() {
+BaseProperty.prototype._signalAllStaticMembersHaveBeenAdded = function () {
 };
 
 /**
  * Tests whether this property may be modified
  * @param {checkConstant} in_checkConstant - Check if is readonly constant property
  */
-BaseProperty.prototype._checkIsNotReadOnly = function(in_checkConstant) {
-  if (this._isConstant && in_checkConstant) {
-    throw new Error(MSG.MODIFICATION_OF_CONSTANT_PROPERTY);
-  }
-
-  var root = this.getRoot();
-  if (root && root._getCheckedOutRepositoryInfo) {
-    var repositoryInfo = root._getCheckedOutRepositoryInfo();
-
-    if (repositoryInfo && repositoryInfo._isReadOnly()) {
-      throw new Error(MSG.MODIFICATION_OF_REFERENCED_PROPERTY);
+BaseProperty.prototype._checkIsNotReadOnly = function (in_checkConstant) {
+    if (this._isConstant && in_checkConstant) {
+        throw new Error(MSG.MODIFICATION_OF_CONSTANT_PROPERTY);
     }
-  }
+
+    var root = this.getRoot();
+    if (root && root._getCheckedOutRepositoryInfo) {
+        var repositoryInfo = root._getCheckedOutRepositoryInfo();
+
+        if (repositoryInfo && repositoryInfo._isReadOnly()) {
+            throw new Error(MSG.MODIFICATION_OF_REFERENCED_PROPERTY);
+        }
+    }
 };
 
 /**
  * Set a property and its children as constants (readonly properties)
  */
-BaseProperty.prototype._setAsConstant = function() {
-  this._isConstant = true;
+BaseProperty.prototype._setAsConstant = function () {
+    this._isConstant = true;
 
-  if (this instanceof Property.ContainerProperty) {
-  // Set all children properties as constants
-    this.traverseDown(function(prop) {
-      prop._isConstant = true;
-    });
-  }
+    if (this instanceof Property.ContainerProperty) {
+        // Set all children properties as constants
+        this.traverseDown(function (prop) {
+            prop._isConstant = true;
+        });
+    }
 };
 
 /**
  * Unsets a property and its children as constants
  */
-BaseProperty.prototype._unsetAsConstant = function() {
-  // Deleting this property will make the object
-  // fall back to the entry in the prototype (false)
-  delete this._isConstant;
+BaseProperty.prototype._unsetAsConstant = function () {
+    // Deleting this property will make the object
+    // fall back to the entry in the prototype (false)
+    delete this._isConstant;
 
-  if (this instanceof Property.ContainerProperty) {
-    // Unset all children properties as constants
-    this.traverseDown(function(prop) {
-      // Deleting this property will make the object
-      // fall back to the entry in the prototype (false)
-      delete prop._isConstant;
-    });
-  }
+    if (this instanceof Property.ContainerProperty) {
+        // Unset all children properties as constants
+        this.traverseDown(function (prop) {
+            // Deleting this property will make the object
+            // fall back to the entry in the prototype (false)
+            delete prop._isConstant;
+        });
+    }
 };
 
 /**
@@ -1188,15 +1188,15 @@ BaseProperty.prototype._unsetAsConstant = function() {
  *                                             can be prevented via this flag.
  * @private
  */
-BaseProperty.prototype._setDirtyTree = function(in_reportToView) {
-  this._traverse(function(node) {
-    // Set all nodes to dirty, but prevent recursive updates up to the repository for the individual changes
-    node._setDirty(false);
-  }, '');
-  // Now make one report
-  if (in_reportToView) {
-    this._reportDirtinessToView();
-  }
+BaseProperty.prototype._setDirtyTree = function (in_reportToView) {
+    this._traverse(function (node) {
+        // Set all nodes to dirty, but prevent recursive updates up to the repository for the individual changes
+        node._setDirty(false);
+    }, '');
+    // Now make one report
+    if (in_reportToView) {
+        this._reportDirtinessToView();
+    }
 };
 
 /**
@@ -1208,28 +1208,28 @@ BaseProperty.prototype._setDirtyTree = function(in_reportToView) {
  * @throws if the property can not be inserted
  * @private
  */
-BaseProperty.prototype._validateInsertIn = function(in_targetParent, in_childId) {
-  // Already a child?
-  if (this._parent !== undefined) {
-    throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-  }
-  // A root?
-  if (this._getCheckedOutRepositoryInfo() !== undefined) {
-    throw new Error(MSG.INSERTED_ROOT_ENTRY);
-  }
-  // Would create a cycle?
-  let parent = in_targetParent;
-  while (parent !== undefined) {
-    if (parent === this) {
-      throw new Error(MSG.INSERTED_IN_OWN_CHILDREN);
+BaseProperty.prototype._validateInsertIn = function (in_targetParent, in_childId) {
+    // Already a child?
+    if (this._parent !== undefined) {
+        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
     }
-    parent = parent._parent;
-  }
-  // Outside the checked out paths?
-  const repositoryInfo = in_targetParent._getCheckedOutRepositoryInfo();
-  if (repositoryInfo && !repositoryInfo._allCoveredByCheckout(in_targetParent.getAbsolutePath(), in_childId, this)) {
-    throw new Error(MSG.INSERTED_OUTSIDE_PATHS);
-  }
+    // A root?
+    if (this._getCheckedOutRepositoryInfo() !== undefined) {
+        throw new Error(MSG.INSERTED_ROOT_ENTRY);
+    }
+    // Would create a cycle?
+    let parent = in_targetParent;
+    while (parent !== undefined) {
+        if (parent === this) {
+            throw new Error(MSG.INSERTED_IN_OWN_CHILDREN);
+        }
+        parent = parent._parent;
+    }
+    // Outside the checked out paths?
+    const repositoryInfo = in_targetParent._getCheckedOutRepositoryInfo();
+    if (repositoryInfo && !repositoryInfo._allCoveredByCheckout(in_targetParent.getAbsolutePath(), in_childId, this)) {
+        throw new Error(MSG.INSERTED_OUTSIDE_PATHS);
+    }
 };
 
 
@@ -1246,46 +1246,46 @@ BaseProperty.prototype._validateInsertIn = function(in_targetParent, in_childId)
  * @return {Bool} If the property and all its children are included in the paths
  * @private
  */
-BaseProperty.prototype._coveredByPaths = function(in_basePath, in_paths) {
-  // First, get the coverage of the base property
-  const coverage = PathHelper.getPathCoverage(in_basePath, in_paths);
+BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
+    // First, get the coverage of the base property
+    const coverage = PathHelper.getPathCoverage(in_basePath, in_paths);
 
-  if (coverage.coverageExtent === PathHelper.CoverageExtent.FULLY_COVERED) {
-    return true;
-  } else if (coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED) {
-    // We know that part of the property is covered, if we don't find any actual children not covered
-    // by the paths it's because we're fully covered.
-    let childrenIds, childPath, child;
-    if (this.isPrimitiveType()) {
-      // primitive
-      if (this.getContext() === 'single') {
-        // no children
-        childrenIds = [];
-      } else {
-        childrenIds = this.getIds();
-      }
-      for (let i = 0; i < childrenIds.length; i++) {
-        child = this.get(childrenIds[i]);
-        childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
-        if (PathHelper.getPathCoverage(childPath, coverage.pathList) === PathHelper.CoverageExtent.UNCOVERED) {
-          // this children is outside the list of paths
-          return false;
+    if (coverage.coverageExtent === PathHelper.CoverageExtent.FULLY_COVERED) {
+        return true;
+    } else if (coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED) {
+        // We know that part of the property is covered, if we don't find any actual children not covered
+        // by the paths it's because we're fully covered.
+        let childrenIds, childPath, child;
+        if (this.isPrimitiveType()) {
+            // primitive
+            if (this.getContext() === 'single') {
+                // no children
+                childrenIds = [];
+            } else {
+                childrenIds = this.getIds();
+            }
+            for (let i = 0; i < childrenIds.length; i++) {
+                child = this.get(childrenIds[i]);
+                childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
+                if (PathHelper.getPathCoverage(childPath, coverage.pathList) === PathHelper.CoverageExtent.UNCOVERED) {
+                    // this children is outside the list of paths
+                    return false;
+                }
+            }
+        } else {
+            childrenIds = this.getIds();
+            for (let i = 0; i < childrenIds.length; i++) {
+                child = this.get(childrenIds[i]);
+                childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
+                if (!child._coveredByPaths(childPath, coverage.pathList)) {
+                    return false;
+                }
+            }
         }
-      }
-    } else {
-      childrenIds = this.getIds();
-      for (let i = 0; i < childrenIds.length; i++) {
-        child = this.get(childrenIds[i]);
-        childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
-        if (!child._coveredByPaths(childPath, coverage.pathList)) {
-          return false;
-        }
-      }
+        return true;
     }
-    return true;
-  }
 
-  return false;
+    return false;
 };
 
 /**
@@ -1293,18 +1293,18 @@ BaseProperty.prototype._coveredByPaths = function(in_basePath, in_paths) {
  * @private
  * @return {boolean} has fixed id
  */
-BaseProperty.prototype._hasFixedId = function() {
-  return false;
+BaseProperty.prototype._hasFixedId = function () {
+    return false;
 };
 
 Object.defineProperty(
-  BaseProperty.prototype,
-  '_properties',
-  {
-    get: function() {
-      return this._flatten();
+    BaseProperty.prototype,
+    '_properties',
+    {
+        get: function () {
+            return this._flatten();
+        }
     }
-  }
 );
 
 module.exports = BaseProperty;
