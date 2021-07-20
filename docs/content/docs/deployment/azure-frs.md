@@ -1,5 +1,5 @@
 ---
-title: Connect to a Fluid Service in Azure with FrsClient
+title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
@@ -20,7 +20,6 @@ To connect to our FRS instance, we first need to instaniate our `FrsClient`. Thi
 ```javascript
 const config = {
     tenantId: "myFrsTenantId",
-    // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
     tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),
     orderer: "https://myFrsOrdererUrl",
     storage: "https://myFrsStorageUrl",
