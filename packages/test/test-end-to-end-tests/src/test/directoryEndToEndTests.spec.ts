@@ -194,6 +194,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 sharedDirectory1.set("testKey1", "value1");
                 sharedDirectory2.set("testKey1", "value2");
                 sharedDirectory3.set("testKey1", "value0");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey1", "value3");
 
                 expectAllBeforeValues("testKey1", "/", "value1", "value2", "value3");
@@ -207,6 +211,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after delete
                 sharedDirectory1.set("testKey1", "value1.1");
                 sharedDirectory2.delete("testKey1");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey1", "value1.3");
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", undefined, "value1.3");
@@ -238,6 +246,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // delete after set
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.set("testKey3", "value3.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.delete("testKey3");
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
@@ -251,6 +263,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // clear after set
                 sharedDirectory1.set("testKey1", "value1.1");
                 sharedDirectory2.set("testKey1", "value1.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.clear();
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", "value1.2", undefined);
@@ -285,6 +301,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after clear
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.clear();
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/", "value3.1", undefined, "value3.3");
 
@@ -448,6 +468,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 root1SubDir.set("testKey1", "value1");
                 root2SubDir.set("testKey1", "value2");
                 root3SubDir.set("testKey1", "value0");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey1", "value3");
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1", "value2", "value3");
@@ -461,6 +485,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after delete
                 root1SubDir.set("testKey1", "value1.1");
                 root2SubDir.delete("testKey1");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey1", "value1.3");
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", undefined, "value1.3");
@@ -491,6 +519,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // delete after set
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.set("testKey3", "value3.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.delete("testKey3");
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
@@ -504,6 +536,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // clear after set
                 root1SubDir.set("testKey1", "value1.1");
                 root2SubDir.set("testKey1", "value1.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.clear();
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", "value1.2", undefined);
                 assert.equal(root3SubDir.size, 0, "Incorrect map size after clear");
@@ -536,6 +572,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after clear
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.clear();
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", undefined, "value3.3");
 
