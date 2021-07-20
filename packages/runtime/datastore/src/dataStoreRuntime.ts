@@ -300,13 +300,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        const loadExisting = existing === true || context.existing === true;
         // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        this.bindState = this.existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
-        if (existing) {
+        if (this.existing) {
             this.deferredAttached.resolve();
         }
     }
