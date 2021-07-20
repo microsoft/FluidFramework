@@ -9,6 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
+    ISummaryNack,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -262,20 +263,44 @@ export class RunningSummarizer implements IDisposable {
             const attempts = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
-                { refreshLatestAck: true, fullTree: false, delayMinutes: 2 },
-                { refreshLatestAck: true, fullTree: true, delayMinutes: 10 },
+                { refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
+                { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
-            for (let i = 0; i < attempts.length; i++) {
-                const { delayMinutes = 0, ...options } = attempts[i];
-                if (delayMinutes > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
+            let overrideDelaySeconds: number | undefined;
+            let retryNumber = 0;
+            // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
+            for (let attemptPhase = 0; attemptPhase < attempts.length; retryNumber++) {
+                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
+                const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
+                if (delaySeconds > 0) {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "SummarizeAttemptDelay",
+                        retryAfterSeconds: overrideDelaySeconds, // delay from retryAfter summaryNack response
+                        regularDelaySeconds, // delay from regular attempt retry
+                    });
+                    await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
                 }
-                const attemptReason = i > 0 ? `retry${i}` as `retry${number}` : reason;
+                const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as `retry${number}` : reason;
                 const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
                 await this.generator.waitSummarizing();
                 if (result.success && result.data.summaryAckNackOp.type === MessageType.SummaryAck) {
                     // Note: checking for MessageType.SummaryAck is redundant since success is false for nack.
                     return;
+                }
+                // Check for retryDelay in summaryNack response.
+                // TODO: cast needed until dep on protocol-definitions version bump
+                const summaryNack = result.data?.summaryAckNackOp.type === MessageType.SummaryNack
+                    ? result.data.summaryAckNackOp.contents as ISummaryNack & { message?: string; retryAfter?: number; }
+                    : undefined;
+                if (summaryNack?.retryAfter !== undefined && summaryNack.retryAfter > 0) {
+                    if (overrideDelaySeconds !== undefined) {
+                        // Retry the same step only once per retryAfter response.
+                        attemptPhase++;
+                    }
+                    overrideDelaySeconds = summaryNack.retryAfter;
+                } else {
+                    attemptPhase++;
+                    overrideDelaySeconds = undefined;
                 }
             }
             // If all attempts failed, close the summarizer container

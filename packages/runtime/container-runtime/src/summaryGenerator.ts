@@ -178,12 +178,13 @@ const summarizeErrors = {
      * Runs the heuristic to determine if it should try to summarize.
      */
     public run() {
-        this.idleTimer.clear();
         const timeSinceLastSummary = Date.now() - this.lastAcked.summaryTime;
         const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAcked.refSequenceNumber;
         if (timeSinceLastSummary > this.configuration.maxTime) {
+            this.idleTimer.clear();
             this.trySummarize("maxTime");
         } else if (opCountSinceLastSummary > this.configuration.maxOps) {
+            this.idleTimer.clear();
             this.trySummarize("maxOps");
         } else {
             this.idleTimer.restart();
@@ -411,7 +412,11 @@ export class SummaryGenerator {
                     message: getFailMessage("summaryNack"),
                     error: undefined,
                 });
-                return fail("summaryNack", ackNack.contents.errorMessage, telemetryProps);
+                return fail(
+                    "summaryNack",
+                    (ackNack.contents as { message?: string }).message ?? ackNack.contents.errorMessage,
+                    telemetryProps,
+                );
             }
         } finally {
             this.pendingAckTimer.clear();
