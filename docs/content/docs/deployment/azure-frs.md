@@ -24,10 +24,10 @@ The `InsecureTokenProvider` should only be used for development purposes because
 
 ```javascript
 const config = {
-    tenantId: "myFrsTenantId",
-    tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),
-    orderer: "https://myFrsOrdererUrl",
-    storage: "https://myFrsStorageUrl",
+    tenantId: "myTenantId",
+    tokenProvider: new InsecureTokenProvider("myTenantKey", { id: "UserId", name: "Test User" }),
+    orderer: "https://myOrdererUrl",
+    storage: "https://myStorageUrl",
 }
 
 const client = new FrsClient(config);
@@ -35,9 +35,11 @@ const client = new FrsClient(config);
 
 Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
 
-# Managing containers
+## Token providers
 
-##  Token Providers
+Coming soon!
+
+# Managing containers
 
 The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
 
