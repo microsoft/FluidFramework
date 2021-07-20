@@ -271,7 +271,7 @@ export class RunningSummarizer implements IDisposable {
                     await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
                 }
                 const attemptReason = i > 0 ? `retry${i}` as `retry${number}` : reason;
-                const result = await this.generator.summarize(attemptReason, options).summaryAckNack;
+                const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
                 await this.generator.waitSummarizing();
                 if (result.success && result.data.summaryAckNackOp.type === MessageType.SummaryAck) {
                     // Note: checking for MessageType.SummaryAck is redundant since success is false for nack.
@@ -305,7 +305,7 @@ export class RunningSummarizer implements IDisposable {
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
         const result = this.generator.summarize(`onDemand;${reason}` as `onDemand;${string}`, options);
-        result.summaryAckNack.finally(() => this.checkRerunHeuristics());
+        result.receivedSummaryAckOrNack.finally(() => this.checkRerunHeuristics());
         return result;
     }
 

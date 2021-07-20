@@ -18,8 +18,9 @@ import { ContainerWarning, IDeltaManager } from "@fluidframework/container-defin
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, ISummaryStats } from "@fluidframework/runtime-definitions";
 import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
@@ -92,8 +93,12 @@ export interface IBaseSummarizeResult {
 /** Results of generateSummary after generating the summary tree. */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
     readonly stage: "generate";
-    /** Generated summary tree and stats. */
+    /** Generated summary tree. */
+    readonly summaryTree: ISummaryTree;
+    /** Stats for generated summary tree. */
     readonly summaryStats: IGeneratedSummaryStats;
+    /** Garbage collection data gathered while generating the summary. */
+    readonly gcData: IGarbageCollectionData;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
 }
@@ -153,16 +158,16 @@ export type SummarizeResultPart<T> = {
     error: any;
 };
 
-export interface ISummarizeResult {
-    /** Resolves when we generate, upload, and submit the summary */
-    readonly generateSummary: Promise<SummarizeResultPart<GenerateSummaryResult>>;
-    /** Resolves when we see our summarize op broadcast; is sequence number of op */
-    readonly broadcastSummaryOp: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    /** True for ack; false for nack */
-    readonly summaryAckNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+export interface ISummarizeResults {
+    /** Resolves when we generate, upload, and submit the summary. */
+    readonly summarySubmitted: Promise<SummarizeResultPart<GenerateSummaryResult>>;
+    /** Resolves when we observe our summarize op broadcast. */
+    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    /** Resolves when we receive a summaryAck or summaryNack. */
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
 }
 
-export type OnDemandSummarizeResult = (ISummarizeResult & {
+export type OnDemandSummarizeResult = (ISummarizeResults & {
     /** Indicates that an already running summarize attempt does not exist. */
     readonly alreadyRunning?: undefined;
 }) | {

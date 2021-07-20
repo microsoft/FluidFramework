@@ -12,6 +12,7 @@ import {
     ISummaryConfiguration,
     ISummaryProposal,
     MessageType,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
@@ -110,6 +111,7 @@ describe("Runtime", () => {
                                 generateDuration: 0,
                                 uploadDuration: 0,
                                 submitOpDuration: 0,
+                                summaryTree: { type: SummaryType.Tree, tree: {} },
                                 summaryStats: {
                                     treeNodeCount: 0,
                                     blobNodeCount: 0,
@@ -119,6 +121,7 @@ describe("Runtime", () => {
                                     summarizedDataStoreCount: 0,
                                     unreferencedBlobSize: 0,
                                 },
+                                gcData: { gcNodes: {} },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             } as const;

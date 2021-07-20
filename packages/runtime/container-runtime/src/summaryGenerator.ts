@@ -12,7 +12,7 @@ import {
     IAckNackSummaryResult,
     IBroadcastSummaryResult,
     IGenerateSummaryOptions,
-    ISummarizeResult,
+    ISummarizeResults,
     ISummarizerInternalsProvider,
     SummarizeResultPart,
 } from "./summarizerTypes";
@@ -198,20 +198,20 @@ const summarizeErrors = {
 }
 
 class SummarizeResultBuilder {
-    public readonly generateSummary = new Deferred<SummarizeResultPart<GenerateSummaryResult>>();
-    public readonly broadcastSummaryOp = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
-    public readonly summaryAckNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
+    public readonly summarySubmitted = new Deferred<SummarizeResultPart<GenerateSummaryResult>>();
+    public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
+    public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
     public fail(message: string, error: any) {
         const result = { success: false, message, data: undefined, error } as const;
-        this.generateSummary.resolve(result);
-        this.broadcastSummaryOp.resolve(result);
-        this.summaryAckNack.resolve(result);
+        this.summarySubmitted.resolve(result);
+        this.summaryOpBroadcasted.resolve(result);
+        this.receivedSummaryAckOrNack.resolve(result);
     }
-    public build(): ISummarizeResult {
+    public build(): ISummarizeResults {
         return {
-            generateSummary: this.generateSummary.promise,
-            broadcastSummaryOp: this.broadcastSummaryOp.promise,
-            summaryAckNack: this.summaryAckNack.promise,
+            summarySubmitted: this.summarySubmitted.promise,
+            summaryOpBroadcasted: this.summaryOpBroadcasted.promise,
+            receivedSummaryAckOrNack: this.receivedSummaryAckOrNack.promise,
         } as const;
     }
 }
@@ -250,7 +250,7 @@ export class SummaryGenerator {
     public summarize(
         reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): ISummarizeResult {
+    ): ISummarizeResults {
         ++this.summarizeCount;
         const resultsBuilder = new SummarizeResultBuilder();
 
@@ -315,7 +315,7 @@ export class SummaryGenerator {
                 summaryLogger: this.logger,
             });
 
-            resultsBuilder.generateSummary.resolve({ success: true, data: summaryData });
+            resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
@@ -370,7 +370,7 @@ export class SummaryGenerator {
             }
 
             const broadcastDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
-            resultsBuilder.broadcastSummaryOp.resolve({
+            resultsBuilder.summaryOpBroadcasted.resolve({
                 success: true,
                 data: { summarizeOp, broadcastDuration },
             });
@@ -400,12 +400,12 @@ export class SummaryGenerator {
             if (ackNack.type === MessageType.SummaryAck) {
                 this.heuristics.ackLastSent();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
-                resultsBuilder.summaryAckNack.resolve({ success: true, data: {
+                resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckNackOp: ackNack,
                     ackNackDuration,
                 }});
             } else {
-                resultsBuilder.summaryAckNack.resolve({
+                resultsBuilder.receivedSummaryAckOrNack.resolve({
                     success: false,
                     data: { summaryAckNackOp: ackNack, ackNackDuration },
                     message: getFailMessage("summaryNack"),
