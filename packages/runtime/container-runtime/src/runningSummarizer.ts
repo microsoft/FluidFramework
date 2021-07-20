@@ -9,6 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
+    ISummaryNack,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -263,15 +264,28 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: false, delayMinutes: 2 },
                 { refreshLatestAck: true, fullTree: true, delayMinutes: 10 },
             ];
+            let overrideDelaySeconds: number | undefined;
+            let retryAttempt = 0;
             for (let i = 0; i < attempts.length; i++) {
                 const { delayMinutes = 0, ...options } = attempts[i];
-                if (delayMinutes > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, delayMinutes * 1000 * 60));
+                const delaySeconds = overrideDelaySeconds ?? (delayMinutes * 60);
+                if (delaySeconds > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
                 }
-                const attemptReason = i > 0 ? `retry${i}` as `retry${number}` : reason;
-                if (await this.generator.summarize(attemptReason, options) === true) {
+                const attemptReason = retryAttempt > 0 ? `retry${retryAttempt}` as `retry${number}` : reason;
+                const result = await this.generator.summarize(attemptReason, options);
+                if (result.success) {
                     return;
+                } else if (result.retryDelaySeconds !== undefined && result.retryDelaySeconds > 0) {
+                    if (overrideDelaySeconds === undefined) {
+                        // Retry the same step only once per retryAfter response.
+                        i--;
+                    }
+                    overrideDelaySeconds = result.retryDelaySeconds;
+                } else {
+                    overrideDelaySeconds = undefined;
                 }
+                retryAttempt++;
             }
             // If all attempts failed, close the summarizer container
             this.logger.sendErrorEvent({ eventName: "FailToSummarize" });

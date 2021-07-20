@@ -10,6 +10,7 @@ import {
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryConfiguration,
+    ISummaryNack,
     ISummaryProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -21,7 +22,10 @@ import { SummaryCollection } from "../summaryCollection";
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("RunningSummarizer", () => {
+            let stopCall: number;
             let runCount: number;
+            let fullTreeRunCount: number;
+            let refreshLatestAckRunCount: number;
             let clock: sinon.SinonFakeTimers;
             let mockLogger: MockLogger;
             let mockDeltaManager: MockDeltaManager;
@@ -68,7 +72,7 @@ describe("Runtime", () => {
                 });
             }
 
-            async function emitAck(type: MessageType = MessageType.SummaryAck) {
+            async function emitAck() {
                 const summaryProposal: ISummaryProposal = {
                     summarySequenceNumber: lastSummarySeq,
                 };
@@ -76,14 +80,46 @@ describe("Runtime", () => {
                     handle: "test-ack-handle",
                     summaryProposal,
                 };
-                mockDeltaManager.emit("op", { contents, type });
+                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryAck });
 
                 await flushPromises(); // let summarize run
+            }
+
+            async function emitNack(retryAfterSeconds?: number) {
+                const summaryProposal: ISummaryProposal = {
+                    summarySequenceNumber: lastSummarySeq,
+                };
+                const contents: ISummaryNack & { retryAfter?: number } = {
+                    summaryProposal,
+                    retryAfter: retryAfterSeconds,
+                    errorMessage: "test-nack",
+                };
+                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryNack });
+
+                await flushPromises();
             }
 
             async function tickAndFlushPromises(ms: number) {
                 clock.tick(ms);
                 await flushPromises();
+            }
+
+            function assertRunCounts(
+                expectedTotalRunCount: number,
+                expectedFullTreeRunCount: number,
+                expectedRefreshLatestAckRunCount: number,
+                errorMessage?: string,
+            ) {
+                const errorPrefix = errorMessage ? `${errorMessage}: ` : "";
+                assert.strictEqual(runCount, expectedTotalRunCount, `${errorPrefix}unexpected total run count`);
+                assert.strictEqual(
+                    fullTreeRunCount,
+                    expectedFullTreeRunCount,
+                    `${errorPrefix}unexpected fullTree count`);
+                assert.strictEqual(
+                    refreshLatestAckRunCount,
+                    expectedRefreshLatestAckRunCount,
+                    `${errorPrefix}unexpected refreshLatestAck count`);
             }
 
             const startRunningSummarizer = async (): Promise<void> => {
@@ -94,8 +130,16 @@ describe("Runtime", () => {
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
                     {
-                        generateSummary: async () => {
+                        generateSummary: async (options) => {
                             runCount++;
+
+                            const { fullTree = false, refreshLatestAck = false } = options;
+                            if (fullTree) {
+                                fullTreeRunCount++;
+                            }
+                            if (refreshLatestAck) {
+                                refreshLatestAckRunCount++;
+                            }
 
                             // immediate broadcast
                             emitBroadcast();
@@ -124,7 +168,7 @@ describe("Runtime", () => {
                             } as const;
                         },
                         stop(reason?: SummarizerStopReason) {
-                            // do nothing
+                            stopCall++;
                         },
                     },
                     0,
@@ -146,6 +190,9 @@ describe("Runtime", () => {
                 shouldDeferGenerateSummary = false;
                 clock.reset();
                 runCount = 0;
+                stopCall = 0;
+                fullTreeRunCount = 0;
+                refreshLatestAckRunCount = 0;
                 lastRefSeq = 0;
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
@@ -162,11 +209,11 @@ describe("Runtime", () => {
 
                     // too early, should not run yet
                     await emitNextOp(summaryConfig.maxOps - 1);
-                    assert.strictEqual(runCount, 0);
+                    assertRunCounts(0, 0, 0);
 
                     // now should run
                     await emitNextOp(1);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
@@ -174,11 +221,11 @@ describe("Runtime", () => {
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_end", summaryGenTag: (runCount - 1) }, // ack for previous run
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
@@ -186,7 +233,7 @@ describe("Runtime", () => {
                     ]), "unexpected log sequence");
 
                     await emitNextOp();
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                     assert(!mockLogger.matchEvents([
                         { eventName: "Running:Summarize_end" },
                     ]), "No ack expected yet");
@@ -197,22 +244,22 @@ describe("Runtime", () => {
 
                     // too early, should not run yet
                     await tickAndFlushPromises(summaryConfig.idleTime - 1);
-                    assert.strictEqual(runCount, 0);
+                    assertRunCounts(0, 0, 0);
 
                     // now should run
                     await tickAndFlushPromises(1);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp();
                     await tickAndFlushPromises(summaryConfig.idleTime);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
                     await emitNextOp();
                     await tickAndFlushPromises(summaryConfig.idleTime);
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                 });
 
                 it("Should summarize after configured active time when not pending", async () => {
@@ -228,12 +275,12 @@ describe("Runtime", () => {
                     }
                     await tickAndFlushPromises(remainingTime - 1);
                     await emitNextOp();
-                    assert.strictEqual(runCount, 0);
+                    assertRunCounts(0, 0, 0);
 
                     // now should run
                     await tickAndFlushPromises(1);
                     await emitNextOp();
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should not run because our summary hasnt been acked/nacked yet
                     for (let i = 0; i < idlesPerActive; i++) {
@@ -243,35 +290,35 @@ describe("Runtime", () => {
                     }
                     await tickAndFlushPromises(remainingTime);
                     await emitNextOp();
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
                     await emitNextOp();
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                 });
 
                 it("Should summarize after pending timeout", async () => {
                     // first run to start pending
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should not run because still pending
                     await tickAndFlushPromises(summaryConfig.maxAckWaitTime - 1);
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
 
                     // should run because pending timeout
                     await tickAndFlushPromises(1);
                     await emitNextOp();
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 1);
 
                     // verify subsequent ack works
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 1);
                     await emitAck();
                     await emitNextOp();
-                    assert.strictEqual(runCount, 3);
+                    assertRunCounts(3, 0, 1);
                 });
 
                 it("Should not cause pending ack timeouts using older summary time", async () => {
@@ -280,7 +327,7 @@ describe("Runtime", () => {
 
                     // should do first summary fine
                     await emitNextOp(summaryConfig.maxOps);
-                    assert.strictEqual(runCount, 1);
+                    assertRunCounts(1, 0, 0);
                     deferGenerateSummary.resolve();
                     await emitAck();
 
@@ -289,7 +336,7 @@ describe("Runtime", () => {
 
                     // subsequent summary should not cancel pending!
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                     await emitNextOp(); // fine
                     await tickAndFlushPromises(1); // next op will exceed maxAckWaitTime from first summary
                     await emitNextOp(); // not fine, nay cancel pending too soon
@@ -298,14 +345,150 @@ describe("Runtime", () => {
                     // we should not generate another summary without previous ack
                     await emitNextOp(); // flush finish summarizing
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 2);
+                    assertRunCounts(2, 0, 0);
                     deferGenerateSummary.resolve();
+                });
+            });
+
+            describe("Safe Retries", () => {
+                beforeEach(async () => {
+                    await startRunningSummarizer();
+                });
+
+                it("Should retry on failures", async () => {
+                    await emitNextOp();
+
+                    // too early, should not run yet
+                    await emitNextOp(summaryConfig.maxOps - 1);
+                    assertRunCounts(0, 0, 0);
+
+                    // now should run a normal run
+                    await emitNextOp(1);
+                    assertRunCounts(1, 0, 0);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // should not run, because our summary hasn't been acked/nacked yet
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    // should run with refresh after first nack
+                    await emitNack();
+                    assertRunCounts(2, 0, 1, "retry1 should be refreshLatestAck");
+                    assert(mockLogger.matchEvents([
+                        {
+                            eventName: "Running:Summarize_cancel",
+                            summaryGenTag: (runCount - 1),
+                            message: "summaryNack",
+                        },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Should not run, because of 2 min delay
+                    await emitNack();
+                    await tickAndFlushPromises(2 * 60 * 1000 - 1);
+                    assertRunCounts(2, 0, 1, "retry2 should not start until after delay");
+
+                    // Should run with refreshLatestAck after second nack
+                    await tickAndFlushPromises(1);
+                    assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
+                    assert(mockLogger.matchEvents([
+                        {
+                            eventName: "Running:Summarize_cancel",
+                            summaryGenTag: (runCount - 1),
+                            message: "summaryNack",
+                        },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Should not run, because of 10 min delay
+                    await emitNack();
+                    await tickAndFlushPromises(10 * 60 * 1000 - 1);
+                    assertRunCounts(3, 0, 2, "retry3 should not start until after delay");
+
+                    // Should run with fullTree after third nack
+                    await tickAndFlushPromises(1);
+                    assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
+                    assert(mockLogger.matchEvents([
+                        {
+                            eventName: "Running:Summarize_cancel",
+                            summaryGenTag: (runCount - 1),
+                            message: "summaryNack",
+                        },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Should stop after final nack
+                    assert.strictEqual(stopCall, 0);
+                    await emitNack();
+                    assert.strictEqual(stopCall, 1);
+                });
+
+                it("Should retry after delay on failures with retryAfter", async () => {
+                    await emitNextOp();
+
+                    // too early, should not run yet
+                    await emitNextOp(summaryConfig.maxOps - 1);
+                    assertRunCounts(0, 0, 0, "too early");
+
+                    // now should run a normal run
+                    await emitNextOp(1);
+                    assertRunCounts(1, 0, 0, "normal run");
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // should not run, because our summary hasn't been acked/nacked yet
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0, "waiting for ack/nack");
+
+                    // should not run, because of specified 30 sec delay
+                    await emitNack(30);
+                    await tickAndFlushPromises(30 * 1000 - 1);
+                    assertRunCounts(1, 0, 0, "waiting for retryAfter delay");
+
+                    // should rerun the normal try after the delay
+                    await tickAndFlushPromises(1);
+                    assertRunCounts(2, 0, 0, "rerun after retryAfter delay");
+                    assert(mockLogger.matchEvents([
+                        {
+                            eventName: "Running:Summarize_cancel",
+                            summaryGenTag: (runCount - 1),
+                            message: "summaryNack",
+                        },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // should not run, because of specified 30 sec delay
+                    await emitNack(30);
+                    await tickAndFlushPromises(30 * 1000 - 1);
+                    assertRunCounts(2, 0, 0, "wait for another retryAfter delay");
+
+                    // should run the next stage with refreshLatestAck after delay
+                    await tickAndFlushPromises(1);
+                    assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
+                    assert(mockLogger.matchEvents([
+                        {
+                            eventName: "Running:Summarize_cancel",
+                            summaryGenTag: (runCount - 1),
+                            message: "summaryNack",
+                        },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
                 });
             });
 
             describe("Summary Start", () => {
                 it("Should summarize immediately if summary ack is missing at startup", async () => {
-                    assert.strictEqual(runCount, 0);
+                    assertRunCounts(0, 0, 0);
                     // Simulate as summary op was in opstream.
                     const summaryTimestamp = Date.now();
                     emitBroadcast(summaryTimestamp);
@@ -332,7 +515,7 @@ describe("Runtime", () => {
                         "RunningSummarizer should be started from the above op");
 
                     await emitNextOp(summaryConfig.maxOps + 1);
-                    assert.strictEqual(runCount, 1, "Should run summarizer once");
+                    assertRunCounts(1, 0, 0, "Should run summarizer once");
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
