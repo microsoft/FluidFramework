@@ -10,7 +10,7 @@ The audience is the collection of users connected to a container.  When you crea
 
 This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, `tinylicious-client` is used.
 
-## Working with the Audience
+## Working with the audience
 
 When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
 
@@ -41,7 +41,7 @@ An `IMember` represents a single user identity.  `IMember` holds a list of `ICon
 
 {{% callout tip %}}
 
-Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection.  The audience will reflect this as a member leaving and a member joining.
+Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection.  The audience will reflect through its [member leaving and member joining events](#events).
 
 {{% /callout %}}
 
@@ -63,7 +63,7 @@ The `getMembers` method returns a map of the audience's current members.  The ma
 
 {{% callout tip %}}
 
-Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization](./will/this/page/ever/exist/idk)).
+Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization]({{< relref summarizer.md >}})).
 
 {{% /callout %}}
 
@@ -87,27 +87,23 @@ Connection transitions can result in short timing windows where `getMyself` retu
 
 #### membersChanged
 
-The `membersChanged` event is emitted whenever an externally visible change to the audience members is made.  Listeners may call the `getMembers` method to get the new list of members.
+The `membersChanged` event is emitted whenever a change to the audience members' client connections is made and will always be paired with a `memberAdded` or `memberRemoved` event.  Listeners may call the `getMembers` method to get the new list of members and their connections.  Listeners that need the specific changed member or connection should use the `memberAdded` and `memberRemoved` events instead.
 
 #### memberAdded
 
-The `memberAdded` event is emitted whenever an externally visible member or client connection is added to the audience.  The event also provides the connection client ID and the `IMember` object for this change.
+The `memberAdded` event is emitted whenever a client connection is added to the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` may be queried for more information on the new connection using the provided connection client ID.  Depending on if it already had previous connections, the `IMember` may be either new or existing.
 
 #### memberRemoved
 
-The `memberRemoved` event is emitted whenver an externally visible member or client connection leaves the audience.  The event also provides the connection client ID and the `IMember` object for this change.
+The `memberRemoved` event is emitted whenver a client connection leaves the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` reflects its state in the audience before the connection's removal, and may be queried for more information on the removed connection using the provided connection client ID.
 
-## Using Audience to Build Presence Features
+## Using audience to build presence features
 
-### Data Management and Inter-User Communication
+### Data management and inter-user communication
 
-While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own.  Building compelling presence features will involve working with additional user data. This data typically fits into one or more of the categories below.
+While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own.  Building compelling presence features will involve working with additional user data. These data typically fit into one or more of the categories below.
 
-#### Unshared data
-
-In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If you retrieve a user's profile picture from your user metadata service and assign each user a color based on a hash of their user ID, you will have the desired data on other users without needing to communicate with them.
-
-#### Shared Persisted Data
+#### Shared persisted data
 
 Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members.  Some of those scenarios will require you to save data for each user for future sessions.  For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
 
@@ -115,6 +111,10 @@ One option is to use a `SharedMap` with a `SharedCounter` as the value onto whic
 
 #### Shared transient data
 
-Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display where each user has selected in your UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data is irrelevant.
+Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display where each user has selected in your UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
 
-You can address this scenario using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation.  Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data is discarded.
+You can address this scenario using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation.  Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data are discarded.
+
+#### Unshared data
+
+In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If you retrieve a user's profile picture from your user metadata service and assign each user a color based on a hash of their user ID, you will have the desired data on other users without needing to communicate with them.
