@@ -54,7 +54,7 @@ When running the live FRS Instance, we would require the tenant ID, orderer and 
 ```typescript
 const connectionConfig: FrsConnectionConfig = useFrs ? {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
     orderer: "https://alfred.eus-1.canary.frs.azure.com",
     storage: "https://historian.eus-1.canary.frs.azure.com",
 } : {
