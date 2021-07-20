@@ -1,0 +1,1 @@
+{"version":3,"file":"getSessionStorageContainer.d.ts","sourceRoot":"","sources":["../src/getSessionStorageContainer.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,OAAO,EACH,eAAe,EAClB,MAAM,uCAAuC,CAAC;AAC/C,OAAO,EAAE,SAAS,EAAU,MAAM,kCAAkC,CAAC;AASrE;;;;GAIG;AACH,wBAAsB,0BAA0B,CAC5C,UAAU,EAAE,MAAM,EAClB,uBAAuB,EAAE,eAAe,EACxC,SAAS,EAAE,OAAO,GACnB,OAAO,CAAC,SAAS,CAAC,CAwCpB"}
