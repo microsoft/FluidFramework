@@ -10,6 +10,9 @@ import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
+import winston from "winston";
+
+const log = (obj: any) => winston.info(JSON.stringify(obj));
 
 export interface ISocketIoRedisConnection {
     publish(channel: string, message: string): Promise<void>;
@@ -159,7 +162,8 @@ export class RedisSocketIoAdapter extends Adapter {
      */
     public async addAll(socketId: SocketId, roomIds: Set<Room>): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
-            const newRooms: string[] = [];
+            log({ action: "addAll", socketId, roomIds: Array.from(roomIds) });
+            const newRooms: Room[] = [];
 
             for (const roomId of roomIds) {
                 let socketRooms = this.sids.get(socketId);
@@ -196,7 +200,7 @@ export class RedisSocketIoAdapter extends Adapter {
     /**
      * Removes a socket from a room
      */
-    public del(socketId: SocketId, roomId: Room): void {
+    public async del(socketId: SocketId, roomId: Room): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
             this.sids.get(socketId)?.delete(roomId);
 
@@ -212,7 +216,7 @@ export class RedisSocketIoAdapter extends Adapter {
     /**
      * Removes a socket
      */
-    public delAll(socketId: SocketId): void {
+    public async delAll(socketId: SocketId): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
             const rooms = this.sids.get(socketId);
             if (rooms) {
@@ -240,6 +244,11 @@ export class RedisSocketIoAdapter extends Adapter {
      * Broadcast packets
      */
     public broadcast(packet: any, opts: BroadcastOptions): void {
+        log({ action: "broadcast", packet, opts: {
+            rooms: Array.from(opts.rooms),
+            except: Array.from(opts.except),
+            flags: opts.flags,
+        }});
         if (this.isDefaultNamespaceAndDisable) {
             return;
         }
@@ -258,6 +267,11 @@ export class RedisSocketIoAdapter extends Adapter {
      * Publishes the packet to Redis
      */
     private publish(packet: any, opts: BroadcastOptions) {
+        log({ action: "publish", packet, opts: {
+            rooms: Array.from(opts.rooms),
+            except: Array.from(opts.except),
+            flags: opts.flags,
+        } });
         // include the room in the channel name
 		const channel = `${this.channel}${opts.rooms.values().next().value}#`;
 
@@ -272,6 +286,7 @@ export class RedisSocketIoAdapter extends Adapter {
      * Handles messages from the Redis subscription
      */
     private onRoomMessage(channel: string, messageBuffer: Buffer) {
+        log({ action: "onRoomMessage", channel, thisChannel: this.channel, args: msgpack.decode(messageBuffer) });
         if (!channel.startsWith(this.channel)) {
             // sent to different channel
             return;
@@ -306,6 +321,9 @@ export class RedisSocketIoAdapter extends Adapter {
         const startTime = Date.now();
 
         try {
+            // if (packet && packet.nsp === undefined) {
+            //     packet.nsp = "/";
+            // }
             if (packet) {
                 if (packet.data === undefined) {
                     // the data is the packet itself
@@ -332,6 +350,14 @@ export class RedisSocketIoAdapter extends Adapter {
                 throw new Error(`Invalid namespace. ${packet.nsp} !== ${this.nsp.name}`);
             }
 
+            // let opts: BroadcastOptions = args[1];
+
+            // if (!opts || !opts.rooms || opts.rooms.size === 0) {
+            //     opts = {
+            //         rooms: new Set([room]),
+            //     };
+            // }
+            // this.broadcast(packet, opts);
             const opts: BroadcastOptions = {
 				rooms: new Set([room]),
 			};
@@ -375,6 +401,7 @@ export class RedisSocketIoAdapter extends Adapter {
      * Subscribes to the rooms and starts the health checkers
      */
     private async subscribeToRooms(rooms: string[]) {
+        log({ action: "subscribeToRooms", rooms, thisChannel: this.channel, thisChannelNames: this.getChannelNames(rooms) });
         await RedisSocketIoAdapter.options.subConnection.subscribe(
             this.getChannelNames(rooms),
             this.onRoomMessage.bind(this), true);
@@ -388,6 +415,7 @@ export class RedisSocketIoAdapter extends Adapter {
      * Unsubscribes to the rooms and clears the health checkers
      */
     private async unsubscribeFromRooms(rooms: string[]) {
+        log({ action: "unsubscribeFromRooms", rooms, thisChannel: this.channel, thisChannelNames: this.getChannelNames(rooms) });
         await RedisSocketIoAdapter.options.subConnection.unsubscribe(this.getChannelNames(rooms));
 
         for (const room of rooms) {

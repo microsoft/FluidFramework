@@ -102,6 +102,9 @@ export function create(
         {
             pubConnection: new SocketIORedisConnection(pub),
             subConnection: new SocketIoRedisSubscriptionConnection(sub),
+            onReceive: (channel, startTime, packet, error) => {
+                winston.info(JSON.stringify({ action: "onReceive", channel, startTime, packet, error }));
+            },
         };
 
         redisSocketIoAdapter.RedisSocketIoAdapter.setup(
@@ -122,7 +125,7 @@ export function create(
             // it would impossible to hardcode or configure restricted CORS policies.
             origin: "*",
         },
-        adapter
+        adapter,
     });
 
     return new SocketIoServer(io, pub, sub);
