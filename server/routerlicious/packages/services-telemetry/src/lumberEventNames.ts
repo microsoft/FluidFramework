@@ -16,4 +16,5 @@ export enum LumberEventName {
     // Lambdas
     DeliHandler = "DeliHandler",
     ScribeHandler = "ScribeHandler",
+    AlfredHandler = "AlfredHandler",
 }
