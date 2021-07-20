@@ -13,4 +13,5 @@ export enum LumberEventName {
     // Unit Testing
     UnitTestEvent = "UnitTestEvent",
     DeliHandler = "DeliHandler",
+    ScribeHandler = "ScribeHandler",
 }
