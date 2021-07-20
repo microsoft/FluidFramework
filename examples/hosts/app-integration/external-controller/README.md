@@ -49,7 +49,7 @@ We can connect to both live FRS instance by passing in the tenanID, orderer and 
 
 For running the Tinylicious client, we pass the tenantID as "local" and make use of `InsecureTokenProvider` where we can pass anything into the key since we are running it locally and an object identifying the current user. For running the instance locally, it would get naviagted to the Tinylicious on the default values of `localhost:7070`.
 
-When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user making an axios `GET` request call to the Azure Function. This axios call takes in the tenantID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenantID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: FrsConnectionConfig = useFrs ? {
