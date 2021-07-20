@@ -18,7 +18,7 @@ Fluid requires a backing service to enable collaborative communication. The `Frs
 
 NOTE: You can use one instance of the `FrsClient` to create/fetch multiple containers from the same FRS service instance.
 
-In the example below we will walk through both connecting to a a live FRS service instance by providing the tenantId and key that is uniquely generated for us when onboarding to the service, as well as using a tenantId of "local" for development purposes to run our application against Tinylicious. We make use of `FrsAzFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `FrsAzFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live FRS service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `FrsAzFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `FrsAzFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
@@ -48,10 +48,10 @@ When running against a live FRS instance, we can use the same interface as we do
 import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
 
 const config: FrsConnectionConfig = {
-    tenantId: "YOUR-TENANT-ID-HERE",
+    tenantId: "YOUR-TENANT-KEY-HERE",
     tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
-    orderer: "https://alfred.eus-1.canary.frs.azure.com",
-    storage: "https://historian.eus-1.canary.frs.azure.com",
+    orderer: "ENTER-ORDERER-URL-HERE",
+    storage: "ENTER-STORAGE-URL-HERE",
 };
 const frsClient = new FrsClient(config);
 ```

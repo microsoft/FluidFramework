@@ -45,18 +45,20 @@ Dice Roller uses the following distributed data structures:
 
 ## Backed Locally and running with live FRS instance
 
-We can connect to both live FRS instance by passing in the tenanID, orderer and storage as well as using the tenantID as "local" for running against Tinylicious for development purpose.
+We can connect to both live FRS instance by passing in the tenant ID, orderer and storage as well as using the tenant ID as "local" for running against Tinylicious for development purpose.
 
-For running the Tinylicious client, we pass the tenantID as "local" and make use of `InsecureTokenProvider` where we can pass anything into the key since we are running it locally and an object identifying the current user. For running the instance locally, it would get naviagted to the Tinylicious on the default values of `localhost:7070`.
+To run the the `FrsClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything since we are running it locally, and an object identifying the current user. For running the instance locally, the orderer and storage URLs would point to the Tinylicious instance on the default values of `http://localhost:7070`.
 
-When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenantID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
+"To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window"
+
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "YOUR-TENANT-ID-HERE",
+    tenantId: "YOUR-TENANT-KEY-HERE",
     tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
-    orderer: "https://alfred.eus-1.canary.frs.azure.com",
-    storage: "https://historian.eus-1.canary.frs.azure.com",
+    orderer: "ENTER-ORDERER-URL-HERE",
+    storage: "ENTER-STORAGE-URL-HERE",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
