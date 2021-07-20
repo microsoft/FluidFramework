@@ -73,15 +73,7 @@ The `FluidContainer` contains the Fluid data model and is service-agnostic. Any 
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
-`audience` provides two callbacks that will return `FrsMember` objects that have a user ID and user name:
-- `getMembers` returns a map of all the users connected to the container.
-- `getMyself` returns the current user on this client.
-
-Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients, `connections` here will hold multiple values for each client.
-
-`audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified.
-
-These callbacks and events can be combined to present a real-time view of the users in the current session.
+Let's take a look at how you can use the `audience` object to maintain an updated view of all the members currently in a container.
 
 ``` javascript
 const { audience } = containerServices;
@@ -105,6 +97,35 @@ const onAudienceChanged = () => {
 onAudienceChanged();
 audience.on("membersChanged", onAudienceChanged);
 ```
+
+`audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
+- `getMembers` returns a map of all the users connected to the container. These values will change anytime a member joins or leaves the container.
+- `getMyself` returns the current user on this client.
+
+`audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified. After any of these events fire, a new call to `getMembers` will return the updated member roster.
+
+A sample `FrsMember` object looks like the following:
+
+```json
+{
+  "userId": "0e662aca-9d7d-4ff0-8faf-9f8672b70f15",
+  "userName": "Test User",
+  "connections": [
+    {
+      "id": "c699c3d1-a4a0-4e9e-aeb4-b33b00544a71",
+      "mode": "write"
+    },
+    {
+      "id": "0e662aca-9d7d-4ff0-8faf-9f8672b70f15",
+      "mode": "write"
+    }
+  ]
+}
+```
+
+Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients.
+
+These functions and events can be combined to present a real-time view of the users in the current session.
 
 Every time the `membersChanged` event is sent, the new member roster is fetched and the view is updated accordingly.
 
