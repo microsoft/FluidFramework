@@ -153,11 +153,10 @@ export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats
     summarizeResult.stats.treeNodeCount++;
 }
 
-export async function getFluidDataStoreAttributesFromStorageOrSnapshot(
+export async function getFluidDataStoreAttributes(
     storage: IDocumentStorageService,
     snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
-    // Need to rip through snapshot.
     // Note: storage can be undefined in special case while detached.
     const attributes = storage !== undefined
         ? await readAndParse<ReadFluidDataStoreAttributes>(

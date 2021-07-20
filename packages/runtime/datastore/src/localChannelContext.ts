@@ -153,6 +153,7 @@ export class LocalChannelContext implements IChannelContext {
             this.services.value.objectStorage,
             ".attributes");
 
+        assert(this.factory === undefined, "Factory should be undefined before loading");
         this.factory = this.registry.get(attributes.type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${attributes.type} not registered`);

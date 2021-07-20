@@ -71,7 +71,7 @@ import {
     ReadFluidDataStoreAttributes,
     WriteFluidDataStoreAttributes,
     getAttributesFormatVersion,
-    getFluidDataStoreAttributesFromStorageOrSnapshot,
+    getFluidDataStoreAttributes,
 } from "./summaryFormat";
 
 function createAttributes(
@@ -697,7 +697,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
-            // Need to rip through snapshot and use that to populate extraBlobs
+            // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
                 await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
@@ -852,9 +852,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
         if (snapshot !== undefined) {
-            // Need to rip through snapshot.
+            // Get the dataStore attributes.
             // Note: storage can be undefined in special case while detached.
-            attributes = await getFluidDataStoreAttributesFromStorageOrSnapshot(this.storage, snapshot);
+            attributes = await getFluidDataStoreAttributes(this.storage, snapshot);
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
                 assert(snapshot !== undefined,
