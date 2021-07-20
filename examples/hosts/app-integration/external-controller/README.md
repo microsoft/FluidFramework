@@ -43,7 +43,7 @@ Dice Roller uses the following distributed data structures:
 
 - SharedDirectory - root
 
-### Backed Locally and running with live FRS instance
+## Backed Locally and running with live FRS instance
 
 We can connect to both live FRS instance by passing in the tenanID, orderer and storage as well as using the tenantID as "local" for running against Tinylicious for development purpose.
 
