@@ -37,7 +37,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { BlobCacheStorageService, buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
@@ -51,14 +51,7 @@ import {
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
-import {
-    dataStoreAttributesBlobName,
-    IContainerRuntimeMetadata,
-    nonDataStorePaths,
-    rootHasIsolatedChannels,
-    ReadFluidDataStoreAttributes,
-    getAttributesFormatVersion,
-} from "./summaryFormat";
+import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -117,32 +110,16 @@ export class DataStores implements IDisposable {
                     throw new Error("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value;
-                // Need to rip through snapshot.
-                const attributes = readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-                        snapshotTree.blobs,
-                        snapshotTree.blobs[dataStoreAttributesBlobName]);
-                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
-                // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
-                // However the feature of loading a detached container from snapshot, is added when the
-                // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
-                const formatVersion = getAttributesFormatVersion(attributes);
-                assert(formatVersion > 0,
-                    0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
-                const pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
-                    pkgFromSnapshot,
+                    undefined,
                     this.runtime,
                     this.runtime.storage,
                     this.runtime.scope,
                     this.getCreateChildSummarizerNodeFn(key, { type: CreateSummarizerNodeSource.FromSummary }),
                     (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
                     snapshotTree,
-                    // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
-                    // stores in older documents are not garbage collected incorrectly. This may lead to additional
-                    // roots in the document but they won't break.
-                    attributes.isRootDataStore ?? true,
+                    undefined,
                 );
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
