@@ -31,7 +31,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -69,7 +69,6 @@ import {
     IFluidDataStoreRuntime,
     IFluidDataStoreRuntimeEvents,
     IChannelFactory,
-    IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
     cloneGCData,
@@ -80,7 +79,7 @@ import {
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
-import { LocalChannelContext } from "./localChannelContext";
+import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
 export enum DataStoreMessageType {
@@ -170,7 +169,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
-    private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
+    private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
@@ -248,14 +247,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 let channelContext: IChannelContext;
                 // If already exists on storage, then create a remote channel. However, if it is case of rehydrating a
                 // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
-                // true. In this case create a LocalChannelContext.
+                // true. In this case create a RehydratedLocalChannelContext.
                 if (dataStoreContext.isLocalDataStore) {
-                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
-                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
-                    channelContext = new LocalChannelContext(
+                    channelContext = new RehydratedLocalChannelContext(
                         path,
                         this.sharedObjectRegistry,
-                        channelAttributes.type,
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
@@ -267,9 +263,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // the channel as attached. So mark it now. Otherwise add it to local channel context queue, so
                     // that it can be mark attached later with the data store.
                     if (dataStoreContext.attachState !== AttachState.Detached) {
-                        (channelContext as LocalChannelContext).markAttached();
+                        (channelContext as LocalChannelContextBase).markAttached();
                     } else {
-                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContext);
+                        this.localChannelContextQueue.set(path, channelContext as LocalChannelContextBase);
                     }
                 } else {
                     channelContext = new RemoteChannelContext(
@@ -382,8 +378,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address),
-            undefined);
+            (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -417,7 +412,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             // If our data store is local then add the channel to the queue
             if (!this.localChannelContextQueue.has(channel.id)) {
-                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
+                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
             }
         }
     }
@@ -518,7 +513,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         assert(!this.contexts.has(id),
                         0x17d, /* `Unexpected attach channel OP,
                             is in pendingAttach set: ${this.pendingAttach.has(id)},
-                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContext}` */);
+                            is local channel contexts: ${this.contexts.get(id) instanceof LocalChannelContextBase}` */);
 
                         const flatBlobs = new Map<string, ArrayBufferLike>();
                         const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -738,7 +733,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Craft the .attributes file for each shared object
         for (const [contextId, context] of this.contexts) {
-            if (!(context instanceof LocalChannelContext)) {
+            if (!(context instanceof LocalChannelContextBase)) {
                 throw new Error("Should only be called with local channel handles");
             }
 
@@ -821,7 +816,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.submit(DataStoreMessageType.Attach, message);
         }
 
-        const context = this.contexts.get(channel.id) as LocalChannelContext;
+        const context = this.contexts.get(channel.id) as LocalChannelContextBase;
         context.markAttached();
     }
 
