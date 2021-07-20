@@ -33,7 +33,7 @@ import { ChannelStorageService } from "./channelStorageService";
 /**
  * Channel context for a locally created channel
  */
-class LocalChannelContextBase implements IChannelContext {
+export abstract class LocalChannelContextBase implements IChannelContext {
     public channel: IChannel | undefined;
     private attached = false;
     protected readonly pending: ISequencedDocumentMessage[] = [];
