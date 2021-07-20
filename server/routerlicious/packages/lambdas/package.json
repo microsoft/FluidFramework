@@ -53,6 +53,7 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1028.0",
     "@fluidframework/server-services-core": "^0.1028.0",
+    "@fluidframework/server-services-telemetry": "^0.1028.0",
     "@types/semver": "^6.0.1",
     "async": "^3.2.0",
     "axios": "^0.21.1",
