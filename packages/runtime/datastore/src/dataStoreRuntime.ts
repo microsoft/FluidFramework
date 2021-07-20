@@ -197,7 +197,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        existing: boolean,
+        public readonly existing: boolean,
     ) {
         super();
 
