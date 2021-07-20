@@ -43,12 +43,15 @@ export interface ISnapshotCacheValue {
     sequenceNumber: number | undefined;
 }
 
-export interface ISnapshotCacheValueV2 {
+export interface ISnapshotValue {
     snapshotTree: ISnapshotTree,
     blobs: Map<string, ArrayBuffer>,
     ops: ISequencedDeltaOpMessage[],
     sequenceNumber: number | undefined,
-    version: 2,
+}
+
+export interface ISnapshotCacheValueWithVersion extends ISnapshotValue {
+    version: number,
 }
 
 export interface IOdspResponse<T> {

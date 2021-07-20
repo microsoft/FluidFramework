@@ -23,7 +23,8 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
-    ISnapshotCacheValueV2,
+    ISnapshotCacheValueWithVersion,
+    ISnapshotValue,
 } from "./odspUtils";
 import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
 
@@ -43,7 +44,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
-): Promise<ISnapshotCacheValueV2> {
+): Promise<ISnapshotValue> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
 
@@ -77,7 +78,7 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
-): Promise<ISnapshotCacheValueV2> {
+): Promise<ISnapshotValue> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -147,7 +148,7 @@ async function fetchLatestSnapshotCore(
     logger: ITelemetryLogger,
     snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-): Promise<ISnapshotCacheValueV2> {
+): Promise<ISnapshotValue> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
             // This is the most critical code path for boot.
@@ -276,7 +277,7 @@ async function fetchLatestSnapshotCore(
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value: snapshot,
+                        value: { ...snapshot, version: 2 } as ISnapshotCacheValueWithVersion,
                         fluidEpoch,
                         version: 2,
                     };

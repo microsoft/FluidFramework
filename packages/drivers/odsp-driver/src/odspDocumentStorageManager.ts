@@ -39,7 +39,7 @@ import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     ISnapshotCacheValue,
-    ISnapshotCacheValueV2,
+    ISnapshotValue,
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -411,12 +411,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-            const odspSnapshotCacheValue: ISnapshotCacheValueV2 = await PerformanceEvent.timedExecAsync(
+            const odspSnapshotCacheValue: ISnapshotValue = await PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotCacheValue | ISnapshotCacheValueV2 | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotCacheValue | ISnapshotCacheValueV2 | undefined> =
+                    let cachedSnapshot: ISnapshotCacheValue | ISnapshotValue | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotCacheValue | ISnapshotValue | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;
@@ -449,11 +449,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     event.end({ method });
                     // If the cached snapshot value does not contains version, then it means it if of older(IOdspSnapshot)
                     // format. So convert it to ISnapshotTree/blobs etc.
-                    if (!(cachedSnapshot as any).version) {
+                    if (method === "cache" && !(cachedSnapshot as any).version) {
                         const oldformatSnapshot = cachedSnapshot as ISnapshotCacheValue;
                         return convertOdspSnapshotToSnapsohtTreeAndBlobs(oldformatSnapshot.snapshot);
                     }
-                    return cachedSnapshot as ISnapshotCacheValueV2;
+                    return cachedSnapshot as ISnapshotValue;
                 });
 
             // Successful call, redirect future calls to getVersion only!
