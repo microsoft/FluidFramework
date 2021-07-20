@@ -45,14 +45,18 @@ Dice Roller uses the following distributed data structures:
 
 ### Backed Locally and running with live FRS instance
 
-When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. Each tenant ID maps to a tenant key secret that can be passed to the `FrsAzFunctionTokenProvider` to generate and sign the token such that the service will accept it. For running the instance locally, it would get naviagted to the Tinylicious on the default values of `localhost:7070`.
+We can connect to both live FRS instance by passing in the tenanID, orderer and storage as well as using the tenantID as "local" for running against Tinylicious for development purpose.
+
+For running the Tinylicious client, we pass the tenantID as "local" and make use of `InsecureTokenProvider` where we can pass anything into the key since we are running it locally and an object identifying the current user. For running the instance locally, it would get naviagted to the Tinylicious on the default values of `localhost:7070`.
+
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user making an axios `GET` request call to the Azure Function. This axios call takes in the tenantID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "",
-    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
-    orderer: "",
-    storage: "",
+    tenantId: "YOUR-TENANT-ID-HERE",
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
+    orderer: "https://alfred.eus-1.canary.frs.azure.com",
+    storage: "https://historian.eus-1.canary.frs.azure.com",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
@@ -60,4 +64,4 @@ const connectionConfig: FrsConnectionConfig = useFrs ? {
     storage: "http://localhost:7070",
 };
 ```
-In this way, we can toggle between remote and local mode using the same config format.
+In this way, we can toggle between remote and local mode using the same config format. We make use of `FrsAzFunctionTokenProvider` for running against live FRS instance since it is more secured, without exposing the tenant secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
