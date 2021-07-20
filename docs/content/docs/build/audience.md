@@ -1,5 +1,5 @@
 ---
-title: User Presence and Audience
+title: User presence and audience
 menuPosition: 5
 editor: tylerbutler
 ---
@@ -22,7 +22,7 @@ const audience = containerServices.audience;
 
 {{% callout tip %}}
 
-The backing container controls the audience by adding and removing members as part of processing ops (see [Total Order Broadcast & Eventual Consistency](./../deep/tob.md)).  This means audience members will be reflective of the container's processed ops rather than live information from the service, and delays in op processing may also produce audience de-syncs.
+The backing container controls the audience by adding and removing members as part of processing ops (see [Total Order Broadcast & Eventual Consistency]({{< relref tob.md >}})).  This means audience membership reflects the container's processed ops rather than live information from the service, and delays in op processing may also produce outdated audience information.
 
 {{% /callout %}}
 
@@ -41,11 +41,11 @@ An `IMember` represents a single user identity.  `IMember` holds a list of `ICon
 
 {{% callout tip %}}
 
-Connections can be short-lived and are not reused - a client that disconnects from the container and immediately reconnects will receive an entirely new connection.  The audience will reflect this as a member leaving and a member joining.
+Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection.  The audience will reflect this as a member leaving and a member joining.
 
 {{% /callout %}}
 
-### Service-Specifics
+### Service-specific audience data
 
 The `ServiceAudience` class represents the base audience implementation, and individual services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
 
@@ -59,7 +59,7 @@ export interface TinyliciousMember extends IMember {
 
 #### getMembers
 
-The `getMembers` method returns a map of the audience's current members.  The map is keyed on user IDs (the same as the `IMember.userId` property), and values are the `IMember` for that user ID.  You can further query the individual `IMember`s for its client connections.
+The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  You can further query the individual `IMember`s for its client connections.
 
 {{% callout tip %}}
 
@@ -101,18 +101,20 @@ The `memberRemoved` event is emitted whenver an externally visible member or cli
 
 ### Data Management and Inter-User Communication
 
-While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own.  Your specific scenario will involve working with additional user data, which falls into a combination of the following three categories.
+While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own.  Building compelling presence features will involve working with additional user data. This data typically fits into one or more of the categories below.
 
-#### Unshared Data
+#### Unshared data
 
-Not all presence scenarios will require sharing data among users - the data could be generated locally or fetched from an external service.  Consider the scenario where you want to display the connected users with a profile picture and a color border.  If you retrieve a user's profile picture from your service and assign each user a color based on a hash of their ID, you will have the desired data on other users without needing to communicate with them.
+In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If you retrieve a user's profile picture from your user metadata service and assign each user a color based on a hash of their user ID, you will have the desired data on other users without needing to communicate with them.
 
 #### Shared Persisted Data
 
-Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members.  Some of those scenarios will require you to save data for each user for future sessions.  Consider if you want to display how long each user has spent in your application.  An active user's time should tick up, pause when they disconnect, and resume once they reconnect.  You may choose to use a `SharedMap` with a `SharedCounter` as the value onto which each user will increment their time spent every minute (also see [Introducing Distributed Data Structures](./dds.md)).  All other connected users will then receive changes to that map automatically.  Your UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
+Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members.  Some of those scenarios will require you to save data for each user for future sessions.  For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
 
-#### Shared Transient Data
+One option is to use a `SharedMap` with a `SharedCounter` as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
 
-Many presence scenarios involve data that are short-lived and do not need to be persisted.  Consider if you want to display where each user has selected in your UI.  Each user will need to tell other users their own information, and users do not care about past users.
+#### Shared transient data
 
-From a data storage and communication perspective, you can accomplish this using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals](./where/does/this/article/go.md) are designed for sending transient data and would be more appropriate in this situation.  You can broadcast a signal containing your selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data is discarded.
+Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display where each user has selected in your UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data is irrelevant.
+
+You can address this scenario using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation.  Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data is discarded.
