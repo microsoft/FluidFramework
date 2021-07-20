@@ -130,7 +130,7 @@ describe("Runtime", () => {
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
                     {
-                        generateSummary: async (options) => {
+                        submitSummary: async (options) => {
                             runCount++;
 
                             const { fullTree = false, refreshLatestAck = false } = options;

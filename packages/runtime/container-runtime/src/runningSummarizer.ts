@@ -42,7 +42,7 @@ export class RunningSummarizer implements IDisposable {
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
         internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         raiseSummarizingError: (description: string) => void,
@@ -85,7 +85,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         private readonly internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private readonly raiseSummarizingError: (description: string) => void,

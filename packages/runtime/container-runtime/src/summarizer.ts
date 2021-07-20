@@ -24,8 +24,8 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-    GenerateSummaryResult,
-    IGenerateSummaryOptions,
+    SubmitSummaryResult,
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerRuntime,
@@ -197,7 +197,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
+            this /* Pick<ISummarizerInternalsProvider, "submitSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
             { /** Initial summary attempt */
                 refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
@@ -259,9 +259,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return this.runtime.nextSummarizerD.promise;
     }
 
-    /** Implementation of SummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult> {
-        const result = this.internalsProvider.generateSummary(options);
+    /** Implementation of SummarizerInternalsProvider.submitSummary */
+    public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+        const result = this.internalsProvider.submitSummary(options);
 
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
