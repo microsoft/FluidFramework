@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -157,12 +157,8 @@ export async function getFluidDataStoreAttributes(
     storage: IDocumentStorageService,
     snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
-    // Note: storage can be undefined in special case while detached.
-    const attributes = storage !== undefined
-        ? await readAndParse<ReadFluidDataStoreAttributes>(
-            storage, snapshot.blobs[dataStoreAttributesBlobName])
-        : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-            snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
+    const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
+        storage, snapshot.blobs[dataStoreAttributesBlobName]);
     // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
     // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
     // However the feature of loading a detached container from snapshot, is added when the
