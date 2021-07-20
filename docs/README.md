@@ -207,7 +207,9 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
 | `build:diagrams` | Generate the diagram images using ditaa. |
+| `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and interation. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:uber-package` | `node ../rollup-api-json.js ../_api-extractor-temp/doc-models` |
 | `clean` | Remove all generated files. |
 | `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
