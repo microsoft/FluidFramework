@@ -55,7 +55,7 @@ When running the live FRS Instance, we would require the tenant ID, orderer and 
 
 ```typescript
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "YOUR-TENANT-KEY-HERE",
+    tenantId: "YOUR-TENANT-ID-HERE",
     tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
