@@ -1,4 +1,4 @@
-# Fluid
+# root
 
 The Fluid Framework is a library for building distributed, real-time collaborative web
 applications using JavaScript or TypeScript.
@@ -168,3 +168,9 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks). Use of
 Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft
 sponsorship.
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

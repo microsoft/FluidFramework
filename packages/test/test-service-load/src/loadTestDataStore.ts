@@ -60,7 +60,7 @@ class LoadTestDataStoreModel {
             }
 
             const opListener = () => {
-                if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
+                if (runtime.deltaManager.lastSequenceNumber >= lastKnownSeq) {
                     runtime.deltaManager.off("op", opListener);
                     runtime.off("dispose", disposeListener);
                     resolve();

@@ -15,4 +15,5 @@ export interface ILoadTestConfig {
     numClients: number,
     totalSendCount: number,
     readWriteCycleMs: number,
+    noFaultInjection?: boolean,
 }
