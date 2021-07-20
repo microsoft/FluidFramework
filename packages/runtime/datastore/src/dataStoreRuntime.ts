@@ -79,7 +79,7 @@ import {
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
-import { LocalChannelContext } from "./localChannelContext";
+import { LocalChannelContext, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
 export enum DataStoreMessageType {
@@ -249,10 +249,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
                 // true. In this case create a LocalChannelContext.
                 if (dataStoreContext.isLocalDataStore) {
-                    channelContext = new LocalChannelContext(
+                    channelContext = new RehydratedLocalChannelContext(
                         path,
                         this.sharedObjectRegistry,
-                        undefined,
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
@@ -379,8 +378,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.dataStoreContext,
             this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address),
-            undefined);
+            (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
