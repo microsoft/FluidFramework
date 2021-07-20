@@ -14,12 +14,28 @@ import {
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
-export const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): something is T => {
-    if (something === undefined) {
-        return false;
-    }
-    return (something as IPromiseTimerResult).timerResult === undefined;
+export type RaceTimerResult<T> = {
+    readonly result: IPromiseTimerResult["timerResult"];
+} | {
+    readonly result: "timeoutError" | "error";
+    readonly error: any;
+} | {
+    readonly result: "done";
+    readonly value: T;
 };
+export const raceTimer = async <T>(
+    p: Promise<T>,
+    timer: Promise<IPromiseTimerResult>,
+): Promise<RaceTimerResult<T>> => Promise.race([
+    p.then(
+        (value) => ({ result: "done", value } as const),
+        (error) => ({ result: "timeoutError", error } as const),
+    ),
+    timer.then(
+        (result) => ({ result: result.timerResult } as const),
+        (error) => ({ result: "error", error } as const),
+    ),
+]);
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -329,14 +345,15 @@ export class SummaryGenerator {
         }
 
         try {
-            const pendingTimeoutP = this.pendingAckTimer.start().catch(() => undefined);
+            const pendingTimeoutP = this.pendingAckTimer.start();
             const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
             // Wait for broadcast
-            const summarizeOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
-            if (!checkNotTimeout(summarizeOp)) {
+            const waitBroadcastResult = await raceTimer(summary.waitBroadcast(), pendingTimeoutP);
+            if (waitBroadcastResult.result !== "done") {
                 return fail("summaryOpWaitTimeout");
             }
+            const summarizeOp = waitBroadcastResult.value;
 
             const broadcastDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
             this.heuristics.lastAttempted.summarySequenceNumber = summarizeOp.sequenceNumber;
@@ -349,32 +366,33 @@ export class SummaryGenerator {
             });
 
             // Wait for ack/nack
-            const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
-            if (!checkNotTimeout(ackNack)) {
+            const waitAckNackResult = await raceTimer(summary.waitAckNack(), pendingTimeoutP);
+            if (waitAckNackResult.result !== "done") {
                 return fail("summaryAckWaitTimeout");
             }
+            const ackNackOp = waitAckNackResult.value;
             this.pendingAckTimer.clear();
 
             // Update for success/failure
             const ackNackDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
             const telemetryProps: Record<string, number> = {
                 timeWaiting: ackNackDuration,
-                sequenceNumber: ackNack.sequenceNumber,
-                summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
+                sequenceNumber: ackNackOp.sequenceNumber,
+                summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
             };
-            if (ackNack.type === MessageType.SummaryAck) {
+            if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristics.ackLastSent();
-                summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
+                summarizeEvent.end({ ...telemetryProps, handle: ackNackOp.contents.handle, message: "summaryAck" });
                 return { success: true };
             } else {
                 // TODO: cast needed until dep on protocol-definitions version bump
-                const summaryNack = ackNack.contents as ISummaryNack & Partial<{
+                const summaryNack = ackNackOp.contents as ISummaryNack & Partial<{
                     message: string;
                     retryAfter: number;
                 }>;
                 return fail(
                     "summaryNack",
-                    summaryNack.message ?? ackNack.contents.errorMessage,
+                    summaryNack.message ?? summaryNack.errorMessage,
                     telemetryProps,
                     summaryNack.retryAfter,
                 );

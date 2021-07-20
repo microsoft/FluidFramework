@@ -18,8 +18,8 @@ import {
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
-    checkNotTimeout,
     ISummaryAttempt,
+    raceTimer,
     SummarizeReason,
     SummarizerHeuristics,
     SummaryGenerator,
@@ -227,21 +227,21 @@ export class RunningSummarizer implements IDisposable {
 
     private async waitStart() {
         // Wait no longer than ack timeout for all pending
-        const maybeLastAck = await Promise.race([
+        const waitStartResult = await raceTimer(
             this.summaryWatcher.waitFlushed(),
             this.pendingAckTimer.start(),
-        ]);
+        );
         this.pendingAckTimer.clear();
 
         // Remove pending ack wait timeout by op timestamp comparison, because
         // it has race conditions with summaries submitted by this same client.
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
-        if (checkNotTimeout(maybeLastAck)) {
+        if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
             this.heuristics.initialize({
-                refSequenceNumber: maybeLastAck.summaryOp.referenceSequenceNumber,
-                summaryTime: maybeLastAck.summaryOp.timestamp,
-                summarySequenceNumber: maybeLastAck.summaryOp.sequenceNumber,
+                refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
+                summaryTime: waitStartResult.value.summaryOp.timestamp,
+                summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
     }
