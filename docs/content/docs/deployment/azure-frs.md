@@ -32,6 +32,8 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 # Managing containers
 
+##  Token Providers
+
 The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
 
 - A _container config_ that defines the ID of the container and an optional entry point for logging.
