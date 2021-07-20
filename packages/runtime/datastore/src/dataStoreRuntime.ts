@@ -105,8 +105,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
-     * @param activeCallback - The callback called when the data store runtime in active
-     * @param dataStoreRegistry - The registry of data store created and used by this data store
      * @param existing - If loading from an existing file.
      */
     public static load(
@@ -114,8 +112,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing?: boolean,
     ): FluidDataStoreRuntime {
-        const loadExisting = existing === true || context.existing === true;
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, loadExisting);
+        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
     }
 
     public get IFluidRouter() { return this; }
@@ -180,6 +177,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public readonly documentId: string;
     public readonly id: string;
+    public existing: boolean;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
@@ -197,7 +195,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        public readonly existing: boolean,
+        existing?: boolean,
     ) {
         super();
 
@@ -209,6 +207,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         );
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
+        this.existing = existing === undefined
+            ? dataStoreContext.existing === true
+            : existing;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
@@ -299,6 +300,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
+        const loadExisting = existing === true || context.existing === true;
         // If exists on storage or loaded from a snapshot, it should already be binded.
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;

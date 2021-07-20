@@ -5,13 +5,19 @@
 
 import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import {
+    IContainerRuntimeBase,
+    IGarbageCollectionData,
+    IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
 describe("FluidDataStoreRuntime Tests", () => {
     let dataStoreContext: MockFluidDataStoreContext;
     let sharedObjectRegistry: ISharedObjectRegistry;
+    const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
+        FluidDataStoreRuntime.load(context, registry);
 
     beforeEach(() => {
         dataStoreContext = new MockFluidDataStoreContext();
@@ -29,7 +35,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         let failed: boolean = false;
         let dataStoreRuntime: FluidDataStoreRuntime | undefined;
         try {
-            dataStoreRuntime = new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry);
+            dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
         } catch (error) {
             failed = true;
         }
@@ -38,7 +44,7 @@ describe("FluidDataStoreRuntime Tests", () => {
     });
 
     it("can summarize an empty data store runtime", async () => {
-        const dataStoreRuntime = new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry);
+        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
         const summarizeResult = await dataStoreRuntime.summarize(true, false);
         assert(summarizeResult.summary.type === SummaryType.Tree, "Data store runtime did not return a summary tree");
         assert(Object.keys(summarizeResult.summary.tree).length === 0, "The summary should be empty");
@@ -49,7 +55,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         const expectedGCData: IGarbageCollectionData = {
             gcNodes: { "/": [] },
         };
-        const dataStoreRuntime = new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry);
+        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
         const gcData = await dataStoreRuntime.getGCData();
         assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
     });
