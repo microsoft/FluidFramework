@@ -10,17 +10,17 @@
  */
 
 var lazyLoadedProperties = {
-  PropertyFactory: undefined,
-  ContainerProperty: undefined,
-  ArrayProperty: undefined,
-  EnumArrayProperty: undefined,
-  ReferenceProperty: undefined,
-  StringProperty: undefined,
-  ValueProperty: undefined,
-  ValueMapProperty: undefined,
-  ReferenceMapProperty: undefined,
-  NodeProperty: undefined,
-  IndexedCollectionBaseProperty: undefined,
+    PropertyFactory: undefined,
+    ContainerProperty: undefined,
+    ArrayProperty: undefined,
+    EnumArrayProperty: undefined,
+    ReferenceProperty: undefined,
+    StringProperty: undefined,
+    ValueProperty: undefined,
+    ValueMapProperty: undefined,
+    ReferenceMapProperty: undefined,
+    NodeProperty: undefined,
+    IndexedCollectionBaseProperty: undefined,
 };
 
 module.exports = lazyLoadedProperties;
