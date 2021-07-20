@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/sharejs-json1";
-export const pkgVersion = "0.42.4";
+export const pkgVersion = "0.42.5";
