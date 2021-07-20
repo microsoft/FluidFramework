@@ -15,7 +15,12 @@ The steps below assume you are onboarded to Azure Fluid Relay service. Azure Flu
 
 # Connecting to the Service
 
-To connect to our FRS instance, we first need to instaniate our `FrsClient`. This takes in, as configuration parameters, the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. It also requires a token provider to generate the JWT token that will be used to authorize the current user against the service. The `InsecureTokenProvider` should only be used for testing purposes as it exposes the tenant key secret in your client-side code bundle. This should be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key. 
+To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `frs-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
+
+{{< callout danger >}}
+The `InsecureTokenProvider` should only be used for development purposes because **using it exposes the tenant key secret in your client-side code bundle.** This must be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key.
+{{< /callout >}}
+
 
 ```javascript
 const config = {
