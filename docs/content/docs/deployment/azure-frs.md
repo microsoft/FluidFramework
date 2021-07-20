@@ -59,9 +59,9 @@ const { fluidContainer, containerServices } = await frsClient.getContainer({ id:
 
 The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container `id`.
 
-For the further information on how to start recording logs being emitted by Fluid, please see [Telemetry](../testing/telemetry.md)
+For the further information on how to start recording logs being emitted by Fluid, please see [Telemetry]({{< relref "telemetry.md" >}})
 
-The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling](../build/data-modeling.md) to learn more about how to establish the schema and use the `FluidContainer` object.
+The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `FluidContainer` object.
 
 # Getting Audience Details
 
