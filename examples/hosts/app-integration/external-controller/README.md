@@ -42,3 +42,22 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 Dice Roller uses the following distributed data structures:
 
 - SharedDirectory - root
+
+### Backed Locally and running with live FRS instance
+
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. Each tenant ID maps to a tenant key secret that can be passed to the `FrsAzFunctionTokenProvider` to generate and sign the token such that the service will accept it. For running the instance locally, it would get naviagted to the Tinylicious on the default values of `localhost:7070`.
+
+```typescript
+const connectionConfig: FrsConnectionConfig = useFrs ? {
+    tenantId: "",
+    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
+    orderer: "",
+    storage: "",
+} : {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
+```
+In this way, we can toggle between remote and local mode using the same config format.
