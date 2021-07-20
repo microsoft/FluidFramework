@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
-import { ISummaryConfiguration, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration, ISummaryNack, MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     GenerateSummaryResult,
@@ -226,12 +226,12 @@ export class SummaryGenerator {
     public async summarize(
         reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): Promise<boolean> {
+    ): Promise<{ success: true; } | { success: false; retryDelaySeconds?: number ;}> {
         ++this.summarizeCount;
         if (this.summarizing !== undefined) {
             // We do not expect this case. Log the error and let it try again anyway.
             this.logger.sendErrorEvent({ eventName: "ConcurrentSummarizeAttempt", reason });
-            return false;
+            return { success: false };
         }
 
         // GenerateSummary could take some time
@@ -242,7 +242,7 @@ export class SummaryGenerator {
             return this.summarizeCore(reason, options);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
-            return false;
+            return { success: false };
         } finally {
             this.summarizing?.resolve();
             this.summarizing = undefined;
@@ -252,7 +252,7 @@ export class SummaryGenerator {
     private async summarizeCore(
         reason: SummarizeReason,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
-    ): Promise<boolean> {
+    ): Promise<{ success: true; } | { success: false; retryDelaySeconds?: number ;}> {
         const { refreshLatestAck, fullTree } = options;
         const summarizeEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarize",
@@ -267,10 +267,11 @@ export class SummaryGenerator {
             message: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
-        ): false => {
+            retryDelaySeconds?: number,
+        ) => {
             this.raiseSummarizingError(summarizeErrors[message]);
             summarizeEvent.cancel({ ...properties, message }, error);
-            return false;
+            return { success: false, retryDelaySeconds };
         };
 
         // Wait to generate and send summary
@@ -364,12 +365,18 @@ export class SummaryGenerator {
             if (ackNack.type === MessageType.SummaryAck) {
                 this.heuristics.ackLastSent();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
-                return true;
+                return { success: true };
             } else {
+                // TODO: cast needed until dep on protocol-definitions version bump
+                const summaryNack = ackNack.contents as ISummaryNack & Partial<{
+                    message: string;
+                    retryAfter: number;
+                }>;
                 return fail(
                     "summaryNack",
-                    ackNack.contents.errorMessage,
+                    summaryNack.message ?? ackNack.contents.errorMessage,
                     telemetryProps,
+                    summaryNack.retryAfter,
                 );
             }
         } finally {
