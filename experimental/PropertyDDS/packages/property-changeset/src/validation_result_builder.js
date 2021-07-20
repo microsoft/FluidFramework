@@ -14,31 +14,31 @@
  * @constructor
  */
 var ValidationResultBuilder = function(in_typeid) {
-  this._result = {
-    isValid: true,
-    errors: [],
-    warnings: [],
-    resolvedTypes: [],
-    unresolvedTypes: []
-  };
+    this._result = {
+        isValid: true,
+        errors: [],
+        warnings: [],
+        resolvedTypes: [],
+        unresolvedTypes: []
+    };
 
-  if (in_typeid) {
-    this._result.typeid = in_typeid;
-  }
-
-  /**
-   * Fetches the validation result. Example: {
-   *   isValid: false,
-   *   errors: ['Something went wrong. Validation failed.'],
-   *   warnings: ['A non-fatal warning'],
-   *   typeid: 'SomeNamespace:PointID-1.0.0'
-   * }
-   */
-  Object.defineProperty(this, 'result', {
-    get: function() {
-      return this._result;
+    if (in_typeid) {
+        this._result.typeid = in_typeid;
     }
-  });
+
+    /**
+     * Fetches the validation result. Example: {
+     *   isValid: false,
+     *   errors: ['Something went wrong. Validation failed.'],
+     *   warnings: ['A non-fatal warning'],
+     *   typeid: 'SomeNamespace:PointID-1.0.0'
+     * }
+     */
+    Object.defineProperty(this, 'result', {
+        get: function() {
+            return this._result;
+        }
+    });
 };
 
 /**
@@ -46,11 +46,11 @@ var ValidationResultBuilder = function(in_typeid) {
  * @param {Error} in_error An Error instance.
  */
 ValidationResultBuilder.prototype.addError = function(in_error) {
-  this._result.isValid = false;
-  // remove empty error messages before logging.
-  if (in_error.message) {
-    this._result.errors.push(in_error);
-  }
+    this._result.isValid = false;
+    // remove empty error messages before logging.
+    if (in_error.message) {
+        this._result.errors.push(in_error);
+    }
 };
 
 /**
@@ -58,7 +58,7 @@ ValidationResultBuilder.prototype.addError = function(in_error) {
  * @param {string} in_msg A warning description.
  */
 ValidationResultBuilder.prototype.addWarning = function(in_msg) {
-  this._result.warnings.push(in_msg);
+    this._result.warnings.push(in_msg);
 };
 
 /**
@@ -67,7 +67,7 @@ ValidationResultBuilder.prototype.addWarning = function(in_msg) {
  *   this value.
  */
 ValidationResultBuilder.prototype.isValid = function() {
-  return this._result.isValid;
+    return this._result.isValid;
 };
 
 module.exports = ValidationResultBuilder;

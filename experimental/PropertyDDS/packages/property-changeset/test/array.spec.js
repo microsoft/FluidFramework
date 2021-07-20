@@ -13,17 +13,18 @@ const { last } = require('lodash');
 
 describe('Array Operations', function() {
     let guidCounter = 1;
+
     function generateNamedEntities(count, offsets, type) {
         return _.range(count).map((i) => {
             let offsetShift = offsets !== undefined ? offsets.shift() : undefined;
             let id = offsetShift !== undefined ? guidCounter - offsetShift : guidCounter++;
             if (type === undefined) {
-            return {
-                String: {
-                    guid: "00000000-0000-0000-0000-" + ("000000000000" + id).substr(-12),
-                },
-                typeid: "test:namedEntry-1.0.0",
-            };
+                return {
+                    String: {
+                        guid: "00000000-0000-0000-0000-" + ("000000000000" + id).substr(-12),
+                    },
+                    typeid: "test:namedEntry-1.0.0",
+                };
             } else if (type === 'number') {
                 return id;
             }
@@ -58,13 +59,19 @@ describe('Array Operations', function() {
         // in between. Those two removes must not be merged when applying the two changesets
         // as otherwise overlapping ranges would be created in the result, which are not allowed
         // by the spec
-         const op1 = createArrayCS({
-            insert: [[1, generateNamedEntities(3)]],
-            remove: [[1, generateNamedEntities(1)]]
+        const op1 = createArrayCS({
+            insert: [
+                [1, generateNamedEntities(3)]
+            ],
+            remove: [
+                [1, generateNamedEntities(1)]
+            ]
         });
 
         const op2 = createArrayCS({
-            remove: [[0, generateNamedEntities(2)]],
+            remove: [
+                [0, generateNamedEntities(2)]
+            ],
         });
 
         const result = new ChangeSet(op1);
@@ -81,12 +88,18 @@ describe('Array Operations', function() {
 
     it("Rebasing with a base changeset containing adjacent removes and inserts", () => {
         const base = createArrayCS({
-            insert: [[1, generateNamedEntities(3)]],
-            remove: [[0, generateNamedEntities(1)]]
+            insert: [
+                [1, generateNamedEntities(3)]
+            ],
+            remove: [
+                [0, generateNamedEntities(1)]
+            ]
         });
 
         const rebaseCS = createArrayCS({
-            insert: [[0, generateNamedEntities(1)]],
+            insert: [
+                [0, generateNamedEntities(1)]
+            ],
         });
 
         let conflicts = [];
@@ -103,21 +116,27 @@ describe('Array Operations', function() {
         expect(rebaseCS.modify["array<test:namedEntry-1.0.0>"].array.insert[0][0]).to.equal(0);
     });
 
-    for (const i of [0, 3]) {
+    for (const i of[0, 3]) {
         it(`Rebasing an insert behind a remove insert base changeset with insert position ${i}`, () => {
             const base = createArrayCS({
-                insert: [[i, generateNamedEntities(3)]],
-                remove: [[0, generateNamedEntities(3)]]
+                insert: [
+                    [i, generateNamedEntities(3)]
+                ],
+                remove: [
+                    [0, generateNamedEntities(3)]
+                ]
             });
             const rebaseCS = createArrayCS({
-                insert: [[0, generateNamedEntities(1)]],
+                insert: [
+                    [0, generateNamedEntities(1)]
+                ],
             });
 
             let originalRebaseCS = _.cloneDeep(rebaseCS);
             let conflicts = [];
             let applyAfterMetaInformation = new Map();
             const CS = new ChangeSet(base);
-            CS._rebaseChangeSet(rebaseCS, conflicts, {applyAfterMetaInformation});
+            CS._rebaseChangeSet(rebaseCS, conflicts, { applyAfterMetaInformation });
 
             // Whether the insert in the rebaseCS is moved depends on the insert in the base CS. If the base CS
             // is the result of an I(3, 3) followed by a R(0,3), it would not be moved since the insert in the baseCS
@@ -128,7 +147,7 @@ describe('Array Operations', function() {
             let combinedCS = new ChangeSet(originalRebaseCS);
             combinedCS._toInverseChangeSet()
             combinedCS.applyChangeSet(base);
-            combinedCS.applyChangeSet(rebaseCS, {applyAfterMetaInformation});
+            combinedCS.applyChangeSet(rebaseCS, { applyAfterMetaInformation });
 
             let finalCs = combinedCS.getSerializedChangeSet();
             // The insert above should cancel out. If the original insert was at position 0, we moved the rebased
@@ -140,12 +159,18 @@ describe('Array Operations', function() {
     }
 
     it("Inserts should happen at the beginning of a remove range", () => {
-        const op1 = createArrayCS( {
-            "insert": [ [1, generateNamedEntities(3) ]],
-            "remove": [ [1, generateNamedEntities(1) ]]
+        const op1 = createArrayCS({
+            "insert": [
+                [1, generateNamedEntities(3)]
+            ],
+            "remove": [
+                [1, generateNamedEntities(1)]
+            ]
         });
-        const op2 = createArrayCS( {
-            "insert": [ [4, generateNamedEntities(2) ]]
+        const op2 = createArrayCS({
+            "insert": [
+                [4, generateNamedEntities(2)]
+            ]
         });
 
         let combinedCS = new ChangeSet(op1);
@@ -195,16 +220,16 @@ describe('Array Operations', function() {
     }
 
     function runTestApplyingReverseAndRebasedChangesetForIndependentModifications(baseInsertPositions,
-                                                                                  rebasedInsertPositions,
-                                                                                  baseOperation = "insert",
-                                                                                  baseCount = 1) {
+        rebasedInsertPositions,
+        baseOperation = "insert",
+        baseCount = 1) {
         let counter = 0;
+
         function createInserts(positions, count) {
             return positions.map((x) => [
                 x,
                 generateNamedEntities(count)
-              ]
-            );
+            ]);
         }
 
         let baseChangeSet = createArrayCS({
@@ -234,12 +259,12 @@ describe('Array Operations', function() {
     }
 
     describe("Rebase test applying the reverse, base and then rebased changeset", () => {
-        for (let basePositions of [
-            [0], [1], [2], [5], [13], [0, 2], [0, 5], [0, 5, 13]
-        ]) {
-            for (let rebasePositions of [
-                [0], [1], [5, 9], [5, 9 , 12]
+        for (let basePositions of[
+                [0], [1], [2], [5], [13], [0, 2], [0, 5], [0, 5, 13]
             ]) {
+            for (let rebasePositions of[
+                    [0], [1], [5, 9], [5, 9, 12]
+                ]) {
                 it(`with base positions ${basePositions} and rebase positions ${rebasePositions}`, () => {
                     runTestApplyingReverseAndRebasedChangesetForIndependentModifications(
                         basePositions,
@@ -253,8 +278,7 @@ describe('Array Operations', function() {
     describe("Rebase test applying the reverse, base and then rebased changeset2", () => {
         it(`with removes in the base`, () => {
             runTestApplyingReverseAndRebasedChangesetForIndependentModifications(
-                [0],
-                [2],
+                [0], [2],
                 "remove",
                 2
             );
@@ -299,133 +323,357 @@ describe('Array Operations', function() {
 
     describe("Rebase Distributivity", () => {
         describe("Multiple inserts in a remove range", () => {
-            for (let insertPosition of [0, 1, 3, 5, 7, 12]) {
+            for (let insertPosition of[0, 1, 3, 5, 7, 12]) {
                 it(`Position ${insertPosition}`, () => {
                     testRebaseDistributivity([
-                            createArrayCS({insert: [[1, generateNamedEntities(1)]]}),
-                            createArrayCS({insert: [[6, generateNamedEntities(1)]]}),
-                            createArrayCS({insert: [[9, generateNamedEntities(1)]]}),
-                            createArrayCS({remove: [
-                                [2, generateNamedEntities(4)],
-                                [7, generateNamedEntities(2)],
-                                [10, generateNamedEntities(2)]
-                            ]})
+                            createArrayCS({
+                                insert: [
+                                    [1, generateNamedEntities(1)]
+                                ]
+                            }),
+                            createArrayCS({
+                                insert: [
+                                    [6, generateNamedEntities(1)]
+                                ]
+                            }),
+                            createArrayCS({
+                                insert: [
+                                    [9, generateNamedEntities(1)]
+                                ]
+                            }),
+                            createArrayCS({
+                                remove: [
+                                    [2, generateNamedEntities(4)],
+                                    [7, generateNamedEntities(2)],
+                                    [10, generateNamedEntities(2)]
+                                ]
+                            })
                         ],
-                        createArrayCS({insert: [[insertPosition, generateNamedEntities(1)]]}),
-                        createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                        createArrayCS({
+                            insert: [
+                                [insertPosition, generateNamedEntities(1)]
+                            ]
+                        }),
+                        createArrayCS({
+                            insert: [
+                                [0, generateNamedEntities(10)]
+                            ]
+                        })
                     );
                 });
             };
         });
         it("Rebasing an insert with respect to a remove + insert", () => {
-           testRebaseDistributivity([
-                    createArrayCS({remove: [[0, generateNamedEntities(3)]]}),
-                    createArrayCS({insert: [[0, generateNamedEntities(3)]]})
+            testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    })
                 ],
-                createArrayCS({insert: [[0, generateNamedEntities(3)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(3)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
             testRebaseDistributivity([
-                    createArrayCS({remove: [[0, generateNamedEntities(3)]]}),
-                    createArrayCS({insert: [[0, generateNamedEntities(3)]]})
+                    createArrayCS({
+                        remove: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    })
                 ],
-                createArrayCS({insert: [[3, generateNamedEntities(3)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [3, generateNamedEntities(3)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("remove + insert at start of array", () => {
-           testRebaseDistributivity([
-                    createArrayCS({remove: [[0, generateNamedEntities(3)]]}),
-                    createArrayCS({insert: [[0, generateNamedEntities(3)]]})
+            testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    })
                 ],
-                createArrayCS({insert: [[3, generateNamedEntities(1)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [3, generateNamedEntities(1)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("Rebased remove that cancels out", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({remove: [[0, generateNamedEntities(3)]]}),
-                    createArrayCS({insert: [[0, generateNamedEntities(3)]]})
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [0, generateNamedEntities(3)]
+                        ]
+                    })
                 ],
-                createArrayCS({remove: [[1, generateNamedEntities(2)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    remove: [
+                        [1, generateNamedEntities(2)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
             let arrayCS = getArrayCS(deltacS);
             expect(arrayCS.insert[0][1].length).to.equal(3);
             expect(arrayCS.remove[0][1].length).to.equal(1);
         });
         it("Insert in between two removes 1", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({insert: [[2, generateNamedEntities(1)]]}),
-                    createArrayCS({remove: [[0, generateNamedEntities(2)]]}),
-                    createArrayCS({remove: [[1, generateNamedEntities(1)]]}),
-                    createArrayCS({insert: [[0, generateNamedEntities(2)]]}),
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        insert: [
+                            [2, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [0, generateNamedEntities(2)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [1, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [0, generateNamedEntities(2)]
+                        ]
+                    }),
                 ],
-                createArrayCS({insert: [[1, generateNamedEntities(1)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [1, generateNamedEntities(1)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("Insert in between two removes 2", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({insert: [[4, generateNamedEntities(1)]]}),
-                    createArrayCS({remove: [[2, generateNamedEntities(2)]]}),
-                    createArrayCS({remove: [[3, generateNamedEntities(1)]]}),
-                    createArrayCS({insert: [[2, generateNamedEntities(2)]]}),
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        insert: [
+                            [4, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [2, generateNamedEntities(2)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [3, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [2, generateNamedEntities(2)]
+                        ]
+                    }),
                 ],
-                createArrayCS({insert: [[3, generateNamedEntities(1)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [3, generateNamedEntities(1)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("Inserts in between three removes", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({insert: [[4, generateNamedEntities(1)]]}),
-                    createArrayCS({insert: [[6, generateNamedEntities(1)]]}),
-                    createArrayCS({remove: [[2, generateNamedEntities(2)]]}),
-                    createArrayCS({remove: [[3, generateNamedEntities(1)]]}),
-                    createArrayCS({remove: [[4, generateNamedEntities(1)]]}),
-                    createArrayCS({insert: [[2, generateNamedEntities(2)]]}),
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        insert: [
+                            [4, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [6, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [2, generateNamedEntities(2)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [3, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        remove: [
+                            [4, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [2, generateNamedEntities(2)]
+                        ]
+                    }),
                 ],
-                createArrayCS({insert: [[3, generateNamedEntities(1)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    insert: [
+                        [3, generateNamedEntities(1)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("Adjacent remove with insert at the beginning of the remove range", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({ remove: [[1, generateNamedEntities(1)]]}),
-                    createArrayCS({ insert: [[1, generateNamedEntities(2)]]})
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [1, generateNamedEntities(1)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [1, generateNamedEntities(2)]
+                        ]
+                    })
                 ],
-                createArrayCS({remove: [[1, generateNamedEntities(1, [3])]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(10)]]})
+                createArrayCS({
+                    remove: [
+                        [1, generateNamedEntities(1, [3])]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(10)]
+                    ]
+                })
             );
         });
         it("Remove operation that cancels out", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({ remove: [[8, generateNamedEntities(2)]]}),
-                    createArrayCS({ insert: [[8, generateNamedEntities(1)]]})
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [8, generateNamedEntities(2)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            [8, generateNamedEntities(1)]
+                        ]
+                    })
                 ],
-                createArrayCS({remove: [[8, generateNamedEntities(1, [3])]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(14)]]})
+                createArrayCS({
+                    remove: [
+                        [8, generateNamedEntities(1, [3])]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(14)]
+                    ]
+                })
             );
         });
         it("Remove operation that cancels out 2", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({ remove: [[8, generateNamedEntities(3)]]}),
-                    createArrayCS({ insert: [
-                        //[8, generateNamedEntities(1)],
-                        [8, generateNamedEntities(1)],
-                        [17, generateNamedEntities(1)]
-                    ]})
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [8, generateNamedEntities(3)]
+                        ]
+                    }),
+                    createArrayCS({
+                        insert: [
+                            //[8, generateNamedEntities(1)],
+                            [8, generateNamedEntities(1)],
+                            [17, generateNamedEntities(1)]
+                        ]
+                    })
                 ],
-                createArrayCS({remove: [[8, generateNamedEntities(1, [3])]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(14)]]})
+                createArrayCS({
+                    remove: [
+                        [8, generateNamedEntities(1, [3])]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(14)]
+                    ]
+                })
             );
         });
         it("Remove operation that cancels out in the middle of a range", () => {
-           let deltacS = testRebaseDistributivity([
-                    createArrayCS({ remove: [[4, generateNamedEntities(1)]]})
+            let deltacS = testRebaseDistributivity([
+                    createArrayCS({
+                        remove: [
+                            [4, generateNamedEntities(1)]
+                        ]
+                    })
                 ],
-                createArrayCS({remove: [[3, generateNamedEntities(3)]]}),
-                createArrayCS({insert: [[0, generateNamedEntities(14)]]})
+                createArrayCS({
+                    remove: [
+                        [3, generateNamedEntities(3)]
+                    ]
+                }),
+                createArrayCS({
+                    insert: [
+                        [0, generateNamedEntities(14)]
+                    ]
+                })
             );
         });
     });
@@ -437,7 +685,7 @@ describe('Array Operations', function() {
         if (arrayCS.insert) {
             arrayCS.insert.forEach((x) => insertPositions.add(x[0]));
         }
-        for (let type of ['insert', 'modify', 'remove']) {
+        for (let type of['insert', 'modify', 'remove']) {
             let changes = arrayCS[type];
 
             // Make sure the entries are sorted
@@ -494,18 +742,26 @@ describe('Array Operations', function() {
     describe("Apply Associativity", () => {
         it("insert + remove + insert", () => {
             let initial = createArrayCS({
-                            "insert": [[ 0, generateNamedEntities(3) ]]
-                        }, 'insert');
+                "insert": [
+                    [0, generateNamedEntities(3)]
+                ]
+            }, 'insert');
 
             let ops = [
                 createArrayCS({
-                    "insert": [[2, generateNamedEntities(2) ]]
+                    "insert": [
+                        [2, generateNamedEntities(2)]
+                    ]
                 }),
                 createArrayCS({
-                    "remove": [[3, generateNamedEntities(2, [1, 3]) ]]
+                    "remove": [
+                        [3, generateNamedEntities(2, [1, 3])]
+                    ]
                 }),
                 createArrayCS({
-                    "insert": [[ 2, generateNamedEntities(1) ]]
+                    "insert": [
+                        [2, generateNamedEntities(1)]
+                    ]
                 })
             ];
 
@@ -513,15 +769,18 @@ describe('Array Operations', function() {
         });
 
         describe("Inserting into a remove range with deletes on both sides", () => {
-            for (let additionalInserts of ["", " with insert at the beginning", " with insert at the end",]) {
+            for (let additionalInserts of["", " with insert at the beginning", " with insert at the end", ]) {
                 let offset = additionalInserts === " with insert at the beginning" ? 2 : 0;
                 for (let i of _.range(1, 9)) {
                     it(`at postion ${i + offset}${additionalInserts}`, () => {
                         let initial = createArrayCS({
-                            "insert": [[0, generateNamedEntities(10, undefined, 'number')]]
+                            "insert": [
+                                [0, generateNamedEntities(10, undefined, 'number')]
+                            ]
                         }, 'insert', "array<Float64>");
 
-                        let initialInserts = [], finalInserts = [];
+                        let initialInserts = [],
+                            finalInserts = [];
                         if (additionalInserts === " with insert at the beginning") {
                             initialInserts = [
                                 [0, generateNamedEntities(2, undefined, 'number')]
@@ -533,33 +792,32 @@ describe('Array Operations', function() {
                             ]
                         }
                         const ops = [createArrayCS({
-                            "insert": [
-                                ...initialInserts,
-                                [
-                                    2,
-                                    generateNamedEntities(2, undefined, 'number')
+                                "insert": [
+                                    ...initialInserts, [
+                                        2,
+                                        generateNamedEntities(2, undefined, 'number')
+                                    ],
+                                    [
+                                        7,
+                                        generateNamedEntities(3, undefined, 'number')
+                                    ],
+                                    ...finalInserts,
                                 ],
-                                [
-                                    7,
-                                    generateNamedEntities(3, undefined, 'number')
-                                ],
-                                ...finalInserts,
-                            ],
-                            "remove": [
-                                [
-                                    2,
-                                    generateNamedEntities(5, undefined, 'number')
+                                "remove": [
+                                    [
+                                        2,
+                                        generateNamedEntities(5, undefined, 'number')
+                                    ]
                                 ]
-                            ]
-                        }, undefined, "array<Float64>"),
-                        createArrayCS({
-                            "insert": [
-                                [
-                                    i + offset,
-                                    generateNamedEntities(2, undefined, 'number')
+                            }, undefined, "array<Float64>"),
+                            createArrayCS({
+                                "insert": [
+                                    [
+                                        i + offset,
+                                        generateNamedEntities(2, undefined, 'number')
+                                    ]
                                 ]
-                            ]
-                        }, undefined, "array<Float64>"),
+                            }, undefined, "array<Float64>"),
                         ];
                         testApplyAssociativity(initial, ops, (combinedCS) => {
                             let arrayCS = getArrayCS(combinedCS);
@@ -583,160 +841,190 @@ describe('Array Operations', function() {
 
         it("remove overlapping insert and remove ranges", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10, undefined, 'number')]]
+                "insert": [
+                    [0, generateNamedEntities(10, undefined, 'number')]
+                ]
             }, 'insert', "array<Float64>");
 
             const ops = [createArrayCS({
-                "insert": [
-                    [0, generateNamedEntities(1, undefined, 'number') ],
-                    [1, generateNamedEntities(1, undefined, 'number') ],
-                    [4, generateNamedEntities(6, undefined, 'number') ],
-                ],
-                "remove": [
-                [1, generateNamedEntities(1, undefined, 'number') ],
-                [2, generateNamedEntities(2, undefined, 'number') ],
-                [4, generateNamedEntities(5, undefined, 'number') ],
-                ]
-            }, undefined, "array<Float64>"),
-            createArrayCS({
-                "remove": [
-                    [
-                        0,
-                        generateNamedEntities(2, undefined, 'number')
+                    "insert": [
+                        [0, generateNamedEntities(1, undefined, 'number')],
+                        [1, generateNamedEntities(1, undefined, 'number')],
+                        [4, generateNamedEntities(6, undefined, 'number')],
+                    ],
+                    "remove": [
+                        [1, generateNamedEntities(1, undefined, 'number')],
+                        [2, generateNamedEntities(2, undefined, 'number')],
+                        [4, generateNamedEntities(5, undefined, 'number')],
                     ]
-                ]
-            }, undefined, "array<Float64>"),
+                }, undefined, "array<Float64>"),
+                createArrayCS({
+                    "remove": [
+                        [
+                            0,
+                            generateNamedEntities(2, undefined, 'number')
+                        ]
+                    ]
+                }, undefined, "array<Float64>"),
             ];
             testApplyAssociativity(initial, ops);
         });
 
         it("Overlapping remove / insert", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10, undefined, 'number')]]
+                "insert": [
+                    [0, generateNamedEntities(10, undefined, 'number')]
+                ]
             }, 'insert', "array<Float64>");
 
             const ops = [createArrayCS({
-                "insert": [
-                    [0, generateNamedEntities(2, undefined, 'number') ],
-                    [4, generateNamedEntities(2, undefined, 'number') ],
-                ],
-                "remove": [
-                [4, generateNamedEntities(5, undefined, 'number') ],
-                ]
-            }, undefined, "array<Float64>"),
-            createArrayCS({
-                "remove": [[4, generateNamedEntities(2, undefined, 'number') ]]
-            }, undefined, "array<Float64>"),
+                    "insert": [
+                        [0, generateNamedEntities(2, undefined, 'number')],
+                        [4, generateNamedEntities(2, undefined, 'number')],
+                    ],
+                    "remove": [
+                        [4, generateNamedEntities(5, undefined, 'number')],
+                    ]
+                }, undefined, "array<Float64>"),
+                createArrayCS({
+                    "remove": [
+                        [4, generateNamedEntities(2, undefined, 'number')]
+                    ]
+                }, undefined, "array<Float64>"),
             ];
             testApplyAssociativity(initial, ops);
         });
         it("Removing multiple inserts and removes", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10, undefined, 'number')]]
+                "insert": [
+                    [0, generateNamedEntities(10, undefined, 'number')]
+                ]
             }, 'insert', "array<Float64>");
 
             const ops = [createArrayCS({
-                "insert": [
-                    [1, generateNamedEntities(2, undefined, 'number')],
-                    [4, generateNamedEntities(4, undefined, 'number')],
-                ],
-                "remove": [
-                    [0, generateNamedEntities(1, undefined, 'number')],
-                    [1, generateNamedEntities(3, undefined, 'number')],
-                    [4, generateNamedEntities(5, undefined, 'number')],
-                ]
-            }, undefined, "array<Float64>"),
-            createArrayCS({
-                "remove": [[0, generateNamedEntities(6, undefined, 'number')]]
-            }, undefined, "array<Float64>"),
+                    "insert": [
+                        [1, generateNamedEntities(2, undefined, 'number')],
+                        [4, generateNamedEntities(4, undefined, 'number')],
+                    ],
+                    "remove": [
+                        [0, generateNamedEntities(1, undefined, 'number')],
+                        [1, generateNamedEntities(3, undefined, 'number')],
+                        [4, generateNamedEntities(5, undefined, 'number')],
+                    ]
+                }, undefined, "array<Float64>"),
+                createArrayCS({
+                    "remove": [
+                        [0, generateNamedEntities(6, undefined, 'number')]
+                    ]
+                }, undefined, "array<Float64>"),
             ];
             testApplyAssociativity(initial, ops);
         });
         it("Removing insert/removes at the end", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10, undefined, 'number')]]
+                "insert": [
+                    [0, generateNamedEntities(10, undefined, 'number')]
+                ]
             }, 'insert', "array<Float64>");
 
             const ops = [createArrayCS({
-                "insert": [
-                    [0, generateNamedEntities(2, undefined, 'number')],
-                    [1, generateNamedEntities(1, undefined, 'number')],
-                    [4, generateNamedEntities(4, undefined, 'number')],
-                ],
-                "remove": [
-                    [1, generateNamedEntities(3, undefined, 'number')],
-                    [4, generateNamedEntities(5, undefined, 'number')],
-                ]
-            }, undefined, "array<Float64>"),
-            createArrayCS({
-                "remove": [[6, generateNamedEntities(2, undefined, 'number')]]
-            }, undefined, "array<Float64>"),
+                    "insert": [
+                        [0, generateNamedEntities(2, undefined, 'number')],
+                        [1, generateNamedEntities(1, undefined, 'number')],
+                        [4, generateNamedEntities(4, undefined, 'number')],
+                    ],
+                    "remove": [
+                        [1, generateNamedEntities(3, undefined, 'number')],
+                        [4, generateNamedEntities(5, undefined, 'number')],
+                    ]
+                }, undefined, "array<Float64>"),
+                createArrayCS({
+                    "remove": [
+                        [6, generateNamedEntities(2, undefined, 'number')]
+                    ]
+                }, undefined, "array<Float64>"),
             ];
             testApplyAssociativity(initial, ops);
         });
         it("Insert with overlapping remove", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10)]]
+                "insert": [
+                    [0, generateNamedEntities(10)]
+                ]
             }, 'insert');
 
             const ops = [createArrayCS({
-                "insert": [
-                    [1, generateNamedEntities(3)],
-                ]
-            }),
-            createArrayCS({
-                "remove": [[1, generateNamedEntities(1)]],
-                "insert": [[1, generateNamedEntities(3)]]
-            }),
+                    "insert": [
+                        [1, generateNamedEntities(3)],
+                    ]
+                }),
+                createArrayCS({
+                    "remove": [
+                        [1, generateNamedEntities(1)]
+                    ],
+                    "insert": [
+                        [1, generateNamedEntities(3)]
+                    ]
+                }),
             ];
             testApplyAssociativity(initial, ops);
         });
 
         it("Failed case", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10)]]
+                "insert": [
+                    [0, generateNamedEntities(10)]
+                ]
             }, 'insert');
 
             const ops = [createArrayCS({
-                "insert": [
-                    [0, generateNamedEntities(7)],
-                ]
-            }),
-            createArrayCS({
-                "remove": [[0, generateNamedEntities(1)]],
-                "insert": [[1, generateNamedEntities(2)]]
-            }),
+                    "insert": [
+                        [0, generateNamedEntities(7)],
+                    ]
+                }),
+                createArrayCS({
+                    "remove": [
+                        [0, generateNamedEntities(1)]
+                    ],
+                    "insert": [
+                        [1, generateNamedEntities(2)]
+                    ]
+                }),
             ];
             testApplyAssociativity(initial, ops);
         });
 
         it("Failed case", () => {
             let initial = createArrayCS({
-                "insert": [[0, generateNamedEntities(10)]]
+                "insert": [
+                    [0, generateNamedEntities(10)]
+                ]
             }, 'insert');
 
             const ops = [createArrayCS({
-                "insert": [
-                    [0, generateNamedEntities(5)],
-                ]
-            }),
-            createArrayCS({
-                "remove": [
-                    [4, generateNamedEntities(1)]
-                ],
-                "insert": [[5, generateNamedEntities(3)]]
-            }),
+                    "insert": [
+                        [0, generateNamedEntities(5)],
+                    ]
+                }),
+                createArrayCS({
+                    "remove": [
+                        [4, generateNamedEntities(1)]
+                    ],
+                    "insert": [
+                        [5, generateNamedEntities(3)]
+                    ]
+                }),
             ];
             testApplyAssociativity(initial, ops);
         });
     });
 
     describe("Apply with removes in both changesets", () => {
-        for (let startInsertA of [true, false]) {
-            for (let startInsertB of [true, false]) {
-                for (let removeInsertA of [true, false]) {
-                    for (let removeInsertB of [true, false]) {
-                        for (let removeInsideInsertB of ['adjacent', 'separate', false]) {
+        for (let startInsertA of[true, false]) {
+            for (let startInsertB of[true, false]) {
+                for (let removeInsertA of[true, false]) {
+                    for (let removeInsertB of[true, false]) {
+                        for (let removeInsideInsertB of['adjacent', 'separate', false]) {
 
                             let insertNames = [];
                             if (startInsertA) {
@@ -765,25 +1053,27 @@ describe('Array Operations', function() {
                                 let insertsB = [];
                                 let offset = 0;
                                 if (startInsertA) {
-                                    insertsA.push([0, generateNamedEntities(1) ]);
+                                    insertsA.push([0, generateNamedEntities(1)]);
                                     offset += 1;
                                 }
                                 if (removeInsertA) {
-                                    insertsA.push([5, generateNamedEntities(1) ]);
+                                    insertsA.push([5, generateNamedEntities(1)]);
                                     offset += 1;
                                 }
 
-                                let removesB = [[5 + offset, generateNamedEntities(3) ]];
+                                let removesB = [
+                                    [5 + offset, generateNamedEntities(3)]
+                                ];
                                 if (startInsertB) {
-                                    insertsB.push([0, generateNamedEntities(1) ]);
+                                    insertsB.push([0, generateNamedEntities(1)]);
                                 }
                                 if (removeInsertB) {
-                                    insertsB.push([5 + offset, generateNamedEntities(1) ]);
+                                    insertsB.push([5 + offset, generateNamedEntities(1)]);
                                 }
                                 if (removeInsideInsertB) {
                                     let removeOffset = removeInsideInsertB === "separate" ? 1 : 0;
 
-                                    insertsB.push([6 + offset + removeOffset, generateNamedEntities(1) ]);
+                                    insertsB.push([6 + offset + removeOffset, generateNamedEntities(1)]);
                                     removesB = [
                                         [5 + offset + removeOffset, generateNamedEntities(1)],
                                         [6 + offset + removeOffset, generateNamedEntities(1)],
@@ -791,7 +1081,9 @@ describe('Array Operations', function() {
                                 }
                                 let CS1 = createArrayCS({
                                     insert: insertsA,
-                                    remove: [[5, generateNamedEntities(3) ]]
+                                    remove: [
+                                        [5, generateNamedEntities(3)]
+                                    ]
                                 });
                                 let CS2 = createArrayCS({
                                     insert: insertsB,
@@ -808,4 +1100,114 @@ describe('Array Operations', function() {
             }
         }
     });
+});
+testApplyAssociativity(initial, ops);
+});
+
+it("Failed case", () => {
+let initial = createArrayCS({
+    "insert": [
+        [0, generateNamedEntities(10)]
+    ]
+}, 'insert');
+
+const ops = [createArrayCS({
+        "insert": [
+            [0, generateNamedEntities(5)],
+        ]
+    }),
+    createArrayCS({
+        "remove": [
+            [4, generateNamedEntities(1)]
+        ],
+        "insert": [
+            [5, generateNamedEntities(3)]
+        ]
+    }),
+];
+testApplyAssociativity(initial, ops);
+});
+});
+
+describe("Apply with removes in both changesets", () => {
+for (let startInsertA of[true, false]) {
+    for (let startInsertB of[true, false]) {
+        for (let removeInsertA of[true, false]) {
+            for (let removeInsertB of[true, false]) {
+                for (let removeInsideInsertB of['adjacent', 'separate', false]) {
+
+                    let insertNames = [];
+                    if (startInsertA) {
+                        insertNames.push("at start of A");
+                    }
+                    if (startInsertB) {
+                        insertNames.push("at start of B");
+                    }
+                    if (removeInsertA) {
+                        insertNames.push("before remove in A");
+                    }
+                    if (removeInsertB) {
+                        insertNames.push("before remove in B");
+                    }
+                    if (removeInsideInsertB) {
+                        insertNames.push("inside remove range in B (" + removeInsideInsertB + ")");
+                    }
+                    let title = "with ";
+                    if (insertNames.length === 0) {
+                        title += "no inserts";
+                    } else {
+                        title += "inserts " + insertNames.join(", ");
+                    }
+                    it(title, () => {
+                        let insertsA = [];
+                        let insertsB = [];
+                        let offset = 0;
+                        if (startInsertA) {
+                            insertsA.push([0, generateNamedEntities(1)]);
+                            offset += 1;
+                        }
+                        if (removeInsertA) {
+                            insertsA.push([5, generateNamedEntities(1)]);
+                            offset += 1;
+                        }
+
+                        let removesB = [
+                            [5 + offset, generateNamedEntities(3)]
+                        ];
+                        if (startInsertB) {
+                            insertsB.push([0, generateNamedEntities(1)]);
+                        }
+                        if (removeInsertB) {
+                            insertsB.push([5 + offset, generateNamedEntities(1)]);
+                        }
+                        if (removeInsideInsertB) {
+                            let removeOffset = removeInsideInsertB === "separate" ? 1 : 0;
+
+                            insertsB.push([6 + offset + removeOffset, generateNamedEntities(1)]);
+                            removesB = [
+                                [5 + offset + removeOffset, generateNamedEntities(1)],
+                                [6 + offset + removeOffset, generateNamedEntities(1)],
+                            ];
+                        }
+                        let CS1 = createArrayCS({
+                            insert: insertsA,
+                            remove: [
+                                [5, generateNamedEntities(3)]
+                            ]
+                        });
+                        let CS2 = createArrayCS({
+                            insert: insertsB,
+                            remove: removesB
+                        });
+
+                        let CS = new ChangeSet(CS1);
+                        CS.applyChangeSet(CS2);
+                        validateChangeSet(CS.getSerializedChangeSet());
+                    });
+                }
+            }
+        }
+    }
+}
+});
 });
