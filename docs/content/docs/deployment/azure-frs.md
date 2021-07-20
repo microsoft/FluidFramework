@@ -51,7 +51,7 @@ await frsClient.createContainer({ id: "_unique-id_" }, schema);
 const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
-The ID that is being passed in to the container config can be thought of as the "filename" for the item holding the data for this container on the FRS backend. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container ID.
+The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container `id`.
 
 For the further information on how to start recording logs being emitted by Fluid, please see [Telemetry](../testing/telemetry.md)
 
@@ -78,7 +78,7 @@ const audienceDiv = document.createElement("div");
 const onAudienceChanged = () => {
     const members = audience.getMembers();
     const self = audience.getMyself();
-    const memberNames: string[] = [];
+    const memberNames = [];
     members.forEach((member) => {
         if (member.userId !== self?.userId) {
             memberNames.push(member.userName);
