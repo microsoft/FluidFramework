@@ -17,8 +17,8 @@ The steps below assume you are onboarded to Azure Fluid Relay service. Azure Flu
 
 To connect to our FRS instance, we first need to instaniate our `FrsClient`. This takes in, as configuration parameters, the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. It also requires a token provider to generate the JWT token that will be used to authorize the current user against the service. The `InsecureTokenProvider` should only be used for testing purposes as it exposes the tenant key secret in your client-side code bundle. This should be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key. 
 
-```typescript
-const config: FrsConnectionConfig = {
+```javascript
+const config = {
     tenantId: "myFrsTenantId",
     // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
     tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),
@@ -38,7 +38,7 @@ The `FrsClient` API exposes `createContainer` and `getContainer` functions to cr
 - A _container config_ that defines the ID of the container and an optional entry point for logging.
 - A _container schema_ that defines the container data model.
 
-```typescript
+```javascript
 const schema = {
     name: "my-container",
     initialObjects: {
@@ -71,7 +71,7 @@ Alongside the user ID and name, `FrsMember` objects also hold an array of `conne
 
 These callbacks and events can be combined to present a real-time view of the users in the current session.
 
-``` typescript
+``` javascript
 const { audience } = containerServices;
 const audienceDiv = document.createElement("div");
 
