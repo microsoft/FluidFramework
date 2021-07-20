@@ -44,7 +44,6 @@ export interface FrsContainerServices {
  */
 export interface FrsMember extends IMember {
     userName: string;
-    userId: string;
 }
 
 export interface FrsResources {
