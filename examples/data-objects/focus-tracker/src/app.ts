@@ -22,7 +22,6 @@ export const containerSchema: ContainerSchema = {
     name: "focus-tracker-container",
     initialObjects: {
         /* [id]: DataObject */
-        focusTracker: FocusTracker,
         signalManager: SignalManager,
     },
 };
@@ -58,8 +57,11 @@ async function start(): Promise<void> {
 
     // Render page focus information for audience members
     const contentDiv = document.getElementById("content") as HTMLDivElement;
-    const focusTracker = fluidContainer.initialObjects.focusTracker as FocusTracker;
-    focusTracker.init(containerServices.audience, fluidContainer.initialObjects.signalManager as SignalManager);
+    const focusTracker = new FocusTracker(
+        fluidContainer,
+        containerServices.audience,
+        fluidContainer.initialObjects.signalManager as SignalManager,
+    );
     renderFocusPresence(focusTracker, contentDiv);
 }
 
