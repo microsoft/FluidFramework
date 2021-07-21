@@ -39,7 +39,10 @@ export interface IErrorBase {
      */
     readonly errorType: string;
     readonly message: string;
-    /** Sequence number when error happened */
+    /**
+     * @deprecated - This info is logged by other means, when applicable, so this is no longer needed
+     * Sequence number when error happened
+     */
     sequenceNumber?: number;
 }
 
