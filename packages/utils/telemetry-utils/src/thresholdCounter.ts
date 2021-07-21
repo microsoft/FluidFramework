@@ -5,29 +5,29 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
-export class ThresholdTelemetrySender {
+export class ThresholdCounter {
     public constructor(
         private readonly threshold: number,
         private readonly logger: ITelemetryLogger,
     ) {}
 
-    public send(event: string, value?: number) {
-        this.sendInternal(event, value);
+    public send(event: string, count?: number) {
+        this.sendInternal(event, count);
     }
 
-    public sendIfMultiple(event: string, value?: number) {
-        this.sendInternal(event, value, 0);
+    public sendIfMultiple(event: string, count?: number) {
+        this.sendInternal(event, count, 0);
     }
 
-    private sendInternal(event: string, value?: number, delta?: number) {
-        if (value === undefined || value < this.threshold) {
+    private sendInternal(event: string, count?: number, delta?: number) {
+        if (count === undefined || count < this.threshold) {
             return;
         }
 
-        if (delta === undefined || value % this.threshold === delta) {
+        if (delta === undefined || count % this.threshold === delta) {
             this.logger.sendPerformanceEvent({
                 eventName: event,
-                [value]: value,
+                value: count,
             });
         }
     }

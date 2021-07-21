@@ -64,7 +64,7 @@ import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/run
 import {
     LoggingError,
     TelemetryDataTag,
-    ThresholdTelemetrySender,
+    ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -207,7 +207,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    private readonly thresholdOpsCounter: ThresholdTelemetrySender;
+    private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly tooManyOpsThreshold = 1000;
 
     constructor(
@@ -248,7 +248,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getInitialGCSummaryDetails(),
         );
 
-        this.thresholdOpsCounter = new ThresholdTelemetrySender(FluidDataStoreContext.tooManyOpsThreshold, this.logger);
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.tooManyOpsThreshold, this.logger);
     }
 
     public dispose(): void {

@@ -11,7 +11,7 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { ThresholdTelemetrySender } from "../thresholdTelemetrySender";
+import { ThresholdCounter } from "../thresholdCounter";
 
 class FakeTelemetryLogger implements ITelemetryLogger {
     public events: ITelemetryGenericEvent[] = [];
@@ -33,14 +33,14 @@ class FakeTelemetryLogger implements ITelemetryLogger {
     }
 }
 
-describe("ThresholdTelemetrySender", () => {
+describe("ThresholdCounter", () => {
     let logger: FakeTelemetryLogger;
-    let sender: ThresholdTelemetrySender;
+    let sender: ThresholdCounter;
     const threshold = 100;
 
     beforeEach(() => {
         logger = new FakeTelemetryLogger();
-        sender = new ThresholdTelemetrySender(threshold, logger);
+        sender = new ThresholdCounter(threshold, logger);
     });
 
     it("Send only if it passes threshold", () => {
