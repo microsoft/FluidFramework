@@ -1,23 +1,46 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory} from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    createLocalLoader,
-    OpProcessingController,
+    createLoader,
+    LoaderContainerTracker,
     ITestFluidObject,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+
+/**
+ * Creates a loader with the given package entries and a delta connection server.
+ * @param packageEntries - A list of code details to Fluid entry points.
+ * @param deltaConnectionServer - The delta connection server to use as the server.
+ */
+function createLocalLoader(
+    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+    options?: ILoaderOptions,
+): IHostLoader {
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+
+    return createLoader(
+        packageEntries,
+        documentServiceFactory,
+        urlResolver,
+        undefined,
+        options,
+    );
+}
 
 describe("LocalTestServer", () => {
     const documentId = "localServerTest";
@@ -31,7 +54,7 @@ describe("LocalTestServer", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let urlResolver: LocalResolver;
-    let opProcessingController: OpProcessingController;
+    let loaderContainerTracker: LoaderContainerTracker;
     let container1: IContainer;
     let container2: IContainer;
     let dataObject1: ITestFluidObject;
@@ -41,18 +64,21 @@ describe("LocalTestServer", () => {
 
     async function createContainer(): Promise<IContainer> {
         const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        loaderContainerTracker.add(loader);
         return createAndAttachContainer(
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(): Promise<IContainer> {
         const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        loaderContainerTracker.add(loader);
         return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         urlResolver = new LocalResolver();
+        loaderContainerTracker = new LoaderContainerTracker();
 
         // Create a Container for the first client.
         container1 = await createContainer();
@@ -63,9 +89,10 @@ describe("LocalTestServer", () => {
         container2 = await loadContainer();
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+    });
 
-        opProcessingController = new OpProcessingController();
-        opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     describe("Document.existing", () => {
@@ -103,27 +130,27 @@ describe("LocalTestServer", () => {
                 }
             });
 
-            await opProcessingController.pauseProcessing();
+            await loaderContainerTracker.pauseProcessing();
 
             sharedString1.insertText(0, "A");
             sharedString2.insertText(0, "C");
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.process(container1.deltaManager);
+            await loaderContainerTracker.ensureSynchronized(container1);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.process(container2.deltaManager);
+            await loaderContainerTracker.ensureSynchronized(container2);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await opProcessingController.processIncoming(container1.deltaManager);
+            await loaderContainerTracker.processIncoming(container1);
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
             sharedString1.insertText(0, "B");
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             assert.equal(sharedString1.getText(), sharedString2.getText(), "Shared string not synced");
             assert.equal(sharedString1.getText().length, 3, sharedString1.getText());

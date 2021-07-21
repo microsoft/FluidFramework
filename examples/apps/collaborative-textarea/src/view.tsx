@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import React from "react";
-import { CollaborativeTextArea } from "@fluidframework/react-inputs";
+import { CollaborativeTextArea } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 
 interface CollaborativeTextProps {

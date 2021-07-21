@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -58,9 +58,11 @@ export class ContainerUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        assert(parsedUrl.pathname !== undefined, "Pathname should be defined");
+        // eslint-disable-next-line no-null/no-null
+        assert(parsedUrl.pathname !== null, 0x0b7 /* "Pathname should be defined" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
-        assert(documentId !== undefined && tenantId !== undefined);
+        assert(!!tenantId && !!documentId,
+            0x0b8 /* "'tenantId' and 'documentId' must be defined, non-zero length strings." */);
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

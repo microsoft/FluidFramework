@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -351,7 +351,7 @@ describe("client.applyMsg", () => {
         logger.validate();
     });
 
-    it("insersecting insert with unack insert and delete", () => {
+    it("intersecting insert with un-acked insert and delete", () => {
         const clientA = new TestClient();
         clientA.startOrUpdateCollaboration("A");
         const clientB = new TestClient();
@@ -376,6 +376,47 @@ describe("client.applyMsg", () => {
             });
         }
 
+        logger.validate();
+    });
+
+    it("conflicting insert over local delete", () => {
+        const clientA = new TestClient();
+        clientA.startOrUpdateCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startOrUpdateCollaboration("B");
+        const clientC = new TestClient();
+        clientC.startOrUpdateCollaboration("C");
+
+        const clients = [clientA, clientB, clientC];
+
+        let seq = 0;
+        const messages = [
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "CCC"), ++seq),
+            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
+
+        ];
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            clients.forEach((c) => {
+                c.applyMsg(msg);
+            });
+        }
+        const logger = new TestClientLogger(clients);
+        logger.log();
+        logger.validate();
+
+        messages.push(
+            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "CC"), ++seq),
+            clientB.makeOpMessage(clientB.insertTextLocal(1, "BBB"), ++seq),
+        );
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            logger.log(msg, (c) => {
+                c.applyMsg(msg);
+            });
+        }
+        logger.log();
         logger.validate();
     });
 });

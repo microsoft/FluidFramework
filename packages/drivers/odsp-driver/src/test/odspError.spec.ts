@@ -1,8 +1,9 @@
-/* eslint-disable max-len */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -10,10 +11,9 @@ import {
     createOdspNetworkError,
     fetchIncorrectResponse,
     invalidFileNameStatusCode,
-    OdspError,
-    OdspErrorType,
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -268,8 +268,8 @@ describe("Odsp Error", () => {
 
     it("Check Epoch Mismatch error props", async () => {
         const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
-        assert.strictEqual(error.errorType, OdspErrorType.epochVersionMismatch, "Error type should be epoch mismatch");
+        assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should be epoch mismatch");
         const errorBag = { ...error.getTelemetryProperties() };
-        assert.strictEqual(errorBag.errorType, OdspErrorType.epochVersionMismatch, "Error type should exist in prop bag");
+        assert.strictEqual(errorBag.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should exist in prop bag");
     });
 });

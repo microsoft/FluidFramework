@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,15 +10,13 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ChannelFactoryRegistry,
-    ITestFluidObject,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -27,13 +25,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("SharedMap", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
 
     let dataObject1: ITestFluidObject;
@@ -42,21 +37,21 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     let sharedMap3: ISharedMap;
 
     beforeEach(async () => {
-        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
+        const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
+        const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await args.loadTestContainer(testContainerConfig) as Container;
+        const container3 = await provider.loadTestContainer(testContainerConfig) as Container;
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
         sharedMap1.set("testKey1", "testValue");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
@@ -97,7 +92,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllAfterValues("testKey2", undefined);
@@ -106,7 +101,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("Should delete values in 3 containers correctly", async () => {
         sharedMap2.delete("testKey1");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         const hasKey1 = sharedMap1.has("testKey1");
         assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -121,7 +116,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("Should check if three containers has same number of keys", async () => {
         sharedMap3.set("testKey3", true);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllSize(2);
     });
@@ -160,7 +155,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         sharedMap1.set("testKey1", "updatedValue");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -177,7 +172,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey1", "value3");
     });
@@ -190,7 +185,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey1", "value1.3");
     });
@@ -202,12 +197,12 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await args.opProcessingController.processOutgoing();
+        await provider.opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey2", "value2.2");
     });
@@ -220,7 +215,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey3", undefined);
     });
@@ -233,7 +228,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllSize(0);
@@ -246,12 +241,12 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await args.opProcessingController.processOutgoing();
+        await provider.opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey2", "value2.2");
         expectAllSize(1);
@@ -264,7 +259,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
@@ -292,7 +287,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Now add the handle to an attached map so the new map gets attached too.
         sharedMap1.set("newSharedMap", newSharedMap1.handle);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         // The new map should be available in the remote client and it should contain that key that was
         // set in local state.
@@ -303,14 +298,10 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // Set a new value for the same key in the remote map.
         newSharedMap2.set("newKey", "anotherNewValue");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         // Verify that the new value is updated in both the maps.
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
-};
-
-describe("Map", () => {
-    generateTest(tests);
 });

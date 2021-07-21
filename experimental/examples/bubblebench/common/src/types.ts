@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -33,7 +33,7 @@ export interface IAppState {
 }
 
 export function makeBubble(stageWidth: number, stageHeight: number) {
-    const radius = (normal() * 15) + 5;
+    const radius = Math.max((normal() * 10) + 10, 3);
     const maxSpeed = 4;
     const diameter = radius * 2;
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,7 @@ import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { getTenantIdFromRequest } from "../utils";
+import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -39,8 +39,6 @@ export function create(
     // Running behind iisnode
     app.set("trust proxy", 1);
 
-    // View engine setup.
-    app.set("view engine", "hjs");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
             const messageMetaData = {
@@ -75,35 +73,11 @@ export function create(
             secretManager));
 
     // Catch 404 and forward to error handler
-    app.use((req, res, next) => {
-        const err = new Error("Not Found");
-        (err as any).status = 404;
-        next(err);
-    });
+    app.use(catch404());
 
     // Error handlers
 
-    // development error handler
-    // will print stacktrace
-    if (app.get("env") === "development") {
-        app.use((err, req, res, next) => {
-            res.status(err.status || 500);
-            res.render("error", {
-                error: err,
-                message: err.message,
-            });
-        });
-    }
-
-    // Production error handler
-    // no stacktraces leaked to user
-    app.use((err, req, res, next) => {
-        res.status(err.status || 500);
-        res.render("error", {
-            error: {},
-            message: err.message,
-        });
-    });
+    app.use(handleError(app.get("env") === "development"));
 
     return app;
 }

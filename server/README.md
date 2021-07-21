@@ -6,8 +6,6 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Admin](./admin) provides tenant management for Routerlicious
 
-[Auspkn](./auspkn) provides REST API access to npm packages. Useful as a CDN. Its API is based off of unpkg.
-
 [Charts](./charts) Kubernetes charts for some micro-services
 
 [Gateway](./gateway) Internal landing page for the Fluid server
@@ -15,8 +13,6 @@ This directory contains our reference server implementation. [Routerlicious](./r
 [Gitrest](./gitrest) provides a REST API to a GitHub repository. Its API is based off of GitHub's REST APIs.
 
 [Gitssh](./gitssh) is a git ssh server client container.
-
-[Headless-agent](./headless-agent) loads Fluid data stores on a headless chromium browser.
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
@@ -42,7 +38,6 @@ For development, you'll also need to give docker access to your drive (Shared Dr
 ### Common Issues
 * Port already allocated
   * This can happen if you have a process already running on a port the docker-compose file expects to have available
-  * This may be Tinylicious, which also expects to run on 3000
 * Drive Share Failure
   * An intermittent failure most frequent on Windows, best solved by reinstalling
 * Not Enough RAM

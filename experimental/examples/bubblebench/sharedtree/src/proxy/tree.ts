@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
     Change,
     Delete,
-    EditNode,
+    ChangeNode,
     Insert,
     NodeId,
     SharedTree,
@@ -15,6 +15,7 @@ import {
     TraitLabel,
 } from "@fluid-experimental/tree";
 import { IArrayish } from "@fluid-experimental/bubblebench-common";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { fromJson, NodeKind } from "./treeutils";
 
 function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]) => void): unknown {
@@ -22,8 +23,7 @@ function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]
     const node = view.getSnapshotNode(nodeId);
     switch (node.definition) {
         case NodeKind.scalar:
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return JSON.parse(node.payload!.base64);
+            return node.payload;
         case NodeKind.array: {
             return new TreeArrayProxy(tree, nodeId, update);
         }
@@ -57,7 +57,7 @@ export const TreeObjectProxy = <T extends Object>(
                 const child = view.getSnapshotNode(childId);
 
                 if (child.definition === NodeKind.scalar) {
-                    update(Change.setPayload(childId, { base64: JSON.stringify(value) }));
+                    update(Change.setPayload(childId, value));
                     return true;
                 }
             }
@@ -82,7 +82,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
     ) {
         return new Proxy(this, {
             get(target, key) {
-                if (typeof key !== "symbol" && !isNaN(key as number)) {
+                if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });
@@ -93,7 +93,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
                 return target[key];
             },
             set(target, key, value) {
-                if (typeof key !== "symbol" && !isNaN(key as number)) {
+                if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });
@@ -129,7 +129,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
     toString(): string { return this.items.toString(); }
     toLocaleString(): string { return this.items.toLocaleString(); }
 
-    pop(): T | undefined {
+    pop(): Serializable<T> | undefined {
         const itemIds = this.itemIds;
         if (itemIds.length === 0) {
             return undefined;
@@ -138,10 +138,10 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         const removedId = itemIds[itemIds.length - 1];
         const removed = getChild(this.tree, removedId, this.update);
         this.update(Delete.create(StableRange.only(this.tree.currentView.getChangeNode(removedId))));
-        return removed as T;
+        return removed as Serializable<T>;
     }
 
-    push(...item: T[]): number {
+    push(...item: Serializable<T>[]): number {
         this.update(
             ...Insert.create(
                 item.map(fromJson), StablePlace.atEndOf({
@@ -151,7 +151,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         return this.items.length;
     }
 
-    pushNode(...node: EditNode[]) {
+    pushNode(...node: ChangeNode[]) {
         this.update(
             ...Insert.create(
                 node, StablePlace.atEndOf({

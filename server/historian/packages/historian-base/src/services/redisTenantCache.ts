@@ -1,47 +1,52 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
-import { RedisClient } from "redis";
-
+import { Redis } from "ioredis";
+import * as winston from "winston";
+import { IRedisParameters } from "./definitions";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
  */
 export class RedisTenantCache {
-    private readonly setAsync;
-    private readonly getAsync;
-    private readonly existsAsync;
-    private readonly expire: any;
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "tenant";
 
     constructor(
-        client: RedisClient,
-        private readonly expireInSeconds = 60 * 60 * 24,
-        private readonly prefix = "tenant") {
-        this.setAsync = util.promisify(client.set.bind(client));
-        this.getAsync = util.promisify(client.get.bind(client));
-        this.existsAsync = util.promisify(client.exists.bind(client));
-        this.expire = util.promisify(client.expire.bind(client));
+        private readonly client: Redis,
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
+
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
+        client.on("error", (error) => {
+            winston.error("Redis Tenant Cache Error:", error);
+        });
     }
 
     public async exists(item: string): Promise<boolean> {
-        const result = await this.existsAsync(this.getKey(item));
+        const result = await this.client.exists(this.getKey(item));
         return result >= 1;
     }
 
     public async set(
         key: string,
         value: string = "",
-        expiresInSeconds: number = this.expireInSeconds): Promise<void> {
-        const result = await this.setAsync(this.getKey(key), value);
-        return result !== "OK" ?
-            Promise.reject(result) :
-            this.expire(this.getKey(key), expiresInSeconds);
+        expireAfterSeconds: number = this.expireAfterSeconds): Promise<void> {
+        const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
+        if (result !== "OK")
+        {
+            return Promise.reject(result);
+        }
     }
 
     public async get(key: string): Promise<string> {
-        return this.getAsync(this.getKey(key));
+        return this.client.get(this.getKey(key));
     }
 
     /**

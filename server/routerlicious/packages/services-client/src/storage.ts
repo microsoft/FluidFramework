@@ -1,10 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 /**
  * Required params to create ref with config
@@ -67,6 +68,7 @@ export interface IGitService {
     getTag(tag: string): Promise<git.ITag>;
     createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
     getTree(sha: string, recursive: boolean): Promise<git.ITree>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
 }
 
 /**
@@ -100,4 +102,18 @@ export interface IGitManager {
     createRef(branch: string, sha: string): Promise<git.IRef>;
     upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<git.ICommit>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+}
+
+/**
+ * Uploads a summary to storage.
+ */
+export interface ISummaryUploadManager {
+    /**
+     * Writes summary tree to storage.
+     * @param summaryTree Summary tree to write to storage
+     * @param parentHandle Parent summary acked handle (from summary ack)
+     * @returns Id of created tree.
+     */
+    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string): Promise<string>;
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,7 +12,7 @@ import {
     setSyncedCounterConfig,
     setSyncedArrayConfig,
     setSyncedStringConfig,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
 import * as React from "react";

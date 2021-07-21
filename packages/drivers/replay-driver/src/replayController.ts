@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -64,7 +64,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * Note: this API is called while replay() is in progress - next batch of ops is downloaded in parallel
      * @param currentOp - current op
      */
-    public abstract fetchTo(currentOp: number): number;
+    public abstract fetchTo(currentOp: number): number | undefined;
 
     /**
      * Returns true if no more ops should be processed (or downloaded for future processing).

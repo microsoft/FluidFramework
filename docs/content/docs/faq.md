@@ -1,5 +1,7 @@
 ---
 title: Frequently Asked Questions
+aliases:
+  - "/start/faq/"
 ---
 
 The following are short, sometimes superficial, answers to some of the most commonly asked questions about the Fluid
@@ -18,7 +20,7 @@ The Fluid Framework was designed with performance and ease of development as top
 
 ### What is a DDS?
 
-DDS is short for _distributed data structure_. DDSes are the foundation of the Fluid Framework. They are designed such
+DDS is short for *distributed data structure*. DDSes are the foundation of the Fluid Framework. They are designed such
 that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
@@ -154,7 +156,9 @@ Microsoft has developed an M365-specific Fluid service designed to enable soluti
 ecosystem. There will be ways for Fluid Framework developers to operate in M365 but those integration points are
 not available yet.
 
-Microsoft is also looking at providing a more general Fluid service but no specifics are available at this time.
+Microsoft has also
+[announced](https://developer.microsoft.com/en-us/office/blogs/whats-new-in-microsoft-365-platform-at-build-2021/) Azure
+Fluid Relay, a fully managed Fluid service, at Build 2021.
 
 ### Besides SharePoint, where else can we store .fluid files?
 

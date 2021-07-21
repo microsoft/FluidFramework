@@ -7,10 +7,10 @@ titleCaseStyle: "Chicago"
 
 permalinks:
   page: "/:slug"
-  post: "/:year/:month/:day/:title"
+  post: "/:year/:month/:title"
 
 params:
-  # appInsightKey: ""  # This is provided by the build system as an env variable
+  appInsightKey: ""  # This is provided by the build system as an env variable
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
@@ -21,28 +21,61 @@ params:
 
 menu:
   main:
+  - name: "Getting started"
+    url: "/docs/start/quick-start/"
+    weight: -100
+  - name: "Recipes"
+    url: "/docs/recipes/react/"
+    weight: -90
   - name: "Docs"
     url: "/docs/"
-    weight: -90
-  - name: "API"
-    url: "/apis/"
     weight: -80
   - name: "Community"
     url: "/community/"
-    weight: -40
+    weight: -60
+#  - name: "Updates"
+#    url: "/posts/"
+#    weight: -50
   - name: "Playground"
     url: "/playground/"
     weight: -40
 
-  docs:
-  - identifier: "get-started"
-    name: "Get Started"
+  old_section:
+  - identifier: "quick-start"
+    name: "Quick Start"
+    url: "/start/quick-start/"
+    weight: -800
+  - identifier: "tutorial"
+    name: "Tutorial"
+    url: "/start/tutorial/"
+    weight: -700
+  - identifier: "examples"
+    name: "Examples"
+    url: "/start/examples/"
+    weight: -600
+
+  # this menu supplements one generated in the apiNav partial
+  section:
+  - identifier: "start"
+    name: "Getting started"
+    weight: -800
+  - identifier: "recipes"
+    name: "Recipes"
+    weight: -700
+  - identifier: "build"
+    name: "Build with Fluid"
+    weight: -600
+  - identifier: "testing"
+    name: "Testing"
     weight: -500
-  - identifier: "concepts"
-    name: "Learn"
+  - identifier: "deployment"
+    name: "Deployment"
+    weight: -400
+  - identifier: "DDS"
+    name: "Data Structures"
     weight: -300
-  - identifier: "advanced"
-    name: "Advanced concepts"
+  - identifier: "deep"
+    name: "The depths 🤿"
     weight: -200
   - identifier: "faq"
     name: "FAQ"
@@ -50,14 +83,14 @@ menu:
     weight: -100
   - identifier: "glossary"
     name: "Glossary"
-    url: "/docs/Glossary/"
+    url: "/docs/glossary/"
     weight: -90
 
 markup:
   goldmark:
     renderer:
       autoHeadingIDType: "github"
-      # mark unsafe html as true since api-documenter uses html snipets.
+      # mark unsafe html as true since api-documenter uses html snippets in markdown
       unsafe: true
       extensions:
         definitionList: true

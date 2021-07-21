@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -20,6 +20,7 @@ import {
     dumpSnapshotStats,
     dumpSnapshotTrees,
     dumpSnapshotVersions,
+    paramActualFormatting,
     paramNumSnapshotVersions,
     paramSnapshotVersionIndex,
     paramUnpackAggregatedBlobs,
@@ -114,7 +115,8 @@ async function fetchBlobsFromSnapshotTree(
     tree: ISnapshotTree,
     prefix: string = "/",
     perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
-    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"));
+    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"),
+        0x1be /* "Unexpected tree input to fetch" */);
     const commit = !perCommitBlobIdMap;
     if (commit && dumpSnapshotTrees) {
         console.log(tree);
@@ -148,8 +150,10 @@ async function fetchBlobsFromSnapshotTree(
             console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
             continue;
         }
-        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore]);
-        assert(tree.commits[dataStore] === dataStoreVersions[0].id);
+        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore],
+            0x1bf /* `Unexpected id for tree: ${dataStoreSnapShotTree.id}` */);
+        assert(tree.commits[dataStore] === dataStoreVersions[0].id,
+            0x1c0 /* "Mismatch between commit id and fetched tree id" */);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             dataStoreSnapShotTree,
@@ -159,7 +163,7 @@ async function fetchBlobsFromSnapshotTree(
 
     for (const subtreeId of Object.keys(tree.trees)) {
         const subtree = tree.trees[subtreeId];
-        assert(Object.keys(subtree.commits).length === 0);
+        assert(Object.keys(subtree.commits).length === 0, 0x1c1 /* "Unexpected subtree properties" */);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,
@@ -239,23 +243,28 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
             console.error(`ERROR: Unable to get data for blob ${item.blobId}`);
             return;
         }
-        const data = bufferToString(buffer,"base64");
 
         if (!isFetchedTree(item)) {
-            fs.writeFileSync(`${outDir}/${item.filename}`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            // Just write the data as is.
+            fs.writeFileSync(`${outDir}/${item.filename}`, Buffer.from(buffer));
+
+            // we assume that the buffer is utf8 here, which currently is true for
+            // all of our snapshot blobs.  It doesn't necessary be true in the future
+            let decoded = bufferToString(buffer,"utf8");
             try {
-                const object = JSON.parse(decoded);
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, JSON.stringify(object, undefined, 2));
+                if (!paramActualFormatting) {
+                    decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
+                }
             } catch (e) {
-                fs.writeFileSync(`${outDir}/decoded/${item.filename}.txt`, decoded);
             }
+            fs.writeFileSync(
+                `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
-            // Write out same data for tree
-            fs.writeFileSync(`${outDir}/${item.filename}.json`, data);
-            const decoded = bufferToString(buffer,"utf8");
+            // Write out same data for tree decoded or not, except for formatting
+            const treeString = bufferToString(buffer,"utf8");
+            fs.writeFileSync(`${outDir}/${item.filename}.json`, treeString);
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
-                JSON.stringify(JSON.parse(decoded), undefined, 2));
+                paramActualFormatting ? treeString : JSON.stringify(JSON.parse(treeString), undefined, 2));
         }
     }));
 }

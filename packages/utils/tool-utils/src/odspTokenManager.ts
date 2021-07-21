@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -15,6 +15,7 @@ import {
     TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils";
 import jwtDecode from "jwt-decode";
+import { Mutex } from "async-mutex";
 import { debug } from "./debug";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
@@ -48,9 +49,17 @@ export type OdspTokenConfig = {
     redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 };
 
-export interface IOdspTokenManagerCacheKey { isPush: boolean; server: string; }
+export interface IOdspTokenManagerCacheKey {
+    readonly isPush: boolean;
+    readonly server: string;
+}
 
 const isValidToken = (token: string) => {
+    // Return false for undefined or empty tokens.
+    if (!token || token.length === 0) {
+        return false;
+    }
+
     const decodedToken = jwtDecode<any>(token);
     // Give it a 60s buffer
     return (decodedToken.exp - 60 >= (new Date().getTime() / 1000));
@@ -63,11 +72,18 @@ const cacheKeyToString = (key: IOdspTokenManagerCacheKey) => {
 export class OdspTokenManager {
     private readonly storageCache = new Map<string, IOdspTokens>();
     private readonly pushCache = new Map<string, IOdspTokens>();
+    private readonly cacheMutex = new Mutex();
     constructor(
         private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
     ) { }
 
     public async updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
+        await this.cacheMutex.runExclusive(async () => {
+            await this.updateTokensCacheWithoutLock(key, value);
+        });
+    }
+
+    private async updateTokensCacheWithoutLock(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
         debug(`${cacheKeyToString(key)}: Saving tokens`);
         const memoryCache = key.isPush ? this.pushCache : this.storageCache;
         memoryCache.set(key.server, value);
@@ -134,13 +150,17 @@ export class OdspTokenManager {
         forceReauth: boolean,
     ): Promise<IOdspTokens> {
         const invokeGetTokensCore = async () => {
-            return this.getTokensCore(
-                isPush,
-                server,
-                clientConfig,
-                tokenConfig,
-                forceRefresh,
-                forceReauth);
+            // Don't solely rely on tokenCache lock, ensure serialized execution of
+            // cache update to avoid multiple fetch.
+            return this.cacheMutex.runExclusive(async () => {
+                return this.getTokensCore(
+                    isPush,
+                    server,
+                    clientConfig,
+                    tokenConfig,
+                    forceRefresh,
+                    forceReauth);
+            });
         };
         if (!forceReauth && !forceRefresh) {
             // check and return if it exists without lock
@@ -172,30 +192,31 @@ export class OdspTokenManager {
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
+        let tokens: IOdspTokens | undefined;
         if (!forceReauth) {
             // check the cache again under the lock (if it is there)
             const tokensFromCache = await this.getTokenFromCache(cacheKey);
             if (tokensFromCache) {
-                let canReturn = true;
                 if (forceRefresh || !isValidToken(tokensFromCache.accessToken)) {
                     try {
                         // This updates the tokens in tokensFromCache
-                        await refreshTokens(server, scope, clientConfig, tokensFromCache);
+                        tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
+                        await this.updateTokensCacheWithoutLock(cacheKey, tokens);
                     } catch (error) {
-                        canReturn = false;
+                        debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
                     }
-                    await this.updateTokensCache(cacheKey, tokensFromCache);
                 } else {
+                    tokens = tokensFromCache;
                     debug(`${cacheKeyToString(cacheKey)}: Token reused from locked cache `);
-                }
-                if (canReturn) {
-                    await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
-                    return tokensFromCache;
                 }
             }
         }
 
-        let tokens: IOdspTokens | undefined;
+        if (tokens) {
+            await this.onTokenRetrievalFromCache(tokenConfig, tokens);
+            return tokens;
+        }
+
         switch (tokenConfig.type) {
             case "password":
                 tokens = await this.acquireTokensWithPassword(
@@ -220,8 +241,7 @@ export class OdspTokenManager {
                 unreachableCase(tokenConfig);
         }
 
-        await this.updateTokensCache(cacheKey, tokens);
-
+        await this.updateTokensCacheWithoutLock(cacheKey, tokens);
         return tokens;
     }
 
@@ -311,7 +331,7 @@ async function loadAndPatchRC() {
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadAndPatchRC();
-        return rc.tokens?.data[key.server]?.[key.isPush ? "storage" : "push"];
+        return rc.tokens?.data[key.server]?.[key.isPush ? "push" : "storage"];
     },
     async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadAndPatchRC();
@@ -326,7 +346,7 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
             prevTokens = {};
             rc.tokens.data[key.server] = prevTokens;
         }
-        prevTokens[key.isPush ? "storage" : "push"] = tokens;
+        prevTokens[key.isPush ? "push" :  "storage"] = tokens;
         return saveRC(rc);
     },
     async lock<T>(callback: () => Promise<T>): Promise<T> {

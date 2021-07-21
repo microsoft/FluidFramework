@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -73,17 +73,18 @@ class ContainerContent {
 
     public constructor(public readonly op: number) {
         this._normalizedSnapshot = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
+            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retreiving it" */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
         this._snapshotAsString = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
+            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retreiving it" */);
             return JSON.stringify(this.snapshot, undefined, 2);
         });
 
         this._snapshotExpanded = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as expanded string");
+            assert(this.snapshot !== undefined,
+                0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -223,7 +224,8 @@ class Document {
             await new Promise<void>((resolve) => {
                 this.resolveC = resolve;
             });
-            assert(this.documentSeqNumber === this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp,
+                0x1c8 /* "Mismatch between document sequence number and current op number" */);
         }
     }
 
@@ -293,7 +295,8 @@ export class ReplayTool {
         } else if (threads.isMainThread) {
             process.stdout.write("\n");
         }
-        assert(this.documentsFromStorageSnapshots.length === 0);
+        assert(this.documentsFromStorageSnapshots.length === 0,
+            0x1c9 /* "Leftover documents after replay!" */);
 
         process.removeListener("unhandledRejection", listener);
 
@@ -520,7 +523,7 @@ export class ReplayTool {
                 replayTo = Math.min(replayTo, op);
             }
 
-            assert(replayTo > currentOp);
+            assert(replayTo > currentOp, 0x1ca /* "replay-to target is <= current op in replay cycle" */);
             for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
@@ -594,7 +597,8 @@ export class ReplayTool {
         while (this.documentsWindow.length > 0
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
-            assert(doc.fromOp === startOp || final);
+            assert(doc.fromOp === startOp || final,
+                0x1cb /* "Bad window to verify snapshot" */);
             await this.saveAndVerify(doc, dir, content, final);
         }
     }
@@ -611,7 +615,7 @@ export class ReplayTool {
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
-            assert(this.documentPriorSnapshot.fromOp === op);
+            assert(this.documentPriorSnapshot.fromOp === op, 0x1cc /* "Unexpected previous snapshot op number" */);
             await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
                     const from = this.documentPriorSnapshot.containerDescription;

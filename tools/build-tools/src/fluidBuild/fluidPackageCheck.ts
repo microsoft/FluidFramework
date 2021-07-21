@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -73,7 +73,7 @@ export class FluidPackageCheck {
             const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
             const hasConfig = testScript.includes(" --config ");
             if (isClient) {
-                const pkgstring = "@fluidframework/mocha-test-setup"
+                const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;
                 }
@@ -155,7 +155,7 @@ export class FluidPackageCheck {
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
-                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 7070 test:mocha")
             } else {
                 expectedTestScripts.push("npm run test:mocha");
             }
@@ -261,6 +261,7 @@ export class FluidPackageCheck {
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            const buildSuffix = (pkg.getScript("build:docs") && pkg.name.startsWith("@fluidframework")) ? " && npm run build:docs" : "";
             // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:commonjs")) {
@@ -331,14 +332,14 @@ export class FluidPackageCheck {
                 }
             }
 
-            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
+            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "", suffix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
+                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`) + suffix;
                 if (this.checkScript(pkg, scriptName, expected, fix)) {
                     fixed = true;
                 }
             }
-            check("build", build, true, buildPrefix);
+            check("build", build, true, buildPrefix, buildSuffix);
             if (buildCompile.length === 0) {
                 if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
                     fixed = true;
@@ -428,9 +429,15 @@ export class FluidPackageCheck {
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "**/_api-extractor-temp/**",
-        ]
-        const expected = pkg.name.startsWith("@fluidframework/test-") ?
+        ];
+
+        if (pkg.getScript("build:docs")) {
+            expectedCommon.push("**/_api-extractor-temp/**");
+        }
+
+        const testPackage = pkg.name.startsWith("@fluidframework/test-")
+            || pkg.name.startsWith("@fluid-internal/test-")
+        const expected = testPackage ?
             expectedCommon :
             [...expectedCommon,
                 "src/test",
@@ -509,11 +516,15 @@ export class FluidPackageCheck {
         const command = pkg.getScript("tsc");
         if (command) {
             const parsedCommand = TscUtils.parseCommandLine(command);
-            if (!parsedCommand) { return undefined; }
+            if (!parsedCommand) { return; }
 
             // Assume tsc with no argument.
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
+            if (configJson === undefined) {
+                this.logWarn(pkg, `Failed to load config file '${configFile}'`, false);
+                return;
+            }
 
             let changed = false;
             if (await this.checkTsConfigExtend(pkg, fix, configJson)) {

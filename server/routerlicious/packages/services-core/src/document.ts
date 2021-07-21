@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
+import { INackMessagesControlMessageContents } from "./messages";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -47,9 +47,6 @@ export interface IClientSequenceNumber {
 }
 
 export interface IDeliState {
-    // Branch related mapping
-    branchMap: IRangeTrackerSnapshot | undefined;
-
     // List of connected clients
     clients: IClientSequenceNumber[] | undefined;
 
@@ -67,6 +64,12 @@ export interface IDeliState {
 
     // Term at logOffset
     term: number;
+
+    // Last sent minimum sequence number
+    lastSentMSN: number | undefined;
+
+    // Nack messages state
+    nackMessages: INackMessagesControlMessageContents | undefined;
 }
 
 // TODO: We should probably rename this to IScribeState

@@ -65,7 +65,7 @@ packages/tools/**:
 packages/utils/odsp-doclib-utils/**:
 - markfields
 - curtisman
-packages/utils/telemtry-utils/**:
+packages/utils/telemetry-utils/**:
 - markfields
 - vladsud
 - wes-carlson
@@ -91,12 +91,6 @@ experimental/dds/tree/**:
 - taylorsw04
 - CraigMacomber
 - Abe27342
-
-# docs
-docs/**:
-- tylerbutler
-"**/README*.md":
-- tylerbutler
 
 # tools
 tools/**:

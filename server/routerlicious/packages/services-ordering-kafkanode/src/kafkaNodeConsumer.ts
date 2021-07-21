@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -45,6 +45,10 @@ export class KafkaNodeConsumer implements IConsumer {
         }
     }
 
+    public isConnected() {
+        return this.client ? true : false;
+    }
+
     public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         // Although tagged as optional, kafka-node requies a value in the metadata field.
         // Also logs are replayed from the last checkponited offset. To avoid reprocessing the last message
@@ -77,6 +81,11 @@ export class KafkaNodeConsumer implements IConsumer {
 
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
+        return this;
+    }
+
+    public once(event: string, listener: (...args: any[]) => void): this {
+        this.events.once(event, listener);
         return this;
     }
 

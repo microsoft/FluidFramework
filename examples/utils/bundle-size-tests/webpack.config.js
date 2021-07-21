@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -15,6 +15,7 @@ module.exports = {
     'map': './src/map',
     'matrix': './src/matrix',
     'odspDriver': './src/odspDriver',
+    'odspPrefetchSnapshot': './src/odspPrefetchSnapshot',
     'sharedString': './src/sharedString'
   },
   mode: 'production',

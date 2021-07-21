@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,8 +12,25 @@ export interface IDeliCheckpointManager {
     deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
 }
 
-export interface ICheckpointParams extends IDeliState {
-    queuedMessage: IQueuedMessage;
+export interface ICheckpointParams {
+    /**
+     * The deli checkpoint state @ deliCheckpointMessage
+     */
+    deliState: IDeliState;
+
+    /**
+     * The message to checkpoint for deli (mongodb)
+     */
+    deliCheckpointMessage: IQueuedMessage;
+
+    /**
+     * The message to checkpoint for kafka
+     */
+    kafkaCheckpointMessage: IQueuedMessage | undefined;
+
+    /**
+     * Flag that decides if the deli checkpoint should be deleted
+     */
     clear?: boolean;
 }
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -43,6 +43,7 @@ export class MongoManager {
      * Closes the connection to MongoDB
      */
     public async close(): Promise<void> {
+        debug("Call close connection to MongoDB");
         this.shouldReconnect = false;
         const database = await this.databaseP;
         return database.close();
@@ -65,6 +66,14 @@ export class MongoManager {
                     this.reconnect(this.reconnectDelayMs);
                 });
 
+                db.on("reconnect", (value) => {
+                    debug("DB Reconnect");
+                });
+
+                db.on("reconnectFailed", (value) => {
+                    debug("DB Reconnect failed");
+                });
+
                 return db;
             });
 
@@ -73,6 +82,7 @@ export class MongoManager {
             this.reconnect(this.reconnectDelayMs);
         });
 
+        debug("Successfully connected to MongoDB");
         return databaseP;
     }
 
@@ -81,6 +91,7 @@ export class MongoManager {
      */
     private reconnect(delay) {
         if (!this.shouldReconnect) {
+            debug("Should not reconnect to MongoDB");
             return;
         }
 

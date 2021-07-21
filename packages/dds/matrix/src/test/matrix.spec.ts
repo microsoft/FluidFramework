@@ -1,10 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
     MockFluidDataStoreRuntime,
@@ -13,9 +12,10 @@ import {
     MockContainerRuntimeForReconnection,
     MockEmptyDeltaConnection,
     MockStorage,
+    MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
@@ -58,7 +58,7 @@ describe("Matrix", () => {
 
         // Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
         // equivalent, and then returns the 2nd matrix.
-        async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+        async function summarize<T>(matrix: SharedMatrix<T>) {
             // Create a summary
             const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 
@@ -80,7 +80,7 @@ describe("Matrix", () => {
             return matrix2;
         }
 
-        async function expect<T extends Serializable>(expected: readonly (readonly T[])[]) {
+        async function expect<T>(expected: readonly (readonly (MatrixItem<T>)[])[]) {
             const actual = extract(matrix);
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(extract(consumer), actual, "Matrix must notify IMatrixConsumers of all changes.");
@@ -629,6 +629,7 @@ describe("Matrix", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
+        let mockHandle: MockHandle<unknown>;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
             containerRuntimeFactory.processAllMessages();
@@ -661,6 +662,8 @@ describe("Matrix", () => {
             matrix2 = response2.matrix;
             containerRuntime2 = response2.containerRuntime;
             consumer2 = new TestConsumer(matrix2);
+
+            mockHandle = new MockHandle({});
         });
 
         afterEach(async () => {
@@ -694,7 +697,43 @@ describe("Matrix", () => {
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
 
-            // Verify that the 'setCells()' op targetted the original position of (0,0),
+            // Verify that the 'setCells()' op targeted the original position of (0,0),
+            // not the current local position of (0,3).
+            await expect([
+                [undefined, undefined, undefined, "A"],
+            ]);
+        });
+
+        it("can resend 'setCell()' at correct position when multiple reconnects occur", async () => {
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+
+            await expect([[undefined]]);
+
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+            // Note: Inserting '3' helps expose incorrect range check logic that fails to
+            //       consider unallocated handles.  Consider the empty leading segment:
+            //
+            //           start  = -1  (unallocated)
+            //           length = 3
+            //           end    = -1 + 3 = 2
+            //
+            //       In which case, pass the empty segment into 'findReconnectionPostition()'.
+
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
+
+            // Disconnect and reconnect the client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Disconnect and reconnect the client a second time to catch bugs caused by not preserving
+            // the original 'localSeq' or caused by state mutations during reconnection.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Verify that the 'setCells()' op targeted the original position of (0,0),
             // not the current local position of (0,3).
             await expect([
                 [undefined, undefined, undefined, "A"],
@@ -757,6 +796,33 @@ describe("Matrix", () => {
             await expect([
                 ["2nd"],
             ]);
+        });
+
+        it("setCell(IFluidHandle) is preserved when resubmitted", async () => {
+            // Disconnect the first client.
+            containerRuntime1.connected = false;
+
+            matrix1.insertCols(0, 1);
+            matrix1.insertRows(0, 1);
+            matrix1.setCell(0, 0, mockHandle);
+
+            // Reconnect the second client.
+            containerRuntime1.connected = true;
+
+            // Note: We cannot 'deepEquals' bound Fluid handles, and therefore cannot use our
+            //       'expect()' helper here.  Instead, we 'processAllMessages()' and then compare
+            //       the relevant fields of IFluidHandle.
+
+            containerRuntimeFactory.processAllMessages();
+
+            const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
+            const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+
+            assert.equal(handle1.IFluidHandle.absolutePath, handle2.IFluidHandle.absolutePath);
+
+            // Remove handle from matrix to prevent the convergence sanity checks in 'afterEach()'
+            // from performing a 'deepEquals' on the matrix contents.
+            matrix1.setCell(0, 0, undefined);
         });
 
         it("resubmission omits writes to recycled row/col handles", async () => {

@@ -1,9 +1,8 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -16,9 +15,9 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     Jsonable,
-    AsJsonable,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -80,16 +79,14 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc ISharedSummaryBlock.get}
      */
-    public get<T = Jsonable>(key: string): T {
-        // The cast to unknown is needed because of a limitation in TypeScript where an interface cannot be cast to
-        // Jsonable: https://github.com/Microsoft/TypeScript/issues/15300
-        return this.data.get(key) as unknown as T;
+    public get<T>(key: string): Jsonable<T> {
+        return this.data.get(key) as Jsonable<T>;
     }
 
     /**
      * {@inheritDoc ISharedSummaryBlock.set}
      */
-    public set<T extends any = Jsonable>(key: string, value: AsJsonable<T>): void {
+    public set<T>(key: string, value: Jsonable<T>): void {
         this.data.set(key, value);
         // Set this object as dirty so that it is part of the next summary.
         this.dirty();
@@ -126,10 +123,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-        const contents = JSON.parse(rawContent) as ISharedSummaryBlockDataSerializable;
-
+        const contents = await readAndParse<ISharedSummaryBlockDataSerializable>(storage, snapshotFileName);
         for (const [key, value] of Object.entries(contents)) {
             this.data.set(key, value);
         }
@@ -150,5 +144,9 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         throw new Error("shared summary block should not generate any ops.");
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

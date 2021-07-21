@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,6 +7,7 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 function endsWith(value: string, endings: string[]): boolean {
     for (const ending of endings) {
@@ -54,84 +55,87 @@ export class Historian implements IHistorian {
     /* eslint-disable @typescript-eslint/promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`);
+            return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString());
         } else {
             return this.getHeaderDirect(sha);
         }
     }
 
     public getFullTree(sha: string): Promise<any> {
-        return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`);
+        return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`, this.getQueryString());
     }
 
     public getBlob(sha: string): Promise<git.IBlob> {
         return this.restWrapper.get<git.IBlob>(
-            `/git/blobs/${encodeURIComponent(sha)}`);
+            `/git/blobs/${encodeURIComponent(sha)}`, this.getQueryString());
     }
 
     public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
         return this.restWrapper.post<git.ICreateBlobResponse>(
-            `/git/blobs`, this.getQueryString(blob));
+            `/git/blobs`, blob, this.getQueryString());
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        return this.restWrapper.get(`/contents/${path}`, { ref });
+        return this.restWrapper.get(`/contents/${path}`, this.getQueryString({ ref }));
     }
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         return this.restWrapper.get<git.ICommitDetails[]>(
-            `/commits`, { count, sha })
+            `/commits`, this.getQueryString({ count, sha }))
                 .catch((error) => (error === 400 || error === 404) ?
                     [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
         return this.restWrapper.get<git.ICommit>(
-            `/git/commits/${encodeURIComponent(sha)}`);
+            `/git/commits/${encodeURIComponent(sha)}`, this.getQueryString());
     }
 
     public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.restWrapper.post<git.ICommit>(`/git/commits`, this.getQueryString(commit));
+        return this.restWrapper.post<git.ICommit>(`/git/commits`, commit, this.getQueryString());
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        return this.restWrapper.get(`/git/refs`);
+        return this.restWrapper.get(`/git/refs`, this.getQueryString());
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        return this.restWrapper.get(`/git/refs/${ref}`);
+        return this.restWrapper.get(`/git/refs/${ref}`, this.getQueryString());
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.restWrapper.post(`/git/refs`, this.getQueryString(params));
+        return this.restWrapper.post(`/git/refs`, params, this.getQueryString());
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.restWrapper.patch(`/git/refs/${ref}`, this.getQueryString(params));
+        return this.restWrapper.patch(`/git/refs/${ref}`, params, this.getQueryString());
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async deleteRef(ref: string): Promise<void> {
-        await this.restWrapper.delete(`/git/refs/${ref}`);
+        await this.restWrapper.delete(`/git/refs/${ref}`, this.getQueryString());
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.restWrapper.post(`/git/tags`, this.getQueryString(tag));
+        return this.restWrapper.post(`/git/tags`, tag, this.getQueryString());
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        return this.restWrapper.get(`/git/tags/${tag}`);
+        return this.restWrapper.get(`/git/tags/${tag}`, this.getQueryString());
     }
 
     public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.restWrapper.post<git.ITree>(`/git/trees`, this.getQueryString(tree));
+        return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.getQueryString());
     }
 
     public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
         return this.restWrapper.get<git.ITree>(
             `/git/trees/${encodeURIComponent(sha)}`,
             this.getQueryString({ recursive: recursive ? 1 : 0 }));
+    }
+    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        return this.restWrapper.post<IWriteSummaryResponse>(`/git/summaries`, summary, this.getQueryString());
     }
     /* eslint-enable @typescript-eslint/promise-function-async */
 

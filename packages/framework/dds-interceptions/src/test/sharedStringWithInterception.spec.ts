@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -159,8 +159,7 @@ describe("Shared String with Interception", () => {
                 // Try to replace text.
                 sharedStringWithInterception.replaceText(1, 2, text);
             } catch (error) {
-                assert.strictEqual(error.message,
-                    "Interception wrapper methods called recursively from the interception callback",
+                assert.strictEqual(error.message, "0x0c8",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }

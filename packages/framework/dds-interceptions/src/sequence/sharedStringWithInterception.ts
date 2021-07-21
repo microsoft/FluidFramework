@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -46,7 +46,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c1 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -73,7 +73,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c2 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -101,7 +101,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c3 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -124,7 +124,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c4 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -152,7 +152,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c5 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -178,7 +178,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c6 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -204,7 +204,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c7 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -233,7 +233,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c8 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
@@ -257,7 +257,7 @@ export function createSharedStringWithInterception(
         // Wrapper methods should not be called from the interception callback as this will lead to
         // infinite recursion.
         assert(executingCallback === false,
-            "Interception wrapper methods called recursively from the interception callback");
+            0x0c9 /* "Interception wrapper methods called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             executingCallback = true;

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -68,12 +68,13 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
 
 /**
  * Default request handler for a Fluid object that returns the object itself if:
- *  1. the request url is a "/"
- *  2. the request url is empty
+ *  1. the request url is empty
+ *  2. the request url is "/"
+ *  3. the request url starts with "/" and is followed by a query param, such as /?key=value
  * Returns a 404 error for any other url.
  */
 export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, request: IRequest): IResponse {
-    if (request.url === "/" || request.url === "") {
+    if (request.url === "" || request.url === "/" || request.url.startsWith("/?")) {
         return { mimeType: "fluid/object", status: 200, value: fluidObject };
     } else {
         return create404Response(request);

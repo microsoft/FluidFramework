@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,13 +14,15 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
     createAndAttachContainer,
-    OpProcessingController,
     ITestFluidObject,
     TestFluidObjectFactory,
     createLoader,
     createDocumentId,
+    LoaderContainerTracker,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const counterKey = "count";
 
@@ -86,34 +88,44 @@ const testDataObjectFactory = new DataObjectFactory(
     {},
 );
 
-describe("LocalLoader", () => {
-    let driver: ITestDriver;
-    before(()=>{
-        driver = getFluidTestDriver() as unknown as ITestDriver;
+// REVIEW: enable compat testing?
+describeNoCompat("LocalLoader", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    before(() => {
+        provider = getTestObjectProvider();
     });
-
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
 
-    let opProcessingController: OpProcessingController;
+    const loaderContainerTracker = new LoaderContainerTracker();
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
+    });
 
     async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, factory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
+        loaderContainerTracker.add(loader);
         return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
+            codeDetails, loader, provider.driver.createCreateNewRequest(documentId));
     }
 
     async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
         const loader = createLoader(
             [[codeDetails, factory]],
-            driver.createDocumentServiceFactory(),
-            driver.createUrlResolver());
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
+            provider.documentServiceFactory,
+            provider.urlResolver,
+            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+        );
+        loaderContainerTracker.add(loader);
+        return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
     }
 
     describe("1 dataObject", () => {
@@ -132,10 +144,6 @@ describe("LocalLoader", () => {
     });
 
     describe("2 dataObjects", () => {
-        beforeEach(async () => {
-            opProcessingController = new OpProcessingController();
-        });
-
         it("early open / late close", async () => {
             const documentId = createDocumentId();
 
@@ -148,21 +156,17 @@ describe("LocalLoader", () => {
 
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
-            opProcessingController.addDeltaManagers(
-                container1.deltaManager,
-                container2.deltaManager);
-
             dataObject1.increment();
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
             assert.equal(
                 dataObject2.value, 1, "Remote update by 'dataObject1' must be observable to 'dataObject2' after sync.");
 
             dataObject2.increment();
             assert.equal(dataObject2.value, 2, "Local update by 'dataObject2' must be promptly observable");
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
             assert.equal(
                 dataObject1.value, 2, "Remote update by 'dataObject2' must be observable to 'dataObject1' after sync.");
         });
@@ -172,8 +176,6 @@ describe("LocalLoader", () => {
             const container1 = await createContainer(documentId, testDataObjectFactory);
             const dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
 
-            opProcessingController.addDeltaManagers(container1.deltaManager);
-
             dataObject1.increment();
             assert.equal(dataObject1.value, 1, "Local update by 'dataObject1' must be promptly observable");
 
@@ -182,16 +184,14 @@ describe("LocalLoader", () => {
             const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             assert(dataObject1 !== dataObject2, "Each container must return a separate TestDataObject instance.");
 
-            opProcessingController.addDeltaManagers(container2.deltaManager);
-
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
             assert.equal(
                 dataObject2.value, 1, "Remote update by 'dataObject1' must be observable to 'dataObject2' after sync.");
 
             dataObject2.increment();
             assert.equal(dataObject2.value, 2, "Local update by 'dataObject2' must be promptly observable");
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
             assert.equal(
                 dataObject1.value, 2, "Remote update by 'dataObject2' must be observable to 'dataObject1' after sync.");
         });
@@ -221,7 +221,6 @@ describe("LocalLoader", () => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                opProcessingController = new OpProcessingController();
                 const documentId = createDocumentId();
                 const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -232,10 +231,6 @@ describe("LocalLoader", () => {
                 const container2 = await loadContainer(documentId, factory);
                 dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
                 text2 = await dataObject2.getSharedObject<SharedString>("text");
-
-                opProcessingController.addDeltaManagers(
-                    container1.deltaManager,
-                    container2.deltaManager);
             });
 
             it("edits propagate", async () => {
@@ -244,7 +239,7 @@ describe("LocalLoader", () => {
 
                 text1.insertText(0, "1");
                 text2.insertText(0, "2");
-                await opProcessingController.process();
+                await loaderContainerTracker.ensureSynchronized();
 
                 assert.strictEqual(text1.getLength(), 2, "The SharedString in dataObject1 is has incorrect length.");
                 assert.strictEqual(text2.getLength(), 2, "The SharedString in dataObject2 is has incorrect length.");
@@ -267,24 +262,23 @@ describe("LocalLoader", () => {
                 dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
             });
 
-            it("Controlled inbounds and outbounds", async () => {
-                opProcessingController = new OpProcessingController();
-                opProcessingController.addDeltaManagers(
-                    container1.deltaManager,
-                    container2.deltaManager);
+            it("Controlled inbounds and outbounds", async function() {
+                if (provider.driver.type !== "local") {
+                    this.skip();
+                }
 
-                await opProcessingController.pauseProcessing();
+                await loaderContainerTracker.pauseProcessing();
 
                 dataObject1.increment();
-                assert.equal(dataObject1.value, 1, "Expected user1 to see the local increment");
+                assert.equal(dataObject1.value, 1, "Expected user 1 to see the local increment");
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.process(container1.deltaManager);
+                await loaderContainerTracker.ensureSynchronized(container1);
                 assert.equal(dataObject2.value, 0,
                     "Expected user 2 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(container2.deltaManager);
+                await loaderContainerTracker.processIncoming(container2);
                 assert.equal(dataObject2.value, 1, "Expected user 2 to see the increment now");
 
                 dataObject2.increment();
@@ -292,11 +286,11 @@ describe("LocalLoader", () => {
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to pauseProcessing call");
 
-                await opProcessingController.processOutgoing(container2.deltaManager);
+                await loaderContainerTracker.processOutgoing(container2);
                 assert.equal(dataObject1.value, 1,
                     "Expected user 1 NOT to see the increment due to no processIncoming call yet");
 
-                await opProcessingController.processIncoming(container1.deltaManager);
+                await loaderContainerTracker.processIncoming(container1);
                 assert.equal(dataObject1.value, 2, "Expected user 1 to see the increment now");
             });
         });

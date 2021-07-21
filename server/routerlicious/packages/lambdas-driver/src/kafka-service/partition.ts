@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,15 +7,15 @@ import { EventEmitter } from "events";
 import {
     IConsumer,
     IQueuedMessage,
+    IPartitionConfig,
     IPartitionLambda,
     IPartitionLambdaFactory,
     ILogger,
     LambdaCloseType,
     IContextErrorData,
 } from "@fluidframework/server-services-core";
-import { AsyncQueue, queue } from "async";
+import { QueueObject, queue } from "async";
 import * as _ from "lodash";
-import { Provider } from "nconf";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -24,7 +24,7 @@ import { Context } from "./context";
  * overall partition offset.
  */
 export class Partition extends EventEmitter {
-    private q: AsyncQueue<IQueuedMessage>;
+    private readonly q: QueueObject<IQueuedMessage>;
     private lambdaP: Promise<IPartitionLambda> | undefined;
     private lambda: IPartitionLambda | undefined;
     private readonly checkpointManager: CheckpointManager;
@@ -34,16 +34,13 @@ export class Partition extends EventEmitter {
     constructor(
         private readonly id: number,
         leaderEpoch: number,
-        factory: IPartitionLambdaFactory,
+        factory: IPartitionLambdaFactory<IPartitionConfig>,
         consumer: IConsumer,
-        config: Provider,
         private readonly logger?: ILogger) {
         super();
 
         // Should we pass epoch with the context?
-        const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.leaderEpoch = leaderEpoch;
-        const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
+        const partitionConfig: IPartitionConfig = { leaderEpoch };
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager, this.logger);
@@ -56,7 +53,14 @@ export class Partition extends EventEmitter {
             (message: IQueuedMessage, callback) => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.lambda!.handler(message);
+                    const optionalPromise = this.lambda!.handler(message);
+                    if (optionalPromise) {
+                        optionalPromise
+                            .then(callback as any)
+                            .catch(callback);
+                        return;
+                    }
+
                     callback();
                 } catch (error) {
                     callback(error);
@@ -84,12 +88,12 @@ export class Partition extends EventEmitter {
                 this.q.kill();
             });
 
-        this.q.error = (error) => {
+        this.q.error((error) => {
             const errorData: IContextErrorData = {
                 restart: true,
             };
             this.emit("error", error, errorData);
-        };
+        });
     }
 
     public process(rawMessage: IQueuedMessage) {
@@ -97,7 +101,7 @@ export class Partition extends EventEmitter {
             return;
         }
 
-        this.q.push(rawMessage);
+        void this.q.push(rawMessage);
     }
 
     public close(closeType: LambdaCloseType): void {
@@ -148,10 +152,10 @@ export class Partition extends EventEmitter {
             // Wait until the queue is drained
             this.logger?.info(`Waiting for queue to drain for partition ${this.id}`);
 
-            this.q.drain = () => {
+            this.q.drain(() => {
                 this.logger?.info(`Drained partition ${this.id}`);
                 resolve();
-            };
+            });
         });
         await drainedP;
 

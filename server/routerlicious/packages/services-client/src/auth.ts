@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,35 +7,44 @@ import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definit
 import { KJUR as jsrsasign } from "jsrsasign";
 import jwtDecode from "jwt-decode";
 import { v4 as uuid } from "uuid";
+import { NetworkError } from "./error";
 
 /**
- * Validates a JWT token to authorize routerlicious and returns decoded claims.
- * An undefined return value indicates invalid claims.
+ * Validates a JWT token to authorize routerlicious.
+ * @returns decoded claims.
+ * @throws {NetworkError} if claims are invalid.
  */
 export function validateTokenClaims(
     token: string,
     documentId: string,
-    tenantId: string,
-    maxTokenLifetimeSec: number,
-    isTokenExpiryEnabled: boolean): ITokenClaims {
+    tenantId: string): ITokenClaims {
     const claims = jwtDecode<ITokenClaims>(token);
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
-        return undefined;
+        throw new NetworkError(403, "DocumentId and/or TenantId in token claims do not match requested resource");
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
-        return undefined;
-    }
-
-    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
-        const now = Math.round((new Date()).getTime() / 1000);
-        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
-            return undefined;
-        }
+        throw new NetworkError(403, "Missing scopes in token claims");
     }
 
     return claims;
+}
+
+/**
+ * Validates token claims' iat and exp properties to ensure valid token expiration.
+ * @returns token lifetime in milliseconds.
+ * @throws {NetworkError} if expiry is invalid.
+ */
+export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number {
+    if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
+        throw new NetworkError(403, "Invalid token expiry");
+    }
+    const lifeTimeMSec = (claims.exp * 1000) - (new Date()).getTime();
+    if (lifeTimeMSec < 0) {
+        throw new NetworkError(401, "Expired token");
+    }
+    return lifeTimeMSec;
 }
 
 /**

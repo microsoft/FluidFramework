@@ -1,10 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString ,TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -28,8 +29,6 @@ import {
     ISerializableValue,
     ISerializedValue,
     ISharedDirectory,
-    IValueOpEmitter,
-    IValueTypeOperationValue,
     ISharedDirectoryEvents,
     IValueChanged,
 } from "./interfaces";
@@ -37,7 +36,6 @@ import {
     ILocalValue,
     LocalValueMaker,
     makeSerializable,
-    ValueTypeLocalValue,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
@@ -72,31 +70,6 @@ interface IDirectoryMessageHandler {
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
     submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
-}
-
-/**
- * Describes an operation specific to a value type.
- */
-interface IDirectoryValueTypeOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "act";
-
-    /**
-     * Directory key being modified.
-     */
-    key: string;
-
-    /**
-     * Absolute path of the directory where the modified key is located.
-     */
-    path: string;
-
-    /**
-     * Value of the operation, specific to the value type.
-     */
-    value: IValueTypeOperationValue;
 }
 
 /**
@@ -147,7 +120,7 @@ interface IDirectoryDeleteOperation {
 /**
  * An operation on a specific key within a directory
  */
-type IDirectoryKeyOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
+type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
@@ -230,13 +203,11 @@ export interface IDirectoryDataObject {
 }
 
 export interface IDirectoryNewStorageFormat {
-    /** @deprecated - added to prevent buggy caching. remove once all loaders past 0.35 */
-    absolutePath?: string;
     blobs: string[];
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(absolutePath: string, root: SubDirectory, serializer: IFluidSerializer): ITree {
+function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ITree {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [] };
@@ -290,7 +261,6 @@ function serializeDirectory(absolutePath: string, root: SubDirectory, serializer
     }
 
     const newFormat: IDirectoryNewStorageFormat = {
-        absolutePath,
         blobs,
         content,
     };
@@ -596,7 +566,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
-        return serializeDirectory(this.handle.absolutePath, this.root, serializer);
+        return serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -608,36 +578,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
         this.submitLocalMessage(op, localOpMetadata);
-    }
-
-    /**
-     * Create an emitter for a value type to emit ops from the given key and path.
-     * @param key - The key of the directory that the value type will be stored on
-     * @param absolutePath - The absolute path of the subdirectory storing the value type
-     * @returns A value op emitter for the given key and path
-     * @internal
-     */
-    public makeDirectoryValueOpEmitter(
-        key: string,
-        absolutePath: string,
-    ): IValueOpEmitter {
-        const emit = (opName: string, previousValue: any, params: any) => {
-            const op: IDirectoryValueTypeOperation = {
-                key,
-                path: absolutePath,
-                type: "act",
-                value: {
-                    opName,
-                    value: params,
-                },
-            };
-
-            // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
-            const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
-            this.emit("valueChanged", event, true, null, this);
-        };
-        return { emit };
     }
 
     /**
@@ -653,7 +593,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
-        assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+        assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
         handler.submit(message, localOpMetadata);
     }
 
@@ -661,16 +601,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const blob = await storage.readBlob(snapshotFileName);
-        const header = bufferToString(blob, "utf8");
-        const data = JSON.parse(header);
+        const data = await readAndParse(storage, snapshotFileName);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
             // New storage format
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
-                const newBlob = await storage.readBlob(value);
-                const dataExtra = JSON.parse(bufferToString(newBlob, "utf8"));
+                const dataExtra = await readAndParse(storage, value);
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {
@@ -746,7 +683,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             const handler = this.messageHandlers.get(op.type);
-            assert(handler !== undefined, `Missing message handler for message type: ${message.type}`);
+            assert(handler !== undefined, 0x00e /* `Missing message handler for message type: ${message.type}` */);
             handler.process(op, local, message, localOpMetadata);
         }
     }
@@ -774,14 +711,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         absolutePath: string,
         serializable: ISerializableValue,
     ): ILocalValue {
-        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            return this.localValueMaker.fromSerializable(serializable);
-        } else {
-            return this.localValueMaker.fromSerializableValueType(
-                serializable,
-                this.makeDirectoryValueOpEmitter(key, absolutePath),
-            );
-        }
+        assert(
+            serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared],
+            0x1e4 /* "Unexpected serializable type" */,
+        );
+        return this.localValueMaker.fromSerializable(serializable);
     }
 
     /**
@@ -881,39 +815,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             },
         );
+    }
 
-        // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
-        // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
-        // stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
-        // watching for manipulations of that item.
-        this.messageHandlers.set(
-            "act",
-            {
-                process: (op: IDirectoryValueTypeOperation, local, message, localOpMetadata) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    // Subdir might not exist if we deleted it
-                    if (!subdir) {
-                        return;
-                    }
-
-                    const localValue = subdir.getLocalValue<ValueTypeLocalValue>(op.key);
-                    // Local value might not exist if we deleted it
-                    if (!localValue) {
-                        return;
-                    }
-
-                    const handler = localValue.getOpHandler(op.value.opName);
-                    const previousValue = localValue.value;
-                    const translatedValue = this.serializer.parse(JSON.stringify(op.value.value));
-                    handler.process(previousValue, translatedValue, local, message);
-                    const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
-                    this.emit("valueChanged", event, local, message, this);
-                },
-                submit: (op, localOpMetadata: unknown) => {
-                    this.submitDirectoryMessage(op, localOpMetadata);
-                },
-            },
-        );
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
 
@@ -1276,7 +1181,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     ): void {
         if (local) {
             assert(localOpMetadata !== undefined,
-                `pendingMessageId is missing from the local client's ${op.type} operation`);
+                0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
             const pendingMessageId = localOpMetadata as number;
             if (this.pendingClearMessageId === pendingMessageId) {
                 this.pendingClearMessageId = -1;
@@ -1483,7 +1388,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    "Received out of order storage op when there is an unackd clear message");
+                    0x010 /* "Received out of order storage op when there is an unackd clear message" */);
             }
             // If I have a NACK clear, we can ignore all ops.
             return false;
@@ -1494,7 +1399,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             // match the message's and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                    0x011 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
@@ -1527,7 +1432,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                    0x012 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
                 if (pendingSubDirectoryMessageId === pendingMessageId) {

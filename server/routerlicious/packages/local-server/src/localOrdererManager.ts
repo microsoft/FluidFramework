@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,6 +32,14 @@ export class LocalOrdererManager implements IOrdererManager {
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
         private readonly pubsub?: IPubSub,
     ) {
+    }
+
+    /**
+     * Closes all local orderers
+     */
+    public async close() {
+        await Promise.all(Array.from(this.map.values()).map(async (orderer) => (await orderer).close()));
+        this.map.clear();
     }
 
     /**
@@ -82,6 +90,7 @@ export class LocalOrdererManager implements IOrdererManager {
             undefined /* foremanContext */,
             undefined /* scribeContext */,
             undefined /* deliContext */,
+            undefined /* moiraContext */,
             this.serviceConfiguration);
 
         const lambdas = [

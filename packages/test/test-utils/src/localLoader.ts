@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,40 +12,21 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
 /**
- * Creates a loader with the given package entries and a delta connection server.
+ * Creates a loader with the given package entries and driver.
  * @param packageEntries - A list of code details to Fluid entry points.
- * @param deltaConnectionServer - The delta connection server to use as the server.
- */
-export function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
-    urlResolver: IUrlResolver,
-    options?: ILoaderOptions,
-): IHostLoader {
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-
-    return createLoader(
-        packageEntries,
-        documentServiceFactory,
-        urlResolver,
-        options,
-    );
-}
-
-/**
- * Creates a loader with the given package entries and a delta connection server.
- * @param packageEntries - A list of code details to Fluid entry points.
- * @param deltaConnectionServer - The delta connection server to use as the server.
+ * @param documentServiceFactory - the driver factory to use
+ * @param urlResolver - the url resolver to use
+ * @param options - loader options
  */
 export function createLoader(
     packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     documentServiceFactory: IDocumentServiceFactory,
     urlResolver: IUrlResolver,
+    logger?: ITelemetryBaseLogger,
     options?: ILoaderOptions,
 ): IHostLoader {
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
@@ -54,6 +35,7 @@ export function createLoader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        logger,
         options,
     });
 }

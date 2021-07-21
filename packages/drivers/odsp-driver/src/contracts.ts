@@ -1,52 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-
-export interface IOdspResolvedUrl extends IFluidResolvedUrl {
-    type: "fluid";
-
-    // URL to send to fluid, contains the documentId and the path
-    url: string;
-
-    // A hashed identifier that is unique to this document
-    hashedDocumentId: string;
-
-    siteUrl: string;
-
-    driveId: string;
-
-    itemId: string;
-
-    endpoints: {
-        snapshotStorageUrl: string;
-        attachmentPOSTStorageUrl: string;
-        attachmentGETStorageUrl: string;
-    };
-
-    // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    tokens: {};
-
-    fileName: string;
-
-    summarizer: boolean;
-
-    // This is used to save the network calls while doing trees/latest call as if the client does not have permission
-    // then this link can be redeemed for the permissions in the same network call.
-    sharingLinkToRedeem?: string;
-
-    codeHint?: {
-        // containerPackageName is used for adding the package name to the request headers.
-        // This may be used for preloading the container package when loading Fluid content.
-        containerPackageName?: string
-    }
-
-    fileVersion?: string;
-}
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 
 /**
  * Socket storage discovery api response
@@ -64,14 +22,9 @@ export interface ISocketStorageDiscovery {
     deltaStorageUrl: string;
 
     /**
-     * The non-AFD URL
+     * PUSH URL
      */
     deltaStreamSocketUrl: string;
-
-    /**
-     * The AFD URL for PushChannel
-     */
-    deltaStreamSocketUrl2?: string;
 
     /**
      * The access token for PushChannel. Optionally returned, depending on implementation.
@@ -127,65 +80,85 @@ export interface IDocumentStorageVersion {
     id: string;
 }
 
-export enum SnapshotType {
-    Container = "container",
-    Channel = "channel",
-}
+/**
+ *
+ * Data structures that form ODSP Summary
+ *
+ */
 
-export interface ISnapshotRequest {
-    type: SnapshotType;
+export interface IOdspSummaryPayload {
+    type: "container" | "channel";
     message: string;
     sequenceNumber: number;
-    entries: SnapshotTreeEntry[];
+    entries: OdspSummaryTreeEntry[];
 }
 
-export interface ISnapshotResponse {
+export interface IWriteSummaryResponse {
     id: string;
 }
 
-export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEntry;
+export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | IOdspSummaryTreeHandleEntry;
 
-export interface ISnapshotTreeBaseEntry {
+export interface IOdspSummaryTreeBaseEntry {
     path: string;
     type: "blob" | "tree" | "commit";
 }
 
-export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
-    value: SnapshotTreeValue;
+export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
+    value: OdspSummaryTreeValue;
     // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
     unreferenced?: true;
 }
 
-export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
+export interface IOdspSummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
     id: string;
 }
 
-export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
+export type OdspSummaryTreeValue = IOdspSummaryTree | IOdspSummaryBlob;
 
-export interface ISnapshotTree {
+export interface IOdspSummaryTree {
     type: "tree";
-    entries?: SnapshotTreeEntry[];
+    entries?: OdspSummaryTreeEntry[];
 }
 
-export interface ISnapshotBlob {
+export interface IOdspSummaryBlob {
     type: "blob";
     content: string;
     encoding: "base64" | "utf-8";
 }
 
-export interface ISnapshotCommit {
-    type: "commit";
-    content: string;
+/**
+ *
+ * Data structures that form ODSP Snapshot
+ *
+ */
+
+export interface IOdspSnapshotTreeEntryTree {
+    path: string;
+    type: "tree";
+    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    unreferenced?: true;
 }
 
-export interface ITreeEntry {
+export interface IOdspSnapshotTreeEntryCommit {
     id: string;
     path: string;
-    type: "commit" | "tree" | "blob";
+    type: "commit";
 }
 
-export interface ITree {
-    entries: ITreeEntry[];
+export interface IOdspSnapshotTreeEntryBlob {
+    id: string;
+    path: string;
+    type: "blob";
+}
+
+export type IOdspSnapshotTreeEntry =
+    | IOdspSnapshotTreeEntryTree
+    | IOdspSnapshotTreeEntryCommit
+    | IOdspSnapshotTreeEntryBlob;
+
+export interface IOdspSnapshotCommit {
+    entries: IOdspSnapshotTreeEntry[];
     id: string;
     sequenceNumber: number;
 }
@@ -193,7 +166,7 @@ export interface ITree {
 /**
  * Blob content, represents blobs in downloaded snapshot.
  */
-export interface IBlob {
+export interface IOdspSnapshotBlob {
     content: string;
     // SPO only uses "base64" today for download.
     // We are adding undefined too, as temp way to roundtrip strings unchanged.
@@ -204,51 +177,9 @@ export interface IBlob {
 
 export interface IOdspSnapshot {
     id: string;
-    trees: ITree[];
-    blobs?: IBlob[];
+    trees: IOdspSnapshotCommit[];
+    blobs?: IOdspSnapshotBlob[];
     ops?: ISequencedDeltaOpMessage[];
-}
-
-export interface IOdspUrlParts {
-    site: string;
-    drive: string;
-    item: string;
-}
-
-export interface ISnapshotOptions {
-    blobs?: number;
-    deltas?: number;
-    channels?: number;
-    /*
-     * Maximum Data size (in bytes)
-     * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
-     * if snapshot is bigger in size than specified limit.
-     */
-    mds?: number;
-
-    /*
-     * Maximum time limit to fetch snapshot (in seconds)
-     * If specified, client will timeout the fetch request if it exceeds the time limit and
-     * will try to fetch the snapshot without blobs.
-     */
-    timeout?: number;
-}
-
-export interface HostStoragePolicy {
-    snapshotOptions?: ISnapshotOptions;
-
-    /**
-     * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
-     * Container loads from whatever comes first in such case.
-     * Snapshot fetched from storage is pushed to cache in either case.
-     * If set to false, driver will first consult with cache. Only on cache miss (cache does not
-     * return snapshot), driver will fetch snapshot from storage (and push it to cache), otherwise
-     * it will load from cache and not reach out to storage.
-     * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
-     */
-    concurrentSnapshotFetch?: boolean;
-
-    blobDeduping?: boolean;
 }
 
 /**
@@ -268,34 +199,10 @@ export interface ICreateFileResponse {
     sequenceNumber: number;
 }
 
-export interface OdspDocumentInfo {
-    siteUrl: string;
-    driveId: string;
-    fileId: string;
-    dataStorePath: string;
+export interface IVersionedValueWithEpoch {
+    value: any;
+    fluidEpoch: string,
+    version: 2,
 }
 
-export interface OdspFluidDataStoreLocator {
-    siteUrl: string;
-    driveId: string;
-    fileId: string;
-    dataStorePath: string;
-    appName?: string;
-    containerPackageName?: string;
-    fileVersion?: string;
-}
-
-export enum SharingLinkHeader {
-    // Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
-    // which can be redeemed at server to get permissions.
-    isSharingLinkToRedeem = "isSharingLinkToRedeem",
-}
-
-export interface ISharingLinkHeader {
-    [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
-}
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ISharingLinkHeader> { }
-}
+export const persistedCacheValueVersion = 2;

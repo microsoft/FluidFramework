@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -37,10 +37,9 @@ export interface IDataObjectProps<O = object, S = undefined> {
  * You probably don't want to inherit from this data store directly unless
  * you are creating another base data store class
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data store may take during creation
- * E - represents events that will be available in the EventForwarder
+ * @typeParam O - represents a type that will define optional providers that will be injected
+ * @typeParam S - the initial state type that the produced data object may take during creation
+ * @typeParam E - represents events that will be available in the EventForwarder
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
@@ -87,7 +86,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const obj = (runtime as any)._dataObject as PureDataObject;
-        assert(obj !== undefined, "Runtime has no DataObject!");
+        assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
         await obj.finishInitialization();
         return obj;
     }
@@ -99,7 +98,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         this.providers = props.providers;
         this.initProps = props.initProps;
 
-        assert((this.runtime as any)._dataObject === undefined);
+        assert((this.runtime as any)._dataObject === undefined, 0x0bd /* "Object runtime already has DataObject!" */);
         (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
@@ -157,7 +156,8 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     public async initializeInternal(): Promise<void> {
         await this.preInitialize();
         if (this.runtime.existing) {
-            assert(this.initProps === undefined);
+            assert(this.initProps === undefined,
+                0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
             await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);

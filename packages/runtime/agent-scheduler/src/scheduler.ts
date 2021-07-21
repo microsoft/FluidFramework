@@ -1,10 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IRequest,
@@ -15,34 +14,34 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    IAgentScheduler,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler {
+class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
-        let scheduler: ConsensusRegisterCollection<string | null>;
+        let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
-            scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.bindToContext();
-            root.set("scheduler", scheduler.handle);
+            consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
+            consensusRegisterCollection.bindToContext();
+            root.set("scheduler", consensusRegisterCollection.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
-            assert(handle !== undefined);
-            scheduler = await handle.get();
+            assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
+            consensusRegisterCollection = await handle.get();
         }
-        const agentScheduler = new AgentScheduler(runtime, context, scheduler);
+        const agentScheduler = new AgentScheduler(runtime, context, consensusRegisterCollection);
         agentScheduler.initialize();
 
         return agentScheduler;
@@ -55,7 +54,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(!!clientId);
+        assert(!!clientId, 0x117 /* "Trying to get missing clientId!" */);
         return clientId;
     }
 
@@ -77,14 +76,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
-        private readonly scheduler: ConsensusRegisterCollection<string | null>) {
+        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>) {
         super();
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
-                return Promise.reject(new Error(`${taskUrl} is already registered`));
+                throw new Error(`${taskUrl} is already registered`);
             }
         }
         const unregisteredTasks: string[] = [];
@@ -101,16 +100,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
 
     public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
         if (this.locallyRunnableTasks.has(taskId)) {
-            return Promise.reject(new Error(`${taskId} is already attempted`));
+            throw new Error(`${taskId} is already attempted`);
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
-        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // in isActive(). This check is done by users of this class - containerRuntime.ts (for "leader") and
-        // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
-        // I'm adding assert here to catch that case and make decision on which way we go - push requirements
-        // to consumers to make a choice, or centrally make this call here.
-        assert(this.context.deltaManager.clientDetails.capabilities.interactive);
+        // We have a policy to disallow non-interactive clients from taking tasks.  Callers of pick() can
+        // either perform this check proactively and call conditionally, or catch the error (in which case
+        // they can know they will not get the task).
+        assert(this.context.deltaManager.clientDetails.capabilities.interactive,
+            0x118 /* "Bad client interactive check" */);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
@@ -126,13 +124,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
             if (!this.locallyRunnableTasks.has(taskUrl)) {
-                return Promise.reject(new Error(`${taskUrl} was never registered`));
+                throw new Error(`${taskUrl} was never registered`);
             }
             // Note - the assumption is - we are connected.
             // If not - all tasks should have been dropped already on disconnect / attachment
-            assert(active);
+            assert(active, 0x119 /* "This agent became inactive while releasing" */);
             if (this.getTaskClientId(taskUrl) !== this.clientId) {
-                return Promise.reject(new Error(`${taskUrl} was never picked`));
+                throw new Error(`${taskUrl} was never picked`);
             }
         }
         return this.releaseCore([...taskUrls]);
@@ -156,7 +154,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
                 const taskStatus = this.getTaskClientId(taskUrl);
 
                 // Task should be either registered (null) or picked up.
-                assert(taskStatus !== undefined, `Unsuccessful registration`);
+                assert(taskStatus !== undefined, 0x11a /* `Unsuccessful registration` */);
 
                 if (taskStatus === null) {
                     debug(`Registered ${taskUrl}`);
@@ -181,7 +179,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private async clearTasks(taskUrls: string[]) {
-        assert(this.isActive());
+        assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
         const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
             debug(`Clearing ${taskUrl}`);
@@ -191,11 +189,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private getTaskClientId(url: string): string | null | undefined {
-        return this.scheduler.read(url);
+        return this.consensusRegisterCollection.read(url);
     }
 
     private async writeCore(key: string, clientId: string | null): Promise<void> {
-        await this.scheduler.write(key, clientId);
+        await this.consensusRegisterCollection.write(key, clientId);
     }
 
     private initialize() {
@@ -205,23 +203,32 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.objectsRoutingContext.isAttached);
+            assert(this.runtime.objectsRoutingContext.isAttached, 0x11c /* "Detached object routing context" */);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
+                const tasks: Promise<any>[] = [];
                 const leftTasks: string[] = [];
-                for (const taskUrl of this.scheduler.keys()) {
+                for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
-                        leftTasks.push(taskUrl);
+                        if (this.locallyRunnableTasks.has(taskUrl)) {
+                            debug(`Requesting ${taskUrl}`);
+                            tasks.push(this.writeCore(taskUrl, this.clientId));
+                        } else {
+                            leftTasks.push(taskUrl);
+                        }
                     }
                 }
-                await this.clearTasks(leftTasks);
+                tasks.push(this.clearTasks(leftTasks));
+                await Promise.all(tasks).catch((error) => {
+                    this.sendErrorEvent("AgentScheduler_RemoveMemberError", error);
+                });
             }
         });
 
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.scheduler.on("atomicChanged", async (key: string, currentClient: string | null) => {
+        this.consensusRegisterCollection.on("atomicChanged", async (key: string, currentClient: string | null) => {
             // Check if this client was chosen.
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
@@ -256,7 +263,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
     }
 
     private onNewTaskAssigned(key: string) {
-        assert(!this.runningTasks.has(key), "task is already running");
+        assert(!this.runningTasks.has(key), 0x11d /* "task is already running" */);
         this.runningTasks.add(key);
         const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
@@ -275,7 +282,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             this.runningTasks.delete(key);
             this.emit("released", key);
         }
-        assert(currentClient !== undefined, "client is undefined");
+        assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
@@ -304,10 +311,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
         }
 
         // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
-        // here. This is done by users of this class - containerRuntime.ts (for "leader") and TaskManager.
-        // In the future, as new usage shows up, we may need to reconsider that.
-        // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
-        // to consumers to make a choice, or centrally make this call here.
+        // here.  Instead we assert in pick() if a non-interactive client tries to pick.
 
         return this.context.deltaManager.active;
     }
@@ -325,7 +329,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler {
             }
         }
 
-        for (const taskUrl of this.scheduler.keys()) {
+        for (const taskUrl of this.consensusRegisterCollection.keys()) {
             const currentClient = this.getTaskClientId(taskUrl);
             if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);

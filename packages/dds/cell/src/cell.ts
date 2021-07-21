@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { assert , bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
 
 import {
@@ -20,6 +20,7 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -96,7 +97,7 @@ const snapshotFileName = "header";
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
  * in response to a `set`, and `delete` will be emitted in response to a `delete`.
  */
-export class SharedCell<T extends Serializable = any> extends SharedObject<ISharedCellEvents<T>>
+export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     implements ISharedCell<T> {
     /**
      * Create a new shared cell
@@ -120,7 +121,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     /**
      * The data held by this cell.
      */
-    private data: T | undefined;
+    private data: Serializable<T> | undefined;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -148,14 +149,14 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     /**
      * {@inheritDoc ISharedCell.get}
      */
-    public get() {
+    public get(): Serializable<T> | undefined {
         return this.data;
     }
 
     /**
      * {@inheritDoc ISharedCell.set}
      */
-    public set(value: T) {
+    public set(value: Serializable<T>) {
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
@@ -240,12 +241,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-
-        const content = rawContent !== undefined
-            ? JSON.parse(rawContent) as ICellValue
-            : { type: ValueType[ValueType.Plain], value: undefined };
+        const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
         this.data = this.fromSerializable(content);
     }
@@ -287,7 +283,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
             if (local) {
                 const messageIdReceived = localOpMetadata as number;
                 assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
-                    "messageId is incorrect from from the local client's ACK");
+                    0x00c /* "messageId is incorrect from from the local client's ACK" */);
 
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = localOpMetadata as number;
@@ -313,7 +309,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         }
     }
 
-    private setCore(value: T) {
+    private setCore(value: Serializable<T>) {
         this.data = value;
         this.emit("valueChanged", value);
     }
@@ -351,5 +347,9 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         return value !== undefined
             ? this.serializer.parse(JSON.stringify(value))
             : value;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

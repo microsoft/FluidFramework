@@ -1,17 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { getSnapshotForDataStores } from "../dataStores";
-import { nonDataStorePaths } from "../snapshot";
+import { getSummaryForDatastores } from "../dataStores";
+import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("getSnapshotForDataStores", () => {
+        describe("getSummaryForDatastores", () => {
+            const enabledMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1 };
+            const disabledMetadata: IContainerRuntimeMetadata = {
+                summaryFormatVersion: 1,
+                disableIsolatedChannels: true,
+            };
+
             const emptyTree = (id: string): ISnapshotTree => ({
                 id,
                 blobs: {},
@@ -42,18 +48,35 @@ describe("Runtime", () => {
             };
 
             it("Should return undefined for undefined snapshots", () => {
-                let snapshot = getSnapshotForDataStores(undefined, undefined);
+                let snapshot = getSummaryForDatastores(undefined, undefined);
                 assert(snapshot === undefined);
-                snapshot = getSnapshotForDataStores(undefined, 1);
+                snapshot = getSummaryForDatastores(undefined, enabledMetadata);
                 assert(snapshot === undefined);
-                snapshot = getSnapshotForDataStores(null as any, undefined);
+                snapshot = getSummaryForDatastores(undefined, disabledMetadata);
                 assert(snapshot === undefined);
-                snapshot = getSnapshotForDataStores(null as any, 1);
+                snapshot = getSummaryForDatastores(null as any, undefined);
+                assert(snapshot === undefined);
+                snapshot = getSummaryForDatastores(null as any, enabledMetadata);
+                assert(snapshot === undefined);
+                snapshot = getSummaryForDatastores(null as any, disabledMetadata);
                 assert(snapshot === undefined);
             });
 
             it("Should strip out non-datastore paths for versions < 1", () => {
-                const snapshot = getSnapshotForDataStores(testSnapshot, undefined);
+                const snapshot = getSummaryForDatastores(testSnapshot, undefined);
+                assert(snapshot, "Snapshot should be defined");
+                assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
+                assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
+                assert.strictEqual(snapshot.trees[channelsTreeName]?.id, "channels-id",
+                    "Should have channels tree as datastore");
+                assert.strictEqual(snapshot.trees["some-datastore"]?.id, "top-datastore-1",
+                    "Should have top datastore 1");
+                assert.strictEqual(snapshot.trees["another-datastore"]?.id, "top-datastore-2",
+                    "Should have top datastore 2");
+            });
+
+            it("Should strip out non-datastore paths for disabled isolated channels", () => {
+                const snapshot = getSummaryForDatastores(testSnapshot, disabledMetadata);
                 assert(snapshot, "Snapshot should be defined");
                 assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
                 assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
@@ -66,7 +89,7 @@ describe("Runtime", () => {
             });
 
             it("Should give channels subtree for version 1", () => {
-                const snapshot = getSnapshotForDataStores(testSnapshot, 1);
+                const snapshot = getSummaryForDatastores(testSnapshot, enabledMetadata);
                 assert(snapshot, "Snapshot should be defined");
                 assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
                 assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");

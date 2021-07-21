@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
@@ -53,44 +53,44 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 /**
  * A registry entry, with extra metadata.
  */
-export interface ISpacesItemEntry<T extends Serializable = AsSerializable<any>> {
+export interface ISpacesItemEntry<T = any> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
     // This might be done by integrating these items with the Spaces subcomponent registry?
-    create: (context: IFluidDataStoreContext) => Promise<T>;
-    getView: (serializableObject: T) => Promise<JSX.Element>;
+    create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
+    getView: (serializableObject: Serializable<T>) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
+const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
+const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(cmfe),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
+const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(CollaborativeText.getFactory()),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
+const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(pmfe),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-const sliderCoordinateItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
+const sliderCoordinateItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(Coordinate.getFactory()),
     getView: getSliderCoordinateView,
     friendlyName: "Coordinate",

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,10 +22,10 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                testProperty: true,
-            },
-            {
-                testGetter: ()=>true,
+                all:{
+                    testProperty: true,
+                    testGetter: ()=>true,
+                },
             },
         );
 
@@ -63,10 +63,11 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2",
             {
-                testProperty: true,
-            },
-            {
-                testGetter: ()=>true,
+                all:
+                {
+                    testProperty: true,
+                    testGetter: ()=>true,
+                },
             },
         );
 
@@ -91,7 +92,10 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                testProperty1: true,
+                all:
+                {
+                    testProperty1: true,
+                },
             },
         );
 
@@ -99,7 +103,10 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2",
             {
-                testProperty2: true,
+                all:
+                {
+                    testProperty2: true,
+                },
             });
 
         childLogger2.send({ category:"generic", eventName:"testEvent" });
@@ -122,18 +129,22 @@ describe("ChildLogger", () => {
         const childLogger1 = ChildLogger.create(
             logger,
             "test1",
-            undefined,
             {
-                testGetter1: ()=> true,
+                all:
+                {
+                    testGetter1: ()=> true,
+                },
             },
         );
 
         const childLogger2 = ChildLogger.create(
             childLogger1,
             "test2",
-            undefined,
             {
-                testGetter2: ()=> true,
+                all:
+                {
+                    testGetter2: ()=> true,
+                },
             },
         );
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,11 +21,9 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
-
-const MaxBatchDeltas = 2000;
 
 const ReplayDocumentId = "documentId";
 
@@ -76,9 +74,10 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public fetchTo(currentOp: number) {
-        const useFetchToBatch = !(this.unitIsTime !== true && this.replayTo >= 0);
-        const fetchToBatch = currentOp + MaxBatchDeltas;
-        return useFetchToBatch ? fetchToBatch : Math.min(fetchToBatch, this.replayTo);
+        if (!(this.unitIsTime !== true && this.replayTo >= 0)) {
+            return undefined;
+        }
+        return this.replayTo;
     }
 
     public isDoneFetch(currentOp: number, lastTimeStamp?: number) {
@@ -166,7 +165,6 @@ export class ReplayControllerStatic extends ReplayController {
                         }
                     }
                 }
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 scheduleNext(nextInterval);
                 emitter(playbackOps);
             };
@@ -303,7 +301,6 @@ export class ReplayDocumentDeltaConnection
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController,
     ): Promise<void> {
-        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         let done;
         let replayPromiseChain = Promise.resolve();
 
@@ -312,26 +309,30 @@ export class ReplayDocumentDeltaConnection
         do {
             const fetchTo = controller.fetchTo(currentOp);
 
-            const { messages, partialResult } = await documentStorageService.get(currentOp, fetchTo);
+            const abortController = new AbortController();
+            const stream = documentStorageService.fetchMessages(currentOp + 1, fetchTo, abortController.signal);
+            do {
+                const result = await stream.read();
 
-            if (messages.length === 0) {
-                // No more ops. But, they can show up later, either because document was just created,
-                // or because another client keeps submitting new ops.
-                assert(!partialResult);
-                if (controller.isDoneFetch(currentOp, undefined)) {
+                if (result.done) {
+                    // No more ops. But, they can show up later, either because document was just created,
+                    // or because another client keeps submitting new ops.
+                    done = controller.isDoneFetch(currentOp, undefined);
+                    if (!done) {
+                        await delay(2000);
+                    }
                     break;
                 }
-                await delay(2000);
-                continue;
-            }
+                replayPromiseChain = replayPromiseChain.then(
+                    async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
 
-            replayPromiseChain = replayPromiseChain.then(
-                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), messages));
+                const messages = result.value;
+                currentOp += messages.length;
+                done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+            } while (!done);
 
-            currentOp += messages.length;
-            done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+            abortController.abort();
         } while (!done);
-
         return replayPromiseChain;
     }
 }

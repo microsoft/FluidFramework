@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -49,12 +49,12 @@ describe("Treebuilder", () => {
                 });
             }, concurrency);
 
-            q.drain = () => {
+            q.drain(() => {
                 resolve();
-            };
+            });
 
             for (let i = 0; i < treeCount; i++) {
-                q.push(1);
+                void q.push(1);
             }
         });
     });

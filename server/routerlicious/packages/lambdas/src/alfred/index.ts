@@ -1,23 +1,25 @@
-/* eslint-disable no-null/no-null */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IConnect,
     IConnected,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     ISignalMessage,
     MessageType,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, canWrite, validateTokenClaims } from "@fluidframework/server-services-client";
+import {
+    canSummarize,
+    canWrite,
+    validateTokenClaims,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
@@ -51,6 +53,19 @@ function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
+const getMessageMetadata = (documentId: string, tenantId: string) => ({
+    documentId,
+    tenantId,
+});
+
+const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
+    logger.error(
+        errorMessage,
+        getMessageMetadata(documentId, tenantId));
+    // eslint-disable-next-line prefer-promise-reject-errors
+    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+};
+
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
 const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
@@ -75,13 +90,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         type: message.type,
     };
 
-    if (isSystemType(sanitizedMessage.type)) {
-        const systemMessage = sanitizedMessage as IDocumentSystemMessage;
-        systemMessage.data = message.data;
-        return systemMessage;
-    } else {
-        return sanitizedMessage;
-    }
+    return sanitizedMessage;
 }
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -188,26 +197,27 @@ export function configureWebSocketServices(
             }
             if (!message.token) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Must provide an authorization token");
+                return Promise.reject({
+                    code: 403,
+                    message: "Must provide an authorization token",
+                });
             }
 
             // Validate token signature and claims
             const token = message.token;
             const claims = validateTokenClaims(token,
                 message.id,
-                message.tenantId,
-                maxTokenLifetimeSec,
-                isTokenExpiryEnabled);
-            if (!claims) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid claims");
-            }
+                message.tenantId);
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid token");
+                return Promise.reject({
+                    // if we don't understand the error, be lenient and allow retry
+                    code: err?.response?.status ?? 401,
+                    message: err?.response?.data ?? "Invalid token",
+                });
             }
 
             const clientId = generateClientId();
@@ -216,10 +226,15 @@ export function configureWebSocketServices(
                 documentId: claims.documentId,
             };
 
-            // Subscribe to channels.
-            await Promise.all([
-                socket.join(getRoomId(room)),
-                socket.join(`client#${clientId}`)]);
+            try {
+                // Subscribe to channels.
+                await Promise.all([
+                    socket.join(getRoomId(room)),
+                    socket.join(`client#${clientId}`)]);
+            } catch (err) {
+                const errMsg = `Could not subscribe to channels. Error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            }
 
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
@@ -237,62 +252,85 @@ export function configureWebSocketServices(
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject(
-                    `Unsupported client protocol.` +
+                return Promise.reject({
+                    code: 400,
+                    message: `Unsupported client protocol. ` +
                     `Server: ${protocolVersions}. ` +
-                    `Client: ${JSON.stringify(connectVersions)}`);
+                    `Client: ${JSON.stringify(connectVersions)}`,
+                });
             }
 
-            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
-            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
+            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
+                .catch(async (err) => {
+                    const errMsg = `Failed to get or create document. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
+
+            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
+                .catch(async (err) => {
+                    const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
-                    code: 400,
-                    message: "Too many clients are already connected to this document.",
+                    code: 429,
+                    message: "Too Many Clients Connected to Document",
                     retryAfter: 5 * 60,
                 });
             }
 
-            await clientManager.addClient(
-                claims.tenantId,
-                claims.documentId,
-                clientId,
-                messageClient as IClient);
+            try {
+                await clientManager.addClient(
+                    claims.tenantId,
+                    claims.documentId,
+                    clientId,
+                    messageClient as IClient);
+            } catch (err) {
+                const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            }
 
-            if (isTokenExpiryEnabled && claims.exp) {
-                const lifeTimeMSec = (claims.exp * 1000) - Math.round((new Date()).getTime());
-                if (lifeTimeMSec > 0) {
-                    setExpirationTimer(lifeTimeMSec);
-                } else {
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject("Invalid token expiry");
-                }
+            if (isTokenExpiryEnabled) {
+                const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+                setExpirationTimer(lifeTimeMSec);
             }
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
-                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                connection.connect();
+                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
+                    .catch(async (err) => {
+                        const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
-                connectionsMap.set(clientId, connection);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details)
+                    .catch(async (err) => {
+                        const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    const messageMetaData = {
-                        documentId: connection.documentId,
-                        tenantId: connection.tenantId,
-                    };
+                    const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
+
                     // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     clearExpirationTimer();
                     socket.disconnect(true);
                 });
+
+                connection.connect()
+                    .catch(async (err) => {
+                        // eslint-disable-next-line max-len
+                        const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
+
+                connectionsMap.set(clientId, connection);
 
                 connectedMessage = {
                     claims,

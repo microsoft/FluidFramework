@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,7 +7,7 @@ import { Context, VersionBumpType } from "./context";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
-import { fatal } from "./utils";
+import { fatal, runPolicyCheckWithFix, } from "./utils";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
@@ -17,6 +17,12 @@ import * as semver from "semver";
  * and push it to `main` and the new release branch to remote
  */
 export async function createReleaseBranch(context: Context) {
+
+    // run policy check before creating release branch.
+    // right now this only does assert short codes
+    // but could also apply other fixups in the future
+    await runPolicyCheckWithFix(context.gitRepo);
+
     const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     if (!remote) {
         fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`)

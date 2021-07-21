@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
+import { emptyMessageStream } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -33,12 +34,12 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         }
     }
 
-    public async get(
-        from?: number,
-        to?: number,
-    ): Promise<IDeltasFetchResult> {
-        // Do not allow container move forward
-        return { messages: [], partialResult: false };
+    public fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<api.ISequencedDocumentMessage[]> {
+        return emptyMessageStream;
     }
 
     public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {
@@ -64,7 +65,8 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
             return this.lastOps;
         }
         this.lastOps = this.messages.slice(readFrom, readTo);
-        assert(this.lastOps[0].sequenceNumber === readFrom + 1);
+        assert(this.lastOps[0].sequenceNumber === readFrom + 1,
+            0x091 /* "Retrieved ops' first sequence number has unexpected value!" */);
         return this.lastOps;
     }
 }

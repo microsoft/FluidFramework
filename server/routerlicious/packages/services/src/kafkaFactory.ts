@@ -1,9 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IProducer } from "@fluidframework/server-services-core";
+import { inspect } from "util";
+import winston from "winston";
+import { IConsumer, IContextErrorData, IProducer } from "@fluidframework/server-services-core";
 import { KafkaNodeConsumer, KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaConsumer, RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 
@@ -21,7 +23,14 @@ export function createConsumer(
         return new RdkafkaConsumer(endpoints, clientId, topic, groupId, { numberOfPartitions, replicationFactor });
     }
 
-    return new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
+    return new KafkaNodeConsumer(
+        { kafkaHost: kafkaEndPoint },
+        clientId,
+        groupId,
+        topic,
+        zookeeperEndPoint,
+        numberOfPartitions,
+        replicationFactor);
 }
 
 export function createProducer(
@@ -33,13 +42,34 @@ export function createProducer(
     pollIntervalMs?: number,
     numberOfPartitions?: number,
     replicationFactor?: number): IProducer {
+    let producer: IProducer;
+
     if (type === "rdkafka") {
-        return new RdkafkaProducer(
+        producer = new RdkafkaProducer(
             { kafka: [kafkaEndPoint] },
             clientId,
             topic,
             { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor });
+
+        producer.on("error", (error, errorData: IContextErrorData) => {
+            if (errorData?.restart) {
+                throw new Error(error);
+            } else {
+                winston.error("Kafka Producer emitted an error that is not configured to restart the process.");
+                winston.error(inspect(error));
+            }
+        });
+    } else {
+        producer =  new KafkaNodeProducer(
+            { kafkaHost: kafkaEndPoint },
+            clientId,
+            topic,
+            numberOfPartitions,
+            replicationFactor);
+        producer.on("error", (error) => {
+            winston.error(error);
+        });
     }
 
-    return new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);
+    return producer;
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,7 +11,6 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
@@ -487,24 +486,6 @@ const commands: IFlowViewCmd[] = [
             f.insertMath(false);
         },
         key: "insert math block",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.videoPlayers);
-        },
-        key: "insert morton",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.images);
-        },
-        key: "insert image",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertNewCollectionComponent(f.progressBars);
-        },
-        key: "insert progress bar",
     },
     {
         exec: (c, p, f) => {
@@ -1095,7 +1076,7 @@ function showBookmarks(
     if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
         const computedEnd = lineEnd;
         const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
-        const comments = flowView.commentsView.findOverlappingIntervals(lineStart, computedEnd);
+        const comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
         const lineText = flowView.sharedString.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
             showBookmark(flowView, undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
@@ -3013,10 +2994,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public bookmarks: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
+    public bookmarks: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public tempBookmarks: Sequence.SequenceInterval[];
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
-    public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<IFluidObject, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
@@ -3038,10 +3018,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public parentFlow: FlowView;
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
-
-    public videoPlayers: IFluidObjectCollection;
-    public images: IFluidObjectCollection;
-    public progressBars: IFluidObjectCollection;
 
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
@@ -3195,7 +3171,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         childFlow.parentFlow = this;
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;
-        childFlow.commentsView = this.commentsView;
         childFlow.presenceSignal = this.presenceSignal;
         childFlow.presenceVector = this.presenceVector;
         childFlow.bookmarks = this.bookmarks;
@@ -4440,7 +4415,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public showCommentText() {
-        const overlappingComments = this.commentsView.findOverlappingIntervals(
+        const overlappingComments = this.comments.findOverlappingIntervals(
             this.cursor.pos,
             this.cursor.pos + 1);
 
@@ -4542,30 +4517,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         mathMarker.instance.enter(CursorDirection.Left);
     }
 
-    public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {
-        // TODO - we may want to have a shared component collection?
-        const instance = collection.createCollectionItem();
-        const loadable = instance.IFluidLoadable;
-
-        const props = {
-            crefTest: {
-                layout: { inline },
-                type: {
-                    name: "component",
-                } as IReferenceDocType,
-                url: loadable.handle,
-            },
-            leafId: loadable.handle,
-        };
-
-        if (!inline) {
-            this.insertParagraph(this.cursor.pos++);
-        }
-
-        const markerPos = this.cursor.pos;
-        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
     public insertList() {
         // eslint-disable-next-line max-len
         const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
@@ -4584,18 +4535,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private async openCollections() {
         const root = this.collabDocument.getRoot();
-
-        const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IFluidHandle>("progressBars").get(),
-            root.get<IFluidHandle<IMathCollection>>("math").get(),
-            root.get<IFluidHandle>("videoPlayers").get(),
-            root.get<IFluidHandle>("images").get(),
-        ]);
-
-        this.math = math;
-        this.progressBars = progressBars.IFluidObjectCollection;
-        this.videoPlayers = videoPlayers.IFluidObjectCollection;
-        this.images = images.IFluidObjectCollection;
+        this.math = await root.get<IFluidHandle<IMathCollection>>("math").get();
     }
 
     public copy() {
@@ -5020,13 +4960,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             ]);
         }
 
-        const bookmarksCollection = this.sharedString.getIntervalCollection("bookmarks");
-        this.bookmarks = await bookmarksCollection.getView();
+        this.bookmarks = this.sharedString.getIntervalCollection("bookmarks");
 
-        // For examples of showing the API we do interval adds on the collection with comments. But use
-        // the view when doing bookmarks.
+        // For examples of showing the API we do interval adds on the collection with comments.
         this.comments = this.sharedString.getIntervalCollection("comments");
-        this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
             .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")

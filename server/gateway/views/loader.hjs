@@ -62,9 +62,6 @@
             container.on("disconnected", () => {
                 connectionDiv.innerHTML = "disconnected";
             });
-            container.on("connect", () => {
-                connectionDiv.innerHTML = "connected...";
-            });
             container.on("connected", () => {
                 connectionDiv.innerHTML = getConnMode(container);
             });

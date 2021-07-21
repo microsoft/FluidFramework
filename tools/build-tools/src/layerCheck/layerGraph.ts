@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -335,7 +335,7 @@ export class LayerGraph {
                 }
             }
             if (!matched) {
-                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check`);
+                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check. Check that the package is listed in data/layerInfo.json.`);
             }
         }
     }

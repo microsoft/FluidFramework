@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import {
@@ -10,14 +10,14 @@ import {
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing
- * @param logger - The logger to log with
  * @param condition - The condition to attest too
+ * @param logger - The logger to log with
  * @param event - The string or event to log
  * @returns - The outcome of the condition
  */
 export function logIfFalse(
-    logger: ITelemetryBaseLogger,
     condition: any,
+    logger: ITelemetryBaseLogger,
     event: string | ITelemetryGenericEvent,
 ): condition is true {
     if(condition) {

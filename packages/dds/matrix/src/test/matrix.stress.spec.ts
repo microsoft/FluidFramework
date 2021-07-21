@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -234,7 +234,14 @@ describe("Matrix", () => {
                         }
                     }
 
-                    if (runtimes[matrixIndex].connected && float64() < disconnectProbability) {
+                    if (float64() < disconnectProbability) {
+                        // If the client is already disconnected, first reconnect it to cover the case where
+                        // multiple reconnections are required.
+                        if (!runtimes[matrixIndex].connected) {
+                            trace?.push(`containerRuntime${matrixIndex + 1}.connected = true;`);
+                            runtimes[matrixIndex].connected = true;
+                        }
+
                         trace?.push(`containerRuntime${matrixIndex + 1}.connected = false;`);
 
                         runtimes[matrixIndex].connected = false;
@@ -269,7 +276,7 @@ describe("Matrix", () => {
             { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 0, seed: 0x84d43a0a },
             { numClients: 3, numOps: 200, syncProbability: 0.1, disconnectProbability: 0, seed: 0x655c763b },
             { numClients: 5, numOps: 200, syncProbability: 0.0, disconnectProbability: 0, seed: 0x2f98736d },
-            { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 1, seed: 0x84d43a0a },
+            { numClients: 2, numOps: 200, syncProbability: 0.2, disconnectProbability: 0.4, seed: 0x84d43a0a },
         ]) {
             // eslint-disable-next-line max-len
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
@@ -301,9 +308,13 @@ describe("Matrix", () => {
                         /* seed: */ (Math.random() * 0x100000000) >>> 0,
                     );
 
-                    // console.log(matrices[0].toString());
-                    // eslint-disable-next-line max-len
-                    console.log(`Stress loop: ${++iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`);
+                    // Note: Mocha reporter intercepts 'console.log()' so use 'process.stdout.write' instead.
+                    process.stdout.write(matrices[0].toString());
+
+                    process.stdout.write(
+                        `Stress loop: ${++iterations} iterations completed - Total Elapsed: ${
+                            ((Date.now() - start) / 1000).toFixed(2)
+                        }s\n`);
                 }
             },
         );

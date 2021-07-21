@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { KafkaResources, KafkaResourcesFactory } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaResourcesFactory } from "@fluidframework/server-services-ordering-rdkafka";
-import { IResourcesFactory } from "@fluidframework/server-services-utils";
+import { IResourcesFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 /**

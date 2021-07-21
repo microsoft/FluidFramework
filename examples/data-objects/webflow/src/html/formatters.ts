@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -56,7 +56,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
             case DocSegmentKind.endTags: {
                 // If the DocumentFormatter encounters an 'endRange', presumably this is because the 'beginTag'
                 // has not yet been inserted.  Ignore it.
-                assert(layout.doc.getStart(segment as Marker) === undefined);
+                assert(layout.doc.getStart(segment as Marker) === undefined, "beginTag inserted before encountering endTag!");
                 return { state, consumed: true };
             }
 
@@ -111,7 +111,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 
     public visit(layout: Layout, state: Readonly<IInclusionState>) {
-        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion);
+        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion, "Layout segment has unexpected kind!");
         layout.popFormat();
         return { state, consumed: true };
     }

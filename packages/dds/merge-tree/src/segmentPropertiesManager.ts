@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -25,7 +25,8 @@ export class SegmentPropertiesManager {
         }
         for (const key of Object.keys(annotateOp.props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-                assert(this.pendingKeyUpdateCount[key] > 0);
+                assert(this.pendingKeyUpdateCount[key] > 0,
+                    0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
                 if (this.pendingKeyUpdateCount?.[key] === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete

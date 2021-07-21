@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -41,7 +41,7 @@ export class SnapshotLoader {
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
-                assert(!!header);
+                assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
                 return this.loadHeader(bufferToString(header,"utf8"));
             });
 
@@ -71,7 +71,7 @@ export class SnapshotLoader {
         if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
             headerChunk.headerMetadata!.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
-            assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
+            assert(blobs.length === 1, 0x060 /* `There should be only one blob with catch up ops: ${blobs.length}` */);
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
@@ -156,11 +156,11 @@ export class SnapshotLoader {
     private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         assert(
             chunk1.length <= chunk1.headerMetadata!.totalLength,
-            "Mismatch in totalLength");
+            0x061 /* "Mismatch in totalLength" */);
 
         assert(
             chunk1.segmentCount <= chunk1.headerMetadata!.totalSegmentCount,
-            "Mismatch in totalSegmentCount");
+            0x062 /* "Mismatch in totalSegmentCount" */);
 
         if (chunk1.segmentCount === chunk1.headerMetadata!.totalSegmentCount) {
             return;
@@ -180,11 +180,11 @@ export class SnapshotLoader {
         }
         assert(
             lengthSofar === chunk1.headerMetadata!.totalLength,
-            "Mismatch in totalLength");
+            0x063 /* "Mismatch in totalLength" */);
 
         assert(
             chunk1.segmentCount + segs.length === chunk1.headerMetadata!.totalSegmentCount,
-            "Mismatch in totalSegmentCount");
+            0x064 /* "Mismatch in totalSegmentCount" */);
 
         // Helper to insert segments at the end of the MergeTree.
         const mergeTree = this.mergeTree;

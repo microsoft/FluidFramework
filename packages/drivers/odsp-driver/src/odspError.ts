@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { createOdspNetworkError, OdspError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "./contracts";
 
 /**
@@ -14,8 +15,5 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError, handle
     return createOdspNetworkError(
         message,
         socketError.code,
-        socketError.retryAfter,
-        // TODO: When long lived token is supported for websocket then IOdspSocketError need to support
-        // passing "claims" value that is used to fetch new token
-        undefined /* claims */);
+        socketError.retryAfter);
 }

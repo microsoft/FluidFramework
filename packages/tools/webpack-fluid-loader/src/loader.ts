@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as moniker from "moniker";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { Deferred } from "@fluidframework/common-utils";
+import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidModule,
@@ -15,6 +15,8 @@ import {
     isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
+import { IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
@@ -29,6 +31,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { OdspPersistentCache } from "./odspPersistantCache";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -37,7 +40,6 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
-    hotSwapContext?: "true" | "false";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -63,6 +65,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
+    tinyliciousPort?: number;
 }
 
 export interface IOdspRouteOptions extends IBaseRouteOptions {
@@ -154,8 +157,10 @@ async function createWebLoader(
     urlResolver: MultiUrlResolver,
     codeDetails: IFluidCodeDetails,
     testOrderer: boolean = false,
+    odspPersistantCache?: IPersistedCache,
 ): Promise<Loader> {
-    let documentServiceFactory: IDocumentServiceFactory = getDocumentServiceFactory(documentId, options);
+    let documentServiceFactory: IDocumentServiceFactory =
+        getDocumentServiceFactory(documentId, options, odspPersistantCache);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
@@ -179,10 +184,6 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: {
-            hotSwapContext: options.hotSwapContext === "true",
-            provideScopeLoader: true,
-        },
     });
 }
 
@@ -222,10 +223,18 @@ export async function start(
         config: {},
     };
 
-    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
+    const loader1 = await createWebLoader(
+        documentId,
+        fluidModule,
+        options,
+        urlResolver,
+        codeDetails,
+        testOrderer,
+        odspPersistantCache);
 
     let container1: Container;
     if (autoAttach || manualAttach) {
@@ -235,24 +244,22 @@ export async function start(
     } else {
         // For existing documents, we try to load the container with the given documentId.
         const documentUrl = `${window.location.origin}/${documentId}`;
+        // This functionality is used in odsp driver to prefetch the latest snapshot and cache it so
+        // as to avoid the network call to fetch trees latest.
+        if (window.location.hash === "#prefetch") {
+            assert(options.mode === "spo-df" || options.mode === "spo",
+                0x1ea /* "Prefetch snapshot only available for odsp!" */);
+            const prefetched = await prefetchLatestSnapshot(
+                await urlResolver.resolve({ url: documentUrl }),
+                async () => options.odspAccessToken,
+                odspPersistantCache,
+                new BaseTelemetryNullLogger(),
+                undefined,
+            );
+            assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
+        }
         container1 = await loader1.resolve({ url: documentUrl });
         containers.push(container1);
-
-        /**
-         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario.
-         * Create a new `documentId`, a new Loader and a new detached container.
-         */
-        if (!container1.existing) {
-            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
-            container1.close();
-
-            documentId = moniker.choose();
-            url = url.replace(id, documentId);
-            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
-            container1 = await loader1.createDetachedContainer(codeDetails);
-        }
     }
 
     let leftDiv: HTMLDivElement = div;

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -44,6 +44,12 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         return this.processingDeferred === undefined && this.q.length === 0;
     }
 
+    public async waitTillProcessingDone(): Promise<void> {
+        if (this.processingDeferred !== undefined) {
+            return this.processingDeferred.promise;
+        }
+    }
+
     /**
      * @param worker - A callback to process a delta.
      * @param logger - For logging telemetry.
@@ -81,13 +87,11 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+        return this.waitTillProcessingDone();
     }
 
     public resume(): void {
-        assert(this.pauseCount > 0);
+        assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
         this.pauseCount--;
         if (!this.paused) {
             this.ensureProcessing();

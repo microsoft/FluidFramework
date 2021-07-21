@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,7 +24,7 @@ import {
     createMap,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
@@ -176,20 +176,16 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
     public get IFluidDataStoreFactory() { return this; }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        const sequenceFactory = SharedString.getFactory();
-
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sequenceFactory.type, sequenceFactory);
-
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
+        const runtime = new runtimeClass(context, new Map([
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+        ].map((factory) => [factory.type, factory])));
         const routerP = ProseMirror.load(runtime, context);
 
         return runtime;

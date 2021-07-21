@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
 # build-docs-latest pipeline
@@ -42,6 +42,14 @@ resources:
     source: Build - common-definitions
   - pipeline: common_utils
     source: Build - common-utils
+  - pipeline: container_definitions
+    source: Build - container-definitions
+  - pipeline: core_interfaces
+    source: Build - core-interfaces
+  - pipeline: driver_definitions
+    source: Build - driver-definitions
+  - pipeline: protocol_definitions
+    source: Build - protocol-definitions
   - pipeline: client
     source: Build - client packages
     trigger:

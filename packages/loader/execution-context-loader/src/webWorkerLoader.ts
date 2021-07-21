@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -53,8 +53,7 @@ export class WebWorkerLoader implements IHostLoader, IFluidRunnable, IFluidRoute
 
     public async request(request: IRequest): Promise<IResponse> {
         const response = await this.proxy.request(request);
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return response;
         }
         return { status: 200, mimeType: "fluid/object", value: this };
@@ -68,8 +67,8 @@ export class WebWorkerLoader implements IHostLoader, IFluidRunnable, IFluidRoute
         return this.proxy.stop(reason);
     }
 
-    public async resolve(request: IRequest): Promise<IContainer> {
-        return this.proxy.resolve(request);
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
+        return this.proxy.resolve(request, pendingLocalState);
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {

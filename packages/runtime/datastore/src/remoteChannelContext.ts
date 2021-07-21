@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
     IChannel,
     IChannelAttributes,
@@ -99,20 +99,25 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
+    public applyStashedOp(message: ISequencedDocumentMessage): unknown {
+        assert(this.isLoaded, 0x194 /* "Remote channel must be loaded when rebasing op" */);
+        return this.services.deltaConnection.applyStashedOp(message);
+    }
+
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summarizerNode.invalidate(message.sequenceNumber);
 
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "Remote channel must not be local when processing op");
+            assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+        assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
@@ -133,7 +138,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
+        assert(!this.isLoaded, 0x197 /* "Remote channel must not already be loaded when loading" */);
 
         let attributes: IChannelAttributes | undefined;
         if (await this.services.objectStorage.contains(attributesBlobKey)) {
@@ -199,15 +204,7 @@ export class RemoteChannelContext implements IChannelContext {
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            try {
-                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
-            } catch (err) {
-                // record sequence number for easier debugging
-                const error = CreateContainerError(err);
-                error.sequenceNumber = message.sequenceNumber;
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw error;
-            }
+            this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
 
         // Commit changes.

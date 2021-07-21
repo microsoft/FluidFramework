@@ -10,6 +10,7 @@
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
+        "createCosmosDBIndexes": false,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
@@ -26,8 +27,8 @@
             "name": "kafka-node",
             "endpoint": "kafka:9092",
             "producerPollIntervalMs": 10,
-            "numberOfPartitions": 32,
-            "replicationFactor": 3
+            "numberOfPartitions": 8,
+            "replicationFactor": 1
         }
     },
     "zookeeper": {
@@ -68,11 +69,11 @@
             },
             {
                 "id": "github",
-                "key": "0bea3f87c186991a69245a29dc3f61d2"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "local",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             }
         ],
         "socketIoAdapter" : {
@@ -202,22 +203,22 @@
         },
         {
             "_id": "github",
-            "key": "0bea3f87c186991a69245a29dc3f61d2",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",
                 "url": "https://api.github.com",
-                "owner": "kurtb",
-                "repository": "praguedocs",
+                "owner": "gitrepoowner",
+                "repository": "gitrepo",
                 "credentials": {
-                    "user": "praguegit",
-                    "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                    "user": "gituser",
+                    "password": "invalid"
                 }
             }
         },
         {
             "_id": "local",
-            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",

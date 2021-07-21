@@ -1,14 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
+import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
@@ -58,13 +59,20 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaReplicationFactor);
 
     const redisConfig = config.get("redis");
-    const redisOptions: any = { password: redisConfig.pass };
+    const redisOptions: RedisOptions = {
+        host: redisConfig.host,
+        port: redisConfig.port,
+        password: redisConfig.pass,
+    };
     if (redisConfig.tls) {
         redisOptions.tls = {
-            serverName: redisConfig.host,
+            servername: redisConfig.host,
         };
     }
-    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
+    const publisher = new services.SocketIoRedisPublisher(redisOptions);
+    publisher.on("error", (err) => {
+        winston.error("Error with Redis Publisher:", err);
+    });
 
     const localContext = new LocalContext(winston);
 

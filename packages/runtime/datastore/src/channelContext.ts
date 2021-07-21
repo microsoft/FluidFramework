@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -27,6 +27,8 @@ export interface IChannelContext {
     summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
+
+    applyStashedOp(content: any): unknown;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context

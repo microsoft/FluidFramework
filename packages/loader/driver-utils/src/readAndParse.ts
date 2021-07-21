@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,7 +7,7 @@ import { bufferToString, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
- * Read a blob from IDocumentStorageService, decode it (from "base64") and JSON.parse it into object of type T
+ * Read a blob from IDocumentStorageService and JSON.parse it into object of type T
  *
  * @param storage - the IDocumentStorageService to read from
  * @param id - the id of the blob to read and parse

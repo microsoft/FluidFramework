@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -126,8 +126,13 @@ export class MongoDbFactory implements core.IDbFactory {
     public async connect(): Promise<core.IDb> {
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
-            autoReconnect: false,
+            autoReconnect: true,
             bufferMaxEntries: 0,
+            keepAlive: true,
+            keepAliveInitialDelay: 180000,
+            reconnectInterval: 1000,
+            reconnectTries: 100,
+            socketTimeoutMS: 120000,
             useNewUrlParser: true,
         };
 

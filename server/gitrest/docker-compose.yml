@@ -8,7 +8,7 @@ services:
             - git:/home/node/documents
         restart: always
     git:
-        image: prague.azurecr.io/gitssh:654
+        image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest
         ports:
             - "3022:22"
         volumes:

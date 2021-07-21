@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,6 +11,7 @@ import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
+import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
 
 describe.only("Historian", () => {
     const endpoint = "http://test:3000";
@@ -85,6 +86,9 @@ describe.only("Historian", () => {
         url: `${endpoint}/trees/${sha}`,
         tree: [],
     };
+    const mockSummaryWriteResponse: IWriteSummaryResponse = {
+        id: "some-summary-id"
+    }
 
     let historian: Historian;
     let restWrapper: RestWrapper;
@@ -136,6 +140,7 @@ describe.only("Historian", () => {
         restWrapper = new BasicRestWrapper(
             endpoint,
             initialQueryString,
+            undefined,
             undefined,
             initialHeaders,
             undefined,
@@ -450,4 +455,30 @@ describe.only("Historian", () => {
         });
     });
 
+    describe("createSummary", () => {
+        const summaryPayload: IWholeSummaryPayload = {
+            type: "container",
+            message: "hello",
+            sequenceNumber: 1,
+            entries: [
+                {
+                    path: "/some/tree/path",
+                    type: "tree",
+                    id: "some-tree-handle-id",
+                }
+            ]
+        };
+        const url = getUrlWithToken(`/git/summaries`, initialCredentials);
+        const response = mockSummaryWriteResponse;
+        it("succeeds on 200", async () => {
+            axiosMock.onPost(url, summaryPayload).reply(mockReplyWithAuth(initialCredentials, response));
+            const received = await historian.createSummary(summaryPayload);
+            assert.deepStrictEqual(received, response);
+        });
+        it("retries once with new credentials on 401", async () => {
+            axiosMock.onPost(url, summaryPayload).reply(mockReplyWithAuth(freshCredentials, response));
+            const received = await historian.createSummary(summaryPayload);
+            assert.deepStrictEqual(received, response);
+        });
+    });
 });

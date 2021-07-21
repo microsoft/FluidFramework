@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -253,6 +253,8 @@ export interface IDeltaConnectionServerMonitor {
 
 /**
  * Class with access to the local delta connection server and delta managers that can control op processing.
+ *
+ * @deprecated Can be removed \>=0.38. Replaced with LoaderContainerTracker
  */
 export class OpProcessingController {
     /**

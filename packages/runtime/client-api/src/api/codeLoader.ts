@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,8 +8,6 @@ import { mixinRequestHandler, FluidDataStoreRuntime } from "@fluidframework/data
 import {
     ICodeLoader,
     IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
@@ -18,6 +16,7 @@ import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -29,7 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -47,33 +46,6 @@ export class Chaincode implements IFluidDataStoreFactory {
     { }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        // Create channel factories
-        const mapFactory = map.SharedMap.getFactory();
-        const sharedStringFactory = sequence.SharedString.getFactory();
-        const inkFactory = ink.Ink.getFactory();
-        const cellFactory = cell.SharedCell.getFactory();
-        const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
-        const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
-        const consensusQueueFactory = ConsensusQueue.getFactory();
-        const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
-        const directoryFactory = map.SharedDirectory.getFactory();
-        const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
-        const sharedMatrixFactory = SharedMatrix.getFactory();
-
-        // Register channel factories
-        const modules = new Map<string, any>();
-        modules.set(mapFactory.type, mapFactory);
-        modules.set(sharedStringFactory.type, sharedStringFactory);
-        modules.set(inkFactory.type, inkFactory);
-        modules.set(cellFactory.type, cellFactory);
-        modules.set(objectSequenceFactory.type, objectSequenceFactory);
-        modules.set(numberSequenceFactory.type, numberSequenceFactory);
-        modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
-        modules.set(directoryFactory.type, directoryFactory);
-        modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
-        modules.set(sharedMatrixFactory.type, sharedMatrixFactory);
-
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const document = await routerP;
@@ -89,7 +61,20 @@ export class Chaincode implements IFluidDataStoreFactory {
             },
             this.dataStoreFactory);
 
-        const runtime = new runtimeClass(context, modules);
+        const runtime = new runtimeClass(context, new Map([
+            map.SharedMap.getFactory(),
+            sequence.SharedString.getFactory(),
+            ink.Ink.getFactory(),
+            cell.SharedCell.getFactory(),
+            sequence.SharedObjectSequence.getFactory(),
+            sequence.SharedNumberSequence.getFactory(),
+            ConsensusQueue.getFactory(),
+            ConsensusRegisterCollection.getFactory(),
+            sequence.SparseMatrix.getFactory(),
+            map.SharedDirectory.getFactory(),
+            sequence.SharedIntervalCollection.getFactory(),
+            SharedMatrix.getFactory(),
+        ].map((factory) => [factory.type, factory])));
 
         // Initialize core data structures
         let root: map.ISharedMap;
@@ -113,17 +98,22 @@ export class Chaincode implements IFluidDataStoreFactory {
     }
 }
 
-export class ChaincodeFactory implements IRuntimeFactory {
-    public get IRuntimeFactory() { return this; }
-
+export class ChaincodeFactory extends RuntimeFactoryHelper {
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
         private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        super();
     }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const chaincode = new Chaincode(context.closeFn);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
+    }
 
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
+        const chaincode = new Chaincode(context.closeFn);
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
@@ -134,12 +124,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 defaultRouteRequestHandler(rootStoreId),
                 innerRequestHandler,
             ),
-            this.runtimeOptions);
-
-        // On first boot create the base data store
-        if (!runtime.existing) {
-            await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
-        }
+            this.runtimeOptions,
+            undefined, // containerScope
+            existing,
+        );
 
         return runtime;
     }

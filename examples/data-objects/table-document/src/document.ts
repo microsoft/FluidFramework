@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -29,6 +29,10 @@ export interface ITableDocumentEvents extends IEvent {
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
+/**
+ * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
+ *               the IMatrixProducer/Consumer interfaces instead.
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
@@ -66,7 +70,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
 
     public async getRange(label: string) {
         const intervals = this.matrix.getIntervalCollection(label);
-        const interval = (await intervals.getView()).nextInterval(0);
+        const interval = intervals.nextInterval(0);
         return new CellRange(interval, this.localRefToRowCol);
     }
 

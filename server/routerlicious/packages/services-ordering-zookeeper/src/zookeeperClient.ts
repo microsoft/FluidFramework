@@ -1,15 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IZookeeperClient } from "@fluidframework/server-services-core";
-import * as zookeeper from "node-zookeeper-client";
-
-const RetryAttemps = 3;
+import ZooKeeper from "zookeeper";
 
 export class ZookeeperClient implements IZookeeperClient {
-    private client: zookeeper.Client;
+    private client: ZooKeeper;
 
     constructor(private readonly url: string) {
         this.connect();
@@ -17,15 +15,10 @@ export class ZookeeperClient implements IZookeeperClient {
 
     public async getPartitionLeaderEpoch(topic: string, partition: number) {
         const path = `/brokers/topics/${topic}/partitions/${partition}/state`;
-        return new Promise<number>((resolve, reject) => {
-            this.client.getData(path, (error, data, stat) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    const state = data.toString("utf8");
-                    resolve(JSON.parse(state).leader_epoch);
-                }
-            });
+        return this.client.get(path, false).then((data) => {
+            // `data` is typed incorrectly. Instead of string | Buffer, it is an array like [object, Buffer].
+            const state = (data[1] as string | Buffer).toString("utf8");
+            return JSON.parse(state).leader_epoch as number;
         });
     }
 
@@ -38,13 +31,16 @@ export class ZookeeperClient implements IZookeeperClient {
     }
 
     private connect() {
-        this.client = zookeeper.createClient(this.url, { retries: RetryAttemps });
-        this.client.connect();
-        this.client.once("connected", () => {
-            this.client.once("disconnected", () => {
+        this.client = new ZooKeeper({
+            connect: this.url,
+            timeout: 30000,
+        });
+        this.client.once("connect", () => {
+            this.client.once("close", () => {
                 this.close();
                 this.connect();
             });
         });
+        this.client.init({});
     }
 }

@@ -1,10 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { assert, TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
+import { TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
@@ -49,13 +50,13 @@ class InMemoryStorage {
     constructor(private readonly blobSizeLimit: number | undefined) {}
 
     async uploadSummaryWithContext(summary: ISummaryTree, context) {
-        assert(!this.summaryWritten);
+        assert(!this.summaryWritten, "Trying to upload summary when summary already written!");
         this.summaryWritten = summary;
         return "handle";
     }
 
     async getSnapshotTree(version) {
-        assert(this.summaryWritten !== undefined);
+        assert(this.summaryWritten !== undefined, "Missing summary to build tree from");
         return buildSnapshotTree(convertSummaryTreeToITree(this.summaryWritten).entries, this.blobs);
     }
 
@@ -130,10 +131,11 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     });
 
     const snapshot = await aggregator.getSnapshotTree();
-    assert(!!snapshot);
+    assert(!!snapshot, "Missing snapshot tree!");
 
     const service = new FlattenedStorageService(snapshot, aggregator);
-    assert(Object.keys(service.flattenedTree).length === 5);
+    assert(Object.keys(service.flattenedTree).length === 5,
+        `Unexpected flattened tree size: ${Object.keys(service.flattenedTree).length}`);
     assert (service.flattenedTree.blob1 !== undefined);
     assert (service.flattenedTree["dataStore1/blob2"] !== undefined);
     assert (service.flattenedTree["dataStore1/blob3"] !== undefined);
@@ -154,27 +156,31 @@ describe("BlobAggregationStorage", () => {
         const { storage } = await prep(false, 2048);
 
         // NUmber of actual blobs in storage should be 4 - no aggregation!
-        assert(storage.blobs.size === 5);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 
     it("Noop aggregation (driver does not know about aggregation", async () => {
         const { storage } = await prep(true, undefined);
 
         // NUmber of actual blobs in storage should be 4 - no aggregation!
-        assert(storage.blobs.size === 5);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 
     it("aggregation above 2K", async () => {
         const { storage } = await prep(true, 2048);
 
         // Number of actual blobs in storage should be 2!
-        assert(storage.blobs.size === 3);
+        assert(storage.blobs.size === 3,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 3`);
     });
 
     it("aggregation above 40 bytes only", async () => {
         const { storage } = await prep(true, 40);
 
         // Should skip one blob that is bigger than 40 bytes.
-        assert(storage.blobs.size === 4);
+        assert(storage.blobs.size === 4,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 4`);
     });
 });

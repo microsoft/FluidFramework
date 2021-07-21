@@ -1,81 +1,27 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    Heap,
-    IComparer,
-    IHeapNode,
-    PromiseTimer,
-    IPromiseTimerResult,
-} from "@fluidframework/common-utils";
+import { delay, IPromiseTimerResult, PromiseTimer } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
-import {
-    IContainerContext,
-    LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { Throttler } from "./throttler";
 
-export const summarizerClientType = "summarizer";
+const defaultInitialDelayMs = 5000;
+const opsToBypassInitialDelay = 4000;
 
-interface ITrackedClient {
-    clientId: string;
-    sequenceNumber: number;
-    isSummarizer: boolean;
-}
-
-class ClientComparer implements IComparer<ITrackedClient> {
-    public readonly min: ITrackedClient = {
-        clientId: "",
-        sequenceNumber: -1,
-        isSummarizer: false,
-    };
-
-    public compare(a: ITrackedClient, b: ITrackedClient): number {
-        return a.sequenceNumber - b.sequenceNumber;
-    }
-}
-
-class QuorumHeap {
-    private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
-    private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
-    private summarizerCount = 0;
-
-    public addClient(clientId: string, client: ISequencedClient) {
-        // Have to undefined-check client.details for backwards compatibility
-        const isSummarizer = client.client.details?.type === summarizerClientType;
-        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
-        this.heapMembers.set(clientId, heapNode);
-        if (isSummarizer) {
-            this.summarizerCount++;
-        }
-    }
-
-    public removeClient(clientId: string) {
-        const member = this.heapMembers.get(clientId);
-        if (member) {
-            this.heap.remove(member);
-            this.heapMembers.delete(clientId);
-            if (member.value.isSummarizer) {
-                this.summarizerCount--;
-            }
-        }
-    }
-
-    public getFirstClientId(): string | undefined {
-        return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
-    }
-
-    public getSummarizerCount(): number {
-        return this.summarizerCount;
-    }
-}
+const defaultThrottleDelayWindowMs = 60 * 1000;
+const defaultThrottleMaxDelayMs = 30 * 1000;
+// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
+const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 enum SummaryManagerState {
     Off = 0,
@@ -85,64 +31,19 @@ enum SummaryManagerState {
     Disabled = -1,
 }
 
-const defaultInitialDelayMs = 5000;
-const opsToBypassInitialDelay = 4000;
-
-// Please note that all reasons  in this list are not errors,
+// Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
-type ShouldSummarizeState = {
-    shouldSummarize: true;
-    shouldStart: boolean;
-} | {
-    shouldSummarize: false;
-    stopReason: StopReason;
-};
-
-const defaultThrottleDelayWindowMs = 60 * 1000;
-const defaultThrottleMaxDelayMs = 30 * 1000;
-// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
-
-/**
- * Used to give increasing delay times for throttling a single functionality.
- * Delay is based on previous attempts within specified time window, ignoring actual delay time.
- */
-class Throttler {
-    private startTimes: number[] = [];
-    constructor(
-        private readonly delayWindowMs,
-        private readonly maxDelayMs,
-        private readonly delayFunction,
-    ) { }
-
-    public get attempts() {
-        return this.startTimes.length;
-    }
-
-    public getDelay() {
-        const now = Date.now();
-        this.startTimes = this.startTimes.filter((t) => now - t < this.delayWindowMs);
-        const delayMs = Math.min(this.delayFunction(this.startTimes.length), this.maxDelayMs);
-        this.startTimes.push(now);
-        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
-        if (delayMs === this.maxDelayMs) {
-            // we hit max delay so adding more won't affect anything
-            // shift off oldest time to stop this array from growing forever
-            this.startTimes.shift();
-        }
-
-        return delayMs;
-    }
-}
+type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize" | "disposed">;
+type ShouldSummarizeState =
+    | { shouldSummarize: true; }
+    | { shouldSummarize: false; stopReason: StopReason; };
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly quorumHeap = new QuorumHeap();
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
-    private summarizerClientId?: string;
+    private electedClientId?: string;
     private clientId?: string;
     private latestClientId?: string;
     private connected = false;
@@ -157,7 +58,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private opsUntilFirstConnect = -1;
 
     public get summarizer() {
-        return this.summarizerClientId;
+        return this.electedClientId;
     }
 
     public get disposed() {
@@ -166,11 +67,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     constructor(
         private readonly context: IContainerContext,
+        private readonly clientElection: SummarizerClientElection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
-        private nextSummarizerP?: Promise<Summarizer>,
-        immediateSummary: boolean = false,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -178,33 +77,25 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            undefined,
-            { clientId: () => this.latestClientId });
+            {all:{ clientId: () => this.latestClientId }});
 
         this.connected = context.connected;
         if (this.connected) {
             this.setClientId(context.clientId);
         }
 
-        const members = context.quorum.getMembers();
-        for (const [clientId, client] of members) {
-            this.quorumHeap.addClient(clientId, client);
-        }
-
-        context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+        // Track ops until first (write) connect
+        const opsUntilFirstConnectHandler = (clientId: string, details: ISequencedClient) => {
             if (this.opsUntilFirstConnect === -1 && clientId === this.clientId) {
+                context.quorum.off("addMember", opsUntilFirstConnectHandler);
                 this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
             }
-            this.quorumHeap.addClient(clientId, details);
-            this.refreshSummarizer();
-        });
+        };
+        context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        context.quorum.on("removeMember", (clientId: string) => {
-            this.quorumHeap.removeClient(clientId);
-            this.refreshSummarizer();
-        });
+        clientElection.on("electedSummarizerChanged", () => this.refreshSummarizer());
 
-        this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
+        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
 
         this.refreshSummarizer();
@@ -250,34 +141,25 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
-        } else if (this.nextSummarizerP !== undefined) {
-            // This client has just come from a context reload, which means its
-            // summarizer client did as well.  We need to call start to rebind them.
-            return { shouldSummarize: true, shouldStart: true };
-        } else if (this.quorumHeap.getSummarizerCount() > 0) {
-            // Need to wait for any other existing summarizer clients to close,
-            // because they can live longer than their parent container.
-            return { shouldSummarize: true, shouldStart: false };
         } else {
-            return { shouldSummarize: true, shouldStart: true };
+            return { shouldSummarize: true };
         }
     }
 
     private refreshSummarizer() {
-        // Compute summarizer
-        const newSummarizerClientId = this.quorumHeap.getFirstClientId();
-        if (newSummarizerClientId !== this.summarizerClientId) {
-            this.summarizerClientId = newSummarizerClientId;
+        // Check which client is elected as summarizer, and propagate the event if changed.
+        const newSummarizerClientId = this.clientElection.electedClientId;
+        if (newSummarizerClientId !== this.electedClientId) {
+            this.electedClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
         }
 
-        // Transition states depending on shouldSummarize, which is a calculated
-        // property that is only true if this client is connected and has the
-        // computed summarizer client id
+        // Transition states depending on shouldSummarize, which is a calculated property
+        // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
-                if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
+                if (shouldSummarizeState.shouldSummarize) {
                     this.start();
                 }
                 return;
@@ -336,7 +218,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
-            this.setNextSummarizer(summarizer.setSummarizer());
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.raiseContainerWarning(warning));
             this.run(summarizer);
@@ -362,7 +243,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             async () => summarizer.run(clientId),
         ).finally(() => {
             this.runningSummarizer = undefined;
-            this.nextSummarizerP = undefined;
             this.tryRestart();
         });
 
@@ -374,14 +254,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private tryRestart(): void {
         const shouldSummarizeState = this.getShouldSummarizeState();
-        if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
+        if (shouldSummarizeState.shouldSummarize) {
             this.start();
         } else {
             this.state = SummaryManagerState.Off;
         }
     }
 
-    private stop(reason: string) {
+    private stop(reason: SummarizerStopReason) {
         this.state = SummaryManagerState.Stopping;
 
         if (this.runningSummarizer) {
@@ -409,12 +289,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+                shouldDelay ? delay(delayMs) : Promise.resolve(),
             ]);
-        }
-
-        if (this.nextSummarizerP) {
-            return this.nextSummarizerP;
         }
 
         const loader = this.context.loader;
@@ -436,8 +312,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject(new Error("Invalid summarizer route"));
         }
 

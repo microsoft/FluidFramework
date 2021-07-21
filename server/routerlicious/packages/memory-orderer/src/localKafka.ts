@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -26,6 +26,10 @@ export class LocalKafka implements IProducer {
 
     public get length() {
         return this.qeueue.length;
+    }
+
+    public isConnected() {
+        return true;
     }
 
     public subscribe(kafakaSubscriber: IKafkaSubscriber) {
@@ -75,7 +79,7 @@ export class LocalKafka implements IProducer {
         }
 
         for (const subscription of this.subscriptions) {
-            subscription.process();
+            void subscription.process();
         }
     }
 

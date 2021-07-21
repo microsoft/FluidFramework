@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { Edit } from './PersistedTypes';
 import { Snapshot } from './Snapshot';
-import { SharedTree } from './SharedTree';
 import { Checkout } from './Checkout';
+import { EditCommittedEventArguments, GenericSharedTree } from './generic';
 
 /**
  * Basic Session that stays up to date with the SharedTree.
@@ -15,19 +14,14 @@ import { Checkout } from './Checkout';
  * @public
  * @sealed
  */
-export class BasicCheckout extends Checkout {
+export class BasicCheckout<TChange> extends Checkout<TChange> {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: SharedTree) {
-		super(tree, tree.currentView, () => this.emitChange());
-	}
-
-	protected handleNewEdit(edit: Edit, view: Snapshot): void {
-		// Since external edits could have been applied while currentEdit was pending,
-		// do not use the produced view: just go to the newest revision
-		// (which processLocalEdit will do, including invalidation).
-		this.tree.processLocalEdit(edit);
+	public constructor(tree: GenericSharedTree<TChange>) {
+		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange>>) => {
+			this.emitChange();
+		});
 	}
 
 	protected get latestCommittedView(): Snapshot {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -54,18 +54,37 @@ export class PermutationSegment extends BaseSegment {
 
     public get start() { return this._start; }
     public set start(value: Handle) {
-        assert(this._start === Handle.unallocated);
-        assert(isHandleValid(value));
+        assert(this._start === Handle.unallocated, 0x024 /* "Start of PermutationSegment already allocated!" */);
+        assert(isHandleValid(value), 0x025 /* "Trying to set start of PermutationSegment to invalid handle!" */);
 
         this._start = value;
     }
 
     /**
-     * Transfers ownership of the associated row/col handles to the given 'destination' segment.
-     * The original segment's handle allocation is reset.  Used by 'undoRow/ColRemove' when
-     * copying cells to restore row/col segments.)
+     * Invoked by '_undoRow/ColRemove' to prepare the newly inserted destination
+     * segment to serve as the replacement for this removed segment.  This moves handle
+     * allocations from this segment to the replacement as well as maintains tracking
+     * groups for the undo/redo stack.
      */
-    public transferHandlesTo(destination: PermutationSegment) {
+    public transferToReplacement(destination: PermutationSegment) {
+        // When this segment was removed, it may have been split from a larger original
+        // segment.  In this case, it will have been added to an undo/redo tracking group
+        // that associates all of the fragments from the original insertion.
+        //
+        // Move this association from the this removed segment to its replacement so that
+        // it is included if the undo stack continues to unwind to the original insertion.
+        //
+        // Out of paranoia we link and unlink in separate loops to avoid mutating the underlying
+        // set during enumeration.  In pratice, this is unlikely to matter since there should be
+        // exactly 0 or 1 items in the enumeration.
+        for (const group of this.trackingCollection.trackingGroups) {
+            group.link(destination);
+        }
+        for (const group of this.trackingCollection.trackingGroups) {
+            group.unlink(this);
+        }
+
+        // Move handle allocations from this segment to its replacement.
         destination._start = this._start;
         this.reset();
     }
@@ -103,7 +122,7 @@ export class PermutationSegment extends BaseSegment {
     }
 
     protected createSplitSegmentAt(pos: number) {
-        assert(0 < pos && pos < this.cachedLength);
+        assert(0 < pos && pos < this.cachedLength, 0x026 /* "Trying to split segment at out-of-bounds position!" */);
 
         const leafSegment = new PermutationSegment(
             /* length: */ this.cachedLength - pos,
@@ -168,7 +187,7 @@ export class PermutationVector extends Client {
     }
 
     public getMaybeHandle(pos: number): Handle {
-        assert(0 <= pos && pos < this.getLength());
+        assert(0 <= pos && pos < this.getLength(), 0x027 /* "Trying to get handle of out-of-bounds position!" */);
 
         return this.handleCache.getHandle(pos);
     }
@@ -211,7 +230,7 @@ export class PermutationVector extends Client {
 
     public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq,
-            "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op.");
+            0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
         //       the original operation to the current position for resubmitting.  This is probably the
@@ -256,7 +275,7 @@ export class PermutationVector extends Client {
         // ops that reference the stale handle, or the removal is unACKed, in which case the handle
         // has not yet been recycled.
 
-        assert(isHandleValid(containingSegment.start));
+        assert(isHandleValid(containingSegment.start), 0x029 /* "Invalid handle at start of containing segment!" */);
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,10 +9,10 @@ import {
     IContext,
     IQueuedMessage,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {
     public handleCalls = 0;
@@ -21,12 +21,12 @@ export class TestLambda implements IPartitionLambda {
     private failHandler = false;
     private throwHandler = false;
 
-    constructor(config: Provider, private readonly context: IContext) {
-        this.documentId = config.get("documentId");
+    constructor(config: IPartitionLambdaConfig, private readonly context: IContext) {
+        this.documentId = config.documentId;
         assert(this.documentId);
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         this.handleCalls++;
         const sequencedMessage = message.value as ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
@@ -38,6 +38,8 @@ export class TestLambda implements IPartitionLambda {
         } else {
             this.context.checkpoint(message);
         }
+
+        return undefined;
     }
 
     public close() {
@@ -62,7 +64,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
         super();
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreatelambda) {
             return Promise.reject(new Error("Test failure"));
         } else {
@@ -94,7 +96,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
     }
 }
 
-export const create = (config: Provider): IPartitionLambdaFactory => new TestLambdaFactory();
+export const create = (): IPartitionLambdaFactory => new TestLambdaFactory();
 
 export interface ITestLambdaModule {
     create: () => TestLambdaFactory;

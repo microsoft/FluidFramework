@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,13 +9,13 @@ import {
     IDocumentStorage,
     IOrdererManager,
     IProducer,
+    IRunner,
     ITenantManager,
+    IThrottler,
     IWebServer,
     IWebServerFactory,
     MongoManager,
-    IThrottler,
 } from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
@@ -23,7 +23,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
-export class AlfredRunner implements utils.IRunner {
+export class AlfredRunner implements IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 

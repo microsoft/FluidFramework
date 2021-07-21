@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -28,7 +28,6 @@ const socketReferenceBufferTime = 2000;
 class SocketReference {
     private references: number = 1;
     private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
-    private delayDeleteTimeoutSetTime?: number;
     private _socket: SocketIOClient.Socket | undefined;
 
     // When making decisions about socket reuse, we do not reuse disconnected socket.
@@ -54,13 +53,6 @@ class SocketReference {
             // Clear the pending deletion if there is one
             socketReference.clearTimer();
             socketReference.references++;
-
-            logger.sendTelemetryEvent({
-                references: socketReference.references,
-                eventName: "OdspDocumentDeltaCollection.GetSocketIoReference",
-                delayDeleteDelta: socketReference.delayDeleteTimeoutSetTime !== undefined ?
-                    (Date.now() - socketReference.delayDeleteTimeoutSetTime) : undefined,
-            });
         }
 
         return socketReference;
@@ -73,7 +65,7 @@ class SocketReference {
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
     public removeSocketIoReference(isFatalError: boolean) {
-        assert(this.references > 0);
+        assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
         this.references--;
 
         // see comment in disconnected() getter
@@ -87,10 +79,9 @@ class SocketReference {
         if (this.references === 0 && this.delayDeleteTimeout === undefined) {
             this.delayDeleteTimeout = setTimeout(() => {
                 // We should not get here with active users.
-                assert(this.references === 0);
+                assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
                 this.closeSocket();
             }, socketReferenceBufferTime);
-            this.delayDeleteTimeoutSetTime = Date.now();
         }
     }
 
@@ -127,7 +118,6 @@ class SocketReference {
         if (this.delayDeleteTimeout !== undefined) {
             clearTimeout(this.delayDeleteTimeout);
             this.delayDeleteTimeout = undefined;
-            this.delayDeleteTimeoutSetTime = undefined;
         }
     }
 
@@ -136,7 +126,8 @@ class SocketReference {
 
         this.clearTimer();
 
-        assert(SocketReference.socketIoSockets.get(this.key) === this);
+        assert(SocketReference.socketIoSockets.get(this.key) === this,
+            0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
         SocketReference.socketIoSockets.delete(this.key);
 
         const socket = this._socket;
@@ -382,7 +373,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     protected disconnect(socketProtocolError: boolean, reason: DriverError) {
         const socket = this.socketReference;
-        assert(socket !== undefined, "reentrancy not supported!");
+        assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {

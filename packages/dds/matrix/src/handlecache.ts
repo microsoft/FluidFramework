@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -56,11 +56,12 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
     /** Update the cache when a handle has been allocated for a given position. */
     public addHandle(position: number, handle: Handle) {
-        assert(isHandleValid(handle));
+        assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
         const index = this.getIndex(position);
         if (index < this.handles.length) {
-            assert(!isHandleValid(this.handles[index]));
+            assert(!isHandleValid(this.handles[index]),
+                0x018 /* "Trying to insert handle into position with already valid handle!" */);
             this.handles[index] = handle;
         }
     }

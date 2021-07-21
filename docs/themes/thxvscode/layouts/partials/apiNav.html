@@ -1,94 +1,189 @@
 {{ $current := . }}
 {{ $currentURL := . | relURL }}
 {{ $package := $current.Params.package }}
-{{ $area := "" }}
+{{ $area := $current.Params.area }}
 {{ range $name, $packages := $.Site.Data.packages }}
-{{ range $packages }}
-{{ if eq $package .}}
-{{ $area = $name}}
-{{ end }}
-{{ end }}
+    {{ range $packages }}
+        {{ if eq $package .}}
+            {{ $area = $name}}
+        {{ end }}
+    {{ end }}
 {{ end }}
 
 {{ $section := .CurrentSection }}
-{{ $packagePages := where $section.RegularPages "Params.kind" "Package"}}
+{{ $api_section := .Site.GetPage "/docs/apis/_index.md" }}
+{{ $in_api_section := (.IsDescendant $api_section) }}
+{{ $ref_home_active := and .IsSection (not $in_api_section) }}
+{{ $api_home_active := and .IsSection $in_api_section }}
+
+{{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
+
+<!-- {{ printf "%#v" .Kind }}
+{{ printf "%#v" $in_api_section }} -->
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
-        <li {{ if eq .Kind "section" }} class="active" {{ end }}>
-            <a class="docs-home" href="/apis/" {{ if eq .Kind "section" }} aria-label="Current Page: Fluid API Overview"
-                {{ end }}>API Overview</a>
+
+        <li {{ if $ref_home_active }} class="active" {{ end }}>
+            <a class="docs-home" href="/docs/" {{ if $ref_home_active }}
+                aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
-        {{ range $grouping, $names :=  $.Site.Data.packages }}
-        {{ $isCurrentArea := (eq $grouping $area) }}
+        {{- range .Site.Menus.section }}
+        {{ $menuArea := .Identifier}}
+        {{ $isCurrentArea := (eq $menuArea $area) }}
 
+        <!-- {{ printf "%#v" $menuArea }}
+        {{ printf "%#v" $area }} -->
+
+        {{- if ne .URL "" -}}
+        {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+
+        <li class="panel {{if $isCurrentPage }}active{{end}}">
+            <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}" href="{{.URL}}"
+                data-parent="#main-nav">{{ .Name }}</a>
+        </li>
+        {{- else -}}
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
-            <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
-                data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
+            <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
+                data-toggle="collapse">{{ .Name }}</a>
 
-            <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
-                {{- range $names }}
-                {{ $targetPage := $current }}
-                {{/* instead of a package name, we have a custom map used to create class/interface links */}}
-                {{- if reflect.IsMap .}}
+            <ul id="{{ $menuArea }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                <!-- list all pages in area -->
+                {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
+                {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
 
-                {{$custom := index . "custom"}}
-                {{ $customLink := index $custom "url" }}
-                {{ $customTitle := index $custom "title"}}
-                {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+                <!-- {{ printf "%#v" .URL }}
+                {{ printf "%#v" $current.RelPermalink }} -->
+
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{$customLink}}"
-                        {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
-                        {{ end }}>
-                        {{ $customTitle | humanize | title }} </a>
+                    <a href="{{ .RelPermalink }}"
+                        {{ if $isCurrentPage }}aria-label="Current Page: {{ .Title | safeHTML }} " {{ end }}>
+                        {{ .Title }} </a>
                 </li>
-
-                {{- else }}
-
-                {{ $isCurrentPage := eq $package .}}
-                {{- range where $packagePages "Params.package" . -}}
-                {{ $targetPage = . }}
-                {{- end }}
-                {{ if $isCurrentPage}}
-                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
-                {{ end }}
-                <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{$targetPage.Permalink}}"
-                        {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
-                        {{ end }}>
-                        {{ (path.Base .) | humanize | title }} </a>
-                </li>
-                {{- end }}
                 {{- end }}
             </ul>
         </li>
+        {{- end -}}
+        {{- end }}
+
+        <hr/>
+
+        <li {{ if $in_api_section }} class="active" {{ end }}>
+            <a class="docs-home" href="/docs/apis/" {{ if $in_api_section }}
+                aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
+        </li>
+
+        {{ range $grouping, $names :=  $.Site.Data.packages }}
+            {{ $isCurrentArea := (eq $grouping $area) }}
+
+            <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
+                <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
+                    data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
+
+                <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                    {{- range $names }}
+                        {{ $targetPage := $current }}
+
+                        {{/* instead of a package name, we have a custom map used to create class/interface links */}}
+                        {{- if reflect.IsMap .}}
+
+                            {{ $custom := index . "custom" }}
+                            {{ $customLink := index $custom "url" }}
+                            {{ $customTitle := index $custom "title" }}
+                            {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+                            <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                                <a href="{{relURL $customLink}}"
+                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ $customTitle | humanize | title }} "
+                                    {{ end }}>
+                                    {{ $customTitle | humanize | title }} </a>
+                            </li>
+
+                        {{- else }}
+                            <!-- {{ printf "% #v" (len $packagePages) }} -->
+                            <!-- PART 0 -->
+
+                            {{- range (where $packagePages "Params.package" .) -}}
+                                <!-- PART 1 -->
+                                {{ $targetPage = . }}
+                            {{- end }}
+                            <!-- {{ printf "%#v" $targetPage.Params.package }}
+                            {{ printf "%#v" $package }} -->
+
+                            {{ $isCurrentPage := eq $package $targetPage.Params.package }}
+                            {{ if $isCurrentPage}}
+                                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
+                                <!-- PART 2 -->
+                            {{ end }}
+                            <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                                <a href="{{$targetPage.RelPermalink}}"
+                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
+                                    {{ end }}>
+                                    {{ (path.Base $targetPage.RelPermalink) | humanize | title }} </a>
+                            </li>
+                        {{- end }}
+                    {{- end }}
+                </ul>
+            </li>
         {{- end }}
     </ul>
 </nav>
 <nav id="small-nav" aria-label="Topics" class="docs-nav hidden-md hidden-lg">
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
-        <option value="/api" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range $grouping, $names :=  $.Site.Data.packages }}
-        <optgroup label="{{ $grouping }}">
-            {{- range $names }}
+        <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
+        {{- range .Site.Menus.section }}
+            {{ $menuArea := .Identifier}}
 
-            {{/* instead of a package name, we have a custom map used to create class/interface links */}}
-            {{- if reflect.IsMap .}}
-
-            {{$custom := index . "custom"}}
-            {{ $customLink := index $custom "url" }}
-            {{ $customTitle := index $custom "title"}}
-            {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
-            <option value="{{ $customLink }}" {{ if $isCurrentPage }}selected{{end}}>
-                {{ $customTitle | humanize | title }}</option>
-            {{- else }}
-            {{ $isCurrentPage := eq $package . }}
-            <option value="{{.}}" {{ if $isCurrentPage }}selected{{end}}>{{ . }}</option>
-            {{- end }}
+            {{- if ne .URL "" -}}
+                {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+                <option value="{{.URL}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Name }}</option>
+            {{- else -}}
+                <optgroup label="{{ $menuArea }}">
+                {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
+                    {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
+                    <option value="{{.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Title }}</option>
+                {{- end -}}
+                </optgroup>
             {{ end }}
-        </optgroup>
+        {{- end }}
+
+        <option value="/docs/apis" {{if $in_api_section}}selected{{end}}>API Overview</option>
+        {{- range $grouping, $names :=  $.Site.Data.packages }}
+            <optgroup label="{{ $grouping | humanize | title }}">
+            {{- range $names }}
+                {{ $targetPage := $current }}
+                <!-- {{ printf "%#v" . }} -->
+
+                {{/* instead of a package name, we have a custom map used to create class/interface links */}}
+                <!-- {{- if reflect.IsMap .}}
+
+                    {{ $custom := index . "custom" }}
+                    {{ $customLink := index $custom "url" }}
+                    {{ $customTitle := index $custom "title" }}
+                    {{ $isCurrentPage := eq (relURL $current.RelPermalink) $customLink }}
+                    <option value="{{ relURL $customLink }}" {{ if $isCurrentPage }}selected{{end}}>
+                    {{ $customTitle | humanize | title }}</option>
+                {{- else }} -->
+                    <!-- {{ printf "BEFORE: %#v" $targetPage.RelPermalink }}
+                    {{ printf "LEN: %#v" (len (where $packagePages "Params.package" .)) }} -->
+
+                    {{- range (where $packagePages "Params.package" .) -}}
+                        {{ $targetPage = . }}
+                    {{- end }}
+                    <!-- {{ printf "AFTER: %#v" $package }}
+                    {{ printf "AFTER: %#v" $targetPage.Params.package }} -->
+
+                    {{ $isCurrentPage := eq $package $targetPage.Params.package }}
+                    {{ if $isCurrentPage }}
+                        {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink }}
+                    {{ end }}
+                    <option value="{{$targetPage.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>
+                        {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
+                    </option>
+                <!-- {{- end }} -->
+            {{ end }}
+            </optgroup>
         {{- end }}
     </select>
 </nav>

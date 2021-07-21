@@ -1,4 +1,9 @@
 /*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  *
@@ -6,4 +11,4 @@
  */
 
 export const pkgName = "@fluidframework/common-utils";
-export const pkgVersion = "0.29.0";
+export const pkgVersion = "0.32.0";

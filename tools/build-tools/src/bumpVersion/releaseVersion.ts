@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { Context, VersionBumpType } from "./context";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
-import { fatal } from "./utils";
+import { fatal, runPolicyCheckWithFix } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 
@@ -25,6 +25,12 @@ export function getPackageShortName(pkgName: string) {
  * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
  */
 export async function releaseVersion(context: Context, releaseName: string, updateLock: boolean, releaseVersion?: VersionBumpType) {
+
+    // run policy check before releasing a version.
+    // right now this only does assert short codes
+    // but could also apply other fixups in the future
+    await runPolicyCheckWithFix(context.gitRepo);
+
     if (releaseVersion === undefined) {
         if (!context.originalBranchName.startsWith("release/")) {
             fatal(`Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'`);

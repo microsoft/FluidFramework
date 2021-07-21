@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -172,7 +172,7 @@ export class ConsensusRegisterCollection<T>
 
         if (versions !== undefined) {
             // We don't support deletion. So there should be at least one value.
-            assert(versions.length > 0, "Value should be undefined or non-empty");
+            assert(versions.length > 0, 0x06c /* "Value should be undefined or non-empty" */);
 
             return versions[versions.length - 1];
         }
@@ -218,7 +218,8 @@ export class ConsensusRegisterCollection<T>
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
-                "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17");
+                // eslint-disable-next-line max-len
+                0x06d /* "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17" */);
 
             this.data.set(key, dataObj[key]);
         }
@@ -243,7 +244,8 @@ export class ConsensusRegisterCollection<T>
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
                     // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;
-                    assert(refSeqWhenCreated <= message.referenceSequenceNumber);
+                    assert(refSeqWhenCreated <= message.referenceSequenceNumber,
+                        0x06e /* "Message's reference sequence number < op's reference sequence number!" */);
 
                     const value = incomingOpMatchesCurrentFormat(op)
                         ? this.parse(op.serializedValue, this.serializer) as T
@@ -306,7 +308,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            assert(!!data);
+            assert(!!data, 0x06f /* "data missing for non-atomic inbound update!" */);
         }
 
         // Remove versions that were known to the remote client at the time of write
@@ -321,11 +323,12 @@ export class ConsensusRegisterCollection<T>
 
         // Asserts for data integrity
         if (!this.isAttached()) {
-            assert(refSeq === 0 && sequenceNumber === 0, "sequence numbersare expected to be 0 when unattached");
+            assert(refSeq === 0 && sequenceNumber === 0,
+                0x070 /* "sequence numbers are expected to be 0 when unattached" */);
         }
         else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
-                "Versions should naturally be ordered by sequenceNumber");
+                0x071 /* "Versions should naturally be ordered by sequenceNumber" */);
         }
 
         // Push the new element.
@@ -347,5 +350,10 @@ export class ConsensusRegisterCollection<T>
     private parse(content: string, serializer: IFluidSerializer): any {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
+    }
+
+    protected applyStashedOp() {
+        // empty implementation
+        return () => { };
     }
 }

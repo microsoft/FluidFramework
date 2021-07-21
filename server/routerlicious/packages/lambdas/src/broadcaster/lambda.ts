@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,24 +7,20 @@ import { INack, ISequencedDocumentMessage } from "@fluidframework/protocol-defin
 import {
     extractBoxcar,
     IContext,
+    IMessageBatch,
     INackMessage,
     IPartitionLambda,
     IPublisher,
+    IQueuedMessage,
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
-    IQueuedMessage,
 } from "@fluidframework/server-services-core";
 
-class BroadcasterBatch {
-    public messages: (ISequencedDocumentMessage | INack)[] = [];
-
-    constructor(
-        public documentId: string,
-        public tenantId: string,
-        public event: string) {
-    }
-}
+/**
+ * Container for a batch of messages being sent for a specific tenant/document id
+ */
+type BroadcasterMessageBatch = IMessageBatch<ISequencedDocumentMessage | INack>;
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases
@@ -40,15 +36,17 @@ if (typeof setImmediate === "function") {
 }
 
 export class BroadcasterLambda implements IPartitionLambda {
-    private pending = new Map<string, BroadcasterBatch>();
+    private pending = new Map<string, BroadcasterMessageBatch>();
     private pendingOffset: IQueuedMessage | undefined;
-    private current = new Map<string, BroadcasterBatch>();
+    private current = new Map<string, BroadcasterMessageBatch>();
     private messageSendingTimerId: unknown | undefined;
 
-    constructor(private readonly publisher: IPublisher, protected context: IContext) {
+    constructor(
+        private readonly publisher: IPublisher<ISequencedDocumentMessage | INack>,
+        protected context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -70,16 +68,23 @@ export class BroadcasterLambda implements IPartitionLambda {
 
                 let pendingBatch = this.pending.get(topic);
                 if (!pendingBatch) {
-                    pendingBatch = new BroadcasterBatch(value.documentId, value.tenantId, event);
+                    pendingBatch = {
+                        tenantId: value.tenantId,
+                        documentId: value.documentId,
+                        event,
+                        messages: [value.operation],
+                    };
                     this.pending.set(topic, pendingBatch);
+                } else {
+                    pendingBatch.messages.push(value.operation);
                 }
-
-                pendingBatch.messages.push(value.operation);
             }
         }
 
         this.pendingOffset = message;
         this.sendPending();
+
+        return undefined;
     }
 
     public close() {
@@ -117,11 +122,24 @@ export class BroadcasterLambda implements IPartitionLambda {
             const batchOffset = this.pendingOffset;
 
             this.current = this.pending;
-            this.pending = new Map<string, BroadcasterBatch>();
+            this.pending = new Map<string, BroadcasterMessageBatch>();
             this.pendingOffset = undefined;
 
             // Process all the batches + checkpoint
-            if (this.publisher.emit) {
+            if (this.publisher.emitBatch) {
+                const promises: Promise<void>[] = [];
+
+                for (const [topic, batch] of this.current) {
+                    promises.push(this.publisher.emitBatch(topic, batch));
+                }
+
+                try {
+                    await Promise.all(promises);
+                } catch (ex) {
+                    this.context.error(ex, { restart: true });
+                    return;
+                }
+            } else if (this.publisher.emit) {
                 const promises: Promise<void>[] = [];
 
                 for (const [topic, batch] of this.current) {

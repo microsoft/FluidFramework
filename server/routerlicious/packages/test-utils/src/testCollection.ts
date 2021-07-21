@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -122,7 +122,7 @@ export class TestCollection implements ICollection<any> {
             if (!query[key]) {
                 return;
             }
-            if (query[key].$gt > 0 || query[key].$lt > 0) {
+            if (query[key].$gt > 0 || query[key].$lt > 0 || query[key].$lte > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) > query[key].$gt);
@@ -130,6 +130,10 @@ export class TestCollection implements ICollection<any> {
                 if (query[key].$lt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) < query[key].$lt);
+                }
+                if (query[key].$lte > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) <= query[key].$lte);
                 }
             } else {
                 filteredCollection = filteredCollection.filter(

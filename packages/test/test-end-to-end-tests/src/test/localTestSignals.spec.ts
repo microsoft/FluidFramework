@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,21 +8,20 @@ import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject, timeoutPromise,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    timeoutPromise,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
 const waitForSignal =
-    async (...signallers: {once(e: "signal", l: () => void): void}[]) =>
+    async (...signallers: { once(e: "signal", l: () => void): void }[]) =>
         Promise.all(
             signallers.map(
                 async (signaller, index) =>
@@ -33,17 +32,17 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
+describeFullCompat("TestSignals", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
     beforeEach(async () => {
-        args = argsFactory();
-        const container1 = await args.makeTestContainer(testContainerConfig) as Container;
+        provider = getTestObjectProvider();
+        const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-        const container2 = await args.loadTestContainer(testContainerConfig) as Container;
+        const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         // need to be connected to send signals
@@ -54,10 +53,6 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
             await new Promise((res) => container2.once("connected", res));
         }
     });
-    afterEach(() => {
-        args.reset();
-    });
-
     describe("Attach signal Handlers on Both Clients", () => {
         it("Validate data store runtime signals", async () => {
             let user1SignalReceivedCount = 0;
@@ -164,8 +159,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
         assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on data store runtime");
     });
-};
-
-describe("TestSignals", () => {
-    generateTest(tests);
 });

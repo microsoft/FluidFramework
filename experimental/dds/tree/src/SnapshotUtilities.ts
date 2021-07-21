@@ -1,55 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, TraitMap } from './PersistedTypes';
-import { Snapshot, SnapshotNode } from './Snapshot';
-
-/** Returns true if two `SnapshotNodes` are equivalent */
-export function compareSnapshotNodes(nodeA: SnapshotNode, nodeB: SnapshotNode): boolean {
-	if (nodeA === nodeB) {
-		return true;
-	}
-
-	if (nodeA.identifier !== nodeB.identifier) {
-		return false;
-	}
-
-	if (nodeA.definition !== nodeB.definition) {
-		return false;
-	}
-
-	if (nodeA.payload?.base64 !== nodeB.payload?.base64) {
-		return false;
-	}
-
-	if (nodeA.traits.size !== nodeB.traits.size) {
-		return false;
-	}
-
-	for (const traitA of nodeA.traits) {
-		const [traitLabelA, nodeSequenceA] = traitA;
-		const nodeSequenceB = nodeB.traits.get(traitLabelA);
-		if (!nodeSequenceB) {
-			return false;
-		}
-
-		if (nodeSequenceA.length !== nodeSequenceB.length) {
-			return false;
-		}
-
-		for (let i = 0; i < nodeSequenceA.length; i++) {
-			if (nodeSequenceA[i] !== nodeSequenceB[i]) {
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
+import { ChangeNode, TraitMap } from './generic';
+import { Snapshot } from './Snapshot';
 
 /**
  * Converts a node in a snapshot to an equivalent `ChangeNode`.
@@ -109,4 +66,23 @@ function makeTraits(
 	}
 
 	return traitMap;
+}
+
+/**
+ * Compares finite numbers to form a strict partial ordering.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ *
+ * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
+ */
+export function compareFiniteNumbers(a: number, b: number): number {
+	return a - b;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
+ */
+export function compareStrings(a: string, b: string): number {
+	return a > b ? 1 : a === b ? 0 : -1;
 }

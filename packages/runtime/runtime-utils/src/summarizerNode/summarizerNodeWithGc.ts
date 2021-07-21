@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -17,13 +17,13 @@ import {
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
-    ReadAndParseBlob,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -120,15 +120,23 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadInitialGCSummaryDetails() {
-        // If referenceUsedRoutes is not undefined, don't do anything because we have already initialized.
-        if (this.referenceUsedRoutes === undefined) {
-            const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
-            this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        // If referenceUsedRoutes exists, don't do anything because we have already initialized.
+        if (this.referenceUsedRoutes !== undefined) {
+            return;
+        }
 
-            // If the GC details has GC data, initialize our GC data from it.
-            if (gcDetailsInInitialSummary.gcData !== undefined) {
-                this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
-            }
+        const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
+
+        // Possible re-entrancy. It's possible that referenceUsedRoutes was set while we were waiting to get the
+        // initial GC details.
+        if (this.referenceUsedRoutes !== undefined) {
+            return;
+        }
+
+        this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        // If the GC details has GC data, initialize our GC data from it.
+        if (gcDetailsInInitialSummary.gcData !== undefined) {
+            this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
     }
 
@@ -141,7 +149,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
-            assert(this.wipSerializedUsedRoutes !== undefined, "wip used routes should be set if tracking a summary");
+            assert(this.wipSerializedUsedRoutes !== undefined,
+                0x1b1 /* "wip used routes should be set if tracking a summary" */);
         }
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
@@ -149,7 +158,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (trackState) {
             const summarizeResult = await super.summarize(fullTree);
 
-            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsiblity
+            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsibility
             // to ensure that GC data is available by calling getGCData before calling summarize.
             const gcData = this.gcData !== undefined ? cloneGCData(this.gcData) : { gcNodes: {} };
 
@@ -164,7 +173,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        this.gcData = cloneGCData(summarizeResult.gcData);
+        if (summarizeResult.gcData !== undefined) {
+            this.gcData = cloneGCData(summarizeResult.gcData);
+        }
         return summarizeResult;
     }
 
@@ -174,8 +185,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-        assert(!this.gcDisabled, "Getting GC data should not be called when GC is disabled!");
-        assert(this.getGCDataFn !== undefined, "GC data cannot be retrieved without getGCDataFn");
+        assert(!this.gcDisabled, 0x1b2 /* "Getting GC data should not be called when GC is disabled!" */);
+        assert(this.getGCDataFn !== undefined, 0x1b3 /* "GC data cannot be retrieved without getGCDataFn" */);
 
         // Load GC details from the initial summary, if not already loaded. If this is the first time this function is
         // called and the node's data has not changed since last summary, the GC data in initial details is returned.
@@ -201,7 +212,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (!this.gcDisabled) {
             assert(
                 this.wipSerializedUsedRoutes === undefined,
-                "We should not already be tracking used routes when to track a new summary");
+                0x1b4 /* "We should not already be tracking used routes when to track a new summary" */);
 
             // back-compat: 0.33 - This will be done in `updateUsedRoutes`. Older clients do not have that method, so
             // keeping this one for now.
@@ -223,7 +234,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is disabled, don't set wip used routes.
         if (!this.gcDisabled) {
             wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
-            assert(wipSerializedUsedRoutes !== undefined, "We should have been tracking used routes");
+            assert(wipSerializedUsedRoutes !== undefined, 0x1b5 /* "We should have been tracking used routes" */);
         }
 
         super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
@@ -321,7 +332,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
     ): ISummarizerNodeWithGC {
-        assert(!this.children.has(id), "Create SummarizerNode child already exists");
+        assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 
         const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
         const child = new SummarizerNodeWithGC(
@@ -349,6 +360,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         this.children.set(id, child);
         return child;
+    }
+
+    /**
+     * Deletes the child node with the given id.
+     */
+    public deleteChild(id: string): void {
+        this.children.delete(id);
     }
 
     /**

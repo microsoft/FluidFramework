@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -17,6 +17,7 @@ import { RequestParser, create404Response } from "@fluidframework/runtime-utils"
 import {
     innerRequestHandler,
     createFluidObjectResponse,
+    rootDataStoreRequestHandler,
 } from "../requestHandlers";
 
 class MockRuntime {
@@ -24,14 +25,16 @@ class MockRuntime {
 
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "objectId") {
-            return {
-                request: async (r) => {
-                    if (r.url === "" || r.url === "/route") {
-                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
+            const router: any = {
+                request: async (request: IRequest) => {
+                    if (request.url === "" || request.url === "/route") {
+                        return createFluidObjectResponse({ route: request.url } as IFluidObject);
                     }
-                    return create404Response(r);
+                    return create404Response(request);
                 },
-            } as IFluidDataStoreChannel;
+            };
+            router.IFluidRouter = router;
+            return router as IFluidDataStoreChannel;
         }
 
         assert(wait !== true);
@@ -98,6 +101,47 @@ describe("RequestParser", () => {
         it("Data store request with non-existing sub route", async () => {
             const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
             const responseP = innerRequestHandler(requestParser, runtime);
+            await assertRejected(responseP);
+        });
+    });
+
+    describe("rootDataStoreRequestHandler", () => {
+        const runtime = new MockRuntime() as any as IContainerRuntime;
+
+        it("Empty request", async () => {
+            const requestParser = RequestParser.create({ url: "/" });
+            const response = await rootDataStoreRequestHandler(
+                requestParser,
+                runtime);
+            assert.equal(response.status, 404);
+        });
+
+        it("Data store request without wait", async () => {
+            const requestParser = RequestParser.create({ url: "/nonExistingUri" });
+            const responseP = rootDataStoreRequestHandler(
+                requestParser,
+                runtime);
+            await assertRejected(responseP);
+        });
+
+        it("Data store request with wait", async () => {
+            const requestParser = RequestParser.create({ url: "/nonExistingUri", headers: { wait: true } });
+            const responseP = rootDataStoreRequestHandler(
+                requestParser,
+                runtime);
+            await assertRejected(responseP);
+        });
+
+        it("Data store request with sub route", async () => {
+            const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
+            const response = await rootDataStoreRequestHandler(requestParser, runtime);
+            assert.equal(response.status, 200);
+            assert.equal(response.value.route, "/route");
+        });
+
+        it("Data store request with non-existing sub route", async () => {
+            const requestParser = RequestParser.create({ url: "/objectId/doesNotExist", headers: { wait: true } });
+            const responseP = rootDataStoreRequestHandler(requestParser, runtime);
             await assertRejected(responseP);
         });
     });

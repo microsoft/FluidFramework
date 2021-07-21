@@ -1,25 +1,25 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import assert from "assert";
-import { RedisClient } from "redis";
-import redis from "redis-mock";
+import { Redis } from "ioredis";
+import RedisMock from "ioredis-mock";
 import { IThrottlingMetrics } from "@fluidframework/server-services-core";
 import { RedisThrottleStorageManager } from "../redisThrottleStorageManager";
 import Sinon from "sinon";
 
 describe("RedisThrottleStorageManager", () => {
-    let mockRedisClient: RedisClient;
+    let mockRedisClient: Redis;
     beforeEach(() => {
         // use fake timers to have full control over the passage of time
         Sinon.useFakeTimers()
-        mockRedisClient = redis.createClient() as RedisClient;
+        mockRedisClient = new RedisMock() as Redis;
     });
     afterEach(() => {
         mockRedisClient.flushall();
-        mockRedisClient.end();
+        mockRedisClient.quit();
         Sinon.restore();
     });
     it("Creates and retrieves throttlingMetric", async () => {
@@ -78,7 +78,7 @@ describe("RedisThrottleStorageManager", () => {
 
     it("Expires outdated values", async () => {
         const ttlInSeconds = 10;
-        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
+        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, { expireAfterSeconds: ttlInSeconds });
 
         const id = "test-id";
         const originalThrottlingMetric: IThrottlingMetrics = {
@@ -103,7 +103,7 @@ describe("RedisThrottleStorageManager", () => {
 
     it("Updates expiration on overwrite, then expires outdated values", async () => {
         const ttlInSeconds = 10;
-        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, ttlInSeconds);
+        const throttleManager = new RedisThrottleStorageManager(mockRedisClient, { expireAfterSeconds: ttlInSeconds });
 
         const id = "test-id";
         const originalThrottlingMetric: IThrottlingMetrics = {

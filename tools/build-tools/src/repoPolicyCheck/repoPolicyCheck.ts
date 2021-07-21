@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,11 +10,12 @@ import * as path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
 import { Handler } from "./common";
+import { handler as assertShortCodeHandler } from "./handlers/assertShortCode";
 import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFileHeader";
 import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
 import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
 import { handler as fluidCaseHandler } from "./handlers/fluidCase";
-import { handler as lockfilesHandler } from "./handlers/lockfiles";
+import { handlers as lockfilesHandlers } from "./handlers/lockfiles";
 
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
@@ -58,20 +59,36 @@ const handlers: Handler[] = [
     ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
     fluidCaseHandler,
-    lockfilesHandler,
+    ...lockfilesHandlers,
+    assertShortCodeHandler,
 ];
+
+const handlerActionPerf = new Map<"handle" | "resolve" | "final",Map<string, number>>();
+
+function runWithPerf<T>(name: string, action: "handle" | "resolve" | "final", run: ()=>T): T{
+    const actionMap = handlerActionPerf.get(action) ?? new Map<string, number>();
+    let dur = actionMap.get(name) ?? 0;
+
+    const start = Date.now();
+    const result = run();
+    dur += Date.now() - start
+
+    actionMap.set(name, dur);
+    handlerActionPerf.set(action, actionMap);
+    return result;
+}
 
 // route files to their handlers by regex testing their full paths
 // synchronize output, exit code, and resolve decision for all handlers
 function routeToHandlers(file: string) {
     handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
-        const result = handler.handler(file, pathToGitRoot);
+        const result = runWithPerf(handler.name, "handle", ()=>handler.handler(file, pathToGitRoot));
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
-
-            if (program.resolve && handler.resolver) {
+            const resolver = handler.resolver;
+            if (program.resolve && resolver) {
                 output += newline + 'attempting to resolve: ' + file;
-                const resolveResult = handler.resolver(file, pathToGitRoot);
+                const resolveResult = runWithPerf(handler.name, "resolve", ()=>resolver(file, pathToGitRoot));
 
                 if (resolveResult.message) {
                     output += newline + resolveResult.message;
@@ -121,6 +138,26 @@ lineReader.on('line', line => {
     }
 });
 
+lineReader.once("close",()=>{
+    handlers.forEach((h)=>{
+        const final = h.final;
+        if(final){
+            const result = runWithPerf(h.name, "final", ()=>final(pathToGitRoot, program.resolve));
+            if(result?.error){
+                process.exitCode = 1;
+                console.log(result.error);
+            }
+        }
+    });
+});
+
+
 process.on("beforeExit", () => {
-    console.log(`${processed} processed, ${count - processed} excluded, ${count} total`);
+    writeOutLine(`Statitisics: ${processed} processed, ${count - processed} excluded, ${count} total`);
+    handlerActionPerf.forEach((handlerPerf, action)=>{
+        writeOutLine(`Performance for "${action}":`);
+        handlerPerf.forEach((dur, handler)=>{
+            writeOutLine(`\t${handler}: ${dur/1000}:`);
+        });
+    });
 });

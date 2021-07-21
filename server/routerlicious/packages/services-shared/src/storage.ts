@@ -1,19 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
+import { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
     ITreeEntry,
     ICommittedProposal,
     ISequencedDocumentMessage,
     ISummaryTree,
-    SummaryType,
-    SummaryObject,
-    ISnapshotTreeEx,
 } from "@fluidframework/protocol-definitions";
-import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
+import { IGitCache, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDeliState,
@@ -28,12 +25,10 @@ import {
 import {
     getQuorumTreeEntries,
     IQuorumSnapshot,
-    getGitType,
-    getGitMode,
     mergeAppAndProtocolTree,
 } from "@fluidframework/protocol-base";
 import * as winston from "winston";
-import { gitHashFile, IsoBuffer, toUtf8, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { toUtf8 } from "@fluidframework/common-utils";
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
@@ -66,8 +61,9 @@ export class DocumentStorage implements IDocumentStorage {
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
-        const blobsShaCache = new Set<string>();
-        const handle = await writeSummaryTree(gitManager, summary, blobsShaCache, undefined);
+        const blobsShaCache = new Map<string, string>();
+        const summaryTreeUploadManager = new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
+        const handle = await summaryTreeUploadManager.writeSummaryTree(summary, "");
 
         // At this point the summary op and its data are all valid and we can perform the write to history
         const quorumSnapshot: IQuorumSnapshot = {
@@ -108,13 +104,14 @@ export class DocumentStorage implements IDocumentStorage {
         winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const deli: IDeliState = {
-            branchMap: undefined,
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
             logOffset: -1,
             sequenceNumber,
             epoch: undefined,
             term: 1,
+            lastSentMSN: 0,
+            nackMessages: undefined,
         };
 
         const scribe: IScribe = {
@@ -281,11 +278,11 @@ export class DocumentStorage implements IDocumentStorage {
             // TODO: Make the rest endpoint handle this case.
             const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
             const ops = JSON.parse(
-                            Buffer.from(
-                                opsContent.content,
-                                Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
-                            ).toString(),
-                        ) as ISequencedDocumentMessage[];
+                Buffer.from(
+                    opsContent.content,
+                    Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+                ).toString(),
+            ) as ISequencedDocumentMessage[];
             const dbOps = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,
@@ -312,113 +309,4 @@ export class DocumentStorage implements IDocumentStorage {
             return false;
         }
     }
-}
-
-/**
- * Writes the summary tree to storage.
- * @param manager - Git manager to write.
- * @param summaryTree - summary tree to be written to storage.
- * @param blobsShaCache - cache so that duplicate blobs are written only once.
- * @param snapshot - snapshot tree.
- */
-export async function writeSummaryTree(
-    manager: IGitManager,
-    summaryTree: ISummaryTree,
-    blobsShaCache: Set<string>,
-    snapshot: ISnapshotTreeEx | undefined,
-): Promise<string> {
-    const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
-        const entry = summaryTree.tree[key];
-        const pathHandle = await writeSummaryTreeObject(manager, blobsShaCache, key, entry, snapshot);
-        const treeEntry: ICreateTreeEntry = {
-            mode: getGitMode(entry),
-            path: encodeURIComponent(key),
-            sha: pathHandle,
-            type: getGitType(entry),
-        };
-        return treeEntry;
-    }));
-
-    const treeHandle = await manager.createGitTree({ tree: entries });
-    return treeHandle.sha;
-}
-
-async function writeSummaryTreeObject(
-    manager: IGitManager,
-    blobsShaCache: Set<string>,
-    key: string,
-    object: SummaryObject,
-    snapshot: ISnapshotTreeEx | undefined,
-    currentPath = "",
-): Promise<string> {
-    switch (object.type) {
-        case SummaryType.Blob: {
-            return writeSummaryBlob(object.content, blobsShaCache, manager);
-        }
-        case SummaryType.Handle: {
-            if (snapshot === undefined) {
-                throw Error("Parent summary does not exist to reference by handle.");
-            }
-            return getIdFromPath(object.handleType, object.handle, snapshot);
-        }
-        case SummaryType.Tree: {
-            return writeSummaryTree(manager, object, blobsShaCache, snapshot?.trees[key]);
-        }
-
-        default:
-            throw Error(`Unexpected summary object type: "${object.type}".`);
-    }
-}
-
-function getIdFromPath(
-    handleType: SummaryType,
-    handlePath: string,
-    fullSnapshot: ISnapshotTreeEx,
-): string {
-    const path = handlePath.split("/").map((part) => decodeURIComponent(part));
-    if (path[0] === "") {
-        // root of tree should be unnamed
-        path.shift();
-    }
-
-    return getIdFromPathCore(handleType, path, fullSnapshot);
-}
-
-function getIdFromPathCore(
-    handleType: SummaryType,
-    path: string[],
-    snapshot: ISnapshotTreeEx,
-): string {
-    const key = path[0];
-    if (path.length === 1) {
-        switch (handleType) {
-            case SummaryType.Blob: {
-                return snapshot.blobs[key];
-            }
-            case SummaryType.Tree: {
-                return snapshot.trees[key]?.id;
-            }
-            default:
-                throw Error(`Unexpected handle summary object type: "${handleType}".`);
-        }
-    }
-    return getIdFromPathCore(handleType, path.slice(1), snapshot);
-}
-
-async function writeSummaryBlob(
-    content: string | Uint8Array,
-    blobsShaCache: Set<string>,
-    manager: IGitManager,
-): Promise<string> {
-    const { parsedContent, encoding } = typeof content === "string"
-        ? { parsedContent: content, encoding: "utf-8" }
-        : { parsedContent: Uint8ArrayToString(content, "base64"), encoding: "base64" };
-
-    // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
-    if (!blobsShaCache.has(hash)) {
-        const blob = await manager.createBlob(parsedContent, encoding);
-        blobsShaCache.add(blob.sha);
-    }
-    return hash;
 }

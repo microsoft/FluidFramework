@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,9 +22,9 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants } from "../../../utils";
+import { Constants, handleResponse } from "../../../utils";
 
-export async function getDeltas(
+async function getDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId: string,
@@ -214,13 +214,7 @@ export function create(
                 from,
                 to);
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 
@@ -241,13 +235,7 @@ export function create(
                 tenantId,
                 getParam(request.params, "id"));
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 
@@ -272,13 +260,7 @@ export function create(
                 from,
                 to);
 
-            deltasP.then(
-                (deltas) => {
-                    response.status(200).json(deltas);
-                },
-                (error) => {
-                    response.status(500).json(error);
-                });
+            handleResponse(deltasP, response, 500);
         },
     );
 

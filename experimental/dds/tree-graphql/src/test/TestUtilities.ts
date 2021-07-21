@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,19 +10,19 @@ import {
 	TraitLabel,
 	initialTree,
 	Side,
-	EditNode,
+	ChangeNode,
 	TreeNode,
 	NodeId,
 	Payload,
 } from '@fluid-experimental/tree';
 
-/** From the given `EditNode`, create a `SharedTree` which is suitable for use in a graphql query */
-export function createTestQueryTree(node: EditNode): SharedTree {
+/** From the given `ChangeNode`, create a `SharedTree` which is suitable for use in a graphql query */
+export function createTestQueryTree(node: ChangeNode): SharedTree {
 	const componentRuntime = new MockFluidDataStoreRuntime();
 	componentRuntime.local = true;
 	const tree = new SharedTree(componentRuntime, 'testSharedTree', true);
 	assert(typeof node !== 'number', 'root node may not be detached');
-	const treeNode = node as TreeNode<EditNode>;
+	const treeNode = node as TreeNode<ChangeNode>;
 	// Follow the graphql convention that the root type of a schema must of type 'Query'
 	// Traits are copied off of the Query node and applied to the root node
 	// This is simply to save space/complexity in the tree, rather than adding the query root node _under_ the `initialTree` root node
@@ -42,13 +42,6 @@ export class NodeIdGenerator {
 	private nextId = 0;
 
 	public new(): NodeId {
-		// Prefix 'i' to avoid 'sorted-btree' default comparator issues with mixed string/numeric keys
-		// (See https://github.com/qwertie/btree-typescript/pull/15)
-		return `i${this.nextId++}` as NodeId;
+		return String(this.nextId++) as NodeId;
 	}
-}
-
-/** 'Encode' a scalar type */
-export function encodeScalar(x: string | number | boolean): Payload {
-	return { base64: x.toString(10) };
 }

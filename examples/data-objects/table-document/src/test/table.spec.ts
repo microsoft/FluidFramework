@@ -1,48 +1,29 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-    createAndAttachContainer,
-    createLocalLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
 
-describe("TableDocument", () => {
-    const documentId = "fluid-test://localhost/tableTest";
-    const codeDetails = {
-        package: "tableTestPkg",
-        config: {},
-    };
+describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
     let tableDocument: TableDocument;
-    let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
         const newId = Math.random().toString(36).substr(2);
         return newId;
     }
 
+    let provider: ITestObjectProvider;
     beforeEach(async () => {
-        const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new LocalResolver();
-        const loader = createLocalLoader(
-            [[codeDetails, TableDocument.getFactory()]],
-            deltaConnectionServer,
-            urlResolver);
-        const container = await createAndAttachContainer(
-            codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+        provider = getTestObjectProvider();
+        const container = await provider.createContainer(TableDocument.getFactory());
         tableDocument = await requestFluidObject<TableDocument>(container, "default");
-
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     const extract = (table: TableDocument) => {
@@ -62,14 +43,15 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(tableDocument), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await opProcessingController.process();
+        await provider.ensureSynchronized();
         assert.strictEqual(tableDocument.numRows, expected.length);
         assert.deepStrictEqual(extract(tableDocument), expected);
     };
 
     it("Initially empty", async () => {
         await expect([]);
-        assert.throws(() => tableDocument.getCellValue(0, 0));
+
+        assert.throws(() => { tableDocument.getCellValue(0, 0); });
     });
 
     it("Insert row", async () => {
@@ -159,10 +141,12 @@ describe("TableDocument", () => {
             tableDocument.insertCols(0, 7);
 
             const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            /* eslint-disable @typescript-eslint/no-unsafe-return */
             assert.throws(() => slice.getCellValue(-1, 0));
             assert.throws(() => slice.getCellValue(3, 0));
             assert.throws(() => slice.getCellValue(0, -1));
             assert.throws(() => slice.getCellValue(0, 3));
+            /* eslint-enable @typescript-eslint/no-unsafe-return */
         });
 
         it("Annotations work when proxied through table slice", async () => {

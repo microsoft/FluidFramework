@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
-import { TelemetryLogger, ITelemetryPropertyGetters, MultiSinkLogger, ChildLogger } from "./logger";
+import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
 
 /**
  * Implementation of debug logger
@@ -24,8 +24,7 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static create(
         namespace: string,
-        properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -34,7 +33,7 @@ export class DebugLogger extends TelemetryLogger {
         debugErr.log = console.error.bind(console);
         debugErr.enabled = true;
 
-        return new DebugLogger(debug, debugErr, properties, propertyGetters);
+        return new DebugLogger(debug, debugErr, properties);
     }
 
     /**
@@ -48,27 +47,32 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
-        properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
+        properties?: ITelemetryLoggerPropertyBags,
     ): TelemetryLogger {
         if (!baseLogger) {
-            return DebugLogger.create(namespace, properties, propertyGetters);
+            return DebugLogger.create(namespace, properties);
         }
 
-        const multiSinkLogger = new MultiSinkLogger(undefined, properties, propertyGetters);
-        multiSinkLogger.addLogger(DebugLogger.create(namespace));
+        const multiSinkLogger = new MultiSinkLogger(undefined, properties);
+        multiSinkLogger.addLogger(DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)));
         multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
         return multiSinkLogger;
     }
 
+    private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
+        if(baseLogger instanceof TelemetryLogger) {
+            return (baseLogger as any as {properties: ITelemetryLoggerPropertyBags}).properties;
+        }
+        return undefined;
+    }
+
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: ITelemetryProperties,
-        propertyGetters?: ITelemetryPropertyGetters,
+        properties?: ITelemetryLoggerPropertyBags,
     ) {
-        super(undefined, properties, propertyGetters);
+        super(undefined, properties);
     }
 
     /**

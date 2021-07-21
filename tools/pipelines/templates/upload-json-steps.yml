@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
 # upload-json-steps pipeline
@@ -22,6 +22,14 @@ steps:
 - download: common_definitions
   artifact: _api-extractor-temp
 - download: common_utils
+  artifact: _api-extractor-temp
+- download: container_definitions
+  artifact: _api-extractor-temp
+- download: core_interfaces
+  artifact: _api-extractor-temp
+- download: driver_definitions
+  artifact: _api-extractor-temp
+- download: protocol_definitions
   artifact: _api-extractor-temp
 - download: client
   artifact: _api-extractor-temp

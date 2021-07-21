@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,15 +8,13 @@ import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -25,13 +23,10 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-const tests = (argsFactory: () => ITestObjectProvider) => {
-    let args: ITestObjectProvider;
-    beforeEach(()=>{
-        args = argsFactory();
-    });
-    afterEach(() => {
-        args.reset();
+describeFullCompat("SharedCell", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
     });
 
     const initialCellValue = "Initial cell value";
@@ -44,24 +39,24 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await args.makeTestContainer(testContainerConfig);
+        const container1 = await provider.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container2 = await args.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
         // Load the Container that was created by the first client.
-        const container3 = await args.loadTestContainer(testContainerConfig);
+        const container3 = await provider.loadTestContainer(testContainerConfig);
         const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
     });
 
     function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
@@ -100,7 +95,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("can set and get cell data in 3 containers correctly", async () => {
         sharedCell2.set(newCellValue);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
@@ -108,7 +103,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
     it("can delete cell data in 3 containers correctly", async () => {
         sharedCell3.delete();
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellEmpty(true, true, true);
     });
@@ -134,7 +129,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
 
         sharedCell1.set(newCellValue);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         assert.equal(user1ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -147,11 +142,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedCell1.set("value1");
         sharedCell2.set("value2");
         sharedCell3.set("value0");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.set("value3");
 
         verifyCellValues("value1", "value2", "value3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellValues("value3", "value3", "value3");
     });
@@ -160,11 +159,15 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // set after delete
         sharedCell1.set("value1.1");
         sharedCell2.delete();
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.set("value1.3");
 
         verifyCellValues("value1.1", undefined, "value1.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellValues("value1.3", "value1.3", "value1.3");
     });
@@ -176,12 +179,12 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         sharedCell3.set("value2.3");
 
         // drain the outgoing so that the next set will come after
-        await args.opProcessingController.processOutgoing();
+        await provider.opProcessingController.processOutgoing();
 
         sharedCell2.set("value2.2");
         verifyCellValues("value2.1", "value2.2", "value2.3");
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellValues("value2.2", "value2.2", "value2.2");
     });
@@ -190,12 +193,16 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         // delete after set
         sharedCell1.set("value3.1");
         sharedCell2.set("value3.2");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.delete();
 
         verifyCellValues("value3.1", "value3.2", undefined);
         verifyCellEmpty(false, false, true);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         verifyCellValues(undefined, undefined, undefined);
         verifyCellEmpty(true, true, true);
@@ -209,7 +216,7 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         detachedCell1.set(detachedCell2.handle);
         sharedCell1.set(detachedCell1.handle);
 
-        await args.ensureSynchronized();
+        await provider.ensureSynchronized();
 
         async function getCellDataStore(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
@@ -220,8 +227,4 @@ const tests = (argsFactory: () => ITestObjectProvider) => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
-};
-
-describe("Cell", () => {
-    generateTest(tests);
 });

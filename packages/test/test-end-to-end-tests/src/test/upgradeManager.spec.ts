@@ -1,27 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import {
-    ICodeLoader,
-    IContainer,
-} from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    createAndAttachContainer,
-    createDocumentId,
-    LocalCodeLoader,
-    OpProcessingController,
-} from "@fluidframework/test-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { TestContainerRuntimeFactory, ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IProvideFluidCodeDetailsComparer } from "@fluidframework/core-interfaces";
 
 class TestDataObject extends DataObject {
     public static readonly type = "@fluid-example/test-dataObject";
@@ -38,42 +29,26 @@ class TestDataObject extends DataObject {
     public get _root() { return this.root; }
 }
 
-describe("UpgradeManager (hot-swap)", () => {
-    const codeDetails: IFluidCodeDetails = {
-        package: "localLoaderTestPackage",
-        config: {},
-    };
-    let driver: ITestDriver;
-    let opProcessingController: OpProcessingController;
+const runtimeFactory: IProvideRuntimeFactory & IProvideFluidCodeDetailsComparer = {
+    IRuntimeFactory: new TestContainerRuntimeFactory(TestDataObject.type,TestDataObject.getFactory()),
+    IFluidCodeDetailsComparer: {
+        get IFluidCodeDetailsComparer() {return this;},
+        satisfies: async ()=> true,
+        compare: async ()=>undefined,
+    },
+};
 
-    async function createContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
-            codeLoader,
-            options: { hotSwapContext: true },
-        });
+describeNoCompat("UpgradeManager", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
 
-        return createAndAttachContainer(
-            codeDetails, loader, driver.createCreateNewRequest(documentId));
-    }
+    const createContainer = async (): Promise<IContainer> =>
+        provider.createContainer(runtimeFactory);
 
-    async function loadContainer(documentId: string, factory: IFluidDataStoreFactory): Promise<IContainer> {
-        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const loader = new Loader({
-            urlResolver: driver.createUrlResolver(),
-            documentServiceFactory: driver.createDocumentServiceFactory(),
-            codeLoader,
-            options: { hotSwapContext: true },
-        });
-
-        return loader.resolve({ url: await driver.createContainerUrl(documentId) });
-    }
+    const loadContainer = async (): Promise<IContainer> =>
+        provider.loadContainer(runtimeFactory);
 
     beforeEach(async () => {
-        driver = getFluidTestDriver() as unknown as ITestDriver;
-        opProcessingController = new OpProcessingController();
+        provider = getTestObjectProvider();
     });
 
     it("prevents multiple approved proposals", async () => {
@@ -82,22 +57,19 @@ describe("UpgradeManager (hot-swap)", () => {
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
         const containers: IContainer[] = [];
-        const documentId = createDocumentId();
 
         // Create the first Container.
-        const container1 = await createContainer(documentId, TestDataObject.getFactory());
+        const container1 = await createContainer();
         containers.push(container1);
 
         // Load rest of the Containers.
         const restOfContainersP =
-            Array(clients - 1).fill(undefined).map(async () => loadContainer(documentId, TestDataObject.getFactory()));
+            Array(clients - 1).fill(undefined).map(async () => loadContainer());
         const restOfContainers = await Promise.all(restOfContainersP);
         containers.push(...restOfContainers);
 
         const dataObjects = await Promise.all(containers.map(
             async (container) => requestFluidObject<TestDataObject>(container, "default")));
-
-        opProcessingController.addDeltaManagers(...containers.map((c) => c.deltaManager));
 
         dataObjects.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -114,12 +86,12 @@ describe("UpgradeManager (hot-swap)", () => {
         dataObjects.map((dataObject) => {
             dataObject._root.set("tempKey", "tempValue");
         });
-        while (containers.filter((c)=>!c.deltaManager.active).length !== 0) {
-            await opProcessingController.process();
+        while (containers.filter((c) => !c.deltaManager.active).length !== 0) {
+            await provider.ensureSynchronized();
         }
 
         // upgrade all containers at once
-        const resultsP = upgradeManagers.map(async (u) => u.upgrade(codeDetails, true));
+        const resultsP = upgradeManagers.map(async (u) => u.upgrade(provider.defaultCodeDetails, true));
 
         await Promise.all(succeededP);
 
@@ -133,12 +105,9 @@ describe("UpgradeManager (hot-swap)", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const documentId = createDocumentId();
-
-        const container = await createContainer(documentId, TestDataObject.getFactory());
+        const container = await createContainer();
         const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-        opProcessingController.addDeltaManagers(container.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -150,23 +119,21 @@ describe("UpgradeManager (hot-swap)", () => {
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        upgradeManager.upgrade(codeDetails);
-        await opProcessingController.process();
+        upgradeManager.upgrade(provider.defaultCodeDetails);
+        await provider.ensureSynchronized();
         await upgradeP;
     });
 
     it("2 clients low priority is delayed", async () => {
-        const documentId = createDocumentId();
-
         // Create the first Container.
-        const container1 = await createContainer(documentId, TestDataObject.getFactory());
+        const container1 = await createContainer();
 
         // Load the second Container.
-        const container2 = await loadContainer(documentId, TestDataObject.getFactory()) as Container;
+        const container2 = await loadContainer() as Container;
 
         const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
@@ -181,17 +148,16 @@ describe("UpgradeManager (hot-swap)", () => {
         });
 
         const dataObject = await requestFluidObject<TestDataObject>(container1, "default");
-        opProcessingController.addDeltaManagers(container1.deltaManager);
 
         // Set a key in the root map of the first container's dataObject. The Container is created in "read" mode so the
         // first op it sends will get nack'd and it reconnects.
         // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
         dataObject._root.set("tempKey", "tempValue");
         while (!container1.deltaManager.active || !container2.deltaManager.active) {
-            await opProcessingController.process();
+            await provider.ensureSynchronized();
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        upgradeManager.upgrade(codeDetails);
+        upgradeManager.upgrade(provider.defaultCodeDetails);
 
         // disconnect one client, which should initiate upgrade
         assert(container2.clientId);

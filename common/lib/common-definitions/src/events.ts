@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -71,153 +71,12 @@ export type TransformedEvent<TThis, E, A extends any[]> =
 
 // This type is a conditional type for transforming all the overloads provides in TEvent.
 // Due to limitations of the typescript typing system, we need to handle each number of overload individually.
-// It currently supports up to 20 event overloads which is more than we use anywhere,
-// but could be easily extended to support more, by adding more layers.
+// It currently supports the max of 15 event overloads which is more than we use anywhere.
+// At more than 15 overloads we start to hit TS2589. If we need to move beyond 15 we should evaluate
+// using a mapped type pattern like {"event":(listenerArgs)=>void}
 //
 export type IEventTransformer<TThis, TEvent extends IEvent> =
     TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: infer E4, listener: (...args: infer A4) => void),
-        (event: infer E5, listener: (...args: infer A5) => void),
-        (event: infer E6, listener: (...args: infer A6) => void),
-        (event: infer E7, listener: (...args: infer A7) => void),
-        (event: infer E8, listener: (...args: infer A8) => void),
-        (event: infer E9, listener: (...args: infer A9) => void),
-        (event: infer E10, listener: (...args: infer A10) => void),
-        (event: infer E11, listener: (...args: infer A11) => void),
-        (event: infer E12, listener: (...args: infer A12) => void),
-        (event: infer E13, listener: (...args: infer A13) => void),
-        (event: infer E14, listener: (...args: infer A14) => void),
-        (event: infer E15, listener: (...args: infer A15) => void),
-        (event: infer E16, listener: (...args: infer A16) => void),
-        (event: infer E17, listener: (...args: infer A17) => void),
-        (event: infer E18, listener: (...args: infer A18) => void),
-        (event: infer E19, listener: (...args: infer A19) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
-    TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
-    TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> &
-    TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> &
-    TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> &
-    TransformedEvent<TThis, E15, A15> & TransformedEvent<TThis, E16, A16> & TransformedEvent<TThis, E17, A17> &
-    TransformedEvent<TThis, E18, A18> & TransformedEvent<TThis, E19, A19>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: infer E4, listener: (...args: infer A4) => void),
-        (event: infer E5, listener: (...args: infer A5) => void),
-        (event: infer E6, listener: (...args: infer A6) => void),
-        (event: infer E7, listener: (...args: infer A7) => void),
-        (event: infer E8, listener: (...args: infer A8) => void),
-        (event: infer E9, listener: (...args: infer A9) => void),
-        (event: infer E10, listener: (...args: infer A10) => void),
-        (event: infer E11, listener: (...args: infer A11) => void),
-        (event: infer E12, listener: (...args: infer A12) => void),
-        (event: infer E13, listener: (...args: infer A13) => void),
-        (event: infer E14, listener: (...args: infer A14) => void),
-        (event: infer E15, listener: (...args: infer A15) => void),
-        (event: infer E16, listener: (...args: infer A16) => void),
-        (event: infer E17, listener: (...args: infer A17) => void),
-        (event: infer E18, listener: (...args: infer A18) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
-    TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
-    TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> &
-    TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> &
-    TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> &
-    TransformedEvent<TThis, E15, A15> & TransformedEvent<TThis, E16, A16> & TransformedEvent<TThis, E17, A17> &
-    TransformedEvent<TThis, E18, A18>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: infer E4, listener: (...args: infer A4) => void),
-        (event: infer E5, listener: (...args: infer A5) => void),
-        (event: infer E6, listener: (...args: infer A6) => void),
-        (event: infer E7, listener: (...args: infer A7) => void),
-        (event: infer E8, listener: (...args: infer A8) => void),
-        (event: infer E9, listener: (...args: infer A9) => void),
-        (event: infer E10, listener: (...args: infer A10) => void),
-        (event: infer E11, listener: (...args: infer A11) => void),
-        (event: infer E12, listener: (...args: infer A12) => void),
-        (event: infer E13, listener: (...args: infer A13) => void),
-        (event: infer E14, listener: (...args: infer A14) => void),
-        (event: infer E15, listener: (...args: infer A15) => void),
-        (event: infer E16, listener: (...args: infer A16) => void),
-        (event: infer E17, listener: (...args: infer A17) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
-    TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
-    TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> &
-    TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> &
-    TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> &
-    TransformedEvent<TThis, E15, A15> & TransformedEvent<TThis, E16, A16> & TransformedEvent<TThis, E17, A17>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: infer E4, listener: (...args: infer A4) => void),
-        (event: infer E5, listener: (...args: infer A5) => void),
-        (event: infer E6, listener: (...args: infer A6) => void),
-        (event: infer E7, listener: (...args: infer A7) => void),
-        (event: infer E8, listener: (...args: infer A8) => void),
-        (event: infer E9, listener: (...args: infer A9) => void),
-        (event: infer E10, listener: (...args: infer A10) => void),
-        (event: infer E11, listener: (...args: infer A11) => void),
-        (event: infer E12, listener: (...args: infer A12) => void),
-        (event: infer E13, listener: (...args: infer A13) => void),
-        (event: infer E14, listener: (...args: infer A14) => void),
-        (event: infer E15, listener: (...args: infer A15) => void),
-        (event: infer E16, listener: (...args: infer A16) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
-    TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
-    TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> &
-    TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> &
-    TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> &
-    TransformedEvent<TThis, E15, A15> & TransformedEvent<TThis, E16, A16>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: infer E4, listener: (...args: infer A4) => void),
-        (event: infer E5, listener: (...args: infer A5) => void),
-        (event: infer E6, listener: (...args: infer A6) => void),
-        (event: infer E7, listener: (...args: infer A7) => void),
-        (event: infer E8, listener: (...args: infer A8) => void),
-        (event: infer E9, listener: (...args: infer A9) => void),
-        (event: infer E10, listener: (...args: infer A10) => void),
-        (event: infer E11, listener: (...args: infer A11) => void),
-        (event: infer E12, listener: (...args: infer A12) => void),
-        (event: infer E13, listener: (...args: infer A13) => void),
-        (event: infer E14, listener: (...args: infer A14) => void),
-        (event: infer E15, listener: (...args: infer A15) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
-    TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
-    TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> &
-    TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> &
-    TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> &
-    TransformedEvent<TThis, E15, A15>
-    : TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
         (event: infer E1, listener: (...args: infer A1) => void),

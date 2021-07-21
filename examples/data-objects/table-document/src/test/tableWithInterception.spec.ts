@@ -1,29 +1,22 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
-describe("Table Document with Interception", () => {
+describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
     describe("Simple User Attribution", () => {
-        const documentId = "fluid-test://localhost/tableWithInterceptionTest";
-        const codeDetails = {
-            package: "tableWithInterceptionTestPkg",
-            config: {},
-        };
-
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;
         let componentContext: IFluidDataStoreContext;
@@ -65,7 +58,9 @@ describe("Table Document with Interception", () => {
             }
         }
 
+        let provider: ITestObjectProvider;
         beforeEach(async () => {
+            provider = getTestObjectProvider();
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
                 TableDocument.getFactory(),
                 new Map([
@@ -73,11 +68,7 @@ describe("Table Document with Interception", () => {
                 ]),
             );
 
-            const deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const urlResolver = new LocalResolver();
-            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-            const container = await createAndAttachContainer(
-                codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+            const container = await provider.createContainer(factory);
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,7 +21,7 @@ export class OdspUrlResolver implements IUrlResolver {
             if (!contents) {
                 return undefined;
             }
-            const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+            const urlToBeResolved = createOdspUrl({...contents, dataStorePath: "" });
             const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
             return odspDriverUrlResolver.resolve({ url: urlToBeResolved, headers: request.headers });
         }

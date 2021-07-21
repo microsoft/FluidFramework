@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -46,7 +46,7 @@ describe("sharedText", () => {
                     let text = "";
                     // all content is stored in spans, and presence is stored in divs
                     // we only want content here
-                    title.querySelectorAll("span").forEach((span)=>text+=span.innerText);
+                    title.querySelectorAll("span").forEach((span) => text += span.innerText);
                     return text;
                 }
 
@@ -54,14 +54,16 @@ describe("sharedText", () => {
             }, index);
         }
 
+
         const word: string = "sharedTextTest";
-        // Issue #5331:  See if typing a character at a time will help with stability
-        // await page.type('[class=flow-view]', word, { delay: 10 });
-        for (const c of word) {
-            // Type a word in one of the documents. There are two classes with name "flow-view",
-            // one for each user. This will pick the first class it finds and type in that.
-            await page.type('[class=flow-view]', c, { delay: 10 });
-        }
+        // Issue #5331:  Generate synthetic events on the client side to improve stability instead of using page.type
+        await page.evaluate((word: string) => {
+            for (const c of word) {
+                // Type a word in one of the documents. There are two classes with name "flow-view",
+                // one for each user. This will pick the first class it finds and type in that.
+                document.body.dispatchEvent(new KeyboardEvent("keypress", { charCode: c.charCodeAt(0) } as any));
+            }
+        }, word);
 
         // wait for all changes to propagate
         await page.waitFor(() => window["FluidLoader"].isSynchronized());

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,7 +22,7 @@ interface IApp { clients: IArrayish<IClient>; }
 export class Bubblebench extends DataObject implements IFluidHTMLView {
     public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }
     private maybeTree?: SharedTree = undefined;
-    private maybeClientManager?: AppState = undefined;
+    private maybeAppState?: AppState = undefined;
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
@@ -40,7 +40,7 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.maybeClientManager = new AppState(
+        this.maybeAppState = new AppState(
             this.tree,
             /* stageWidth: */ 640,
             /* stageHeight: */ 480,
@@ -52,8 +52,8 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
             // update the tree if it has.
             setInterval(() => {
                 const clientId = this.runtime.clientId;
-                if (clientId !== undefined && clientId !== this.clientManager.localClient.clientId) {
-                    this.clientManager.localClient.clientId = clientId;
+                if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
+                    this.appState.localClient.clientId = clientId;
                 }
             }, 1000);
         };
@@ -67,14 +67,14 @@ export class Bubblebench extends DataObject implements IFluidHTMLView {
     }
 
     public render(div: HTMLElement) {
-        ReactDOM.render(<AppView app={this.clientManager}></AppView>, div);
+        ReactDOM.render(<AppView app={this.appState}></AppView>, div);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     private get tree() { return this.maybeTree!; }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    private get clientManager() { return this.maybeClientManager!; }
+    private get appState() { return this.maybeAppState!; }
 }
 
 /**

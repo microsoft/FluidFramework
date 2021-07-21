@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -34,19 +34,38 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
         blobNodeCount: 0,
         handleNodeCount: 0,
         totalBlobSize: 0,
+        unreferencedBlobSize: 0,
     };
     for (const stat of stats) {
         results.treeNodeCount += stat.treeNodeCount;
         results.blobNodeCount += stat.blobNodeCount;
         results.handleNodeCount += stat.handleNodeCount;
         results.totalBlobSize += stat.totalBlobSize;
+        results.unreferencedBlobSize += stat.unreferencedBlobSize;
     }
     return results;
 }
 
+export function utf8ByteLength(str: string): number {
+  // returns the byte length of an utf8 string
+  let s = str.length;
+  for (let i = str.length - 1; i >= 0; i--) {
+    const code = str.charCodeAt(i);
+    if (code > 0x7f && code <= 0x7ff) {
+        s++;
+    } else if (code > 0x7ff && code <= 0xffff) {
+        s += 2;
+    }
+    if (code >= 0xDC00 && code <= 0xDFFF) {
+        i--; // trail surrogate
+    }
+  }
+  return s;
+}
+
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return IsoBuffer.from(content, "utf8").byteLength;
+        return utf8ByteLength(content);
     } else {
         return content.byteLength;
     }
@@ -203,7 +222,9 @@ export function convertToSummaryTreeWithStats(
         }
     }
 
-    return builder.getSummaryTree();
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
+    return summaryTree;
 }
 
 /**
@@ -240,7 +261,8 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0, "There should not be commit tree entries in snapshot");
+    assert(Object.keys(snapshot.commits).length === 0,
+        0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
     for (const [key, value] of Object.entries(snapshot.blobs)) {
@@ -256,32 +278,9 @@ export function convertSnapshotTreeToSummaryTree(
         const subtree = convertSnapshotTreeToSummaryTree(tree);
         builder.addWithStats(key, subtree);
     }
-    return builder.getSummaryTree();
-}
 
-/**
- * Utility to convert serialized snapshot taken in detached container to format where we can use it to
- * attach the container.
- * @param serializedSnapshotTree - serialized snapshot tree to be converted to summary tree for attach.
- */
-export function convertContainerToDriverSerializedFormat(
-    serializedSnapshotTree: string,
-): ISummaryTree {
-    const snapshotTree: ISnapshotTree = JSON.parse(serializedSnapshotTree);
-    const summaryTree = convertSnapshotTreeToSummaryTree(snapshotTree).summary;
-    const appSummaryTree: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {},
-    };
-    const entries = Object.entries(summaryTree.tree);
-    for (const [key, subTree] of entries) {
-        if (key !== ".protocol") {
-            appSummaryTree.tree[key] = subTree;
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete summaryTree.tree[key];
-        }
-    }
-    summaryTree.tree[".app"] = appSummaryTree;
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
     return summaryTree;
 }
 
@@ -326,5 +325,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
+        unreferenced: summaryTree.unreferenced,
     };
 }

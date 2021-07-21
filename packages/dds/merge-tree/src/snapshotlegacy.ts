@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
@@ -50,9 +51,9 @@ export class SnapshotLegacy {
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
-    // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
+    // As we produce json for the blob (and then send over the wire compressed), this number
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-    // For test with small number of chunks it would be closer to blob size (before base64 encoding),
+    // For test with small number of chunks it would be closer to blob size,
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
@@ -153,11 +154,11 @@ export class SnapshotLegacy {
 
         assert(
             length === this.header!.segmentsTotalLength,
-            "emit: mismatch in segmentsTotalLength");
+            0x05d /* "emit: mismatch in segmentsTotalLength" */);
 
         assert(
             segments === chunk1.totalSegmentCount,
-            "emit: mismatch in totalSegmentCount");
+            0x05e /* "emit: mismatch in totalSegmentCount" */);
 
         if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
             tree.entries.push({

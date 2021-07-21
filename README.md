@@ -1,7 +1,7 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
-applications.
+The Fluid Framework is a library for building distributed, real-time collaborative web
+applications using JavaScript or TypeScript.
 
 ## Getting started using the Fluid Framework
 
@@ -51,9 +51,8 @@ Dependencies between packages in various layers of the system are enforced via a
 [docs/PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
-
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and
-[Node.js](https://nodejs.org/).
+In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and the version of
+[Node.js](https://nodejs.org/) noted in the [.nvmrc file](https://raw.githubusercontent.com/microsoft/FluidFramework/main/.nvmrc).
 
 Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
 [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different

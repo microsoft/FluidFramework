@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -47,7 +47,7 @@ export class CellRange {
         private readonly resolve: (localRef: LocalReference) => { row: number; col: number },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
-        assert(!!interval);
+        assert(!!interval, "CellInterval created with bad interval!");
     }
 
     public getRange() {

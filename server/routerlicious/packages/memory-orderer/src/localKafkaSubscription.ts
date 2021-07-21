@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -34,7 +34,7 @@ export class LocalKafkaSubscription extends EventEmitter {
         this.removeAllListeners();
     }
 
-    public process() {
+    public async process() {
         if (this.queue.length <= this.queueOffset || this.processing || this.retryTimer !== undefined || this.closed) {
             return;
         }
@@ -44,7 +44,10 @@ export class LocalKafkaSubscription extends EventEmitter {
         try {
             this.processing = true;
 
-            this.subscriber.process(message);
+            const optionalPromise = this.subscriber.process(message);
+            if (optionalPromise !== undefined) {
+                await optionalPromise;
+            }
 
             this.queueOffset++;
 
@@ -55,7 +58,7 @@ export class LocalKafkaSubscription extends EventEmitter {
 
             this.retryTimer = setTimeout(() => {
                 this.retryTimer = undefined;
-                this.process();
+                void this.process();
             }, 500);
 
             return;
@@ -64,6 +67,6 @@ export class LocalKafkaSubscription extends EventEmitter {
         }
 
         // Process the next one
-        this.process();
+        void this.process();
     }
 }

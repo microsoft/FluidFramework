@@ -1,11 +1,11 @@
 {
   "name": "@fluid-example/multiview-constellation-view",
-  "version": "0.37.0",
+  "version": "0.44.0",
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
-  "author": "Microsoft",
+  "author": "Microsoft and contributors",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,19 +37,19 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.37.0",
-    "@fluid-example/multiview-slider-coordinate-view": "^0.37.0",
+    "@fluid-example/multiview-coordinate-interface": "^0.44.0",
+    "@fluid-example/multiview-slider-coordinate-view": "^0.44.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.20.0",
+    "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/webpack-fluid-loader": "^0.37.0",
+    "@fluidframework/webpack-fluid-loader": "^0.44.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
-    "@types/node": "^10.17.24",
+    "@types/node": "^12.19.0",
     "@types/puppeteer": "1.3.0",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

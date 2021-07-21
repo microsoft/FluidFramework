@@ -1,24 +1,29 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IContextErrorData, IPartitionLambda, IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
+import {
+    DefaultServiceConfiguration,
+    IContextErrorData,
+    IPartitionConfig,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+    LambdaCloseType,
+} from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import nconf from "nconf";
-import * as plugin from "../../document-router";
+import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
 describe("document-router", () => {
     describe("DocumentLambda", () => {
         let testModule: ITestLambdaModule;
-        let factory: IPartitionLambdaFactory;
-        let config: nconf.Provider;
+        let factory: IPartitionLambdaFactory<IPartitionConfig>;
         let lambda: IPartitionLambda;
         let context: TestContext;
         let defaultMessageFactory: MessageFactory;
@@ -26,16 +31,11 @@ describe("document-router", () => {
 
         beforeEach(async () => {
             testModule = createTestModule();
-            const defaultConfig = {
-                documentLambda: testModule,
-            };
-
             defaultMessageFactory = new MessageFactory("test", "test");
             kafkaMessageFactory = new KafkaMessageFactory();
-            config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
-            factory = await plugin.create(config);
+            factory = new DocumentLambdaFactory(testModule.create(), DefaultServiceConfiguration.documentLambda);
             context = new TestContext();
-            lambda = await factory.create(config, context);
+            lambda = await factory.create({ leaderEpoch: 0 }, context);
         });
 
         afterEach(async () => {

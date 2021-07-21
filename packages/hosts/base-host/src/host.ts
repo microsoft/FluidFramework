@@ -1,17 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IFluidObject, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
+import { Loader, Container, IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
-import { initializeContainerCode } from "./initializeContainerCode";
 
 /**
  * Create a loader and return it.
@@ -21,7 +19,9 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
+    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
+    detachedBlobStorage?: IDetachedBlobStorage,
+): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
 
@@ -34,6 +34,7 @@ async function createWebLoader(
     return new Loader({
         ...hostConfig,
         codeLoader,
+        detachedBlobStorage,
     });
 }
 
@@ -42,10 +43,12 @@ export class BaseHost {
     public constructor(
         hostConfig: IBaseHostConfig,
         seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
+        detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,
             seedPackages,
+            detachedBlobStorage,
         );
     }
 
@@ -53,23 +56,9 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails): Promise<Container> {
+    public async loadContainer(url: string): Promise<Container> {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
-
-        // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the container already has a code proposal
-        if (codeDetails) {
-            await initializeContainerCode(container, codeDetails)
-                .catch((error) => console.error("code proposal error", error));
-        }
-
-        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-        // for the contextChanged event to avoid returning before that reload completes.
-        if (container.hasNullRuntime()) {
-            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-        }
-
         return container;
     }
 
@@ -81,7 +70,6 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.createDetachedContainer(codeDetails);
 
-        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
         return container;
     }
 
@@ -93,18 +81,13 @@ export class BaseHost {
         const loader = await this.getLoader();
         const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 
-        assert(container.hasNullRuntime() === false, "Detached container should never have null runtime");
         return container;
     }
 
     public async requestFluidObjectFromContainer(container: Container, url: string) {
         const response = await container.request({ url });
 
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "fluid/object"
-            )) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return undefined;
         }
 
@@ -115,11 +98,7 @@ export class BaseHost {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "fluid/object"
-            )) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return undefined;
         }
 

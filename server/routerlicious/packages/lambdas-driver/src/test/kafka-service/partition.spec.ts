@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IContextErrorData, LambdaCloseType } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { Provider } from "nconf";
 import { Partition } from "../../kafka-service/partition";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
@@ -37,27 +36,25 @@ function verifyClose(
 describe("kafka-service", () => {
     describe("Partition", () => {
         let testConsumer: TestConsumer;
-        let testConfig: Provider;
         let kafkaMessageFactory: KafkaMessageFactory;
         let testFactory: TestPartitionLambdaFactory;
 
         beforeEach(() => {
             const testKafka = new TestKafka();
             testConsumer = testKafka.createConsumer();
-            testConfig = (new Provider({})).defaults({}).use("memory");
             testFactory = new TestPartitionLambdaFactory();
             kafkaMessageFactory = new KafkaMessageFactory();
         });
 
         describe(".stop", () => {
             it("Should stop message processing", async () => {
-                const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                const testPartition = new Partition(0, 0, testFactory, testConsumer);
                 await testPartition.drain();
                 testPartition.close(LambdaCloseType.Stop);
             });
 
             it("Should process all pending messages prior to stopping", async () => {
-                const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                const testPartition = new Partition(0, 0, testFactory, testConsumer);
                 const messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
                     testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));
@@ -71,7 +68,7 @@ describe("kafka-service", () => {
             it("Should emit an error event with restart true if cannot create lambda", async () => {
                 testFactory.setFailCreate(true);
                 return new Promise<void>((resolve, reject) => {
-                    const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                    const testPartition = new Partition(0, 0, testFactory, testConsumer);
                     testPartition.on("error", (error, errorData: IContextErrorData) => {
                         assert(error);
                         assert(errorData.restart);
@@ -82,7 +79,7 @@ describe("kafka-service", () => {
 
             it("Should emit the close event with restart true if handler throws", async () => {
                 testFactory.setThrowHandler(true);
-                const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                const testPartition = new Partition(0, 0, testFactory, testConsumer);
                 const verifyP = verifyClose(testPartition);
 
                 // Send a message to trigger the failure
@@ -95,7 +92,7 @@ describe("kafka-service", () => {
                 const closeError = "Test close";
                 const closeRestart = true;
 
-                const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                const testPartition = new Partition(0, 0, testFactory, testConsumer);
                 const verifyP = verifyClose(testPartition, closeError, closeRestart);
 
                 // Send off a sequence of messages
@@ -111,7 +108,7 @@ describe("kafka-service", () => {
 
             it("Should emit the close event after a checkpoint write failure", async () => {
                 testConsumer.setFailOnCommit(true);
-                const testPartition = new Partition(0, 0, testFactory, testConsumer, testConfig);
+                const testPartition = new Partition(0, 0, testFactory, testConsumer);
                 const verifyP = verifyClose(testPartition);
 
                 testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));

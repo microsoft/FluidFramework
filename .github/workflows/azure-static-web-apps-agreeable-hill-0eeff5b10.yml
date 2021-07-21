@@ -12,11 +12,15 @@ on:
     - "docs/next"
     paths:
     - "docs/**"
+    - ".github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml"
 
 jobs:
   build_and_deploy_job:
     name: Azure Static Web App
-    if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: |
+      ((github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed')) &&
+      github.repository == 'microsoft/FluidFramework'
     runs-on: ubuntu-latest
 
     steps:
@@ -99,9 +103,11 @@ jobs:
           # api_location: "api" # Api source code path - optional
           app_artifact_location: "public" # Built app content directory - optional
           routes_location: "/docs"
+          skip_deploy_on_missing_secrets: true
           ###### End of Repository/Build Configurations ######
         env: # Add environment variables here
           HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}
+          HUGO_VERSION: 0.76.5
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -114,3 +120,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
           action: "close"
+          skip_deploy_on_missing_secrets: true

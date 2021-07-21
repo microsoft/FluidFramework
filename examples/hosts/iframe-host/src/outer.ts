@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -33,6 +33,7 @@ export async function loadFrame(
     iframeDivId: string,
     dataStoreDivId: string,
     logDivId: string,
+    tinyliciousPort?: number,
 ) {
     const documentId = getDocumentId();
     const iframeDiv = document.getElementById(iframeDivId) as HTMLIFrameElement;
@@ -42,7 +43,7 @@ export async function loadFrame(
     iframe.sandbox.add("allow-scripts", "allow-forms", "allow-same-origin");
     iframeDiv.appendChild(iframe);
 
-    const urlResolver = new InsecureTinyliciousUrlResolver();
+    const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
 
     const tokenProvider = new InsecureTokenProvider("12345", { id: "userid0" });
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
@@ -83,11 +84,7 @@ export async function loadFrame(
 
 async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "fluid/object"
-        )) {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
     const fluidObject = response.value as IFluidObject;

@@ -1,18 +1,15 @@
-/* eslint-disable import/no-internal-modules */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import {
-    KeyValueDataObject,
-    KeyValueInstantiationFactory
-} from "@fluid-experimental/data-objects";
+/* eslint-disable import/no-internal-modules */
+
+import { SharedMap } from "@fluid-experimental/fluid-framework";
+import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getObjectWithIdFromContainer } from "@fluidframework/aqueduct";
 
 import { DiceRollerController } from "../src/controller";
-import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { renderDiceRoller } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -24,6 +21,15 @@ if (window.location.hash.length === 0) {
 }
 const documentId = window.location.hash.substring(1);
 
+export const containerConfig = {
+    name: "dice-roller-container",
+    initialObjects: {
+        /* [id]: DataObject */
+        map1: SharedMap,
+        map2: SharedMap,
+    },
+};
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
@@ -33,21 +39,35 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     // to store ops.
     const container = await getSessionStorageContainer(
         documentId,
-        new DOProviderContainerRuntimeFactory([KeyValueInstantiationFactory.registryEntry]),
+        new DOProviderContainerRuntimeFactory(containerConfig),
         createNewFlag,
     );
 
     // Get the Default Object from the Container
-    const dataObjectId = "dice";
-    if (createNewFlag) {
-        await container.request({ url: `/create/${KeyValueInstantiationFactory.type}/${dataObjectId}` });
-    }
-    const kvPairDataObject = await getObjectWithIdFromContainer<KeyValueDataObject>(dataObjectId, container);
-    const diceRollerController = new DiceRollerController(kvPairDataObject);
-    await diceRollerController.initialize(createNewFlag);
+    const fluidContainer = (await container.request({ url: "/" })).value;
+    // We now get the DataObject from the container
+    const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
 
-    // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(diceRollerController, element);
+    // Our controller manipulates the data object (model).
+    const diceRollerController = new DiceRollerController(sharedMap1);
+    await diceRollerController.initialize(createNew);
+
+    // We render a view which uses the controller.
+    const div1 = document.createElement("div");
+    element.appendChild(div1);
+    renderDiceRoller(diceRollerController, div1);
+
+    // We now get the DataObject from the container
+    const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+
+    // Our controller manipulates the data object (model).
+    const diceRollerController2 = new DiceRollerController(sharedMap2);
+    await diceRollerController2.initialize(createNew);
+
+    const div2 = document.createElement("div");
+    element.appendChild(div2);
+    // We render a view which uses the controller.
+    renderDiceRoller(diceRollerController2, div2);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

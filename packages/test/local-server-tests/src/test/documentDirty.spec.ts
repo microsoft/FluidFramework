@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -19,8 +19,8 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import {
     createAndAttachContainer,
     ITestFluidObject,
+    LoaderContainerTracker,
     LocalCodeLoader,
-    OpProcessingController,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
@@ -34,7 +34,7 @@ describe("Document Dirty", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
-    let opProcessingController: OpProcessingController;
+    let loaderContainerTracker: LoaderContainerTracker;
     let container: Container;
     let dataObject: ITestFluidObject;
     let containerRuntime: IContainerRuntime;
@@ -119,6 +119,7 @@ describe("Document Dirty", () => {
             documentServiceFactory,
             codeLoader,
         });
+        loaderContainerTracker.add(loader);
 
         return createAndAttachContainer(
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
@@ -127,20 +128,19 @@ describe("Document Dirty", () => {
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        loaderContainerTracker = new LoaderContainerTracker();
 
         // Create the first container, component and DDSes.
         container = await createContainer() as Container;
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
-        opProcessingController = new OpProcessingController();
-        opProcessingController.addDeltaManagers(container.deltaManager);
 
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
         sharedMap.set("setup", "done");
 
-        await opProcessingController.process();
+        await loaderContainerTracker.ensureSynchronized();
 
         wasMarkedDirtyRuntimeCount = 0;
         wasMarkedCleanRuntimeCount = 0;
@@ -150,6 +150,10 @@ describe("Document Dirty", () => {
 
         registerSavedContainerHandler();
         registerDirtyContainerHandler();
+    });
+
+    afterEach(() => {
+        loaderContainerTracker.reset();
     });
 
     function checkDirtyState(
@@ -177,7 +181,7 @@ describe("Document Dirty", () => {
             checkDirtyState("after value set", true, 0);
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Document will have been marked clean on reconnection
 
@@ -193,7 +197,7 @@ describe("Document Dirty", () => {
             checkDirtyState("after batch value set", true, 0);
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             checkDirtyState("after processing batch value set", false, 1);
         });
@@ -231,7 +235,7 @@ describe("Document Dirty", () => {
             // Document should still be dirty right after reconnection
             checkDirtyState("after reconnect and replayed ops", true, 0);
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Document will have been marked clean after process
             checkDirtyState("after processing replayed ops", false, 1);
@@ -258,7 +262,7 @@ describe("Document Dirty", () => {
                 checkDirtyState("after reconnect and replayed ops", true, 0);
 
                 // Wait for the ops to get processed.
-                await opProcessingController.process();
+                await loaderContainerTracker.ensureSynchronized();
 
                 // Document will have been marked clean after process
                 checkDirtyState("after processing replayed ops", false, 1);
@@ -286,7 +290,7 @@ describe("Document Dirty", () => {
             checkDirtyState("after reconnect and replayed ops", true, 0);
 
             // Wait for the ops to get processed.
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Document will have been marked clean after process
             checkDirtyState("after processing replayed ops", false, 1);
@@ -317,7 +321,7 @@ describe("Document Dirty", () => {
                 checkDirtyState("after reconnect and replayed ops", true, 0);
 
                 // Wait for the ops to get processed.
-                await opProcessingController.process();
+                await loaderContainerTracker.ensureSynchronized();
 
                 // Document will have been marked clean after process
                 checkDirtyState("after processing replayed ops", false, 1);
@@ -332,7 +336,7 @@ describe("Document Dirty", () => {
             // Set values in DDSes in force read only state.
             sharedMap.set("key", "value");
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Document should have been marked dirty again due to pending DDS ops
             checkDirtyState("after value set while force readonly", true, 0);
@@ -343,7 +347,7 @@ describe("Document Dirty", () => {
             // Document should still be dirty right after turning off force readonly
             checkDirtyState("after clear readonly and replayed ops", true, 0);
 
-            await opProcessingController.process();
+            await loaderContainerTracker.ensureSynchronized();
 
             // Document will have been marked clean after process
             checkDirtyState("after processing replayed ops", false, 1);
@@ -360,7 +364,7 @@ describe("Document Dirty", () => {
                 container.forceReadonly(true);
                 await ensureContainerConnected(container);
 
-                await opProcessingController.process();
+                await loaderContainerTracker.ensureSynchronized();
 
                 // Document should have been marked dirty again due to pending DDS ops
                 checkDirtyState("after value set while force readonly", true, 0);
@@ -371,7 +375,7 @@ describe("Document Dirty", () => {
                 // Document should still be dirty right after turning off force readonly
                 checkDirtyState("after reconnect and replayed ops", true, 0);
 
-                await opProcessingController.process();
+                await loaderContainerTracker.ensureSynchronized();
 
                 // Document will have been marked clean after process
                 checkDirtyState("after processing replayed ops", false, 1);

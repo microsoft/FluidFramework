@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -168,16 +168,5 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 
 // Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
-    const map = Object.create(null);
-
-    // Using 'delete' on an object causes V8 to put the object in dictionary mode.
-    // This disables creation of hidden classes, which are expensive when an object is
-    // constantly changing shape.
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    map["__"] = undefined;
-    // eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-dynamic-delete
-    delete map["__"];
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return map;
+    return Object.create(null) as MapLike<T>;
 }

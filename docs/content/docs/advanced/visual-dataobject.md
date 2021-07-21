@@ -4,15 +4,6 @@ menuPosition: 3
 draft: true
 ---
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
-{{% callout warning "Draft!" %}}
-
-This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
-
-{{% /callout %}}
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 ## Introducing IFluidHtmlView
 
 All Fluid objects expose their capabilities using the `IFluidX` interface pattern. Please see [Feature detection
@@ -567,7 +558,7 @@ Now we are going to take the scaffolding that we set up earlier and add in our R
 update to our local React state update. If you read through Option A, you will see that the Fluid React libraries will
 now handle much of the event-listening logic that we wrote earlier.
 
-##### Final code
+#### Final React code
 
 ```typescript
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -576,7 +567,7 @@ import {
   IFluidState,
   IViewState,
   FluidToViewMap,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -133,7 +133,8 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opSendTimeForLatencyStatistics !== undefined);
+            assert(this.opSendTimeForLatencyStatistics !== undefined,
+                0x120 /* "Undefined latency statistics (op send time)" */);
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,6 +7,7 @@ import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 const fluidOfficeAndOneNoteServers = [
     "dev.fluidpreview.office.net",
@@ -18,20 +19,20 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
-        let contents: { drive: string; item: string; site: string } | undefined;
+        let contents: IOdspUrlParts | undefined;
         if (fluidOfficeAndOneNoteServers.includes(server)) {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             contents = await initializeFluidOfficeOrOneNote(reqUrl);
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(!!value, `Missing ${name} from office.com URL parameter`);
+                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
                 return value;
             };
             contents = {
-                drive: getRequiredParam("drive"),
-                item: getRequiredParam("item"),
-                site: getRequiredParam("siteUrl"),
+                driveId: getRequiredParam("drive"),
+                itemId: getRequiredParam("item"),
+                siteUrl: getRequiredParam("siteUrl"),
             };
         } else {
             return undefined;
@@ -39,7 +40,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         if (!contents) {
             return undefined;
         }
-        const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+        const urlToBeResolved = createOdspUrl({...contents, dataStorePath:""});
         const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
         return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
@@ -53,7 +54,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     }
 }
 
-async function initializeFluidOfficeOrOneNote(urlSource: URL) {
+async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
@@ -77,7 +78,7 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL) {
 
     // Since we have the drive and item, only take the host ignore the rest
     const siteUrl = decodedSite.substring(storageType.length + 1);
-    const drive = decodeURIComponent(siteDriveItemMatch[3]);
-    const item = decodeURIComponent(siteDriveItemMatch[4]);
-    return { site: siteUrl, drive, item };
+    const driveId = decodeURIComponent(siteDriveItemMatch[3]);
+    const itemId = decodeURIComponent(siteDriveItemMatch[4]);
+    return { siteUrl, driveId, itemId };
 }

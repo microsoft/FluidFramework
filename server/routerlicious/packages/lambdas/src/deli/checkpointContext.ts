@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,6 +10,7 @@ export class CheckpointContext {
     private pendingUpdateP: Promise<void> | undefined;
     private pendingCheckpoint: ICheckpointParams | undefined;
     private closed = false;
+    private lastKafkaCheckpointOffset: number | undefined;
 
     constructor(
         private readonly tenantId: string,
@@ -35,7 +36,17 @@ export class CheckpointContext {
         this.pendingUpdateP = this.checkpointCore(checkpoint);
         this.pendingUpdateP?.then(
             () => {
-                this.context.checkpoint(checkpoint.queuedMessage);
+                // kafka checkpoint
+                // depending on the sequence of events, it might try to checkpoint the same offset a second time
+                // detect and prevent that case here
+                const kafkaCheckpointMessage = checkpoint.kafkaCheckpointMessage;
+                if (kafkaCheckpointMessage &&
+                    (this.lastKafkaCheckpointOffset === undefined ||
+                        kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)) {
+                    this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
+                    this.context.checkpoint(kafkaCheckpointMessage);
+                }
+
                 this.pendingUpdateP = undefined;
 
                 // Trigger another round if there is a pending update
@@ -74,15 +85,8 @@ export class CheckpointContext {
         if (checkpoint.clear) {
             updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
         } else {
-            const deliCheckpoint: IDeliState = {
-                branchMap: checkpoint.branchMap,
-                clients: checkpoint.clients,
-                durableSequenceNumber: checkpoint.durableSequenceNumber,
-                logOffset: checkpoint.logOffset,
-                sequenceNumber: checkpoint.sequenceNumber,
-                epoch: checkpoint.epoch,
-                term: checkpoint.term,
-            };
+            // clone the checkpoint
+            const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
 
             updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
         }

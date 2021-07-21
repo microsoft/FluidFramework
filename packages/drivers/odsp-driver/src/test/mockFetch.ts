@@ -1,9 +1,10 @@
 /*!
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 /* eslint-disable @typescript-eslint/ban-types */
+import assert from "assert";
 import sinon from "sinon";
 import * as fetchModule from "node-fetch";
 
@@ -21,26 +22,11 @@ export const okResponse = async (headers: { [key: string]: string }, response: a
     createResponse(headers, response, 200);
 export const notFound = async (headers: { [key: string]: string } = {}) => createResponse(headers, undefined, 404);
 
-export async function mockFetchMultiple<T>(
-    responses: object[],
-    callback: () => Promise<T>,
-): Promise<T> {
-    const fetchStub = sinon.stub(fetchModule, "default");
-    fetchStub.callsFake(async () => {
-        return responses.shift();
-    });
-    try {
-        return await callback();
-    } finally {
-        fetchStub.restore();
-    }
-}
-
 export type FetchCallType = "internal" | "external" | "single";
 
-export async function mockFetchCore<T>(
+export async function mockFetchMultiple<T>(
     callback: () => Promise<T>,
-    responseType: () => Promise<object>,
+    responses: (() => Promise<object>)[],
     type: FetchCallType = "single",
 ): Promise<T> {
     const fetchStub = sinon.stub(fetchModule, "default");
@@ -48,7 +34,9 @@ export async function mockFetchCore<T>(
         if (type === "external") {
             fetchStub.restore();
         }
-        return responseType();
+        const cb = responses.shift();
+        assert(cb !== undefined, "the end");
+        return cb() as Promise<fetchModule.Response>;
     });
     try {
         return await callback();
@@ -56,15 +44,24 @@ export async function mockFetchCore<T>(
         if (type !== "internal") {
             fetchStub.restore();
         }
+        assert(responses.length === 0, "all responses used");
     }
 }
 
-export async function mockFetch<T>(
-    response: object,
+export async function mockFetchSingle<T>(
     callback: () => Promise<T>,
+    responseType: () => Promise<object>,
+    type: FetchCallType = "single",
+): Promise<T> {
+    return mockFetchMultiple(callback, [responseType], type);
+}
+
+export async function mockFetchOk<T>(
+    callback: () => Promise<T>,
+    response: object = {},
     headers: { [key: string]: string} = {},
 ): Promise<T> {
-    return mockFetchCore(
+    return mockFetchSingle(
         callback,
         async () => okResponse(headers, response));
 }

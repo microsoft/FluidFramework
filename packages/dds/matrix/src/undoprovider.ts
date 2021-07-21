@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Serializable } from "@fluidframework/datastore-definitions";
 import { TrackingGroup, MergeTreeDeltaOperationType, MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { SharedMatrix } from "./matrix";
+import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
 import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
@@ -46,7 +45,8 @@ export class VectorUndoProvider {
 
             // For SharedMatrix, each IRevertibles always holds a single row/col operation.
             // Therefore, 'currentOp' must either be undefined or equal to the current op.
-            assert(this.currentOp === undefined || this.currentOp === operation);
+            assert(this.currentOp === undefined || this.currentOp === operation,
+                0x02a /* "On vector undo, unexpected 'currentOp' type/state!" */);
 
             switch (operation) {
                 case MergeTreeDeltaType.INSERT:
@@ -79,15 +79,20 @@ export class VectorUndoProvider {
         const revertible = {
             revert: () => {
                 assert(this.currentGroup === undefined && this.currentOp === undefined,
-                    "Must not nest calls to IRevertible.revert()");
+                    0x02b /* "Must not nest calls to IRevertible.revert()" */);
 
                 this.currentGroup = new TrackingGroup();
 
                 try {
                     while (trackingGroup.size > 0) {
-                        const sg = trackingGroup.segments[0] as PermutationSegment;
-                        callback(sg);
-                        sg.trackingCollection.unlink(trackingGroup);
+                        const segment = trackingGroup.segments[0] as PermutationSegment;
+
+                        // Unlink 'segment' from the current tracking group before invoking the callback
+                        // to exclude the current undo/redo segment from those copied to the replacement
+                        // segment (if any). (See 'PermutationSegment.transferToReplacement()')
+                        segment.trackingCollection.unlink(trackingGroup);
+
+                        callback(segment);
                     }
                 } finally {
                     this.currentOp = undefined;
@@ -107,7 +112,7 @@ export class VectorUndoProvider {
     }
 }
 
-export class MatrixUndoProvider<T extends Serializable = Serializable> {
+export class MatrixUndoProvider<T> {
     constructor(
         private readonly consumer: IUndoConsumer,
         private readonly matrix: SharedMatrix<T>,
@@ -136,8 +141,9 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
         );
     }
 
-    cellSet(rowHandle: Handle, colHandle: Handle, oldValue: T) {
-        assert(isHandleValid(rowHandle) && isHandleValid(colHandle));
+    cellSet(rowHandle: Handle, colHandle: Handle, oldValue: MatrixItem<T>) {
+        assert(isHandleValid(rowHandle) && isHandleValid(colHandle),
+            0x02c /* "On cellSet(), invalid row and/or column handles!" */);
 
         if (this.consumer !== undefined) {
             this.consumer.pushToCurrentOperation({

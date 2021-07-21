@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import * as React from "react";
@@ -22,7 +22,7 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
             model.historySequence.insert(len, [
                 {
                     value: newItem,
-                    timestamp: new Date(),
+                    timestamp: new Date().toJSON(),
                 },
             ]);
             model.currentCell.set(newItem);

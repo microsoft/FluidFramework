@@ -123,3 +123,7 @@ Currently, this task recognize whether it is the default tsc build to commonjs m
 #### Tslint/Eslint Task
 
 Tslint task only wait for the type definition from it's package dependencies.
+
+## Note about `fluid-bump-version`
+
+This tool assumes that you have a set a remote git ref to `microsoft/FluidFramework`. Note that this ref must be an HTTPS URL - if you are using an SSH ref and get an error saying that a remote cannot be found for the repo, then make sure you add another ref specifically for the HTTPS URL (even if you do not use it otherwise).

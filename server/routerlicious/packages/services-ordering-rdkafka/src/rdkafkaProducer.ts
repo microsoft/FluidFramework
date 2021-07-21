@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,9 +14,6 @@ import {
 } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImportNodeRdkafka } from "./tryImport";
-
-const kafka = tryImportNodeRdkafka();
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
@@ -52,6 +49,13 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	}
 
 	/**
+	 * Returns true if the producer is connected
+	 */
+	public isConnected() {
+		return this.connected;
+	}
+
+	/**
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
 	protected connect() {
@@ -75,7 +79,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		};
 
 		const producer: kafkaTypes.Producer = this.producer =
-			new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
+			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		producer.on("ready", () => {
 			this.connected = true;
@@ -219,18 +223,17 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Sends all pending messages
 	 */
 	private sendPendingMessages() {
-		for (const [, value] of this.messages) {
-			this.sendBoxcars(value);
-		}
+		const messages = Array.from(this.messages.values());
 
+		// clear messages now because sendBoxcars may insert some
 		this.messages.clear();
+
+		for (const message of messages) {
+			this.sendBoxcars(message);
+		}
 	}
 
 	private sendBoxcars(boxcars: IPendingBoxcar[]) {
-		if (!this.producer) {
-			throw new Error("Invalid producer");
-		}
-
 		for (const boxcar of boxcars) {
 			const boxcarMessage: IBoxcarMessage = {
 				contents: boxcar.messages,
@@ -242,24 +245,32 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			const message = Buffer.from(JSON.stringify(boxcarMessage));
 
 			try {
-				this.producer.produce(
-					this.topic, // topic
-					boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
-					message, // message
-					boxcar.documentId, // key
-					undefined, // timestamp
-					(err: any, offset?: number) => {
-						if (err) {
-							boxcar.deferred.reject(err);
+				if (this.producer && this.connected) {
+					this.producer.produce(
+						this.topic, // topic
+						boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
+						message, // message
+						boxcar.documentId, // key
+						undefined, // timestamp
+						(err: any, offset?: number) => {
+							if (err) {
+								boxcar.deferred.reject(err);
 
-							// eslint-disable-next-line @typescript-eslint/no-floating-promises
-							this.handleError(err);
-						} else {
-							boxcar.deferred.resolve();
-							this.emit("produced", boxcarMessage, offset);
-						}
-					},
-				);
+								// eslint-disable-next-line @typescript-eslint/no-floating-promises
+								this.handleError(err);
+							} else {
+								boxcar.deferred.resolve();
+								this.emit("produced", boxcarMessage, offset, message.length);
+							}
+						},
+					);
+				} else {
+					// we don't have a producer or we are not connected
+					// normally sendBoxcars would not be called in this scenario, but it could happen if
+					// the above this.producer.produce call errors out and calls this.handleError within this for loop
+					// when this happens, let's requeue the messages for later
+					void this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId);
+				}
 			} catch (ex) {
 				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
@@ -276,7 +287,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private async handleError(error: any) {
 		await this.close(true);
 
-		this.emit("error", error);
+		this.error(error);
 
 		this.connect();
 	}

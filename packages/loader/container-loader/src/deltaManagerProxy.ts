@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -65,6 +65,10 @@ export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> imp
     public async resume(): Promise<void> {
         this.queue.resume();
     }
+
+    public async waitTillProcessingDone() {
+        return this.queue.waitTillProcessingDone();
+    }
 }
 
 /**
@@ -87,6 +91,10 @@ export class DeltaManagerProxy
 
     public get lastSequenceNumber(): number {
         return this.deltaManager.lastSequenceNumber;
+    }
+
+    public get lastMessage() {
+        return this.deltaManager.lastMessage;
     }
 
     public get lastKnownSeqNumber() {

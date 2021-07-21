@@ -1,16 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "../contracts";
+import {
+    IOdspResolvedUrl,
+    IEntry,
+    snapshotKey,
+} from "@fluidframework/odsp-driver-definitions";
 import { EpochTrackerWithRedemption } from "../epochTracker";
-import { ICacheEntry, LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetchCore, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
+import { LocalPersistentCache } from "../odspCache";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {
     private epochCallback: () => Promise<any> = async () => {};
@@ -32,47 +37,64 @@ class DeferralWithCallback extends Deferred<void> {
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
-    const itemId = "fileId";
+    const itemId = "itemId";
     let epochTracker: EpochTrackerWithRedemption;
-    let cache: LocalPersistentCacheAdapter;
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
     let epochCallback: DeferralWithCallback;
 
     beforeEach(() => {
-        cache = new LocalPersistentCacheAdapter(new LocalPersistentCache());
-        epochTracker = new EpochTrackerWithRedemption(cache, new TelemetryNullLogger());
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+        epochTracker = new EpochTrackerWithRedemption(
+            new LocalPersistentCache(2000),
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
+    });
 
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        epochTracker.fileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
+    it.skip("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {
+        epochTracker.setEpoch("epoch1", true, "test");
+        const cacheEntry1: IEntry = {
+            type: snapshotKey,
+            key:"key1",
         };
+        await epochTracker.put(cacheEntry1, "val1");
+
+        // We will trigger a successful call to return the value set in the cache after the failed joinSession call
+        epochCallback.setCallback(async () => epochTracker.get(cacheEntry1));
+
+        // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
+        await mockFetchMultiple(
+            async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+            [notFound, async () => okResponse({ "x-fluid-epoch": "epoch1" }, {})],
+        );
     });
 
     it("joinSession call should succeed on retrying after any network call to the file succeeds", async () => {
-        let success: boolean = true;
-        const resolvedUrl = ({ siteUrl, driveId, itemId } as any) as IOdspResolvedUrl;
-        const cacheEntry1: ICacheEntry = {
+        epochTracker.setEpoch("epoch1", true, "test");
+        const cacheEntry1: IEntry = {
+            type: snapshotKey,
             key:"key1",
-            type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        cache.put(cacheEntry1, { value: "val1", fluidEpoch: "epoch1", version: "0.1" }, 0);
+        };
+        await epochTracker.put(cacheEntry1, "val1");
 
-        try {
-            // We will trigger a successful call to return the value set in the cache after the failed joinSession call
-            epochCallback.setCallback(async () => epochTracker.fetchFromCache(cacheEntry1, undefined, "other"));
+        // We will trigger a successful call to return the value set in the cache after the failed joinSession call
+        epochCallback.setCallback(async () => {
+            return epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest");
+        });
 
-            // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
-            await mockFetchMultiple(
-                [notFound(), okResponse({ "x-fluid-epoch": "epoch1" }, {})],
-                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
-            );
-        } catch (error) {
-            success = false;
-        }
-        assert.strictEqual(success, true, "Join session should succeed after retrying");
+        // Initial joinSession call will return 404 but after the timeout, the call will be retried and succeed
+        await mockFetchMultiple(
+            async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
+            [
+                notFound, // joinSession
+                async () => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
+                async () => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
+            ],
+        );
     });
 
     it("Requests should fail if joinSession call fails and the getLatest call also fails", async () => {
@@ -81,7 +103,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         try {
             epochCallback.setCallback(async () => {
                 try {
-                    await mockFetchCore(
+                    await mockFetchSingle(
                         async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
                         notFound,
                         "internal");
@@ -90,7 +112,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                         "Error should be file not found or access denied error");
                 }
             });
-            await mockFetchCore(
+            await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
                 async () => notFound({ "x-fluid-epoch": "epoch1" }),
                 "external");

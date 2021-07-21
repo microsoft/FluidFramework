@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
@@ -25,8 +24,10 @@ import {
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
+    SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 import { debug } from "./debug";
 import {
@@ -34,6 +35,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
+import { IValueChanged } from "./mapKernelInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -445,13 +448,31 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     /**
+     * Returns the GC data for this SharedMatrix. All the IFluidHandle's represent routes to other objects.
+     */
+    protected getGCDataCore(): IGarbageCollectionData {
+        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
+        // serializes.
+        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
+
+        if (this.intervalMapKernel.size > 0) {
+            this.intervalMapKernel.serialize(serializer);
+        }
+
+        this.client.serializeGCData(this.handle, serializer);
+
+        return {
+            gcNodes:{
+                ["/"]: serializer.getSerializedRoutes(),
+            },
+        };
+    }
+
+    /**
      * Replace the range specified from start to end with the provided segment
      * This is done by inserting the segment at the end of the range, followed
      * by removing the contents of the range
-     * For a zero range (start == end), insert at end do not remove anything
-     * For a reverse range (start \> end), insert the segment at the greater of
-     * start/end and allow Client to attempt to remove the range
-     *
+     * For a zero or reverse range (start \>= end), insert at end do not remove anything
      * @param start - The start of the range to replace
      * @param end - The end of the range to replace
      * @param segment - The segment that will replace the range
@@ -463,7 +484,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // Insert first, so local references can slide to the inserted seg if any
         const insert = this.client.insertSegmentLocal(insertIndex, segment);
         if (insert) {
-            if (start !== end) {
+            if (start < end) {
                 const remove = this.client.removeRangeLocal(start, end);
                 this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
             } else {
@@ -553,12 +574,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // if loading isn't complete, we need to cache all
         // incoming ops to be applied after loading is complete
         if (this.deferIncomingOps) {
-            assert(!local, "Unexpected local op when loading not finished");
+            assert(!local, 0x072 /* "Unexpected local op when loading not finished" */);
             this.loadedDeferredIncomingOps.push(message);
         } else {
-            assert(message.type === MessageType.Operation, "Sequence message not operation");
+            assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
-            const handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
 
             if (!handled) {
                 this.processMergeTreeMsg(message);
@@ -591,7 +612,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(serializer: IFluidSerializer): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
+        assert(this.loadedDeferred.isCompleted, 0x074 /* "Snapshot called when not fully loaded" */);
         const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
         this.processMinSequenceNumberChanged(minSeq);
@@ -698,5 +719,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attachGraph(this.client, key);
         }
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

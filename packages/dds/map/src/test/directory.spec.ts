@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -373,7 +373,7 @@ describe("Directory", () => {
                 const header = summaryTree.tree.header as ISummaryBlob;
                 assert(header !== undefined, "header not present in summary");
                 assert.strictEqual(header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
-                assert(header.content.length <= 250, "header's length is incorrect");
+                assert(header.content.length <= 200, "header's length is incorrect");
 
                 const directory2 = new SharedDirectory("test", dataStoreRuntime, DirectoryFactory.Attributes);
                 const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
@@ -1171,6 +1171,16 @@ describe("Directory", () => {
                     expectedDirectories2.delete(subDirName);
                 }
                 assert.ok(expectedDirectories2.size === 0);
+            });
+
+            it("Only creates a subdirectory once", () => {
+                const fooDirectory = directory1.createSubDirectory("foo");
+                fooDirectory.set("testKey", "testValue");
+                const fooDirectory2 = directory1.createSubDirectory("foo");
+                fooDirectory2.set("testKey2", "testValue2");
+                assert.strictEqual(fooDirectory, fooDirectory2, "Created two separate subdirectories");
+                assert.strictEqual(fooDirectory.get("testKey2"), "testValue2", "Value 2 not present");
+                assert.strictEqual(fooDirectory2.get("testKey"), "testValue", "Value 1 not present");
             });
         });
     });

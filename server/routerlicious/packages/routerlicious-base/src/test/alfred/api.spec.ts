@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -190,7 +190,7 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId/:id-invalidToken", async () => {
                         await supertest.get(`/documents/${appTenant1.id}/${document1._id}`)
-                            .expect(401);
+                            .expect(403);
                     });
                     it("/:tenantId", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
@@ -198,31 +198,32 @@ describe("Routerlicious", () => {
                             .send({id: document1._id})
                             .expect((res) => {
                                 assert.notStrictEqual(res.status, 401);
+                                assert.notStrictEqual(res.status, 403);
                             });
                     });
                     it("/:tenantId-invalidtoken", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
                             .send({id: document1._id})
-                            .expect(401);
+                            .expect(403);
                     });
                 });
 
                 describe("/deltas-invalidToken", () => {
                     it("/raw/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/raw/${appTenant2.id}/${document1._id}`)
-                            .expect(401);
+                            .expect(403);
                     });
                     it("/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/${appTenant2.id}/${document1._id}`)
-                            .expect(401);
+                            .expect(403);
                     });
                     it("/v1/:tenantId/:id", async () => {
                         await supertest.get(`/deltas/v1/${appTenant2.id}/${document1._id}`)
-                            .expect(401);
+                            .expect(403);
                     });
                     it("/:tenantId/:id/v1", async () => {
                         await supertest.get(`/deltas/${appTenant2.id}/${document1._id}/v1`)
-                            .expect(401);
+                            .expect(403);
                     });
                 });
             });

@@ -1,0 +1,147 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-test-real-service
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Lite
+
+- name: testPackage
+  type: string
+  default: "@fluidframework/test-end-to-end-tests"
+
+- name: testSteps
+  type: stepList
+
+- name: testWorkspace
+  type: string
+
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
+jobs:
+  - job: run
+    displayName: Run Tests
+    pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+    variables:
+    # We use 'chalk' to colorize output, which auto-detects color support in the
+    # running terminal.  The log output shown in Azure DevOps job runs only has
+    # basic ANSI color support though, so force that in the pipeline
+    - name: FORCE_COLOR
+      value: 1
+    - name: testPackageDir
+      value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+    - name: testPackageFilePattern
+      value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+    - name: testPackagePathPattern
+      value: $(Pipeline.Workspace)/client/pack/${{ variables.testPackageFilePattern }}
+
+    steps:
+    # Setup
+    - checkout: none
+      clean: true
+
+    # Print parameters/Vars
+    - task: Bash@3
+      displayName: Print Parameters and Variables
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Parameters:
+            poolBuild=${{ parameters.poolBuild }}
+            testPackage=${{ parameters.testPackage }}
+
+          Pipeline Variables:
+            testWorkspace=${{ parameters.testWorkspace }}
+            testPackageFilePattern=${{ variables.testPackageFilePattern }}
+          "
+
+    # Install
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs:
+        version: 12.x
+
+    # Download artifact
+    - download: client
+      displayName: Download test package
+      artifact: pack
+      patterns: "**/${{ variables.testPackageFilePattern }}"
+
+    - task: Bash@3
+      displayName: Create test directory
+      inputs:
+        targetType: 'inline'
+        script: |
+          mkdir ${{ parameters.testWorkspace }}
+
+    - task: Bash@3
+      name: Initialize
+      displayName: Initialize
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.testWorkspace }}
+        script: |
+          echo Initialize package
+          npm init --yes
+
+          echo Generating .npmrc
+          echo "registry=https://registry.npmjs.org" >> ./.npmrc
+          echo "always-auth=false" >> ./.npmrc
+
+          echo "@fluidframework:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluid-experimental:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluid-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+          echo "always-auth=true" >> ./.npmrc
+          cat .npmrc
+
+          if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
+            echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+          else
+            ls -1 ${{ variables.testPackagePathPattern }}
+            echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+          fi
+
+    # Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: 'npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+
+    # Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: 'npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    # Install test and logger package
+    - task: Npm@1
+      displayName: 'npm install'
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.testWorkspace }}
+        customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+        customRegistry: 'useNpmrc'
+
+    # run the test
+    - ${{ parameters.testSteps }}
+
+    # Upload results
+    - task: PublishTestResults@2
+      displayName: Publish Test Results
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*junit-report.xml'
+        searchFolder: ${{ variables.testPackageDir }}/nyc
+        mergeTestResults: false
+      condition: succeededOrFailed()

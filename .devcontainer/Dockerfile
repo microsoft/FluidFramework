@@ -1,7 +1,8 @@
-#-------------------------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
-#-------------------------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Fluid Development Container based on "docker-from-docker" template:
+# https://github.com/microsoft/vscode-dev-containers/blob/master/containers/docker-from-docker/.devcontainer/Dockerfile
 
 ARG NODE_VERSION=12
 
@@ -11,41 +12,34 @@ ARG NODE_VERSION=12
 #
 # Debian base image includes the following:
 #
-#    curl, g++, git, make, procps, python, wget
+#    ca-certificates, curl, g++, git, gnupg, libxss1, make, procps, python, wget
 #
 # (See https://github.com/microsoft/vscode-dev-containers/tree/master/containers/javascript-node/.devcontainer)
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:${NODE_VERSION}
 
+# Install Chromium to get .so libraries required for Puppeteer tests.
+# (Note that Puppeteer bundles its own version of Chromium, we just need OS dependencies.)
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends chromium libxss1
+
 # Install Docker CLI / Docker-Compose and create '/usr/local/share/docker-init.sh' to proxy the
 # docker socket.  (We retrieve the script from the 'docker-from-docker' dev container template)
-RUN mkdir /tmp/library-scripts \
-    && curl -o /tmp/library-scripts/docker-debian.sh -sS https://raw.githubusercontent.com/microsoft/vscode-dev-containers/c3214ad7fcf5086e898e3941a36e0171959a48ca/containers/azure-ansible/.devcontainer/library-scripts/docker-debian.sh \
-    && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${SOURCE_SOCKET}" "${TARGET_SOCKET}" "node" \
-    && rm -rf /tmp/library-scripts/
 
-# Update package information before installing
-RUN apt-get update
+# [Option] Enable non-root Docker access in container
+ARG ENABLE_NONROOT_DOCKER="true"
+# [Option] Use the OSS Moby CLI instead of the licensed Docker CLI
+ARG USE_MOBY="true"
 
-# Install .so libraries required for Puppeteer tests
-RUN export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends \
-        libpangocairo-1.0-0 \
-        libxi6 \
-        libatk-bridge2.0-0 \
-        libgtk-3-0 \
-        libasound2 \
-        libatk1.0-0 \
-        libcups2 \
-        libnss3 \
-        libx11-6 \
-        libx11-xcb1 \
-        libxcomposite1 \
-        libxcursor1 \
-        libxdamage1 \
-        libxext6 \
-        libxrandr2 \
-        libxss1 \
-        libxtst6
+# A user of "automatic" attempts to reuse an user ID if one already exists.
+ARG USERNAME=automatic
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN mkdir /tmp/library-scripts
+RUN wget -O /tmp/library-scripts/docker-debian.sh https://raw.githubusercontent.com/microsoft/vscode-dev-containers/master/containers/docker-from-docker/.devcontainer/library-scripts/docker-debian.sh
+RUN /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "/var/run/docker-host.sock" "/var/run/docker.sock" "${USERNAME}" "${USE_MOBY}"
+RUN rm -rf /tmp/library-scripts/
 
 # Install additional desired packages here
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -65,3 +59,7 @@ RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:
 
 # Copy our custom .zshrc to user's home directory
 COPY .zshrc /home/node/.zshrc
+
+# Set '/usr/local/share/docker-init.sh' as entrypoint to proxy Docker socket on start.
+ENTRYPOINT ["/usr/local/share/docker-init.sh"]
+CMD ["sleep", "infinity"]

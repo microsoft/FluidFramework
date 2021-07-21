@@ -68,6 +68,7 @@ zookeeper:
 mongodb:
   url: mongodb_url
   expireAfterSeconds: -1
+  createCosmosDBIndexes: false
 
 rabbitmq:
   connectionString: ""
@@ -92,6 +93,7 @@ kafka:
     rawdeltas: rawdeltas
     deltas: deltas
   url: kafka_url:port
+  libname: rdkafka
 
 ingress:
   class: nginx-prod

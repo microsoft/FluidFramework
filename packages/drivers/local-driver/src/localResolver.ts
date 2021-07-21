@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -52,6 +52,7 @@ export class LocalResolver implements IUrlResolver {
                 ordererUrl: "http://localhost:3000",
                 storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
             },
+            id: documentId,
             tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
             url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
@@ -68,11 +69,12 @@ export class LocalResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        if (parsedUrl.pathname === undefined) {
+        // eslint-disable-next-line no-null/no-null
+        if (parsedUrl.pathname === null) {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(!!documentId, "The resolvedUrl must have a documentId");
+        assert(!!documentId, 0x09a /* "'documentId' must be a defined, non-zero length string." */);
 
         return `http://localhost:3000/${documentId}/${url}`;
     }

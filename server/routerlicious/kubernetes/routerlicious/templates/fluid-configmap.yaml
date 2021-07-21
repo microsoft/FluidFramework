@@ -22,6 +22,7 @@ data:
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
             "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
+            "createCosmosDBIndexes": "{{ .Values.mongodb.createCosmosDBIndexes }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -34,21 +35,19 @@ data:
         },
         "kafka": {
             "lib": {
-                "name": "kafka-node",
+                "name": "{{ .Values.kafka.libname }}",
                 "endpoint": "{{ .Values.kafka.url }}",
                 "producerPollIntervalMs": 10,
                 "numberOfPartitions": 32,
-                "replicationFactor": 3
+                "replicationFactor": 3,
+                "rdkafkaOptimizedRebalance": true,
+                "rdkafkaAutomaticConsume": true,
+                "rdkafkaConsumeTimeout": 5,
+                "rdkafkaMaxConsumerCommitRetries": 10
             }
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
-        },
-        {{- if .Values.eventHub }}
-        "eventHub": {
-            "endpoint": "{{ .Values.eventHub.endpoint }}",
-            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}",
-            "storageContainer": "{{ .Values.eventHub.storageContainer }}"
         },
         {{- end }}
         "alfred": {

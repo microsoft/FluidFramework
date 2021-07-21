@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -91,7 +91,7 @@ async function main() {
     await repo.checkPackages(options.fix);
     timer.time("Check scripts completed");
 
-
+    let failureSummary = "";
     if (options.clean || options.build !== false) {
         logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 
@@ -127,6 +127,7 @@ async function main() {
             } else {
                 logStatus(`Build ${buildStatus}`);
             }
+            failureSummary = buildGraph.taskFailureSummary;
         }
     }
 
@@ -136,6 +137,9 @@ async function main() {
 
     logStatus(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s`);
 
+    if (failureSummary !== "") {
+        logStatus(`\n${failureSummary}`);
+    }
 }
 
 function buildResultString(buildResult: BuildResult) {

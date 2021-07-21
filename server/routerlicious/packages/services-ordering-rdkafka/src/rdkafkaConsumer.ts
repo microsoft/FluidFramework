@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,9 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImportNodeRdkafka } from "./tryImport";
-
-const kafka = tryImportNodeRdkafka();
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
@@ -19,6 +16,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	optimizedRebalance: boolean;
 	commitRetryDelay: number;
 	automaticConsume: boolean;
+	maxConsumerCommitRetries: number;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
 }
 
@@ -51,7 +49,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			optimizedRebalance: options?.optimizedRebalance ?? false,
 			commitRetryDelay: options?.commitRetryDelay ?? 1000,
 			automaticConsume: options?.automaticConsume ?? true,
+			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
+	}
+
+	/**
+	 * Returns true if the consumer is connected
+	 */
+	public isConnected() {
+		return this.consumer?.isConnected() ? true : false;
 	}
 
 	protected connect() {
@@ -80,7 +86,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		};
 
 		const consumer: kafkaTypes.KafkaConsumer = this.consumer =
-			new kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
+			new this.kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
 
 		consumer.setDefaultConsumeTimeout(this.consumerOptions.consumeTimeout);
 		consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
@@ -103,7 +109,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
-			this.emit("error", error);
+			this.error(error);
 
 			this.connect();
 		});
@@ -118,11 +124,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
 					this.consumerOptions.optimizedRebalance &&
-					(err.code === kafka.CODES.ERRORS.ERR_REBALANCE_IN_PROGRESS ||
-						err.code === kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
+					(err.code === this.kafka.CODES.ERRORS.ERR_REBALANCE_IN_PROGRESS ||
+						err.code === this.kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.emit("error", err);
+					this.error(err);
 				}
 			}
 
@@ -149,14 +155,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						this.emit("checkpoint", offset.partition, offset.offset);
 					}
 				} else {
-					this.emit("error", new Error(`Unknown commit for partition ${offset.partition}`));
+					this.error(new Error(`Unknown commit for partition ${offset.partition}`));
 				}
 			}
 		});
 
 		consumer.on("rebalance", async (err, topicPartitions) => {
-			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
-				err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
+			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
+				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
 
 				if (newAssignedPartitions.size === this.assignedPartitions.size &&
@@ -210,21 +216,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				} catch (ex) {
 					this.isRebalancing = false;
-					this.emit("error", ex);
+					this.error(ex);
 				} finally {
 					this.pendingMessages.clear();
 				}
 			} else {
-				this.emit("error", err);
+				this.error(err);
 			}
 		});
 
 		consumer.on("rebalance.error", (error) => {
-			this.emit("error", error);
+			this.error(error);
 		});
 
 		consumer.on("event.error", (error) => {
-			this.emit("error", error);
+			this.error(error);
 		});
 
 		consumer.on("event.throttle", (event) => {
@@ -268,28 +274,51 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 	}
 
-	public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
-		if (!this.consumer) {
-			throw new Error("Invalid consumer");
+	public async commitCheckpoint(
+		partitionId: number,
+		queuedMessage: IQueuedMessage,
+		retries: number = 0): Promise<void> {
+		const startTime = Date.now();
+		try {
+			if (!this.consumer) {
+				throw new Error("Invalid consumer");
+			}
+
+			if (this.pendingCommits.has(partitionId)) {
+				throw new Error(`There is already a pending commit for partition ${partitionId}`);
+			}
+
+			// this will be resolved in the "offset.commit" event
+			const deferredCommit = new Deferred<void>();
+			this.pendingCommits.set(partitionId, deferredCommit);
+
+			// logs are replayed from the last checkpointed offset.
+			// to avoid reprocessing the last message twice, we checkpoint at offset + 1
+			this.consumer.commit({
+				topic: this.topic,
+				partition: partitionId,
+				offset: queuedMessage.offset + 1,
+			});
+
+			const result = await deferredCommit.promise;
+			const latency = Date.now() - startTime;
+			this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
+			return result;
+		} catch (ex) {
+			const hasPartition = this.assignedPartitions.has(partitionId);
+			const willRetry = this.consumer?.isConnected()
+				&& retries < this.consumerOptions.maxConsumerCommitRetries
+				&& hasPartition;
+
+			const latency = Date.now() - startTime;
+			this.emit("checkpoint_error", partitionId, queuedMessage, retries, latency, willRetry, ex);
+
+			if (willRetry) {
+				return this.commitCheckpoint(partitionId, queuedMessage, retries + 1);
+			}
+
+			throw ex;
 		}
-
-		if (this.pendingCommits.has(partitionId)) {
-			throw new Error(`There is already a pending commit for partition ${partitionId}`);
-		}
-
-		// this will be resolved in the "offset.commit" event
-		const deferredCommit = new Deferred<void>();
-		this.pendingCommits.set(partitionId, deferredCommit);
-
-		// logs are replayed from the last checkpointed offset.
-		// to avoid reprocessing the last message twice, we checkpoint at offset + 1
-		this.consumer.commit({
-			topic: this.topic,
-			partition: partitionId,
-			offset: queuedMessage.offset + 1,
-		});
-
-		return deferredCommit.promise;
 	}
 
 	public async pause() {
@@ -356,7 +385,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		try {
-			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
 				for (const assignment of assignments) {
 					const offset = this.latestOffsets.get(assignment.partition);
 					if (offset !== undefined) {
@@ -368,7 +397,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				}
 
 				this.consumer.assign(assignments);
-			} else if (err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
+			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				this.consumer.unassign();
 			}
 		} catch (ex) {

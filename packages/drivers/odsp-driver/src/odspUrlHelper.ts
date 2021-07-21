@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "./contracts";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 // Centralized store for all ODC/SPO logic
 
@@ -104,19 +104,19 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
             }
         }
 
-        const drive = joinSessionMatch[3] || joinSessionMatch[5];
-        const item = joinSessionMatch[4];
+        const driveId = joinSessionMatch[3] || joinSessionMatch[5];
+        const itemId = joinSessionMatch[4];
 
-        return { site: `${url.origin}${url.pathname}`, drive, item };
+        return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
     } else {
         joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
         if (joinSessionMatch === null) {
             return undefined;
         }
-        const drive = joinSessionMatch[2];
-        const item = joinSessionMatch[3];
+        const driveId = joinSessionMatch[2];
+        const itemId = joinSessionMatch[3];
 
-        return { site: `${url.origin}${url.pathname}`, drive, item };
+        return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
     }
 }

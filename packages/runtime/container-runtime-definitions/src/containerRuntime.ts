@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,7 +32,6 @@ import {
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
-import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,17 +44,13 @@ export interface IProvideContainerRuntime {
     IContainerRuntime: IContainerRuntime;
 }
 
-export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
+export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
         event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
-    (
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
-    );
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
@@ -66,16 +61,13 @@ export type IContainerRuntimeBaseWithCombinedEvents =
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
-    Partial<IProvideContainerRuntimeDirtyable>,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;

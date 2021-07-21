@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -108,6 +108,5 @@ const factory = new DataObjectFactory<TableView, undefined, undefined, IEvent>(
     [],
     {},
     [
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
     ]);

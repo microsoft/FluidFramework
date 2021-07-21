@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,7 +16,7 @@ export class InnerUrlResolver implements IUrlResolver {
         // is expected to exist when running any inner iframe code.
         const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy = combinedProxy[IUrlResolverProxyKey] as Comlink.Remote<IUrlResolverProxy>;
-        assert(outerProxy !== undefined, "OuterUrlResolverProxy unavailable");
+        assert(outerProxy !== undefined, 0x099 /* "OuterUrlResolverProxy unavailable" */);
         await outerProxy.connected();
         return new InnerUrlResolver(outerProxy);
     }

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
 # publish-npm-package template to publish NPM packages/projects
@@ -65,6 +65,7 @@ jobs:
                       echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
                   ${{ if eq(parameters.official, true) }}:
@@ -72,6 +73,7 @@ jobs:
                       echo Generating .npmrc for ${{ parameters.feedName }}
                       echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
 

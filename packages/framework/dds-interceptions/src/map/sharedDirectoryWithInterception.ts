@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -42,7 +42,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         let directory;
         // Set should not be called on the wrapped object from the interception callback as this will lead to
         // infinite recursion.
-        assert(executingCallback === false, "set called recursively from the interception callback");
+        assert(executingCallback === false, 0x0bf /* "set called recursively from the interception callback" */);
 
         context.containerRuntime.orderSequentially(() => {
             directory = subDirectory.set(key, value);

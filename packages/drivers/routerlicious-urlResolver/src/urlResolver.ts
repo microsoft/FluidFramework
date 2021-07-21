@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -120,6 +120,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 deltaStorageUrl,
                 ordererUrl,
             },
+            id: documentId,
             tokens: { jwt: token },
             type: "fluid",
             url: fluidUrl,
@@ -134,10 +135,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        assert(!!parsedUrl.pathname, "PathName should exist");
+        assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
-        assert(!!tenantId, "Tenant id should exist");
-        assert(!!documentId, "Document id should exist");
+        assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
+        assert(!!documentId, 0x0bb /* "Document id should exist" */);
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

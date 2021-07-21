@@ -1,31 +1,38 @@
+// Fluid Development Container based on "docker-from-docker" template:
+// https://github.com/microsoft/vscode-dev-containers/blob/master/containers/docker-from-docker/.devcontainer/devcontainer.json
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
-	"name": "Fluid",
-	"build": {
-		"dockerfile": "Dockerfile",
+    "name": "Fluid",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
+        "args": {
+            "NODE_VERSION": "12"
+        }
+    },
+    "runArgs": [ "--init" ],
+    "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+    "overrideCommand": false,
 
-		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
-		"args": { "NODE_VERSION": "12" }
-	},
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+        "terminal.integrated.shell.linux": "/usr/bin/zsh"
+    },
 
-    // Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
-    // at the root of the ${workspaceFolder}.
-    "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
-
-    // Expose 'docker.sock' to the dev container and proxy access for the 'node' user.
-	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
-	"postStartCommand": "/usr/local/share/docker-init.sh",
-
-	// Set *default* container specific settings.json values on container create.
-	"settings": { "terminal.integrated.shell.linux": "/usr/bin/zsh" },
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
         "dbaeumer.vscode-eslint",
         "ms-azuretools.vscode-docker",
         "editorconfig.editorconfig"
-	],
+    ],
 
     // Forward port for Tinylicious
-    "forwardPorts": [ 3000 ]
+    "forwardPorts": [ 7070 ],
+
+    // Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
+    // located at the root of the ${workspaceFolder}.
+    "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
+
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "node"
 }

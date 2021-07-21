@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,8 +11,17 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // General best practice is to explicitly log the fields you care about from objects
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
+/**
+ * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
+ * to mark pieces of information that should be organized or handled differently by loggers in various first or third
+ * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+ */
+export interface ITaggedTelemetryPropertyType {
+    value: TelemetryEventPropertyType,
+    tag: string,
+}
 export interface ITelemetryProperties {
-    [index: string]: TelemetryEventPropertyType;
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
 /**
@@ -47,12 +56,9 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Error telemetry event.
  * Maps to category = "error"
  */
-export type ITelemetryErrorEvent = Omit<ITelemetryGenericEvent, "category"> & {
-    /**
-     * @deprecated - category will always be error
-     */
-    category?: TelemetryEventCategory;
-};
+ export interface ITelemetryErrorEvent extends ITelemetryProperties {
+    eventName: string;
+}
 
 /**
  * Performance telemetry event.
@@ -60,6 +66,14 @@ export type ITelemetryErrorEvent = Omit<ITelemetryGenericEvent, "category"> & {
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number; // Duration of event (optional)
+}
+
+/**
+ * An error object that supports exporting its properties to be logged to telemetry
+ */
+export interface ILoggingError extends Error {
+    /** Return all properties from this object that should be logged to telemetry */
+    getTelemetryProperties(): ITelemetryProperties;
 }
 
 /**
@@ -93,39 +107,4 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Helper method to log generic errors
-     * @param eventName - Name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    logGenericError(eventName: string, error: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    logException(event: ITelemetryErrorEvent, exception: any): void;
-
-    /**
-     *  @deprecated - use sendErrorEvent
-     * Report ignorable errors in code logic or data integrity.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
-
-    /**
-     * @deprecated - use sendErrorEvent
-     * Report ignorable errors in code logic or data integrity.
-     * Similar to debugAssert(), but is not supposed to be optimized out.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
 }

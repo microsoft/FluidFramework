@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -248,9 +248,13 @@ export class ClientReplayTool {
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
                     assert(
-                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength());
+                        mergeTree[1].getLength() === readonlyClient.get(mergeTree[0]).getLength(),
+                        // eslint-disable-next-line max-len
+                        0x1c2 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree length" */);
                     assert(
-                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText());
+                        mergeTree[1].getText() === readonlyClient.get(mergeTree[0]).getText(),
+                        // eslint-disable-next-line max-len
+                        0x1c3 /* "Mismatch between client mergeTree length and corresponding readonly mergeTree text" */);
                 }
             }
         }

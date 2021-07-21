@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,12 +7,12 @@ import { EventEmitter } from "events";
 import {
     IContext,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     ITaskMessageSender,
     ITenantManager,
     TokenGenerator,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { ForemanLambda } from "./lambda";
 
 export class ForemanLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -29,17 +29,15 @@ export class ForemanLambdaFactory extends EventEmitter implements IPartitionLamb
         });
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const tenantId = config.get("tenantId");
-        const documentId = config.get("documentId");
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         return new ForemanLambda(
             this.messageSender,
             this.tenantManager,
             this.tokenGenerator,
             this.permissions,
             context,
-            tenantId,
-            documentId);
+            config.tenantId,
+            config.documentId);
     }
 
     public async dispose(): Promise<void> {

@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import assert from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { RateLimiter } from "@fluidframework/driver-utils";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { RouterliciousRestWrapper } from "../restWrapper";
@@ -13,6 +14,7 @@ import { R11sErrorType } from "../errorUtils";
 
 describe("RouterliciousDriverRestWrapper", () => {
     const axiosMockAdapter = new AxiosMockAdapter(Axios);
+    const rateLimiter = new RateLimiter(1);
     const testUrl = "/api/protected";
 
     // Set up mock request authentication
@@ -60,7 +62,8 @@ describe("RouterliciousDriverRestWrapper", () => {
 
         axiosMockAdapter.reset();
         restWrapper = new RouterliciousRestWrapper(
-            new TelemetryNullLogger(),
+            new TelemetryUTLogger(),
+            rateLimiter,
             getAuthHeader,
         );
         await restWrapper.load();

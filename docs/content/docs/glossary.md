@@ -1,12 +1,15 @@
 ---
 title: Glossary
+aliases:
+  - "/start/glossary/"
+
 ---
 
 ## Aqueduct
 
 The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
 Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
-to get started quickly. [Learn more.](https://fluidframework.com/apis/aqueduct/)
+to get started quickly. [Learn more.](https://fluidframework.com/docs/apis/aqueduct/)
 
 ## Code loader
 
@@ -16,7 +19,7 @@ and load the container code bundle dynamically.
 ## Container
 
 The container is your application's entry point to the Fluid Framework. It runs your container code and is
-the object through which you'll retrieve your data objects.
+the object through which you'll retrieve your Fluid objects.
 
 ## Container code
 
@@ -47,6 +50,10 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 ## Fluid service driver
 
 Client code responsible for connecting to the Fluid service.
+
+## Shared object
+
+A distributed data structure (DDS) or `DataObject`.
 
 ## URL resolver
 

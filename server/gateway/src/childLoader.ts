@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { parse } from "url";
@@ -123,8 +123,7 @@ class KeyValueLoader {
 
     private async attach(loader: Loader, docUrl: string) {
         const response = await loader.request({ url: docUrl });
-        if (response.status !== 200 ||
-            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return;
         }
         const fluidObject = response.value as IFluidObject;

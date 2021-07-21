@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -80,18 +80,20 @@ export async function requestFluidObject<T = IFluidObject>(
         throw responseToException(response, request);
     }
 
-    assert(response.value);
+    assert(response.value, 0x19a /* "Invalid response value for Fluid object request" */);
     return response.value as T;
 }
 
 export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
 
 export function createResponseError(status: number, value: string, request: IRequest): IResponse {
-    assert(status !== 200);
+    assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
+    // Omit query string which could contain personal data (aka "PII")
+    const urlNoQuery = request.url?.split("?")[0];
     return {
         mimeType: "text/plain",
         status,
-        value: request.url === undefined ? value : `${value}: ${request.url}`,
+        value: urlNoQuery === undefined ? value : `${value}: ${urlNoQuery}`,
         stack: getStack(),
     };
 }

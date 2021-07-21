@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,9 +8,9 @@ import {
     IContext,
     IPublisher,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";
 
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -23,7 +23,7 @@ export class BroadcasterLambdaFactory extends EventEmitter implements IPartition
         });
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         return new BroadcasterLambda(this.publisher, context);
     }
 

@@ -1,31 +1,40 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
 import { ICache } from "@fluidframework/server-services-core";
-import { RedisClient } from "redis";
-
+import { IRedisParameters } from "@fluidframework/server-services-utils";
+import { Redis } from "ioredis";
+import * as winston from "winston";
 /**
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    private readonly getAsync: any;
-    private readonly setAsync: any;
+    private readonly expireAfterSeconds: number = 60 * 60 * 24;
+    private readonly prefix: string = "page";
+    constructor(
+        private readonly client: Redis,
+        parameters?: IRedisParameters) {
+        if (parameters?.expireAfterSeconds) {
+            this.expireAfterSeconds = parameters.expireAfterSeconds;
+        }
 
-    constructor(client: RedisClient, private readonly prefix = "page") {
-        this.getAsync = util.promisify(client.get.bind(client));
-        this.setAsync = util.promisify(client.set.bind(client));
+        if (parameters?.prefix) {
+            this.prefix = parameters.prefix;
+        }
+
+        client.on("error", (err) => {
+            winston.error("Error with Redis:", err);
+        });
     }
 
     public async get(key: string): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.getAsync(this.getKey(key));
+        return this.client.get(this.getKey(key));
     }
 
     public async set(key: string, value: string): Promise<void> {
-        const result = await this.setAsync(this.getKey(key), value);
+        const result = await this.client.set(this.getKey(key), value, "EX", this.expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
         }

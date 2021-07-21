@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -187,9 +187,9 @@ export class DocumentDeltaConnection
     public get initialMessages(): ISequencedDocumentMessage[] {
         // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
         // latest ops.  This could possibly indicate that initialMessages was called twice.
-        assert(this.earlyOpHandlerAttached, "Potentially missed initial messages");
+        assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
         // We will lose ops and perf will tank as we need to go to storage to become current!
-        assert(this.listeners("op").length !== 0, "No op handler is setup!");
+        assert(this.listeners("op").length !== 0, 0x08f /* "No op handler is setup!" */);
 
         this.removeEarlyOpHandler();
 
@@ -209,7 +209,7 @@ export class DocumentDeltaConnection
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
-        assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
+        assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
 
         this.removeEarlySignalHandler();
 
@@ -419,7 +419,9 @@ export class DocumentDeltaConnection
     }
 
     private removeConnectionListeners() {
-        clearTimeout(this.socketConnectionTimeout);
+        if (this.socketConnectionTimeout !== undefined) {
+            clearTimeout(this.socketConnectionTimeout);
+        }
 
         for (const { event, listener } of this.connectionListeners) {
             this.socket.off(event, listener);

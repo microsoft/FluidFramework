@@ -8,7 +8,7 @@
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
-  "author": "Microsoft",
+  "author": "Microsoft and contributors",
   "main": "app/index.js",
   "files": [
     "app"
@@ -27,8 +27,8 @@
     "yeoman-generator": "^4.1.0"
   },
   "devDependencies": {
-    "@types/mocha": "^5.2.5",
-    "mocha": "^8.1.1",
+    "@types/mocha": "^8.2.2",
+    "mocha": "^8.4.0",
     "shelljs": "^0.8.4",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"

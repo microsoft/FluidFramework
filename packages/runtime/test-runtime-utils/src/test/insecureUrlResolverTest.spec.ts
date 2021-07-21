@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,6 +22,14 @@ describe("Insecure Url Resolver Test", () => {
     beforeEach(() => {
         resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, bearer);
         request = resolver.createCreateNewRequest(fileName);
+
+        // Mocking window since the resolver depends on window.location.host
+        if (typeof window === "undefined" && typeof global === "object") {
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            global["window"] = {
+                location: { host:"localhost" } as unknown as Location,
+            } as unknown as (Window & typeof globalThis);
+        }
     });
 
     it("Create New Request", async () => {
@@ -57,11 +65,6 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}`,
             headers: {},
         };
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = { location: { host:"localhost" } };
-        }
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -74,12 +77,6 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}/dataStore1/dataStore2`,
             headers: {},
         };
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = { location: { host:"localhost" } };
-        }
-
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -98,11 +95,6 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}/`,
             headers: {},
         };
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = { location: { host:"localhost" } };
-        }
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -115,11 +107,6 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}//`,
             headers: {},
         };
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = { location: { host:"localhost" } };
-        }
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -132,11 +119,6 @@ describe("Insecure Url Resolver Test", () => {
             url: `https://localhost/${fileName}/!@$123/dataStore!@$`,
             headers: {},
         };
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = { location: { host:"localhost" } };
-        }
         const resolvedUrl = await resolver.resolve(testRequest);
         ensureFluidResolvedUrl(resolvedUrl);
 

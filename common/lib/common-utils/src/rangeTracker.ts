@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -93,9 +93,9 @@ export class RangeTracker {
     public add(primary: number, secondary: number) {
         // Both values must continuously be increasing - we won't always track the last value we saw so we do so
         // below to check invariants
-        assert(primary >= this.lastPrimary);
+        assert(primary >= this.lastPrimary, 0x003 /* "Primary to add to range < last primary!" */);
         if (this.lastSecondary !== undefined) {
-            assert(secondary >= this.lastSecondary);
+            assert(secondary >= this.lastSecondary, 0x004 /* "Secondary to add to range < last secondary!" */);
         }
         this.lastPrimary = primary;
         this.lastSecondary = secondary;
@@ -140,7 +140,7 @@ export class RangeTracker {
      * @returns the closest range to the primary
      */
     public get(primary: number): number {
-        assert(primary >= this.ranges[0].primary);
+        assert(primary >= this.ranges[0].primary, 0x005 /* "Target primary to retrieve < first range's primary!" */);
 
         // Find the first range where the starting position is greater than the primary. Our target range is
         // the one before it.
@@ -150,7 +150,8 @@ export class RangeTracker {
                 break;
             }
         }
-        assert(primary >= this.ranges[index - 1].primary);
+        assert(primary >= this.ranges[index - 1].primary,
+            0x006 /* "Target primary to retrieve < last range's primary!" */);
 
         // If the difference is within the stored range use it - otherwise add in the length - 1 as the highest
         // stored secondary value to use.
@@ -164,7 +165,7 @@ export class RangeTracker {
      * @param primary - the primary value to update
      */
     public updateBase(primary: number) {
-        assert(primary >= this.ranges[0].primary);
+        assert(primary >= this.ranges[0].primary, 0x007 /* "Target primary to update < first range's primary!" */);
 
         // Walk the ranges looking for the first one that is greater than the primary. Primary is then within the
         // previous index by definition (since it's less than the current index's primary but greather than the
@@ -175,7 +176,8 @@ export class RangeTracker {
                 break;
             }
         }
-        assert(primary >= this.ranges[index - 1].primary);
+        assert(primary >= this.ranges[index - 1].primary,
+            0x008 /* "Target primary to update < last range's primary!" */);
 
         // Update the last range values
         const range = this.ranges[index - 1];
@@ -188,6 +190,7 @@ export class RangeTracker {
         this.ranges = index - 1 > 0 ? this.ranges.slice(index - 1) : this.ranges;
 
         // Assert that the lowest value is now the input to this method
-        assert(primary === this.ranges[0].primary);
+        assert(primary === this.ranges[0].primary,
+            0x009 /* "After update, target primary is not first range's primary!" */);
     }
 }

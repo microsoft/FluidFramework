@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -26,7 +26,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const combinedProxy = Comlink.wrap(outerPort);
         const outerProxy =
             combinedProxy[IDocumentServiceFactoryProxyKey] as Comlink.Remote<IDocumentServiceFactoryProxy>;
-        assert(outerProxy !== undefined, "OuterDocumentServiceFactoryProxy unavailable");
+        assert(outerProxy !== undefined, 0x098 /* "OuterDocumentServiceFactoryProxy unavailable" */);
         await outerProxy.connected();
         return new InnerDocumentServiceFactory(outerProxy);
     }

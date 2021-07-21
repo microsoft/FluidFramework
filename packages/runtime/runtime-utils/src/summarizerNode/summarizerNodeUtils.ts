@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,19 +7,36 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
     ISnapshotTree,
-    IDocumentAttributes,
     ISequencedDocumentMessage,
     SummaryType,
+    ISummaryTree,
+    SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "../summaryUtils";
+import { ReadAndParseBlob } from "../utils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
 const maxDecodeDepth = 100;
 
-/** Reads a blob from storage and parses it from JSON. */
-export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
+/**
+ * Return value of refreshSummaryAck function. There can be three different scenarios based on the passed params:
+ * 1. The latest summary was not udpated.
+ * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
+ * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
+ *    latest summary is updated based on the downloaded snapshot which is also returned.
+ */
+export type RefreshSummaryResult = {
+    latestSummaryUpdated: false,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: true,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: false,
+    snapshot: ISnapshotTree,
+};
 
 export interface ISummarizerNodeRootContract {
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
@@ -30,22 +47,7 @@ export interface ISummarizerNodeRootContract {
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void>;
-}
-
-/**
- * Fetches the sequence number of the snapshot tree by examining the protocol.
- * @param tree - snapshot tree to examine
- * @param readAndParseBlob - function to read blob contents from storage
- * and parse the result from JSON.
- */
-export async function seqFromTree(
-    tree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
-): Promise<number> {
-    const attributesHash = tree.trees[".protocol"].blobs.attributes;
-    const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
-    return attrib.sequenceNumber;
+    ): Promise<RefreshSummaryResult>;
 }
 
 /** Path for nodes in a tree with escaped special characters */
@@ -201,8 +203,8 @@ export function decodeSummary(
             };
         }
 
-        assert(!!outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-        assert(newBaseSummary !== undefined, "Base summary tree missing, but outstanding ops blob exists");
+        assert(!!outstandingOpsBlob, 0x1af /* "Outstanding ops blob missing, but base summary tree exists" */);
+        assert(newBaseSummary !== undefined, 0x1b0 /* "Base summary tree missing, but outstanding ops blob exists" */);
         baseSummary = newBaseSummary;
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);
@@ -289,9 +291,9 @@ export interface ICreateChildDetails {
     changeSequenceNumber: number;
 }
 
-export interface ISubtreeInfo {
+export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
     /** Tree to use to find children subtrees */
-    childrenTree: ISnapshotTree,
+    childrenTree: T,
     /** Additional path part where children are isolated */
     childrenPathPart: string | undefined,
 }
@@ -301,7 +303,7 @@ export interface ISubtreeInfo {
  * would be located if exists.
  * @param baseSummary - summary to check
  */
-export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo {
+export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo<ISnapshotTree> {
     // New versions of snapshots have child nodes isolated in .channels subtree
     const channelsSubtree = baseSummary.trees[channelsTreeName];
     if (channelsSubtree !== undefined) {
@@ -312,6 +314,26 @@ export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInf
     }
     return {
         childrenTree: baseSummary,
+        childrenPathPart: undefined,
+    };
+}
+
+/**
+ * Checks if the summary contains .channels subtree where the children subtrees
+ * would be located if exists.
+ * @param baseSummary - summary to check
+ */
+export function parseSummaryTreeForSubtrees(summary: ISummaryTree): ISubtreeInfo<SummaryObject> {
+    // New versions of snapshots have child nodes isolated in .channels subtree
+    const channelsSubtree = summary.tree[channelsTreeName];
+    if (channelsSubtree !== undefined) {
+        return {
+            childrenTree: channelsSubtree,
+            childrenPathPart: channelsTreeName,
+        };
+    }
+    return {
+        childrenTree: summary,
         childrenPathPart: undefined,
     };
 }

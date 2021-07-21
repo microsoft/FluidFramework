@@ -1,16 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { TaskManager } from "@fluid-experimental/task-manager";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
-import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
 
 export const ClickerName = "Clicker";
@@ -20,12 +22,15 @@ const taskManagerKey = "taskManager";
 
 const consoleLogTaskId = "ConsoleLog";
 
+export interface IClickerEvents extends IEvent {
+    (event: "incremented", listener: () => void);
+}
+
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends DataObject implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class Clicker extends DataObject<object, undefined, IClickerEvents> {
     private _counter: SharedCounter | undefined;
     private _taskManager: TaskManager | undefined;
 
@@ -45,36 +50,37 @@ export class Clicker extends DataObject implements IFluidHTMLView {
         const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
         this._taskManager = await taskManagerHandle?.get();
 
-        if (this.runtime.connected) {
-            this.setupAgent();
-        } else {
-            this.runtime.once("connected", () => { this.setupAgent(); });
-        }
+        this.counter.on("incremented", () => { this.emit("incremented"); });
+        this.setupAgent();
     }
 
-    // #region IFluidHTMLView
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(div: HTMLElement) {
-        // Get our counter object that we set in initialize and pass it in to the view.
-        ReactDOM.render(
-            <CounterReactView counter={this.counter} />,
-            div,
-        );
-        return div;
+    public increment() {
+        this.counter.increment(1);
     }
 
-    // #endregion IFluidHTMLView
+    public get value() {
+        return this.counter.value;
+    }
 
-    public setupAgent() {
+    private setupAgent() {
         this.taskManager.lockTask(consoleLogTaskId)
             .then(async () => {
                 console.log(`Picked`);
                 const clickerAgent = new ClickerAgent(this.counter);
+                // Attempt to reacquire the task if we lose it
+                this.taskManager.once("lost", () => {
+                    clickerAgent.stop();
+                    this.setupAgent();
+                });
                 await clickerAgent.run();
-            }).catch((err) => { console.error(err); });
+            }).catch(() => {
+                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
+                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
+                // give up.
+                if (!this.runtime.connected) {
+                    this.runtime.once("connected", () => { this.setupAgent(); });
+                }
+            });
     }
 
     private get counter() {
@@ -94,26 +100,26 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 // ----- REACT STUFF -----
 
-interface CounterProps {
-    counter: SharedCounter;
+export interface ClickerProps {
+    clicker: Clicker;
 }
 
-interface CounterState {
+export interface ClickerState {
     value: number;
 }
 
-class CounterReactView extends React.Component<CounterProps, CounterState> {
-    constructor(props: CounterProps) {
+export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+    constructor(props: ClickerProps) {
         super(props);
 
         this.state = {
-            value: this.props.counter.value,
+            value: this.props.clicker.value,
         };
     }
 
     componentDidMount() {
-        this.props.counter.on("incremented", (incrementValue: number, currentValue: number) => {
-            this.setState({ value: currentValue });
+        this.props.clicker.on("incremented", () => {
+            this.setState({ value: this.props.clicker.value });
         });
     }
 
@@ -123,7 +129,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
                     {this.state.value}
                 </span>
-                <button onClick={() => { this.props.counter.increment(1); }}>+</button>
+                <button onClick={() => { this.props.clicker.increment(); }}>+</button>
             </div>
         );
     }
@@ -131,11 +137,14 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, undefined, undefined, IEvent>(
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const ClickerInstantiationFactory = new DataObjectFactory<Clicker, object, undefined, IClickerEvents>(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory(), TaskManager.getFactory()],
     {},
 );
 
-export const fluidExport = ClickerInstantiationFactory;
+const clickerViewCallback = (clicker: Clicker) => <ClickerReactView clicker={clicker} />;
+
+export const fluidExport = new ContainerViewRuntimeFactory<Clicker>(ClickerInstantiationFactory, clickerViewCallback);

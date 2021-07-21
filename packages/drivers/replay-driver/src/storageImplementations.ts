@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -100,7 +100,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         protected readonly storage: IDocumentStorageService,
         protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(!!this.docTree);
+        assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -141,6 +141,8 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    public dispose() {}
+
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");
@@ -157,10 +159,6 @@ export class StaticStorageDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // We have no delta stream, so make it not return forever...
         return new Promise(() => { });
-    }
-
-    public getErrorTrackingService() {
-        return null;
     }
 }
 

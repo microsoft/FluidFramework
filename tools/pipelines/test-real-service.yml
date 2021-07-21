@@ -1,189 +1,73 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-real-service pipeline
+# test-real-service-e2e pipeline
 
 name: $(Build.BuildId)
 
-parameters:
-- name: buildDirectory
-  type: string
-  default: .
-
-- name: taskBuild
-  type: string
-  default: ci:build
-
-- name: poolBuild
-  type: object
-  default: Main
-
-- name: checkoutSubmodules
-  type: boolean
-  default: false
-
-trigger:
-  batch: true
-  branches:
-    include:
-    - main
-    - release/*
+trigger: none
 pr: none
 
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - releases/*
+      - main
+
 variables:
-  # We use 'chalk' to colorize output, which auto-detects color support in the
-  # running terminal.  The log output shown in Azure DevOps job runs only has
-  # basic ANSI color support though, so force that in the pipeline
-  - name: FORCE_COLOR
-    value: 1
-  - template: templates/include-vars.yml
-    parameters:
-      buildNumberInPatch: true
-  - name: diDir
-    value: '$(Build.SourcesDirectory)/tools/pipelines/dependency-injection'
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
 
-jobs:
-  - job: run
-    displayName: Build and Run Tests
-    pool: ${{ parameters.poolBuild }}
-    steps:
-    # Setup
-    - checkout: self
-      clean: true
-      lfs: ${{ parameters.checkoutSubmodules }}
-      submodules: ${{ parameters.checkoutSubmodules }}
+stages:
+  # end-to-end tests routerlicious
+  - stage:
+    displayName: e2e - routerlicious
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Lite
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testSteps:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
+          continueOnError: true
+          env:
+            fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
+            fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
+            fluid__webpack__tenantId: $(fluid-webpack-tenantId)
+            fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            customCommand: 'run test:realsvc:routerlicious:report'
 
-    # Print parameters/Vars
-    - task: Bash@3
-      displayName: Print Parameters and Variables
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          # Show all task group conditions
-
-          echo "
-          Pipeline Parameters:
-            buildDirectory=${{ parameters.buildDirectory }}
-            taskBuild=${{ parameters.taskBuild }}
-            poolBuild=${{ parameters.poolBuild }}
-            checkoutSubmodules=${{ parameters.checkoutSubmodules }}
-
-          Pipeline Variables:
-            diDir=${{ variables.diDir }}
-          "
-
-    # Install
-    - task: UseNode@1
-      displayName: Use Node 12.x
-      inputs:
-        version: 12.x
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --unsafe-perm'
-        customRegistry: 'useNpmrc'
-
-    # Build
-    - task: Npm@1
-      displayName: npm run ${{ parameters.taskBuild }}
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'run ${{ parameters.taskBuild }}'
-
-    # [DI] Auth to internal feed
-    - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (internal feed)'
-      inputs:
-        workingFile: ${{ variables.diDir }}/.npmrc
-
-    # [DI] Auth to Office feed
-    - task: npmAuthenticate@0
-      displayName: '[DI] npm authenticate (office feed)'
-      inputs:
-        workingFile: ${{ variables.diDir }}/.npmrc
-        customEndpoint: 'Office Packages - Readonly'
-
-    # [DI] Prep dependency-injection package for install
-    - task: Bash@3
-      displayName: '[DI] Prepare DI package'
-      inputs:
-        targetType: 'inline'
-        script: 'mv _package.json package.json'
-        workingDirectory: ${{ variables.diDir }}
-
-    # [DI] Install dependency-injection package
-    - task: Npm@1
-      displayName: '[DI] npm install'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ variables.diDir }}
-        customCommand: 'install'
-        customRegistry: 'useNpmrc'
-
-    # end-to-end tests routerlicious
-    - task: Npm@1
-      displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
-      continueOnError: true
-      timeoutInMinutes: 15
-      env:
-        fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
-        fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
-        fluid__webpack__tenantId: $(fluid-webpack-tenantId)
-        fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-      inputs:
-        command: 'custom'
-        workingDir: packages/test/test-end-to-end-tests
-        customCommand: 'run test:realsvc:routerlicious:report'
-
-    # end-to-end tests odsp
-    - task: Npm@1
-      displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
-      continueOnError: true
-      timeoutInMinutes: 15
-      env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__microsoft__secret: $(login-microsoft-secret)
-        login__odsp__test__accounts: $(login-odsp-test-accounts)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-      inputs:
-        command: 'custom'
-        workingDir: packages/test/test-end-to-end-tests
-        customCommand: 'run test:realsvc:odsp:report'
-
-    # Run Stress Tests
-    - task: Npm@1
-      displayName: '[stress tests] npm run start'
-      continueOnError: true
-      timeoutInMinutes: 15
-      env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__microsoft__secret: $(login-microsoft-secret)
-        login__odsp__test__accounts: $(login-odsp-test-accounts)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.diDir }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-      inputs:
-        command: 'custom'
-        workingDir: packages/test/service-load-test
-        customCommand: 'run start'
-
-    # Run Copy Test Results
-    - task: Npm@1
-      displayName: npm run test:copyresults'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'run test:copyresults'
-
-    # Upload results
-    - task: PublishTestResults@2
-      displayName: Publish Test Results
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}/nyc
-        mergeTestResults: false
-      condition: succeededOrFailed()
+  # end-to-end tests odsp
+  - stage:
+    displayName:  e2e - odsp
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Lite
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 240
+        testSteps:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
+          continueOnError: true
+          env:
+            login__microsoft__clientId: $(login-microsoft-clientId)
+            login__microsoft__secret: $(login-microsoft-secret)
+            login__odsp__test__accounts: $(automation-e2e-login-odsp-test-accounts)
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            customCommand: 'run test:realsvc:odsp:report'

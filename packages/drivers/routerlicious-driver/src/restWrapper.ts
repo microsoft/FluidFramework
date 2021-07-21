@@ -1,13 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { RateLimiter } from "@fluidframework/driver-utils";
 import {
     getAuthorizationTokenFromCredentials,
-    ICredentials,
     RestWrapper,
 } from "@fluidframework/server-services-client";
 import Axios, { AxiosError, AxiosRequestConfig } from "axios";
@@ -23,6 +23,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
     constructor(
         private readonly logger: ITelemetryLogger,
+        private readonly rateLimiter: RateLimiter,
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
@@ -41,7 +42,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         };
 
         try {
-            const response = await Axios.request<T>(config);
+            const response = await this.rateLimiter.schedule(async () => Axios.request<T>(config));
             return response.data;
         } catch (reason: any) {
             if (!reason || !reason?.isAxiosError) {
@@ -95,11 +96,12 @@ export class RouterliciousRestWrapper extends RestWrapper {
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
     private constructor(
         logger: ITelemetryLogger,
+        rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
     ) {
-        super(logger, getAuthorizationHeader, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -107,33 +109,27 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         documentId: string,
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
+        rateLimiter: RateLimiter,
         baseurl?: string,
-        directCredentials?: ICredentials,
     ): Promise<RouterliciousStorageRestWrapper> {
         const defaultQueryString = {
-            token: `${fromUtf8ToBase64(directCredentials?.user || tenantId)}`,
+            token: `${fromUtf8ToBase64(tenantId)}`,
         };
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
-            // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
-            // tenant token
-            let credentials: ICredentials;
-            if (directCredentials) {
-                credentials = directCredentials;
-            } else {
-                const storageToken = await tokenProvider.fetchStorageToken(
-                    tenantId,
-                    documentId,
-                );
-                credentials = {
-                    password: storageToken.jwt,
-                    user: tenantId,
-                };
-            }
+            // Craft credentials using tenant id and token
+            const storageToken = await tokenProvider.fetchStorageToken(
+                tenantId,
+                documentId,
+            );
+            const credentials = {
+                password: storageToken.jwt,
+                user: tenantId,
+            };
             return getAuthorizationTokenFromCredentials(credentials);
         };
 
         const restWrapper = new RouterliciousStorageRestWrapper(
-            logger, getAuthorizationHeader, baseurl, defaultQueryString);
+            logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
         try {
             await restWrapper.load();
         } catch (e) {
@@ -149,11 +145,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
     private constructor(
         logger: ITelemetryLogger,
+        rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
     ) {
-        super(logger, getAuthorizationHeader, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -161,6 +158,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         documentId: string,
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
+        rateLimiter: RateLimiter,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
@@ -171,7 +169,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             return `Basic ${ordererToken.jwt}`;
         };
 
-        const restWrapper = new RouterliciousOrdererRestWrapper(logger, getAuthorizationHeader, baseurl);
+        const restWrapper = new RouterliciousOrdererRestWrapper(logger, rateLimiter, getAuthorizationHeader, baseurl);
         try {
             await restWrapper.load();
         } catch (e) {

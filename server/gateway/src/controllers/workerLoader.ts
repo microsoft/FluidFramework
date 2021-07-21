@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -46,7 +46,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
             //     docId: decodeURI(this.id),
             //     resolvedUrl: this.resolved,
             //     version: request.headers?.[LoaderHeader.version],
-            //     pause: request.headers?.[LoaderHeader.pause],
+            //     loadMode: request.headers?.[LoaderHeader.loadMode],
             // },
         );
         this.container = container;
@@ -65,8 +65,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         }
 
         const response = await this.container.request(request);
-        if (response.status !== 200 ||
-            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
         this.runnable = response.value as IFluidRunnable;

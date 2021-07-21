@@ -1,39 +1,88 @@
 # @fluid-internal/hosts-sample
 
-The Fluid loader is all that is needed to load any Fluid document. This example walks through all the steps to
-create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
-more detail on each line of the code.
+This example demonstrates how to host Fluid components in a web application.
+The Fluid loader is needed to load a Fluid document. The example walks through all the steps to
+create, initialize, and then make use of the loader in under 200 lines of code.
+And does so in a literate programming-like style to provide more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @fluidframework/base-host.
-These may be better starting options when integrating the loader into your own code. But this example will show all
-the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
-of code.
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- The getting started instructions are automatically generated.
+To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
 
-## Build steps
+## Getting Started
 
-Getting up and running is simple.
+You can run this example using the following steps:
 
-```bash
-npm install
-npm start
+1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+   a. For an even faster build, you can add the package name to the build command, like this:
+   `npm run build:fast -- --nolint @fluid-internal/hosts-sample`
+1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
+1. Run `npm run start` from this directory (examples/hosts/hosts-sample) and open <http://localhost:8080> in a web browser to see the app running.
+ <!-- AUTO-GENERATED-CONTENT:END -->
+
+## Using Example
+Upon navigating to the example application home URL with no parameters, it will create a new document with an auto-generated ID and load it using the default package name and version. When loaded correctly a placeholder component will be rendered in the content `div` element.
+
+![Home Page](./images/home-page.png)
+
+The application URL has the following format:
 ```
+http://localhost:8080/[#document-id]
+```
+, where `document-id` is an alphanumerical string representing the unique Fluid document ID.
 
-Then navigate to <http://localhost:8080.> This will redirect you to <http://localhost:8080/example> but you can change
-'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
-will be created.
+The application also provides the code details panel allowing to load different code versions and propose code upgrades.
 
-## The Code
+![Code Details](./images/code-details.png)
 
-### Packages
+Consider the following code upgrade scenario (see the image below):
 
-The loader itself only requires two Fluid packages: `@fluidframework/container-definitions` and `@fluidframework/container-loader`.
+1. User A creates the initial document using the version 1.0.0.
+1. User A and User B load the document using a newer code version 2.0.0.
+1. User A proposes the document code upgrade to the version 2.0.0.
+1. The code upgrade proposal is propagated by the Fluid runtime to all participants in the current collab window.
 
-`@fluidframework/container-loader` contains the actual loader itself.
+![Code Details](./images/major-upgrade.gif)
 
-`@fluidframework/container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
-These provide the bindings between the loader code itself and the documents loaded by the loader.
+Refer to the implementation details [below](#code-upgrade).
 
-### Creating the Loader
+## Implementation Details
+
+### Files
+
+#### index.html
+
+This is a scaffolded HTML page defining the application layout.
+
+#### app.ts
+
+This is the main file that starts running the web app. It fetches the container for the Fluid object the app is using and proceeds to render the object on the browser at <http://localhost:8080>, and uses the locally running Tinylicious server instance.
+
+#### codeDetailsLoader.ts
+
+This file contains an in-memory code loader emulating a Fluid package store.
+
+#### codeDetailsView.ts
+
+Contains methods and utilities to setup the user experience for showning active code details and making code upgrade proposals.
+
+#### fauxComponent.ts
+
+Contains a placeholder data object used to render an HTML element when it is mounted by the host.
+
+#### utils.ts
+
+Contains a collection of helper functions for the application.
+
+### Dependencies
+
+The sample code requires the following Fluid packages as dependencies:
+
+-   `@fluidframework/container-loader` contains the actual loader itself.
+-   `@fluidframework/core-interfaces` is a set of TypeScript interface definitions that provide bindings between the loader and the container loaded by the loader.
+-   `@fluidframework/routerlicious-driver` is needed to instantiate a Fluid driver used to connect to the Tinylicious server.
+
+### Creating Loader
 
 Creating a loader is a simple process
 
@@ -47,187 +96,47 @@ const loader = new Loader({
 });
 ```
 
-The loader takes in four parameters. The first is a set of host interfaces. These allow the loader to interact with
-the host for identity and access control related tasks like URL resolution. The second contains the driver factory.
-This allows the loader to communicate with the service hosting the Fluid document. The third parameter defines the
-code loader used to load the code defined in the Fluid document. And finally the last parameter is a set of options
-used during the actual load.
+The loader takes an options argument allowing it to customize its behavior, such as:
 
-Each of these will be described in more detail in the sections that follow.
+-   `urlResolver` is used by the loader for resolving external URLs into Fluid URLs such that the container
+    specified by the external URL can be loaded.
+-   `documentServiceFactory` takes the Fluid URL provided by the resolved URL and constructs all the necessary services for communication with the backend.
+-   `codeLoader` handles loading the necessary code for running a container once it is loaded.
 
-#### Host Platform
+Each of these options will be described in more detail in the sections that follow.
 
-There are certain tasks that require the host's help to complete. These are defined via the host interfaces.
+### Creating Fluid Document
 
-As a library the loader does not have full context on the identity of the user. This is defined by the session the user
-has established with the web server that served the web page being viewed. As such the Fluid loader defers
-certain tasks to the host page when identity or access control is involved.
-
-The primary of these is resolving a URL to its Fluid specific endpoint and access tokens. Sites hosting Fluid
-documents are free to define any URL scheme they want to represent a document. But they must then be able to map
-from this URL to a Fluid based url of the form:
-
-`fluid-protocol://service.domain/documentId/path`
-
-And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
-driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
-the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
-Fluid object to render and parameters for it.
-
-Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
-return the resolved Fluid URL with access tokens if these pass.
-
-In this sample we aren't doing any user authentication and are running client side only with the API tokens hard
-coded into the sample. This is NOT a security best practice and is only intended to be used to simplify the loader
-sample. To make this clear we call our URL resolver the `InsecureUrlResolver`. In a production environment the
-tenant secret should be protected on the service as you would a database password, SSL private key, etc... and the
-URL resolver would make an authenticated API call against a server API to receive the resulting information.
-
-That warning out of the way let's dig in to the `IUrlResolver`.
-
-The `IUrlResolver` interface is defined as
-
-```typescript
-export interface IUrlResolver {
-    resolve(request: IRequest): Promise<IResolvedUrl>;
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-}
-```
-
-This simple interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
-along with associated access tokens.
-
-In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
-method we then parse a URL of this form into the associated fluid:// based URL.
-
-To do so we first start by parsing the full URL and extracing the document ID out of the URL
-
-```typescript
-const parsedUrl = new URL(request.url);
-const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-```
-
-Once those are available we can construct the full Fluid url as
-
-```typescript
-const documentUrl = `fluid://${new URL(this.ordererUrl).host}` +
-    `/${encodeURIComponent(this.tenantId)}` +
-    parsedUrl.pathname;
-```
-
-We can then construct the final `IFluidResolvedUrl` by generating all the endpoints needed by the driver. As well as
-crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
-
-```typescript
-const deltaStorageUrl =
-    `${this.ordererUrl}/deltas/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(documentId)}`;
-
-const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(this.tenantId)}`;
-
-const response: IFluidResolvedUrl = {
-    endpoints: {
-        deltaStorageUrl,
-        ordererUrl: this.ordererUrl,
-        storageUrl,
-    },
-    tokens: { jwt: this.auth(this.tenantId, documentId) },
-    type: "fluid",
-    url: documentUrl,
-};
-
-return response;
-```
-It also defines an api, `getAbsoluteUrl` which takes 2 arguments, `resolvedUrl` and `relativeUrl`. It creates a url for
-the created container with any data store path given in the relative url.
-
-#### Drivers
-
-Similar to how the loader defers certain tasks to the host it also defers how to establish a connection to a Fluid
-service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
-define so long as code is provided that correctly implements the loader's driver interface.
-
-In this example the Routerlicious driver is used `@fluidframework/routerlicious-driver`. But drivers also exist to
-talk to OneDrive/SharePoint.
-
-Creating this is simple
-
-```typescript
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-
-const documentServicesFactory = new RouterliciousDocumentServiceFactory();
-```
-
-The driver factory is then passed to the loader. Internally the loader then binds the data returned from the
-host resolver to the associated driver.
-
-Although not fully utilized yet the protocol part of the Fluid URL is used to determine which driver to make use of -
-i.e. fluid-routerlicious:// would indicate the routerlicious driver/protocol should be used, while the fluid-spo://
-would indicate the SharePoint driver is required.
-
-#### Code Loader
-
-At its core a Fluid document is a code plus data package. The operation stream defines the code to run in addition
-to containing the operations to run against the underlying data types. This is very similar to a the traditional web
-model where HTML is combined with script tags.
-
-Because the loader is designed to work in both the browser and in node.js, both of which have different code loading
-mechanisms, the loader takes in an interface which provides the ability to dynamically load a code package. This also
-would allow a host to implement allowlisting, or other access controls, of which code to load.
-
-The interface for the loader is also simple.
-
-```typescript
-export interface ICodeLoader {
-    load(source: string): Promise<IChaincodeFactory>;
-}
-```
-
-load takes in a source string. Today this is an npm package. But similar to npm package references is expected to
-grow into git repos, tarballs, CDN links, etc...
-
-The IChaincodeFactory is a simple interface that defines the entry point function the loader expects the code
-package to export.
-
-```typescript
-export interface IChaincodeFactory {
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
-}
-```
-
-Once the `IChaincodeFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
-
-### Creating a Fluid document
-
-Once the loader has been created then actually creating a Fluid document is very simple
+Once the loader has been created creating a new Fluid document is simple
 
 ```typescript
 const container = await loader.createDetachedContainer(codeDetails);
 await container.attach(request);
 ```
-In first line, we actually create an in-memory container without creating it on the actual storage. `codeDetails`
+
+In the first line, we create an in-memory container without creating it on the actual storage. `codeDetails`
 is the code package to run for the container. It provides benefits like freaky fast container creation so that the
 user can start editing the container immediately and we don't have to propose code through the quorum.
 
-In the second line, we call attach on the container to actually create it on the storage. This is async and can
+In the second line, we call attach on the container to create it on the storage. This is async and can
 be done in the background while the user is editing the container. It takes in a `request` which is a `createNewRequest`
-which can be resolved by the resolver. This resolved url might not contain the endpoints because the container is not yet
-created. The resolver can also provide this api on its instance to create the `createNewRequest`.
+which can be resolved by the resolver. This resolved URL might not contain the endpoints because the container is not yet
+created. The resolver can also provide this API on its instance to create the `createNewRequest`.
 
-### Loading a Fluid Document
+### Loading Fluid Document
 
-Loading a Fluid document is a one line call
+Loading a Fluid document is a one-line call
 
 ```typescript
-const response = await loader.request({ url });
+const response = await loader.request({ URL });
 ```
 
 Internally the loader is then using the host interface to resolve the URL, creating a driver to connect to the
 resolved URL, and then connecting to the document. The path part of the URL is then provided to the document and
-used to route the request to an object. In many ways you can view the Fluid document like a traditional web
-server that is returning a web page. But in the Fluid case a live, collaborative object is returned.
+used to route the request to an object. In many ways, you can view the Fluid document like a traditional web
+server that is returning a web page. But in the Fluid case, a live collaborative object is returned.
 
-Like a web server a status code is returned to indicate the success of the request. For consistency we match HTTP
+Like a web server, a status code is returned to indicate the success of the request. For consistency, we match HTTP
 status codes.
 
 ```typescript
@@ -236,12 +145,12 @@ if (response.status !== 200) {
 }
 ```
 
-A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web
-model. But a document could also return different mime types like static images, videos, etc...
+A MIME type is also provided with the request to distinguish the type of object. The most common thing you'll receive
+is a Fluid object. Fluid objects implement the `attach` interface which allows them to participate in the web
+model. But a document could also return different MIME types like static images, videos, etc.
 
-The host can then switch on the mime type and act accordingly. In the case of the Fluid object, we check if is a viewable
-and provide it a div for it to render.
+The host can then switch on the MIME type and act accordingly. In the case of the Fluid object, we check if is a viewable
+and provide it a `div` for it to render.
 
 ```typescript
 switch (response.mimeType) {
@@ -258,24 +167,161 @@ switch (response.mimeType) {
 }
 ```
 
-#### IFluidObject interface
+### Host Integration
 
-The Fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
-a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
+Certain tasks require the host's help to complete. These are defined via the host interfaces.
+
+As a library, the loader does not have full context on the identity of the user. This is defined by the session the user
+has established with the web server that served the web page being viewed. As such the Fluid loader defers
+certain tasks to the host page when identity or access control is involved.
+
+#### URL Resolver
+
+The primary of these is resolving a URL to its Fluid specific endpoint and access tokens. Sites hosting Fluid
+documents are free to define any URL scheme they want to represent a document. But they must then be able to map
+from this URL to a Fluid based URL of the form:
+
+`fluid-protocol://service.domain/documentId/path`
+
+And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
+driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
+the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
+Fluid object to render and parameters for it.
+
+Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
+return the resolved Fluid URL with access tokens if these pass.
+
+In this sample we aren't doing any user authentication and are running client side only with the API tokens hard
+coded into the sample. This is NOT a security best practice and is only intended to be used to simplify the loader
+sample. To make this clear we call our URL resolver the `InsecureUrlResolver`. In a production environment the
+tenant secret should be protected on the service as you would a database password, SSL private key, etc. The
+URL resolver would make an authenticated API call against a server API to receive the resulting information.
+
+That warning out of the way let's dig in to the `IUrlResolver`.
+
+The `IUrlResolver` interface defines a method, `resolve`, which takes in an `IRequest` object and resolves it to an
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
+along with associated access tokens.
+
+In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
+method we then parse a URL of this form into the associated `fluid://` schema based URL.
+
+To do so we first start by parsing the full URL and extracing the document ID out of the URL
+
+```typescript
+const parsedUrl = new URL(request.url);
+const documentId = parsedUrl.pathname.substr(1).split("/")[0];
+```
+
+Once those are available we can construct the full Fluid URL as
+
+```typescript
+const documentUrl =
+    `fluid://${new URL(this.ordererUrl).host}` +
+    `/${encodeURIComponent(this.tenantId)}` +
+    parsedUrl.pathname;
+```
+
+We can then construct the final `IFluidResolvedUrl` by generating all the endpoints needed by the driver. As well as
+crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
+
+```typescript
+const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(documentId)}`;
+
+const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(
+    this.tenantId
+)}`;
+
+const response: IFluidResolvedUrl = {
+    endpoints: {
+        deltaStorageUrl,
+        ordererUrl: this.ordererUrl,
+        storageUrl,
+    },
+    tokens: { jwt: this.auth(this.tenantId, documentId) },
+    type: "fluid",
+    url: documentUrl,
+};
+
+return response;
+```
+
+It also defines an API, `getAbsoluteUrl` which takes 2 arguments, `resolvedUrl` and `relativeUrl`. It creates a URL for
+the created container with any data store path given in the relative URL.
+
+#### Drivers
+
+Similar to how the loader delegates certain tasks to the host it also defers how to establish a connection to a Fluid
+service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
+define so long as code is provided that correctly implements the loader's driver interface.
+
+In this example the Routerlicious driver is used to communicate with a Tinylicious server. Other drivers also exist to
+talk to OneDrive/SharePoint.
+
+Creating the driver is simple
+
+```typescript
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+
+const documentServicesFactory = new RouterliciousDocumentServiceFactory();
+```
+
+The driver factory is then passed to the loader. Internally the loader then binds the data returned from the
+host resolver to the associated driver.
+
+Although not fully utilized yet the protocol part of the Fluid URL is used to determine which driver to make use of -
+i.e. `fluid-routerlicious://` would indicate the routerlicious driver/protocol should be used, while the `fluid-spo://`
+would indicate the SharePoint driver is required.
+
+#### Code Loader
+
+At its core, a Fluid document is a code plus data package. The operation stream defines the code to run in addition
+to containing the operations to run against the underlying data types. This is very similar to a traditional web
+model where HTML is combined with script tags.
+
+Because the loader is designed to work in both the browser and `Node.js` environment, both of which have different code loading
+mechanisms, the loader takes in an interface that provides the ability to dynamically load a code package. This also
+would allow a host to implement allow-listing, or other access controls, of which code to load.
+
+The loader's entry point `load` method takes in a source code details parameter. Today this is an npm package.
+But similar to npm package references is expected to grow into git repos, tarballs, CDN links, etc.
+
+The load method is expected to return a runtime factory that defines the entry point function the loader expects the code
+package to export. Once the runtime factory instance is returned the container then invokes the `instantiateRuntime`
+call to load the code package.
+
+#### Fluid Object
+
+The Fluid object model supports a delegation and feature detection mechanism.
+A feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
 cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
-are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
+are testing for. The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
+
+### Code Upgrade
+
+The code upgrade proposal is a mechanism used by the Fluid loader to ensure that only compatible clients can collaborate in each document.
+The code details object is provided by the host at the document creation time and written as a JSON payload associated with the document.
+The object contains attributes, such as a version range of code package, that are compatible with this document schema.
+Interpretation of these details is controlled by the host. Upgrades are also controlled by the host and can happen at any point in time.
+An upgrade could result in non-compatible clients in a collaboration session being rejected and reloaded with new code.
+
+To support code upgrade scenarios, the container instance provides the following API:
+- Query a container to determine current loaded code details, via the `codeDetails` property.
+- Propose code details via the `proposeCodeDetails` method.
+- Observe new code proposals via the `codeDetailsProposed` event.
+
+In addition to that, the application may opt to supply a customized code loader designed to:
+- Compare code details.
+- Tell the runtime to close the container if the container’s code is outside of the policy.
 
 ## Next Steps
 
-And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
-setup as a host. And once done you gain full access to the power of the Fluid platform.
+And that's all that's needed to create or load Fluid documents. It's intended to be lightweight and easy to get
+set up as a host. And once done, you gain full access to the power of the Fluid platform.
 
-Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/main/tools/generator-fluid/README.md.
-You can then publish this package to Verdaccio and load it inside of your new loader!
+For an example demonstrating configuration and usage of the Fluid loader inside the Node.js environment, refer to the [node-host](../node-host/README.md) example.
 
-When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
-to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can
-also serve as a host for other Fluid content.
+To explore further loader integration options into your code, refer to the [base-host](../../../packages/hosts/base-host/README.md) package.

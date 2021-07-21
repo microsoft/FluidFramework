@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -49,7 +49,7 @@ function flattenCore(
             };
             entries.push(entry);
         } else {
-            assert(treeEntry.type === TreeEntry.Tree);
+            assert(treeEntry.type === TreeEntry.Tree, 0x101 /* "Unexpected tree entry type on flatten!" */);
             const t = treeEntry.value;
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],

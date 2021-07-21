@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -142,12 +142,12 @@ export class ProseMirrorTransactionBuilder {
                 //
                 // For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-                assert(i < this.things.length);
+                assert(i < this.things.length, "Trying to insert removal node out-of-bounds!");
 
                 i = this.splitAt(position, i);
                 let length = range.segment.cachedLength;
                 while (length > 0) {
-                    assert(this.things[i].type === "ether");
+                    assert(this.things[i].type === "ether", "Current thing does not have 'ether' node type!");
 
                     if (this.things[i].length <= length) {
                         // Ether node is fully encompasing
@@ -185,12 +185,12 @@ export class ProseMirrorTransactionBuilder {
                 //
                 // For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-                assert(i < this.things.length);
+                assert(i < this.things.length, "Trying to insert annotations field on out-of-bounds node!");
 
                 i = this.splitAt(position, i);
                 let length = range.segment.cachedLength;
                 while (length > 0) {
-                    assert(this.things[i].type === "ether");
+                    assert(this.things[i].type === "ether", "Current thing does not have 'ether' node type!");
 
                     if (this.things[i].length <= length) {
                         // Ether node is fully encompasing

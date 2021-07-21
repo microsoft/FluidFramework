@@ -1,24 +1,46 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { Change, ChangeNode, StablePlace } from '../../PersistedTypes';
-import { makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
+import { noop } from '../../Common';
+import { Change, SharedTree, StablePlace, StableRange } from '../../default-edits';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { ChangeNode, TraitLocation } from '../../generic';
+import { TreeNodeHandle } from '../../TreeNodeHandle';
+import { deepCompareNodes, makeEmptyNode, setUpTestSharedTree } from './TestUtilities';
 
-export interface SharedTreeTestOptions {
+/** Options used to generate a SharedTree undo/redo test suite. */
+interface SharedTreeUndoRedoOptions {
 	/** Determines if the tests should be run in local state or connected state with a remote SharedTree */
 	localMode: boolean;
+	/** Title used for the test suite describe block. */
+	title: string;
+	/** Function for undoing an edit on a given tree. */
+	undo: (tree: SharedTree, editId: EditId) => EditId;
+	/** Function for redoing an edit on a given tree. */
+	redo: (tree: SharedTree, editId: EditId) => EditId;
+	/** Optional additional setup to run in a beforeEach block that takes the SharedTrees used in the tests. */
+	beforeEach?: (trees: SharedTree[]) => void;
+	/**
+	 * Function to run after edits. Used for testing the SharedTreeUndoRedoHandler in order to close stack
+	 * operations between edits.
+	 */
+	afterEdit?: () => void;
+	/** If true, runs tests for out-of-order undo/redo. True by default. */
+	testOutOfOrderRevert?: boolean;
 }
 
 /**
- * Runs revert tests for SharedTree
+ * Runs undo/redo tests for SharedTree
  */
-export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): Mocha.Suite {
-	const { localMode } = options;
+export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOptions): Mocha.Suite {
+	const { localMode, title, undo, redo, beforeEach: additionalSetup } = options;
+	const afterEdit = options.afterEdit || noop;
+	const testOutOfOrderRevert = options.testOutOfOrderRevert === undefined ? true : options.testOutOfOrderRevert;
 
 	const definition = 'node' as Definition;
 
@@ -33,27 +55,84 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 	};
 
+	const leftTrait: TraitLocation = {
+		parent: initialTree.identifier,
+		label: leftTraitLabel,
+	};
+
 	const treeOptions = {
 		initialTree,
 		localMode,
+		allowInvalid: true,
+		allowMalformed: true,
 	};
 
 	const secondTreeOptions = {
 		localMode,
 		id: 'secondTestTree',
+		allowInvalid: true,
 	};
 
-	return describe('Revert', () => {
-		it('works for Insert', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+	return describe(title, () => {
+		let tree: SharedTree;
+		let undoTree: SharedTree;
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+		function getTreeHandle() {
+			return new TreeNodeHandle(tree.currentView, initialTree.identifier);
+		}
+
+		beforeEach(() => {
+			const setupResult = setUpTestSharedTree(treeOptions);
+			tree = setupResult.tree;
+			containerRuntimeFactory = setupResult.containerRuntimeFactory;
 			const secondTree = localMode
 				? undefined
 				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
+			undoTree = secondTree || tree;
 
+			if (additionalSetup !== undefined) {
+				if (secondTree !== undefined) {
+					additionalSetup([tree, undoTree]);
+				} else {
+					additionalSetup([tree]);
+				}
+			}
+		});
+
+		it('can detach and re-insert the same node', () => {
+			const detachedId = 0 as DetachedSequenceId;
+			const editId = tree.applyEdit(
+				Change.detach(StableRange.only(left), detachedId),
+				Change.insert(detachedId, StablePlace.atStartOf(leftTrait))
+			);
+
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
+
+			const undoId: EditId = undo(tree, editId);
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
+
+			redo(tree, undoId);
+			if (!localMode) {
+				containerRuntimeFactory.processAllMessages();
+			}
+
+			expect(deepCompareNodes(getTreeHandle(), initialTree)).to.be.true;
+		});
+
+		it('works for Insert', () => {
 			const newNode = makeEmptyNode();
 
 			const insertId = tree.editor.insert(newNode, StablePlace.after(left));
+			afterEdit();
 			expect(tree.edits.length).to.equal(2);
 
 			if (!localMode) {
@@ -61,11 +140,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const insertIndex = tree.edits.getIndexOfId(insertId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(insertIndex),
-				tree.logViewer.getSnapshotInSession(insertIndex)
-			);
+			const undoId: EditId = undo(undoTree, insertId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -81,11 +156,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterUndo.length).to.equal(1);
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			redo(undoTree, undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -101,17 +172,75 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(leftTraitAfterRedo.length).to.equal(2);
 		});
 
-		it('works for Detach', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const secondTree = localMode
-				? undefined
-				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
+		// Scope of detach code and fixtures
+		{
+			const leftTraitNodes = [makeEmptyNode(), left, makeEmptyNode()];
+			const leftTraitPlaces = [
+				{ index: 0, place: StablePlace.atStartOf(leftTrait) },
+				{ index: 0, place: StablePlace.before(leftTraitNodes[0]) },
+				{ index: 1, place: StablePlace.after(leftTraitNodes[0]) },
+				{ index: 1, place: StablePlace.before(leftTraitNodes[1]) },
+				{ index: 2, place: StablePlace.after(leftTraitNodes[1]) },
+				{ index: 2, place: StablePlace.before(leftTraitNodes[2]) },
+				{ index: 3, place: StablePlace.after(leftTraitNodes[2]) },
+				{ index: 3, place: StablePlace.atEndOf(leftTrait) },
+			];
+			for (let startIndex = 0; startIndex < leftTraitPlaces.length; ++startIndex) {
+				for (let endIndex = startIndex; endIndex < leftTraitPlaces.length; ++endIndex) {
+					it(`works for Detach [${startIndex} -> ${endIndex}]`, () => {
+						tree.editor.insert(leftTraitNodes[0], StablePlace.before(left));
+						afterEdit();
+						tree.editor.insert(leftTraitNodes[2], StablePlace.after(left));
+						afterEdit();
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3);
 
+						const range = {
+							start: leftTraitPlaces[startIndex].place,
+							end: leftTraitPlaces[endIndex].place,
+						};
+						const countDetached = leftTraitPlaces[endIndex].index - leftTraitPlaces[startIndex].index;
+						const deleteId = tree.editor.delete(range);
+						afterEdit();
+
+						expect(tree.edits.length).to.equal(4);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3 - countDetached);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						// Undo testing
+						const undoId: EditId = undo(undoTree, deleteId);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						expect(tree.edits.length).to.equal(5);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3);
+
+						// Redo testing
+						redo(undoTree, undoId);
+
+						if (!localMode) {
+							containerRuntimeFactory.processAllMessages();
+						}
+
+						expect(tree.edits.length).to.equal(6);
+						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3 - countDetached);
+					});
+				}
+			}
+		}
+
+		it('works for SetValue', () => {
 			const newNode = makeEmptyNode();
 
 			tree.editor.insert(newNode, StablePlace.after(left));
-			const deleteId = tree.editor.delete(newNode);
+			afterEdit();
+			const testPayload = 5;
+			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
+			afterEdit();
 			expect(tree.edits.length).to.equal(3);
 
 			if (!localMode) {
@@ -119,68 +248,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			}
 
 			// Undo testing
-			const deleteIndex = tree.edits.getIndexOfId(deleteId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(deleteIndex),
-				tree.logViewer.getSnapshotInSession(deleteIndex)
-			);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(4);
-
-			const leftTraitAfterUndo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			expect(leftTraitAfterUndo.length).to.equal(2);
-
-			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(5);
-
-			const leftTraitAfterRedo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			expect(leftTraitAfterRedo.length).to.equal(1);
-		});
-
-		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for SetValue', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const secondTree = localMode
-				? undefined
-				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
-
-			const newNode = makeEmptyNode();
-
-			tree.editor.insert(newNode, StablePlace.after(left));
-			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, { base64: 'test' }));
-			expect(tree.edits.length).to.equal(3);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			// Undo testing
-			const setValueIndex = tree.edits.getIndexOfId(setValueId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(setValueIndex),
-				tree.logViewer.getSnapshotInSession(setValueIndex)
-			);
+			const undoId: EditId = undo(undoTree, setValueId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -197,11 +265,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 			expect(nodeAfterUndo.payload).to.be.undefined;
 
 			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+			redo(undoTree, undoId);
 
 			if (!localMode) {
 				containerRuntimeFactory.processAllMessages();
@@ -215,192 +279,161 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeTestOptions): 
 				label: leftTraitLabel,
 			});
 			const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
-			expect(nodeAfterRedo.payload?.base64).to.equal('test');
+			expect(nodeAfterRedo.payload).equal(testPayload);
 		});
 
-		it('works for out-of-order Insert', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const secondTree = localMode
-				? undefined
-				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
+		if (testOutOfOrderRevert === true) {
+			it('works for out-of-order Insert', () => {
+				const firstNode = makeEmptyNode();
+				const secondNode = makeEmptyNode();
 
-			const firstNode = makeEmptyNode();
-			const secondNode = makeEmptyNode();
+				const firstInsertId = tree.editor.insert(firstNode, StablePlace.after(left));
+				afterEdit();
+				tree.editor.insert(secondNode, StablePlace.after(left));
+				afterEdit();
+				expect(tree.edits.length).to.equal(3);
 
-			const firstInsertId = tree.editor.insert(firstNode, StablePlace.after(left));
-			tree.editor.insert(secondNode, StablePlace.after(left));
-			expect(tree.edits.length).to.equal(3);
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
+				// Undo testing
+				const undoId: EditId = undo(undoTree, firstInsertId);
 
-			// Undo testing
-			const firstInsertIndex = tree.edits.getIndexOfId(firstInsertId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(firstInsertIndex),
-				tree.logViewer.getSnapshotInSession(firstInsertIndex)
-			);
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
+				const editsAfterUndo = tree.edits;
+				expect(editsAfterUndo.length).to.equal(4);
 
-			const editsAfterUndo = tree.edits;
-			expect(editsAfterUndo.length).to.equal(4);
+				const leftTraitAfterUndo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				expect(leftTraitAfterUndo.length).to.equal(2);
 
-			const leftTraitAfterUndo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
+				// Check that the node under the left trait is the second node
+				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
+
+				// Redo testing
+				redo(undoTree, undoId);
+
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
+
+				expect(tree.edits.length).to.equal(5);
+
+				const leftTraitAfterRedo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				expect(leftTraitAfterRedo.length).to.equal(3);
 			});
-			expect(leftTraitAfterUndo.length).to.equal(2);
 
-			// Check that the node under the left trait is the second node
-			const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
-			expect(nodeAfterUndo.identifier).to.equal(secondNode.identifier);
+			it('works for out-of-order Detach', () => {
+				const firstNode = makeEmptyNode();
+				const secondNode = makeEmptyNode();
 
-			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
+				tree.editor.insert(firstNode, StablePlace.after(left));
+				afterEdit();
+				const deleteId = tree.editor.delete(firstNode);
+				afterEdit();
+				tree.editor.insert(secondNode, StablePlace.after(left));
+				afterEdit();
+				expect(tree.edits.length).to.equal(4);
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
 
-			expect(tree.edits.length).to.equal(5);
+				// Undo testing
+				const undoId: EditId = undo(undoTree, deleteId);
 
-			const leftTraitAfterRedo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
+
+				expect(tree.edits.length).to.equal(5);
+
+				const leftTraitAfterUndo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				expect(leftTraitAfterUndo.length).to.equal(3);
+
+				// Check the first node is the second one under the left trait
+				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
+
+				// Redo testing
+				redo(undoTree, undoId);
+
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
+
+				expect(tree.edits.length).to.equal(6);
+
+				const leftTraitAfterRedo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				expect(leftTraitAfterRedo.length).to.equal(2);
 			});
-			expect(leftTraitAfterRedo.length).to.equal(3);
-		});
 
-		it('works for out-of-order Detach', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const secondTree = localMode
-				? undefined
-				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
+			it('works for out-of-order SetValue', () => {
+				const newNode = makeEmptyNode();
 
-			const firstNode = makeEmptyNode();
-			const secondNode = makeEmptyNode();
+				tree.editor.insert(newNode, StablePlace.after(left));
+				afterEdit();
+				const testPayload = 10;
+				const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
+				afterEdit();
+				tree.editor.insert(newNode, StablePlace.after(left));
+				afterEdit();
+				expect(tree.edits.length).to.equal(4);
 
-			tree.editor.insert(firstNode, StablePlace.after(left));
-			const deleteId = tree.editor.delete(firstNode);
-			tree.editor.insert(secondNode, StablePlace.after(left));
-			expect(tree.edits.length).to.equal(4);
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
+				// Undo testing
+				const undoId: EditId = undo(undoTree, setValueId);
 
-			// Undo testing
-			const deleteIndex = tree.edits.getIndexOfId(deleteId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(deleteIndex),
-				tree.logViewer.getSnapshotInSession(deleteIndex)
-			);
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
 
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
+				expect(tree.edits.length).to.equal(5);
 
-			expect(tree.edits.length).to.equal(5);
+				// Check the node whose value was set now has an empty payload
+				const leftTraitAfterUndo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
+				expect(nodeAfterUndo.payload).to.be.undefined;
 
-			const leftTraitAfterUndo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
+				// Redo testing
+				redo(undoTree, undoId);
+
+				if (!localMode) {
+					containerRuntimeFactory.processAllMessages();
+				}
+
+				expect(tree.edits.length).to.equal(6);
+
+				// Check the inserted node was reinserted
+				const leftTraitAfterRedo = tree.currentView.getTrait({
+					parent: initialTree.identifier,
+					label: leftTraitLabel,
+				});
+				const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[1]);
+				expect(nodeAfterRedo.payload).equal(testPayload);
 			});
-			expect(leftTraitAfterUndo.length).to.equal(3);
-
-			// Check the first node is the second one under the left trait
-			const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[1]);
-			expect(nodeAfterUndo.identifier).to.equal(firstNode.identifier);
-
-			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(6);
-
-			const leftTraitAfterRedo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			expect(leftTraitAfterRedo.length).to.equal(2);
-		});
-
-		// TODO:#46649: Enable tests once SetValue support is added
-		it.skip('works for out-of-order SetValue', () => {
-			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const secondTree = localMode
-				? undefined
-				: setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions }).tree;
-			const undoTree = secondTree || tree;
-
-			const newNode = makeEmptyNode();
-
-			tree.editor.insert(newNode, StablePlace.after(left));
-			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, { base64: 'test' }));
-			expect(tree.edits.length).to.equal(3);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			// Undo testing
-			const setValueIndex = tree.edits.getIndexOfId(setValueId);
-			const undoId: EditId = undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(setValueIndex),
-				tree.logViewer.getSnapshotInSession(setValueIndex)
-			);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(4);
-
-			// Check the node whose value was set now has an empty payload
-			const leftTraitAfterUndo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			const nodeAfterUndo = tree.currentView.getSnapshotNode(leftTraitAfterUndo[0]);
-			expect(nodeAfterUndo.payload).to.be.undefined;
-
-			// Redo testing
-			const undoIndex = tree.edits.getIndexOfId(undoId);
-			undoTree.editor.revert(
-				tree.edits.getEditInSessionAtIndex(undoIndex),
-				tree.logViewer.getSnapshotInSession(undoIndex)
-			);
-
-			if (!localMode) {
-				containerRuntimeFactory.processAllMessages();
-			}
-
-			expect(tree.edits.length).to.equal(5);
-
-			// Check the inserted node was reinserted
-			const leftTraitAfterRedo = tree.currentView.getTrait({
-				parent: initialTree.identifier,
-				label: leftTraitLabel,
-			});
-			const nodeAfterRedo = tree.currentView.getSnapshotNode(leftTraitAfterRedo[0]);
-			expect(nodeAfterRedo.payload?.base64).to.equal('test');
-		});
+		}
 	});
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,9 +16,15 @@ import {
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChannelFactoryRegistry, ITestFluidObject } from "@fluidframework/test-utils";
+import {
+    ChannelFactoryRegistry,
+    ITestFluidObject,
+    ITestContainerConfig,
+    ITestObjectProvider,
+    DataObjectFactoryType,
+} from "@fluidframework/test-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataObjectFactoryType, generateTest, ITestContainerConfig, ITestObjectProvider } from "./compatUtils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -37,13 +43,10 @@ const testContainerConfig: ITestContainerConfig = {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
-        let args: ITestObjectProvider;
-        beforeEach(()=>{
-            args = argsFactory();
-        });
-        afterEach(() => {
-            args.reset();
+    describeFullCompat(name, (getTestObjectProvider) => {
+        let provider: ITestObjectProvider;
+        beforeEach(() => {
+            provider = getTestObjectProvider();
         });
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
@@ -54,18 +57,18 @@ function generate(
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig);
+            const container1 = await provider.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig);
+            const container2 = await provider.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
             deltaManager2 = container2.deltaManager;
 
             // Load the Container that was created by the first client.
-            const container3 = await args.loadTestContainer(testContainerConfig);
+            const container3 = await provider.loadTestContainer(testContainerConfig);
             const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
@@ -118,27 +121,27 @@ function generate(
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await args.opProcessingController.pauseProcessing();
+            await provider.opProcessingController.pauseProcessing();
 
             const addP: Promise<void>[] = [];
             for (const item of input) {
                 addP.push(collection1.add(item));
             }
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             await Promise.all(addP);
 
             const removeP1 = acquireAndComplete(collection3);
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             const removeP2 = acquireAndComplete(collection2);
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             const removeP3 = acquireAndComplete(collection1);
 
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all the incoming and outgoing
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             // Verify the value is in the correct order
             assert.strictEqual(await removeP1, output[0], "Unexpected value in document 1");
@@ -160,10 +163,10 @@ function generate(
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await args.opProcessingController.pauseProcessing();
+            await provider.opProcessingController.pauseProcessing();
 
             const waitOn2P = waitAcquireAndComplete(collection2);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             let added = false;
             waitOn2P.then(
                 (value) => {
@@ -177,28 +180,28 @@ function generate(
 
             const addP1 = collection1.add(input[0]);
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             const addP2 = collection3.add(input[1]);
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             const addP3 = collection2.add(input[2]);
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             added = true;
 
             // Now process the incoming
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             await Promise.all([addP1, addP2, addP3]);
             assert.strictEqual(await waitOn2P, output[0],
                 "Unexpected wait before add resolved value in document 2 added in document 1");
 
             const waitOn1P = waitAcquireAndComplete(collection1);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.strictEqual(await waitOn1P, output[1],
                 "Unexpected wait after add resolved value in document 1 added in document 3");
 
             const waitOn3P = waitAcquireAndComplete(collection3);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             assert.strictEqual(await waitOn3P, output[2],
                 "Unexpected wait after add resolved value in document 13added in document 2");
         });
@@ -282,7 +285,7 @@ function generate(
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
-            await args.opProcessingController.pauseProcessing();
+            await provider.opProcessingController.pauseProcessing();
 
             let addCount1 = 0;
             let addCount2 = 0;
@@ -320,26 +323,26 @@ function generate(
             const p: Promise<void>[] = [];
             p.push(collection1.add(input[0]));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             p.push(collection2.add(input[1]));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             p.push(collection3.add(input[2]));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             p.push(acquireAndComplete(collection2));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             p.push(acquireAndComplete(collection3));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             p.push(acquireAndComplete(collection1));
             // drain the outgoing so that the next set will come after
-            await args.opProcessingController.processOutgoing();
+            await provider.opProcessingController.processOutgoing();
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             await Promise.all(p);
             assert.strictEqual(await removeEmptyP, undefined, "Remove of empty collection should be undefined");
             assert.strictEqual(addCount1, 3, "Incorrect number add events in document 1");
@@ -349,10 +352,6 @@ function generate(
             assert.strictEqual(removeCount2, 3, "Incorrect number remove events in document 2");
             assert.strictEqual(removeCount3, 3, "Incorrect number remove events in document 3");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import fetch from "node-fetch";
+import { fetch } from "./fetch";
 import {
     IOdspAuthRequestInfo,
     authRequestWithRetry,
@@ -13,7 +13,7 @@ export async function getAsync(
     url: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config) as Response);
+    return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
 }
 
 export async function putAsync(
@@ -25,7 +25,7 @@ export async function putAsync(
             ...config,
             method: "PUT",
         };
-        return fetch(url, putConfig) as Response;
+        return fetch(url, putConfig);
     });
 }
 
@@ -40,13 +40,13 @@ export async function postAsync(
             body,
             method: "POST",
         };
-        return fetch(url, postConfig) as Response;
+        return fetch(url, postConfig);
     });
 }
 
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
     return safeRequestCore(async () => {
-        return fetch(url, { body, method: "POST" }) as Response;
+        return fetch(url, { body, method: "POST" });
     });
 }
 

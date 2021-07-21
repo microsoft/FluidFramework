@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict } from "assert";
 import fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { assert } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
@@ -32,6 +31,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -63,7 +63,7 @@ export function compareWithReferenceSnapshot(
      * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
      * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
      */
-    const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
+    const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
@@ -94,6 +94,8 @@ class UnknownChannel implements IChannel {
             },
             reSubmit: (content: any, localOpMetadata: unknown) => {
             },
+            applyStashedOp: (content: any) => {
+            },
         });
     }
 
@@ -110,6 +112,7 @@ class UnknownChannel implements IChannel {
                 blobNodeCount: 0,
                 handleNodeCount: 0,
                 totalBlobSize: 0,
+                unreferencedBlobSize: 0,
             },
             summary: {
                 type: SummaryType.Tree,
@@ -213,6 +216,7 @@ export async function loadContainer(
             ordererUrl: "example.com",
             storageUrl: "example.com",
         },
+        id: documentName,
         tokens: {},
         type: "fluid",
         url: `fluid-file://localhost:6000/fluid/${documentName}`,
@@ -223,8 +227,12 @@ export async function loadContainer(
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
-    const codeLoader = new API.CodeLoader({ generateSummaries: false },
+    // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
+    // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
+    const codeLoader = new API.CodeLoader({
+        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
         [
+            ["_scheduler", Promise.resolve(chaincode)],
             ["@ms/atmentions", Promise.resolve(chaincode)],
             ["@ms/augloop", Promise.resolve(chaincode)],
             ["@ms/catalog", Promise.resolve(chaincode)],
@@ -260,9 +268,18 @@ export async function loadContainer(
         options,
         logger,
     });
-    const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
-
-    return container;
+    return loader.resolve(
+        {
+            url: resolved.url,
+            headers: {
+                [LoaderHeader.clientDetails]: {
+                    // #6346
+                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
+                    // from `@fluidframework/container-loader`
+                    environment: `replay enable-legacy-create-on-load`,
+                    capabilities: { interactive: false },
+                },
+            },
+        });
 }

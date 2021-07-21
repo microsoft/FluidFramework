@@ -1,176 +1,60 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, hashFile, IsoBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
+import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    HostStoragePolicyInternal,
-    IBlob,
-    ISnapshotRequest,
-    ISnapshotResponse,
-    ISnapshotTree,
-    ISnapshotTreeBaseEntry,
-    SnapshotTreeEntry,
-    SnapshotTreeValue,
-    SnapshotType,
+    IOdspSummaryPayload,
+    IWriteSummaryResponse,
+    IOdspSummaryTree,
+    IOdspSummaryTreeBaseEntry,
+    OdspSummaryTreeEntry,
+    OdspSummaryTreeValue,
 } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
-import { TokenFetchOptions } from "./tokenFetch";
 
 /* eslint-disable max-len */
 
 // Gate that when flipped, instructs to mark unreferenced nodes as such in the summary sent to SPO.
 function gatesMarkUnreferencedNodes() {
-    // Leave override for testing purposes
-    if (typeof localStorage === "object" && localStorage !== null) {
-        if  (localStorage.FluidMarkUnreferencedNodes === "1") {
-            return true;
+    try {
+        // Leave override for testing purposes
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.FluidMarkUnreferencedNodes === "1") {
+                return true;
+            }
+            if  (localStorage.FluidMarkUnreferencedNodes === "0") {
+                return false;
+            }
         }
-        if  (localStorage.FluidMarkUnreferencedNodes === "0") {
-            return false;
-        }
-    }
+    } catch (e) {}
 
-    // We are starting disabled. This will be enabled once Apps (Bohemia) have finished GC work.
-    // See - https://github.com/microsoft/FluidFramework/issues/5127
-    return false;
-}
-
-export interface IDedupCaches {
-    // Cache which contains mapping from blob sha to the blob path in summary. Path starts from ".app" or ".protocol"
-    blobShaToPath: Map<string, string>,
-    // Cache which contains mapping from blob path to blob sha in summary. Path starts from ".app" or ".protocol".
-    // It is reverse mapping of "blobShaToPath" cache but the number entries in it are always >= number of entries in
-    // "blobShaToPath" cache as hash of multiple blobs can be same but not the path. In case the blob contents were not
-    // returned during snapshot fetch we will put the value as undefined.
-    pathToBlobSha: Map<string, string | undefined>,
-    // Cache which contains mapping from trees path to summary tree in the summary. Path starts from ".app" or ".protocol".
-    // The stored trees are fully expanded trees. However the blobs content are empty as we don't need them because their
-    // hashes are stored in the "pathToBlobSha" cache for a given path.
-    treesPathToTree: Map<string, api.ISummaryTree>,
+    return true;
 }
 
 /**
- * This class manages a summary upload. First it builts some caches from a downloaded summary which it then uses to dedup
- * blobs in the summary getting uploaded. When it receives a call to upload summary, it converts the summary tree into
- * a snapshot tree and while doing that dedup the blobs in the summary tree from the caches it built.
+ * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
+ * a snapshot tree and then uploads that to the server.
  */
 export class OdspSummaryUploadManager {
-    // This cache is associated with mapping sha to path for previous summary which belongs to lastSummaryProposalHandle.
-    private blobTreeDedupCaches: IDedupCaches = {
-        blobShaToPath: new Map(),
-        pathToBlobSha: new Map(),
-        treesPathToTree: new Map(),
-    };
-
-    // This cache is associated with mapping sha to path for last acked summary. We check this by comparing the lastSummaryProposalHandle
-    // which the driver has with the proposedHandle received in summary context in writeSummaryTree call. If they match, it means the last
-    // uploaded summary got acked. However if the summary is not acked, then we overwrite the "blobTreeDedupCaches" with this cache.
-    private previousBlobTreeDedupCaches: IDedupCaches = {
-        blobShaToPath: new Map(),
-        pathToBlobSha: new Map(),
-        treesPathToTree: new Map(),
-    };
-
     // Last proposed handle of the uploaded app summary.
     private lastSummaryProposalHandle: string | undefined;
 
     constructor(
         private readonly snapshotUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
-        private readonly hostPolicy: HostStoragePolicyInternal,
     ) {
-    }
-
-    /**
-     * Builts the caches which will be used for blob deduping.
-     * @param snapshotTree - snapshot tree from which the dedup caches are built.
-     */
-    public async buildCachesForDedup(snapshotTree: api.ISnapshotTree, blobCache: Map<string, IBlob | ArrayBuffer>) {
-        const prefixedSnapshotTree = this.addAppPrefixToSnapshotTree(snapshotTree);
-        await this.buildCachesForDedupCore(prefixedSnapshotTree, blobCache);
-        this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
-    }
-
-    /**
-     * Builts the caches which will be used for blob deduping.
-     * @param snapshotTree - snapshot tree from which the dedup caches are built.
-     * @param path - path of the current node evaluated.
-     */
-    private async buildCachesForDedupCore(
-        snapshotTree: api.ISnapshotTree,
-        blobCache: Map<string, IBlob | ArrayBuffer>,
-        path: string = ""): Promise<api.ISummaryTree>
-    {
-        assert(Object.keys(snapshotTree.commits).length === 0, "There should not be commit tree entries in snapshot");
-
-        const summaryTree: api.ISummaryTree = {
-            type: api.SummaryType.Tree,
-            tree: {},
-        };
-        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
-            // fullBlobPath does not start with "/"
-            const fullBlobPath = path === "" ? key : `${path}/${key}`;
-            let hash: string | undefined;
-            const blobValue = blobCache.get(value);
-            if (blobValue !== undefined) {
-                hash = await hashFile(
-                    blobValue instanceof ArrayBuffer ?
-                        IsoBuffer.from(blobValue) :
-                            IsoBuffer.from(blobValue.content, blobValue.encoding ?? "utf-8"),
-                );
-                this.blobTreeDedupCaches.blobShaToPath.set(hash, fullBlobPath);
-            }
-            // We are setting the content as undefined because we won't use it anywhere.
-            // Instead we will use the hash of the blob from pathToBlobSha cache.
-            summaryTree.tree[key] = {
-                type: api.SummaryType.Blob,
-                content: "",
-            };
-            (summaryTree.tree[key] as any).content = undefined;
-            this.blobTreeDedupCaches.pathToBlobSha.set(fullBlobPath, hash);
-        }
-
-        for (const [key, tree] of Object.entries(snapshotTree.trees)) {
-            // fullTreePath does not start with "/"
-            const fullTreePath = path === "" ? key : `${path}/${key}`;
-            const subtree = await this.buildCachesForDedupCore(tree, blobCache, fullTreePath);
-            this.blobTreeDedupCaches.treesPathToTree.set(fullTreePath, subtree);
-            summaryTree.tree[key] = subtree;
-        }
-        return summaryTree;
-    }
-
-    /**
-     * Adds ".app" as prefix to paths which belongs to app snapshot tree.
-     * @param snapshotTree - Snapshot tree to which complete path will be added.
-     */
-    private addAppPrefixToSnapshotTree(snapshotTree: api.ISnapshotTree): api.ISnapshotTree {
-        const prefixedSnapshotTree: api.ISnapshotTree = {
-            id: snapshotTree.id,
-            commits: snapshotTree.commits,
-            trees: {},
-            blobs: {},
-        };
-        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
-            prefixedSnapshotTree.blobs[`.app/${key}`] = value;
-        }
-        for (const [key, value] of Object.entries(snapshotTree.trees)) {
-            prefixedSnapshotTree.trees[key === ".protocol" ? `${key}` : `.app/${key}`] = value;
-        }
-        return prefixedSnapshotTree;
     }
 
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
@@ -182,16 +66,12 @@ export class OdspSummaryUploadManager {
                 ackedSummaryProposedHandle: context.proposalHandle,
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
             });
-            this.blobTreeDedupCaches = { ...this.previousBlobTreeDedupCaches };
-        } else {
-            this.previousBlobTreeDedupCaches = { ...this.blobTreeDedupCaches };
         }
-        const { result, blobTreeDedupCachesLatest } = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
+        const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
         }
-        this.blobTreeDedupCaches = { ...blobTreeDedupCachesLatest };
         this.lastSummaryProposalHandle = id;
         return id;
     }
@@ -200,40 +80,18 @@ export class OdspSummaryUploadManager {
         parentHandle: string | undefined,
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
-    ): Promise<{
-            result: ISnapshotResponse,
-            blobTreeDedupCachesLatest: IDedupCaches,
-    }> {
-        // This cache is associated with mapping sha to path for currently generated summary.
-        // We are building these caches from scratch as this will take care of the deleted blobs. The deleted blobs/trees will not come
-        // in these caches and then we will replace the old caches with these new caches, so that they have the correct values.
-        const blobTreeDedupCachesLatest: IDedupCaches = {
-            blobShaToPath: new Map(),
-            pathToBlobSha: new Map(),
-            treesPathToTree: new Map(),
-        };
-        const { snapshotTree, reusedBlobs, blobs } = await this.convertSummaryToSnapshotTree(
+    ): Promise<IWriteSummaryResponse> {
+        const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
-            // Clone as we change the blob contents.
-            cloneDeep(tree),
-            blobTreeDedupCachesLatest,
+            tree,
             ".app",
-            // Issue: https://github.com/microsoft/FluidFramework/issues/5055
-            // Stop handle expansion due to missing unreferenced flag in summary returned from server. So in
-            // case we do expand an unreferenced tree, it could again become referenced.  We would try getting
-            // unreferenced flag in trees/latest from spo so that we can use that and expand accordingly.
-            false,
             "",
-            false,
         );
-        if (!this.hostPolicy.blobDeduping) {
-            assert(reusedBlobs === 0, "No blobs should be deduped");
-        }
-        const snapshot: ISnapshotRequest = {
+        const snapshot: IOdspSummaryPayload = {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            type: SnapshotType.Channel,
+            type: "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -252,11 +110,10 @@ export class OdspSummaryUploadManager {
                     hasTenantId: !!options.tenantId,
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     blobs,
-                    reusedBlobs,
                     size: postBody.length,
                 },
                 async () => {
-                    const response = await this.epochTracker.fetchAndParseAsJSON<ISnapshotResponse>(
+                    const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
                         url,
                         {
                             body: postBody,
@@ -264,7 +121,7 @@ export class OdspSummaryUploadManager {
                             method: "POST",
                         },
                         "uploadSummary");
-                    return { result: response.content, blobTreeDedupCachesLatest };
+                    return response.content;
                 });
         });
     }
@@ -272,56 +129,31 @@ export class OdspSummaryUploadManager {
     /**
      * Following are the goals of this function.
      *  a.) Converts the summary tree to a snapshot/odsp tree to be uploaded. Always upload full snapshot tree.
-     *  b.) Blob deduping - Blob deduping means instead of creating a new blob on server we reuse a previous
-     *      blob which has same content as the blob being evaluated. In this case we send the server a path
-     *      of the previous blob as id so that server can refer to that blob and find out the actual contents
-     *      of the blob. We always send the path from the last uploaded summary as we always upload the full
-     *      snapshot tree instead of handles.
-     *      Handles: Whenever we evaluate a handle in current summary, we expect that a summary tree corresponding
-     *               to that handle exists in "treesPathToTree" cache. We get that tree and start evaluating it.
-     *               This leads us to dedup any blobs which could be deduped but wasn't because we can't refer to blobs
-     *               within same summary due to limitation of server. We set the "expanded" as true in that case.
-     *      Blobs: For a blob, we find the hash of the blobs using the contents so that we can match with the ones in
-     *             caches and if present we dedup them. Now when the expanded is true we always expect it to be present
-     *             in the cache because it means that it was also present in the last summary. So while expanding a handle
-     *             we make sure that we are not adding a new blob instead we are just deduping the ones which can be deduped.
-     *             If not expanding a handle, we still check whether the blob can de deduped. If so, we use the cachedPath
-     *             as id of the blob so that the server can refer to it.
-     *  c.) Building new trees/blobs dedup caches so that they can be used to dedup blobs in next summary.
      * @param parentHandle - Handle of the last uploaded summary or detach new summary.
      * @param tree - Summary Tree which will be converted to snapshot tree to be uploaded.
-     * @param blobTreeDedupCachesLatest - Blobs/Trees caches which will be build to be used in next summary upload
-     *  in order to dedup the blobs.
      * @param rootNodeName - Root node name of the summary tree.
      * @param path - Current path of node which is getting evaluated.
-     * @param expanded - True if we are currently expanding a handle by a tree stored in the cache.
      * @param markUnreferencedNodes - True if we should mark unreferenced nodes.
      */
     private async convertSummaryToSnapshotTree(
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
-        blobTreeDedupCachesLatest: IDedupCaches,
         rootNodeName: string,
-        allowHandleExpansion: boolean,
         path: string = "",
-        expanded: boolean = false,
         markUnreferencedNodes: boolean = gatesMarkUnreferencedNodes(),
     ) {
-        const blobDedupingEnabled = this.hostPolicy.blobDeduping ?? false;
-        const snapshotTree: ISnapshotTree = {
+        const snapshotTree: IOdspSummaryTree = {
             type: "tree",
-            entries: [] as SnapshotTreeEntry[],
+            entries: [] as OdspSummaryTreeEntry[],
         };
 
-        let reusedBlobs = 0;
         let blobs = 0;
-
         const keys = Object.keys(tree.tree);
         for (const key of keys) {
             const summaryObject = tree.tree[key];
 
             let id: string | undefined;
-            let value: SnapshotTreeValue | undefined;
+            let value: OdspSummaryTreeValue | undefined;
 
             // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
             // property is not present, the tree entry is considered referenced. If the property is present and is
@@ -330,73 +162,31 @@ export class OdspSummaryUploadManager {
             const currentPath = path === "" ? `${rootNodeName}/${key}` : `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryObject);
                     const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
-                        blobTreeDedupCachesLatest,
                         rootNodeName,
-                        allowHandleExpansion,
-                        currentPath,
-                        expanded);
+                        currentPath);
                     value = result.snapshotTree;
                     unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
-                    reusedBlobs += result.reusedBlobs;
                     blobs += result.blobs;
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    let hash: string | undefined;
-                    let cachedPath: string | undefined;
-                    // If we are expanding the handle, then the currentPath should exist in the cache as we will get the blob
-                    // hash from the cache.
-                    if (expanded && blobDedupingEnabled) {
-                        hash = this.blobTreeDedupCaches.pathToBlobSha.get(currentPath);
-                        if (hash !== undefined) {
-                            cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
-                            assert(cachedPath !== undefined, "path should be defined as path->sha mapping exists");
-                        } else {
-                            // We may not have the blob hash in case its contents were not returned during snapshot fetch.
-                            // In that case just put the current path as cached path as its contents should not have changed
-                            // in expansion flow.
-                            cachedPath = currentPath;
-                        }
+                    if (typeof summaryObject.content === "string") {
+                        value = {
+                            type: "blob",
+                            content: summaryObject.content,
+                            encoding: "utf-8",
+                        };
                     } else {
-                        if (typeof summaryObject.content === "string") {
-                            value = {
-                                type: "blob",
-                                content: summaryObject.content,
-                                encoding: "utf-8",
-                            };
-                        } else {
-                            value = {
-                                type: "blob",
-                                content: Uint8ArrayToString(summaryObject.content, "base64"),
-                                encoding: "base64",
-                            };
-                        }
-                        if (blobDedupingEnabled) {
-                            hash = await hashFile(IsoBuffer.from(value.content, value.encoding));
-                            cachedPath = this.blobTreeDedupCaches.blobShaToPath.get(hash);
-                        }
+                        value = {
+                            type: "blob",
+                            content: Uint8ArrayToString(summaryObject.content, "base64"),
+                            encoding: "base64",
+                        };
                     }
-                    (summaryObject as any).content = undefined;
-                    // If the cache has the hash of the blob and handle of last summary is also present, then use that
-                    // cached path for the given blob. Also update the caches for future use.
-                    if (cachedPath === undefined || parentHandle === undefined) {
-                        blobs++;
-                    } else {
-                        if (!blobDedupingEnabled) {
-                            assert(false, "Blob deduping is disabled");
-                        }
-                        reusedBlobs++;
-                        id = `${parentHandle}/${cachedPath}`;
-                        value = undefined;
-                    }
-                    if (hash !== undefined) {
-                        blobTreeDedupCachesLatest.blobShaToPath.set(hash, currentPath);
-                    }
-                    blobTreeDedupCachesLatest.pathToBlobSha.set(currentPath, hash);
+                    blobs++;
                     break;
                 }
                 case api.SummaryType.Handle: {
@@ -408,32 +198,7 @@ export class OdspSummaryUploadManager {
                         handlePath = `/${handlePath}`;
                     }
                     const pathKey = `${rootNodeName}${handlePath}`;
-                    // We try to get the summary tree from the cache so that we can expand it in order to dedup the blobs.
-                    // We always send whole tree no matter what, even if some part of the tree did not change in order to dedup
-                    // the blobs.
-                    const summaryTreeToExpand = this.blobTreeDedupCaches.treesPathToTree.get(pathKey);
-                    if (summaryTreeToExpand !== undefined && allowHandleExpansion && blobDedupingEnabled) {
-                        blobTreeDedupCachesLatest.treesPathToTree.set(currentPath, summaryTreeToExpand);
-                        const result = await this.convertSummaryToSnapshotTree(
-                            parentHandle,
-                            summaryTreeToExpand,
-                            blobTreeDedupCachesLatest,
-                            rootNodeName,
-                            allowHandleExpansion,
-                            currentPath,
-                            true);
-                        value = result.snapshotTree;
-                        unreferenced = markUnreferencedNodes ? summaryTreeToExpand.unreferenced : undefined;
-                        reusedBlobs += result.reusedBlobs;
-                        blobs += result.blobs;
-                    } else {
-                        if (allowHandleExpansion && blobDedupingEnabled) {
-                            // Ideally we should not come here as we should have found it in cache. But in order to successfully upload the summary
-                            // we are just logging the event. Once we make sure that we don't have any telemetry for this, we would remove this.
-                            this.logger.sendErrorEvent({ eventName: "SummaryTreeHandleCacheMiss", parentHandle, handlePath: pathKey });
-                        }
-                        id = `${parentHandle}/${pathKey}`;
-                    }
+                    id = `${parentHandle}/${pathKey}`;
                     break;
                 }
                 case api.SummaryType.Attachment: {
@@ -445,15 +210,15 @@ export class OdspSummaryUploadManager {
                 }
             }
 
-            const baseEntry: ISnapshotTreeBaseEntry = {
+            const baseEntry: IOdspSummaryTreeBaseEntry = {
                 path: encodeURIComponent(key),
                 type: getGitType(summaryObject),
             };
 
-            let entry: SnapshotTreeEntry;
+            let entry: OdspSummaryTreeEntry;
 
             if (value) {
-                assert(id === undefined);
+                assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);
                 entry = {
                     value,
                     ...baseEntry,
@@ -471,7 +236,7 @@ export class OdspSummaryUploadManager {
             snapshotTree.entries!.push(entry);
         }
 
-        return { snapshotTree, blobs, reusedBlobs };
+        return { snapshotTree, blobs };
     }
 }
 

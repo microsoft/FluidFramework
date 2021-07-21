@@ -1,0 +1,8 @@
+-R spec
+--recursive
+--timeout 180s
+--exit
+--full-trace
+--reporter cypress-multi-reporters
+--reporter-options configFile=test/mocha_reporter_config.json
+test/**/*.spec.js

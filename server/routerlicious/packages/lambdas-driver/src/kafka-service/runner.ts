@@ -1,22 +1,28 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { inspect } from "util";
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IContextErrorData, ILogger, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IRunner } from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import { promiseTimeout } from "@fluidframework/server-services-client";
+import {
+    IConsumer,
+    IContextErrorData,
+    ILogger,
+    IPartitionLambdaFactory,
+    IRunner,
+} from "@fluidframework/server-services-core";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
     private deferred: Deferred<void> | undefined;
     private partitionManager: PartitionManager | undefined;
+    private stopped: boolean = false;
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
-        private readonly consumer: IConsumer,
-        private readonly config: Provider) {
+        private readonly consumer: IConsumer) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -37,10 +43,26 @@ export class KafkaRunner implements IRunner {
             deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, logger);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
-            deferred.reject(error);
+            const metadata = {
+                messageMetaData: {
+                    documentId: errorData?.documentId,
+                    tenantId: errorData?.tenantId,
+                },
+            };
+
+            if (errorData && !errorData.restart) {
+                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.", metadata);
+                logger?.error(inspect(error), metadata);
+            } else {
+                logger?.error("KakfaRunner encountered an error that will trigger a restart.", metadata);
+                logger?.error(inspect(error), metadata);
+                deferred.reject(error);
+            }
         });
+
+        this.stopped = false;
 
         return deferred.promise;
     }
@@ -49,15 +71,23 @@ export class KafkaRunner implements IRunner {
      * Signals to stop the service
      */
     public async stop(): Promise<void> {
-        if (!this.deferred) {
+        if (!this.deferred || this.stopped) {
             return;
         }
+
+        this.stopped = true;
 
         // Stop listening for new updates
         await this.consumer.pause();
 
         // Stop the partition manager
         await this.partitionManager?.stop();
+
+        // Dispose the factory
+        await this.factory.dispose();
+
+        // Close the underlying consumer, but setting a timeout for safety
+        await promiseTimeout(30000, this.consumer.close());
 
         // Mark ourselves done once the partition manager has stopped
         this.deferred.resolve();

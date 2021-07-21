@@ -1,13 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    MapKernel,
-} from "@fluidframework/map";
 import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
 } from "@fluidframework/protocol-definitions";
@@ -28,6 +25,7 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -185,7 +183,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 
@@ -203,5 +201,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

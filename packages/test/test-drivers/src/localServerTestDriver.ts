@@ -1,32 +1,32 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    LocalDocumentServiceFactory,
-    LocalResolver,
-    createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
     private readonly _server = LocalDeltaConnectionServer.create();
 
     public readonly type = "local";
-    public readonly version = pkgVersion;
+    public get version() { return this.api.version; }
     public get server(): ILocalDeltaConnectionServer { return this._server; }
 
-    createDocumentServiceFactory(): LocalDocumentServiceFactory {
-        return new LocalDocumentServiceFactory(this._server);
+    constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
+
     }
-    createUrlResolver(): LocalResolver {
-        return new LocalResolver();
+
+    createDocumentServiceFactory(): IDocumentServiceFactory {
+        return new this.api.LocalDocumentServiceFactory(this._server);
+    }
+    createUrlResolver(): IUrlResolver {
+        return new this.api.LocalResolver();
     }
     createCreateNewRequest(testId: string): IRequest {
-        return createLocalResolverCreateNewRequest(testId);
+        return this.api.createLocalResolverCreateNewRequest(testId);
     }
 
     async createContainerUrl(testId: string): Promise<string> {

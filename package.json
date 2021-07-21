@@ -5,7 +5,7 @@
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
-  "author": "Microsoft",
+  "author": "Microsoft and contributors",
   "scripts": {
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
     "build:ci": "npm run build:genver && lerna run build:compile --stream",
@@ -20,6 +20,7 @@
     "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "bundle-analysis:run": "fluid-run-bundle-analyses",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
+    "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
     "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
     "ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
@@ -39,7 +40,9 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "readme:update": "md-magic --path \"{common,examples,packages}/*{/*/,/}*/README.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
+    "readme:update": "npm run readme:update:root && npm run readme:update:docs",
+    "readme:update:docs": "md-magic --path \"docs/content/**/*.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
+    "readme:update:root": "md-magic --path \"{common,examples,experimental,packages}/*{/*/,/}*/README.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
     "restart": "cd server/routerlicious && npm run restart",
     "start:docker": "docker-compose -f server/docker-compose.yml up",
     "start:tinylicious": "forever start node_modules/tinylicious/dist/index.js",
@@ -49,7 +52,7 @@
     "test": "npm run test:mocha && npm run test:jest && npm run test:types && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
-    "test:coverage": "nyc npm run test:report",
+    "test:coverage": "c8 npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "test:jest": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --color",
     "test:jest:bail": "assign-test-ports && lerna run test:jest --concurrency 4 --stream",
@@ -72,7 +75,24 @@
     "webpack": "lerna run --no-sort webpack --stream",
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
-  "nyc": {
+  "devDependencies": {
+    "@fluidframework/build-tools": "^0.2.29883",
+    "@fluidframework/test-tools": "^0.2.3074",
+    "@microsoft/api-documenter": "^7.12.7",
+    "@microsoft/api-extractor": "^7.16.1",
+    "c8": "^7.7.1",
+    "concurrently": "^5.2.0",
+    "copyfiles": "^2.1.0",
+    "forever": "^3.0.4",
+    "lerna": "^4.0.0",
+    "markdown-magic": "^1.0.0",
+    "rimraf": "^2.6.2",
+    "run-script-os": "^1.1.5",
+    "start-server-and-test": "^1.11.7",
+    "tinylicious": "^0.4.21640",
+    "typescript": "~4.1.3"
+  },
+  "c8": {
     "all": true,
     "cache-dir": "nyc/.cache",
     "exclude": [
@@ -80,6 +100,7 @@
       "**/src/test/**/*.ts",
       "**/dist/test/**/*.js",
       "experimental/examples/**",
+      "experimental/PropertyDDS/examples/**",
       "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
@@ -103,28 +124,15 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.19073",
-    "@fluidframework/test-tools": "^0.2.3074",
-    "@microsoft/api-documenter": "^7.12.7",
-    "@microsoft/api-extractor": "^7.13.1",
-    "concurrently": "^5.2.0",
-    "copyfiles": "^2.1.0",
-    "forever": "^3.0.4",
-    "lerna": "^3.14.1",
-    "markdown-magic": "^1.0.0",
-    "nyc": "^15.0.0",
-    "rimraf": "^2.6.2",
-    "run-script-os": "^1.1.5",
-    "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.18879",
-    "typescript": "~4.1.3"
-  },
   "fluidBuild": {
     "repoPackages": {
       "build": "common/build",
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
+      "container-def": "common/lib/container-definitions",
+      "core-interfaces": "common/lib/core-interfaces",
+      "driver-def": "common/lib/driver-definitions",
+      "protocol-def": "common/lib/protocol-definitions",
       "server": "server/routerlicious",
       "client": {
         "directory": "",
@@ -133,6 +141,7 @@
         ]
       },
       "tools": [
+        "tools/benchmark",
         "tools/generator-fluid",
         "server/tinylicious"
       ],

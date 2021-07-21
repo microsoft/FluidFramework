@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { parse } from "url";
-import { fromUtf8ToBase64, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 export interface IParsedUrl {
     id: string;
@@ -45,12 +45,14 @@ export function parseUrl(url: string): IParsedUrl | undefined {
  */
 function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
+    blobs: Map<string, ArrayBufferLike>,
 ): ISnapshotTree {
-    const treeNode = {
+    const treeNode: ISnapshotTree = {
         blobs: {},
         trees: {},
         commits: {},
         id: uuid(),
+        unreferenced: summary.unreferenced,
     };
     const keys = Object.keys(summary.tree);
     for (const key of keys) {
@@ -58,15 +60,16 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
+                treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject, blobs);
                 break;
             }
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                treeNode.blobs[blobId] = fromUtf8ToBase64(content);
+                const contentBuffer = typeof summaryObject.content === "string" ?
+                    stringToBuffer(summaryObject.content, "utf8") : summaryObject.content;
+                blobs.set(blobId, contentBuffer);
+                treeNode.blobs[blobId] = bufferToString(contentBuffer, "base64");
                 break;
             }
             case SummaryType.Handle:
@@ -88,7 +91,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 export function convertProtocolAndAppSummaryToSnapshotTree(
     protocolSummaryTree: ISummaryTree,
     appSummaryTree: ISummaryTree,
-): ISnapshotTree {
+) {
     // Shallow copy is fine, since we are doing a deep clone below.
     const combinedSummary: ISummaryTree = {
         type: SummaryType.Tree,
@@ -96,7 +99,21 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
     };
 
     combinedSummary.tree[".protocol"] = protocolSummaryTree;
-
-    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary);
-    return snapshotTree;
+    const blobs = new Map<string, ArrayBufferLike>();
+    const snapshotTree = convertSummaryToSnapshotWithEmbeddedBlobContents(combinedSummary, blobs);
+    return { snapshotTree, blobs };
 }
+
+// This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
+// a detached container can be rehydrated.
+export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+    const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
+    const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
+    assert(protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+        0x1e0 /* "Protocol and App summary trees should be present" */);
+    const { snapshotTree, blobs } = convertProtocolAndAppSummaryToSnapshotTree(
+        protocolSummaryTree,
+        appSummaryTree,
+    );
+    return { snapshotTree, blobs };
+};

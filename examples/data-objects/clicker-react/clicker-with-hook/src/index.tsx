@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,7 +11,7 @@ import {
     SyncedDataObject,
     setSyncedCounterConfig,
     useSyncedCounter,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";

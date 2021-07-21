@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,7 +16,7 @@ import {
 const PJV = require("package-json-validator").PJV;
 
 const licenseId = 'MIT';
-const author = 'Microsoft';
+const author = 'Microsoft and contributors';
 const repository = 'https://github.com/microsoft/FluidFramework';
 const homepage = 'https://fluidframework.com';
 const trademark = `
@@ -29,7 +29,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 function packageShouldBePrivate(name: string): boolean {
     // See https://github.com/microsoft/FluidFramework/issues/2625
-    if (name === "@fluid-internal/client-api") {
+    if (name === "@fluid-internal/client-api"
+        || name.startsWith("@fluid-internal/test-")         // allow test packages to be packaged
+    ) {
         return false;
     }
 

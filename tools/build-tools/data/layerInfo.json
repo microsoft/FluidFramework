@@ -20,7 +20,8 @@
             },
             "Driver-Definitions": {
                 "packages": [
-                    "@fluidframework/driver-definitions"
+                    "@fluidframework/driver-definitions",
+                    "@fluidframework/odsp-driver-definitions"
                 ],
                 "deps": [
                     "Protocol-Definitions",
@@ -151,14 +152,17 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
+                    "@fluid-experimental/frs-client",
                     "@fluid-experimental/get-container",
-                    "@fluid-experimental/fluid-static"
+                    "@fluid-experimental/tinylicious-client"                  
                 ],
                 "deps": [
+                    "Framework",
                     "Loader",
                     "Routerlicious-Driver",
                     "Server-Libs",
-                    "Test"
+                    "Server-Shared-Utils",
+                    "Test"                    
                 ]
             },
             "Runtime": {
@@ -179,11 +183,13 @@
             "Framework": {
                 "packages": [
                     "@fluid-internal/client-api",
-                    "@fluid-experimental/experimental-fluidframework",
-                    "@fluid-experimental/data-objects"
+                    "@fluid-experimental/fluid-framework",
+                    "@fluid-experimental/data-objects",
+                    "@fluid-experimental/fluid-static"
                 ],
                 "dirs": [
                     "experimental/framework/",
+                    "experimental/PropertyDDS/packages/",
                     "packages/framework/"
                 ],
                 "deps": [
@@ -197,6 +203,8 @@
                 "dirs": [
                     "examples/",
                     "experimental/examples/",
+                    "experimental/PropertyDDS/examples/",
+                    "experimental/PropertyDDS/services/",
                     "packages/agents/"
                 ],
                 "deps": [
@@ -210,7 +218,8 @@
                 "dev": true,
                 "packages": [
                     "@fluidframework/build-common",
-                    "@fluidframework/eslint-config-fluid"
+                    "@fluidframework/eslint-config-fluid",
+                    "@fluid-tools/benchmark"
                 ]
             },
             "Tools": {

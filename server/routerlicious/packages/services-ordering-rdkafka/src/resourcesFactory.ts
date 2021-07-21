@@ -1,10 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
-import { IResources, IResourcesFactory } from "@fluidframework/server-services-utils";
+import {
+    IConsumer,
+    IPartitionLambdaFactory,
+    IResources,
+    IResourcesFactory,
+} from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
@@ -40,10 +44,14 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const zookeeperEndpoint = config.get("zookeeper:endpoint");
+        const kafkaEndpoint: string = config.get("kafka:lib:endpoint");
+        const zookeeperEndpoint: string = config.get("zookeeper:endpoint");
         const numberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const replicationFactor = config.get("kafka:lib:replicationFactor");
+        const optimizedRebalance = config.get("kafka:lib:rdkafkaOptimizedRebalance");
+        const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
+        const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
+        const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -53,13 +61,24 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 
         const clientId = moniker.choose();
 
-        const endpoints = { kafka: [kafkaEndpoint], zooKeeper: [zookeeperEndpoint] };
+        const endpoints = {
+            kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
+            zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
+         };
+
         const consumer = new RdkafkaConsumer(
             endpoints,
             clientId,
             receiveTopic,
             groupId,
-            { numberOfPartitions, replicationFactor },
+            {
+                numberOfPartitions,
+                replicationFactor,
+                optimizedRebalance,
+                automaticConsume,
+                consumeTimeout,
+                maxConsumerCommitRetries,
+            },
         );
 
         return new RdkafkaResources(

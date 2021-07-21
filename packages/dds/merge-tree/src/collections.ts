@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -467,6 +467,64 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
+    walkExactMatchesForward(
+        compareFn: (node: RBNode<TKey, TData>) => number,
+        actionFn: (node: RBNode<TKey, TData>) => void,
+        continueLeftFn: (number) => boolean,
+        continueRightFn: (number) => boolean) {
+        this.nodeWalkExactMatchesForward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
+    }
+
+    nodeWalkExactMatchesForward(
+        node: RBNode<TKey, TData> | undefined,
+        compareFn: (node: RBNode<TKey, TData>) => number,
+        actionFn: (node: RBNode<TKey, TData>) => void,
+        continueLeftFn: (number) => boolean,
+        continueRightFn: (number) => boolean) {
+        if (!node) {
+            return;
+        }
+        const result: number = compareFn(node);
+        if (continueLeftFn(result)) {
+            this.nodeWalkExactMatchesForward(node.left, compareFn, actionFn, continueLeftFn, continueRightFn);
+        }
+        if (result === 0) {
+            actionFn(node);
+        }
+        if (continueRightFn(result)) {
+            this.nodeWalkExactMatchesForward(node.right, compareFn, actionFn, continueLeftFn, continueRightFn);
+        }
+    }
+
+    walkExactMatchesBackward(
+        compareFn: (node: RBNode<TKey, TData>) => number,
+        actionFn: (node: RBNode<TKey, TData>) => void,
+        continueLeftFn: (number) => boolean,
+        continueRightFn: (number) => boolean) {
+        this.nodeWalkExactMatchesBackward(this.root, compareFn, actionFn, continueLeftFn, continueRightFn);
+    }
+
+    nodeWalkExactMatchesBackward(
+        node: RBNode<TKey, TData> | undefined,
+        compareFn: (node: RBNode<TKey, TData>) => number,
+        actionFn: (node: RBNode<TKey, TData>) => void,
+        continueLeftFn: (cmp: number) => boolean,
+        continueRightFn: (cmp: number) => boolean) {
+        if (!node) {
+            return;
+        }
+        const result: number = compareFn(node);
+        if (continueRightFn(result)) {
+            this.nodeWalkExactMatchesBackward(node.right, compareFn, actionFn, continueLeftFn, continueRightFn);
+        }
+        if (result === 0) {
+            actionFn(node);
+        }
+        if (continueLeftFn(result)) {
+            this.nodeWalkExactMatchesBackward(node.left, compareFn, actionFn, continueLeftFn, continueRightFn);
+        }
+    }
+
     put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (key !== undefined) {
             if (data === undefined) {
@@ -611,16 +669,20 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 return;
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.root!.color = RBColor.RED;
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root = this.nodeRemove(this.root!, key);
+            this.removeExisting(key);
         }
         // TODO: error on undefined key
+    }
+
+    removeExisting(key: TKey) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root!.color = RBColor.RED;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.root = this.nodeRemove(this.root!, key);
     }
 
     nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
@@ -873,6 +935,10 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         this.nodeWalk(this.root, actions);
     }
 
+    walkBackward(actions: RBNodeActions<TKey, TData>) {
+        this.nodeWalkBackward(this.root, actions);
+    }
+
     nodeWalk(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
         let go = true;
         if (node) {
@@ -891,6 +957,34 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             }
             if (go) {
                 go = this.nodeWalk(node.right, actions);
+            }
+            if (go && actions.post) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
+                    go = actions.post(node);
+                }
+            }
+        }
+        return go;
+    }
+
+    nodeWalkBackward(node: RBNode<TKey, TData> | undefined, actions: RBNodeActions<TKey, TData>) {
+        let go = true;
+        if (node) {
+            if (actions.pre) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
+                    go = actions.pre(node);
+                }
+            }
+            if (node.right) {
+                go = this.nodeWalkBackward(node.right, actions);
+            }
+            if (go && actions.infix) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
+                    go = actions.infix(node);
+                }
+            }
+            if (go) {
+                go = this.nodeWalkBackward(node.left, actions);
             }
             if (go && actions.post) {
                 if (actions.showStructure || (node.color === RBColor.BLACK)) {
@@ -1060,6 +1154,8 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
 export interface IInterval {
     clone(): IInterval;
     compare(b: IInterval): number;
+    compareStart(b: IInterval): number;
+    compareEnd(b: IInterval): number;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }
@@ -1082,6 +1178,10 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
 
     remove(x: T) {
         this.intervals.remove(x);
+    }
+
+    removeExisting(x: T) {
+        this.intervals.removeExisting(x);
     }
 
     put(x: T, conflict?: IntervalConflictResolver<T>) {
@@ -1115,7 +1215,28 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         this.intervals.walk(actions);
     }
 
-    // TODO: toString()
+    mapUntil(fn: (X: T) => boolean) {
+        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
+            infix: (node) => {
+                return fn(node.key);
+            },
+            showStructure: true,
+        };
+        this.intervals.walk(actions);
+    }
+
+    mapBackward(fn: (x: T) => void) {
+        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
+            infix: (node) => {
+                fn(node.key);
+                return true;
+            },
+            showStructure: true,
+        };
+        this.intervals.walkBackward(actions);
+    }
+
+   // TODO: toString()
     match(x: T) {
         return this.intervals.gather(x, this);
     }

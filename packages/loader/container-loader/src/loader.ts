@@ -1,32 +1,36 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import {
+    IFluidCodeDetails,
     IFluidObject,
+    IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
+    IFluidModule,
     IHostLoader,
     ILoader,
-    ILoaderOptions,
+    IPendingLocalState,
+    ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
+import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
+    IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -49,53 +53,56 @@ function canUseCache(request: IRequest): boolean {
     return request.headers[LoaderHeader.cache] !== false;
 }
 
-/**
- * Loader used internally by the Container that expects all requests
- * to route into the Container itself (urls must begin with "/")
- */
-export class RelativeLoader extends EventEmitter implements ILoader {
-    // Because the loader is passed to the container during construction we need to resolve the target container
-    // after construction.
-    private readonly containerDeferred = new Deferred<Container>();
-
-    /**
-     * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
-     * to be fetched again.
-     */
+export class RelativeLoader implements ILoader {
     constructor(
-        private readonly loader: ILoader,
-        private readonly containerUrl: () => string | undefined,
+        private readonly container: Container,
+        private readonly loader: ILoader | undefined,
     ) {
-        super();
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async resolve(request: IRequest): Promise<IContainer> {
-        assert(request.url.startsWith("/"));
-        // If no headers are set that require a reload make use of the same object
-        return this.containerDeferred.promise;
+        if (request.url.startsWith("/")) {
+            if (canUseCache(request)) {
+                return this.container;
+            } else {
+                const resolvedUrl = this.container.resolvedUrl;
+                ensureFluidResolvedUrl(resolvedUrl);
+                const container = await Container.load(
+                    this.loader as Loader,
+                    {
+                        canReconnect: request.headers?.[LoaderHeader.reconnect],
+                        clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+                        resolvedUrl: {...resolvedUrl},
+                        version: request.headers?.[LoaderHeader.version] ?? undefined,
+                        loadMode: request.headers?.[LoaderHeader.loadMode],
+                    },
+                );
+                return container;
+            }
+        }
+
+        if (this.loader === undefined) {
+            throw new Error("Cannot resolve external containers");
+        }
+        return this.loader.resolve(request);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (!request.url.startsWith("/")) {
-            return { status: 404, mimeType: "text/plain", value: "nonrelative url disallowed" };
-        };
-
-        const containerUrl = this.containerUrl();
-        let container: IContainer;
-        if (canUseCache(request)) {
-            container = await this.containerDeferred.promise;
-        } else if (containerUrl === undefined) {
-            throw new Error("Container url is not provided");
-        } else {
-            container = await this.loader.resolve({ url: containerUrl, headers: request.headers });
+        if (request.url.startsWith("/")) {
+            const container = await this.resolve(request);
+            return container.request(request);
         }
-        return container.request(request);
-    }
 
-    public resolveContainer(container: Container) {
-        this.containerDeferred.resolve(container);
+        if (this.loader === undefined) {
+            return {
+                status: 404,
+                value: "Cannot request external containers",
+                mimeType: "plain/text",
+            };
+        }
+        return this.loader.request(request);
     }
 }
 
@@ -113,6 +120,39 @@ function createCachedResolver(resolver: IUrlResolver) {
         return resolveCache.get(request.url);
     };
     return cacheResolver;
+}
+
+export interface ILoaderOptions extends ILoaderOptions1{
+    summarizeProtocolTree?: true,
+}
+
+/**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+     module: IFluidModule;
+     /**
+      * Code details associated with the module. Represents a document schema this module supports.
+      * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+      * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+      */
+     details: IFluidCodeDetails;
+ }
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+    extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Load the code module (package) that is capable to interact with the document.
+     *
+     * @param source - Code proposal that articulates the current schema the document is written in.
+     * @returns - Code module entry point along with the code details associated with it.
+     */
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -135,7 +175,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -159,6 +199,11 @@ export interface ILoaderProps {
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
 /**
@@ -181,7 +226,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -205,12 +250,33 @@ export interface ILoaderServices {
      * The logger downstream consumers should construct their loggers from
      */
     readonly subLogger: ITelemetryLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
+
+/**
+ * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
+ * blobs in detached containers.
+ */
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+ };
+
+ /**
+ * To be included in the `IClientDetails.environment` value for the `IRequest` header
+ * if the client must be able to create a container at load when an existing container is not available.
+ *
+ * @deprecated - avoid using this flow, this key is only for temporarily supporting a legacy scenario.
+ */
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements IHostLoader {
+export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
@@ -221,7 +287,7 @@ export class Loader extends EventEmitter implements IHostLoader {
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
@@ -240,10 +306,8 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     constructor(loaderProps: ILoaderProps) {
-        super();
-
         const scope = { ...loaderProps.scope };
-        if (loaderProps.options?.provideScopeLoader === true) {
+        if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
 
@@ -253,8 +317,9 @@ export class Loader extends EventEmitter implements IHostLoader {
             codeLoader: loaderProps.codeLoader,
             options: loaderProps.options ?? {},
             scope,
-            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { loaderId: uuid() }),
+            subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
+            detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
@@ -285,14 +350,16 @@ export class Loader extends EventEmitter implements IHostLoader {
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
         debug(`Container creating in detached state: ${performance.now()} `);
 
-        return Container.rehydrateDetachedFromSnapshot(
-            this,
-            JSON.parse(snapshot));
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
-            const resolved = await this.resolveCore(request);
+    public async resolve(request: IRequest, pendingLocalState?: string): Promise<Container> {
+        const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName }, async () => {
+            const resolved = await this.resolveCore(
+                request,
+                pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+            );
             return resolved.container;
         });
     }
@@ -322,11 +389,12 @@ export class Loader extends EventEmitter implements IHostLoader {
                     this.containers.delete(key);
                 });
             }
-        }).catch((error) => { console.error("Error during caching Container on the Loader", error); });
+        }).catch((error) => {});
     }
 
     private async resolveCore(
         request: IRequest,
+        pendingLocalState?: IPendingLocalState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -337,12 +405,20 @@ export class Loader extends EventEmitter implements IHostLoader {
             throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        // parseUrl's id is expected to be of format "tenantId/docId"
-        const [, docId] = parsed.id.split("/");
+        if (pendingLocalState !== undefined) {
+            const parsedPendingUrl = parseUrl(pendingLocalState.url);
+            if (parsedPendingUrl?.id !== parsed.id ||
+                parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")) {
+                const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+                throw new Error(message);
+            }
+        }
+
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const shouldCache = pendingLocalState !== undefined ? false : canCache;
 
         let container: Container;
-        if (canCache) {
+        if (shouldCache) {
             const key = this.getKeyForContainerCache(request, parsed);
             const maybeContainer = await this.containers.get(key);
             if (maybeContainer !== undefined) {
@@ -350,7 +426,6 @@ export class Loader extends EventEmitter implements IHostLoader {
             } else {
                 const containerP =
                     this.loadContainer(
-                        docId,
                         request,
                         resolvedAsFluid);
                 this.addToContainerCache(key, containerP);
@@ -359,9 +434,9 @@ export class Loader extends EventEmitter implements IHostLoader {
         } else {
             container =
                 await this.loadContainer(
-                    docId,
                     request,
-                    resolvedAsFluid);
+                    resolvedAsFluid,
+                    pendingLocalState?.pendingRuntimeState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -401,11 +476,6 @@ export class Loader extends EventEmitter implements IHostLoader {
         // If set in both query string and headers, use query string
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
-        // Version === null means not use any snapshot.
-        if (request.headers[LoaderHeader.version] === "null") {
-            request.headers[LoaderHeader.version] = null;
-        }
-
         const canCache = this.canCacheForRequest(request.headers);
         debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
@@ -416,22 +486,24 @@ export class Loader extends EventEmitter implements IHostLoader {
     }
 
     private async loadContainer(
-        encodedDocId: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
+        pendingLocalState?: unknown,
     ): Promise<Container> {
-        const docId = decodeURI(encodedDocId);
         return Container.load(
             this,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                containerUrl: request.url,
-                docId,
                 resolvedUrl: resolved,
-                version: request.headers?.[LoaderHeader.version],
-                pause: request.headers?.[LoaderHeader.pause],
+                version: request.headers?.[LoaderHeader.version] ?? undefined,
+                loadMode: request.headers?.[LoaderHeader.loadMode],
+                createOnLoad: request.headers
+                    ?.[LoaderHeader.clientDetails]
+                    ?.environment
+                    ?.includes(LegacyCreateOnLoadEnvironmentKey),
             },
+            pendingLocalState,
         );
     }
 }

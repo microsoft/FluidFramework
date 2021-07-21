@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -50,11 +50,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             break;
         }
         case "tinylicious": {
-            Axios.get(tinyliciousUrls.hostUrl).then().catch((err) => {
-                throw new Error(`
+            const hostUrl = tinyliciousUrls(options).hostUrl;
+            Axios.get(hostUrl).then().catch((err) => {
+                throw new Error(`${err.message}
 
-                You're running the Webpack-Fluid-Loader with Tinylicious.
-                Tinylicious isn't running. Start the Fluid Framework Tinylicious server.
+                ERROR: Cannot connect to Tinylicious service at URL: ${hostUrl}
+
+                Please ensure the Fluid Framework Tinylicious service is running.
+                (See https://www.npmjs.com/package/tinylicious for details.)
                 `);
             });
             break;

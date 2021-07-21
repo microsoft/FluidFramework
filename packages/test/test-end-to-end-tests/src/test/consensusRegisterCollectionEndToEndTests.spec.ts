@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,15 +14,13 @@ import {
 } from "@fluidframework/register-collection";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ITestFluidObject,
-    ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import {
-    generateTest,
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
-} from "./compatUtils";
+    ITestFluidObject,
+    ChannelFactoryRegistry,
+} from "@fluidframework/test-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -39,15 +37,11 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    const tests = (argsFactory: () => ITestObjectProvider) => {
-        let args: ITestObjectProvider;
-        beforeEach(()=>{
-            args = argsFactory();
+    describeFullCompat(name, (getTestObjectProvider) => {
+        let provider: ITestObjectProvider;
+        beforeEach(() => {
+            provider = getTestObjectProvider();
         });
-        afterEach(() => {
-            args.reset();
-        });
-
         let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
@@ -55,17 +49,17 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         beforeEach(async () => {
             // Create a Container for the first client.
-            const container1 = await args.makeTestContainer(testContainerConfig);
+            const container1 = await provider.makeTestContainer(testContainerConfig);
             dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container2 = await args.loadTestContainer(testContainerConfig);
+            const container2 = await provider.loadTestContainer(testContainerConfig);
             const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
             // Load the Container that was created by the first client.
-            const container3 = await args.loadTestContainer(testContainerConfig);
+            const container3 = await provider.loadTestContainer(testContainerConfig);
             const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
@@ -114,7 +108,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write2P = collection2.write("key1", "value2");
             const write3P = collection3.write("key1", "value3");
             await Promise.all([write1P, write2P, write3P]);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             const versions = collection1.readVersions("key1");
             assert(versions);
             assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
@@ -144,28 +138,28 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write2P = collection2.write("key1", "value2");
             const write3P = collection3.write("key1", "value3");
             await Promise.all([write1P, write2P, write3P]);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
 
             const versions = collection1.readVersions("key1");
             assert(versions);
             assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
 
             await collection3.write("key1", "value4");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             const versions2 = collection1.readVersions("key1");
             assert(versions2);
             assert.strictEqual(versions2.length, 1, "Happened after value did not overwrite");
             assert.strictEqual(versions2[0], "value4", "Happened after value did not overwrite");
 
             await collection2.write("key1", "value5");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             const versions3 = collection1.readVersions("key1");
             assert(versions3);
             assert.strictEqual(versions3.length, 1, "Happened after value did not overwrite");
             assert.strictEqual(versions3[0], "value5", "Happened after value did not overwrite");
 
             await collection1.write("key1", "value6");
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             const versions4 = collection1.readVersions("key1");
             assert(versions4);
             assert.strictEqual(versions4.length, 1, "Happened after value did not overwrite");
@@ -175,7 +169,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const write8P = collection2.write("key1", "value8");
             const write9P = collection3.write("key1", "value9");
             await Promise.all([write7P, write8P, write9P]);
-            await args.ensureSynchronized();
+            await provider.ensureSynchronized();
             const versions5 = collection3.readVersions("key1");
             assert(versions5);
             assert.strictEqual(versions5.length, 3, "Concurrent happened after updates should overwrite and preserve");
@@ -213,10 +207,6 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             assert.equal(sharedMap1Prime.get("test"), "sampleValue");
             assert.equal(sharedMap2Prime.get("test"), "sampleValue");
         });
-    };
-
-    describe(name, () => {
-        generateTest(tests);
     });
 }
 

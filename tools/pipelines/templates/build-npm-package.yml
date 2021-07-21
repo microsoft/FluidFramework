@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
 # build-npm-package template to build NPM packages/projects
@@ -313,11 +313,11 @@ stages:
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
           - task: Npm@1
-            displayName: npm run build:docs
+            displayName: npm run ci:build:docs
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run build:docs'
+              customCommand: 'run ci:build:docs'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - _api-extractor-temp

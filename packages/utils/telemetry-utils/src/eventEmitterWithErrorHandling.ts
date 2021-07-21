@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { IEvent } from "@fluidframework/common-definitions";
@@ -12,20 +12,17 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-        if (event === "error") {
-            const anyListeners = super.emit(event, ...args);
-            if (!anyListeners) {
-                console.error("Nobody is listening for 'error' events");
-            }
-            return anyListeners;
-        }
-
-        let result: boolean;
         try {
-            result = super.emit(event, ...args);
+            return super.emit(event, ...args);
         } catch (error) {
-            result = this.emit("error", error);
+            // Some listener threw an error, we'll try emitting that error via the error event
+            // But not if we're already dealing with the error event, in that case just let the error be thrown
+            if (event === "error") {
+                throw error;
+            }
+
+            // Note: This will throw if no listeners are registered for the error event
+            return super.emit("error", error);
         }
-        return result;
     }
 }

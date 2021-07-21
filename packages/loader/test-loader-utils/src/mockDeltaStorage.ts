@@ -1,9 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IStream,
+} from "@fluidframework/driver-definitions";
+import { streamFromMessages } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -14,21 +18,30 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
     }
 
-    public async get(from: number, to: number): Promise<IDeltasFetchResult> {
+    public fetchMessages(
+        from: number, // inclusive
+        to: number | undefined, // exclusive
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]> {
+        return streamFromMessages(this.getCore(from, to));
+    }
+
+    private async getCore(from: number, to?: number) {
         const messages: ISequencedDocumentMessage[] = [];
         let index: number = 0;
 
         // Find first
-        while (index < this.messages.length && this.messages[index].sequenceNumber <= from) {
+        while (index < this.messages.length && this.messages[index].sequenceNumber < from) {
             index++;
         }
 
         // start reading
-        while (index < this.messages.length && this.messages[index].sequenceNumber < to) {
+        while (index < this.messages.length && (to === undefined || this.messages[index].sequenceNumber < to)) {
             messages.push(this.messages[index]);
             index++;
         }
 
-        return { messages, partialResult: false };
+        return messages;
     }
 }

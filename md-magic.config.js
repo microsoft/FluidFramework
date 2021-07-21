@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,8 +32,8 @@ You can run this example using the following steps:
    a. For an even faster build, you can add the package name to the build command, like this:
       \`npm run build:fast -- --nolint ${getPackageName(path)}\``;
 
-      const tinyliciousStep = `1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).`;
-      const finalStep = `1. Run \`npm run start\` from this directory (${getPackagePath(path)}) and open <http://localhost:8080> in a web browser to see the app running.`;
+    const tinyliciousStep = `1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).`;
+    const finalStep = `1. Run \`npm run start\` from this directory (${getPackagePath(path)}) and open <http://localhost:8080> in a web browser to see the app running.`;
 
     const steps = [
         preamble,
@@ -47,9 +47,16 @@ You can run this example using the following steps:
 /* markdown-magic config */
 module.exports = {
     transforms: {
-        /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) --> */
-        INCLUDE(content, options) {
-            const fileContents = fs.readFileSync(options.path, "utf8");
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=../file.js) --> */
+        INCLUDE_ROOT(content, options) {
+            console.log(`reading ${options.path}`);
+            let fileContents = fs.readFileSync(options.path, "utf8");
+            if (options.start || options.end) {
+                options.start = options.start || 0;
+                options.end = options.end || undefined;
+                const split = fileContents.split(/\r?\n/);
+                fileContents = split.slice(options.start, options.end).join("\n");
+            }
             return fileContents;
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,13 +7,13 @@ import { EventEmitter } from "events";
 import {
     IContext,
     IDocumentLambdaServerConfiguration,
+    IPartitionConfig,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 
-export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionConfig> {
     constructor(
         private readonly documentLambdaFactory: IPartitionLambdaFactory,
         private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
@@ -26,7 +26,7 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
         });
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+    public async create(config: IPartitionConfig, context: IContext): Promise<IPartitionLambda> {
         return new DocumentLambda(
             this.documentLambdaFactory,
             config,

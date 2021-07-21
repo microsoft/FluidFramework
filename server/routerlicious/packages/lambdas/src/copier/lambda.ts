@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,7 +24,7 @@ export class CopierLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
         const batch = boxcar.contents;
@@ -49,6 +49,8 @@ export class CopierLambda implements IPartitionLambda {
         // Update current offset (will be tied to this batch):
         this.pendingOffset = message;
         this.sendPending();
+
+        return undefined;
     }
 
     public close() {

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -72,6 +72,13 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
 
     public get IFluidHTMLView() { return this; }
 
+    public static readonly factory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
+    (
+        DiceRoller.Name,
+        DiceRoller,
+        [],
+        {},
+    );
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
      * Fluid object and all work will resolve before the view is presented to any user.
@@ -115,10 +122,4 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
-(
-    DiceRoller.Name,
-    DiceRoller,
-    [],
-    {},
-);
+export const DiceRollerInstantiationFactory = DiceRoller.factory;

@@ -1,17 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
-import * as utils from "@fluidframework/server-services-utils";
-import { configureLogging } from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
+import { runService } from "@fluidframework/server-services-shared";
 
 export function execute(
-    factoryFn: (name: string, lambda: string) => utils.IResourcesFactory<IKafkaResources>,
+    factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
     configOrPath: nconf.Provider | string) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const packageDetails = require("../../package.json");
@@ -24,7 +25,7 @@ export function execute(
             configureLogging(configOrPath);
 
             action = true;
-            utils.runService(
+            runService(
                 factoryFn(name, lambda),
                 new KafkaRunnerFactory(),
                 winston,

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,23 +14,21 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ICodeLoader,
     IContainerContext,
     IDeltaManager,
     ILoader,
     IRuntime,
-    IRuntimeState,
     ICriticalContainerError,
     ContainerWarning,
     AttachState,
-    IFluidModule,
     ILoaderOptions,
+    IRuntimeFactory,
+    ICodeLoader,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IDocumentAttributes,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -44,7 +42,7 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { NullChaincode, NullRuntime } from "./nullRuntime";
+import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -52,10 +50,9 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IFluidObject,
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -64,8 +61,9 @@ export class ContainerContext implements IContainerContext {
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
-        previousRuntimeState: IRuntimeState,
         updateDirtyContainerState: (dirty: boolean) => void,
+        existing: boolean,
+        pendingLocalState?: unknown,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -73,7 +71,6 @@ export class ContainerContext implements IContainerContext {
             codeLoader,
             codeDetails,
             baseSnapshot,
-            attributes,
             deltaManager,
             quorum,
             loader,
@@ -82,9 +79,10 @@ export class ContainerContext implements IContainerContext {
             submitSignalFn,
             closeFn,
             version,
-            previousRuntimeState,
-            updateDirtyContainerState);
-        await context.load();
+            updateDirtyContainerState,
+            existing,
+            pendingLocalState);
+        await context.instantiateRuntime(existing);
         return context;
     }
 
@@ -100,14 +98,6 @@ export class ContainerContext implements IContainerContext {
 
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
-    }
-
-    public get existing(): boolean | undefined {
-        return this.container.existing;
-    }
-
-    public get branch(): string {
-        return this.attributes.branch;
     }
 
     public get connected(): boolean {
@@ -141,7 +131,7 @@ export class ContainerContext implements IContainerContext {
         return this._baseSnapshot;
     }
 
-    public get storage(): IDocumentStorageService | undefined {
+    public get storage(): IDocumentStorageService {
         return this.container.storage;
     }
 
@@ -159,28 +149,16 @@ export class ContainerContext implements IContainerContext {
         return this._disposed;
     }
 
-    private readonly fluidModuleP = new LazyPromise<IFluidModule>(async () => {
-        if (this.codeDetails === undefined) {
-            const fluidExport =  new NullChaincode();
-            return {
-                fluidExport,
-            };
-        }
+    public get codeDetails() { return this._codeDetails; }
 
-        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
-            async () => this.codeLoader.load(this.codeDetails),
-        );
-
-        return fluidModule;
-    });
+    private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeLoader,
-        public readonly codeDetails: IFluidCodeDetails,
+        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
-        private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
@@ -189,21 +167,16 @@ export class ContainerContext implements IContainerContext {
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
-        public readonly previousRuntimeState: IRuntimeState,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
+        public readonly existing: boolean,
+        public readonly pendingLocalState?: unknown,
 
     ) {
         this.logger = container.subLogger;
+        this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
+            async () => this.loadCodeModule(_codeDetails),
+        );
         this.attachListener();
-    }
-
-    private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
-        this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
-        });
     }
 
     public dispose(error?: Error): void {
@@ -225,13 +198,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.loadedFromVersion;
     }
 
-    /**
-     * Snapshot and close the runtime, and return its state if available
-     */
-    public async snapshotRuntimeState(): Promise<IRuntimeState> {
-        return this.runtime.stop();
-    }
-
     public get attachState(): AttachState {
         return this.container.attachState;
     }
@@ -243,7 +209,7 @@ export class ContainerContext implements IContainerContext {
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
 
-        assert(connected === this.connected, "Mismatch in connection state while setting");
+        assert(connected === this.connected, 0x0de /* "Mismatch in connection state while setting" */);
 
         runtime.setConnectionState(connected, clientId);
     }
@@ -260,16 +226,12 @@ export class ContainerContext implements IContainerContext {
         return this.runtime.request(path);
     }
 
-    public async reloadContext(): Promise<void> {
-        return this.container.reloadContext();
-    }
-
-    public hasNullRuntime() {
-        return this.runtime instanceof NullRuntime;
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
+    }
+
+    public getPendingLocalState(): unknown {
+        return this.runtime.getPendingLocalState();
     }
 
     /**
@@ -284,7 +246,8 @@ export class ContainerContext implements IContainerContext {
             comparers.push(maybeCompareCodeLoader.IFluidCodeDetailsComparer);
         }
 
-        const maybeCompareExport = (await this.fluidModuleP).fluidExport;
+        const moduleWithDetails = await this._fluidModuleP;
+        const maybeCompareExport = moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
@@ -299,7 +262,10 @@ export class ContainerContext implements IContainerContext {
         }
 
         for (const comparer of comparers) {
-            const satisfies = await comparer.satisfies(this.codeDetails, constraintCodeDetails);
+            const satisfies = await comparer.satisfies(
+                moduleWithDetails.details,
+                constraintCodeDetails,
+            );
             if (satisfies === false) {
                 return false;
             }
@@ -307,11 +273,48 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    private async load() {
-        const maybeFactory = (await this.fluidModuleP).fluidExport.IRuntimeFactory;
-        if (maybeFactory === undefined) {
+    public notifyAttaching() {
+        this.runtime.setAttachState(AttachState.Attaching);
+    }
+
+    // #region private
+
+    private async getRuntimeFactory(): Promise<IRuntimeFactory> {
+        const runtimeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
+        if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
-        this._runtime = await maybeFactory.instantiateRuntime(this);
+
+        return runtimeFactory;
     }
+
+    private async instantiateRuntime(existing: boolean) {
+        const runtimeFactory = await this.getRuntimeFactory();
+        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
+    }
+
+    private attachListener() {
+        this.container.once("attached", () => {
+            this.runtime.setAttachState(AttachState.Attached);
+        });
+    }
+
+    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
+        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(codeDetails),
+        );
+
+        if ("module" in loadCodeResult) {
+            const { module, details } = loadCodeResult;
+            return {
+                module,
+                details: details ?? codeDetails,
+            };
+        } else {
+            return { module: loadCodeResult, details: codeDetails };
+        }
+    }
+    // #endregion
 }

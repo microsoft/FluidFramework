@@ -1,9 +1,8 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/core-interfaces";
 import {
     FileMode,
@@ -17,6 +16,7 @@ import {
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
@@ -157,12 +157,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const blob = await storage.readBlob(snapshotFileName);
-        const rawContent = bufferToString(blob, "utf8");
-
-        const content = rawContent !== undefined
-            ? JSON.parse(rawContent) as ICounterSnapshotFormat
-            : { value: 0 };
+        const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
         this._value = content.value;
     }
@@ -198,5 +193,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
                     throw new Error("Unknown operation");
             }
         }
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
