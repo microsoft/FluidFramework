@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export const cell: string;
-export const math: string;
-export const input: string;
+export { SharedXTree } from "./tree";
+export { SharedXTreeFactory } from "./runtime";

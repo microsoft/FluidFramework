@@ -40,10 +40,6 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
-    /**
-     * @deprecated deprecated
-     */
-    supportsTags?: true;
     send(event: ITelemetryBaseEvent): void;
 }
 
