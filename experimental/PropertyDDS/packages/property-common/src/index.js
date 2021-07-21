@@ -16,7 +16,7 @@ const HTTPError = require('./error_objects/http_error');
 const HTTPErrorNoStack = require('./error_objects/http_error_no_stack');
 const DeferredPromise = require('./deferred_promise');
 const DeterministicRandomGenerator = require('./deterministic_random_generator');
-const { HashCalculator } = require('./hash_calculator');
+const { calculateHash } = require('./hash_calculator');
 
 module.exports = {
     constants,
@@ -32,5 +32,5 @@ module.exports = {
     FlaggedError,
     DeferredPromise,
     DeterministicRandomGenerator,
-    HashCalculator
+    calculateHash
 };

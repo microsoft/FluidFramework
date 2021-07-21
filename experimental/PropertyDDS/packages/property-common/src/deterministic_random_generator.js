@@ -6,8 +6,9 @@
  * @fileoverview Helper class to create a deterministic sequence of random numbers.
  */
 
-const { guidToUint32x4 } = require('./guid_utils');
-const { hashCombine4xUint32, HashCalculator } = require('./hash_calculator');
+const { hashCombine4xUint32, guidToUint32x4 } = require('./guid_utils');
+
+const { calculateHash } = require('./hash_calculator');
 const _ = require('lodash');
 
 /**
@@ -25,9 +26,7 @@ var DeterministicRandomGenerator = function (in_seed) {
     if (_.isString(in_seed)) {
         this._guid1 = guidToUint32x4(in_seed);
     } else if (_.isNumber(in_seed)) {
-        const hashCalculator = new HashCalculator()
-        hashCalculator.pushFloat64(in_seed);
-        this._guid1 = guidToUint32x4(hashCalculator.getHash());
+        this._guid1 = guidToUint32x4(calculateHash(String(in_seed)));
     }
     this._guid2 = new Uint32Array(4);
     this._guid2[0] = (this._guid1[0] + 1) >>> 0;

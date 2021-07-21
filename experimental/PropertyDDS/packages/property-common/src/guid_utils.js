@@ -262,13 +262,26 @@ var isGUID = function (in_guid) {
  * Performs a hash combination operation on the two supplied Uint32 arrays of length 4 (using
  * a variant of the algorithm from boost::hash_combine
  *
- * @param {Uint32Array} in_array1 First array
- * @param {Uint32Array} in_array2 Second array
- * @return {Uint32Array} New combined hash
+ * @param {Uint32Array | Array.<number>} in_array1 - first hash array
+ * @param {Uint32Array | Array.<number>} in_array2 - second hash array
+ * @param {Uint32Array | Array.<number>} [io_result] optional array to write to
+ *
+ * @return {Uint32Array | Array.<number>}
+ * @alias property-common.hashCombine4xUint32
  */
-var hashCombine4xUint32 = function (in_array1, in_array2) {
 
-    var accumulated = new Uint32Array(in_array2);
+var hashCombine4xUint32 = function (in_array1, in_array2, io_result) {
+
+    var accumulated = io_result;
+    if (accumulated === undefined) {
+        accumulated = new Uint32Array(in_array2);
+    } else {
+        accumulated[0] = in_array2[0];
+        accumulated[1] = in_array2[1];
+        accumulated[2] = in_array2[2];
+        accumulated[3] = in_array2[3];
+    }
+
     accumulated[0] += 0x9e3779b9;
     accumulated[1] += 0x638f227;
     accumulated[2] += 0x1aff2bad;
