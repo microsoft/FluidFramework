@@ -1,119 +1,132 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
+
 /**
  * @fileoverview A chronometer implementation backed by a high resolution timer. Implementation
  *   falls back to milliseconds precision when high resolution timers are not supported.
  */
 
-/**
- * Creates and starts a new Chronometer.
- */
-var Chronometer = function () {
-    this.start();
-};
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
+declare let process: any;
 
 /**
  * All the chronometer implementations (hrtime, window.performance, and date:
  */
-var implementations = {
+const implementations = {
     // Node implementation uses hrtime
     node: {
-        name: 'hrtime',
-        _start: function () {
+        name: "hrtime",
+        _startTime: 0,
+        _stopTime: undefined as any[] | undefined,
+        stop: () => { },
+
+        _start() {
             this._startTime = process.hrtime();
         },
-        _stop: function () {
+        _stop() {
             this._stopTime = process.hrtime(this._startTime);
-            return this;
         },
-        _elapsedSec: function () {
-            if (!this._stopTime) {
+        _elapsedSec(): number {
+            if (this._stopTime === undefined) {
                 this.stop();
             }
-            return this._stopTime[0] + this._stopTime[1] / 1000000000;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return (this._stopTime![0] as number) + (this._stopTime![1] as number) / 1000000000;
         },
-        _elapsedMilliSec: function () {
-            if (!this._stopTime) {
+        _elapsedMilliSec(): number {
+            if (this._stopTime === undefined) {
                 this.stop();
             }
-            return this._stopTime[0] * 1000 + this._stopTime[1] / 1000000;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this._stopTime![0] * 1000 + this._stopTime![1] / 1000000;
         },
-        _elapsedMicroSec: function () {
-            if (!this._stopTime) {
+        _elapsedMicroSec(): number {
+            if (this._stopTime === undefined) {
                 this.stop();
             }
-            return this._stopTime[0] * 1000000 + this._stopTime[1] / 1000;
-        }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this._stopTime![0] * 1000000 + this._stopTime![1] / 1000;
+        },
     },
     // Browser implementation uses window.performance (if available):
     performance: {
-        name: 'window.performance',
-        _start: function () {
+        name: "window.performance",
+        _startTime: 0,
+        _stopTime: 0,
+
+        stop: () => { },
+        elapsedMilliSec: () => 0,
+
+        _start() {
             this._startTime = window.performance.now();
         },
-        _stop: function () {
+        _stop() {
             this._stopTime = window.performance.now();
-            return this;
         },
-        _elapsedSec: function () {
+        _elapsedSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
             return this.elapsedMilliSec() / 1000;
         },
-        _elapsedMilliSec: function () {
+        _elapsedMilliSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
             return this._stopTime - this._startTime;
         },
-        _elapsedMicroSec: function () {
+        _elapsedMicroSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
             return this.elapsedMilliSec() * 1000;
-        }
+        },
     },
     // Fallback is Date implementation if none of the above is supported:
     date: {
-        name: 'date',
-        _start: function () {
+        name: "date",
+        _startTime: new Date(),
+        _stopTime: undefined as Date | undefined,
+        stop: () => { },
+        elapsedMilliSec: () => 0,
+
+        _start() {
             this._startTime = new Date();
         },
-        _stop: function () {
+        _stop() {
             this._stopTime = new Date();
-            return this;
         },
-        _elapsedSec: function () {
+        _elapsedSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
             return this.elapsedMilliSec() / 1000;
         },
-        _elapsedMilliSec: function () {
+        _elapsedMilliSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
-            return this._stopTime - this._startTime;
+            return (this._stopTime as Date).getTime() - this._startTime.getTime();
         },
-        _elapsedMicroSec: function () {
+        _elapsedMicroSec(): number {
             if (!this._stopTime) {
                 this.stop();
             }
             return this.elapsedMilliSec() * 1000;
-        }
-    }
+        },
+    },
 };
 
-var impl;
-if (typeof process !== 'undefined' && typeof process.hrtime !== 'undefined') {
+let impl: typeof implementations.date | typeof implementations.node | typeof implementations.performance;
+if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
     impl = implementations.node;
 } else if (
-    typeof window !== 'undefined' &&
-    typeof window.performance !== 'undefined' &&
-    typeof window.performance.now !== 'undefined'
+    typeof window !== "undefined" &&
+    typeof window.performance !== "undefined" &&
+    typeof window.performance.now !== "undefined"
 ) {
     impl = implementations.performance;
 } else {
@@ -121,62 +134,74 @@ if (typeof process !== 'undefined' && typeof process.hrtime !== 'undefined') {
 }
 
 /**
- * Sets the chronometer start time.
+ * Creates and starts a new Chronometer.
  */
-Chronometer.prototype.start = impl._start;
 
-/**
- * Stops the chronometer. Stopped chronometers can be reused by calling {@link #start} again.
- * @return {Chronometer} The chronometer instance, so that callers can do this:
- *   let elapsedMS = chrono.stop().elapsedMS();
- */
-Chronometer.prototype.stop = impl._stop;
+export class Chronometer {
+    constructor() {
+        this.start();
+    }
 
-/**
- * @return {number} How many microseconds have elapsed between the last call to {@link #start}
- *   (or the chronometer creation), and {@link #stop}. Implementations that are not precise
- *   enough may return "elapsedMilliSec() * 1000". Measuring elapsed time causes the chronometer
- *   to be stopped if required (if the chrono is not stopped when this method is called).
- */
-Chronometer.prototype.elapsedMicroSec = impl._elapsedMicroSec;
+    /**
+     * Sets the chronometer start time.
+     */
+    start() {
+        return impl._start.call(this);
+    }
 
-/**
- * @return {number} How many milliseconds have elapsed between the last call to {@link #start}
- *   (or the chronometer creation), and {@link #stop}. Measuring elapsed time causes the
- *   chronometer to be stopped if required (if the chrono is not stopped when this method is
- *   called).
- */
-Chronometer.prototype.elapsedMilliSec = impl._elapsedMilliSec;
+    /**
+     * Stops the chronometer. Stopped chronometers can be reused by calling {@link Chronometer.start} again.
+     *
+     * @returns The chronometer instance, so that callers can do this:
+     *   let elapsedMS = chrono.stop().elapsedMS();
+     */
+    stop(): Chronometer {
+        impl._stop.call(this);
+        return this;
+    }
 
-/**
- * @return {number} How many seconds have elapsed between the last call to {@link #start}
- *   (or the chronometer creation), and {@link #stop}. Measuring elapsed time causes the
- *   chronometer to be stopped if required (if the chrono is not stopped when this method is
- *   called).
- */
-Chronometer.prototype.elapsedSec = impl._elapsedSec;
+    /**
+     * @returns How many microseconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Implementations that are not precise
+     *   enough may return "elapsedMilliSec() * 1000". Measuring elapsed time causes the chronometer
+     *   to be stopped if required (if the chrono is not stopped when this method is called).
+     */
+    elapsedMicroSec(): number {
+        return impl._elapsedMicroSec.call(this);
+    }
 
-/**
- * A utility function to measure promise execution time.
- * @param {Function} in_promiseFn A function that returns a promise whose execution time is to be
- *   measured.
- * @return {Promise} A Promise that resolves with an object: {
- *   {object} chrono A stopped chronometer instance from which to get the elapsed time,
- *   {*} result The resolved result of the promise returned by in_promiseFn
- * }
- */
-Chronometer.timePromise = function (in_promiseFn) {
-    return new Promise(function (resolve, reject) {
-        var chrono = new Chronometer();
-        return in_promiseFn()
-            .then(function (result) {
-                chrono.stop();
-                resolve({ chrono: chrono, result: result });
-            })
-            .catch(function (error) {
-                reject(error);
-            });
-    });
-};
+    /**
+     * @returns How many milliseconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
+     *   chronometer to be stopped if required (if the chrono is not stopped when this method is
+     *   called).
+     */
+    elapsedMilliSec(): number {
+        return impl._elapsedMilliSec.call(this);
+    }
 
-module.exports = Chronometer;
+    /**
+     * @returns How many seconds have elapsed between the last call to {@link Chronometer.start}
+     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
+     *   chronometer to be stopped if required (if the chrono is not stopped when this method is
+     *   called).
+     */
+    elapsedSec(): number {
+        return impl._elapsedSec.call(this);
+    }
+
+    /**
+     * A utility function to measure promise execution time.
+     * @param promiseFn - A function that returns a promise whose execution time is to be
+     *   measured.
+     * @returns A Promise that resolves with an object with properties:
+     *    - chrono A stopped chronometer instance from which to get the elapsed time,
+     *    - result The resolved result of the promise returned by promiseFn
+     */
+    static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer, result: T }> {
+        const chrono = new Chronometer();
+        const result = await promiseFn();
+        chrono.stop();
+        return { chrono, result };
+    }
+}
