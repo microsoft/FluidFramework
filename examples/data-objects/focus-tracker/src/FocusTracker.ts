@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    DataObject,
-    DataObjectFactory,
+    FluidContainer,
     IMember,
     IServiceAudience,
     SignalManager,
@@ -18,11 +17,10 @@ export interface IFocusTrackerEvents extends IEvent {
 }
 
 /**
- * Data object example of using the audience with signals to track focus
- * state of connected clients without writing changes to a DDS
+ * Example of using the audience with signals to track focus state of connected clients
+ * without writing changes to a DDS.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents> implements EventEmitter {
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
 
     /**
@@ -44,33 +42,17 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         this.emit("focusChanged");
     };
 
-    private _audience: IServiceAudience<IMember> | undefined;
-    public get audience(): IServiceAudience<IMember> {
-        if (this._audience === undefined) {
-            throw new Error("no audience");
-        }
-        return this._audience;
-    }
+    public constructor(
+        container: FluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signalManager: SignalManager,
+    ) {
+        super();
 
-    private _signalManager: SignalManager | undefined;
-    private get signalManager(): SignalManager {
-        if (this._signalManager === undefined) {
-            throw new Error("no signalManager");
-        }
-        return this._signalManager;
-    }
-
-    public init(newAudience: IServiceAudience<IMember>) {
-        if (this._audience !== undefined || this._signalManager !== undefined) {
-            throw new Error("init only once");
-        }
-        this._audience = newAudience;
-        this._signalManager = new SignalManager(this.runtime);
-
-        this._audience.on("memberAdded", (clientId: string, member: IMember) => {
+        this.audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
         });
-        this._audience.on("memberRemoved", (clientId: string, member: IMember) => {
+        this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
             const clientIdMap = this.focusMap.get(member.userId);
             if (clientIdMap !== undefined) {
                 clientIdMap.delete(clientId);
@@ -81,6 +63,9 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
             this.emit("focusChanged");
         });
 
+        this.signalManager.on("error", (error) => {
+            this.emit("error", error);
+        });
         this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
@@ -93,21 +78,12 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         window.addEventListener("blur", () => {
             this.sendFocusSignal(false);
         });
-        this.runtime.on("connected", () => {
+
+        container.on("connected", () => {
             this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
         });
         this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
     }
-
-    public static get Name() { return "@fluid-example/focus-tracker"; }
-
-    public static readonly factory = new DataObjectFactory<FocusTracker, undefined, undefined, IFocusTrackerEvents>
-    (
-        FocusTracker.Name,
-        FocusTracker,
-        [],
-        {},
-    );
 
     /**
      * Alert all connected clients that there has been a change to a client's focus
