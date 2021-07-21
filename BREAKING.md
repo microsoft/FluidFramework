@@ -108,6 +108,13 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
 
+_\[edit\]_
+
+This actually was a breaking change in 0.40, in that the type of the `event` parameter of `ITelemetryBaseLogger.send` changed to
+a more inclusive type which needs to be accounted for in implementations.  However, in releases 0.40 through 0.44,
+_no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_.  We are preparing to do so
+soon, and will include an entry in BREAKING.md when we do.
+
 ### IContainerRuntimeDirtyable removed
 The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
 
@@ -122,7 +129,6 @@ The `RouterliciousDocumentServiceFactory` constructor no longer accepts the foll
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
 - [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
-- [ITelemetryBaseLogger now has a supportsTags property (not breaking)](#itelemetrybaselogger-now-has-a-supportstags-property-not-breaking)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
