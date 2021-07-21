@@ -2,68 +2,47 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-use-before-define */
+
 /**
  * Creates a Promise that can be fulfilled or rejected later in an arbitrary manner (rather than
  * through the constructor's executor).
  * For example, a deferred promise could be fulfilled after waiting for many asynchronous
  * tasks to terminate. This class becomes useful when combining classic async calls with promises.
  */
+export class DeferredPromise<T> implements Promise<T> {
+    private _resolveSelf;
+    private _rejectSelf;
+    private readonly promise: Promise<T>;
 
-'use strict';
+    constructor() {
+        this.promise = new Promise((resolve, reject) => {
+            this._resolveSelf = resolve;
+            this._rejectSelf = reject;
+        });
+    }
 
-/**
- * Create a new DeferredPromise.
- * @constructor
- */
-var DeferredPromise = function () {
-    var lResolve, lReject;
-    var p = new Promise(function (resolve, reject) {
-        lResolve = resolve;
-        lReject = reject;
-    });
+    public async finally(onfinally?: () => void): Promise<T> {
+        throw new Error("Method not implemented.");
+    }
 
-    p._deferredPromiseResolve = lResolve;
-    p._deferredPromiseReject = lReject;
-    p.getCb = _getCb;
-    p.resolve = _resolve;
-    p.reject = _reject;
-    return p;
-};
+    public async then<TResult1 = T, TResult2 = never>(
+        onfulfilled?: ((value: T) =>
+            TResult1 | PromiseLike<TResult1>) | undefined | null,
+        onrejected?: ((reason: any) =>
+            TResult2 | PromiseLike<TResult2>) | undefined | null,
+    ): Promise<TResult1 | TResult2> {
+        return this.promise.then(onfulfilled, onrejected);
+    }
 
-DeferredPromise.prototype = Object.create(Promise.prototype);
-DeferredPromise.prototype.constructor = Promise;
+    public async catch<TResult = never>(
+        onrejected?: ((reason: any) =>
+            TResult | PromiseLike<TResult>) | undefined | null,
+    ): Promise<T | TResult> {
+        return this.promise.then(onrejected);
+    }
 
-/**
- * Fetches a node style callback that fulfills the promise when called.
- * @return {Function} A node style callback that fulfills the promise when called.
- */
-var _getCb = function () {
-    var that = this;
+    public resolve(val: T) { this._resolveSelf(val); }
+    public reject(reason: any) { this._rejectSelf(reason); }
 
-    return function (error, result) {
-        if (error) {
-            return that.reject(error);
-        }
-
-        return that.resolve(result);
-    };
-};
-
-/**
- * Resolves the promise.
- * @param {*} in_result The promise result.
- */
-var _resolve = function (in_result) {
-    this._deferredPromiseResolve(in_result);
-};
-
-/**
- * Rejects the promise.
- * @param {*} in_error The error.
- */
-var _reject = function (in_error) {
-    this._deferredPromiseReject(in_error);
-};
-
-module.exports = DeferredPromise;
+    [Symbol.toStringTag]: "Promise";
+}

@@ -1,14 +1,15 @@
+/* eslint-disable no-bitwise */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Utility functions related to handling GUIDs
  */
 
-const { generateRandomUInt32Array } = require('../platform-dependent');
-const { repeatString } = require('./strings/index');
-const base64js = require('base64-js');
+import base64js from "base64-js";
+import { generateRandomUInt32Array } from "../platform-dependent";
 const UINT_32HASH_PRIME = 16777619;
 
 /**
@@ -19,69 +20,98 @@ const UINT_32HASH_PRIME = 16777619;
  * Page 357, algorithm name: Ranlim32
  *
  */
-const guidRNG = {};
+const guidRNG = {
+    u: 0,
+    v: 0,
+    w1: 0,
+    w2: 0,
+    isInitialized: false,
+
+    /**
+     * Initialize RNG.
+     * This function need to be called once, before the first guid gets created.
+     *
+     * @param in_seed - Optional 32-bit seed for guid RNG;
+     *                           If no seed is given, a combination of system's
+     *                           local time and Math.random() is used.
+     * @param in_enforceReInitialization - Optionally enforce re-initialization with another seed
+     *
+     * @returns  The seed used to initialize the RNG;
+     *          If re-initialization is not enforced,
+     *          a zero indicates that the RNG was not re-seeded.
+     * @alias property-common.initializeGUIDGenerator
+     */
+    initialize(in_seed?: number, in_enforceReInitialization: boolean = false): number {
+        // Quit if the RNG has already been initialized and we do not
+        // want to enforce a re-initialization with a new seed
+        if (this.isInitialized && !in_enforceReInitialization) {
+            return 0;
+        } else {
+            this.isInitialized = true;
+
+            if (in_seed === undefined) {
+                const randomValues = generateRandomUInt32Array(4);
+                this.u = randomValues[0];
+                this.v = randomValues[1];
+                this.w1 = randomValues[2];
+                this.w2 = randomValues[3];
+            } else {
+                this.v = 224461437;
+                this.w1 = 521288629;
+                this.w2 = 362436069;
+
+                this.u = in_seed ^ this.v;
+                this.genRandUInt32();
+                this.v = this.u;
+                this.genRandUInt32();
+            }
+            return -1;
+        }
+    },
+
+    /**
+     * @returns 32-bit random number based on the RNGs internal state
+     */
+    genRandUInt32(): number {
+        this.u = multiply_uint32(this.u, 2891336453) + 1640531513;
+        this.v ^= this.v >>> 13;
+        this.v ^= this.v << 17;
+        this.v = ((this.v >>> 5) ^ this.v) >>> 0;
+
+        this.w1 = multiply_uint32(33378, (this.w1 & 0xffff)) + (this.w1 >>> 16);
+        this.w2 = multiply_uint32(57225, (this.w2 & 0xffff)) + (this.w2 >>> 16);
+
+        let x = this.u ^ (this.u << 9);
+        x ^= x >>> 17;
+        x ^= x << 6;
+
+        let y = this.w1 ^ (this.w1 << 17);
+        y ^= y >>> 15;
+        y ^= y << 5;
+        return (((x >>> 0) + this.v) ^ ((y >>> 0) + this.w2)) >>> 0;
+    },
+};
 
 /**
  * Check if guid is base64 based on the length
  * The length of base16 guid is 36, base64 - 22
  *
- * @param {string} guid Input guid
- * @return {boolean} True if guid is base64
+ * @param guid - Input guid
+ * @returns True if guid is base64
  */
-var isBase64 = function (guid) {
-    return guid.length === 22;
-};
+const isBase64 = (guid: string): boolean => guid.length === 22;
 
-/**
- * Initialize RNG.
- * This function need to be called once, before the first guid gets created.
- *
- * @param {number} [in_seed] Optional 32-bit seed for guid RNG;
- *                           If no seed is given, a combination of system's
- *                           local time and Math.random() is used.
- * @param {boolean} [in_enforceReInitialization] Optionally enforce re-initialization with another seed
- *
- * @return {number} The seed used to initialize the RNG;
- *                  If re-initialization is not enforced,
- *                  a zero indicates that the RNG was not re-seeded.
- * @alias property-common.initializeGUIDGenerator
- */
-guidRNG.initialize = function (in_seed, in_enforceReInitialization) {
-
-    // Quit if the RNG has already been initialized and we do not
-    // want to enforce a re-initialization with a new seed
-    if (guidRNG.isInitialized && !in_enforceReInitialization) {
-        return 0;
-    } else {
-        guidRNG.isInitialized = true;
-
-        if (in_seed === undefined) {
-            const randomValues = generateRandomUInt32Array(4);
-            guidRNG.u = randomValues[0];
-            guidRNG.v = randomValues[1];
-            guidRNG.w1 = randomValues[2];
-            guidRNG.w2 = randomValues[3];
-        } else {
-            guidRNG.v = 224461437;
-            guidRNG.w1 = 521288629;
-            guidRNG.w2 = 362436069;
-
-            guidRNG.u = in_seed ^ guidRNG.v;
-            guidRNG.genRandUInt32();
-            guidRNG.v = guidRNG.u;
-            guidRNG.genRandUInt32();
-        }
-        return -1;
-    }
-};
 /**
  * Allows for 32-bit integer multiplication with C-like semantics
  *
- * @param {number} n - unsigned int32 value
- * @param {number} m - unsigned int32 value
- * @return {number} - result of unsigned integer multiplication
+ * @param a - unsigned int32 value
+ * @param b - unsigned int32 value
+ * @returns - result of unsigned integer multiplication
  */
-function multiply_uint32(n, m) {
+function multiply_uint32(a: number, b: number): number {
+    let n = a;
+    let m = b;
+
     n >>>= 0;
     m >>>= 0;
     const nlo = n & 0xffff;
@@ -89,64 +119,37 @@ function multiply_uint32(n, m) {
 }
 
 /**
- * @return {number} 32-bit random number based on the RNGs internal state
- */
-guidRNG.genRandUInt32 = function () {
-
-    guidRNG.u = multiply_uint32(guidRNG.u, 2891336453) + 1640531513;
-    guidRNG.v ^= guidRNG.v >>> 13;
-    guidRNG.v ^= guidRNG.v << 17;
-    guidRNG.v = ((guidRNG.v >>> 5) ^ guidRNG.v) >>> 0;
-
-    guidRNG.w1 = multiply_uint32(33378, (guidRNG.w1 & 0xffff)) + (guidRNG.w1 >>> 16);
-    guidRNG.w2 = multiply_uint32(57225, (guidRNG.w2 & 0xffff)) + (guidRNG.w2 >>> 16);
-
-    let x = guidRNG.u ^ (guidRNG.u << 9);
-    x ^= x >>> 17;
-    x ^= x << 6;
-
-    let y = guidRNG.w1 ^ (guidRNG.w1 << 17);
-    y ^= y >>> 15;
-    y ^= y << 5;
-    return (((x >>> 0) + guidRNG.v) ^ ((y >>> 0) + guidRNG.w2)) >>> 0;
-};
-
-/**
  * Helper function to convert base64 encoding to url friendly format
  *
- * @param {string} base64 Base64 string
+ * @param base64 - Base64 string
  *
- * @return {string} Url-friendly base64 encoding.
- * @alias property-common.toUrlBase64
+ * @returns Url-friendly base64 encoding.
  */
-var toUrlBase64 = function (base64) {
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').split('=')[0];
-};
+const toUrlBase64 = (base64: string): string => base64.replace(/\+/g, "-").replace(/\//g, "_").split("=")[0];
 
 /**
  * Helper function to recover padding of base64 encoding
  *
- * @param {string} base64 Base64 string
+ * @param x - Base64 string
  *
- * @return {string} Padded base64 encoding.
- * @alias property-common.toPaddedBase64
+ * @returns Padded base64 encoding.
  */
-var toPaddedBase64 = function (base64) {
+const toPaddedBase64 = function(x: string): string {
+    let base64 = x;
     const padLength = 4 - base64.length % 4;
-    base64 += repeatString('=', padLength);
+    base64 += "=".repeat(padLength);
     return base64;
 };
 
 /**
  * Helper function to create a guid string from an array with 32Bit values
  *
- * @param {Uint32Array | Int32Array | Array.<number>} in_guidArray Array with the 32 bit values
- * @param {boolean} base64 Use base64 encoding instead of standart guids
+ * @param in_guidArray - Array with the 32 bit values
+ * @param base64 - Use base64 encoding instead of standart guids
  *
- * @return {string} The guid
- * @alias property-common.uint32x4ToGUID
+ * @returns The guid
  */
-var uint32x4ToGUID = function (in_guidArray, base64 = false) {
+const uint32x4ToGUID = function(in_guidArray: Uint32Array | Int32Array | number[], base64: boolean = false): string {
     if (base64) {
         const intArray = new Uint32Array(in_guidArray);
         const byteArray = new Uint8Array(intArray.buffer);
@@ -155,42 +158,36 @@ var uint32x4ToGUID = function (in_guidArray, base64 = false) {
         return toUrlBase64(base64guid);
     } else {
         // Convert to hexadecimal string
-        var str = '';
-        for (var i = 0; i < 4; i++) {
-            var hex = in_guidArray[i].toString(16);
-            str += (repeatString('0', 8 - hex.length) + hex);
+        let str = "";
+        for (let i = 0; i < 4; i++) {
+            const hex = in_guidArray[i].toString(16);
+            str += ("0".repeat(8 - hex.length) + hex);
         }
-        return str.substr(0, 8) + '-' + str.substr(8, 4) + '-' +
-            str.substr(12, 4) + '-' + str.substr(16, 4) + '-' +
-            str.substr(20, 12);
+        // eslint-disable-next-line max-len
+        return `${str.substr(0, 8)}-${str.substr(8, 4)}-${str.substr(12, 4)}-${str.substr(16, 4)}-${str.substr(20, 12)}`;
     }
 };
 
 /**
  * Convert guid to four 32Bit values.
  *
- * @param {string} in_guid The guid to convert
- * @param {Uint32Array | Array.<number>} [io_result] An optional array to write the result to;
+ * @param in_guid - The guid to convert
+ * @param io_result - An optional array to write the result to;
  *                                If no array is given, a new one gets created
- * @return {Uint32Array | Array.<number>} Four 32-bit values
+ * @returns Four 32-bit values
  *
- * @alias property-common.guidToUint32x4
  */
-var guidToUint32x4 = function (in_guid, io_result) {
-    var result = io_result;
-    if (result === undefined) {
-        result = new Uint32Array(4);
-    }
+const guidToUint32x4 = function(in_guid: string, result: Uint32Array = new Uint32Array(4)): Uint32Array {
     if (isBase64(in_guid)) {
         const guid = toPaddedBase64(in_guid);
         const bytes = base64js.toByteArray(guid);
         const intArray = new Uint32Array(bytes.buffer);
         result.set(intArray);
     } else {
-        result[0] = parseInt('0x' + in_guid.substr(0, 8), 16);
-        result[1] = parseInt('0x' + in_guid.substr(9, 4) + in_guid.substr(14, 4), 16);
-        result[2] = parseInt('0x' + in_guid.substr(19, 4) + in_guid.substr(24, 4), 16);
-        result[3] = parseInt('0x' + in_guid.substr(28, 8), 16);
+        result[0] = parseInt(`0x${in_guid.substr(0, 8)}`, 16);
+        result[1] = parseInt(`0x${in_guid.substr(9, 4)}${in_guid.substr(14, 4)}`, 16);
+        result[2] = parseInt(`0x${in_guid.substr(19, 4)}${in_guid.substr(24, 4)}`, 16);
+        result[3] = parseInt(`0x${in_guid.substr(28, 8)}`, 16);
     }
     return result;
 };
@@ -198,26 +195,20 @@ var guidToUint32x4 = function (in_guid, io_result) {
 /**
  * Convert base64 guid into base16.
  *
- * @param {string} in_guid Base64 guid to convert
- * @return {string} Base16 guid
+ * @param in_guid - Base64 guid to convert
+ * @returns Base16 guid
  *
- * @alias property-common.base64Tobase16
  */
-var base64Tobase16 = function (in_guid) {
-    return uint32x4ToGUID(guidToUint32x4(in_guid));
-};
+const base64Tobase16 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid));
 
 /**
  * Convert base16 into base64 guid.
  *
- * @param {string} in_guid Base16 guid to convert
- * @return {string} Base64 guid
+ * @param in_guid - Base16 guid to convert
+ * @returns Base64 guid
  *
- * @alias property-common.base16ToBase64
  */
-var base16ToBase64 = function (in_guid) {
-    return uint32x4ToGUID(guidToUint32x4(in_guid), true);
-};
+const base16ToBase64 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid), true);
 
 /**
  * Based on the boolean parameter generate either
@@ -226,13 +217,12 @@ var base16ToBase64 = function (in_guid) {
  *
  * This function is *not* thread safe!
  *
- * @param {boolean} base64 Use base64 encoding instead of standart guids
+ * @param base64 - Use base64 encoding instead of standart guids
  *
- * @return {string} The guid
- * @alias property-common.generateGUID
+ * @returns The guid
  */
-var generateGUID = function (base64 = false) {
-    var rnds = new Uint32Array(4);
+const generateGUID = function(base64 = false): string {
+    const rnds = new Uint32Array(4);
 
     // Random numbers for guid (4x32 bit)
     rnds[0] = guidRNG.genRandUInt32();
@@ -242,37 +232,35 @@ var generateGUID = function (base64 = false) {
     return uint32x4ToGUID(rnds, base64);
 };
 
-/**
- * Routine used to check whether the given string is a valid guid
- *
- * @param {string} in_guid The guid to test.
- * @return {boolean} True if the parameter is a valid guid, false otherwise.
- * @alias property-common.isGUID
- */
 // The last character is checked this way because last 4 bits of 22nd character are ignored
 // by decoder, e.g. "+Q" and "+Z" result in the same decoding.
 // The only characters with last 4 bits set to 0 are A, Q, g, w.
-const reBase64 = (/^[A-Za-z0-9\-_]{21}[AQgw]{1}$/);
-const reBase16 = (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
-var isGUID = function (in_guid) {
-    return reBase16.test(in_guid) || reBase64.test(in_guid);
-};
+const reBase64 = (/^[\w-]{21}[AQgw]$/);
+// eslint-disable-next-line unicorn/no-unsafe-regex
+const reBase16 = (/^[\dA-Fa-f]{8}(?:-[\dA-Fa-f]{4}){3}-[\dA-Fa-f]{12}$/);
+
+/**
+ * Routine used to check whether the given string is a valid guid
+ *
+ * @param in_guid - The guid to test.
+ * @returns True if the parameter is a valid guid, false otherwise.
+ */
+const isGUID = (in_guid: string) => reBase16.test(in_guid) || reBase64.test(in_guid);
 
 /**
  * Performs a hash combination operation on the two supplied Uint32 arrays of length 4 (using
  * a variant of the algorithm from boost::hash_combine
  *
- * @param {Uint32Array | Array.<number>} in_array1 - first hash array
- * @param {Uint32Array | Array.<number>} in_array2 - second hash array
- * @param {Uint32Array | Array.<number>} [io_result] optional array to write to
- *
- * @return {Uint32Array | Array.<number>}
- * @alias property-common.hashCombine4xUint32
+ * @param in_array1 - First array
+ * @param in_array2 - Second array
+ * @returns New combined hash
  */
-
-var hashCombine4xUint32 = function (in_array1, in_array2, io_result) {
-
-    var accumulated = io_result;
+const hashCombine4xUint32 = function(
+    in_array1: Uint32Array,
+    in_array2: Uint32Array,
+    io_result?: Uint32Array,
+): Uint32Array {
+    let accumulated = io_result;
     if (accumulated === undefined) {
         accumulated = new Uint32Array(in_array2);
     } else {
@@ -310,29 +298,31 @@ var hashCombine4xUint32 = function (in_array1, in_array2, io_result) {
  * Note: You should only use this helper function when you need only one combination.
  *       Otherwise, it is more efficient to work on the uint8 arrays directly.
  *
- * @param {string} in_guid1 Input guid
- * @param {string} in_guid2 Input guid
- * @param {boolean} base64 Use base64 encoding instead of standart guids
- * @return {string} Combined guid
+ * @param in_guid1 - Input guid
+ * @param in_guid2 - Input guid
+ * @param base64 - Use base64 encoding instead of standart guids
+ * @returns Combined guid
  */
-var combineGuids = function (in_guid1, in_guid2, base64 = false) {
-    var firstArray = guidToUint32x4(in_guid1);
-    var secondArray = guidToUint32x4(in_guid2);
-    var combined = hashCombine4xUint32(firstArray, secondArray);
+const combineGuids = function(in_guid1: string, in_guid2: string, base64 = false): string {
+    const firstArray = guidToUint32x4(in_guid1);
+    const secondArray = guidToUint32x4(in_guid2);
+    const combined = hashCombine4xUint32(firstArray, secondArray);
     return uint32x4ToGUID(combined, base64);
 };
 
 // Make sure the RNG is initialized
 guidRNG.initialize();
 
-module.exports = {
+const initializeGUIDGenerator = (...args) => { guidRNG.initialize(...args); };
+
+export {
     uint32x4ToGUID,
     guidToUint32x4,
     base64Tobase16,
     base16ToBase64,
-    initializeGUIDGenerator: guidRNG.initialize,
+    initializeGUIDGenerator,
     generateGUID,
     isGUID,
     combineGuids,
-    hashCombine4xUint32
+    hashCombine4xUint32,
 };
