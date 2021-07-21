@@ -106,7 +106,7 @@ Telemetry properties on logs *can (but are **not** yet required to)* now be tagg
 
 _\[edit\]_
 
-This actually was a breaking change in 0.40, in that the signature of `ITelemetryBaseLogger.send` changed to
+This actually was a breaking change in 0.40, in that the type of the `event` parameter of `ITelemetryBaseLogger.send` changed to
 a more inclusive type which needs to be accounted for in implementations.  However, in releases 0.40 through 0.44,
 _no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_.  We are preparing to do so
 soon, and will include an entry in BREAKING.md when we do.
