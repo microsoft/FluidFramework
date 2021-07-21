@@ -1,5 +1,34 @@
 # Change Log
 
+## 3.1.0
+
+* build: update dependencies
+  * Associated pull request: [32541](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32541)
+  * Commit: [377619eea97e59d894f0481e20f1362bf85193fb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/377619eea97e59d894f0481e20f1362bf85193fb)
+* test: Add change node format to SharedTree document and summary compatibility tests
+  * Associated pull request: [32364](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32364)
+  * Commit: [387afed0a93c10d152b6b9f44d1e2bae6745e22e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/387afed0a93c10d152b6b9f44d1e2bae6745e22e)
+* test: Summarizer Read Forward Compatibility Tests
+  * Associated pull request: [32352](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32352)
+  * Commit: [6a4d3eeb9946d5b2b4323dc0a61d6de971bcc239](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6a4d3eeb9946d5b2b4323dc0a61d6de971bcc239)
+* refactor: BREAKING CHANGE: Split Snapshot into RevisionView and TransactionView
+  * Associated pull request: [32438](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32438)
+  * Commit: [ae8d4c4c5dc4cd51a6367459609b402141f9f743](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ae8d4c4c5dc4cd51a6367459609b402141f9f743)
+* fix: cleanup shared-tree changelog
+  * Associated pull request: [32450](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32450)
+  * Commit: [2befd08ad2cac5bcb4e18999ac2b5c9b199dae84](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2befd08ad2cac5bcb4e18999ac2b5c9b199dae84)
+* merge: `releases/2021.07.2` into `master`
+  * Associated pull request: [32433](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32433)
+  * Commit: [2553c08296b8a67c2e05c5d3ad66606b03a40c27](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2553c08296b8a67c2e05c5d3ad66606b03a40c27)
+* Merged PR 32436: Revert "Merged PR 32369: merge: releases/2021.07.2 into master"
+  * Commit: [9a8b77a73ea9b40b11e3991cab9a00553aec9a72](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9a8b77a73ea9b40b11e3991cab9a00553aec9a72)
+* revert: Revert 'feat: BREAKING CHANGE: SharedTree configuration methods'
+  * Associated pull request: [32394](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32394)
+  * Commit: [fe0d966113f96205d6b20d476ccb6e0b53a0de25](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fe0d966113f96205d6b20d476ccb6e0b53a0de25)
+* merge: releases/2021.07.2 into master
+  * Associated pull request: [32369](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32369)
+  * Commit: [c249e821675ee6daf258a3b1ad01346465b69cf5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c249e821675ee6daf258a3b1ad01346465b69cf5)
+
 ## 2.0.1
 
 * build: update dependencies
