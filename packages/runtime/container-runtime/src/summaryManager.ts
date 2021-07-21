@@ -46,8 +46,9 @@ export interface IConnectedEvents extends IEvent {
 export interface IConnectedState extends IEventProvider<IConnectedEvents> {
     readonly connected: boolean;
     // Under current implementation this is undefined if we've never connected, otherwise it's the clientId from our
-    // latest connection (even if we've since disconnected!).  Let's not trust that here though -- instead we will
-    // pretend it is undefined if we are disconnected and keep track of "latest clientId" ourselves.
+    // latest connection (even if we've since disconnected!).  Although this happens to be the behavior we want,
+    // let's not trust it and instead assume clientId is undefined if we are disconnected.  We'll keep track of
+    // "latest clientId" ourselves.
     readonly clientId: string | undefined;
 }
 
@@ -60,7 +61,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private latestClientId: string | undefined;
-    private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
@@ -91,7 +91,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         this.connectedState.on("connected", this.handleConnected);
         this.connectedState.on("disconnected", this.handleDisconnected);
-        this.connected = this.connectedState.connected;
         this.latestClientId = this.connectedState.clientId;
 
         // Track ops until first (write) connect
@@ -114,17 +113,11 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private readonly handleConnected = (clientId: string) => {
         this.latestClientId = clientId;
         this.runningSummarizer?.updateOnBehalfOf(clientId);
-        if (!this.connected) {
-            this.connected = true;
-            this.refreshSummarizer();
-        }
+        this.refreshSummarizer();
     };
 
     private readonly handleDisconnected = () => {
-        if (this.connected) {
-            this.connected = false;
-            this.refreshSummarizer();
-        }
+        this.refreshSummarizer();
     };
 
     private getShouldSummarizeState(): ShouldSummarizeState {
