@@ -334,6 +334,7 @@ export class RunningSummarizer implements IDisposable {
         return result;
     }
 
+    /** After summarizing, we should rerun the heuristics to see if we already need to summarize again. */
     private checkRerunHeuristics() {
         if (this.tryWhileSummarizing) {
             this.tryWhileSummarizing = false;
